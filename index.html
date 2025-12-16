@@ -44,6 +44,20 @@
     *{box-sizing:border-box}
     html,body{height:100%}
 
+    /* ✅ Quita el “cuadro azul” / tap highlight en Android */
+    *{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
+    a, button, .cardDrop, .btnDrop, .cartTrigger, .btnHero, .pBtn, .pbBtn, .shipBtn{
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      outline: none;
+    }
+    button:focus, a:focus, .cardDrop:focus{ outline:none; }
+    /* Mantén accesibilidad: si navegan con teclado, sí se ve focus */
+    :focus-visible{
+      outline: 3px solid rgba(225, 6, 0, .55);
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
+
     body{
       margin:0; font-family: var(--fontBody);
       color: #111;
@@ -291,7 +305,6 @@
       box-shadow: 0 10px 18px rgba(0,0,0,0.25);
     }
 
-    /* ✅ LOGO MÁS GRANDE (HORIZONTAL) */
     .dropLogo{
       height: 112px;
       max-width: 92%;
@@ -876,7 +889,7 @@
 
   <header class="topbar">
     <div class="topInner">
-      <a href="./" class="brandLogo" aria-label="SCORE Official Baja Gear">
+      <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
         <img src="assets/logo-score.png" alt="SCORE" loading="eager">
       </a>
 
@@ -918,11 +931,10 @@
           <div class="statusBadge">ACTIVO</div>
 
           <img
-            src="assets/logo-baja100.png"
+            src="assets/logo-baja1000.png"
             class="dropLogo"
             alt="Baja 1000"
             loading="lazy"
-            onerror="this.src='assets/logo-baja1000.png'"
           >
 
           <div class="dropInfo">
@@ -1050,12 +1062,9 @@
         <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
           Envío (México)
         </div>
-
-        <!-- ✅ FIX: aquí estaba el <div roto -->
         <div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
           Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
         </div>
-
         <div class="shipRow">
           <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
           <button class="shipBtn" onclick="quoteShipping()">Calcular</button>
@@ -1097,29 +1106,22 @@
     const API_CHECKOUT = '/.netlify/functions/create_checkout';
     const API_SHIPPING = '/.netlify/functions/quote_shipping';
 
-    // ✅ RUTAS REALES (según tu repo)
+    // ✅ Ajustado a tu repo actual
     const PATH_ED2025 = "assets/EDICION_2025/";
     const PATH_OTRAS  = "assets/OTRAS_EDICIONES/";
 
-    function applyImgFallback(imgEl){
-      try{
-        const fb = imgEl.getAttribute("data-fallback");
-        if(fb && imgEl.src !== fb) imgEl.src = fb;
-      }catch(e){}
-    }
-
     const PRODUCTS_B1000 = [
-      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg`, fallback: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
+      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
 
-      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
-      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
-      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
+      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
+      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
+      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
 
-      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg`, fallback: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
-      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg`, fallback: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
+      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
+      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
 
-      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg`,  fallback: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
-      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg`,  fallback: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
+      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
+      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
     ];
 
     const SIZES = ["S","M","L","XL","2XL"];
@@ -1195,10 +1197,8 @@
             <div class="pImg">
               <img
                 src="${p.img}"
-                data-fallback="${p.fallback || ""}"
                 alt="${escapeHtml(p.name)}"
                 loading="lazy"
-                onerror="applyImgFallback(this)"
               >
             </div>
             <div class="pInfo">
@@ -1261,7 +1261,6 @@
         id: p.id,
         name: p.name,
         img: p.img,
-        fallback: p.fallback || "",
         size,
         priceMXN: p.priceMXN,
         qty: 1
@@ -1331,8 +1330,8 @@
           const lineUSD = mxnToUsd(lineMXN);
           return `
             <div class="cItem">
-              <img src="${i.img}" data-fallback="${i.fallback||""}" class="cImg"
-                   alt="${escapeHtml(i.name)}" loading="lazy" onerror="applyImgFallback(this)">
+              <img src="${i.img}" class="cImg"
+                   alt="${escapeHtml(i.name)}" loading="lazy">
               <div style="flex:1">
                 <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
                 <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
@@ -1343,6 +1342,18 @@
           `;
         }).join('');
       }
+    }
+
+    /* ✅ Sanitiza notas para que nunca salga HTML crudo de Envia */
+    function safeNote(str){
+      const s = String(str || "").trim();
+      if(!s) return "";
+      const lower = s.toLowerCase();
+      if (s.includes("<") || lower.includes("<!doctype") || lower.includes("<html") || lower.includes("doctype html")) {
+        return "No se pudo cotizar en este momento. Intenta de nuevo en unos minutos.";
+      }
+      if (s.length > 140) return s.slice(0, 140) + "…";
+      return s;
     }
 
     async function quoteShipping(){
@@ -1375,10 +1386,13 @@
         if(res.ok && typeof data.mxn === "number"){
           shippingMXN = Math.max(0, Math.round(data.mxn));
           shippingQuoted = true;
-          note.textContent = data.note ? data.note : "Envío estimado aplicado al total.";
+
+          const n = safeNote(data.note);
+          note.textContent = n || "Envío estimado aplicado al total.";
           updateCartUI();
         } else {
-          note.textContent = (data && data.error) ? data.error : "No se pudo cotizar el envío.";
+          const err = safeNote((data && data.error) ? data.error : "");
+          note.textContent = err || "No se pudo cotizar el envío.";
         }
       }catch(e){
         note.textContent = "Error de conexión. Revisa Netlify Functions.";
