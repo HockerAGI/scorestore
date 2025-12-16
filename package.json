@@ -9,11 +9,11 @@
   },
   "scripts": {
     "dev": "netlify dev",
-    "build": "echo \"static site\"",
-    "postinstall": "echo \"skip\""
+    "build": "echo \"static site\""
   },
   "dependencies": {
-    "stripe": "^14.25.0"
+    "stripe": "^14.25.0",
+    "nodemailer": "^6.9.16"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
