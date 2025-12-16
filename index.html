@@ -56,7 +56,7 @@
 
     /* ✅ TEMA NAVIDAD + AÑO NUEVO (default) */
     body[data-theme="xmas"]{
-      --seasonTint: rgba(105, 180, 255, .12);  /* frío */
+      --seasonTint: rgba(105, 180, 255, .12);
       --seasonGlow: rgba(255,255,255,.20);
       --partnersTint: rgba(105, 180, 255, .10);
       --cardGlassA: rgba(255,255,255,.18);
@@ -277,11 +277,19 @@
       opacity:.96;
       transform: scale(1.03);
     }
+
+    /* ✅ Overlay café semi claro (PRO) */
     .heroOverlay{
       position:absolute; inset:0;
       background:
-        linear-gradient(to right, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.40) 64%, transparent 100%),
-        radial-gradient(circle at 78% 20%, rgba(225,6,0,0.16), transparent 48%);
+        linear-gradient(
+          to right,
+          rgba(148,111,74,0.78) 0%,
+          rgba(148,111,74,0.48) 55%,
+          rgba(148,111,74,0.18) 100%
+        ),
+        radial-gradient(circle at 78% 20%, rgba(225,6,0,0.12), transparent 52%),
+        linear-gradient(to top, rgba(0,0,0,0.30) 0%, transparent 55%);
     }
 
     /* ✅ Cinta temporada */
@@ -300,9 +308,7 @@
       box-shadow: 0 12px 22px rgba(0,0,0,.16);
     }
     .seasonRibbon b{ color: var(--red); }
-    body[data-theme="xmas"] .seasonRibbon::before{
-      content:"🎄 ";
-    }
+    body[data-theme="xmas"] .seasonRibbon::before{ content:"🎄 "; }
 
     .heroContent{
       position:relative; z-index:2;
@@ -333,12 +339,12 @@
     .heroSub{
       font-size: 17px;
       line-height: 1.5;
-      color:#e6e6e6;
+      color:#f3f0ea;
       margin-bottom: 18px;
       border-left: 4px solid var(--red);
       padding-left: 18px;
-      font-weight: 700;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      font-weight: 800;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
     }
 
     /* ✅ CTA + microcopy cupón */
@@ -360,9 +366,9 @@
       font-weight: 900;
       font-size: 12px;
       letter-spacing: .10em;
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.92);
       text-transform: uppercase;
-      background: rgba(0,0,0,.35);
+      background: rgba(0,0,0,.28);
       border: 1px solid rgba(255,255,255,.14);
       padding: 10px 12px;
       border-radius: 14px;
@@ -374,8 +380,14 @@
       .hero{ align-items:flex-end; min-height: 500px; }
       .heroOverlay{
         background:
-          linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%),
-          radial-gradient(circle at 60% 25%, rgba(225,6,0,0.14), transparent 50%);
+          linear-gradient(
+            to top,
+            rgba(148,111,74,0.86) 12%,
+            rgba(148,111,74,0.32) 68%,
+            rgba(148,111,74,0.10) 100%
+          ),
+          radial-gradient(circle at 60% 25%, rgba(225,6,0,0.10), transparent 55%),
+          linear-gradient(to top, rgba(0,0,0,0.28) 0%, transparent 60%);
       }
       .heroTitle{ font-size: 56px; }
       .heroContent{ padding: 25px; width: 100%; }
@@ -433,7 +445,6 @@
       box-shadow: 0 18px 44px rgba(0,0,0,.28);
     }
 
-    /* fondo “desierto” + textura */
     .dropBg{
       position:absolute; inset:0;
       background:
@@ -445,7 +456,6 @@
       opacity: .95;
       filter: saturate(1.05) contrast(1.05);
     }
-    /* viñeta para legibilidad */
     .dropBg::after{
       content:"";
       position:absolute; inset:0;
@@ -455,7 +465,6 @@
       opacity:.95;
     }
 
-    /* glass interno */
     .dropGlass{
       position:absolute; inset:0;
       display:flex;
@@ -515,7 +524,7 @@
     }
     .btnDrop:hover{ transform: translateY(-1px); }
 
-    /* ✅ PARTNERS SIN TARJETA (en el fondo, con tinte visible) */
+    /* ✅ PARTNERS SIN TARJETA */
     .partnersStrip{
       margin-top: 22px;
       padding: 18px 6px 6px;
@@ -630,7 +639,7 @@
       text-transform: uppercase;
     }
 
-    /* drawer carrito (igual base) */
+    /* drawer carrito */
     .drawer{
       position: fixed; top:0; right:0;
       width: min(420px, 92vw);
@@ -844,11 +853,12 @@
       color:#111;
     }
     .pPrice{ margin-top: 10px; }
+    /* ✅ Ahora pWas = "Original" (no tachado para no confundir) */
     .pWas{
       font-weight: 900;
       font-size: 12px;
       color: rgba(0,0,0,.55);
-      text-decoration: line-through;
+      text-decoration: none;
     }
     .pNow{ font-weight: 900; font-size: 16px; margin-top: 2px; }
     .pCoupon{
@@ -894,8 +904,8 @@
       </a>
 
       <div class="navRight">
-        <div class="promoPill" title="Cupón activo">
-          <span>15% OFF con</span>&nbsp;<b>SCORE10</b>
+        <div class="promoPill" title="Cupón disponible">
+          <span>10% OFF con</span>&nbsp;<b>SCORE10</b>
         </div>
 
         <button class="cartTrigger" id="cartTrigger" type="button" onclick="toggleCart()" aria-label="Abrir carrito">
@@ -923,12 +933,13 @@
         <h1 class="heroTitle">LEYENDAS<br><span>DEL DESIERTO</span></h1>
 
         <p class="heroSub">
-          Inventario limitado + drops oficiales. Compra segura en México.
+          Drops oficiales + inventario limitado. Precios calculados desde el costo original (+20%).
+          Usa <b>SCORE10</b> y obtén <b>10% OFF</b>.
         </p>
 
         <div class="heroActions">
           <button class="btnHero" type="button" onclick="openProductModal('ALL')">VER DROPS</button>
-          <div class="heroHint">Agrega el código <b>SCORE10</b> y obtén <b>15% OFF</b></div>
+          <div class="heroHint">Código <b>SCORE10</b> = <b>10% OFF</b></div>
         </div>
       </div>
     </section>
@@ -989,7 +1000,6 @@
       </div>
     </div>
 
-    <!-- ✅ Partners directo al fondo, con tinte y líneas -->
     <section class="partnersStrip" aria-label="Partners">
       <div class="partnersTitle">OFFICIAL PARTNERS</div>
       <div class="spGrid">
@@ -1030,7 +1040,7 @@
 
   <div class="paybar" id="paybar" aria-label="Resumen de compra">
     <div>
-      <div class="pbTotal">TOTAL (MXN) · Cupón: SCORE10 -15%</div>
+      <div class="pbTotal" id="pbLabel">TOTAL (MXN)</div>
       <div class="pbPrice" id="pbTotal">$0 MXN <small>$0 USD</small></div>
     </div>
     <button class="pbBtn" type="button" onclick="toggleCart()">VER CARRITO</button>
@@ -1054,19 +1064,18 @@
 
       <div class="promoBox" aria-label="Código de promoción">
         <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          Código de promoción (15% OFF)
+          Código de promoción (10% OFF)
         </div>
         <div class="promoRow">
           <input class="promoInput" id="promoInput" maxlength="24" placeholder="SCORE10">
           <button class="promoBtn" type="button" onclick="applyPromo()">APLICAR</button>
         </div>
-        <div class="promoNote" id="promoNote">Tip: con <b>SCORE10</b> se aplica 15% de descuento al total.</div>
+        <div class="promoNote" id="promoNote">Tip: con <b>SCORE10</b> se aplica 10% de descuento al total.</div>
       </div>
 
       <button class="dfBtn" id="payBtn" type="button" onclick="goCheckout()">IR A PAGAR</button>
       <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
 
-      <!-- ✅ control de temporada (modular, UX simple) -->
       <div style="margin-top:12px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
         Temporada:
         <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('xmas')">Navidad</span> ·
@@ -1087,14 +1096,13 @@
   </div>
 
   <div class="overlay" id="globalOverlay2" style="display:none"></div>
-
-<script>/
-* =========================
-     SCORE STORE — JS
-     Precios: base (catálogo) +15%
-     Cupón: SCORE10 = -15% (regresa a “precio original”)
-     Temas: xmas/halloween/patrio (modular)
-     ========================= */
+<script>
+/* =========================
+   SCORE STORE — JS (PRO)
+   Precios: baseMXN (original) +20%
+   Cupón: SCORE10 = -10%
+   Temas: xmas/halloween/patrio (modular)
+   ========================= */
 
   // PWA
   if ("serviceWorker" in navigator) {
@@ -1103,23 +1111,22 @@
     });
   }
 
-  const FX_MXN_PER_USD = 17.50;
+  let FX_MXN_PER_USD = 17.50;
 
-  // ✅ precios
-  const PRICE_MARKUP = 0.15;     // +15% al precio original
+  // ✅ precios (TU REGLA)
+  const PRICE_MARKUP = 0.20;     // +20% al precio original
   const PROMO_CODE_FIXED = "SCORE10";
-  const PROMO_PCT_FIXED  = 0.15; // -15%
+  const PROMO_PCT_FIXED  = 0.10; // -10%
 
   const API_CHECKOUT = "/.netlify/functions/create_checkout";
-  const LS_KEY = "score_cart_v4";
+  const LS_KEY = "score_cart_v5";
 
   const SIZES = ["S","M","L","XL","2XL"];
 
   let cart = JSON.parse(localStorage.getItem(LS_KEY)) || [];
   let CATALOG = null;
 
-  let promoApplied = null; // { code, type:"percent", value:0.15 }
-  let promoOffMXN = 0;
+  let promoApplied = null; // { code, type:"percent", value:0.10 }
 
   function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
   function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
@@ -1130,6 +1137,7 @@
   function normCode(s){
     return String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
   }
+  function roundMXN(n){ return Math.round(Number(n||0)); }
 
   function toast(msg){
     const el = document.getElementById("toast");
@@ -1164,7 +1172,6 @@
   overlay.addEventListener("click", closeOverlay);
 
   function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
-  function cartSubtotalMXN(){ return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0); }
   function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
 
   function toggleCart(){
@@ -1190,18 +1197,24 @@
     return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
   }
 
-  // ✅ Pricing: original (baseMXN) +15%
+  // ✅ Pricing: original (baseMXN) +20%
   function priceListFromBase(baseMXN){
-    return Math.round(Number(baseMXN||0) * (1 + PRICE_MARKUP));
+    return roundMXN(Number(baseMXN||0) * (1 + PRICE_MARKUP));
   }
   function priceWithCoupon(listMXN){
-    return Math.round(Number(listMXN||0) * (1 - PROMO_PCT_FIXED));
+    return roundMXN(Number(listMXN||0) * (1 - PROMO_PCT_FIXED));
   }
 
   async function loadCatalog(){
     const v = Date.now().toString().slice(-6);
-    const res = await fetch(`/data/catalog.json?v=${v}`);
+    const res = await fetch(`/data/catalog.json?v=${v}`, { cache:"no-store" });
     CATALOG = await res.json();
+
+    // opcional: si el catálogo trae tipo cambio
+    if(CATALOG?.site?.fx_mxn_per_usd){
+      const fx = Number(CATALOG.site.fx_mxn_per_usd);
+      if(!Number.isNaN(fx) && fx > 0) FX_MXN_PER_USD = fx;
+    }
   }
 
   function pmDivider(label){
@@ -1222,17 +1235,18 @@
     const coupon = priceWithCoupon(list);
 
     const sized = needsSize(p.name);
+
     return `
       <div class="pCard">
         <div class="pImg">
-          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" width="800" height="600">
         </div>
         <div class="pInfo">
           <div class="pName">${escapeHtml(p.name)}</div>
 
           <div class="pPrice">
-            <div class="pWas">${moneyMXN(list)} MXN</div>
-            <div class="pNow">${moneyMXN(list)} MXN</div>
+            <div class="pWas">Original: ${moneyMXN(base)} MXN</div>
+            <div class="pNow">Precio: ${moneyMXN(list)} MXN</div>
 
             <div class="pCoupon" title="Usa el cupón SCORE10">
               <span>Con <b>${PROMO_CODE_FIXED}</b></span>
@@ -1271,12 +1285,20 @@
     const products = CATALOG.products;
     let html = "";
 
+    // ✅ Modular: cualquier producto que tenga sectionId se renderiza en su sección (auto)
     if(sections.length){
       for(const s of sections){
         const items = products.filter(p => String(p.sectionId||"") === String(s.id||""));
         if(!items.length) continue;
         html += pmDivider(s.title || s.id);
         html += items.map(cardTpl).join("");
+      }
+
+      // fallback: lo que no tenga sección
+      const orphan = products.filter(p => !p.sectionId);
+      if(orphan.length){
+        html += pmDivider("Más productos");
+        html += orphan.map(cardTpl).join("");
       }
     } else {
       html = products.map(cardTpl).join("");
@@ -1327,8 +1349,8 @@
       name: p.name,
       img: p.img,
       size,
-      priceMXN: list,     // ✅ precio tienda (original +15%)
-      baseMXN: base,      // original
+      baseMXN: base,
+      listMXN: list,
       qty: 1
     });
 
@@ -1348,21 +1370,10 @@
     if(confirm("¿Vaciar carrito?")){
       cart = [];
       promoApplied = null;
-      promoOffMXN = 0;
       saveCart();
       updateCartUI();
       toast("Carrito vacío");
     }
-  }
-
-  function computePromoOff(subtotal){
-    promoOffMXN = 0;
-    if(!promoApplied) return 0;
-
-    if(promoApplied.type === "percent"){
-      promoOffMXN = Math.max(0, Math.round(subtotal * promoApplied.value));
-    }
-    return promoOffMXN;
   }
 
   function applyPromo(){
@@ -1372,32 +1383,52 @@
 
     if(code === PROMO_CODE_FIXED){
       promoApplied = { code, type:"percent", value: PROMO_PCT_FIXED };
-      note.innerHTML = `✅ Cupón aplicado: <b>${PROMO_CODE_FIXED}</b> (-15%)`;
+      note.innerHTML = `✅ Cupón aplicado: <b>${PROMO_CODE_FIXED}</b> (-10%)`;
       toast("SCORE10 aplicado");
       updateCartUI();
       return;
     }
 
     promoApplied = null;
-    promoOffMXN = 0;
     note.textContent = code ? `Código no válido: ${code}` : `Escribe un código para aplicarlo.`;
     updateCartUI();
   }
 
+  function calcTotals(){
+    const subtotalList = cart.reduce((a,b)=> a + (Number(b.listMXN||0) * Number(b.qty||0)), 0);
+
+    if(!promoApplied){
+      return { subtotalList, off:0, totalMXN: subtotalList };
+    }
+
+    // ✅ Aplicación por item (mejor UX + redondeos consistentes)
+    let totalAfter = 0;
+    for(const i of cart){
+      const unit = Number(i.listMXN||0);
+      const unitAfter = priceWithCoupon(unit);
+      totalAfter += unitAfter * Number(i.qty||0);
+    }
+    totalAfter = roundMXN(totalAfter);
+    const off = Math.max(0, roundMXN(subtotalList - totalAfter));
+    return { subtotalList, off, totalMXN: Math.max(0, totalAfter) };
+  }
+
   function updateCartUI(){
-    const subtotal = cartSubtotalMXN();
-    const off = computePromoOff(subtotal);
-    const totalMXN = Math.max(0, subtotal - off);
+    document.getElementById("cartCount").innerText = cartCount();
+
+    const { subtotalList, off, totalMXN } = calcTotals();
     const totalUSD = mxnToUsd(totalMXN);
 
-    document.getElementById("cartCount").innerText = cartCount();
+    // paybar
+    const pbLabel = document.getElementById("pbLabel");
+    pbLabel.textContent = promoApplied ? `TOTAL (MXN) · Cupón ${PROMO_CODE_FIXED} -10%` : `TOTAL (MXN)`;
 
     document.getElementById("pbTotal").innerHTML = `
       ${moneyMXN(totalMXN)}
       <small>${moneyUSD(totalUSD)} USD</small>
     `;
 
-    document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
+    document.getElementById("subTotalLine").textContent = moneyMXN(subtotalList);
 
     const promoLine = document.getElementById("promoLine");
     if(off > 0){
@@ -1419,24 +1450,38 @@
     const body = document.getElementById("cartBody");
     if(cart.length === 0){
       body.innerHTML = "<div class='cartEmpty'>TU CARRITO ESTÁ VACÍO.</div>";
-    } else {
-      body.innerHTML = cart.map((i, idx) => {
-        const lineMXN = (i.priceMXN * i.qty);
-        const lineUSD = mxnToUsd(lineMXN);
-        return `
-          <div class="cItem">
-            <img src="${escapeHtml(i.img)}" class="cImg" alt="${escapeHtml(i.name)}" loading="lazy" decoding="async">
-            <div style="flex:1">
-              <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
-              <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
-              <div class="cPrice">${moneyMXN(lineMXN)} <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span></div>
-            </div>
-            <button type="button" onclick="rem(${idx})"
-              style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
-          </div>
-        `;
-      }).join("");
+      return;
     }
+
+    body.innerHTML = cart.map((i, idx) => {
+      const unit = Number(i.listMXN||0);
+      const unitAfter = promoApplied ? priceWithCoupon(unit) : unit;
+      const lineMXN = unitAfter * Number(i.qty||0);
+      const lineUSD = mxnToUsd(lineMXN);
+
+      return `
+        <div class="cItem">
+          <img src="${escapeHtml(i.img)}" class="cImg" alt="${escapeHtml(i.name)}" loading="lazy" decoding="async" width="200" height="200">
+          <div style="flex:1">
+            <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
+            <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
+
+            ${promoApplied ? `
+              <div style="margin-top:6px; font-size:11px; font-weight:900; color:#666; text-decoration:line-through;">
+                ${moneyMXN(unit)} c/u
+              </div>
+            ` : ``}
+
+            <div class="cPrice">
+              ${moneyMXN(lineMXN)}
+              <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span>
+            </div>
+          </div>
+          <button type="button" onclick="rem(${idx})"
+            style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
+        </div>
+      `;
+    }).join("");
   }
 
   async function goCheckout(){
@@ -1475,9 +1520,11 @@
 
   (async function boot(){
     await loadCatalog();
-    // ✅ UX: sugerimos el cupón ya en el input para que se note
+
+    // UX: sugerimos el cupón ya en el input
     const inp = document.getElementById("promoInput");
     if(inp && !inp.value) inp.value = "SCORE10";
+
     updateCartUI();
   })();
 </script>
