@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#E10600" />
+
+  <title>SCORE | Official Baja Gear</title>
+  <meta name="description" content="Equípate con la historia. Drops oficiales inspirados en el desierto. Compra segura en México." />
+  <meta name="robots" content="index,follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SCORE | Official Baja Gear" />
+  <meta property="og:description" content="Inventario limitado + drops oficiales. Compra rápida, segura y directa en México." />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+
+  <link rel="icon" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --red: #E10600;
+      --carbon: #1a1a1a;
+      --charcoal: #262626;
+      --sand: #f0f0f0;
+
+      --fontTitle: "Teko", sans-serif;
+      --fontBody: "Inter", sans-serif;
+
+      --bgTexture: url("assets/baja1000-texture.png");
+
+      /* ✅ MÁS TRANSPARENTE (overlay café) */
+      --coffeeGlass: rgba(148, 111, 74, 0.12);
+      --coffeeGlass2: rgba(120, 86, 55, 0.06);
+
+      --logoOutline: rgba(255,255,255,0.92);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0; font-family: var(--fontBody);
+      color: #111;
+      background-color: var(--sand);
+      overflow-x:hidden;
+      padding-bottom: 95px;
+    }
+    body.modalOpen{ overflow:hidden; }
+
+    body::before{
+      content:""; position:fixed; inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
+      z-index:-2; pointer-events:none; mix-blend-mode:multiply;
+    }
+
+    .wrap{
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      padding-top: 90px;
+      padding-bottom: 60px;
+    }
+
+    .topbar{
+      position:fixed; top:0; left:0; right:0; z-index:90;
+      background: rgba(245,245,245,0.95);
+      border-bottom: 3px solid var(--red);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .topInner{
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      height:76px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brandLogo img{
+      height:55px; display:block;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+    }
+
+    .navRight{ display:flex; align-items:center; gap:12px; }
+
+    .miniPill{
+      display:flex; align-items:center; justify-content:center;
+      height: 38px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.08);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .06em;
+      color: #111;
+      white-space: nowrap;
+    }
+    @media (max-width: 520px){
+      .miniPill{ display:none; }
+    }
+
+    .cartTrigger{
+      position:relative;
+      background: var(--carbon); color:#fff; border:none;
+      height:48px; padding:0 18px;
+      display:flex; align-items:center; gap:10px;
+      font-family: var(--fontTitle); font-weight:700; font-size:22px;
+      clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+      cursor:pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .cartIconImg{ width:28px; height:28px; filter: invert(1); object-fit:contain; }
+    .cartCount{
+      position:absolute; top:5px; right:5px;
+      background: var(--red);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height:1;
+      font-weight:900;
+    }
+
+    .hero{
+      position:relative;
+      border-radius: 12px;
+      overflow:hidden;
+      min-height: 540px;
+      display:flex;
+      align-items:center;
+      background: var(--carbon);
+      color:#fff;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    .heroBg{
+      position:absolute; inset:0;
+      background: url('assets/hero.png') center/cover no-repeat;
+      opacity:0.95;
+    }
+    .heroOverlay{
+      position:absolute; inset:0;
+      background: linear-gradient(to right, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.40) 60%, transparent 100%);
+    }
+    .heroContent{
+      position:relative; z-index:2;
+      padding: 50px;
+      max-width: 680px;
+    }
+    .heroTag{
+      background: var(--red); color:#fff;
+      padding: 6px 16px;
+      font-family: var(--fontTitle);
+      font-size:22px;
+      font-weight:700;
+      transform: skew(-10deg);
+      display:inline-block;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      letter-spacing: .02em;
+    }
+    .heroTitle{
+      font-family: var(--fontTitle);
+      font-size: 90px;
+      line-height: 0.85;
+      margin:0 0 18px;
+      text-transform:uppercase;
+      text-shadow: 0 5px 20px rgba(0,0,0,0.6);
+    }
+    .heroTitle span{ color: var(--red); }
+    .heroSub{
+      font-size: 17px;
+      line-height: 1.5;
+      color:#ddd;
+      margin-bottom: 26px;
+      border-left: 4px solid var(--red);
+      padding-left: 18px;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .btnHero{
+      background:#fff; color: var(--carbon);
+      border:none;
+      padding: 14px 35px;
+      font-family: var(--fontTitle);
+      font-size: 26px;
+      font-weight: 700;
+      cursor:pointer;
+      clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+      transition: transform .2s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .btnHero:hover{ transform: translateY(-2px); }
+
+    @media (max-width: 768px){
+      .hero{ align-items:flex-end; min-height: 480px; }
+      .heroOverlay{
+        background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%);
+      }
+      .heroTitle{ font-size: 55px; }
+      .heroContent{ padding: 25px; width: 100%; }
+    }
+
+    .secHeader{
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 60px 0 25px;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+      gap: 12px;
+    }
+    .secTitle{
+      font-family: var(--fontTitle);
+      font-size: 42px;
+      color: var(--carbon);
+      margin:0;
+      letter-spacing: .04em;
+    }
+    .secMeta{
+      font-weight: 900;
+      color:#888;
+      letter-spacing: 1px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .gridDrops{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+    }
+
+    .cardDrop{
+      position:relative;
+      height: 290px;
+      border-radius: 12px;
+      overflow:hidden;
+      cursor:pointer;
+      transition: transform .25s ease, box-shadow .25s ease;
+      background: var(--charcoal);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .cardDrop:hover{
+      transform: translateY(-6px);
+      box-shadow: 0 22px 45px rgba(0,0,0,0.16);
+    }
+
+    .dropBg{
+      position:absolute; inset:0;
+      background-image: var(--bgTexture);
+      background-size: cover;
+      background-position:center;
+      filter: brightness(0.62) sepia(0.25) contrast(1.1);
+      transition: transform .45s ease, filter .45s ease;
+    }
+    .cardDrop:hover .dropBg{
+      transform: scale(1.06);
+      filter: brightness(0.72) sepia(0.20) contrast(1.1);
+    }
+
+    .dropGlass{
+      position:absolute; inset: 14px;
+      background: linear-gradient(180deg, var(--coffeeGlass), var(--coffeeGlass2));
+      backdrop-filter: blur(9px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px;
+      padding: 22px;
+      display:flex;
+      flex-direction:column;
+      justify-content: space-between;
+      align-items:center;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+    }
+
+    .statusBadge{
+      position:absolute; top: 14px; left: 14px;
+      background: var(--red);
+      color:#fff;
+      font-weight: 900;
+      font-size: 10px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+    }
+
+    /* ✅ LOGO MÁS GRANDE (HORIZONTAL) */
+    .dropLogo{
+      height: 112px;
+      max-width: 92%;
+      width: auto;
+      object-fit: contain;
+      filter:
+        drop-shadow( 1px  0px 0px var(--logoOutline))
+        drop-shadow(-1px  0px 0px var(--logoOutline))
+        drop-shadow( 0px  1px 0px var(--logoOutline))
+        drop-shadow( 0px -1px 0px var(--logoOutline))
+        drop-shadow( 1px  1px 0px var(--logoOutline))
+        drop-shadow(-1px -1px 0px var(--logoOutline))
+        drop-shadow(-1px  1px 0px var(--logoOutline))
+        drop-shadow( 1px -1px 0px var(--logoOutline))
+        drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+    }
+
+    .dropInfo{
+      width:100%;
+      text-align:center;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 12px;
+    }
+    .dropInfo h3{
+      color:#fff;
+      font-size: 32px;
+      line-height:1;
+      margin:0;
+      letter-spacing: 1px;
+      font-family: var(--fontTitle);
+      text-transform: uppercase;
+    }
+    .dropInfo p{
+      color: rgba(255,255,255,0.88);
+      font-size: 13px;
+      font-weight: 700;
+      margin: 6px 0 0;
+      line-height: 1.35;
+    }
+    .btnDrop{
+      margin-top: 12px;
+      background: rgba(0,0,0,0.12);
+      color:#fff;
+      border: 1px solid rgba(255,255,255,0.45);
+      padding: 9px 18px;
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      cursor:pointer;
+      transition: .2s;
+      border-radius: 10px;
+    }
+    .btnDrop:hover{
+      background:#fff;
+      color:#000;
+      border-color:#fff;
+      transform: translateY(-1px);
+    }
+
+    .sponsors{
+      margin-top: 75px;
+      padding: 40px 0;
+      border-top: 1px solid #ddd;
+      text-align:center;
+      opacity: 0.8;
+    }
+    .spGrid{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap: 34px;
+      margin-top: 22px;
+    }
+    .spLogo{
+      height: 40px;
+      filter: grayscale(1);
+      transition: .3s;
+      opacity: .75;
+    }
+    .spLogo:hover{
+      filter: grayscale(0);
+      opacity: 1;
+    }
+
+    footer{
+      background: var(--charcoal);
+      color:#ccc;
+      padding: 60px 20px 110px;
+      border-top: 4px solid var(--red);
+      margin-top: 0;
+    }
+    .footGrid{
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    @media(max-width:700px){
+      .footGrid{ grid-template-columns: 1fr; }
+    }
+    .fLink{
+      display:block;
+      color:#999;
+      text-decoration:none;
+      margin-bottom: 8px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: .2s;
+      border-bottom: 1px solid transparent;
+      width: fit-content;
+      font-weight: 800;
+    }
+    .fLink:hover{
+      color:#fff;
+      border-color: var(--red);
+    }
+
+    /* === MODAL PRODUCTOS === */
+    .prodModal{
+      position:fixed; inset:0; z-index:2000;
+      background: var(--sand);
+      display:flex;
+      flex-direction:column;
+      transform: translateY(100%);
+      transition: transform .35s ease-out;
+    }
+    .prodModal.active{ transform: translateY(0); }
+
+    .pmHead{
+      background: var(--carbon);
+      color:#fff;
+      padding: 15px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom: 4px solid var(--red);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .pmTitle{
+      font-size: 26px;
+      font-family: var(--fontTitle);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .pmClose{
+      background:none;
+      border:none;
+      color:#fff;
+      font-size: 32px;
+      cursor:pointer;
+      line-height:1;
+    }
+    .pmBody{ flex:1; overflow-y:auto; padding: 20px; }
+
+    .pmGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 18px;
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+
+    .pCard{
+      background:#fff;
+      border-radius: 12px;
+      overflow:hidden;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      transition:.2s;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .pCard:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(0,0,0,0.10);
+    }
+    .pImg{
+      height: 220px;
+      background:#e5e5e5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .pImg img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .pInfo{
+      padding: 14px;
+      text-align:center;
+    }
+    .pName{
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      color:#222;
+      letter-spacing: .03em;
+    }
+    .pPrice{
+      font-family: var(--fontTitle);
+      font-size: 22px;
+      color: var(--red);
+      font-weight: 700;
+      line-height: 1.05;
+    }
+    .pPrice small{
+      display:block;
+      font-family: var(--fontBody);
+      font-weight: 900;
+      font-size: 11px;
+      color:#555;
+      margin-top: 4px;
+      letter-spacing: .04em;
+    }
+    .sizeRow{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      justify-content:center;
+      margin-top: 10px;
+    }
+    .sizeRow label{
+      font-size: 11px;
+      font-weight: 900;
+      color:#444;
+      letter-spacing:.04em;
+      text-transform: uppercase;
+    }
+    .sizeSelect{
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.12);
+      padding: 0 10px;
+      font-weight: 900;
+      font-size: 12px;
+      background: #fff;
+      color:#111;
+    }
+    .pBtn{
+      width:100%;
+      margin-top: 10px;
+      background: var(--carbon);
+      color:#fff;
+      border:none;
+      padding: 12px;
+      font-weight: 900;
+      font-size: 13px;
+      text-transform: uppercase;
+      cursor:pointer;
+      transition:.2s;
+      border-radius: 12px;
+    }
+    .pBtn:hover{ background: var(--red); }
+
+    .paybar{
+      position:fixed; bottom:0; left:0; right:0; z-index:1500;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #ddd;
+      padding: 14px 18px;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      transform: translateY(110%);
+      transition: transform .3s;
+      gap: 12px;
+    }
+    .paybar.visible{ transform: translateY(0); }
+    .pbTotal{
+      font-size: 11px;
+      color:#666;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .pbPrice{
+      display:block;
+      font-family: var(--fontTitle);
+      font-size: 28px;
+      color: var(--carbon);
+      line-height: 0.95;
+      white-space: nowrap;
+    }
+    .pbPrice small{
+      display:block;
+      font-family: var(--fontBody);
+      font-size: 11px;
+      font-weight: 900;
+      color:#666;
+      margin-top: 2px;
+      letter-spacing: .06em;
+    }
+    .pbBtn{
+      background: var(--red);
+      color:#fff;
+      border:none;
+      padding: 12px 22px;
+      font-family: var(--fontTitle);
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor:pointer;
+      clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+      white-space: nowrap;
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.80);
+      z-index:1900;
+      display:none;
+    }
+    .overlay.active{ display:block; }
+
+    .drawer{
+      position:fixed; top:0; right:0; bottom:0;
+      width: 88vw; max-width: 420px;
+      background:#fff;
+      z-index:2000;
+      transform: translateX(100%);
+      transition: .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display:flex; flex-direction:column;
+    }
+    .drawer.active{ transform: translateX(0); }
+
+    .dHead{
+      background: var(--carbon);
+      color:#fff;
+      padding: 18px 18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom: 4px solid var(--red);
+    }
+    .dTitle{
+      font-family: var(--fontTitle);
+      font-size: 26px;
+      margin:0;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+
+    .dBody{
+      flex:1;
+      overflow-y:auto;
+      padding: 16px;
+      background: #f4f4f4;
+    }
+    .cartEmpty{
+      text-align:center;
+      color:#888;
+      margin-top: 40px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .cItem{
+      background:#fff;
+      padding: 10px;
+      border-radius: 12px;
+      display:flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.05);
+      align-items:flex-start;
+    }
+    .cImg{
+      width: 74px;
+      height: 74px;
+      background:#eee;
+      object-fit: cover;
+      border-radius: 10px;
+      flex: 0 0 auto;
+    }
+    .cMetaLine{
+      font-size: 12px;
+      font-weight: 900;
+      color:#444;
+      margin-top: 4px;
+    }
+    .cPrice{
+      font-weight: 900;
+      color: var(--red);
+      margin-top: 4px;
+      font-size: 12px;
+      letter-spacing: .02em;
+    }
+
+    .dFoot{
+      padding: 16px;
+      background:#fff;
+      border-top: 1px solid #ddd;
+    }
+    .sumRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      font-weight: 900;
+      margin: 8px 0;
+      gap: 10px;
+    }
+    .sumRow span{ color:#666; font-weight: 900; }
+    .sumRow strong{ color:#111; }
+
+    .shipBox{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #fafafa;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .shipRow{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      margin-top: 10px;
+    }
+    .shipInput{
+      flex:1;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      padding: 0 12px;
+      font-weight: 900;
+      letter-spacing: .03em;
+    }
+    .shipBtn{
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      padding: 0 14px;
+      background: #111;
+      color:#fff;
+      font-weight: 900;
+      cursor:pointer;
+      white-space: nowrap;
+    }
+
+    .dfBtn{
+      width:100%;
+      background: var(--carbon);
+      color:#fff;
+      padding: 16px;
+      border:none;
+      font-weight: 900;
+      font-size: 18px;
+      cursor:pointer;
+      clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
+      margin-top: 12px;
+    }
+    .dfBtn:disabled{ opacity: .55; cursor: not-allowed; }
+
+    .clearLink{
+      display:block;
+      text-align:center;
+      margin-top: 12px;
+      color:#999;
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: underline;
+      cursor:pointer;
+    }
+
+    .legalBox{
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 92%;
+      max-width: 560px;
+      background: #fff;
+      padding: 22px;
+      border-radius: 16px;
+      z-index: 2100;
+      display:none;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      border: 1px solid rgba(0,0,0,0.08);
+      max-height: 80vh;
+      overflow:auto;
+    }
+    .legalBox.active{ display:block; }
+    .legalBox h3{
+      margin:0 0 10px;
+      color: var(--red);
+      font-family: var(--fontTitle);
+      font-size: 28px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .legalBox p, .legalBox li{
+      font-size: 13px;
+      line-height: 1.55;
+      color:#222;
+      font-weight: 600;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 110px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.92);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .02em;
+      z-index: 3000;
+      display:none;
+      max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .toast.show{ display:block; }
+
+    .statusBanner{
+      position: fixed;
+      top: 86px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(720px, 92vw);
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-left: 6px solid var(--red);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 1200;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+      display:none;
+      gap: 12px;
+      align-items:center;
+    }
+    .statusBanner.show{ display:flex; }
+    .statusBanner img{
+      width: 40px; height: 40px;
+      object-fit: contain;
+    }
+    .statusBanner strong{
+      display:block;
+      font-weight: 900;
+      letter-spacing:.02em;
+      color:#111;
+    }
+    .statusBanner span{
+      display:block;
+      margin-top:2px;
+      font-size: 12px;
+      font-weight: 800;
+      color:#555;
+      line-height:1.35;
+    }
+    .statusBanner button{
+      margin-left:auto;
+      background: #111;
+      color:#fff;
+      border:none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      cursor:pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay" id="globalOverlay"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="statusBanner" id="statusBanner" aria-live="polite">
+    <img src="assets/icono-compra-exitosa.png" alt="Compra exitosa" loading="lazy" onerror="this.style.display='none'">
+    <div>
+      <strong id="sbTitle">Listo</strong>
+      <span id="sbText">Tu pago fue procesado.</span>
+    </div>
+    <button onclick="hideStatusBanner()">OK</button>
+  </div>
+
+  <header class="topbar">
+    <div class="topInner">
+      <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
+        <img src="assets/logo-score.png" alt="SCORE" loading="eager">
+      </a>
+
+      <div class="navRight">
+        <div class="miniPill" title="México">ENVÍOS MX</div>
+
+        <button class="cartTrigger" onclick="toggleCart()" aria-label="Abrir carrito">
+          <img src="assets/Icono-carrito-compra.png" class="cartIconImg" alt="Carrito" loading="lazy">
+          <span class="cartCount" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-label="Hero">
+      <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
+
+      <div class="heroContent">
+        <div class="heroTag">MERCH OFICIAL</div>
+        <h1 class="heroTitle">LEYENDAS<br><span>DEL DESIERTO</span></h1>
+        <p class="heroSub">
+          Inventario limitado + drops oficiales. Compra rápida y segura en México (tarjeta y OXXO disponibles en checkout).
+        </p>
+        <button class="btnHero" onclick="openProductModal('b1000')">VER DROPS</button>
+      </div>
+    </section>
+
+    <div class="secHeader">
+      <h2 class="secTitle">DROPS ACTIVOS</h2>
+      <span class="secMeta">MX · Drops Oficiales</span>
+    </div>
+
+    <div class="gridDrops">
+      <div class="cardDrop" onclick="openProductModal('b1000')">
+        <div class="dropBg"></div>
+        <div class="dropGlass">
+          <div class="statusBadge">ACTIVO</div>
+
+          <img
+            src="assets/logo-baja100.png"
+            class="dropLogo"
+            alt="Baja 1000"
+            loading="lazy"
+            onerror="this.src='assets/logo-baja1000.png'"
+          >
+
+          <div class="dropInfo">
+            <h3>BAJA 1000</h3>
+            <p>Edición 2025 + piezas limitadas.</p>
+            <button class="btnDrop" onclick="event.stopPropagation(); openProductModal('b1000')">VER PRODUCTOS</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cardDrop" onclick="notifyDrop('San Felipe 250')">
+        <div class="dropBg"></div>
+        <div class="dropGlass" style="opacity:.92">
+          <img src="assets/logo-sf250.png" class="dropLogo" style="opacity:0.82" alt="San Felipe 250" loading="lazy">
+          <div class="dropInfo">
+            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <p>San Felipe 250</p>
+            <button class="btnDrop" onclick="event.stopPropagation(); notifyDrop('San Felipe 250')">AVÍSAME</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cardDrop" onclick="notifyDrop('Baja 500')">
+        <div class="dropBg"></div>
+        <div class="dropGlass" style="opacity:.92">
+          <img src="assets/logo-baja500.png" class="dropLogo" style="opacity:0.82" alt="Baja 500" loading="lazy">
+          <div class="dropInfo">
+            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <p>Baja 500</p>
+            <button class="btnDrop" onclick="event.stopPropagation(); notifyDrop('Baja 500')">AVÍSAME</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cardDrop" onclick="notifyDrop('Baja 400')">
+        <div class="dropBg"></div>
+        <div class="dropGlass" style="opacity:.92">
+          <img src="assets/logo-baja400.png" class="dropLogo" style="opacity:0.82" alt="Baja 400" loading="lazy">
+          <div class="dropInfo">
+            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <p>Baja 400</p>
+            <button class="btnDrop" onclick="event.stopPropagation(); notifyDrop('Baja 400')">AVÍSAME</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="sponsors" aria-label="Partners">
+      <div style="font-family:var(--fontTitle); font-size:20px; color:#999; margin-bottom:18px; letter-spacing:2px;">
+        OFFICIAL PARTNERS
+      </div>
+      <div class="spGrid">
+        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy">
+        <img src="assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy">
+        <img src="assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy">
+        <img src="assets/logo-king.png" class="spLogo" alt="King" onerror="this.style.display='none'" loading="lazy">
+        <img src="assets/logo-polaris.png" class="spLogo" alt="Polaris" onerror="this.style.display='none'" loading="lazy">
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footGrid">
+      <div>
+        <h4 style="color:#fff; font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">ÚNICO UNIFORMES</h4>
+        <p style="font-size:14px; line-height:1.6; color:#999; margin:0;">
+          Fabricante y Patrocinador oficial.<br>
+          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br>
+          <b>unicouniformes.com</b><br><br>
+          ventas.unicotextil@gmail.com<br>
+          WhatsApp: 664 236 8701
+        </p>
+
+        <p style="margin:14px 0 0; font-size:12px; color:#888; font-weight:800; line-height:1.5;">
+          Los productos están sujetos a disponibilidad. Si un artículo se agota, se notificará para reembolso o alternativa.
+        </p>
+
+        <p style="margin:10px 0 0; font-size:11px; color:#777; font-weight:900;">
+          Pagos: Stripe · Logística: Envia.com
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color:var(--red); font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">LEGAL</h4>
+        <div>
+          <span class="fLink" onclick="showLegal('terms')">Términos y condiciones</span>
+          <span class="fLink" onclick="showLegal('privacy')">Aviso de privacidad</span>
+          <span class="fLink" onclick="showLegal('shipping')">Envíos y entregas</span>
+          <span class="fLink" onclick="showLegal('returns')">Cambios y devoluciones</span>
+          <span class="fLink" onclick="showLegal('fiscal')">Facturación</span>
+          <span class="fLink" onclick="showLegal('cookies')">Cookies</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="paybar" id="paybar" aria-label="Resumen de compra">
+    <div>
+      <div class="pbTotal">TOTAL (cobro en MXN)</div>
+      <div class="pbPrice" id="pbTotal">
+        $0 MXN
+        <small>$0 USD</small>
+      </div>
+    </div>
+    <button class="pbBtn" onclick="toggleCart()">VER CARRITO</button>
+  </div>
+
+  <aside class="drawer" id="cartDrawer" aria-label="Carrito">
+    <div class="dHead">
+      <h3 class="dTitle">TU EQUIPO</h3>
+      <button class="pmClose" onclick="toggleCart()" style="font-size:28px" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <div class="dBody" id="cartBody">
+      <div class="cartEmpty">CARRITO VACÍO</div>
+    </div>
+
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
+      <div class="sumRow"><span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong></div>
+      <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
+      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
+
+      <div class="shipBox">
+        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
+          Envío (México)
+        </div>
+        <div
+<div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
+          Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
+        </div>
+        <div class="shipRow">
+          <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
+          <button class="shipBtn" onclick="quoteShipping()">Calcular</button>
+        </div>
+        <div style="margin-top:8px; font-size:11px; color:#666; font-weight:900;" id="shipNote"></div>
+      </div>
+
+      <button class="dfBtn" id="payBtn" onclick="goCheckout()">IR A PAGAR</button>
+      <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
+
+      <div style="margin-top:10px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
+        Pago seguro con Stripe. Inventario limitado.
+      </div>
+    </div>
+  </aside>
+
+  <div class="prodModal" id="pmB1000" aria-label="Colección Baja 1000">
+    <div class="pmHead">
+      <div class="pmTitle">COLECCIÓN BAJA 1000</div>
+      <button class="pmClose" onclick="closeProductModal()" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <div class="pmBody">
+      <div class="pmGrid" id="pmGridB1000"></div>
+    </div>
+  </div>
+
+  <div class="legalBox" id="legalBox" role="dialog" aria-modal="true">
+    <h3 id="lbTitle"></h3>
+    <div id="lbBody"></div>
+    <button onclick="closeOverlay()" style="background:#000; color:#fff; border:none; padding:12px; width:100%; cursor:pointer; font-weight:900; margin-top:14px; border-radius:12px;">
+      CERRAR
+    </button>
+  </div>
+
+  <script>
+    const FX_MXN_PER_USD = 17.50;
+
+    const API_CHECKOUT = '/.netlify/functions/create_checkout';
+    const API_SHIPPING = '/.netlify/functions/quote_shipping';
+
+    // ✅ Paths en TrebEdit (espacios => %20)
+    const PATH_ED2025 = "assets/BAJA100/EDICION%202025/";
+    const PATH_OTRAS  = "assets/BAJA100/OTRAS%20EDICIONES/";
+
+    function applyImgFallback(imgEl){
+      try{
+        const fb = imgEl.getAttribute("data-fallback");
+        if(fb && imgEl.src !== fb) imgEl.src = fb;
+      }catch(e){}
+    }
+
+    const PRODUCTS_B1000 = [
+      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg`, fallback: `assets/BAJA100/EDICION 2025/camisa-pits-baja1000.jpg` },
+
+      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-azul.jpg` },
+      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-cafe.jpg` },
+      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-negra.jpg` },
+
+      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg`, fallback: `assets/BAJA100/EDICION 2025/sudadera-world-desert-cafe.jpg` },
+      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg`, fallback: `assets/BAJA100/EDICION 2025/sudadera-world-desert-negra.jpg` },
+
+      // ✅ ROJA + ROSA (OTRAS EDICIONES)
+      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg`,  fallback: `assets/BAJA100/OTRAS EDICIONES/sudadera-world-desert-roja.jpg` },
+      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg`,  fallback: `assets/BAJA100/OTRAS EDICIONES/sudadera-world-desert-rosa.jpg` },
+    ];
+
+    const SIZES = ["S","M","L","XL","2XL"];
+
+    const LS_KEY = 'score_cart_v2';
+    let cart = JSON.parse(localStorage.getItem(LS_KEY)) || [];
+
+    let shippingMXN = 0;
+    let shippingQuoted = false;
+
+    function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
+    function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
+    function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
+
+    function escapeHtml(str){
+      return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+
+    function toast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2600);
+    }
+
+    function showStatusBanner(title, text){
+      const b = document.getElementById("statusBanner");
+      document.getElementById("sbTitle").textContent = title;
+      document.getElementById("sbText").textContent = text;
+      b.classList.add("show");
+    }
+    function hideStatusBanner(){
+      document.getElementById("statusBanner").classList.remove("show");
+      try{
+        const url = new URL(window.location.href);
+        url.searchParams.delete("status");
+        window.history.replaceState({}, "", url.toString());
+      }catch(e){}
+    }
+
+    function notifyDrop(dropName){
+      const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
+      const body = encodeURIComponent(
+        `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
+        `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
+      );
+      window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
+    }
+
+    const overlay = document.getElementById('globalOverlay');
+    const drawer  = document.getElementById('cartDrawer');
+    const legal   = document.getElementById('legalBox');
+    const pb      = document.getElementById('paybar');
+
+    function closeOverlay(){
+      overlay.classList.remove('active');
+      drawer.classList.remove('active');
+      legal.classList.remove('active');
+      closeProductModal();
+      document.body.classList.remove("modalOpen");
+    }
+    overlay.addEventListener('click', closeOverlay);
+
+    function renderProductsB1000(){
+      const grid = document.getElementById("pmGridB1000");
+      grid.innerHTML = PRODUCTS_B1000.map(p => {
+        const usd = mxnToUsd(p.priceMXN);
+        const needsSize = /sudadera|camisa|chaqueta|hoodie|playera|camiseta/i.test(p.name);
+
+        return `
+          <div class="pCard">
+            <div class="pImg">
+              <img
+                src="${p.img}"
+                data-fallback="${p.fallback || ""}"
+                alt="${escapeHtml(p.name)}"
+                loading="lazy"
+                onerror="applyImgFallback(this)"
+              >
+            </div>
+            <div class="pInfo">
+              <div class="pName">${escapeHtml(p.name)}</div>
+              <div class="pPrice">${moneyMXN(p.priceMXN)}
+                <small>${moneyUSD(usd)} USD</small>
+              </div>
+
+              ${needsSize ? `
+                <div class="sizeRow">
+                  <label for="size_${p.id}">Talla</label>
+                  <select class="sizeSelect" id="size_${p.id}">
+                    ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
+                  </select>
+                </div>
+              ` : ``}
+
+              <button class="pBtn" onclick="addToCart('${p.id}')">AGREGAR</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openProductModal(id){
+      if(id === 'b1000'){
+        renderProductsB1000();
+        document.getElementById('pmB1000').classList.add('active');
+        overlay.classList.add('active');
+        document.body.classList.add("modalOpen");
+      }
+    }
+    function closeProductModal(){
+      document.querySelectorAll('.prodModal').forEach(el => el.classList.remove('active'));
+    }
+
+    function toggleCart(){
+      if(drawer.classList.contains('active')) closeOverlay();
+      else {
+        overlay.classList.add('active');
+        drawer.classList.add('active');
+        document.body.classList.add("modalOpen");
+        updateCartUI();
+      }
+    }
+
+    function addToCart(productId){
+      const p = PRODUCTS_B1000.find(x => x.id === productId);
+      if(!p) return;
+
+      const sizeEl = document.getElementById(`size_${productId}`);
+      const size = sizeEl ? sizeEl.value : "ÚNICA";
+
+      const key = `${p.id}_${size}`;
+      const exist = cart.find(i => i.key === key);
+
+      if(exist) exist.qty++;
+      else cart.push({
+        key,
+        id: p.id,
+        name: p.name,
+        img: p.img,
+        fallback: p.fallback || "",
+        size,
+        priceMXN: p.priceMXN,
+        qty: 1
+      });
+
+      saveCart();
+      updateCartUI();
+      toast("Agregado al carrito");
+    }
+
+    function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
+
+    function cartSubtotalMXN(){
+      return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0);
+    }
+
+    function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
+
+    function rem(idx){
+      cart.splice(idx,1);
+      saveCart();
+      updateCartUI();
+      toast("Producto eliminado");
+    }
+
+    function clearCart(){
+      if(confirm('¿Vaciar carrito?')){
+        cart = [];
+        shippingMXN = 0;
+        shippingQuoted = false;
+        document.getElementById("shipNote").textContent = "";
+        saveCart();
+        updateCartUI();
+        toast("Carrito vacío");
+      }
+    }
+
+    function updateCartUI(){
+      const subtotal = cartSubtotalMXN();
+      const totalMXN = subtotal + (shippingMXN || 0);
+      const totalUSD = mxnToUsd(totalMXN);
+
+      document.getElementById('cartCount').innerText = cartCount();
+
+      document.getElementById('pbTotal').innerHTML = `
+        ${moneyMXN(totalMXN)}
+        <small>${moneyUSD(totalUSD)} USD</small>
+      `;
+
+      document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
+      document.getElementById("shipTotalLine").textContent = moneyMXN(shippingMXN || 0);
+      document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
+      document.getElementById("usdTotalLine").textContent = `${moneyUSD(totalUSD)} USD`;
+
+      if(totalMXN > 0) pb.classList.add('visible');
+      else pb.classList.remove('visible');
+
+      const payBtn = document.getElementById("payBtn");
+      payBtn.disabled = cart.length === 0;
+
+      const body = document.getElementById('cartBody');
+      if(cart.length === 0){
+        body.innerHTML = "<div class='cartEmpty'>TU CARRITO ESTÁ VACÍO.</div>";
+      } else {
+        body.innerHTML = cart.map((i, idx) => {
+          const lineMXN = (i.priceMXN * i.qty);
+          const lineUSD = mxnToUsd(lineMXN);
+          return `
+            <div class="cItem">
+              <img src="${i.img}" data-fallback="${i.fallback||""}" class="cImg"
+                   alt="${escapeHtml(i.name)}" loading="lazy" onerror="applyImgFallback(this)">
+              <div style="flex:1">
+                <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
+                <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
+                <div class="cPrice">${moneyMXN(lineMXN)} <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span></div>
+              </div>
+              <button onclick="rem(${idx})" style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    async function quoteShipping(){
+      const zip = (document.getElementById("zipInput").value || "").trim();
+      const note = document.getElementById("shipNote");
+
+      if(!/^\d{5}$/.test(zip)){
+        note.textContent = "Pon un C.P. válido de 5 dígitos.";
+        return;
+      }
+      if(cart.length === 0){
+        note.textContent = "Primero agrega productos al carrito.";
+        return;
+      }
+
+      note.textContent = "Calculando envío…";
+
+      try{
+        const res = await fetch(API_SHIPPING, {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({
+            zip,
+            items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty }))
+          })
+        });
+
+        const data = await res.json().catch(()=> ({}));
+
+        if(res.ok && typeof data.mxn === "number"){
+          shippingMXN = Math.max(0, Math.round(data.mxn));
+          shippingQuoted = true;
+          note.textContent = data.note ? data.note : "Envío estimado aplicado al total.";
+          updateCartUI();
+        } else {
+          note.textContent = (data && data.error) ? data.error : "No se pudo cotizar el envío.";
+        }
+      }catch(e){
+        note.textContent = "Error de conexión. Revisa Netlify Functions.";
+      }
+    }
+
+    async function goCheckout(){
+      if(cart.length === 0) return;
+
+      const btn = document.getElementById("payBtn");
+      btn.innerText = "PROCESANDO...";
+      btn.disabled = true;
+
+      try{
+        const res = await fetch(API_CHECKOUT, {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({
+            items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty })),
+            shippingMXN: shippingMXN || 0,
+            fx: FX_MXN_PER_USD,
+            meta: {
+              source: "score_store",
+              shippingQuoted: shippingQuoted,
+              zip: (document.getElementById("zipInput").value || "").trim()
+            }
+          })
+        });
+
+        const data = await res.json().catch(()=> ({}));
+
+        if(res.ok && data && data.url){
+          window.location.href = data.url;
+          return;
+        }
+
+        toast("Error iniciando pago. Revisa create_checkout.");
+      }catch(e){
+        toast("Error de conexión. Revisa Netlify Functions.");
+      }finally{
+        btn.innerText = "IR A PAGAR";
+        btn.disabled = cart.length === 0;
+      }
+    }
+
+    function showLegal(t){
+      const titleMap = {
+        terms: "Términos y condiciones",
+        privacy: "Aviso de privacidad",
+        shipping: "Envíos y entregas",
+        returns: "Cambios y devoluciones",
+        fiscal: "Facturación",
+        cookies: "Cookies"
+      };
+
+      const bodyMap = {
+        terms: `
+          <p><b>ÚNICO UNIFORMES</b> opera esta tienda como fabricante y patrocinador oficial de productos físicos.</p>
+          <p><b>Disponibilidad:</b> inventario limitado. Tu compra queda confirmada cuando el pago sea aprobado.</p>
+          <p><b>Precios:</b> se muestran en MXN y referencia en USD (tipo de cambio informativo: <b>${FX_MXN_PER_USD} MXN/USD</b>). El cobro se procesa en MXN.</p>
+          <p><b>Pagos:</b> Stripe. No almacenamos datos bancarios en este sitio.</p>
+          <p><b>Soporte:</b> <b>ventas.unicotextil@gmail.com</b> / WhatsApp <b>664 236 8701</b>.</p>
+        `,
+        privacy: `
+          <p><b>Responsable:</b> <b>ÚNICO UNIFORMES</b>.</p>
+          <p><b>Datos:</b> contacto y envío (nombre, teléfono, correo, domicilio), info de compra (artículos, montos, estado del pago) y datos fiscales si facturas.</p>
+          <p><b>Finalidades:</b> procesar compras, generar envíos, soporte, prevención de fraude y facturación.</p>
+          <p><b>Proveedores:</b> pago (Stripe) y logística (Envia.com).</p>
+          <p><b>Contacto:</b> ventas.unicotextil@gmail.com.</p>
+        `,
+        shipping: `
+          <p><b>Alcance:</b> Envíos dentro de México.</p>
+          <p><b>Cotización:</b> se calcula vía Envia.com (backend). Puede variar por C.P. y paquetería.</p>
+          <p><b>Rastreo:</b> se compartirá el número de guía cuando el pedido esté listo.</p>
+        `,
+        returns: `
+          <p><b>Defecto/daño:</b> reportar dentro de <b>7 días naturales</b> con fotos y número de pedido.</p>
+          <p><b>Cambios:</b> por talla sujetos a disponibilidad. Envíos pueden aplicar.</p>
+        `,
+        fiscal: `
+          <p><b>CFDI:</b> envía tu constancia fiscal y número de pedido a <b>ventas.unicotextil@gmail.com</b>.</p>
+          <p>Solicitar dentro del mismo mes de compra.</p>
+        `,
+        cookies: `
+          <p>Usamos almacenamiento local para el carrito.</p>
+          <p>Puedes borrarlo desde tu navegador.</p>
+        `
+      };
+
+      document.getElementById('lbTitle').innerText = titleMap[t] || "LEGAL";
+      document.getElementById('lbBody').innerHTML = bodyMap[t] || "<p>Contenido no disponible.</p>";
+      overlay.classList.add('active');
+      legal.classList.add('active');
+      document.body.classList.add("modalOpen");
+    }
+
+    updateCartUI();
+
+    (function initStatus(){
+      try{
+        const st = new URLSearchParams(window.location.search).get("status");
+        if(st === "success"){
+          showStatusBanner("✅ Compra confirmada", "Pago recibido. Si pagaste en OXXO, puede tardar en reflejarse según Stripe.");
+        } else if(st === "cancel"){
+          showStatusBanner("⚠️ Pago cancelado", "No se realizó el cobro. Puedes intentarlo de nuevo cuando quieras.");
+        }
+      }catch(e){}
+    })();
+  </script>
+</body>
+</html>
