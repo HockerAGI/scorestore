@@ -1,8 +1,10 @@
 /**
  * netlify/functions/quote_shipping.js
- * Cotización con Envia.com + fallback inteligente si falla.
+ * Cotización real con Envia.com + fallback inteligente si falla.
+ * - POST: responde JSON (la app)
+ * - GET: muestra "tester" HTML (para probar desde el navegador)
  *
- * Requiere Netlify env vars:
+ * Requiere variables Netlify:
  * - ENVIA_API_KEY
  * Opcional:
  * - ENVIA_BASE_URL (default: https://api.envia.com)
@@ -23,20 +25,21 @@ const ORIGIN = {
   reference: "Interior JK",
 };
 
-const MAX_QTY_PER_LINE = 10;
-const MAX_ITEMS_TOTAL = 40;
+function baseHeaders(contentType = "application/json") {
+  return {
+    "Content-Type": contentType,
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+  };
+}
 
 function json(statusCode, data) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-    },
-    body: JSON.stringify(data),
-  };
+  return { statusCode, headers: baseHeaders("application/json"), body: JSON.stringify(data) };
+}
+
+function html(statusCode, body) {
+  return { statusCode, headers: baseHeaders("text/html; charset=utf-8"), body };
 }
 
 function isZip(zip) {
@@ -60,25 +63,16 @@ function readJsonBody(event) {
   }
 }
 
-// Para "mandar todo" sin romper Envia: solo incluimos keys con valor real
-function cleanObject(obj) {
-  const out = {};
-  for (const [k, v] of Object.entries(obj || {})) {
-    const val = typeof v === "string" ? v.trim() : v;
-    if (val === undefined || val === null) continue;
-    if (typeof val === "string" && val.length === 0) continue;
-    out[k] = val;
-  }
-  return out;
-}
-
-// Fallback si Envia falla
+// Fallback “inteligente”
 function fallbackQuote(zip, reason = null) {
-  const z = Number(String(zip || "0").replace(/\D/g, "")) || 0;
-
+  const z = Number(zip);
   let mxn = 199;
-  if (z >= 21000 && z <= 22999) mxn = 149; // Baja California aprox
-  if (z >= 60000) mxn = 249; // regla simple remota
+
+  // Baja California (aprox 21000–22999)
+  if (z >= 21000 && z <= 22999) mxn = 149;
+
+  // Zonas remotas (regla simple)
+  if (z >= 60000) mxn = 249;
 
   return {
     mxn,
@@ -89,30 +83,12 @@ function fallbackQuote(zip, reason = null) {
   };
 }
 
-function normalizeItems(items) {
-  if (!Array.isArray(items) || items.length === 0) return { items: [], qtyTotal: 0 };
-
-  let qtyTotal = 0;
-  const safe = [];
-
-  for (const it of items) {
-    const id = String(it?.id || "").trim();
-    const qty = Math.max(1, safeInt(it?.qty, 1));
-
-    if (!id) continue;
-    if (qty > MAX_QTY_PER_LINE) return { error: `Cantidad inválida (1–${MAX_QTY_PER_LINE}).` };
-
-    qtyTotal += qty;
-    if (qtyTotal > MAX_ITEMS_TOTAL) return { error: `Demasiados artículos (${MAX_ITEMS_TOTAL} máx.).` };
-
-    safe.push({ id, qty });
-  }
-
-  return { items: safe, qtyTotal };
-}
-
-function buildPackages(qtyTotal) {
+// Normaliza items -> paquete estimado
+function buildPackages(items = []) {
+  const safeItems = Array.isArray(items) ? items : [];
+  const qtyTotal = safeItems.reduce((a, i) => a + Math.max(1, safeInt(i?.qty, 1)), 0);
   const weightKg = Math.max(0.5, Math.min(10, qtyTotal * 0.7));
+
   return [
     {
       content: "Ropa / Merch",
@@ -128,46 +104,13 @@ function buildPackages(qtyTotal) {
   ];
 }
 
-/**
- * Construye destination "completo":
- * - hoy tu front solo manda { zip }
- * - mañana puedes mandar destination: { name, email, phone, street, city, state, ... }
- */
-function buildDestination(payload, zip) {
-  const d = payload?.destination || payload?.shipping || payload?.address || {};
-
-  // Base mínima segura
-  const base = {
-    country: "MX",
-    postalCode: String(zip),
-  };
-
-  // Campos extra opcionales (no inventamos datos)
-  const full = {
-    ...base,
-    name: d.name,
-    company: d.company,
-    email: d.email,
-    phone: d.phone,
-
-    street: d.street,
-    number: d.number,
-    district: d.district,
-    city: d.city,
-    state: d.state,
-    reference: d.reference,
-  };
-
-  // “Mandar todo” en código ✅ pero a Envia solo le mandamos lo que tenga valor ✅
-  return cleanObject(full);
-}
-
-async function quoteWithEnvia({ destination, qtyTotal }) {
+async function quoteWithEnvia({ zip, items }) {
   const apiKey = process.env.ENVIA_API_KEY;
   if (!apiKey) throw new Error("ENVIA_API_KEY no configurada");
 
   const baseUrl = (process.env.ENVIA_BASE_URL || "https://api.envia.com").replace(/\/+$/, "");
 
+  // OJO: Envia cambia endpoints según cuenta/plan. Probamos variantes.
   const urlCandidates = [
     `${baseUrl}/ship/rate`,
     `${baseUrl}/ship/rates`,
@@ -177,8 +120,8 @@ async function quoteWithEnvia({ destination, qtyTotal }) {
 
   const body = {
     origin: { ...ORIGIN },
-    destination, // ✅ ya viene “completo” (pero limpio)
-    packages: buildPackages(qtyTotal),
+    destination: { country: "MX", postalCode: String(zip) },
+    packages: buildPackages(items),
   };
 
   let lastErr = null;
@@ -252,7 +195,56 @@ async function quoteWithEnvia({ destination, qtyTotal }) {
   throw lastErr || new Error("No se pudo cotizar con Envia.");
 }
 
+function testerHtml() {
+  const example = JSON.stringify({
+    zip: "22614",
+    items: [{ id: "b1000_tee_azul", size: "S", qty: 1 }]
+  }, null, 2);
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>quote_shipping tester</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial; margin:18px; background:#0b0b0b; color:#fff}
+  textarea{width:100%; min-height:160px; border-radius:12px; padding:12px; border:1px solid #333; background:#111; color:#fff}
+  button{margin-top:12px; width:100%; height:44px; border-radius:12px; border:none; font-weight:900; cursor:pointer}
+  pre{white-space:pre-wrap; word-break:break-word; background:#111; padding:12px; border-radius:12px; border:1px solid #333}
+  .hint{opacity:.8; font-size:13px}
+</style>
+</head>
+<body>
+<h2>✅ quote_shipping tester</h2>
+<div class="hint">Esto manda <b>POST</b> a la misma Function. Si abres la URL normal, es <b>GET</b> y por eso antes te salía Method Not Allowed.</div>
+<textarea id="payload">${example}</textarea>
+<button id="go">PROBAR POST</button>
+<pre id="out">Listo.</pre>
+<script>
+  const out = document.getElementById('out');
+  document.getElementById('go').onclick = async () => {
+    out.textContent = "Enviando...";
+    try{
+      const payload = JSON.parse(document.getElementById('payload').value);
+      const res = await fetch(location.href, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const text = await res.text();
+      out.textContent = "Status: " + res.status + "\\n\\n" + text;
+    }catch(e){
+      out.textContent = "Error: " + e.message;
+    }
+  };
+</script>
+</body>
+</html>`;
+}
+
 exports.handler = async (event) => {
+  if (event.httpMethod === "GET") return html(200, testerHtml());
   if (event.httpMethod === "OPTIONS") return json(204, {});
   if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
 
@@ -260,16 +252,13 @@ exports.handler = async (event) => {
   if (!payload) return json(200, fallbackQuote("00000", "Body inválido / JSON parse error"));
 
   const zip = String(payload.zip || "").trim();
-  const norm = normalizeItems(payload.items);
+  const items = Array.isArray(payload.items) ? payload.items : [];
 
   if (!isZip(zip)) return json(400, { mxn: null, note: "C.P. inválido", provider: "validation" });
-  if (norm?.error) return json(400, { mxn: null, note: norm.error, provider: "validation" });
-  if (!norm.qtyTotal) return json(400, { mxn: null, note: "Carrito vacío", provider: "validation" });
-
-  const destination = buildDestination(payload, zip);
+  if (items.length === 0) return json(400, { mxn: null, note: "Carrito vacío", provider: "validation" });
 
   try {
-    const q = await quoteWithEnvia({ destination, qtyTotal: norm.qtyTotal });
+    const q = await quoteWithEnvia({ zip, items });
     return json(200, q);
   } catch (e) {
     return json(200, fallbackQuote(zip, e?.message || e));
