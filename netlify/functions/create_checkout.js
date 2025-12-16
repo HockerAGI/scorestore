@@ -10,17 +10,19 @@
  * Robustez Netlify:
  * - Soporta event.isBase64Encoded
  * - CORS + OPTIONS preflight
+ *
+ * Nota importante:
+ * - Tu frontend usa rutas con espacios (EDICION 2025 / OTRAS EDICIONES).
+ *   Aquí se generan URLs absolutas con encoding seguro para Stripe (espacios => %20).
  */
 
-const ASSET_BASE = "assets/BAJA1000";
-const ED2025 = `${ASSET_BASE}/EDICION_2025`;
-const OTRAS = `${ASSET_BASE}/OTRAS_EDICIONES`;
+const ASSET_BASE = "assets/BAJA100";
+const ED2025 = `${ASSET_BASE}/EDICION 2025`;
+const OTRAS  = `${ASSET_BASE}/OTRAS EDICIONES`;
 
 /**
- * CATALOGO (alineado a tu estructura en TrebEdit)
- * Nota:
- * - Agregué productos NUEVOS para rosa/roja.
- * - Dejé ALIASES para que no se rompa si el frontend aún usa IDs viejos.
+ * CATALOGO
+ * (IDs alineados a tu index.html actual)
  */
 const CATALOG = {
   // ✅ EDICION 2025
@@ -30,36 +32,34 @@ const CATALOG = {
     img: `${ED2025}/camisa-pits-baja1000.jpg`,
   },
 
-  // Camisetas (colores)
   b1000_tee_azul: {
-    name: "Camiseta · Baja 1000 (Azul)",
+    name: "Camiseta Baja 1000 · Azul",
     priceMXN: 439,
     img: `${ED2025}/camiseta-baja1000-azul.jpg`,
   },
   b1000_tee_cafe: {
-    name: "Camiseta · Baja 1000 (Café)",
+    name: "Camiseta Baja 1000 · Café",
     priceMXN: 439,
     img: `${ED2025}/camiseta-baja1000-cafe.jpg`,
   },
   b1000_tee_negra: {
-    name: "Camiseta · Baja 1000 (Negra)",
+    name: "Camiseta Baja 1000 · Negra",
     priceMXN: 439,
     img: `${ED2025}/camiseta-baja1000-negra.jpg`,
   },
 
-  // Sudaderas World Desert (en tu EDICION_2025)
-  world_desert_negra: {
-    name: "Sudadera SCORE · World Desert (Negra)",
-    priceMXN: 824,
-    img: `${ED2025}/sudadera-world-desert-negra.jpg`,
-  },
   world_desert_cafe: {
     name: "Sudadera SCORE · World Desert (Café)",
     priceMXN: 824,
     img: `${ED2025}/sudadera-world-desert-cafe.jpg`,
   },
+  world_desert_negra: {
+    name: "Sudadera SCORE · World Desert (Negra)",
+    priceMXN: 824,
+    img: `${ED2025}/sudadera-world-desert-negra.jpg`,
+  },
 
-  // ✅ OTRAS EDICIONES (las que no te aparecían)
+  // ✅ OTRAS EDICIONES
   world_desert_roja: {
     name: "Sudadera SCORE · World Desert (Roja)",
     priceMXN: 824,
@@ -73,63 +73,40 @@ const CATALOG = {
 
   /**
    * ====== ALIASES / COMPATIBILIDAD (IDs viejos) ======
-   * Si tu index.html todavía manda estos IDs, seguirá jalando.
+   * Si algo viejo llega, no se rompe.
    */
-  world_desert_blk: { // antes "Negra"
+  world_desert_blk: {
     name: "Sudadera SCORE · World Desert (Negra)",
     priceMXN: 824,
     img: `${ED2025}/sudadera-world-desert-negra.jpg`,
   },
-  world_desert_snd: { // antes "Arena" -> lo más cercano en tus assets es "café"
+  world_desert_snd: {
     name: "Sudadera SCORE · World Desert (Café)",
     priceMXN: 824,
     img: `${ED2025}/sudadera-world-desert-cafe.jpg`,
   },
-  world_desert_pnk: { // antes "Rosa"
+  world_desert_pnk: {
     name: "Sudadera SCORE · World Desert (Rosa)",
     priceMXN: 824,
     img: `${OTRAS}/sudadera-world-desert-rosa.jpg`,
   },
 
-  // Si tu frontend aún usa "b1000_maptee", lo mapeo a camiseta negra (para no romper checkout)
   b1000_maptee: {
-    name: "Camiseta · Baja 1000 (Negra)",
+    name: "Camiseta Baja 1000 · Negra",
     priceMXN: 439,
     img: `${ED2025}/camiseta-baja1000-negra.jpg`,
   },
 
-  /**
-   * Los siguientes estaban en tu catálogo viejo pero NO veo sus imágenes en tus assets.
-   * Los dejo “vivos” sin imagen para evitar 404 en Stripe si alguien los manda.
-   * (Cuando subas sus fotos reales, aquí se actualizan.)
-   */
-  b1000_jacket: {
-    name: "Chaqueta Oficial SCORE · Baja 1000",
-    priceMXN: 1639,
-    img: null,
-  },
-  b1000_kids: {
-    name: "Sudadera Infantil · Baja 1000",
-    priceMXN: 824,
-    img: null,
-  },
-  b1000_panels: {
-    name: "Sudadera Baja 1000 · Paneles",
-    priceMXN: 824,
-    img: null,
-  },
-  score_trucker: {
-    name: "Gorra Trucker SCORE",
-    priceMXN: 715,
-    img: null,
-  },
+  // placeholders (si alguien lo manda, no truena)
+  b1000_jacket: { name: "Chaqueta Oficial SCORE · Baja 1000", priceMXN: 1639, img: null },
+  b1000_kids:   { name: "Sudadera Infantil · Baja 1000",       priceMXN: 824,  img: null },
+  b1000_panels: { name: "Sudadera Baja 1000 · Paneles",        priceMXN: 824,  img: null },
+  score_trucker:{ name: "Gorra Trucker SCORE",                 priceMXN: 715,  img: null },
 };
 
-const ALLOWED_SIZES = new Set(["S", "M", "L", "XL", "2XL", "UNICA", "ÚNICA"]);
-
-// límites de seguridad
+const ALLOWED_SIZES = new Set(["S","M","L","XL","2XL","UNICA","ÚNICA"]);
 const MAX_QTY_PER_LINE = 10;
-const MAX_ITEMS_TOTAL = 40;
+const MAX_ITEMS_TOTAL  = 40;
 const MAX_SHIPPING_MXN = 2500;
 
 function json(statusCode, data) {
@@ -171,12 +148,36 @@ function getBaseUrl() {
   );
 }
 
+// encode robusto por segmento (espacios y caracteres raros)
+function safeEncodePath(p) {
+  return String(p || "")
+    .split("/")
+    .map(seg => {
+      if (!seg) return "";
+      try {
+        // si ya venía encoded, lo normaliza sin doble-encode
+        return encodeURIComponent(decodeURIComponent(seg));
+      } catch {
+        return encodeURIComponent(seg);
+      }
+    })
+    .join("/");
+}
+
 function absImageUrl(baseUrl, path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  const cleanBase = baseUrl.replace(/\/+$/, "");
-  const cleanPath = String(path).replace(/^\/+/, "");
-  return `${cleanBase}/${cleanPath}`;
+
+  const cleanBase = String(baseUrl || "").replace(/\/+$/, "");
+  const cleanPath = String(path || "").replace(/^\/+/, "");
+  const encodedPath = safeEncodePath(cleanPath);
+
+  return `${cleanBase}/${encodedPath}`;
+}
+
+function clampStr(v, max = 220) {
+  const s = String(v ?? "").trim();
+  return s.length > max ? s.slice(0, max) : s;
 }
 
 exports.handler = async (event) => {
@@ -193,12 +194,13 @@ exports.handler = async (event) => {
   if (!payload) return json(400, { error: "Body inválido / JSON parse error" });
 
   try {
-    const { items, shippingMXN = 0, meta = {} } = payload;
+    const { items, shippingMXN = 0, fx = null, meta = {} } = payload;
 
     if (!Array.isArray(items) || items.length === 0) {
       return json(400, { error: "Carrito vacío" });
     }
 
+    // Normalización + validación
     const normalized = [];
     let totalQty = 0;
 
@@ -208,22 +210,13 @@ exports.handler = async (event) => {
       const size = sizeRaw ? sizeRaw.toUpperCase() : "";
       const qty = Math.max(1, safeInt(it?.qty, 1));
 
-      if (!id || !CATALOG[id]) {
-        return json(400, { error: `Producto inválido: ${id || "(sin id)"}` });
-      }
-      if (size && !ALLOWED_SIZES.has(size)) {
-        return json(400, { error: `Talla inválida: ${size}` });
-      }
-      if (qty < 1 || qty > MAX_QTY_PER_LINE) {
-        return json(400, { error: `Cantidad inválida (1–${MAX_QTY_PER_LINE}).` });
-      }
+      if (!id || !CATALOG[id]) return json(400, { error: `Producto inválido: ${id || "(sin id)"}` });
+      if (size && !ALLOWED_SIZES.has(size)) return json(400, { error: `Talla inválida: ${size}` });
+      if (qty < 1 || qty > MAX_QTY_PER_LINE) return json(400, { error: `Cantidad inválida (1–${MAX_QTY_PER_LINE}).` });
 
       totalQty += qty;
-      if (totalQty > MAX_ITEMS_TOTAL) {
-        return json(400, { error: `Demasiados artículos (${MAX_ITEMS_TOTAL} máx.).` });
-      }
+      if (totalQty > MAX_ITEMS_TOTAL) return json(400, { error: `Demasiados artículos (${MAX_ITEMS_TOTAL} máx.).` });
 
-      // Si no mandan talla, lo dejamos vacío (no forzamos ÚNICA)
       normalized.push({ id, size: size || "", qty });
     }
 
@@ -236,10 +229,12 @@ exports.handler = async (event) => {
 
     const baseUrl = getBaseUrl();
 
+    // Stripe line items
     const line_items = [];
     for (const [key, qty] of consolidated.entries()) {
       const [id, size] = key.split("__");
       const product = CATALOG[id];
+
       const imgAbs = absImageUrl(baseUrl, product.img);
 
       line_items.push({
@@ -248,7 +243,10 @@ exports.handler = async (event) => {
           product_data: {
             name: product.name,
             images: imgAbs ? [imgAbs] : [],
-            metadata: { product_id: id, size: size || "" },
+            metadata: {
+              product_id: String(id),
+              size: String(size || ""),
+            },
           },
           unit_amount: Math.round(Number(product.priceMXN) * 100),
         },
@@ -260,31 +258,35 @@ exports.handler = async (event) => {
     const shipRaw = Math.round(Number(shippingMXN || 0));
     const ship = Math.max(0, Math.min(MAX_SHIPPING_MXN, shipRaw));
 
-    const shipping_options =
-      ship > 0
-        ? [{
-            shipping_rate_data: {
-              type: "fixed_amount",
-              fixed_amount: { amount: ship * 100, currency: "mxn" },
-              display_name: "Envío (México)",
-              delivery_estimate: {
-                minimum: { unit: "business_day", value: 2 },
-                maximum: { unit: "business_day", value: 7 },
-              },
-            },
-          }]
-        : [];
+    const shipping_options = ship > 0 ? [{
+      shipping_rate_data: {
+        type: "fixed_amount",
+        fixed_amount: { amount: ship * 100, currency: "mxn" },
+        display_name: "Envío (México)",
+        delivery_estimate: {
+          minimum: { unit: "business_day", value: 2 },
+          maximum: { unit: "business_day", value: 7 },
+        },
+      },
+    }] : [];
 
     const successUrl = `${baseUrl}/?status=success`;
-    const cancelUrl = `${baseUrl}/?status=cancel`;
+    const cancelUrl  = `${baseUrl}/?status=cancel`;
 
+    // Metadata “completa” (pero corta y segura)
     const metaSafe = {
-      source: String(meta.source || "score_store"),
-      zip: String(meta.zip || ""),
-      shippingQuoted: String(!!meta.shippingQuoted),
-      shippingMXN: String(ship),
+      source: clampStr(meta.source || "score_store", 80),
+      zip: clampStr(meta.zip || "", 16),
+      shippingQuoted: clampStr(!!meta.shippingQuoted, 10),
+      shippingMXN: clampStr(ship, 16),
+      fx: clampStr(fx ?? meta.fx ?? "", 32),
+      // reservados para futuro (aunque hoy no se usen)
+      campaign: clampStr(meta.campaign || "", 120),
+      adset: clampStr(meta.adset || "", 120),
+      creative: clampStr(meta.creative || "", 120),
     };
 
+    // Session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       locale: "es",
