@@ -1,0 +1,5 @@
+# robots.txt — SCORE Store
+User-agent: *
+Allow: /
+
+Sitemap: https://scorestore.netlify.app/sitemap.xml
