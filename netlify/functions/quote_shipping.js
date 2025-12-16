@@ -1,14 +1,11 @@
 /**
  * netlify/functions/quote_shipping.js
- * Cotización real con Envia.com + fallback inteligente si falla.
+ * Cotización con Envia.com + fallback inteligente si falla.
  *
- * Requiere variables Netlify:
+ * Requiere Netlify env vars:
  * - ENVIA_API_KEY
  * Opcional:
  * - ENVIA_BASE_URL (default: https://api.envia.com)
- *
- * IMPORTANTE:
- * - Ajusta ORIGIN_* con tu dirección real (origen).
  */
 
 const ORIGIN = {
@@ -25,6 +22,9 @@ const ORIGIN = {
   postalCode: "22614",
   reference: "Interior JK",
 };
+
+const MAX_QTY_PER_LINE = 10;
+const MAX_ITEMS_TOTAL = 40;
 
 function json(statusCode, data) {
   return {
@@ -60,16 +60,25 @@ function readJsonBody(event) {
   }
 }
 
-// Fallback “inteligente”
+// Para "mandar todo" sin romper Envia: solo incluimos keys con valor real
+function cleanObject(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj || {})) {
+    const val = typeof v === "string" ? v.trim() : v;
+    if (val === undefined || val === null) continue;
+    if (typeof val === "string" && val.length === 0) continue;
+    out[k] = val;
+  }
+  return out;
+}
+
+// Fallback si Envia falla
 function fallbackQuote(zip, reason = null) {
-  const z = Number(zip);
+  const z = Number(String(zip || "0").replace(/\D/g, "")) || 0;
+
   let mxn = 199;
-
-  // Baja California (aprox 21000–22999)
-  if (z >= 21000 && z <= 22999) mxn = 149;
-
-  // Zonas remotas (regla simple)
-  if (z >= 60000) mxn = 249;
+  if (z >= 21000 && z <= 22999) mxn = 149; // Baja California aprox
+  if (z >= 60000) mxn = 249; // regla simple remota
 
   return {
     mxn,
@@ -80,16 +89,30 @@ function fallbackQuote(zip, reason = null) {
   };
 }
 
-// Normaliza items -> paquete estimado
-function buildPackages(items = []) {
-  const safeItems = Array.isArray(items) ? items : [];
+function normalizeItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return { items: [], qtyTotal: 0 };
 
-  // qty default = 1 para que nunca se vaya a 0kg
-  const qtyTotal = safeItems.reduce((a, i) => a + Math.max(1, safeInt(i?.qty, 1)), 0);
+  let qtyTotal = 0;
+  const safe = [];
 
-  // 0.7kg por pieza aprox, clamp (0.5–10kg)
+  for (const it of items) {
+    const id = String(it?.id || "").trim();
+    const qty = Math.max(1, safeInt(it?.qty, 1));
+
+    if (!id) continue;
+    if (qty > MAX_QTY_PER_LINE) return { error: `Cantidad inválida (1–${MAX_QTY_PER_LINE}).` };
+
+    qtyTotal += qty;
+    if (qtyTotal > MAX_ITEMS_TOTAL) return { error: `Demasiados artículos (${MAX_ITEMS_TOTAL} máx.).` };
+
+    safe.push({ id, qty });
+  }
+
+  return { items: safe, qtyTotal };
+}
+
+function buildPackages(qtyTotal) {
   const weightKg = Math.max(0.5, Math.min(10, qtyTotal * 0.7));
-
   return [
     {
       content: "Ropa / Merch",
@@ -105,12 +128,43 @@ function buildPackages(items = []) {
   ];
 }
 
-async function quoteWithEnvia({ zip, items }) {
+/**
+ * Construye destination "completo":
+ * - hoy tu front solo manda { zip }
+ * - mañana puedes mandar destination: { name, email, phone, street, city, state, ... }
+ */
+function buildDestination(payload, zip) {
+  const d = payload?.destination || payload?.shipping || payload?.address || {};
+
+  // Base mínima segura
+  const base = {
+    country: "MX",
+    postalCode: String(zip),
+  };
+
+  // Campos extra opcionales (no inventamos datos)
+  const full = {
+    ...base,
+    name: d.name,
+    company: d.company,
+    email: d.email,
+    phone: d.phone,
+
+    street: d.street,
+    number: d.number,
+    district: d.district,
+    city: d.city,
+    state: d.state,
+    reference: d.reference,
+  };
+
+  // “Mandar todo” en código ✅ pero a Envia solo le mandamos lo que tenga valor ✅
+  return cleanObject(full);
+}
+
+async function quoteWithEnvia({ destination, qtyTotal }) {
   const apiKey = process.env.ENVIA_API_KEY;
-  if (!apiKey) {
-    // No truena: dejamos que el handler haga fallback
-    throw new Error("ENVIA_API_KEY no configurada");
-  }
+  if (!apiKey) throw new Error("ENVIA_API_KEY no configurada");
 
   const baseUrl = (process.env.ENVIA_BASE_URL || "https://api.envia.com").replace(/\/+$/, "");
 
@@ -123,11 +177,8 @@ async function quoteWithEnvia({ zip, items }) {
 
   const body = {
     origin: { ...ORIGIN },
-    destination: {
-      country: "MX",
-      postalCode: String(zip),
-    },
-    packages: buildPackages(items),
+    destination, // ✅ ya viene “completo” (pero limpio)
+    packages: buildPackages(qtyTotal),
   };
 
   let lastErr = null;
@@ -138,7 +189,6 @@ async function quoteWithEnvia({ zip, items }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Variantes comunes (por compatibilidad)
           Authorization: `Bearer ${apiKey}`,
           "api-key": apiKey,
           "x-api-key": apiKey,
@@ -210,13 +260,16 @@ exports.handler = async (event) => {
   if (!payload) return json(200, fallbackQuote("00000", "Body inválido / JSON parse error"));
 
   const zip = String(payload.zip || "").trim();
-  const items = Array.isArray(payload.items) ? payload.items : [];
+  const norm = normalizeItems(payload.items);
 
   if (!isZip(zip)) return json(400, { mxn: null, note: "C.P. inválido", provider: "validation" });
-  if (items.length === 0) return json(400, { mxn: null, note: "Carrito vacío", provider: "validation" });
+  if (norm?.error) return json(400, { mxn: null, note: norm.error, provider: "validation" });
+  if (!norm.qtyTotal) return json(400, { mxn: null, note: "Carrito vacío", provider: "validation" });
+
+  const destination = buildDestination(payload, zip);
 
   try {
-    const q = await quoteWithEnvia({ zip, items });
+    const q = await quoteWithEnvia({ destination, qtyTotal: norm.qtyTotal });
     return json(200, q);
   } catch (e) {
     return json(200, fallbackQuote(zip, e?.message || e));
