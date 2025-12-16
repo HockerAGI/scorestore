@@ -47,6 +47,7 @@
 
     *{box-sizing:border-box}
     html,body{height:100%}
+    img{max-width:100%; height:auto; display:block;}
 
     *{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
     a, button, .cardDrop, .btnDrop, .cartTrigger, .btnHero, .pBtn, .pbBtn, .shipBtn{
@@ -333,7 +334,645 @@
       .heroContent{ padding: 25px; width: 100%; }
     }
 
-    /* --- resto de tu CSS sin cambios (lo continúo en la parte 2) --- */
+    /* =========================================================
+       ✅ PARTE QUE FALTABA (FIX LAYOUT / DROPS / CART / MODALS)
+       ========================================================= */
+
+    /* Overlay global */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.62);
+      opacity:0; pointer-events:none;
+      transition: opacity .18s ease;
+      z-index:95;
+    }
+    .overlay.active{ opacity:1; pointer-events:auto; }
+
+    /* Toast */
+    .toast{
+      position:fixed; left:50%; bottom:110px;
+      transform: translateX(-50%);
+      background:#111; color:#fff;
+      padding:10px 14px;
+      border-radius: 14px;
+      font-weight:900; font-size:12px;
+      letter-spacing:.02em;
+      opacity:0; pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index:120;
+      max-width:min(520px, 92vw);
+      box-shadow: 0 16px 40px rgba(0,0,0,.25);
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-6px); }
+
+    /* Status banner */
+    .statusBanner{
+      position:fixed;
+      top:88px; left:50%;
+      transform: translateX(-50%);
+      width:min(560px, 94vw);
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(0,0,0,.08);
+      border-left: 6px solid var(--red);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display:none;
+      align-items:center;
+      gap:12px;
+      z-index:110;
+      box-shadow: 0 18px 45px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+    }
+    .statusBanner.show{ display:flex; }
+    .statusBanner img{
+      width:44px; height:44px;
+      object-fit:contain;
+      flex:0 0 auto;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.18));
+    }
+    .statusBanner strong{ display:block; font-weight:900; font-size:14px; color:#111; }
+    .statusBanner span{ display:block; font-weight:800; font-size:12px; color:#444; }
+    .statusBanner button{
+      margin-left:auto;
+      background:#111; color:#fff;
+      border:none;
+      border-radius: 12px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    /* Headers secciones */
+    .secHeader{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      margin: 26px 0 14px;
+    }
+    .secTitle{
+      margin:0;
+      font-family: var(--fontTitle);
+      font-size: 36px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:#111;
+      text-shadow: 0 2px 0 rgba(255,255,255,.65);
+    }
+    .secMeta{
+      font-weight:900;
+      font-size:12px;
+      color:#555;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+
+    /* DROPS grid */
+    .gridDrops{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:14px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 980px){
+      .gridDrops{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px){
+      .gridDrops{ grid-template-columns: 1fr; }
+    }
+
+    .cardDrop{
+      position:relative;
+      border-radius: 18px;
+      overflow:hidden;
+      cursor:pointer;
+      min-height: 220px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.16);
+      background: rgba(255,255,255,.75);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .cardDrop:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 22px 55px rgba(0,0,0,.20);
+    }
+    .dropBg{
+      position:absolute; inset:0;
+      background: var(--bgTexture) center/cover no-repeat;
+      opacity:.35;
+      transform: scale(1.02);
+    }
+    .dropGlass{
+      position:relative;
+      height:100%;
+      padding:16px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.58));
+      backdrop-filter: blur(12px);
+    }
+    .statusBadge{
+      position:absolute;
+      top:12px; right:12px;
+      background: var(--red);
+      color:#fff;
+      font-weight:900;
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      letter-spacing:.06em;
+      box-shadow: 0 10px 20px rgba(0,0,0,.18);
+    }
+    .dropLogo{
+      width:92px; height:92px;
+      object-fit:contain;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.18));
+      flex:0 0 auto;
+    }
+    .dropInfo{ flex:1; min-width:0; }
+    .dropInfo h3{
+      margin:0 0 4px;
+      font-family: var(--fontTitle);
+      font-size: 32px;
+      letter-spacing:.02em;
+      line-height:1;
+      text-transform:uppercase;
+      color:#111;
+    }
+    .dropInfo p{
+      margin:0 0 12px;
+      color:#333;
+      font-weight:800;
+      font-size:13px;
+      line-height:1.35;
+    }
+    .btnDrop{
+      background:#111;
+      color:#fff;
+      border:none;
+      padding:10px 12px;
+      border-radius: 14px;
+      font-weight:900;
+      cursor:pointer;
+      letter-spacing:.04em;
+      transition: transform .15s ease;
+    }
+    .btnDrop:hover{ transform: translateY(-1px); }
+
+    /* Sponsors */
+    .sponsors{
+      margin-top: 26px;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(0,0,0,.06);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 40px rgba(0,0,0,.10);
+    }
+    .spGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:14px;
+      align-items:center;
+    }
+    @media (max-width: 768px){
+      .spGrid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    .spLogo{
+      width:100%;
+      max-height: 64px;
+      object-fit: contain;
+      opacity:.9;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.12));
+      padding: 6px;
+    }
+
+    /* Footer */
+    footer{
+      margin: 50px 0 24px;
+      padding: 0 3vw;
+    }
+    .footGrid{
+      width:min(1200px, 94vw);
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 18px;
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.86);
+      box-shadow: 0 20px 50px rgba(0,0,0,.22);
+    }
+    @media (max-width: 900px){
+      .footGrid{ grid-template-columns: 1fr; }
+    }
+    .fLink{
+      display:inline-block;
+      margin: 6px 14px 6px 0;
+      color:#ddd;
+      font-weight:900;
+      font-size: 13px;
+      cursor:pointer;
+      opacity:.95;
+    }
+    .fLink:hover{ color:#fff; text-decoration: underline; }
+
+    /* Paybar */
+    .paybar{
+      position:fixed; left:0; right:0; bottom:0;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      transform: translateY(110%);
+      transition: transform .2s ease;
+      z-index:88;
+      backdrop-filter: blur(10px);
+    }
+    .paybar.visible{ transform: translateY(0); }
+    .pbTotal{
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .08em;
+      color:#444;
+    }
+    .pbPrice{
+      font-weight: 900;
+      font-size: 16px;
+      line-height:1.1;
+    }
+    .pbPrice small{
+      display:block;
+      font-weight:900;
+      font-size:12px;
+      color:#666;
+      margin-top: 4px;
+    }
+    .pbBtn{
+      background: var(--carbon);
+      color:#fff;
+      border:none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      letter-spacing:.04em;
+      box-shadow: 0 16px 35px rgba(0,0,0,.18);
+    }
+
+    /* Drawer carrito */
+    .drawer{
+      position:fixed;
+      top:0; right:0;
+      width:min(420px, 92vw);
+      height:100%;
+      background:#fff;
+      transform: translateX(110%);
+      transition: transform .2s ease;
+      z-index:100;
+      display:flex;
+      flex-direction:column;
+      box-shadow: -22px 0 45px rgba(0,0,0,.20);
+    }
+    .drawer.active{ transform: translateX(0); }
+
+    .dHead{
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .dTitle{
+      margin:0;
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      letter-spacing:.02em;
+    }
+
+    .dBody{
+      padding: 14px 16px;
+      overflow:auto;
+      flex:1;
+    }
+    .cartEmpty{
+      font-weight:900;
+      color:#666;
+      padding: 16px 0;
+    }
+    .cItem{
+      display:flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      align-items:flex-start;
+    }
+    .cImg{
+      width:72px;
+      height:72px;
+      object-fit:cover;
+      border-radius: 14px;
+      box-shadow: 0 14px 30px rgba(0,0,0,.12);
+      background: rgba(0,0,0,.06);
+    }
+    .cMetaLine{
+      margin-top:4px;
+      font-size: 12px;
+      color:#555;
+      font-weight:800;
+    }
+    .cPrice{
+      margin-top: 6px;
+      font-weight: 900;
+      font-size: 13px;
+      color:#111;
+    }
+
+    .dFoot{
+      padding: 14px 16px 18px;
+      border-top: 1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.98);
+    }
+    .sumRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:900;
+      margin: 6px 0;
+      color:#111;
+    }
+
+    .shipBox{
+      margin: 10px 0 12px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .shipRow{
+      display:flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .shipInput{
+      flex:1;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      font-weight: 900;
+      font-size: 14px;
+      outline:none;
+      background: rgba(255,255,255,.9);
+    }
+    .shipBtn{
+      padding: 12px 14px;
+      border-radius: 12px;
+      border:none;
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .dfBtn{
+      width:100%;
+      padding: 14px 16px;
+      border:none;
+      border-radius: 16px;
+      background: var(--red);
+      color:#fff;
+      font-weight: 900;
+      cursor:pointer;
+      letter-spacing:.04em;
+      box-shadow: 0 18px 40px rgba(225,6,0,.22);
+    }
+    .dfBtn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .clearLink{
+      display:block;
+      margin-top: 10px;
+      text-align:center;
+      font-weight: 900;
+      color:#555;
+      cursor:pointer;
+      text-decoration: underline;
+    }
+
+    /* Product modal */
+    .prodModal{
+      position:fixed;
+      left:50%; top:50%;
+      transform: translate(-50%, -50%) scale(.98);
+      width:min(980px, 94vw);
+      max-height: 86vh;
+      background: rgba(255,255,255,.96);
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 26px 70px rgba(0,0,0,.22);
+      z-index:105;
+      display:none;
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .prodModal.active{ display:block; }
+
+    .pmHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.92);
+    }
+    .pmTitle{
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .pmClose{
+      background:none;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      line-height:1;
+      color:#111;
+    }
+    .pmBody{
+      padding: 16px;
+      overflow:auto;
+      max-height: calc(86vh - 64px);
+    }
+
+    .pmDivider{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      margin: 16px 0 14px;
+      opacity:.9;
+    }
+    .pmDivider .bar{
+      flex:1;
+      height: 2px;
+      background: rgba(0,0,0,.12);
+      border-radius:999px;
+    }
+    .pmDivider .label{
+      font-weight:900;
+      font-size: 12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color:#444;
+      white-space:nowrap;
+    }
+
+    .pmGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .pmGrid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px){
+      .pmGrid{ grid-template-columns: 1fr; }
+    }
+
+    .pCard{
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 18px 40px rgba(0,0,0,.10);
+      display:flex;
+      flex-direction:column;
+      min-height: 100%;
+    }
+    .pImg{
+      background: rgba(0,0,0,.06);
+      aspect-ratio: 4/3;
+      overflow:hidden;
+    }
+    .pImg img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .pInfo{
+      padding: 12px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      flex:1;
+    }
+    .pName{
+      font-weight:900;
+      font-size: 13px;
+      line-height:1.25;
+      color:#111;
+    }
+    .pPrice .pWas{
+      font-weight:900;
+      font-size: 12px;
+      color:#777;
+      text-decoration: line-through;
+    }
+    .pPrice .pNow{
+      font-weight:900;
+      font-size: 16px;
+      color:#111;
+    }
+    .pOff{
+      display:inline-block;
+      margin-left: 8px;
+      background: var(--red);
+      color:#fff;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      vertical-align: middle;
+    }
+    .pPrice small{
+      display:block;
+      margin-top: 4px;
+      color:#666;
+      font-weight:900;
+      font-size: 12px;
+    }
+
+    .sizeRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .sizeRow label{
+      font-weight:900;
+      font-size: 12px;
+      color:#444;
+    }
+    .sizeSelect{
+      flex: 0 0 auto;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      font-weight: 900;
+      background: rgba(255,255,255,.92);
+    }
+
+    .pBtn{
+      margin-top:auto;
+      width:100%;
+      border:none;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: #111;
+      color:#fff;
+      font-weight: 900;
+      cursor:pointer;
+      letter-spacing:.04em;
+    }
+
+    /* Legal modal */
+    .legalBox{
+      position:fixed;
+      left:50%; top:50%;
+      transform: translate(-50%, -50%) scale(.98);
+      width:min(720px, 94vw);
+      max-height: 82vh;
+      overflow:auto;
+      background: rgba(255,255,255,.96);
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 26px 70px rgba(0,0,0,.22);
+      z-index:106;
+      display:none;
+      padding: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .legalBox.active{ display:block; }
+    .legalBox h3{
+      margin:0 0 10px;
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      text-transform:uppercase;
+    }
+    .legalBox p{
+      margin: 0 0 10px;
+      color:#222;
+      font-weight:700;
+      line-height:1.55;
+      font-size: 14px;
+    }
+
   </style>
 </head>
 <body>
@@ -853,7 +1492,6 @@
   function cleanBackendMsg(any){
     const s = String(any || "").trim();
     if(!s) return "";
-    // si es JSON o algo feo:
     if(s.startsWith("{") || s.startsWith("[")) return "Backend/Envia respondió con error.";
     if(s.length > 120) return s.slice(0, 120) + "…";
     return s;
@@ -894,7 +1532,6 @@
         return;
       }
 
-      // ✅ fallback elegante
       shippingMXN = FALLBACK_SHIPPING_MXN;
       shippingQuoted = false;
 
@@ -904,7 +1541,6 @@
 
       console.warn("Shipping quote failed:", { status: res.status, data });
     }catch(e){
-      // ✅ fallback elegante por catch
       shippingMXN = FALLBACK_SHIPPING_MXN;
       shippingQuoted = false;
       note.textContent = "Envío estimado aplicado (fallback). Motivo: error de conexión con backend.";
