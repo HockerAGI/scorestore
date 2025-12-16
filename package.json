@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "netlify dev",
-    "build": "echo \"static site\""
+    "build": "echo \"static site\"",
+    "postinstall": "echo \"skip\""
   },
   "dependencies": {
     "stripe": "^14.25.0"
