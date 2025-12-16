@@ -7,7 +7,7 @@
  * Opcional:
  * - ENVIA_BASE_URL (default: https://api.envia.com)
  *
- * Nota docs: endpoint principal para rate:
+ * Endpoint:
  * POST https://api.envia.com/ship/rate/
  */
 
@@ -20,7 +20,8 @@ const ORIGIN = {
   number: "6106",
   district: "Anexa Roma",
   city: "Tijuana",
-  state: "BC",
+  // ✅ Estado COMPLETO (en vez de "BC")
+  state: "Baja California",
   country: "MX",
   postalCode: "22614",
   reference: "Interior JK"
@@ -60,6 +61,21 @@ function readJsonBody(event) {
   }
 }
 
+function compactReason(reason) {
+  const s = String(reason || "").trim();
+  if (!s) return "";
+  // Si viene JSON, reduce a algo humano
+  try {
+    const j = JSON.parse(s);
+    if (j?.message) return String(j.message).slice(0, 160);
+    if (j?.error) return String(j.error).slice(0, 160);
+  } catch {}
+  // Limpia basura común
+  if (s.includes("{") && s.includes("}")) return "Error del proveedor (Envia).";
+  if (s.length > 160) return s.slice(0, 160) + "…";
+  return s;
+}
+
 // Fallback “inteligente”
 function fallbackQuote(zip, reason = null) {
   const z = Number(zip);
@@ -71,20 +87,42 @@ function fallbackQuote(zip, reason = null) {
   // Zonas remotas (regla simple)
   if (z >= 60000) mxn = 249;
 
+  const r = compactReason(reason);
+
   return {
     mxn,
-    note: reason
-      ? `Envío estimado (fallback). Motivo: ${String(reason).slice(0, 180)}`
+    note: r
+      ? `Envío estimado (fallback). Motivo: ${r}`
       : "Envío estimado (fallback). Se confirmará al generar guía.",
     provider: "fallback"
+  };
+}
+
+// Heurística rápida por CP (para que Envia no truene)
+function inferDestination(zip) {
+  const z = Number(zip);
+
+  // Baja California: 21000–22999 (Tijuana / Tecate / Rosarito / Ensenada)
+  if (z >= 21000 && z <= 22999) {
+    return {
+      country: "MX",
+      postalCode: String(zip),
+      state: "Baja California",
+      city: "Tijuana"
+    };
+  }
+
+  return {
+    country: "MX",
+    postalCode: String(zip),
+    state: "México",
+    city: "Ciudad de México"
   };
 }
 
 // Normaliza items -> paquete estimado
 function buildPackages(items = []) {
   const safeItems = Array.isArray(items) ? items : [];
-
-  // qty default = 1 para que nunca se vaya a 0kg
   const qtyTotal = safeItems.reduce((a, i) => a + Math.max(1, safeInt(i?.qty, 1)), 0);
 
   // 0.7kg por pieza aprox, clamp (0.5–10kg)
@@ -100,6 +138,7 @@ function buildPackages(items = []) {
       declaredValue: 0,
       weightUnit: "KG",
       lengthUnit: "CM",
+      // ✅ Algunos proveedores prefieren dimensiones planas
       dimensions: { length: 30, width: 25, height: 10 }
     }
   ];
@@ -110,14 +149,11 @@ async function quoteWithEnvia({ zip, items }) {
   if (!apiKey) throw new Error("ENVIA_API_KEY no configurada");
 
   const baseUrl = (process.env.ENVIA_BASE_URL || "https://api.envia.com").replace(/\/+$/, "");
-  const url = `${baseUrl}/ship/rate/`; // <- endpoint correcto
+  const url = `${baseUrl}/ship/rate/`;
 
   const body = {
     origin: { ...ORIGIN },
-    destination: {
-      country: "MX",
-      postalCode: String(zip)
-    },
+    destination: inferDestination(zip), // ✅ ya no solo postalCode
     packages: buildPackages(items)
   };
 
@@ -136,10 +172,14 @@ async function quoteWithEnvia({ zip, items }) {
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
   if (!res.ok) {
-    throw new Error(`Envia ${res.status}: ${String(text).slice(0, 260)}`);
+    const msg =
+      data?.message ||
+      data?.error?.message ||
+      data?.error ||
+      `HTTP ${res.status}`;
+    throw new Error(`Envia ${res.status}: ${compactReason(msg)}`);
   }
 
-  // Envia puede devolver rates en data / result / etc.
   const rates = data?.data || data?.rates || data?.result || data;
 
   if (!Array.isArray(rates) || rates.length === 0) {
