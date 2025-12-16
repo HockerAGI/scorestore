@@ -1,212 +1,119 @@
-/**
- * netlify/functions/create_checkout.js
- * SCORE STORE — Stripe Checkout (MXN) + OXXO + Shipping Address MX
- */
+const fs=require('fs');
+const path=require('path');
+const Stripe=require('stripe');
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const norm=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').trim();
 
-const ASSET_BASE = "assets/BAJA1000";
-const ED2025 = `${ASSET_BASE}/EDICION_2025`;
-const OTRAS = `${ASSET_BASE}/OTRAS_EDICIONES`;
+const catalog=read(path.join(__dirname,'..','..','data','catalog.json'));
+const promos=read(path.join(__dirname,'..','..','data','promos.json'));
 
-const CATALOG = {
-  b1000_pits: { name: "Camisa de Pits Oficial · Baja 1000", priceMXN: 989, img: `${ED2025}/camisa-pits-baja1000.jpg` },
+const discountPct=Number(catalog?.pricing?.discount_pct||0);
+const markupPct=Number(catalog?.pricing?.markup_pct||0);
+const products=Array.isArray(catalog?.products)?catalog.products:[];
+const pIndex=new Map(products.map(p=>[String(p.id),p]));
 
-  b1000_tee_azul: { name: "Camiseta · Baja 1000 (Azul)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-azul.jpg` },
-  b1000_tee_cafe: { name: "Camiseta · Baja 1000 (Café)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-cafe.jpg` },
-  b1000_tee_negra: { name: "Camiseta · Baja 1000 (Negra)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-negra.jpg` },
-
-  world_desert_negra: { name: "Sudadera SCORE · World Desert (Negra)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-negra.jpg` },
-  world_desert_cafe: { name: "Sudadera SCORE · World Desert (Café)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-cafe.jpg` },
-
-  world_desert_roja: { name: "Sudadera SCORE · World Desert (Roja)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-roja.jpg` },
-  world_desert_rosa: { name: "Sudadera SCORE · World Desert (Rosa)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-rosa.jpg` },
-
-  world_desert_blk: { name: "Sudadera SCORE · World Desert (Negra)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-negra.jpg` },
-  world_desert_snd: { name: "Sudadera SCORE · World Desert (Café)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-cafe.jpg` },
-  world_desert_pnk: { name: "Sudadera SCORE · World Desert (Rosa)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-rosa.jpg` },
-
-  b1000_maptee: { name: "Camiseta · Baja 1000 (Negra)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-negra.jpg` },
-
-  b1000_jacket: { name: "Chaqueta Oficial SCORE · Baja 1000", priceMXN: 1639, img: null },
-  b1000_kids: { name: "Sudadera Infantil · Baja 1000", priceMXN: 824, img: null },
-  b1000_panels: { name: "Sudadera Baja 1000 · Paneles", priceMXN: 824, img: null },
-  score_trucker: { name: "Gorra Trucker SCORE", priceMXN: 715, img: null }
+const getPriceMXN=(p)=>{
+  const was=Number(p.wasMXN||0);
+  const base=Number(p.baseMXN||0);
+  if(was>0) return Math.max(0,Math.round(was*(1-discountPct)));
+  if(base>0) return Math.max(0,Math.round(base*(1+markupPct)*(1-discountPct)));
+  return 0;
 };
 
-const ALLOWED_SIZES = new Set(["S", "M", "L", "XL", "2XL", "UNICA", "ÚNICA"]);
-const MAX_QTY_PER_LINE = 10;
-const MAX_ITEMS_TOTAL = 40;
-const MAX_SHIPPING_MXN = 2500;
+const ruleFor=(code)=>{
+  const c=norm(code);
+  if(!c) return null;
+  const rules=Array.isArray(promos?.rules)?promos.rules:[];
+  const r=rules.find(x=>norm(x.code)===c && x.active!==false);
+  return r?{...r,code:c}:null;
+};
 
-function json(statusCode, data) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST, OPTIONS"
-    },
-    body: JSON.stringify(data)
-  };
-}
+const j=(s,b)=>({statusCode:s,headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify(b)});
 
-function safeInt(n, def = 0) {
-  const x = Number(n);
-  if (!Number.isFinite(x)) return def;
-  return Math.trunc(x);
-}
+exports.handler=async(event)=>{
+  try{
+    const key=process.env.STRIPE_SECRET_KEY;
+    if(!key) return j(500,{error:'Missing STRIPE_SECRET_KEY'});
+    const SITE_URL=process.env.SITE_URL||catalog?.site?.url||'https://scorestore.netlify.app';
+    const stripe=new Stripe(key,{apiVersion:'2024-06-20'});
 
-function readJsonBody(event) {
-  try {
-    const raw = event.isBase64Encoded
-      ? Buffer.from(event.body || "", "base64").toString("utf8")
-      : (event.body || "");
-    return JSON.parse(raw || "{}");
-  } catch {
-    return null;
-  }
-}
+    const body=JSON.parse(event.body||'{}');
+    const items=Array.isArray(body.items)?body.items:[];
+    const shippingMXN=Math.max(0,Math.round(Number(body.shippingMXN||0)));
+    const promoCode=norm(body?.promo?.code||'');
 
-function getBaseUrl() {
-  return (
-    process.env.SITE_URL ||
-    process.env.URL ||
-    process.env.DEPLOY_PRIME_URL ||
-    "https://scorestore.netlify.app"
-  );
-}
+    if(!items.length) return j(400,{error:'No items'});
 
-function absImageUrl(baseUrl, path) {
-  if (!path) return null;
-  if (/^https?:\/\//i.test(path)) return path;
-  const cleanBase = baseUrl.replace(/\/+$/, "");
-  const cleanPath = String(path).replace(/^\/+/, "");
-  return `${cleanBase}/${cleanPath}`;
-}
-
-exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return json(204, {});
-  if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
-
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return json(500, { error: "Falta STRIPE_SECRET_KEY en variables de entorno." });
-  }
-
-  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-  const payload = readJsonBody(event);
-  if (!payload) return json(400, { error: "Body inválido / JSON parse error" });
-
-  try {
-    const { items, shippingMXN = 0, meta = {} } = payload;
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return json(400, { error: "Carrito vacío" });
-    }
-
-    const normalized = [];
-    let totalQty = 0;
-
-    for (const it of items) {
-      const id = String(it?.id || "").trim();
-      const sizeRaw = String(it?.size || "").trim();
-      const size = sizeRaw ? sizeRaw.toUpperCase() : "";
-      const qty = Math.max(1, safeInt(it?.qty, 1));
-
-      if (!id || !CATALOG[id]) return json(400, { error: `Producto inválido: ${id || "(sin id)"}` });
-      if (size && !ALLOWED_SIZES.has(size)) return json(400, { error: `Talla inválida: ${size}` });
-      if (qty < 1 || qty > MAX_QTY_PER_LINE) return json(400, { error: `Cantidad inválida (1–${MAX_QTY_PER_LINE}).` });
-
-      totalQty += qty;
-      if (totalQty > MAX_ITEMS_TOTAL) return json(400, { error: `Demasiados artículos (${MAX_ITEMS_TOTAL} máx.).` });
-
-      normalized.push({ id, size: size || "", qty });
-    }
-
-    // Consolidar iguales (id+talla)
-    const consolidated = new Map();
-    for (const i of normalized) {
-      const key = `${i.id}__${i.size}`;
-      consolidated.set(key, (consolidated.get(key) || 0) + i.qty);
-    }
-
-    const baseUrl = getBaseUrl();
-    const line_items = [];
-
-    for (const [key, qty] of consolidated.entries()) {
-      const [id, size] = key.split("__");
-      const product = CATALOG[id];
-      const imgAbs = absImageUrl(baseUrl, product.img);
-
+    const line_items=[];
+    for(const it of items){
+      const id=String(it.id||'');
+      const p=pIndex.get(id);
+      if(!p) return j(400,{error:`Unknown product: ${id}`});
+      const qty=Math.max(1,Math.min(99,parseInt(it.qty,10)||1));
+      const size=String(it.size||'').toUpperCase();
+      const unit=getPriceMXN(p);
       line_items.push({
-        price_data: {
-          currency: "mxn",
-          product_data: {
-            name: product.name,
-            images: imgAbs ? [imgAbs] : [],
-            metadata: { product_id: id, size: size || "" }
-          },
-          unit_amount: Math.round(Number(product.priceMXN) * 100)
-        },
-        quantity: qty
+        quantity:qty,
+        price_data:{
+          currency:'mxn',
+          unit_amount:unit*100,
+          product_data:{
+            name:`${p.name}${size?` · ${size}`:''}`,
+            images:p.img?[new URL(p.img,SITE_URL).toString()]:undefined,
+            metadata:{id,size}
+          }
+        }
       });
     }
 
-    // Shipping saneado
-    const shipRaw = Math.round(Number(shippingMXN || 0));
-    const ship = Math.max(0, Math.min(MAX_SHIPPING_MXN, shipRaw));
+    if(shippingMXN>0){
+      line_items.push({
+        quantity:1,
+        price_data:{
+          currency:'mxn',
+          unit_amount:shippingMXN*100,
+          product_data:{name:'Envío',metadata:{kind:'shipping'}}
+        }
+      });
+    }
 
-    const shipping_options =
-      ship > 0
-        ? [{
-            shipping_rate_data: {
-              type: "fixed_amount",
-              fixed_amount: { amount: ship * 100, currency: "mxn" },
-              display_name: "Envío (México)",
-              delivery_estimate: {
-                minimum: { unit: "business_day", value: 2 },
-                maximum: { unit: "business_day", value: 7 }
-              }
-            }
-          }]
-        : [];
+    const rule=ruleFor(promoCode);
+    let discounts=undefined;
 
-    const successUrl = `${baseUrl}/?status=success`;
-    const cancelUrl = `${baseUrl}/?status=cancel`;
+    if(rule){
+      const t=String(rule.type||'');
+      const coupon={duration:'once',name:`PROMO ${rule.code}`,metadata:{promo_code:rule.code}};
 
-    const metaSafe = {
-      source: String(meta.source || "score_store"),
-      zip: String(meta.zip || ""),
-      shippingQuoted: String(!!meta.shippingQuoted),
-      shippingMXN: String(ship)
-    };
+      if(t==='percent'){
+        const v=Number(rule.value||0);
+        const pct=(v>0 && v<=1)?Math.round(v*100):Math.round(v);
+        if(pct>=1 && pct<=90) coupon.percent_off=pct;
+      }else if(t==='fixed_mxn'){
+        const off=Math.max(1,Math.round(Number(rule.value||0)));
+        coupon.amount_off=off*100; coupon.currency='mxn';
+      }else if(t==='free_shipping'){
+        if(shippingMXN>0){ coupon.amount_off=shippingMXN*100; coupon.currency='mxn'; }
+      }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      locale: "es",
-      payment_method_types: ["card", "oxxo"],
+      if(coupon.percent_off || coupon.amount_off){
+        const created=await stripe.coupons.create(coupon);
+        discounts=[{coupon:created.id}];
+      }
+    }
+
+    const session=await stripe.checkout.sessions.create({
+      mode:'payment',
       line_items,
-
-      shipping_address_collection: { allowed_countries: ["MX"] },
-      phone_number_collection: { enabled: true },
-
-      ...(shipping_options.length ? { shipping_options } : {}),
-
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-
-      metadata: metaSafe,
-      payment_intent_data: { metadata: metaSafe },
-
-      customer_creation: "if_required",
-
-      // explícito para evitar “sorpresas” si Stripe cambia defaults
-      automatic_tax: { enabled: false }
+      discounts,
+      allow_promotion_codes:false,
+      success_url:`${SITE_URL}/?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:`${SITE_URL}/?status=cancel`,
+      metadata:{source:'score_store',promo_code:rule?rule.code:''}
     });
 
-    return json(200, { id: session.id, url: session.url });
-  } catch (error) {
-    console.error("Stripe error:", error);
-    return json(500, { error: error?.message || "Stripe error" });
+    return j(200,{url:session.url});
+  }catch(err){
+    console.error(err);
+    return j(500,{error:err?.message||'Server error'});
   }
 };
