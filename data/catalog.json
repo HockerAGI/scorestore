@@ -1,11 +1,14 @@
 {
   "site": {
     "url": "https://scorestore.netlify.app",
-    "currency": "MXN"
+    "currency": "MXN",
+    "fx_mxn_per_usd": 17.5,
+    "default_theme": "xmas",
+    "default_promo_code": "SCORE10"
   },
   "pricing": {
-    "markup_pct": 0.35,
-    "discount_pct": 0.3
+    "markup_pct": 0.2,
+    "discount_pct": 0.1
   },
   "sections": [
     {
@@ -26,82 +29,82 @@
   "products": [
     {
       "id": "chamarra-baja1000",
-      "name": "Chamarra Baja 1000",
+      "name": "Chaqueta Oficial SCORE “Baja 1000”",
       "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
-      "tags": ["Edición 2025"],
+      "baseMXN": 1490,
+      "wasMXN": 1490,
+      "tags": ["Edición 2025", "Unisex"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "camisa-pits-baja1000",
-      "name": "Camisa Pits Baja 1000",
+      "name": "Camisa de Pits “Baja 1000”",
       "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 899,
+      "wasMXN": 899,
       "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "camiseta-baja1000-azul",
-      "name": "Camiseta Baja 1000 (Azul)",
+      "name": "Camiseta Mapa “Baja 1000” (Azul)",
       "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 399,
+      "wasMXN": 399,
       "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "camiseta-baja1000-cafe",
-      "name": "Camiseta Baja 1000 (Café)",
+      "name": "Camiseta Mapa “Baja 1000” (Café)",
       "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 399,
+      "wasMXN": 399,
       "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "camiseta-baja1000-negra",
-      "name": "Camiseta Baja 1000 (Negra)",
+      "name": "Camiseta Mapa “Baja 1000” (Negra)",
       "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-world-desert-cafe",
-      "name": "Sudadera World Desert (Café)",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 399,
+      "wasMXN": 399,
       "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "sudadera-world-desert-negra",
-      "name": "Sudadera World Desert (Negra)",
+      "name": "Sudadera “SCORE World Desert” (Negra)",
       "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 749,
+      "wasMXN": 749,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "sudadera-world-desert-cafe",
+      "name": "Sudadera “SCORE World Desert” (Café)",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
+      "baseMXN": 749,
+      "wasMXN": 749,
       "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "sudadera-world-desert-roja",
-      "name": "Sudadera World Desert (Roja)",
+      "name": "Sudadera “SCORE World Desert” (Roja)",
       "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 749,
+      "wasMXN": 749,
       "tags": ["Archivo"],
       "sectionId": "OTRAS_EDICIONES"
     },
     {
       "id": "sudadera-world-desert-rosa",
-      "name": "Sudadera World Desert (Rosa)",
+      "name": "Sudadera “SCORE World Desert” (Rosa)",
       "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
-      "baseMXN": 0,
-      "wasMXN": 0,
+      "baseMXN": 749,
+      "wasMXN": 749,
       "tags": ["Archivo"],
       "sectionId": "OTRAS_EDICIONES"
     }
