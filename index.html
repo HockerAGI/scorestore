@@ -18,10 +18,6 @@
   <link rel="icon" href="assets/favicon.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 
-  <!-- ✅ Performance: preload LCP / fondos -->
-  <link rel="preload" as="image" href="assets/hero.png" />
-  <link rel="preload" as="image" href="assets/fondo-pagina-score.png" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -39,7 +35,7 @@
       --bgTexture: url("assets/baja1000-texture.png");
       --pageBg: url("assets/fondo-pagina-score.png");
 
-      /* ✅ Glass overlay (café suave) */
+      /* ✅ MÁS TRANSPARENTE (overlay café) */
       --coffeeGlass: rgba(148, 111, 74, 0.12);
       --coffeeGlass2: rgba(120, 86, 55, 0.06);
 
@@ -66,25 +62,33 @@
       margin:0; font-family: var(--fontBody);
       color: #111;
       background-color: var(--sand);
+      background-image: var(--pageBg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       overflow-x:hidden;
       padding-bottom: 95px;
     }
-    body.modalOpen{ overflow:hidden; }
-
-    /* ✅ Nuevo fondo (capa separada, safe para móvil) */
-    body::before{
-      content:""; position:fixed; inset:0;
-      background: var(--pageBg) center/cover no-repeat;
-      z-index:-3; pointer-events:none;
-      opacity: .35; /* 👈 no opaca el contenido */
-      filter: saturate(.95) contrast(1.02);
+    /* ✅ Evita jank en móvil; “fixed” solo en pantallas grandes */
+    @media (min-width: 900px){
+      body{
+        background-attachment: fixed;
+      }
     }
 
-    /* ✅ Grain / texture encima del fondo */
-    body::after{
+    body.modalOpen{ overflow:hidden; }
+
+    /* Grano leve encima (muy ligero) */
+    body::before{
       content:""; position:fixed; inset:0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
       z-index:-2; pointer-events:none; mix-blend-mode:multiply;
+      animation: dustFloat 10s ease-in-out infinite;
+    }
+
+    @keyframes dustFloat{
+      0%,100%{ transform: translate3d(0,0,0); opacity:.045; }
+      50%{ transform: translate3d(0,-6px,0); opacity:.06; }
     }
 
     .wrap{
@@ -134,25 +138,70 @@
       .miniPill{ display:none; }
     }
 
+    /* ✅ Carrito mejorado */
     .cartTrigger{
       position:relative;
       background: var(--carbon); color:#fff; border:none;
-      height:48px; padding:0 18px;
-      display:flex; align-items:center; gap:10px;
+      height:54px; padding:0 18px;
+      display:flex; align-items:center; gap:12px;
       font-family: var(--fontTitle); font-weight:700; font-size:22px;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
       cursor:pointer;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      overflow:hidden;
+      isolation:isolate;
+      transition: transform .15s ease;
     }
-    .cartIconImg{ width:28px; height:28px; filter: invert(1); object-fit:contain; }
+    .cartTrigger:hover{ transform: translateY(-1px); }
+
+    /* “Racing sweep” */
+    .cartTrigger::after{
+      content:"";
+      position:absolute; inset:-40% -30%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.22) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+      z-index:0;
+      opacity:.0;
+    }
+    .cartTrigger:hover::after{
+      animation: speedSweep .85s ease-out;
+      opacity:1;
+    }
+
+    .cartIconSvg{
+      width:36px;
+      height:36px;
+      stroke: #fff;
+      stroke-width: 2.2;
+      fill: none;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+      z-index:1;
+    }
+
     .cartCount{
-      position:absolute; top:5px; right:5px;
+      position:absolute; top:6px; right:6px;
       background: var(--red);
       font-size: 11px;
       padding: 2px 6px;
-      border-radius: 4px;
+      border-radius: 6px;
       line-height:1;
       font-weight:900;
+      z-index:1;
+    }
+
+    /* Bump al agregar */
+    .cartTrigger.bump{
+      animation: rpmPulse .28s ease-out;
+    }
+    @keyframes rpmPulse{
+      0%{ transform: scale(1); }
+      60%{ transform: scale(1.06); }
+      100%{ transform: scale(1); }
+    }
+
+    @keyframes speedSweep{
+      0%{ transform: translateX(-140%) rotate(-18deg); }
+      100%{ transform: translateX(140%) rotate(-18deg); }
     }
 
     .hero{
@@ -170,10 +219,19 @@
       position:absolute; inset:0;
       background: url('assets/hero.png') center/cover no-repeat;
       opacity:0.95;
+      transform: scale(1.03);
+      animation: heroDrift 9s ease-in-out infinite;
     }
+    @keyframes heroDrift{
+      0%,100%{ transform: scale(1.03) translate3d(0,0,0); }
+      50%{ transform: scale(1.05) translate3d(-6px, -4px, 0); }
+    }
+
     .heroOverlay{
       position:absolute; inset:0;
-      background: linear-gradient(to right, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.40) 60%, transparent 100%);
+      background:
+        linear-gradient(to right, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.40) 60%, transparent 100%),
+        radial-gradient(circle at 70% 30%, rgba(225,6,0,0.18), transparent 45%);
     }
     .heroContent{
       position:relative; z-index:2;
@@ -191,7 +249,13 @@
       margin-bottom: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       letter-spacing: .02em;
+      animation: tagIn .55s ease-out both;
     }
+    @keyframes tagIn{
+      from{ transform: translateY(10px) skew(-10deg); opacity:0; }
+      to{ transform: translateY(0) skew(-10deg); opacity:1; }
+    }
+
     .heroTitle{
       font-family: var(--fontTitle);
       font-size: 90px;
@@ -199,8 +263,14 @@
       margin:0 0 18px;
       text-transform:uppercase;
       text-shadow: 0 5px 20px rgba(0,0,0,0.6);
+      animation: titleIn .6s ease-out both;
+    }
+    @keyframes titleIn{
+      from{ transform: translateY(12px); opacity:0; }
+      to{ transform: translateY(0); opacity:1; }
     }
     .heroTitle span{ color: var(--red); }
+
     .heroSub{
       font-size: 17px;
       line-height: 1.5;
@@ -210,7 +280,13 @@
       padding-left: 18px;
       font-weight: 600;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      animation: subIn .7s ease-out both;
     }
+    @keyframes subIn{
+      from{ transform: translateY(10px); opacity:0; }
+      to{ transform: translateY(0); opacity:1; }
+    }
+
     .btnHero{
       background:#fff; color: var(--carbon);
       border:none;
@@ -222,13 +298,24 @@
       clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
       transition: transform .2s;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      position:relative;
+      overflow:hidden;
     }
     .btnHero:hover{ transform: translateY(-2px); }
+    .btnHero::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.12) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .btnHero:hover::after{ animation: speedSweep .9s ease-out; }
 
     @media (max-width: 768px){
       .hero{ align-items:flex-end; min-height: 480px; }
       .heroOverlay{
-        background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%);
+        background:
+          linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%),
+          radial-gradient(circle at 60% 25%, rgba(225,6,0,0.14), transparent 50%);
       }
       .heroTitle{ font-size: 55px; }
       .heroContent{ padding: 25px; width: 100%; }
@@ -274,6 +361,7 @@
       background: var(--charcoal);
       box-shadow: 0 10px 25px rgba(0,0,0,0.10);
       border: 1px solid rgba(0,0,0,0.06);
+      isolation:isolate;
     }
     .cardDrop:hover{
       transform: translateY(-6px);
@@ -358,6 +446,7 @@
       margin: 6px 0 0;
       line-height: 1.35;
     }
+
     .btnDrop{
       margin-top: 12px;
       background: rgba(0,0,0,0.12);
@@ -370,6 +459,8 @@
       cursor:pointer;
       transition: .2s;
       border-radius: 10px;
+      position:relative;
+      overflow:hidden;
     }
     .btnDrop:hover{
       background:#fff;
@@ -377,6 +468,13 @@
       border-color:#fff;
       transform: translateY(-1px);
     }
+    .btnDrop::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .btnDrop:hover::after{ animation: speedSweep .85s ease-out; }
 
     .sponsors{
       margin-top: 75px;
@@ -389,18 +487,23 @@
       display:flex;
       flex-wrap:wrap;
       justify-content:center;
+      align-items:center;
       gap: 34px;
       margin-top: 22px;
     }
     .spLogo{
-      height: 40px;
+      height: 38px;
+      max-width: 160px;
+      object-fit: contain;
       filter: grayscale(1);
-      transition: .3s;
+      transition: .25s ease;
       opacity: .78;
+      transform: translateZ(0);
     }
     .spLogo:hover{
       filter: grayscale(0);
       opacity: 1;
+      transform: translateY(-2px);
     }
 
     footer{
@@ -440,7 +543,7 @@
     /* === MODAL PRODUCTOS === */
     .prodModal{
       position:fixed; inset:0; z-index:2000;
-      background: rgba(240,240,240,0.98);
+      background: var(--sand);
       display:flex;
       flex-direction:column;
       transform: translateY(100%);
@@ -474,47 +577,40 @@
     }
     .pmBody{ flex:1; overflow-y:auto; padding: 20px; }
 
-    /* ✅ Separación por secciones */
-    .pmSection{
-      max-width: 1050px;
-      margin: 0 auto 18px;
-      background: rgba(255,255,255,0.60);
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 14px;
-      padding: 14px 14px 16px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-    }
-    .pmSectionTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 2px 6px 12px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      margin-bottom: 14px;
-    }
-    .pmSectionTitle h4{
-      margin:0;
-      font-family: var(--fontTitle);
-      font-size: 26px;
-      letter-spacing: .06em;
-      color:#111;
-      text-transform: uppercase;
-    }
-    .pmSectionTitle span{
-      font-size: 11px;
-      font-weight: 900;
-      color:#666;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
     .pmGrid{
       display:grid;
       grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
       gap: 18px;
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+
+    /* separador dentro del catálogo */
+    .pmDivider{
+      grid-column: 1 / -1;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .pmDivider .bar{
+      flex:1;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.12), rgba(225,6,0,0.45), rgba(0,0,0,0.12));
+      border-radius: 99px;
+    }
+    .pmDivider .label{
+      font-family: var(--fontTitle);
+      font-size: 18px;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      color:#222;
+      font-weight:700;
+      white-space:nowrap;
     }
 
     .pCard{
@@ -524,11 +620,28 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.08);
       transition:.2s;
       border: 1px solid rgba(0,0,0,0.05);
+      position:relative;
+      isolation:isolate;
     }
     .pCard:hover{
       transform: translateY(-2px);
       box-shadow: 0 12px 26px rgba(0,0,0,0.10);
     }
+
+    /* racing sheen */
+    .pCard::after{
+      content:"";
+      position:absolute; inset:-40% -35%;
+      background: linear-gradient(90deg, transparent 0%, rgba(225,6,0,.14) 40%, transparent 70%);
+      transform: translateX(-140%) rotate(-18deg);
+      pointer-events:none;
+      opacity:0;
+    }
+    .pCard:hover::after{
+      opacity:1;
+      animation: speedSweep .9s ease-out;
+    }
+
     .pImg{
       height: 220px;
       background:#e5e5e5;
@@ -550,57 +663,54 @@
       font-weight: 900;
       font-size: 12px;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color:#222;
       letter-spacing: .03em;
+      line-height:1.25;
+      min-height: 32px;
     }
 
-    /* ✅ Precio con promo */
+    /* precios con promo */
     .pPrice{
       font-family: var(--fontTitle);
-      font-size: 22px;
-      color: var(--red);
-      font-weight: 700;
       line-height: 1.05;
     }
-    .pPromoRow{
-      margin-top: 4px;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap: 8px;
-      flex-wrap:wrap;
-    }
-    .pOldPrice{
+    .pWas{
       font-family: var(--fontBody);
-      font-size: 12px;
       font-weight: 900;
+      font-size: 12px;
       color:#666;
       text-decoration: line-through;
-      text-decoration-thickness: 2px;
-      text-decoration-color: rgba(0,0,0,0.55);
-      letter-spacing: .02em;
+      letter-spacing: .03em;
     }
-    .pBadge{
-      background: rgba(225, 6, 0, 0.12);
-      border: 1px solid rgba(225, 6, 0, 0.35);
+    .pNow{
+      font-size: 24px;
       color: var(--red);
+      font-weight: 800;
+      display:flex;
+      justify-content:center;
+      align-items:baseline;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .pOff{
+      font-family: var(--fontBody);
       font-size: 10px;
       font-weight: 900;
-      padding: 4px 8px;
+      color:#fff;
+      background: var(--red);
+      padding: 3px 7px;
       border-radius: 999px;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      white-space: nowrap;
+      letter-spacing:.06em;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.18);
     }
-
     .pPrice small{
       display:block;
       font-family: var(--fontBody);
       font-weight: 900;
       font-size: 11px;
       color:#555;
-      margin-top: 4px;
+      margin-top: 6px;
       letter-spacing: .04em;
     }
 
@@ -628,6 +738,7 @@
       background: #fff;
       color:#111;
     }
+
     .pBtn{
       width:100%;
       margin-top: 10px;
@@ -641,8 +752,17 @@
       cursor:pointer;
       transition:.2s;
       border-radius: 12px;
+      position:relative;
+      overflow:hidden;
     }
     .pBtn:hover{ background: var(--red); }
+    .pBtn::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.18) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .pBtn:hover::after{ animation: speedSweep .85s ease-out; }
 
     .paybar{
       position:fixed; bottom:0; left:0; right:0; z-index:1500;
@@ -695,7 +815,16 @@
       cursor:pointer;
       clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
       white-space: nowrap;
+      position:relative;
+      overflow:hidden;
     }
+    .pbBtn::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.18) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .pbBtn:hover::after{ animation: speedSweep .85s ease-out; }
 
     .overlay{
       position:fixed; inset:0;
@@ -828,7 +957,16 @@
       font-weight: 900;
       cursor:pointer;
       white-space: nowrap;
+      position:relative;
+      overflow:hidden;
     }
+    .shipBtn::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.18) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .shipBtn:hover::after{ animation: speedSweep .85s ease-out; }
 
     .dfBtn{
       width:100%;
@@ -841,8 +979,17 @@
       cursor:pointer;
       clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%);
       margin-top: 12px;
+      position:relative;
+      overflow:hidden;
     }
     .dfBtn:disabled{ opacity: .55; cursor: not-allowed; }
+    .dfBtn::after{
+      content:"";
+      position:absolute; inset:-60% -40%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.14) 40%, transparent 70%);
+      transform: translateX(-120%) rotate(-18deg);
+    }
+    .dfBtn:hover::after{ animation: speedSweep .85s ease-out; }
 
     .clearLink{
       display:block;
@@ -954,6 +1101,12 @@
       cursor:pointer;
       white-space: nowrap;
     }
+
+    /* ✅ Respeta accesibilidad / rendimiento */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      body::before{ opacity: .04; }
+    }
   </style>
 </head>
 
@@ -973,14 +1126,18 @@
   <header class="topbar">
     <div class="topInner">
       <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
-        <img src="assets/logo-score.png" alt="SCORE" loading="eager" fetchpriority="high" decoding="async">
+        <img src="assets/logo-score.png" alt="SCORE" loading="eager" decoding="async">
       </a>
 
       <div class="navRight">
         <div class="miniPill" title="México">ENVÍOS MX</div>
 
-        <button class="cartTrigger" onclick="toggleCart()" aria-label="Abrir carrito">
-          <img src="assets/Icono-carrito-compra.png" class="cartIconImg" alt="Carrito" loading="lazy" decoding="async" onerror="this.style.display='none'">
+        <button class="cartTrigger" id="cartTrigger" onclick="toggleCart()" aria-label="Abrir carrito">
+          <!-- ✅ Nuevo ícono pro -->
+          <svg class="cartIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6.5 6h14l-1.6 7.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.1 3.8A1.5 1.5 0 0 0 3.6 2.6H2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="cartCount" id="cartCount">0</span>
         </button>
       </div>
@@ -1071,11 +1228,10 @@
         OFFICIAL PARTNERS
       </div>
       <div class="spGrid">
-        <!-- ✅ Los que se ven en tu repo / capturas -->
-        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <!-- (Si subes más, solo los agregamos aquí. Si falta alguno, se oculta sin romper) -->
+        <img src="assets/logo-unico.png" class="spLogo" alt="Único Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async">
       </div>
     </section>
   </main>
@@ -1137,504 +1293,512 @@
     </div>
 
     <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
-      <div class="sumRow"><span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong></div>
-      <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
-      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
+  <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
+  <div class="sumRow"><span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong></div>
+  <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
+  <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
 
-      <div class="shipBox">
-        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          Envío (México)
-        </div>
-        <div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
-          Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
-        </div>
-        <div class="shipRow">
-          <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
-          <button class="shipBtn" onclick="quoteShipping()">Calcular</button>
-        </div>
-        <div style="margin-top:8px; font-size:11px; color:#666; font-weight:900;" id="shipNote"></div>
-      </div>
-
-      <button class="dfBtn" id="payBtn" onclick="goCheckout()">IR A PAGAR</button>
-      <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
-
-      <div style="margin-top:10px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
-        Pago seguro con Stripe. Inventario limitado.
-      </div>
+  <div class="shipBox">
+    <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
+      Envío (México)
     </div>
-  </aside>
-
-  <div class="prodModal" id="pmB1000" aria-label="Colección Baja 1000">
-    <div class="pmHead">
-      <div class="pmTitle">COLECCIÓN BAJA 1000</div>
-      <button class="pmClose" onclick="closeProductModal()" aria-label="Cerrar">&times;</button>
+    <div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
+      Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
     </div>
-
-    <div class="pmBody">
-      <!-- ✅ Secciones: 2025 / Otras -->
-      <div class="pmSection">
-        <div class="pmSectionTitle">
-          <h4>EDICIÓN 2025</h4>
-          <span>Drop principal</span>
-        </div>
-        <div class="pmGrid" id="pmGridB1000_2025"></div>
-      </div>
-
-      <div class="pmSection">
-        <div class="pmSectionTitle">
-          <h4>OTRAS EDICIONES</h4>
-          <span>Merch adicional</span>
-        </div>
-        <div class="pmGrid" id="pmGridB1000_OTRAS"></div>
-      </div>
+    <div class="shipRow">
+      <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
+      <button class="shipBtn" onclick="quoteShipping()">Calcular</button>
     </div>
+    <div style="margin-top:8px; font-size:11px; color:#666; font-weight:900;" id="shipNote"></div>
   </div>
 
-  <div class="legalBox" id="legalBox" role="dialog" aria-modal="true">
-    <h3 id="lbTitle"></h3>
-    <div id="lbBody"></div>
-    <button onclick="closeOverlay()" style="background:#000; color:#fff; border:none; padding:12px; width:100%; cursor:pointer; font-weight:900; margin-top:14px; border-radius:12px;">
-      CERRAR
-    </button>
+  <button class="dfBtn" id="payBtn" onclick="goCheckout()">IR A PAGAR</button>
+  <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
+
+  <div style="margin-top:10px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
+    Pago seguro con Stripe. Inventario limitado.
+  </div>
+</div>
+</aside>
+
+<div class="prodModal" id="pmB1000" aria-label="Colección Baja 1000">
+  <div class="pmHead">
+    <div class="pmTitle">COLECCIÓN BAJA 1000</div>
+    <button class="pmClose" onclick="closeProductModal()" aria-label="Cerrar">&times;</button>
   </div>
 
-  <script>
-    const FX_MXN_PER_USD = 17.50;
+  <div class="pmBody">
+    <div class="pmGrid" id="pmGridB1000"></div>
+  </div>
+</div>
 
-    const API_CHECKOUT = '/.netlify/functions/create_checkout';
-    const API_SHIPPING = '/.netlify/functions/quote_shipping';
+<div class="legalBox" id="legalBox" role="dialog" aria-modal="true">
+  <h3 id="lbTitle"></h3>
+  <div id="lbBody"></div>
+  <button onclick="closeOverlay()" style="background:#000; color:#fff; border:none; padding:12px; width:100%; cursor:pointer; font-weight:900; margin-top:14px; border-radius:12px;">
+    CERRAR
+  </button>
+</div>
 
-    // ✅ Ajustado a tu repo actual
-    const PATH_ED2025 = "assets/EDICION_2025/";
-    const PATH_OTRAS  = "assets/OTRAS_EDICIONES/";
+<script>
+  const FX_MXN_PER_USD = 17.50;
 
-    // ✅ Regla PROMO: mostrar un "precio original" +30% tachado y etiqueta -30%
-    // (Mantiene tu precio base como el precio visible principal)
-    function promoOldPriceFromBase(baseMXN){
-      return Math.round(Number(baseMXN || 0) * 1.30);
-    }
+  const API_CHECKOUT = '/.netlify/functions/create_checkout';
+  const API_SHIPPING = '/.netlify/functions/quote_shipping';
 
-    // ✅ Chamarra: base 1800, "precio original" +10% (tachado)
-    const JACKET_BASE = 1800;
-    const JACKET_OLD  = Math.round(JACKET_BASE * 1.10); // 1980
+  const PATH_ED2025 = "assets/EDICION_2025/";
+  const PATH_OTRAS  = "assets/OTRAS_EDICIONES/";
 
-    const PRODUCTS_2025 = [
-      { id:"b1000_pits",        name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989,  oldMXN: promoOldPriceFromBase(989),  img: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
-      { id:"b1000_tee_azul",    name:"Camiseta Baja 1000 · Azul",               priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
-      { id:"b1000_tee_cafe",    name:"Camiseta Baja 1000 · Café",               priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
-      { id:"b1000_tee_negra",   name:"Camiseta Baja 1000 · Negra",              priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
+  // ====== PRECIOS: +30% original (tachado) y -30% promo ======
+  const DISCOUNT_PCT = 0.30;
+  const MARKUP_PCT   = 0.30;
 
-      // ✅ Chamarra faltante
-      { id:"b1000_jacket",      name:"Chamarra Baja 1000 · Edición 2025",       priceMXN: JACKET_BASE, oldMXN: JACKET_OLD,            img: `${PATH_ED2025}chamarra-baja1000.jpg` },
+  function calcWas(mxn){
+    const base = Number(mxn || 0);
+    return Math.round(base * (1 + MARKUP_PCT));
+  }
+  function calcNowFromWas(was){
+    const w = Number(was || 0);
+    return Math.round(w * (1 - DISCOUNT_PCT));
+  }
 
-      { id:"world_desert_cafe", name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
-      { id:"world_desert_negra",name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
-    ];
+  // ====== PRODUCTOS (Edición 2025 vs Otras) ======
+  const PRODUCTS_ED2025 = [
+    { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000", baseMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
 
-    const PRODUCTS_OTRAS = [
-      { id:"world_desert_roja", name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
-      { id:"world_desert_rosa", name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
-    ];
+    { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",          baseMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
+    { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",          baseMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
+    { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",         baseMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
 
-    // Para carrito/checkout usamos un solo catálogo combinado:
-    const PRODUCTS_B1000 = [...PRODUCTS_2025, ...PRODUCTS_OTRAS];
+    // ✅ CHAMARRA agregada:
+    // Precio base real: 1800
+    // Precio original mostrado: 1980 (1800 +10%)
+    // Precio promo: 1386 (1980 -30%)
+    { id:"b1000_jacket",       name:"Chamarra Baja 1000 · Edición 2025",   wasMXN: 1980, img: `${PATH_ED2025}chamarra-baja1000.jpg` },
 
-    const SIZES = ["S","M","L","XL","2XL"];
+    { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",  baseMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
+    { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)", baseMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
+  ];
 
-    const LS_KEY = 'score_cart_v2';
-    let cart = JSON.parse(localStorage.getItem(LS_KEY)) || [];
+  const PRODUCTS_OTRAS = [
+    { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)", baseMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
+    { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)", baseMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
+  ];
 
-    let shippingMXN = 0;
-    let shippingQuoted = false;
+  // Unifica para búsquedas / carrito
+  const PRODUCTS_B1000 = [...PRODUCTS_ED2025, ...PRODUCTS_OTRAS];
 
-    function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
-    function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
-    function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
+  const SIZES = ["S","M","L","XL","2XL"];
+  const LS_KEY = 'score_cart_v2';
+  let cart = JSON.parse(localStorage.getItem(LS_KEY)) || [];
 
-    function escapeHtml(str){
-      return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-    }
+  let shippingMXN = 0;
+  let shippingQuoted = false;
 
-    function toast(msg){
-      const el = document.getElementById("toast");
-      el.textContent = msg;
-      el.classList.add("show");
-      clearTimeout(window.__toastTimer);
-      window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2600);
-    }
+  function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
+  function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
+  function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
 
-    function showStatusBanner(title, text){
-      const b = document.getElementById("statusBanner");
-      document.getElementById("sbTitle").textContent = title;
-      document.getElementById("sbText").textContent = text;
-      b.classList.add("show");
-    }
-    function hideStatusBanner(){
-      document.getElementById("statusBanner").classList.remove("show");
-      try{
-        const url = new URL(window.location.href);
-        url.searchParams.delete("status");
-        window.history.replaceState({}, "", url.toString());
-      }catch(e){}
-    }
+  function escapeHtml(str){
+    return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
 
-    function notifyDrop(dropName){
-      const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
-      const body = encodeURIComponent(
-        `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
-        `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
-      );
-      window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
-    }
+  function toast(msg){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2600);
+  }
 
-    const overlay = document.getElementById('globalOverlay');
-    const drawer  = document.getElementById('cartDrawer');
-    const legal   = document.getElementById('legalBox');
-    const pb      = document.getElementById('paybar');
+  function showStatusBanner(title, text){
+    const b = document.getElementById("statusBanner");
+    document.getElementById("sbTitle").textContent = title;
+    document.getElementById("sbText").textContent = text;
+    b.classList.add("show");
+  }
+  function hideStatusBanner(){
+    document.getElementById("statusBanner").classList.remove("show");
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.delete("status");
+      window.history.replaceState({}, "", url.toString());
+    }catch(e){}
+  }
 
-    function closeOverlay(){
-      overlay.classList.remove('active');
-      drawer.classList.remove('active');
-      legal.classList.remove('active');
-      closeProductModal();
-      document.body.classList.remove("modalOpen");
-    }
-    overlay.addEventListener('click', closeOverlay);
+  function notifyDrop(dropName){
+    const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
+    const body = encodeURIComponent(
+      `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
+      `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
+    );
+    window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
+  }
 
-    function productNeedsSize(name){
-      return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(name);
-    }
+  const overlay = document.getElementById('globalOverlay');
+  const drawer  = document.getElementById('cartDrawer');
+  const legal   = document.getElementById('legalBox');
+  const pb      = document.getElementById('paybar');
 
-    function renderProductsGrid(list, gridId){
-      const grid = document.getElementById(gridId);
-      grid.innerHTML = list.map(p => {
-        const usd = mxnToUsd(p.priceMXN);
-        const old = Number(p.oldMXN || 0);
-        const oldUsd = mxnToUsd(old);
-        const needsSize = productNeedsSize(p.name);
+  function closeOverlay(){
+    overlay.classList.remove('active');
+    drawer.classList.remove('active');
+    legal.classList.remove('active');
+    closeProductModal();
+    document.body.classList.remove("modalOpen");
+  }
+  overlay.addEventListener('click', closeOverlay);
 
-        return `
-          <div class="pCard">
-            <div class="pImg">
-              <img
-                src="${p.img}"
-                alt="${escapeHtml(p.name)}"
-                loading="lazy"
-                decoding="async"
-              >
+  function productPricing(p){
+    // Si viene wasMXN fijo (caso chamarra), úsalo tal cual
+    const was = typeof p.wasMXN === "number" ? p.wasMXN : calcWas(p.baseMXN);
+    const now = calcNowFromWas(was);
+    return { was, now };
+  }
+
+  function pmDivider(label){
+    return `
+      <div class="pmDivider" aria-hidden="true">
+        <div class="bar"></div>
+        <div class="label">${escapeHtml(label)}</div>
+        <div class="bar"></div>
+      </div>
+    `;
+  }
+
+  function cardTpl(p){
+    const { was, now } = productPricing(p);
+    const usd = mxnToUsd(now);
+    const needsSize = /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(p.name);
+
+    return `
+      <div class="pCard">
+        <div class="pImg">
+          <img src="${p.img}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+        </div>
+        <div class="pInfo">
+          <div class="pName">${escapeHtml(p.name)}</div>
+
+          <div class="pPrice">
+            <div class="pWas">${moneyMXN(was)} MXN</div>
+            <div class="pNow">
+              ${moneyMXN(now)} MXN <span class="pOff">-30%</span>
             </div>
-            <div class="pInfo">
-              <div class="pName">${escapeHtml(p.name)}</div>
-
-              <div class="pPrice">${moneyMXN(p.priceMXN)}
-                <small>${moneyUSD(usd)} USD</small>
-
-                <div class="pPromoRow">
-                  ${old ? `<span class="pOldPrice">${moneyMXN(old)} · ${moneyUSD(oldUsd)}</span>` : ``}
-                  <span class="pBadge">-30% OFF</span>
-                </div>
-              </div>
-
-              ${needsSize ? `
-                <div class="sizeRow">
-                  <label for="size_${p.id}">Talla</label>
-                  <select class="sizeSelect" id="size_${p.id}">
-                    ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
-                  </select>
-                </div>
-              ` : ``}
-
-              <button class="pBtn" onclick="addToCart('${p.id}')">AGREGAR</button>
-            </div>
+            <small>${moneyUSD(usd)} USD</small>
           </div>
-        `;
-      }).join("");
-    }
 
-    function renderProductsB1000(){
-      renderProductsGrid(PRODUCTS_2025, "pmGridB1000_2025");
-      renderProductsGrid(PRODUCTS_OTRAS, "pmGridB1000_OTRAS");
-    }
-
-    function openProductModal(id){
-      if(id === 'b1000'){
-        renderProductsB1000();
-        document.getElementById('pmB1000').classList.add('active');
-        overlay.classList.add('active');
-        document.body.classList.add("modalOpen");
-      }
-    }
-    function closeProductModal(){
-      document.querySelectorAll('.prodModal').forEach(el => el.classList.remove('active'));
-    }
-
-    function toggleCart(){
-      if(drawer.classList.contains('active')) closeOverlay();
-      else {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
-        document.body.classList.add("modalOpen");
-        updateCartUI();
-      }
-    }
-
-    function addToCart(productId){
-      const p = PRODUCTS_B1000.find(x => x.id === productId);
-      if(!p) return;
-
-      const sizeEl = document.getElementById(`size_${productId}`);
-      const size = sizeEl ? sizeEl.value : "ÚNICA";
-
-      const key = `${p.id}_${size}`;
-      const exist = cart.find(i => i.key === key);
-
-      if(exist) exist.qty++;
-      else cart.push({
-        key,
-        id: p.id,
-        name: p.name,
-        img: p.img,
-        size,
-        priceMXN: p.priceMXN,
-        qty: 1
-      });
-
-      saveCart();
-      updateCartUI();
-      toast("Agregado al carrito");
-    }
-
-    function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
-
-    function cartSubtotalMXN(){
-      return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0);
-    }
-
-    function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
-
-    function rem(idx){
-      cart.splice(idx,1);
-      saveCart();
-      updateCartUI();
-      toast("Producto eliminado");
-    }
-
-    function clearCart(){
-      if(confirm('¿Vaciar carrito?')){
-        cart = [];
-        shippingMXN = 0;
-        shippingQuoted = false;
-        document.getElementById("shipNote").textContent = "";
-        saveCart();
-        updateCartUI();
-        toast("Carrito vacío");
-      }
-    }
-
-    function updateCartUI(){
-      const subtotal = cartSubtotalMXN();
-      const totalMXN = subtotal + (shippingMXN || 0);
-      const totalUSD = mxnToUsd(totalMXN);
-
-      document.getElementById('cartCount').innerText = cartCount();
-
-      document.getElementById('pbTotal').innerHTML = `
-        ${moneyMXN(totalMXN)}
-        <small>${moneyUSD(totalUSD)} USD</small>
-      `;
-
-      document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
-      document.getElementById("shipTotalLine").textContent = moneyMXN(shippingMXN || 0);
-      document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
-      document.getElementById("usdTotalLine").textContent = `${moneyUSD(totalUSD)} USD`;
-
-      if(totalMXN > 0) pb.classList.add('visible');
-      else pb.classList.remove('visible');
-
-      const payBtn = document.getElementById("payBtn");
-      payBtn.disabled = cart.length === 0;
-
-      const body = document.getElementById('cartBody');
-      if(cart.length === 0){
-        body.innerHTML = "<div class='cartEmpty'>TU CARRITO ESTÁ VACÍO.</div>";
-      } else {
-        body.innerHTML = cart.map((i, idx) => {
-          const lineMXN = (i.priceMXN * i.qty);
-          const lineUSD = mxnToUsd(lineMXN);
-          return `
-            <div class="cItem">
-              <img src="${i.img}" class="cImg"
-                   alt="${escapeHtml(i.name)}" loading="lazy" decoding="async">
-              <div style="flex:1">
-                <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
-                <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
-                <div class="cPrice">${moneyMXN(lineMXN)} <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span></div>
-              </div>
-              <button onclick="rem(${idx})" style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
+          ${needsSize ? `
+            <div class="sizeRow">
+              <label for="size_${p.id}">Talla</label>
+              <select class="sizeSelect" id="size_${p.id}">
+                ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
+              </select>
             </div>
-          `;
-        }).join('');
-      }
-    }
+          ` : ``}
 
-    /* ✅ Sanitiza notas para que nunca salga HTML crudo de Envia */
-    function safeNote(str){
-      const s = String(str || "").trim();
-      if(!s) return "";
-      const lower = s.toLowerCase();
-      if (s.includes("<") || lower.includes("<!doctype") || lower.includes("<html") || lower.includes("doctype html")) {
-        return "No se pudo cotizar en este momento. Intenta de nuevo en unos minutos.";
-      }
-      if (s.length > 140) return s.slice(0, 140) + "…";
-      return s;
-    }
+          <button class="pBtn" onclick="addToCart('${p.id}')">AGREGAR</button>
+        </div>
+      </div>
+    `;
+  }
 
-    async function quoteShipping(){
-      const zip = (document.getElementById("zipInput").value || "").trim();
-      const note = document.getElementById("shipNote");
+  function renderProductsB1000(){
+    const grid = document.getElementById("pmGridB1000");
+    grid.innerHTML =
+      pmDivider("Edición 2025") +
+      PRODUCTS_ED2025.map(cardTpl).join("") +
+      pmDivider("Otras ediciones") +
+      PRODUCTS_OTRAS.map(cardTpl).join("");
+  }
 
-      if(!/^\d{5}$/.test(zip)){
-        note.textContent = "Pon un C.P. válido de 5 dígitos.";
-        return;
-      }
-      if(cart.length === 0){
-        note.textContent = "Primero agrega productos al carrito.";
-        return;
-      }
-
-      note.textContent = "Calculando envío…";
-
-      try{
-        const res = await fetch(API_SHIPPING, {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({
-            zip,
-            items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty }))
-          })
-        });
-
-        const data = await res.json().catch(()=> ({}));
-
-        if(res.ok && typeof data.mxn === "number"){
-          shippingMXN = Math.max(0, Math.round(data.mxn));
-          shippingQuoted = true;
-
-          const n = safeNote(data.note);
-          note.textContent = n || "Envío estimado aplicado al total.";
-          updateCartUI();
-        } else {
-          const err = safeNote((data && data.error) ? data.error : "");
-          note.textContent = err || "No se pudo cotizar el envío.";
-        }
-      }catch(e){
-        note.textContent = "Error de conexión. Revisa Netlify Functions.";
-      }
-    }
-
-    async function goCheckout(){
-      if(cart.length === 0) return;
-
-      const btn = document.getElementById("payBtn");
-      btn.innerText = "PROCESANDO...";
-      btn.disabled = true;
-
-      try{
-        const res = await fetch(API_CHECKOUT, {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({
-            items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty })),
-            shippingMXN: shippingMXN || 0,
-            fx: FX_MXN_PER_USD,
-            meta: {
-              source: "score_store",
-              shippingQuoted: shippingQuoted,
-              zip: (document.getElementById("zipInput").value || "").trim()
-            }
-          })
-        });
-
-        const data = await res.json().catch(()=> ({}));
-
-        if(res.ok && data && data.url){
-          window.location.href = data.url;
-          return;
-        }
-
-        toast("Error iniciando pago. Revisa create_checkout.");
-      }catch(e){
-        toast("Error de conexión. Revisa Netlify Functions.");
-      }finally{
-        btn.innerText = "IR A PAGAR";
-        btn.disabled = cart.length === 0;
-      }
-    }
-
-    function showLegal(t){
-      const titleMap = {
-        terms: "Términos y condiciones",
-        privacy: "Aviso de privacidad",
-        shipping: "Envíos y entregas",
-        returns: "Cambios y devoluciones",
-        fiscal: "Facturación",
-        cookies: "Cookies"
-      };
-
-      const bodyMap = {
-        terms: `
-          <p><b>ÚNICO UNIFORMES</b> opera esta tienda como fabricante y patrocinador oficial de productos físicos.</p>
-          <p><b>Disponibilidad:</b> inventario limitado. Tu compra queda confirmada cuando el pago sea aprobado.</p>
-          <p><b>Precios:</b> se muestran en MXN y referencia en USD (tipo de cambio informativo: <b>${FX_MXN_PER_USD} MXN/USD</b>). El cobro se procesa en MXN.</p>
-          <p><b>Pagos:</b> Stripe. No almacenamos datos bancarios en este sitio.</p>
-          <p><b>Soporte:</b> <b>ventas.unicotextil@gmail.com</b> / WhatsApp <b>664 236 8701</b>.</p>
-        `,
-        privacy: `
-          <p><b>Responsable:</b> <b>ÚNICO UNIFORMES</b>.</p>
-          <p><b>Datos:</b> contacto y envío (nombre, teléfono, correo, domicilio), info de compra (artículos, montos, estado del pago) y datos fiscales si facturas.</p>
-          <p><b>Finalidades:</b> procesar compras, generar envíos, soporte, prevención de fraude y facturación.</p>
-          <p><b>Proveedores:</b> pago (Stripe) y logística (Envia.com).</p>
-          <p><b>Contacto:</b> ventas.unicotextil@gmail.com.</p>
-        `,
-        shipping: `
-          <p><b>Alcance:</b> Envíos dentro de México.</p>
-          <p><b>Cotización:</b> se calcula vía Envia.com (backend). Puede variar por C.P. y paquetería.</p>
-          <p><b>Rastreo:</b> se compartirá el número de guía cuando el pedido esté listo.</p>
-        `,
-        returns: `
-          <p><b>Defecto/daño:</b> reportar dentro de <b>7 días naturales</b> con fotos y número de pedido.</p>
-          <p><b>Cambios:</b> por talla sujetos a disponibilidad. Envíos pueden aplicar.</p>
-        `,
-        fiscal: `
-          <p><b>CFDI:</b> envía tu constancia fiscal y número de pedido a <b>ventas.unicotextil@gmail.com</b>.</p>
-          <p>Solicitar dentro del mismo mes de compra.</p>
-        `,
-        cookies: `
-          <p>Usamos almacenamiento local para el carrito.</p>
-          <p>Puedes borrarlo desde tu navegador.</p>
-        `
-      };
-
-      document.getElementById('lbTitle').innerText = titleMap[t] || "LEGAL";
-      document.getElementById('lbBody').innerHTML = bodyMap[t] || "<p>Contenido no disponible.</p>";
+  function openProductModal(id){
+    if(id === 'b1000'){
+      renderProductsB1000();
+      document.getElementById('pmB1000').classList.add('active');
       overlay.classList.add('active');
-      legal.classList.add('active');
       document.body.classList.add("modalOpen");
     }
+  }
+  function closeProductModal(){
+    document.querySelectorAll('.prodModal').forEach(el => el.classList.remove('active'));
+  }
 
+  function toggleCart(){
+    if(drawer.classList.contains('active')) closeOverlay();
+    else {
+      overlay.classList.add('active');
+      drawer.classList.add('active');
+      document.body.classList.add("modalOpen");
+      updateCartUI();
+    }
+  }
+
+  function bumpCart(){
+    const btn = document.getElementById("cartTrigger");
+    if(!btn) return;
+    btn.classList.remove("bump");
+    void btn.offsetWidth;
+    btn.classList.add("bump");
+  }
+
+  function addToCart(productId){
+    const p = PRODUCTS_B1000.find(x => x.id === productId);
+    if(!p) return;
+
+    const { was, now } = productPricing(p);
+
+    const sizeEl = document.getElementById(`size_${productId}`);
+    const size = sizeEl ? sizeEl.value : "ÚNICA";
+
+    const key = `${p.id}_${size}`;
+    const exist = cart.find(i => i.key === key);
+
+    if(exist) exist.qty++;
+    else cart.push({
+      key,
+      id: p.id,
+      name: p.name,
+      img: p.img,
+      size,
+      priceMXN: now,   // ✅ se cobra el precio promo
+      wasMXN: was,     // ✅ guardamos original para mostrarlo si quieres después
+      qty: 1
+    });
+
+    saveCart();
     updateCartUI();
+    bumpCart();
+    toast("Agregado al carrito (-30%)");
+  }
 
-    (function initStatus(){
-      try{
-        const st = new URLSearchParams(window.location.search).get("status");
-        if(st === "success"){
-          showStatusBanner("✅ Compra confirmada", "Pago recibido. Si pagaste en OXXO, puede tardar en reflejarse según Stripe.");
-        } else if(st === "cancel"){
-          showStatusBanner("⚠️ Pago cancelado", "No se realizó el cobro. Puedes intentarlo de nuevo cuando quieras.");
-        }
-      }catch(e){}
-    })();
-  </script>
+  function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
+
+  function cartSubtotalMXN(){
+    return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0);
+  }
+
+  function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
+
+  function rem(idx){
+    cart.splice(idx,1);
+    saveCart();
+    updateCartUI();
+    toast("Producto eliminado");
+  }
+
+  function clearCart(){
+    if(confirm('¿Vaciar carrito?')){
+      cart = [];
+      shippingMXN = 0;
+      shippingQuoted = false;
+      document.getElementById("shipNote").textContent = "";
+      saveCart();
+      updateCartUI();
+      toast("Carrito vacío");
+    }
+  }
+
+  function updateCartUI(){
+    const subtotal = cartSubtotalMXN();
+    const totalMXN = subtotal + (shippingMXN || 0);
+    const totalUSD = mxnToUsd(totalMXN);
+
+    document.getElementById('cartCount').innerText = cartCount();
+
+    document.getElementById('pbTotal').innerHTML = `
+      ${moneyMXN(totalMXN)}
+      <small>${moneyUSD(totalUSD)} USD</small>
+    `;
+
+    document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
+    document.getElementById("shipTotalLine").textContent = moneyMXN(shippingMXN || 0);
+    document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
+    document.getElementById("usdTotalLine").textContent = `${moneyUSD(totalUSD)} USD`;
+
+    if(totalMXN > 0) pb.classList.add('visible');
+    else pb.classList.remove('visible');
+
+    const payBtn = document.getElementById("payBtn");
+    payBtn.disabled = cart.length === 0;
+
+    const body = document.getElementById('cartBody');
+    if(cart.length === 0){
+      body.innerHTML = "<div class='cartEmpty'>TU CARRITO ESTÁ VACÍO.</div>";
+    } else {
+      body.innerHTML = cart.map((i, idx) => {
+        const lineMXN = (i.priceMXN * i.qty);
+        const lineUSD = mxnToUsd(lineMXN);
+        return `
+          <div class="cItem">
+            <img src="${i.img}" class="cImg" alt="${escapeHtml(i.name)}" loading="lazy" decoding="async">
+            <div style="flex:1">
+              <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
+              <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
+              <div class="cPrice">${moneyMXN(lineMXN)} <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span></div>
+            </div>
+            <button onclick="rem(${idx})" style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function safeNote(str){
+    const s = String(str || "").trim();
+    if(!s) return "";
+    const lower = s.toLowerCase();
+    if (s.includes("<") || lower.includes("<!doctype") || lower.includes("<html") || lower.includes("doctype html")) {
+      return "No se pudo cotizar en este momento. Intenta de nuevo en unos minutos.";
+    }
+    if (s.length > 140) return s.slice(0, 140) + "…";
+    return s;
+  }
+
+  async function quoteShipping(){
+    const zip = (document.getElementById("zipInput").value || "").trim();
+    const note = document.getElementById("shipNote");
+
+    if(!/^\d{5}$/.test(zip)){
+      note.textContent = "Pon un C.P. válido de 5 dígitos.";
+      return;
+    }
+    if(cart.length === 0){
+      note.textContent = "Primero agrega productos al carrito.";
+      return;
+    }
+
+    note.textContent = "Calculando envío…";
+
+    try{
+      const res = await fetch(API_SHIPPING, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({
+          zip,
+          items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty }))
+        })
+      });
+
+      const data = await res.json().catch(()=> ({}));
+
+      if(res.ok && typeof data.mxn === "number"){
+        shippingMXN = Math.max(0, Math.round(data.mxn));
+        shippingQuoted = true;
+
+        const n = safeNote(data.note);
+        note.textContent = n || "Envío estimado aplicado al total.";
+        updateCartUI();
+      } else {
+        const err = safeNote((data && data.error) ? data.error : "");
+        note.textContent = err || "No se pudo cotizar el envío.";
+      }
+    }catch(e){
+      note.textContent = "Error de conexión. Revisa Netlify Functions.";
+    }
+  }
+
+  async function goCheckout(){
+    if(cart.length === 0) return;
+
+    const btn = document.getElementById("payBtn");
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
+
+    try{
+      const res = await fetch(API_CHECKOUT, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({
+          items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty })),
+          shippingMXN: shippingMXN || 0,
+          fx: FX_MXN_PER_USD,
+          meta: {
+            source: "score_store",
+            shippingQuoted: shippingQuoted,
+            zip: (document.getElementById("zipInput").value || "").trim()
+          }
+        })
+      });
+
+      const data = await res.json().catch(()=> ({}));
+
+      if(res.ok && data && data.url){
+        window.location.href = data.url;
+        return;
+      }
+
+      toast("Error iniciando pago. Revisa create_checkout.");
+    }catch(e){
+      toast("Error de conexión. Revisa Netlify Functions.");
+    }finally{
+      btn.innerText = "IR A PAGAR";
+      btn.disabled = cart.length === 0;
+    }
+  }
+
+  function showLegal(t){
+    const titleMap = {
+      terms: "Términos y condiciones",
+      privacy: "Aviso de privacidad",
+      shipping: "Envíos y entregas",
+      returns: "Cambios y devoluciones",
+      fiscal: "Facturación",
+      cookies: "Cookies"
+    };
+
+    const bodyMap = {
+      terms: `
+        <p><b>ÚNICO UNIFORMES</b> opera esta tienda como fabricante y patrocinador oficial de productos físicos.</p>
+        <p><b>Disponibilidad:</b> inventario limitado. Tu compra queda confirmada cuando el pago sea aprobado.</p>
+        <p><b>Precios:</b> se muestran en MXN y referencia en USD (tipo de cambio informativo: <b>${FX_MXN_PER_USD} MXN/USD</b>). El cobro se procesa en MXN.</p>
+        <p><b>Pagos:</b> Stripe. No almacenamos datos bancarios en este sitio.</p>
+        <p><b>Soporte:</b> <b>ventas.unicotextil@gmail.com</b> / WhatsApp <b>664 236 8701</b>.</p>
+      `,
+      privacy: `
+        <p><b>Responsable:</b> <b>ÚNICO UNIFORMES</b>.</p>
+        <p><b>Datos:</b> contacto y envío (nombre, teléfono, correo, domicilio), info de compra (artículos, montos, estado del pago) y datos fiscales si facturas.</p>
+        <p><b>Finalidades:</b> procesar compras, generar envíos, soporte, prevención de fraude y facturación.</p>
+        <p><b>Proveedores:</b> pago (Stripe) y logística (Envia.com).</p>
+        <p><b>Contacto:</b> ventas.unicotextil@gmail.com.</p>
+      `,
+      shipping: `
+        <p><b>Alcance:</b> Envíos dentro de México.</p>
+        <p><b>Cotización:</b> se calcula vía Envia.com (backend). Puede variar por C.P. y paquetería.</p>
+        <p><b>Rastreo:</b> se compartirá el número de guía cuando el pedido esté listo.</p>
+      `,
+      returns: `
+        <p><b>Defecto/daño:</b> reportar dentro de <b>7 días naturales</b> con fotos y número de pedido.</p>
+        <p><b>Cambios:</b> por talla sujetos a disponibilidad. Envíos pueden aplicar.</p>
+      `,
+      fiscal: `
+        <p><b>CFDI:</b> envía tu constancia fiscal y número de pedido a <b>ventas.unicotextil@gmail.com</b>.</p>
+        <p>Solicitar dentro del mismo mes de compra.</p>
+      `,
+      cookies: `
+        <p>Usamos almacenamiento local para el carrito.</p>
+        <p>Puedes borrarlo desde tu navegador.</p>
+      `
+    };
+
+    document.getElementById('lbTitle').innerText = titleMap[t] || "LEGAL";
+    document.getElementById('lbBody').innerHTML = bodyMap[t] || "<p>Contenido no disponible.</p>";
+    overlay.classList.add('active');
+    legal.classList.add('active');
+    document.body.classList.add("modalOpen");
+  }
+
+  updateCartUI();
+
+  (function initStatus(){
+    try{
+      const st = new URLSearchParams(window.location.search).get("status");
+      if(st === "success"){
+        showStatusBanner("✅ Compra confirmada", "Pago recibido. Si pagaste en OXXO, puede tardar en reflejarse según Stripe.");
+      } else if(st === "cancel"){
+        showStatusBanner("⚠️ Pago cancelado", "No se realizó el cobro. Puedes intentarlo de nuevo cuando quieras.");
+      }
+    }catch(e){}
+  })();
+</script>
 </body>
 </html>
