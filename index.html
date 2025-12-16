@@ -876,7 +876,7 @@
 
   <header class="topbar">
     <div class="topInner">
-      <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
+      <a href="./" class="brandLogo" aria-label="SCORE Official Baja Gear">
         <img src="assets/logo-score.png" alt="SCORE" loading="eager">
       </a>
 
@@ -1050,10 +1050,12 @@
         <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
           Envío (México)
         </div>
-        <div
-<div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
+
+        <!-- ✅ FIX: aquí estaba el <div roto -->
+        <div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
           Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
         </div>
+
         <div class="shipRow">
           <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
           <button class="shipBtn" onclick="quoteShipping()">Calcular</button>
@@ -1095,9 +1097,9 @@
     const API_CHECKOUT = '/.netlify/functions/create_checkout';
     const API_SHIPPING = '/.netlify/functions/quote_shipping';
 
-    // ✅ Paths en TrebEdit (espacios => %20)
-    const PATH_ED2025 = "assets/BAJA100/EDICION%202025/";
-    const PATH_OTRAS  = "assets/BAJA100/OTRAS%20EDICIONES/";
+    // ✅ RUTAS REALES (según tu repo)
+    const PATH_ED2025 = "assets/EDICION_2025/";
+    const PATH_OTRAS  = "assets/OTRAS_EDICIONES/";
 
     function applyImgFallback(imgEl){
       try{
@@ -1107,18 +1109,17 @@
     }
 
     const PRODUCTS_B1000 = [
-      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg`, fallback: `assets/BAJA100/EDICION 2025/camisa-pits-baja1000.jpg` },
+      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg`, fallback: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
 
-      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-azul.jpg` },
-      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-cafe.jpg` },
-      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg`, fallback: `assets/BAJA100/EDICION 2025/camiseta-baja1000-negra.jpg` },
+      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
+      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
+      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg`, fallback: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
 
-      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg`, fallback: `assets/BAJA100/EDICION 2025/sudadera-world-desert-cafe.jpg` },
-      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg`, fallback: `assets/BAJA100/EDICION 2025/sudadera-world-desert-negra.jpg` },
+      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg`, fallback: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
+      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg`, fallback: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
 
-      // ✅ ROJA + ROSA (OTRAS EDICIONES)
-      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg`,  fallback: `assets/BAJA100/OTRAS EDICIONES/sudadera-world-desert-roja.jpg` },
-      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg`,  fallback: `assets/BAJA100/OTRAS EDICIONES/sudadera-world-desert-rosa.jpg` },
+      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg`,  fallback: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
+      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg`,  fallback: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
     ];
 
     const SIZES = ["S","M","L","XL","2XL"];
