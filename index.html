@@ -18,6 +18,10 @@
   <link rel="icon" href="assets/favicon.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 
+  <!-- ✅ Performance: preload LCP / fondos -->
+  <link rel="preload" as="image" href="assets/hero.png" />
+  <link rel="preload" as="image" href="assets/fondo-pagina-score.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -33,8 +37,9 @@
       --fontBody: "Inter", sans-serif;
 
       --bgTexture: url("assets/baja1000-texture.png");
+      --pageBg: url("assets/fondo-pagina-score.png");
 
-      /* ✅ MÁS TRANSPARENTE (overlay café) */
+      /* ✅ Glass overlay (café suave) */
       --coffeeGlass: rgba(148, 111, 74, 0.12);
       --coffeeGlass2: rgba(120, 86, 55, 0.06);
 
@@ -51,7 +56,6 @@
       outline: none;
     }
     button:focus, a:focus, .cardDrop:focus{ outline:none; }
-    /* Mantén accesibilidad: si navegan con teclado, sí se ve focus */
     :focus-visible{
       outline: 3px solid rgba(225, 6, 0, .55);
       outline-offset: 2px;
@@ -67,7 +71,17 @@
     }
     body.modalOpen{ overflow:hidden; }
 
+    /* ✅ Nuevo fondo (capa separada, safe para móvil) */
     body::before{
+      content:""; position:fixed; inset:0;
+      background: var(--pageBg) center/cover no-repeat;
+      z-index:-3; pointer-events:none;
+      opacity: .35; /* 👈 no opaca el contenido */
+      filter: saturate(.95) contrast(1.02);
+    }
+
+    /* ✅ Grain / texture encima del fondo */
+    body::after{
       content:""; position:fixed; inset:0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
       z-index:-2; pointer-events:none; mix-blend-mode:multiply;
@@ -369,7 +383,7 @@
       padding: 40px 0;
       border-top: 1px solid #ddd;
       text-align:center;
-      opacity: 0.8;
+      opacity: 0.88;
     }
     .spGrid{
       display:flex;
@@ -382,7 +396,7 @@
       height: 40px;
       filter: grayscale(1);
       transition: .3s;
-      opacity: .75;
+      opacity: .78;
     }
     .spLogo:hover{
       filter: grayscale(0);
@@ -426,7 +440,7 @@
     /* === MODAL PRODUCTOS === */
     .prodModal{
       position:fixed; inset:0; z-index:2000;
-      background: var(--sand);
+      background: rgba(240,240,240,0.98);
       display:flex;
       flex-direction:column;
       transform: translateY(100%);
@@ -460,12 +474,47 @@
     }
     .pmBody{ flex:1; overflow-y:auto; padding: 20px; }
 
+    /* ✅ Separación por secciones */
+    .pmSection{
+      max-width: 1050px;
+      margin: 0 auto 18px;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 14px;
+      padding: 14px 14px 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    .pmSectionTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 2px 6px 12px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      margin-bottom: 14px;
+    }
+    .pmSectionTitle h4{
+      margin:0;
+      font-family: var(--fontTitle);
+      font-size: 26px;
+      letter-spacing: .06em;
+      color:#111;
+      text-transform: uppercase;
+    }
+    .pmSectionTitle span{
+      font-size: 11px;
+      font-weight: 900;
+      color:#666;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     .pmGrid{
       display:grid;
       grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
       gap: 18px;
-      max-width: 1050px;
-      margin: 0 auto;
     }
 
     .pCard{
@@ -505,6 +554,8 @@
       color:#222;
       letter-spacing: .03em;
     }
+
+    /* ✅ Precio con promo */
     .pPrice{
       font-family: var(--fontTitle);
       font-size: 22px;
@@ -512,6 +563,37 @@
       font-weight: 700;
       line-height: 1.05;
     }
+    .pPromoRow{
+      margin-top: 4px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap: 8px;
+      flex-wrap:wrap;
+    }
+    .pOldPrice{
+      font-family: var(--fontBody);
+      font-size: 12px;
+      font-weight: 900;
+      color:#666;
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      text-decoration-color: rgba(0,0,0,0.55);
+      letter-spacing: .02em;
+    }
+    .pBadge{
+      background: rgba(225, 6, 0, 0.12);
+      border: 1px solid rgba(225, 6, 0, 0.35);
+      color: var(--red);
+      font-size: 10px;
+      font-weight: 900;
+      padding: 4px 8px;
+      border-radius: 999px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     .pPrice small{
       display:block;
       font-family: var(--fontBody);
@@ -521,6 +603,7 @@
       margin-top: 4px;
       letter-spacing: .04em;
     }
+
     .sizeRow{
       display:flex;
       gap: 8px;
@@ -879,7 +962,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="statusBanner" id="statusBanner" aria-live="polite">
-    <img src="assets/icono-compra-exitosa.png" alt="Compra exitosa" loading="lazy" onerror="this.style.display='none'">
+    <img src="assets/icono-compra-exitosa.png" alt="Compra exitosa" loading="lazy" decoding="async" onerror="this.style.display='none'">
     <div>
       <strong id="sbTitle">Listo</strong>
       <span id="sbText">Tu pago fue procesado.</span>
@@ -890,14 +973,14 @@
   <header class="topbar">
     <div class="topInner">
       <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
-        <img src="assets/logo-score.png" alt="SCORE" loading="eager">
+        <img src="assets/logo-score.png" alt="SCORE" loading="eager" fetchpriority="high" decoding="async">
       </a>
 
       <div class="navRight">
         <div class="miniPill" title="México">ENVÍOS MX</div>
 
         <button class="cartTrigger" onclick="toggleCart()" aria-label="Abrir carrito">
-          <img src="assets/Icono-carrito-compra.png" class="cartIconImg" alt="Carrito" loading="lazy">
+          <img src="assets/Icono-carrito-compra.png" class="cartIconImg" alt="Carrito" loading="lazy" decoding="async" onerror="this.style.display='none'">
           <span class="cartCount" id="cartCount">0</span>
         </button>
       </div>
@@ -935,6 +1018,7 @@
             class="dropLogo"
             alt="Baja 1000"
             loading="lazy"
+            decoding="async"
           >
 
           <div class="dropInfo">
@@ -948,7 +1032,7 @@
       <div class="cardDrop" onclick="notifyDrop('San Felipe 250')">
         <div class="dropBg"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="assets/logo-sf250.png" class="dropLogo" style="opacity:0.82" alt="San Felipe 250" loading="lazy">
+          <img src="assets/logo-sf250.png" class="dropLogo" style="opacity:0.82" alt="San Felipe 250" loading="lazy" decoding="async">
           <div class="dropInfo">
             <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
             <p>San Felipe 250</p>
@@ -960,7 +1044,7 @@
       <div class="cardDrop" onclick="notifyDrop('Baja 500')">
         <div class="dropBg"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="assets/logo-baja500.png" class="dropLogo" style="opacity:0.82" alt="Baja 500" loading="lazy">
+          <img src="assets/logo-baja500.png" class="dropLogo" style="opacity:0.82" alt="Baja 500" loading="lazy" decoding="async">
           <div class="dropInfo">
             <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
             <p>Baja 500</p>
@@ -972,7 +1056,7 @@
       <div class="cardDrop" onclick="notifyDrop('Baja 400')">
         <div class="dropBg"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="assets/logo-baja400.png" class="dropLogo" style="opacity:0.82" alt="Baja 400" loading="lazy">
+          <img src="assets/logo-baja400.png" class="dropLogo" style="opacity:0.82" alt="Baja 400" loading="lazy" decoding="async">
           <div class="dropInfo">
             <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
             <p>Baja 400</p>
@@ -987,11 +1071,11 @@
         OFFICIAL PARTNERS
       </div>
       <div class="spGrid">
-        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy">
-        <img src="assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy">
-        <img src="assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy">
-        <img src="assets/logo-king.png" class="spLogo" alt="King" onerror="this.style.display='none'" loading="lazy">
-        <img src="assets/logo-polaris.png" class="spLogo" alt="Polaris" onerror="this.style.display='none'" loading="lazy">
+        <!-- ✅ Los que se ven en tu repo / capturas -->
+        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <!-- (Si subes más, solo los agregamos aquí. Si falta alguno, se oculta sin romper) -->
       </div>
     </section>
   </main>
@@ -1088,7 +1172,22 @@
     </div>
 
     <div class="pmBody">
-      <div class="pmGrid" id="pmGridB1000"></div>
+      <!-- ✅ Secciones: 2025 / Otras -->
+      <div class="pmSection">
+        <div class="pmSectionTitle">
+          <h4>EDICIÓN 2025</h4>
+          <span>Drop principal</span>
+        </div>
+        <div class="pmGrid" id="pmGridB1000_2025"></div>
+      </div>
+
+      <div class="pmSection">
+        <div class="pmSectionTitle">
+          <h4>OTRAS EDICIONES</h4>
+          <span>Merch adicional</span>
+        </div>
+        <div class="pmGrid" id="pmGridB1000_OTRAS"></div>
+      </div>
     </div>
   </div>
 
@@ -1110,19 +1209,36 @@
     const PATH_ED2025 = "assets/EDICION_2025/";
     const PATH_OTRAS  = "assets/OTRAS_EDICIONES/";
 
-    const PRODUCTS_B1000 = [
-      { id:"b1000_pits",         name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989, img: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
+    // ✅ Regla PROMO: mostrar un "precio original" +30% tachado y etiqueta -30%
+    // (Mantiene tu precio base como el precio visible principal)
+    function promoOldPriceFromBase(baseMXN){
+      return Math.round(Number(baseMXN || 0) * 1.30);
+    }
 
-      { id:"b1000_tee_azul",     name:"Camiseta Baja 1000 · Azul",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
-      { id:"b1000_tee_cafe",     name:"Camiseta Baja 1000 · Café",               priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
-      { id:"b1000_tee_negra",    name:"Camiseta Baja 1000 · Negra",              priceMXN: 439, img: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
+    // ✅ Chamarra: base 1800, "precio original" +10% (tachado)
+    const JACKET_BASE = 1800;
+    const JACKET_OLD  = Math.round(JACKET_BASE * 1.10); // 1980
 
-      { id:"world_desert_cafe",  name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
-      { id:"world_desert_negra", name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824, img: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
+    const PRODUCTS_2025 = [
+      { id:"b1000_pits",        name:"Camisa de Pits Oficial · Baja 1000",      priceMXN: 989,  oldMXN: promoOldPriceFromBase(989),  img: `${PATH_ED2025}camisa-pits-baja1000.jpg` },
+      { id:"b1000_tee_azul",    name:"Camiseta Baja 1000 · Azul",               priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-azul.jpg` },
+      { id:"b1000_tee_cafe",    name:"Camiseta Baja 1000 · Café",               priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-cafe.jpg` },
+      { id:"b1000_tee_negra",   name:"Camiseta Baja 1000 · Negra",              priceMXN: 439,  oldMXN: promoOldPriceFromBase(439),  img: `${PATH_ED2025}camiseta-baja1000-negra.jpg` },
 
-      { id:"world_desert_roja",  name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
-      { id:"world_desert_rosa",  name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824, img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
+      // ✅ Chamarra faltante
+      { id:"b1000_jacket",      name:"Chamarra Baja 1000 · Edición 2025",       priceMXN: JACKET_BASE, oldMXN: JACKET_OLD,            img: `${PATH_ED2025}chamarra-baja1000.jpg` },
+
+      { id:"world_desert_cafe", name:"Sudadera SCORE · World Desert (Café)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_ED2025}sudadera-world-desert-cafe.jpg` },
+      { id:"world_desert_negra",name:"Sudadera SCORE · World Desert (Negra)",   priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_ED2025}sudadera-world-desert-negra.jpg` },
     ];
+
+    const PRODUCTS_OTRAS = [
+      { id:"world_desert_roja", name:"Sudadera SCORE · World Desert (Roja)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_OTRAS}sudadera-world-desert-roja.jpg` },
+      { id:"world_desert_rosa", name:"Sudadera SCORE · World Desert (Rosa)",    priceMXN: 824,  oldMXN: promoOldPriceFromBase(824),  img: `${PATH_OTRAS}sudadera-world-desert-rosa.jpg` },
+    ];
+
+    // Para carrito/checkout usamos un solo catálogo combinado:
+    const PRODUCTS_B1000 = [...PRODUCTS_2025, ...PRODUCTS_OTRAS];
 
     const SIZES = ["S","M","L","XL","2XL"];
 
@@ -1186,11 +1302,17 @@
     }
     overlay.addEventListener('click', closeOverlay);
 
-    function renderProductsB1000(){
-      const grid = document.getElementById("pmGridB1000");
-      grid.innerHTML = PRODUCTS_B1000.map(p => {
+    function productNeedsSize(name){
+      return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(name);
+    }
+
+    function renderProductsGrid(list, gridId){
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = list.map(p => {
         const usd = mxnToUsd(p.priceMXN);
-        const needsSize = /sudadera|camisa|chaqueta|hoodie|playera|camiseta/i.test(p.name);
+        const old = Number(p.oldMXN || 0);
+        const oldUsd = mxnToUsd(old);
+        const needsSize = productNeedsSize(p.name);
 
         return `
           <div class="pCard">
@@ -1199,12 +1321,19 @@
                 src="${p.img}"
                 alt="${escapeHtml(p.name)}"
                 loading="lazy"
+                decoding="async"
               >
             </div>
             <div class="pInfo">
               <div class="pName">${escapeHtml(p.name)}</div>
+
               <div class="pPrice">${moneyMXN(p.priceMXN)}
                 <small>${moneyUSD(usd)} USD</small>
+
+                <div class="pPromoRow">
+                  ${old ? `<span class="pOldPrice">${moneyMXN(old)} · ${moneyUSD(oldUsd)}</span>` : ``}
+                  <span class="pBadge">-30% OFF</span>
+                </div>
               </div>
 
               ${needsSize ? `
@@ -1221,6 +1350,11 @@
           </div>
         `;
       }).join("");
+    }
+
+    function renderProductsB1000(){
+      renderProductsGrid(PRODUCTS_2025, "pmGridB1000_2025");
+      renderProductsGrid(PRODUCTS_OTRAS, "pmGridB1000_OTRAS");
     }
 
     function openProductModal(id){
@@ -1331,7 +1465,7 @@
           return `
             <div class="cItem">
               <img src="${i.img}" class="cImg"
-                   alt="${escapeHtml(i.name)}" loading="lazy">
+                   alt="${escapeHtml(i.name)}" loading="lazy" decoding="async">
               <div style="flex:1">
                 <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(i.name)}</div>
                 <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
