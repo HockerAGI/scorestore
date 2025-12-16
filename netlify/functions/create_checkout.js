@@ -1,112 +1,40 @@
 /**
  * netlify/functions/create_checkout.js
  * SCORE STORE — Stripe Checkout (MXN) + OXXO + Shipping Address MX
- *
- * Seguridad:
- * - NO confía en priceMXN del frontend.
- * - Solo acepta items por ID + talla + qty.
- * - Precios y nombres se calculan aquí (CATALOG).
- *
- * Robustez Netlify:
- * - Soporta event.isBase64Encoded
- * - CORS + OPTIONS preflight
- *
- * Nota importante:
- * - Tu frontend usa rutas con espacios (EDICION 2025 / OTRAS EDICIONES).
- *   Aquí se generan URLs absolutas con encoding seguro para Stripe (espacios => %20).
  */
 
-const ASSET_BASE = "assets/BAJA100";
-const ED2025 = `${ASSET_BASE}/EDICION 2025`;
-const OTRAS  = `${ASSET_BASE}/OTRAS EDICIONES`;
+const ASSET_BASE = "assets/BAJA1000";
+const ED2025 = `${ASSET_BASE}/EDICION_2025`;
+const OTRAS = `${ASSET_BASE}/OTRAS_EDICIONES`;
 
-/**
- * CATALOGO
- * (IDs alineados a tu index.html actual)
- */
 const CATALOG = {
-  // ✅ EDICION 2025
-  b1000_pits: {
-    name: "Camisa de Pits Oficial · Baja 1000",
-    priceMXN: 989,
-    img: `${ED2025}/camisa-pits-baja1000.jpg`,
-  },
+  b1000_pits: { name: "Camisa de Pits Oficial · Baja 1000", priceMXN: 989, img: `${ED2025}/camisa-pits-baja1000.jpg` },
 
-  b1000_tee_azul: {
-    name: "Camiseta Baja 1000 · Azul",
-    priceMXN: 439,
-    img: `${ED2025}/camiseta-baja1000-azul.jpg`,
-  },
-  b1000_tee_cafe: {
-    name: "Camiseta Baja 1000 · Café",
-    priceMXN: 439,
-    img: `${ED2025}/camiseta-baja1000-cafe.jpg`,
-  },
-  b1000_tee_negra: {
-    name: "Camiseta Baja 1000 · Negra",
-    priceMXN: 439,
-    img: `${ED2025}/camiseta-baja1000-negra.jpg`,
-  },
+  b1000_tee_azul: { name: "Camiseta · Baja 1000 (Azul)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-azul.jpg` },
+  b1000_tee_cafe: { name: "Camiseta · Baja 1000 (Café)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-cafe.jpg` },
+  b1000_tee_negra: { name: "Camiseta · Baja 1000 (Negra)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-negra.jpg` },
 
-  world_desert_cafe: {
-    name: "Sudadera SCORE · World Desert (Café)",
-    priceMXN: 824,
-    img: `${ED2025}/sudadera-world-desert-cafe.jpg`,
-  },
-  world_desert_negra: {
-    name: "Sudadera SCORE · World Desert (Negra)",
-    priceMXN: 824,
-    img: `${ED2025}/sudadera-world-desert-negra.jpg`,
-  },
+  world_desert_negra: { name: "Sudadera SCORE · World Desert (Negra)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-negra.jpg` },
+  world_desert_cafe: { name: "Sudadera SCORE · World Desert (Café)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-cafe.jpg` },
 
-  // ✅ OTRAS EDICIONES
-  world_desert_roja: {
-    name: "Sudadera SCORE · World Desert (Roja)",
-    priceMXN: 824,
-    img: `${OTRAS}/sudadera-world-desert-roja.jpg`,
-  },
-  world_desert_rosa: {
-    name: "Sudadera SCORE · World Desert (Rosa)",
-    priceMXN: 824,
-    img: `${OTRAS}/sudadera-world-desert-rosa.jpg`,
-  },
+  world_desert_roja: { name: "Sudadera SCORE · World Desert (Roja)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-roja.jpg` },
+  world_desert_rosa: { name: "Sudadera SCORE · World Desert (Rosa)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-rosa.jpg` },
 
-  /**
-   * ====== ALIASES / COMPATIBILIDAD (IDs viejos) ======
-   * Si algo viejo llega, no se rompe.
-   */
-  world_desert_blk: {
-    name: "Sudadera SCORE · World Desert (Negra)",
-    priceMXN: 824,
-    img: `${ED2025}/sudadera-world-desert-negra.jpg`,
-  },
-  world_desert_snd: {
-    name: "Sudadera SCORE · World Desert (Café)",
-    priceMXN: 824,
-    img: `${ED2025}/sudadera-world-desert-cafe.jpg`,
-  },
-  world_desert_pnk: {
-    name: "Sudadera SCORE · World Desert (Rosa)",
-    priceMXN: 824,
-    img: `${OTRAS}/sudadera-world-desert-rosa.jpg`,
-  },
+  world_desert_blk: { name: "Sudadera SCORE · World Desert (Negra)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-negra.jpg` },
+  world_desert_snd: { name: "Sudadera SCORE · World Desert (Café)", priceMXN: 824, img: `${ED2025}/sudadera-world-desert-cafe.jpg` },
+  world_desert_pnk: { name: "Sudadera SCORE · World Desert (Rosa)", priceMXN: 824, img: `${OTRAS}/sudadera-world-desert-rosa.jpg` },
 
-  b1000_maptee: {
-    name: "Camiseta Baja 1000 · Negra",
-    priceMXN: 439,
-    img: `${ED2025}/camiseta-baja1000-negra.jpg`,
-  },
+  b1000_maptee: { name: "Camiseta · Baja 1000 (Negra)", priceMXN: 439, img: `${ED2025}/camiseta-baja1000-negra.jpg` },
 
-  // placeholders (si alguien lo manda, no truena)
   b1000_jacket: { name: "Chaqueta Oficial SCORE · Baja 1000", priceMXN: 1639, img: null },
-  b1000_kids:   { name: "Sudadera Infantil · Baja 1000",       priceMXN: 824,  img: null },
-  b1000_panels: { name: "Sudadera Baja 1000 · Paneles",        priceMXN: 824,  img: null },
-  score_trucker:{ name: "Gorra Trucker SCORE",                 priceMXN: 715,  img: null },
+  b1000_kids: { name: "Sudadera Infantil · Baja 1000", priceMXN: 824, img: null },
+  b1000_panels: { name: "Sudadera Baja 1000 · Paneles", priceMXN: 824, img: null },
+  score_trucker: { name: "Gorra Trucker SCORE", priceMXN: 715, img: null }
 };
 
-const ALLOWED_SIZES = new Set(["S","M","L","XL","2XL","UNICA","ÚNICA"]);
+const ALLOWED_SIZES = new Set(["S", "M", "L", "XL", "2XL", "UNICA", "ÚNICA"]);
 const MAX_QTY_PER_LINE = 10;
-const MAX_ITEMS_TOTAL  = 40;
+const MAX_ITEMS_TOTAL = 40;
 const MAX_SHIPPING_MXN = 2500;
 
 function json(statusCode, data) {
@@ -116,9 +44,9 @@ function json(statusCode, data) {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "POST, OPTIONS"
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(data)
   };
 }
 
@@ -148,36 +76,12 @@ function getBaseUrl() {
   );
 }
 
-// encode robusto por segmento (espacios y caracteres raros)
-function safeEncodePath(p) {
-  return String(p || "")
-    .split("/")
-    .map(seg => {
-      if (!seg) return "";
-      try {
-        // si ya venía encoded, lo normaliza sin doble-encode
-        return encodeURIComponent(decodeURIComponent(seg));
-      } catch {
-        return encodeURIComponent(seg);
-      }
-    })
-    .join("/");
-}
-
 function absImageUrl(baseUrl, path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-
-  const cleanBase = String(baseUrl || "").replace(/\/+$/, "");
-  const cleanPath = String(path || "").replace(/^\/+/, "");
-  const encodedPath = safeEncodePath(cleanPath);
-
-  return `${cleanBase}/${encodedPath}`;
-}
-
-function clampStr(v, max = 220) {
-  const s = String(v ?? "").trim();
-  return s.length > max ? s.slice(0, max) : s;
+  const cleanBase = baseUrl.replace(/\/+$/, "");
+  const cleanPath = String(path).replace(/^\/+/, "");
+  return `${cleanBase}/${cleanPath}`;
 }
 
 exports.handler = async (event) => {
@@ -194,13 +98,12 @@ exports.handler = async (event) => {
   if (!payload) return json(400, { error: "Body inválido / JSON parse error" });
 
   try {
-    const { items, shippingMXN = 0, fx = null, meta = {} } = payload;
+    const { items, shippingMXN = 0, meta = {} } = payload;
 
     if (!Array.isArray(items) || items.length === 0) {
       return json(400, { error: "Carrito vacío" });
     }
 
-    // Normalización + validación
     const normalized = [];
     let totalQty = 0;
 
@@ -228,13 +131,11 @@ exports.handler = async (event) => {
     }
 
     const baseUrl = getBaseUrl();
-
-    // Stripe line items
     const line_items = [];
+
     for (const [key, qty] of consolidated.entries()) {
       const [id, size] = key.split("__");
       const product = CATALOG[id];
-
       const imgAbs = absImageUrl(baseUrl, product.img);
 
       line_items.push({
@@ -243,14 +144,11 @@ exports.handler = async (event) => {
           product_data: {
             name: product.name,
             images: imgAbs ? [imgAbs] : [],
-            metadata: {
-              product_id: String(id),
-              size: String(size || ""),
-            },
+            metadata: { product_id: id, size: size || "" }
           },
-          unit_amount: Math.round(Number(product.priceMXN) * 100),
+          unit_amount: Math.round(Number(product.priceMXN) * 100)
         },
-        quantity: qty,
+        quantity: qty
       });
     }
 
@@ -258,35 +156,31 @@ exports.handler = async (event) => {
     const shipRaw = Math.round(Number(shippingMXN || 0));
     const ship = Math.max(0, Math.min(MAX_SHIPPING_MXN, shipRaw));
 
-    const shipping_options = ship > 0 ? [{
-      shipping_rate_data: {
-        type: "fixed_amount",
-        fixed_amount: { amount: ship * 100, currency: "mxn" },
-        display_name: "Envío (México)",
-        delivery_estimate: {
-          minimum: { unit: "business_day", value: 2 },
-          maximum: { unit: "business_day", value: 7 },
-        },
-      },
-    }] : [];
+    const shipping_options =
+      ship > 0
+        ? [{
+            shipping_rate_data: {
+              type: "fixed_amount",
+              fixed_amount: { amount: ship * 100, currency: "mxn" },
+              display_name: "Envío (México)",
+              delivery_estimate: {
+                minimum: { unit: "business_day", value: 2 },
+                maximum: { unit: "business_day", value: 7 }
+              }
+            }
+          }]
+        : [];
 
     const successUrl = `${baseUrl}/?status=success`;
-    const cancelUrl  = `${baseUrl}/?status=cancel`;
+    const cancelUrl = `${baseUrl}/?status=cancel`;
 
-    // Metadata “completa” (pero corta y segura)
     const metaSafe = {
-      source: clampStr(meta.source || "score_store", 80),
-      zip: clampStr(meta.zip || "", 16),
-      shippingQuoted: clampStr(!!meta.shippingQuoted, 10),
-      shippingMXN: clampStr(ship, 16),
-      fx: clampStr(fx ?? meta.fx ?? "", 32),
-      // reservados para futuro (aunque hoy no se usen)
-      campaign: clampStr(meta.campaign || "", 120),
-      adset: clampStr(meta.adset || "", 120),
-      creative: clampStr(meta.creative || "", 120),
+      source: String(meta.source || "score_store"),
+      zip: String(meta.zip || ""),
+      shippingQuoted: String(!!meta.shippingQuoted),
+      shippingMXN: String(ship)
     };
 
-    // Session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       locale: "es",
@@ -305,6 +199,9 @@ exports.handler = async (event) => {
       payment_intent_data: { metadata: metaSafe },
 
       customer_creation: "if_required",
+
+      // explícito para evitar “sorpresas” si Stripe cambia defaults
+      automatic_tax: { enabled: false }
     });
 
     return json(200, { id: session.id, url: session.url });
