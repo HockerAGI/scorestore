@@ -24,10 +24,15 @@ function json(statusCode, data) {
   };
 }
 
-function getRawBody(event) {
-  return event.isBase64Encoded
-    ? Buffer.from(event.body || "", "base64").toString("utf8")
-    : (event.body || "");
+/**
+ * Stripe firma el payload EXACTO (bytes).
+ * Por eso devolvemos Buffer (no “string normalizado”).
+ */
+function getRawBodyBuffer(event) {
+  if (event.isBase64Encoded) {
+    return Buffer.from(event.body || "", "base64");
+  }
+  return Buffer.from(event.body || "", "utf8");
 }
 
 function moneyMXNFromStripeAmount(amount) {
@@ -58,13 +63,19 @@ async function sendTelegram(text) {
 async function sendWhatsApp(text) {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const to = process.env.WHATSAPP_TO;
-  if (!token || !phoneNumberId || !to) return { ok: false, skipped: true, channel: "whatsapp" };
+  const to = process.env.WHATSAPP_TO; // Ej: +526642368701
+
+  if (!token || !phoneNumberId || !to) {
+    return { ok: false, skipped: true, channel: "whatsapp" };
+  }
 
   const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({
       messaging_product: "whatsapp",
       to,
@@ -86,19 +97,20 @@ async function notifyOps(text) {
 }
 
 async function buildOrderSummaryFromSession(sessionId) {
-  // Trae sesión + line items + detalles de envío
+  // Trae sesión + customer_details
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
     expand: ["payment_intent", "customer_details"],
   });
 
+  // Trae line items
   const items = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
 
   const lines = [];
   lines.push(`🧾 SCORE STORE — Pedido`);
   lines.push(`Session: ${session.id}`);
   if (session.payment_intent && session.payment_intent.id) lines.push(`PaymentIntent: ${session.payment_intent.id}`);
-  lines.push(`Status pago: ${session.payment_status}`);
-  lines.push(`Total: ${moneyMXNFromStripeAmount(session.amount_total)} MXN`);
+  lines.push(`Status pago: ${session.payment_status || "unknown"}`);
+  lines.push(`Total: ${moneyMXNFromStripeAmount(session.amount_total)}`);
 
   // Customer
   const email = session.customer_details?.email || session.customer_email || "";
@@ -115,10 +127,10 @@ async function buildOrderSummaryFromSession(sessionId) {
   if (shipName) lines.push(`Envío a: ${shipName}`);
   if (addrLine || city || cp) lines.push(`Dirección: ${addrLine} · ${city} · CP ${cp}`);
 
-  // Metadata (la que ya mandas desde create_checkout)
+  // Metadata (la que mandas desde create_checkout)
   const md = session.metadata || {};
-  if (md.shippingMXN) lines.push(`Envío MXN: ${md.shippingMXN}`);
-  if (md.shippingQuoted) lines.push(`ShippingQuoted: ${md.shippingQuoted}`);
+  if (md.shippingMXN) lines.push(`Envío: ${Number(md.shippingMXN).toLocaleString("es-MX")} MXN`);
+  if (typeof md.shippingQuoted !== "undefined") lines.push(`ShippingQuoted: ${md.shippingQuoted}`);
   if (md.zip) lines.push(`ZIP meta: ${md.zip}`);
 
   // Line items
@@ -126,8 +138,8 @@ async function buildOrderSummaryFromSession(sessionId) {
   for (const li of (items.data || [])) {
     const name = li.description || "Producto";
     const qty = li.quantity || 0;
-    const amt = li.amount_total ? moneyMXNFromStripeAmount(li.amount_total) : "";
-    lines.push(`• ${name} x${qty} ${amt ? `(${amt})` : ""}`);
+    const amt = typeof li.amount_total === "number" ? moneyMXNFromStripeAmount(li.amount_total) : "";
+    lines.push(`• ${name} x${qty}${amt ? ` (${amt})` : ""}`);
   }
 
   return lines.join("\n");
@@ -139,10 +151,15 @@ exports.handler = async (event) => {
   if (!process.env.STRIPE_SECRET_KEY) return json(500, { error: "Missing STRIPE_SECRET_KEY" });
   if (!process.env.STRIPE_WEBHOOK_SECRET) return json(500, { error: "Missing STRIPE_WEBHOOK_SECRET" });
 
-  const sig = event.headers?.["stripe-signature"] || event.headers?.["Stripe-Signature"];
+  // En Netlify los headers suelen venir en lowercase
+  const sig =
+    event.headers?.["stripe-signature"] ||
+    event.headers?.["Stripe-Signature"] ||
+    event.headers?.["STRIPE-SIGNATURE"];
+
   if (!sig) return json(400, { error: "Missing stripe-signature header" });
 
-  const rawBody = getRawBody(event);
+  const rawBody = getRawBodyBuffer(event);
 
   let stripeEvent;
   try {
@@ -155,24 +172,18 @@ exports.handler = async (event) => {
   try {
     const type = stripeEvent.type;
 
-    // Los 2 que más importan para tu tienda:
-    // - Card: checkout.session.completed (payment_status normalmente "paid")
-    // - OXXO: checkout.session.async_payment_succeeded (confirmación)
-    if (
-      type === "checkout.session.completed" ||
-      type === "checkout.session.async_payment_succeeded"
-    ) {
+    // Card: checkout.session.completed (normalmente paid)
+    // OXXO: checkout.session.async_payment_succeeded (confirmación)
+    if (type === "checkout.session.completed" || type === "checkout.session.async_payment_succeeded") {
       const session = stripeEvent.data.object;
       const summary = await buildOrderSummaryFromSession(session.id);
 
-      await notifyOps(
-        `${summary}\n\n✅ Evento: ${type}\nHora: ${new Date().toISOString()}`
-      );
+      await notifyOps(`${summary}\n\n✅ Evento: ${type}\nHora: ${new Date().toISOString()}`);
 
       return json(200, { ok: true });
     }
 
-    // Estados útiles para operación:
+    // Fallas / expiraciones (útil operación)
     if (type === "checkout.session.async_payment_failed" || type === "checkout.session.expired") {
       const session = stripeEvent.data.object;
       await notifyOps(
@@ -181,6 +192,7 @@ exports.handler = async (event) => {
       return json(200, { ok: true });
     }
 
+    // Eventos financieros sensibles
     if (type === "charge.refunded" || type === "charge.dispute.created") {
       const obj = stripeEvent.data.object;
       await notifyOps(
@@ -189,11 +201,11 @@ exports.handler = async (event) => {
       return json(200, { ok: true });
     }
 
-    // Default: ACK sin hacer ruido
+    // Default: ACK sin ruido
     return json(200, { ok: true, received: type });
   } catch (err) {
     console.error("Webhook handler error:", err);
-    // Stripe reintenta si no devuelves 2xx, así que aquí mejor 200 y log.
+    // Stripe reintenta si no devuelves 2xx; aquí devolvemos 200 y log
     return json(200, { ok: false, error: err?.message || "handler_error" });
   }
 };
