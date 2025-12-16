@@ -1,30 +1,18 @@
 {
   "name": "SCORE | Official Store",
-  "short_name": "SCORE Store",
-  "description": "Drops oficiales inspirados en el desierto. Compra segura en México.",
+  "short_name": "SCORE",
+  "description": "Tienda oficial de colecciones SCORE (Baja 1000, Baja 500, Baja 400, SF250).",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F0F0F0",
-  "theme_color": "#E10600",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
   "icons": [
     {
-      "src": "/assets/icon-192.png",
-      "sizes": "192x192",
+      "src": "/assets/logo-score.png",
+      "sizes": "any",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }
