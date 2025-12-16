@@ -1,0 +1,42 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# --- NO reescribir Functions ---
+# Netlify ya maneja /.netlify/functions/* automáticamente.
+# Evitamos redirect 200 porque puede causar resultados inesperados.
+
+# --- SPA fallback (solo para rutas "de app", NO para archivos) ---
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# --- No cache para Functions (checkout, shipping, webhooks) ---
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Content-Type-Options = "nosniff"
+
+# --- Cache recomendado para assets (mejora performance) ---
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# --- Seguridad básica global ---
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
