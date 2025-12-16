@@ -2,63 +2,76 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <!-- ✅ Accesibilidad: no bloqueamos zoom -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b0f14" />
 
-  <title>SCORE | Official Store</title>
+  <title>SCORE | Official Baja Gear</title>
   <meta name="description" content="Equípate con la historia. Drops oficiales inspirados en el desierto. Compra segura en México." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://scorestore.netlify.app/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="SCORE | Official Baja Gear" />
-  <meta property="og:description" content="Inventario limitado + drops oficiales. Compra rápida, segura y directa en México." />
+  <meta property="og:description" content="Inventario limitado + drops oficiales. Compra segura en México." />
   <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
   <meta property="og:url" content="https://scorestore.netlify.app/" />
 
   <link rel="icon" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
-  <!-- ✅ PWA -->
   <link rel="manifest" href="/site.webmanifest" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
-  <!-- ✅ Performance: preloads (sin cambiar tu look) -->
   <link rel="preload" as="image" href="/assets/hero.png" />
   <link rel="preload" as="image" href="/assets/fondo-pagina-score.png" />
 
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"WebSite",
-    "name":"SCORE Store",
-    "url":"https://scorestore.netlify.app/"
-  }
-  </script>
-
   <style>
     :root{
+      --fontTitle: "Teko", sans-serif;
+      --fontBody: "Inter", sans-serif;
+
+      /* BASE SCORE */
       --red: #E10600;
       --carbon: #0b0f14;
       --charcoal:#141a22;
       --sand: #f0f0f0;
 
-      --fontTitle: "Teko", sans-serif;
-      --fontBody: "Inter", sans-serif;
-
       --pageBg: url("/assets/fondo-pagina-score.png");
-      --pageBgOpacity: .72;
-
-      --glass: rgba(255,255,255,.78);
-      --glassB: rgba(255,255,255,.62);
+      --pageBgOpacity: .74;
 
       --shadow: 0 20px 50px rgba(0,0,0,.18);
       --shadow2: 0 12px 30px rgba(0,0,0,.22);
+      --radius: 16px;
 
-      --radius: 14px;
+      /* SEASON TOKENS (se sobrescriben por tema) */
+      --seasonTint: rgba(225,6,0,.10);
+      --seasonGlow: rgba(255,255,255,.0);
+      --partnersTint: rgba(225,6,0,.08);
+      --cardGlassA: rgba(255,255,255,.14);
+      --cardGlassB: rgba(255,255,255,.06);
+      --cardVignette: rgba(0,0,0,.62);
+    }
+
+    /* ✅ TEMA NAVIDAD + AÑO NUEVO (default) */
+    body[data-theme="xmas"]{
+      --seasonTint: rgba(105, 180, 255, .12);  /* frío */
+      --seasonGlow: rgba(255,255,255,.20);
+      --partnersTint: rgba(105, 180, 255, .10);
+      --cardGlassA: rgba(255,255,255,.18);
+      --cardGlassB: rgba(255,255,255,.08);
+      --cardVignette: rgba(0,0,0,.64);
+    }
+    body[data-theme="halloween"]{
+      --seasonTint: rgba(255, 132, 0, .14);
+      --seasonGlow: rgba(255, 80, 0, .12);
+      --partnersTint: rgba(255, 132, 0, .10);
+    }
+    body[data-theme="patrio"]{
+      --seasonTint: rgba(0, 180, 90, .12);
+      --seasonGlow: rgba(255,255,255,.10);
+      --partnersTint: rgba(0, 180, 90, .09);
     }
 
     *{box-sizing:border-box}
@@ -72,8 +85,9 @@
       padding-bottom: 95px;
       position: relative;
     }
+    body.modalOpen{ overflow:hidden; }
 
-    /* ✅ Fondo controlado */
+    /* ✅ Fondo base */
     body::after{
       content:"";
       position:fixed; inset:0;
@@ -82,30 +96,52 @@
       background-position: center;
       background-repeat: no-repeat;
       opacity: var(--pageBgOpacity);
-      z-index:-3;
+      z-index:-4;
       pointer-events:none;
     }
-    @media (min-width: 900px){
-      body::after{ background-attachment: fixed; }
+
+    /* ✅ Tinte de temporada (sutil) */
+    .seasonTint{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(circle at 20% 10%, var(--seasonGlow), transparent 48%),
+        radial-gradient(circle at 80% 0%, var(--seasonGlow), transparent 52%),
+        linear-gradient(180deg, var(--seasonTint), transparent 55%);
+      z-index:-3;
+      pointer-events:none;
+      mix-blend-mode: multiply;
+      opacity:.95;
     }
 
-    body.modalOpen{ overflow:hidden; }
+    /* ✅ “Nieve” sutil (navidad/año nuevo) */
+    .seasonSnow{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:-2;
+      opacity:.22;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.85) 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.70) 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.60) 1px, transparent 2px);
+      background-size: 220px 220px, 320px 320px, 460px 460px;
+      background-position: 0 0, 80px 120px, 160px 40px;
+      animation: snowFall 10s linear infinite;
+      display:none;
+    }
+    body[data-theme="xmas"] .seasonSnow{ display:block; }
+    @keyframes snowFall{
+      from{ transform: translateY(-20px); }
+      to{ transform: translateY(220px); }
+    }
 
     /* Grano leve */
     body::before{
       content:""; position:fixed; inset:0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
-      z-index:-2; pointer-events:none; mix-blend-mode:multiply;
-      animation: dustFloat 10s ease-in-out infinite;
-      opacity:.9;
-    }
-    @keyframes dustFloat{
-      0%,100%{ transform: translate3d(0,0,0); opacity:.045; }
-      50%{ transform: translate3d(0,-6px,0); opacity:.06; }
+      z-index:-1; pointer-events:none; mix-blend-mode:multiply;
+      opacity:.65;
     }
 
-    /* taps */
-    *{ -webkit-tap-highlight-color: rgba(0,0,0,0); }
     a, button{ outline:none; }
     :focus-visible{
       outline: 3px solid rgba(225, 6, 0, .55);
@@ -116,11 +152,11 @@
     .wrap{
       width:min(1200px, 94vw);
       margin:0 auto;
-      padding-top: 90px;
+      padding-top: 92px;
       padding-bottom: 60px;
     }
 
-    /* overlay global */
+    /* overlay */
     .overlay{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
@@ -141,7 +177,7 @@
       padding: 10px 14px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .02em;
       box-shadow: var(--shadow2);
       opacity: 0;
@@ -149,53 +185,12 @@
       z-index: 130;
       transition: opacity .18s ease, transform .18s ease;
     }
-    .toast.show{
-      opacity:1;
-      transform: translateX(-50%) translateY(-4px);
-    }
-
-    /* status banner */
-    .statusBanner{
-      position: fixed;
-      top: 86px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(680px, 92vw);
-      display:flex; gap:12px; align-items:center;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.08);
-      border-left: 6px solid var(--red);
-      border-radius: 14px;
-      padding: 12px 14px;
-      box-shadow: var(--shadow2);
-      opacity:0;
-      pointer-events:none;
-      z-index: 130;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-    .statusBanner.show{
-      opacity:1;
-      pointer-events:auto;
-      transform: translateX(-50%) translateY(0);
-    }
-    .statusBanner img{ width:38px; height:38px; object-fit:contain; }
-    .statusBanner strong{ display:block; font-weight: 900; }
-    .statusBanner span{ display:block; font-size: 12px; font-weight: 700; color:#333; }
-    .statusBanner button{
-      margin-left:auto;
-      border:none;
-      background:#111;
-      color:#fff;
-      font-weight:900;
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor:pointer;
-    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
 
     /* topbar */
     .topbar{
       position:fixed; top:0; left:0; right:0; z-index:90;
-      background: rgba(245,245,245,0.95);
+      background: rgba(245,245,245,0.96);
       border-bottom: 3px solid var(--red);
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -215,31 +210,30 @@
       display:block;
       filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
     }
+    .navRight{ display:flex; align-items:center; gap:10px; }
 
-    .navRight{ display:flex; align-items:center; gap:12px; }
-
-    /* ✅ Mejor contraste */
-    .miniPill{
+    /* ✅ Banner UX: descuento visible */
+    .promoPill{
       display:flex; align-items:center; justify-content:center;
       height: 38px;
       padding: 0 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(0,0,0,0.92);
+      border: 1px solid rgba(255,255,255,0.10);
       font-weight: 900;
       font-size: 12px;
-      letter-spacing: .06em;
-      color: #111;
+      letter-spacing: .08em;
+      color: #fff;
       white-space: nowrap;
     }
-    @media (max-width: 520px){
-      .miniPill{ display:none; }
-    }
+    .promoPill b{ color:#fff; }
+    .promoPill span{ color: rgba(255,255,255,.86); }
+    @media (max-width: 520px){ .promoPill{ display:none; } }
 
     /* carrito */
     .cartTrigger{
       position:relative;
-      background: var(--carbon); color:#fff; border:none;
+      background: #0c0f14; color:#fff; border:none;
       height:54px; padding:0 18px;
       display:flex; align-items:center; gap:12px;
       font-family: var(--fontTitle); font-weight:700; font-size:22px;
@@ -247,24 +241,13 @@
       cursor:pointer;
       box-shadow: 0 6px 18px rgba(0,0,0,0.25);
       overflow:hidden;
-      isolation:isolate;
       transition: transform .15s ease;
     }
     .cartTrigger:hover{ transform: translateY(-1px); }
-    .cartTrigger::after{
-      content:"";
-      position:absolute; inset:-40% -30%;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.22) 40%, transparent 70%);
-      transform: translateX(-120%) rotate(-18deg);
-      z-index:0;
-      opacity:0;
-    }
-    .cartTrigger:hover::after{ animation: speedSweep .85s ease-out; opacity:1; }
     .cartIconSvg{
       width:36px; height:36px;
       stroke:#fff; stroke-width:2.2; fill:none;
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
-      z-index:1;
     }
     .cartCount{
       position:absolute; top:6px; right:6px;
@@ -274,17 +257,6 @@
       border-radius: 6px;
       line-height:1;
       font-weight:900;
-      z-index:1;
-    }
-    .cartTrigger.bump{ animation: rpmPulse .28s ease-out; }
-    @keyframes rpmPulse{
-      0%{ transform: scale(1); }
-      60%{ transform: scale(1.06); }
-      100%{ transform: scale(1); }
-    }
-    @keyframes speedSweep{
-      0%{ transform: translateX(-140%) rotate(-18deg); }
-      100%{ transform: translateX(140%) rotate(-18deg); }
     }
 
     /* hero */
@@ -295,31 +267,47 @@
       min-height: 540px;
       display:flex;
       align-items:center;
-      background: var(--carbon);
+      background: #0b0f14;
       color:#fff;
       box-shadow: var(--shadow);
     }
     .heroBg{
       position:absolute; inset:0;
       background: url('/assets/hero.png') center/cover no-repeat;
-      opacity:.95;
+      opacity:.96;
       transform: scale(1.03);
-      animation: heroDrift 9s ease-in-out infinite;
-    }
-    @keyframes heroDrift{
-      0%,100%{ transform: scale(1.03) translate3d(0,0,0); }
-      50%{ transform: scale(1.05) translate3d(-6px, -4px, 0); }
     }
     .heroOverlay{
       position:absolute; inset:0;
       background:
-        linear-gradient(to right, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.40) 60%, transparent 100%),
-        radial-gradient(circle at 70% 30%, rgba(225,6,0,0.18), transparent 45%);
+        linear-gradient(to right, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.40) 64%, transparent 100%),
+        radial-gradient(circle at 78% 20%, rgba(225,6,0,0.16), transparent 48%);
     }
+
+    /* ✅ Cinta temporada */
+    .seasonRibbon{
+      position:absolute;
+      top:18px; right:18px;
+      z-index:3;
+      background: rgba(255,255,255,.90);
+      color:#111;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .10em;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 12px 22px rgba(0,0,0,.16);
+    }
+    .seasonRibbon b{ color: var(--red); }
+    body[data-theme="xmas"] .seasonRibbon::before{
+      content:"🎄 ";
+    }
+
     .heroContent{
       position:relative; z-index:2;
       padding: 50px;
-      max-width: 690px;
+      max-width: 720px;
     }
     .heroTag{
       background: var(--red); color:#fff;
@@ -329,50 +317,36 @@
       font-weight:700;
       transform: skew(-10deg);
       display:inline-block;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       letter-spacing: .02em;
-      animation: tagIn .55s ease-out both;
-    }
-    @keyframes tagIn{
-      from{ transform: translateY(10px) skew(-10deg); opacity:0; }
-      to{ transform: translateY(0) skew(-10deg); opacity:1; }
     }
     .heroTitle{
       font-family: var(--fontTitle);
       font-size: 90px;
       line-height: .85;
-      margin:0 0 18px;
+      margin:0 0 16px;
       text-transform:uppercase;
       text-shadow: 0 5px 20px rgba(0,0,0,0.6);
-      animation: titleIn .6s ease-out both;
-    }
-    @keyframes titleIn{
-      from{ transform: translateY(12px); opacity:0; }
-      to{ transform: translateY(0); opacity:1; }
     }
     .heroTitle span{ color: var(--red); }
-
     .heroSub{
       font-size: 17px;
       line-height: 1.5;
       color:#e6e6e6;
-      margin-bottom: 26px;
+      margin-bottom: 18px;
       border-left: 4px solid var(--red);
       padding-left: 18px;
       font-weight: 700;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      animation: subIn .7s ease-out both;
-    }
-    @keyframes subIn{
-      from{ transform: translateY(10px); opacity:0; }
-      to{ transform: translateY(0); opacity:1; }
     }
 
+    /* ✅ CTA + microcopy cupón */
+    .heroActions{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
     .btnHero{
       background:#fff; color: #111;
       border:none;
-      padding: 14px 35px;
+      padding: 14px 34px;
       font-family: var(--fontTitle);
       font-size: 26px;
       font-weight: 700;
@@ -380,20 +354,24 @@
       clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
       transition: transform .2s;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      position:relative;
-      overflow:hidden;
     }
     .btnHero:hover{ transform: translateY(-2px); }
-    .btnHero::after{
-      content:"";
-      position:absolute; inset:-60% -40%;
-      background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.12) 40%, transparent 70%);
-      transform: translateX(-120%) rotate(-18deg);
+    .heroHint{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .10em;
+      color: rgba(255,255,255,.86);
+      text-transform: uppercase;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 10px 12px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
     }
-    .btnHero:hover::after{ animation: speedSweep .9s ease-out; }
+    .heroHint b{ color:#fff; }
 
     @media (max-width: 768px){
-      .hero{ align-items:flex-end; min-height: 480px; }
+      .hero{ align-items:flex-end; min-height: 500px; }
       .heroOverlay{
         background:
           linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%),
@@ -401,11 +379,12 @@
       }
       .heroTitle{ font-size: 56px; }
       .heroContent{ padding: 25px; width: 100%; }
+      .seasonRibbon{ top:14px; right:14px; }
     }
 
     /* section headers */
     .secHeader{
-      margin: 28px 4px 12px;
+      margin: 26px 4px 12px;
       display:flex; align-items:baseline; justify-content:space-between;
       gap:12px;
     }
@@ -431,32 +410,52 @@
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-bottom: 26px;
+      margin-bottom: 22px;
     }
     @media (max-width: 980px){ .gridDrops{ grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px){ .gridDrops{ grid-template-columns: 1fr; } }
 
+    /* ✅ TARJETA DROP con fondo real + profundidad */
     .cardDrop{
       position:relative;
       border-radius: var(--radius);
       overflow:hidden;
-      background: var(--carbon);
       cursor:pointer;
-      min-height: 220px;
+      min-height: 240px;
       box-shadow: var(--shadow2);
+      background: #0b0f14;
       transform: translateZ(0);
       transition: transform .18s ease, box-shadow .18s ease;
+      border: 1px solid rgba(255,255,255,.10);
     }
     .cardDrop:hover{
       transform: translateY(-2px);
-      box-shadow: 0 16px 40px rgba(0,0,0,.26);
+      box-shadow: 0 18px 44px rgba(0,0,0,.28);
     }
+
+    /* fondo “desierto” + textura */
     .dropBg{
       position:absolute; inset:0;
-      background-image: url("/assets/baja1000-texture.png");
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.10), transparent 52%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.34)),
+        url("/assets/baja1000-texture.png");
       background-size: cover;
-      opacity: .35;
+      background-position: center;
+      opacity: .95;
+      filter: saturate(1.05) contrast(1.05);
     }
+    /* viñeta para legibilidad */
+    .dropBg::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 30% 30%, transparent 30%, var(--cardVignette) 100%),
+        linear-gradient(to right, rgba(0,0,0,.75) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,.15) 100%);
+      opacity:.95;
+    }
+
+    /* glass interno */
     .dropGlass{
       position:absolute; inset:0;
       display:flex;
@@ -464,9 +463,10 @@
       justify-content:space-between;
       padding: 14px;
       background:
-        linear-gradient(135deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,.04) 60%, rgba(0,0,0,.12) 100%);
-      backdrop-filter: blur(8px);
+        linear-gradient(135deg, var(--cardGlassA) 0%, var(--cardGlassB) 60%, rgba(0,0,0,.10) 100%);
+      backdrop-filter: blur(9px);
     }
+
     .statusBadge{
       align-self:flex-start;
       background: var(--red);
@@ -480,23 +480,24 @@
       box-shadow: 0 10px 18px rgba(0,0,0,.25);
     }
     .dropLogo{
-      width: 140px; height: 54px;
+      width: 150px; height: 56px;
       object-fit: contain;
-      filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));
-      margin-top: 10px;
+      filter: drop-shadow(0 12px 16px rgba(0,0,0,.35));
+      margin-top: 8px;
+      opacity:.95;
     }
     .dropInfo h3{
       margin: 8px 0 4px;
       font-family: var(--fontTitle);
-      font-size: 28px;
+      font-size: 30px;
       letter-spacing: .02em;
       color:#fff;
       text-transform: uppercase;
     }
     .dropInfo p{
       margin:0 0 10px;
-      color: rgba(255,255,255,.86);
-      font-weight: 700;
+      color: rgba(255,255,255,.88);
+      font-weight: 800;
       font-size: 13px;
       line-height: 1.35;
     }
@@ -505,8 +506,8 @@
       background:#fff;
       color:#111;
       font-weight: 900;
-      padding: 10px 12px;
-      border-radius: 12px;
+      padding: 10px 14px;
+      border-radius: 14px;
       cursor:pointer;
       width: fit-content;
       transition: transform .15s ease;
@@ -514,28 +515,38 @@
     }
     .btnDrop:hover{ transform: translateY(-1px); }
 
-    /* sponsors */
-    .sponsors{
+    /* ✅ PARTNERS SIN TARJETA (en el fondo, con tinte visible) */
+    .partnersStrip{
       margin-top: 22px;
-      border-radius: var(--radius);
-      padding: 18px;
-      background: rgba(255,255,255,.82);
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: var(--shadow2);
+      padding: 18px 6px 6px;
+      border-top: 3px solid rgba(225,6,0,.85);
+      border-bottom: 3px solid rgba(225,6,0,.25);
+      background: linear-gradient(180deg, var(--partnersTint), transparent 72%);
+      border-radius: 18px;
+    }
+    .partnersTitle{
+      font-family: var(--fontTitle);
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: rgba(0,0,0,.55);
+      margin: 0 0 16px;
+      text-transform: uppercase;
+      padding: 0 12px;
     }
     .spGrid{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 14px;
       align-items:center;
+      padding: 0 12px 12px;
     }
     @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
     .spLogo{
       width: 100%;
-      height: 44px;
+      height: 48px;
       object-fit: contain;
       filter: grayscale(1) contrast(1.05);
-      opacity: .88;
+      opacity: .92;
     }
 
     /* footer */
@@ -586,11 +597,7 @@
       z-index: 120;
       transition: opacity .18s ease, transform .18s ease;
     }
-    .paybar.visible{
-      opacity:1;
-      pointer-events:auto;
-      transform: translateX(-50%) translateY(0);
-    }
+    .paybar.visible{ opacity:1; pointer-events:auto; }
     .pbTotal{
       font-weight: 900;
       font-size: 11px;
@@ -623,10 +630,9 @@
       text-transform: uppercase;
     }
 
-    /* drawer carrito */
+    /* drawer carrito (igual base) */
     .drawer{
-      position: fixed;
-      top:0; right:0;
+      position: fixed; top:0; right:0;
       width: min(420px, 92vw);
       height: 100%;
       background: rgba(255,255,255,.96);
@@ -639,7 +645,6 @@
       flex-direction:column;
     }
     .drawer.active{ transform: translateX(0); }
-
     .dHead{
       display:flex; align-items:center; justify-content:space-between;
       padding: 16px 16px 10px;
@@ -652,10 +657,8 @@
       letter-spacing: .03em;
     }
     .pmClose{
-      border:none;
-      background: transparent;
-      cursor:pointer;
-      font-weight: 900;
+      border:none; background: transparent;
+      cursor:pointer; font-weight: 900;
       line-height: 1;
       padding: 6px 10px;
       border-radius: 12px;
@@ -694,7 +697,6 @@
       font-weight: 900;
       font-size: 13px;
     }
-
     .dFoot{
       padding: 12px 16px 16px;
       border-top: 1px solid rgba(0,0,0,.08);
@@ -708,7 +710,6 @@
     }
     .sumRow strong{ color:#111; font-weight: 900; }
 
-    /* promo box */
     .promoBox{
       margin-top: 12px;
       padding: 12px;
@@ -716,14 +717,12 @@
       background: rgba(0,0,0,.04);
       border: 1px solid rgba(0,0,0,.06);
     }
-    .promoRow{
-      display:flex; gap: 10px; margin-top: 8px;
-    }
+    .promoRow{ display:flex; gap: 10px; margin-top: 8px; }
     .promoInput{
       flex:1;
       height: 42px;
       border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.14);
+      border: 1px solid rgba(0,0,0,0.14);
       padding: 0 12px;
       font-weight: 900;
       letter-spacing: .06em;
@@ -747,36 +746,6 @@
       color: rgba(0,0,0,.68);
       font-weight: 900;
       line-height: 1.35;
-    }
-
-    /* shipping box */
-    .shipBox{
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-    }
-    .shipRow{ display:flex; gap: 10px; margin-top: 10px; }
-    .shipInput{
-      flex:1;
-      height: 42px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.14);
-      padding: 0 12px;
-      font-weight: 900;
-      letter-spacing: .06em;
-    }
-    .shipBtn{
-      height: 42px;
-      border-radius: 12px;
-      border:none;
-      background: var(--red);
-      color:#fff;
-      font-weight: 900;
-      padding: 0 14px;
-      cursor:pointer;
-      letter-spacing: .04em;
     }
 
     .dfBtn{
@@ -805,7 +774,7 @@
       text-underline-offset: 3px;
     }
 
-    /* modales */
+    /* modal catálogo */
     .prodModal{
       position: fixed;
       left: 50%;
@@ -851,28 +820,6 @@
     @media (max-width: 920px){ .pmGrid{ grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px){ .pmGrid{ grid-template-columns: 1fr; } }
 
-    .pmDivider{
-      grid-column: 1 / -1;
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      margin: 10px 0 2px;
-      opacity:.9;
-    }
-    .pmDivider .bar{
-      flex:1;
-      height: 1px;
-      background: rgba(0,0,0,.16);
-    }
-    .pmDivider .label{
-      font-weight: 900;
-      letter-spacing: .12em;
-      font-size: 11px;
-      color: rgba(0,0,0,.65);
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
     .pCard{
       border-radius: 16px;
       overflow:hidden;
@@ -886,17 +833,9 @@
       width:100%;
       aspect-ratio: 4 / 3;
       background: rgba(0,0,0,.04);
-      display:flex;
-      align-items:center;
-      justify-content:center;
       overflow:hidden;
     }
-    .pImg img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-    }
+    .pImg img{ width:100%; height:100%; object-fit: cover; display:block; }
     .pInfo{ padding: 12px; }
     .pName{
       font-weight: 900;
@@ -911,47 +850,20 @@
       color: rgba(0,0,0,.55);
       text-decoration: line-through;
     }
-    .pNow{
-      font-weight: 900;
-      font-size: 16px;
-      margin-top: 2px;
-    }
-    .pOff{
-      display:inline-block;
-      margin-left: 8px;
-      font-size: 11px;
-      font-weight: 900;
-      color: #fff;
-      background: var(--red);
-      padding: 4px 8px;
-      border-radius: 999px;
-      vertical-align: middle;
-      letter-spacing: .06em;
-    }
-    .pPrice small{
-      display:block;
-      margin-top: 4px;
-      font-size: 12px;
-      color: rgba(0,0,0,.55);
-      font-weight: 900;
-    }
-
-    .sizeRow{ margin-top: 10px; display:flex; align-items:center; justify-content:space-between; gap: 10px; }
-    .sizeRow label{
+    .pNow{ font-weight: 900; font-size: 16px; margin-top: 2px; }
+    .pCoupon{
+      margin-top: 6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
       font-size: 12px;
       font-weight: 900;
-      color: rgba(0,0,0,.70);
-    }
-    .sizeSelect{
-      flex:1;
-      height: 38px;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+      padding: 10px 10px;
       border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.14);
-      padding: 0 10px;
-      font-weight: 900;
-      letter-spacing: .06em;
     }
-
+    .pCoupon b{ color: var(--red); }
     .pBtn{
       width: 100%;
       margin-top: 10px;
@@ -965,57 +877,26 @@
       letter-spacing: .06em;
       text-transform: uppercase;
     }
-
-    /* legal modal */
-    .legalBox{
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(.98);
-      width: min(680px, 92vw);
-      max-height: 82vh;
-      overflow:auto;
-      background: rgba(255,255,255,.98);
-      border-radius: 18px;
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: var(--shadow2);
-      z-index: 125;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-      padding: 16px;
-    }
-    .legalBox.active{
-      opacity:1;
-      pointer-events:auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    .legalBox h3{ margin: 0 0 8px; font-family: var(--fontTitle); font-size: 30px; }
-    .legalBox p{ margin: 10px 0; color:#111; line-height: 1.6; font-weight: 600; }
-
   </style>
 </head>
-<body>
+
+<body data-theme="xmas">
+  <div class="seasonTint" aria-hidden="true"></div>
+  <div class="seasonSnow" aria-hidden="true"></div>
+
   <div class="overlay" id="globalOverlay"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <div class="statusBanner" id="statusBanner" aria-live="polite">
-    <img src="/assets/icono-compra-exitosa.png" alt="Compra exitosa" loading="lazy" decoding="async" onerror="this.style.display='none'">
-    <div>
-      <strong id="sbTitle">Listo</strong>
-      <span id="sbText">Tu pago fue procesado.</span>
-    </div>
-    <button type="button" onclick="hideStatusBanner()">OK</button>
-  </div>
 
   <header class="topbar">
     <div class="topInner">
       <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
-        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async" fetchpriority="high">
+        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async">
       </a>
 
       <div class="navRight">
-        <div class="miniPill" title="México">ENVÍOS MX</div>
+        <div class="promoPill" title="Cupón activo">
+          <span>15% OFF con</span>&nbsp;<b>SCORE10</b>
+        </div>
 
         <button class="cartTrigger" id="cartTrigger" type="button" onclick="toggleCart()" aria-label="Abrir carrito">
           <svg class="cartIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -1033,14 +914,22 @@
       <div class="heroBg" aria-hidden="true"></div>
       <div class="heroOverlay" aria-hidden="true"></div>
 
+      <div class="seasonRibbon">
+        <b>NAVIDAD</b> · Año Nuevo
+      </div>
+
       <div class="heroContent">
         <div class="heroTag">MERCH OFICIAL</div>
         <h1 class="heroTitle">LEYENDAS<br><span>DEL DESIERTO</span></h1>
+
         <p class="heroSub">
-          Inventario limitado + drops oficiales. Compra rápida y segura en México (tarjeta y OXXO disponibles en checkout).
+          Inventario limitado + drops oficiales. Compra segura en México.
         </p>
-        <!-- ✅ Abre catálogo dinámico (sin romper tu base) -->
-        <button class="btnHero" type="button" onclick="openProductModal('ALL')">VER DROPS</button>
+
+        <div class="heroActions">
+          <button class="btnHero" type="button" onclick="openProductModal('ALL')">VER DROPS</button>
+          <div class="heroHint">Agrega el código <b>SCORE10</b> y obtén <b>15% OFF</b></div>
+        </div>
       </div>
     </section>
 
@@ -1049,7 +938,6 @@
       <span class="secMeta">MX · Drops Oficiales</span>
     </div>
 
-    <!-- Base visual igual, pero el modal ya es dinámico -->
     <div class="gridDrops">
       <div class="cardDrop" onclick="openProductModal('ALL')" role="button" tabindex="0" aria-label="Abrir catálogo">
         <div class="dropBg" aria-hidden="true"></div>
@@ -1067,9 +955,9 @@
       <div class="cardDrop" onclick="notifyDrop('San Felipe 250')" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="/assets/logo-sf250.png" class="dropLogo" style="opacity:.82" alt="San Felipe 250" loading="lazy" decoding="async">
+          <img src="/assets/logo-sf250.png" class="dropLogo" style="opacity:.90" alt="San Felipe 250" loading="lazy" decoding="async">
           <div class="dropInfo">
-            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <h3 style="opacity:.95">PRÓXIMAMENTE</h3>
             <p>San Felipe 250</p>
             <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('San Felipe 250')">AVÍSAME</button>
           </div>
@@ -1079,9 +967,9 @@
       <div class="cardDrop" onclick="notifyDrop('Baja 500')" role="button" tabindex="0" aria-label="Avísame Baja 500">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="/assets/logo-baja500.png" class="dropLogo" style="opacity:.82" alt="Baja 500" loading="lazy" decoding="async">
+          <img src="/assets/logo-baja500.png" class="dropLogo" style="opacity:.90" alt="Baja 500" loading="lazy" decoding="async">
           <div class="dropInfo">
-            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <h3 style="opacity:.95">PRÓXIMAMENTE</h3>
             <p>Baja 500</p>
             <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 500')">AVÍSAME</button>
           </div>
@@ -1091,9 +979,9 @@
       <div class="cardDrop" onclick="notifyDrop('Baja 400')" role="button" tabindex="0" aria-label="Avísame Baja 400">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass" style="opacity:.92">
-          <img src="/assets/logo-baja400.png" class="dropLogo" style="opacity:.82" alt="Baja 400" loading="lazy" decoding="async">
+          <img src="/assets/logo-baja400.png" class="dropLogo" style="opacity:.90" alt="Baja 400" loading="lazy" decoding="async">
           <div class="dropInfo">
-            <h3 style="opacity:.9">PRÓXIMAMENTE</h3>
+            <h3 style="opacity:.95">PRÓXIMAMENTE</h3>
             <p>Baja 400</p>
             <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 400')">AVÍSAME</button>
           </div>
@@ -1101,14 +989,13 @@
       </div>
     </div>
 
-    <section class="sponsors" aria-label="Partners">
-      <div style="font-family:var(--fontTitle); font-size:20px; color:#666; margin-bottom:18px; letter-spacing:2px;">
-        OFFICIAL PARTNERS
-      </div>
+    <!-- ✅ Partners directo al fondo, con tinte y líneas -->
+    <section class="partnersStrip" aria-label="Partners">
+      <div class="partnersTitle">OFFICIAL PARTNERS</div>
       <div class="spGrid">
         <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <img src="/assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="/assets/logo-unico.png" class="spLogo" alt="Único Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async">
       </div>
     </section>
@@ -1125,20 +1012,11 @@
           ventas.unicotextil@gmail.com<br>
           WhatsApp: 664 236 8701
         </p>
-
-        <p style="margin:14px 0 0; font-size:12px; color:#a1a1a1; font-weight:800; line-height:1.5;">
-          Los productos están sujetos a disponibilidad. Si un artículo se agota, se notificará para reembolso o alternativa.
-        </p>
-
-        <p style="margin:10px 0 0; font-size:11px; color:#8f8f8f; font-weight:900;">
-          Pagos: Stripe · Logística: Envia.com
-        </p>
       </div>
 
       <div>
         <h4 style="color:var(--red); font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">LEGAL</h4>
         <div>
-          <!-- ✅ Crawlable: ahora son links reales -->
           <a class="fLink" href="/#terms" data-legal="terms">Términos y condiciones</a>
           <a class="fLink" href="/#privacy" data-legal="privacy">Aviso de privacidad</a>
           <a class="fLink" href="/#shipping" data-legal="shipping">Envíos y entregas</a>
@@ -1152,11 +1030,8 @@
 
   <div class="paybar" id="paybar" aria-label="Resumen de compra">
     <div>
-      <div class="pbTotal">TOTAL (cobro en MXN)</div>
-      <div class="pbPrice" id="pbTotal">
-        $0 MXN
-        <small>$0 USD</small>
-      </div>
+      <div class="pbTotal">TOTAL (MXN) · Cupón: SCORE10 -15%</div>
+      <div class="pbPrice" id="pbTotal">$0 MXN <small>$0 USD</small></div>
     </div>
     <button class="pbBtn" type="button" onclick="toggleCart()">VER CARRITO</button>
   </div>
@@ -1173,52 +1048,34 @@
 
     <div class="dFoot">
       <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
-      <div class="sumRow"><span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong></div>
-
-      <!-- ✅ Promo line -->
-      <div class="sumRow" id="promoLine" style="display:none;">
-        <span>Promo:</span><strong id="promoTotalLine">-$0 MXN</strong>
-      </div>
-
+      <div class="sumRow" id="promoLine" style="display:none;"><span>Descuento (SCORE10):</span><strong id="promoTotalLine">-$0 MXN</strong></div>
       <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
       <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
 
-      <!-- ✅ PROMO INPUT -->
       <div class="promoBox" aria-label="Código de promoción">
         <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          Código de promoción
+          Código de promoción (15% OFF)
         </div>
         <div class="promoRow">
-          <input class="promoInput" id="promoInput" maxlength="24" placeholder="EJ. SCORE10">
+          <input class="promoInput" id="promoInput" maxlength="24" placeholder="SCORE10">
           <button class="promoBtn" type="button" onclick="applyPromo()">APLICAR</button>
         </div>
-        <div class="promoNote" id="promoNote">Si tienes un cupón, aplícalo aquí. Se verá reflejado antes de pagar.</div>
-      </div>
-
-      <div class="shipBox">
-        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          Envío (México)
-        </div>
-        <div style="margin-top:6px; font-size:12px; color:#444; font-weight:700; line-height:1.35;">
-          Calculado vía Envia.com (backend). Ingresa tu C.P. para estimar.
-        </div>
-        <div class="shipRow">
-          <input class="shipInput" id="zipInput" inputmode="numeric" maxlength="5" placeholder="C.P. (ej. 22614)">
-          <button class="shipBtn" type="button" onclick="quoteShipping()">Calcular</button>
-        </div>
-        <div style="margin-top:8px; font-size:11px; color:#666; font-weight:900;" id="shipNote"></div>
+        <div class="promoNote" id="promoNote">Tip: con <b>SCORE10</b> se aplica 15% de descuento al total.</div>
       </div>
 
       <button class="dfBtn" id="payBtn" type="button" onclick="goCheckout()">IR A PAGAR</button>
       <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
 
-      <div style="margin-top:10px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
-        Pago seguro con Stripe. Inventario limitado.
+      <!-- ✅ control de temporada (modular, UX simple) -->
+      <div style="margin-top:12px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
+        Temporada:
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('xmas')">Navidad</span> ·
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('halloween')">Halloween</span> ·
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('patrio')">Patrio</span>
       </div>
     </div>
   </aside>
 
-  <!-- ✅ Modal catálogo dinámico -->
   <div class="prodModal" id="pmAll" aria-label="Catálogo">
     <div class="pmHead">
       <div class="pmTitle" id="pmAllTitle">CATÁLOGO</div>
@@ -1229,21 +1086,17 @@
     </div>
   </div>
 
-  <div class="legalBox" id="legalBox" role="dialog" aria-modal="true">
-    <h3 id="lbTitle"></h3>
-    <div id="lbBody"></div>
-    <button type="button" onclick="closeOverlay()"
-      style="background:#000; color:#fff; border:none; padding:12px; width:100%; cursor:pointer; font-weight:900; margin-top:14px; border-radius:12px;">
-      CERRAR
-    </button>
-  </div>
+  <div class="overlay" id="globalOverlay2" style="display:none"></div>
 
-<script>
-/* =========================
-   SCORE STORE — JS (base + mejoras)
-   ========================= */
+<script>/
+* =========================
+     SCORE STORE — JS
+     Precios: base (catálogo) +15%
+     Cupón: SCORE10 = -15% (regresa a “precio original”)
+     Temas: xmas/halloween/patrio (modular)
+     ========================= */
 
-  // ✅ Service Worker (PWA)
+  // PWA
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("/sw.js").catch(()=>{});
@@ -1252,33 +1105,30 @@
 
   const FX_MXN_PER_USD = 17.50;
 
-  const API_CHECKOUT = "/.netlify/functions/create_checkout";
-  const API_SHIPPING = "/.netlify/functions/quote_shipping";
+  // ✅ precios
+  const PRICE_MARKUP = 0.15;     // +15% al precio original
+  const PROMO_CODE_FIXED = "SCORE10";
+  const PROMO_PCT_FIXED  = 0.15; // -15%
 
-  // ✅ fallback fijo si Envia truena
-  const FALLBACK_SHIPPING_MXN = 149;
+  const API_CHECKOUT = "/.netlify/functions/create_checkout";
+  const LS_KEY = "score_cart_v4";
 
   const SIZES = ["S","M","L","XL","2XL"];
-  const LS_KEY = "score_cart_v3";
+
   let cart = JSON.parse(localStorage.getItem(LS_KEY)) || [];
-
-  let shippingMXN = 0;
-  let shippingQuoted = false;
-
-  // ✅ Catálogo dinámico
   let CATALOG = null;
-  let PROMOS = null;
 
-  // ✅ Promoción aplicada (UI)
-  let promoApplied = null; // { code, type, value }
+  let promoApplied = null; // { code, type:"percent", value:0.15 }
   let promoOffMXN = 0;
 
   function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
   function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
   function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
-
   function escapeHtml(str){
     return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+  function normCode(s){
+    return String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
   }
 
   function toast(msg){
@@ -1286,89 +1136,36 @@
     el.textContent = msg;
     el.classList.add("show");
     clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2600);
+    window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2400);
   }
 
-  function showStatusBanner(title, text){
-    const b = document.getElementById("statusBanner");
-    document.getElementById("sbTitle").textContent = title;
-    document.getElementById("sbText").textContent = text;
-    b.classList.add("show");
+  // ✅ temas (modular)
+  const THEME_KEY = "score_theme";
+  function setTheme(theme){
+    document.body.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_KEY, theme);
+    toast(`Tema: ${theme}`);
   }
-  function hideStatusBanner(){
-    document.getElementById("statusBanner").classList.remove("show");
-    try{
-      const url = new URL(window.location.href);
-      url.searchParams.delete("status");
-      window.history.replaceState({}, "", url.toString());
-    }catch(e){}
-  }
-
-  function notifyDrop(dropName){
-    const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
-    const body = encodeURIComponent(
-      `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
-      `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
-    );
-    window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
-  }
+  (function initTheme(){
+    const saved = localStorage.getItem(THEME_KEY);
+    if(saved) document.body.setAttribute("data-theme", saved);
+  })();
 
   const overlay = document.getElementById("globalOverlay");
   const drawer  = document.getElementById("cartDrawer");
-  const legal   = document.getElementById("legalBox");
   const pb      = document.getElementById("paybar");
 
   function closeOverlay(){
     overlay.classList.remove("active");
     drawer.classList.remove("active");
-    legal.classList.remove("active");
     closeProductModal();
     document.body.classList.remove("modalOpen");
   }
   overlay.addEventListener("click", closeOverlay);
 
-  // ✅ Legal links (crawlable + modal)
-  document.querySelectorAll("a[data-legal]").forEach(a => {
-    a.addEventListener("click", (e)=>{
-      e.preventDefault();
-      const t = a.getAttribute("data-legal");
-      showLegal(t);
-    });
-  });
-
-  function bumpCart(){
-    const btn = document.getElementById("cartTrigger");
-    if(!btn) return;
-    btn.classList.remove("bump");
-    void btn.offsetWidth;
-    btn.classList.add("bump");
-  }
-
   function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
   function cartSubtotalMXN(){ return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0); }
   function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
-
-  function rem(idx){
-    cart.splice(idx,1);
-    saveCart();
-    updateCartUI();
-    toast("Producto eliminado");
-  }
-
-  function clearCart(){
-    if(confirm("¿Vaciar carrito?")){
-      cart = [];
-      shippingMXN = 0;
-      shippingQuoted = false;
-      promoApplied = null;
-      promoOffMXN = 0;
-      document.getElementById("shipNote").textContent = "";
-      document.getElementById("promoNote").textContent = "Si tienes un cupón, aplícalo aquí. Se verá reflejado antes de pagar.";
-      saveCart();
-      updateCartUI();
-      toast("Carrito vacío");
-    }
-  }
 
   function toggleCart(){
     if(drawer.classList.contains("active")) closeOverlay();
@@ -1380,85 +1177,74 @@
     }
   }
 
-  /* =========
-     Catálogo dinámico
-     ========= */
-  async function loadData(){
-    // cache-bust suave para no pelearte con deploys
-    const v = Date.now().toString().slice(-6);
-    const [cat, pro] = await Promise.allSettled([
-      fetch(`/data/catalog.json?v=${v}`).then(r=>r.json()),
-      fetch(`/data/promos.json?v=${v}`).then(r=>r.json())
-    ]);
-    CATALOG = cat.status === "fulfilled" ? cat.value : null;
-    PROMOS  = pro.status === "fulfilled" ? pro.value : { rules: [] };
-  }
-
-  function normCode(s){
-    return String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
-  }
-
-  function catalogPricing(){
-    const p = (CATALOG && CATALOG.pricing) ? CATALOG.pricing : {};
-    const markup = typeof p.markup_pct === "number" ? p.markup_pct : 0.30;
-    const disc   = typeof p.discount_pct === "number" ? p.discount_pct : 0.30;
-    return { markup, disc };
-  }
-
-  function productPricing(p){
-    const { markup, disc } = catalogPricing();
-    const wasRaw = (typeof p.wasMXN === "number" && p.wasMXN > 0) ? p.wasMXN : null;
-    const baseRaw = (typeof p.baseMXN === "number" && p.baseMXN > 0) ? p.baseMXN : null;
-
-    const was = wasRaw !== null ? Math.round(wasRaw) :
-                baseRaw !== null ? Math.round(baseRaw * (1 + markup)) :
-                0;
-
-    const now = was > 0 ? Math.round(was * (1 - disc)) : 0;
-    return { was, now };
+  function notifyDrop(dropName){
+    const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
+    const body = encodeURIComponent(
+      `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
+      `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
+    );
+    window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
   }
 
   function needsSize(name){
     return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
   }
 
+  // ✅ Pricing: original (baseMXN) +15%
+  function priceListFromBase(baseMXN){
+    return Math.round(Number(baseMXN||0) * (1 + PRICE_MARKUP));
+  }
+  function priceWithCoupon(listMXN){
+    return Math.round(Number(listMXN||0) * (1 - PROMO_PCT_FIXED));
+  }
+
+  async function loadCatalog(){
+    const v = Date.now().toString().slice(-6);
+    const res = await fetch(`/data/catalog.json?v=${v}`);
+    CATALOG = await res.json();
+  }
+
   function pmDivider(label){
     return `
-      <div class="pmDivider" aria-hidden="true">
-        <div class="bar"></div>
-        <div class="label">${escapeHtml(label)}</div>
-        <div class="bar"></div>
+      <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px; margin:10px 0 2px; opacity:.9;">
+        <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
+        <div style="font-weight:900; letter-spacing:.12em; font-size:11px; color: rgba(0,0,0,.65); text-transform:uppercase; white-space: nowrap;">
+          ${escapeHtml(label)}
+        </div>
+        <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
       </div>
     `;
   }
 
   function cardTpl(p){
-    const { was, now } = productPricing(p);
-    const usd = mxnToUsd(now);
-    const sized = needsSize(p.name);
+    const base = Number(p.baseMXN||0);
+    const list = priceListFromBase(base);
+    const coupon = priceWithCoupon(list);
 
+    const sized = needsSize(p.name);
     return `
       <div class="pCard">
         <div class="pImg">
-          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}"
-               loading="lazy" decoding="async">
+          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
         </div>
         <div class="pInfo">
           <div class="pName">${escapeHtml(p.name)}</div>
 
           <div class="pPrice">
-            ${was ? `<div class="pWas">${moneyMXN(was)} MXN</div>` : ``}
-            <div class="pNow">
-              ${now ? `${moneyMXN(now)} MXN` : `PRECIO PENDIENTE`}
-              ${now ? `<span class="pOff">-${Math.round(catalogPricing().disc*100)}%</span>` : ``}
+            <div class="pWas">${moneyMXN(list)} MXN</div>
+            <div class="pNow">${moneyMXN(list)} MXN</div>
+
+            <div class="pCoupon" title="Usa el cupón SCORE10">
+              <span>Con <b>${PROMO_CODE_FIXED}</b></span>
+              <span><b>${moneyMXN(coupon)}</b></span>
             </div>
-            ${now ? `<small>${moneyUSD(usd)} USD</small>` : ``}
           </div>
 
           ${sized ? `
-            <div class="sizeRow">
-              <label for="size_${p.id}">Talla</label>
-              <select class="sizeSelect" id="size_${p.id}">
+            <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <label style="font-size:12px; font-weight:900; color: rgba(0,0,0,.70);" for="size_${p.id}">Talla</label>
+              <select style="flex:1; height:38px; border-radius:12px; border:1px solid rgba(0,0,0,.14); padding:0 10px; font-weight:900; letter-spacing:.06em;"
+                      id="size_${p.id}">
                 ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
               </select>
             </div>
@@ -1472,7 +1258,6 @@
 
   function renderCatalogAll(){
     const grid = document.getElementById("pmGridAll");
-
     if(!CATALOG || !Array.isArray(CATALOG.products)){
       grid.innerHTML = `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">
         No se pudo cargar el catálogo. Revisa <code>/data/catalog.json</code>.
@@ -1510,26 +1295,22 @@
       document.body.classList.add("modalOpen");
     }
   }
-
   function closeProductModal(){
     document.querySelectorAll(".prodModal").forEach(el => el.classList.remove("active"));
   }
 
-  /* =========
-     Carrito + promo
-     ========= */
   function addToCart(productId){
     if(!CATALOG || !Array.isArray(CATALOG.products)){
-      toast("Catálogo no cargado aún…");
+      toast("Catálogo no cargado…");
       return;
     }
-
     const p = CATALOG.products.find(x => String(x.id) === String(productId));
     if(!p) return;
 
-    const { was, now } = productPricing(p);
-    if(!now){
-      toast("Precio pendiente. Ajusta baseMXN/wasMXN en catalog.json");
+    const base = Number(p.baseMXN||0);
+    const list = priceListFromBase(base);
+    if(!list){
+      toast("Falta baseMXN en el producto.");
       return;
     }
 
@@ -1546,34 +1327,41 @@
       name: p.name,
       img: p.img,
       size,
-      priceMXN: now,
-      wasMXN: was,
+      priceMXN: list,     // ✅ precio tienda (original +15%)
+      baseMXN: base,      // original
       qty: 1
     });
 
     saveCart();
     updateCartUI();
-    bumpCart();
     toast("Agregado al carrito");
   }
 
-  function computePromoOff(subtotal, ship){
+  function rem(idx){
+    cart.splice(idx,1);
+    saveCart();
+    updateCartUI();
+    toast("Producto eliminado");
+  }
+
+  function clearCart(){
+    if(confirm("¿Vaciar carrito?")){
+      cart = [];
+      promoApplied = null;
+      promoOffMXN = 0;
+      saveCart();
+      updateCartUI();
+      toast("Carrito vacío");
+    }
+  }
+
+  function computePromoOff(subtotal){
     promoOffMXN = 0;
     if(!promoApplied) return 0;
 
-    const type = String(promoApplied.type||"");
-    const value = promoApplied.value;
-
-    if(type === "percent"){
-      const pct = value > 0 && value <= 1 ? value : (value/100);
-      promoOffMXN = Math.max(0, Math.round(subtotal * pct));
-    } else if(type === "fixed_mxn"){
-      promoOffMXN = Math.max(0, Math.round(Number(value||0)));
-      promoOffMXN = Math.min(promoOffMXN, subtotal); // no “negativo”
-    } else if(type === "free_shipping"){
-      promoOffMXN = Math.min(ship, ship); // cancela envío
+    if(promoApplied.type === "percent"){
+      promoOffMXN = Math.max(0, Math.round(subtotal * promoApplied.value));
     }
-
     return promoOffMXN;
   }
 
@@ -1582,38 +1370,24 @@
     const note  = document.getElementById("promoNote");
     const code  = normCode(input.value);
 
-    if(!code){
-      promoApplied = null;
-      promoOffMXN = 0;
-      note.textContent = "Escribe un código para aplicarlo.";
+    if(code === PROMO_CODE_FIXED){
+      promoApplied = { code, type:"percent", value: PROMO_PCT_FIXED };
+      note.innerHTML = `✅ Cupón aplicado: <b>${PROMO_CODE_FIXED}</b> (-15%)`;
+      toast("SCORE10 aplicado");
       updateCartUI();
       return;
     }
 
-    const rules = (PROMOS && Array.isArray(PROMOS.rules)) ? PROMOS.rules : [];
-    const r = rules.find(x => normCode(x.code) === code && x.active !== false);
-
-    if(!r){
-      promoApplied = null;
-      promoOffMXN = 0;
-      note.textContent = `Código no válido: ${code}`;
-      updateCartUI();
-      return;
-    }
-
-    promoApplied = { code, type: r.type, value: r.value };
-    note.textContent = `Promo aplicada: ${code}`;
+    promoApplied = null;
+    promoOffMXN = 0;
+    note.textContent = code ? `Código no válido: ${code}` : `Escribe un código para aplicarlo.`;
     updateCartUI();
-    toast("Promo aplicada");
   }
 
   function updateCartUI(){
     const subtotal = cartSubtotalMXN();
-    const ship = shippingMXN || 0;
-
-    // promo off calculado en UI
-    const off = computePromoOff(subtotal, ship);
-    const totalMXN = Math.max(0, (subtotal + ship) - off);
+    const off = computePromoOff(subtotal);
+    const totalMXN = Math.max(0, subtotal - off);
     const totalUSD = mxnToUsd(totalMXN);
 
     document.getElementById("cartCount").innerText = cartCount();
@@ -1624,7 +1398,6 @@
     `;
 
     document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
-    document.getElementById("shipTotalLine").textContent = moneyMXN(ship);
 
     const promoLine = document.getElementById("promoLine");
     if(off > 0){
@@ -1658,70 +1431,11 @@
               <div class="cMetaLine">Talla: <b>${escapeHtml(i.size)}</b> · Cant: <b>${i.qty}</b></div>
               <div class="cPrice">${moneyMXN(lineMXN)} <span style="color:#666; font-weight:900;">/ ${moneyUSD(lineUSD)}</span></div>
             </div>
-            <button type="button" onclick="rem(${idx})" style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
+            <button type="button" onclick="rem(${idx})"
+              style="border:none; background:none; color:#888; font-weight:900; font-size:18px; cursor:pointer;">&times;</button>
           </div>
         `;
       }).join("");
-    }
-  }
-
-  function cleanBackendMsg(any){
-    const s = String(any || "").trim();
-    if(!s) return "";
-    if(s.startsWith("{") || s.startsWith("[")) return "Backend/Envia respondió con error.";
-    if(s.length > 140) return s.slice(0, 140) + "…";
-    return s;
-  }
-
-  async function quoteShipping(){
-    const zip = (document.getElementById("zipInput").value || "").trim();
-    const note = document.getElementById("shipNote");
-
-    if(!/^\d{5}$/.test(zip)){
-      note.textContent = "Pon un C.P. válido de 5 dígitos.";
-      return;
-    }
-    if(cart.length === 0){
-      note.textContent = "Primero agrega productos al carrito.";
-      return;
-    }
-
-    note.textContent = "Calculando envío…";
-
-    try{
-      const res = await fetch(API_SHIPPING, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({
-          zip,
-          items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty }))
-        })
-      });
-
-      const data = await res.json().catch(()=> ({}));
-
-      if(res.ok && typeof data.mxn === "number"){
-        shippingMXN = Math.max(0, Math.round(data.mxn));
-        shippingQuoted = true;
-        note.textContent = cleanBackendMsg(data.note) || "Envío calculado y aplicado al total.";
-        updateCartUI();
-        return;
-      }
-
-      shippingMXN = FALLBACK_SHIPPING_MXN;
-      shippingQuoted = false;
-
-      const msg = cleanBackendMsg(data && (data.error || data.message));
-      note.textContent = `Envío estimado aplicado (fallback). Motivo: ${msg || "Envia/Backend 500"}`;
-      updateCartUI();
-
-      console.warn("Shipping quote failed:", { status: res.status, data });
-    }catch(e){
-      shippingMXN = FALLBACK_SHIPPING_MXN;
-      shippingQuoted = false;
-      note.textContent = "Envío estimado aplicado (fallback). Motivo: error de conexión con backend.";
-      updateCartUI();
-      console.error("Shipping quote network error:", e);
     }
   }
 
@@ -1738,24 +1452,16 @@
         headers: { "Content-Type":"application/json" },
         body: JSON.stringify({
           items: cart.map(i => ({ id:i.id, size:i.size, qty:i.qty })),
-          shippingMXN: shippingMXN || 0,
           fx: FX_MXN_PER_USD,
-          promo: promoApplied ? { code: promoApplied.code } : null,
-          meta: {
-            source: "score_store",
-            shippingQuoted: shippingQuoted,
-            zip: (document.getElementById("zipInput").value || "").trim()
-          }
+          promo: promoApplied ? { code: promoApplied.code } : null
         })
       });
 
       const data = await res.json().catch(()=> ({}));
-
       if(res.ok && data && data.url){
         window.location.href = data.url;
         return;
       }
-
       toast("Error iniciando pago. Revisa create_checkout.");
       console.warn("Checkout failed:", { status: res.status, data });
     }catch(e){
@@ -1767,74 +1473,13 @@
     }
   }
 
-  function showLegal(t){
-    const titleMap = {
-      terms: "Términos y condiciones",
-      privacy: "Aviso de privacidad",
-      shipping: "Envíos y entregas",
-      returns: "Cambios y devoluciones",
-      fiscal: "Facturación",
-      cookies: "Cookies"
-    };
-
-    const bodyMap = {
-      terms: `
-        <p><b>ÚNICO UNIFORMES</b> opera esta tienda como fabricante y patrocinador oficial de productos físicos.</p>
-        <p><b>Disponibilidad:</b> inventario limitado. Tu compra queda confirmada cuando el pago sea aprobado.</p>
-        <p><b>Precios:</b> se muestran en MXN y referencia en USD (tipo de cambio informativo: <b>${FX_MXN_PER_USD} MXN/USD</b>). El cobro se procesa en MXN.</p>
-        <p><b>Pagos:</b> Stripe. No almacenamos datos bancarios en este sitio.</p>
-        <p><b>Soporte:</b> <b>ventas.unicotextil@gmail.com</b> / WhatsApp <b>664 236 8701</b>.</p>
-      `,
-      privacy: `
-        <p><b>Responsable:</b> <b>ÚNICO UNIFORMES</b>.</p>
-        <p><b>Datos:</b> contacto y envío (nombre, teléfono, correo, domicilio), info de compra (artículos, montos, estado del pago) y datos fiscales si facturas.</p>
-        <p><b>Finalidades:</b> procesar compras, generar envíos, soporte, prevención de fraude y facturación.</p>
-        <p><b>Proveedores:</b> pago (Stripe) y logística (Envia.com).</p>
-        <p><b>Contacto:</b> ventas.unicotextil@gmail.com.</p>
-      `,
-      shipping: `
-        <p><b>Alcance:</b> Envíos dentro de México.</p>
-        <p><b>Cotización:</b> se calcula vía Envia.com (backend). Puede variar por C.P. y paquetería.</p>
-        <p><b>Rastreo:</b> se compartirá el número de guía cuando el pedido esté listo.</p>
-      `,
-      returns: `
-        <p><b>Defecto/daño:</b> reportar dentro de <b>7 días naturales</b> con fotos y número de pedido.</p>
-        <p><b>Cambios:</b> por talla sujetos a disponibilidad. Envíos pueden aplicar.</p>
-      `,
-      fiscal: `
-        <p><b>CFDI:</b> envía tu constancia fiscal y número de pedido a <b>ventas.unicotextil@gmail.com</b>.</p>
-        <p>Solicitar dentro del mismo mes de compra.</p>
-      `,
-      cookies: `
-        <p>Usamos almacenamiento local para el carrito.</p>
-        <p>Puedes borrarlo desde tu navegador.</p>
-      `
-    };
-
-    document.getElementById("lbTitle").innerText = titleMap[t] || "LEGAL";
-    document.getElementById("lbBody").innerHTML = bodyMap[t] || "<p>Contenido no disponible.</p>";
-    overlay.classList.add("active");
-    legal.classList.add("active");
-    document.body.classList.add("modalOpen");
-  }
-
-  (function initStatus(){
-    try{
-      const st = new URLSearchParams(window.location.search).get("status");
-      if(st === "success"){
-        showStatusBanner("✅ Compra confirmada", "Pago recibido. Si pagaste en OXXO, puede tardar en reflejarse según Stripe.");
-      } else if(st === "cancel"){
-        showStatusBanner("⚠️ Pago cancelado", "No se realizó el cobro. Puedes intentarlo de nuevo cuando quieras.");
-      }
-    }catch(e){}
-  })();
-
-  // ✅ init (carga catálogo/promos y listo)
   (async function boot(){
-    await loadData();
+    await loadCatalog();
+    // ✅ UX: sugerimos el cupón ya en el input para que se note
+    const inp = document.getElementById("promoInput");
+    if(inp && !inp.value) inp.value = "SCORE10";
     updateCartUI();
   })();
-
 </script>
 </body>
 </html>
