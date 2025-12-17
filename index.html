@@ -1249,15 +1249,19 @@
       <div class="pmGrid" id="pmGridAll"></div>
     </div>
   </div>
-<script>
-    /* =========================
-       SCORE STORE — JS (PRO)
-       Precios: baseMXN (original) +20% (NO mostramos "original")
-       Cupón visible: SCORE10 = -10%
-       Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
-       Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
-       Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
-       ========================= */
+    </div>
+  </div>
+
+  <script>
+  /* =========================
+     SCORE STORE — JS (PRO)
+     Precios: baseMXN (original) +20% (NO mostramos "original")
+     Cupón visible: SCORE10 = -10%
+     Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
+     Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
+     Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
+     REGLA: SIEMPRE ES ENVÍO (no se permite pagar sin cotización, excepto ENVIOFREE/GRTS10)
+     ========================= */
 
     // PWA
     if ("serviceWorker" in navigator) {
@@ -1278,6 +1282,7 @@
 
     const LS_KEY = "score_cart_v7";
     const LS_SHIP = "score_ship_v1";
+    const LS_SHIP_META = "score_ship_meta_v1";
     const THEME_KEY = "score_theme";
 
     const SIZES = ["S","M","L","XL","2XL"];
@@ -1291,6 +1296,8 @@
 
     // shippingQuote: { ok, mxn, carrier, service, eta_days, raw }
     let shippingQuote = JSON.parse(localStorage.getItem(LS_SHIP) || "null");
+    // ship meta: { shipHash, cartHash }
+    let shippingMeta = JSON.parse(localStorage.getItem(LS_SHIP_META) || "null");
 
     function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
     function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
@@ -1383,10 +1390,81 @@
       return roundMXN(Number(listMXN||0) * (1 - Number(pct||0)));
     }
 
+    function shipToObj(){
+      return {
+        postal_code: String(document.getElementById("shipPostal")?.value || "").trim(),
+        state_code: String(document.getElementById("shipState")?.value || "").trim().toUpperCase(),
+        city: String(document.getElementById("shipCity")?.value || "").trim(),
+        address1: String(document.getElementById("shipAddress1")?.value || "").trim(),
+        country_code: "MX"
+      };
+    }
+
+    function isShipToValid(to){
+      return (String(to.postal_code||"").trim().length === 5
+        && String(to.state_code||"").trim().length >= 2
+        && String(to.city||"").trim().length >= 2
+        && String(to.address1||"").trim().length >= 5);
+    }
+
+    function hashShipTo(to){
+      return [
+        String(to.postal_code||"").trim(),
+        String(to.state_code||"").trim().toUpperCase(),
+        String(to.city||"").trim().toUpperCase(),
+        String(to.address1||"").trim().toUpperCase()
+      ].join("|");
+    }
+
+    function hashCart(){
+      return cart
+        .map(i => `${String(i.id)}:${String(i.size)}:${Number(i.qty||0)}`)
+        .sort()
+        .join("|");
+    }
+
+    function isFreeShipping(){
+      return promoApplied && promoApplied.type === "free_shipping";
+    }
+    function isFreeTotal(){
+      return promoApplied && promoApplied.type === "free_total";
+    }
+    function canBypassShipping(){
+      return isFreeTotal() || isFreeShipping();
+    }
+
+    function invalidateShipping(reason){
+      shippingQuote = null;
+      shippingMeta = null;
+      localStorage.removeItem(LS_SHIP);
+      localStorage.removeItem(LS_SHIP_META);
+
+      const note = document.getElementById("shipNote");
+      if(note){
+        note.textContent = reason || "Cotiza el envío para continuar.";
+      }
+    }
+
+    // ✅ CLAVE: si cambian inputs de envío, invalidar en caliente
+    function bindShippingInputs(){
+      const ids = ["shipPostal","shipState","shipCity","shipAddress1"];
+      ids.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", ()=>{
+          if(canBypassShipping()) return; // ENVIOFREE/GRTS10 no necesitan cotización
+          // si ya había cotización, la matamos al editar
+          if(shippingQuote || shippingMeta){
+            invalidateShipping("Cambiaste la dirección. Cotiza el envío otra vez.");
+          }
+          updateCartUI();
+        }, { passive:true });
+      });
+    }
+
     async function loadCatalog(){
       const v = Date.now().toString().slice(-6);
 
-      // ✅ fallback: /data/catalog.json -> /catalog.json
       let res = await fetch(`/data/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
       if(!res || !res.ok){
         res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
@@ -1404,7 +1482,6 @@
     async function loadPromos(){
       const v = Date.now().toString().slice(-6);
 
-      // ✅ fallback: /data/promos.json -> /promos.json
       let res = await fetch(`/data/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
       if(!res || !res.ok){
         res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
@@ -1436,11 +1513,7 @@
     function cardTpl(p){
       const base = Number(p.baseMXN||0);
       const list = priceListFromBase(base);
-
-      // ✅ SOLO precio final (+20%) — NO “original”
-      // ✅ SCORE10 se menciona como “ancla” (sin gritar)
       const withScore10 = priceWithPercent(list, 0.10);
-
       const sized = needsSize(p.name);
 
       return `
@@ -1549,11 +1622,12 @@
         name: p.name,
         img: p.img,
         size,
-        priceMXN: list,   // ✅ solo precio final (+20%)
+        priceMXN: list,
         qty: 1
       });
 
       saveCart();
+      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
       updateCartUI();
       toast("Agregado al carrito");
     }
@@ -1561,16 +1635,19 @@
     function inc(idx){
       cart[idx].qty++;
       saveCart();
+      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
       updateCartUI();
     }
     function dec(idx){
       cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1);
       saveCart();
+      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
       updateCartUI();
     }
     function rem(idx){
       cart.splice(idx,1);
       saveCart();
+      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
       updateCartUI();
       toast("Producto eliminado");
     }
@@ -1579,8 +1656,7 @@
       if(confirm("¿Vaciar carrito?")){
         cart = [];
         promoApplied = null;
-        shippingQuote = null;
-        localStorage.removeItem(LS_SHIP);
+        invalidateShipping("Cotiza el envío para continuar.");
         saveCart();
         updateCartUI();
         toast("Carrito vacío");
@@ -1591,7 +1667,6 @@
       const c = normCode(code);
       if(!c) return null;
 
-      // secreto: NO se sugiere ni se muestra
       if(c === SECRET_FREE_CODE){
         return { code: c, type:"free_total", value: 0, active:true };
       }
@@ -1602,7 +1677,6 @@
         if(r) return r;
       }
 
-      // fallback mínimo
       if(c === PUBLIC_COUPON){
         return { code: c, type:"percent", value: 0.10, active:true };
       }
@@ -1620,13 +1694,9 @@
         return Math.max(0, roundMXN(Number(promoApplied.value||0)));
       }
       if(promoApplied.type === "free_total"){
-        return subtotal; // total gratis (merch)
+        return subtotal;
       }
       return 0;
-    }
-
-    function isFreeShipping(){
-      return promoApplied && promoApplied.type === "free_shipping";
     }
 
     function applyPromo(){
@@ -1639,55 +1709,71 @@
         promoApplied = null;
         note.textContent = code ? `Código no válido.` : `Escribe un código para aplicarlo.`;
         toast(code ? "Código no válido" : "Escribe un código");
+        invalidateShipping("Cotiza el envío para continuar.");
         updateCartUI();
         return;
       }
 
       promoApplied = { code: normCode(rule.code), type: rule.type, value: Number(rule.value||0) };
 
-      // NO revelar el secreto
       note.innerHTML = `✅ Cupón aplicado.`;
       toast("Cupón aplicado");
 
-      // si es ENVIOFREE, fuerza shippingQuote a 0
       if(isFreeShipping()){
         shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
+        shippingMeta = { shipHash: "ENVIOFREE", cartHash: hashCart() };
         localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
+        const shipNote = document.getElementById("shipNote");
+        if(shipNote) shipNote.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
+      } else {
+        if(!isFreeTotal()) invalidateShipping("Cotiza el envío para continuar.");
       }
 
       updateCartUI();
     }
 
     async function quoteShipping(){
-      const cp = String(document.getElementById("shipPostal").value || "").trim();
-      const st = String(document.getElementById("shipState").value || "").trim().toUpperCase();
-      const city = String(document.getElementById("shipCity").value || "").trim();
-      const addr1 = String(document.getElementById("shipAddress1").value || "").trim();
+      if(!cart.length){
+        toast("Agrega productos primero");
+        return;
+      }
+
+      const to = shipToObj();
       const note = document.getElementById("shipNote");
+
+      if(isFreeTotal()){
+        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"GRTS10", eta_days:null, raw:null };
+        shippingMeta = { shipHash: "GRTS10", cartHash: hashCart() };
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
+        if(note) note.innerHTML = `✅ Envío $0 (cupón aplicado).`;
+        toast("Envío $0");
+        updateCartUI();
+        return;
+      }
 
       if(isFreeShipping()){
         shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
+        shippingMeta = { shipHash: "ENVIOFREE", cartHash: hashCart() };
         localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
+        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
+        if(note) note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
         toast("Envío gratis aplicado");
         updateCartUI();
         return;
       }
 
-      if(cp.length !== 5){
-        toast("Pon un C.P. válido");
-        return;
-      }
-      if(st.length < 2 || city.length < 2 || addr1.length < 5){
-        toast("Faltan datos (Estado, Ciudad y Calle)");
+      if(!isShipToValid(to)){
+        toast("Completa datos de envío (CP, Estado, Ciudad, Calle)");
         return;
       }
 
-      note.textContent = "Cotizando envío…";
+      if(note) note.textContent = "Cotizando envío…";
 
       try{
         const payload = {
-          to: { postal_code: cp, state_code: st, city, address1: addr1, country_code:"MX" },
+          to,
           items: cart.map(i => ({ id:i.id, qty:i.qty, name:i.name }))
         };
 
@@ -1698,28 +1784,46 @@
         });
 
         const data = await res.json().catch(()=>null);
-        if(!res.ok || !data || !data.ok){
-          shippingQuote = null;
-          localStorage.removeItem(LS_SHIP);
-          note.textContent = "No se pudo cotizar. Intenta de nuevo.";
+        if(!res.ok || !data || !data.ok || !data.quote || !data.quote.ok){
+          invalidateShipping("No se pudo cotizar. Intenta de nuevo.");
           toast("No se pudo cotizar envío");
           updateCartUI();
           return;
         }
 
         shippingQuote = data.quote;
-        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+        shippingMeta = { shipHash: hashShipTo(to), cartHash: hashCart() };
 
-        note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
+
+        if(note){
+          note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
+        }
         toast("Envío cotizado");
         updateCartUI();
       }catch(e){
-        shippingQuote = null;
-        localStorage.removeItem(LS_SHIP);
-        note.textContent = "No se pudo cotizar. Intenta de nuevo.";
+        invalidateShipping("No se pudo cotizar. Intenta de nuevo.");
         toast("Error cotizando envío");
         updateCartUI();
       }
+    }
+
+    function shippingIsValidForCurrent(){
+      if(canBypassShipping()) return true;
+      if(!shippingQuote || !shippingQuote.ok) return false;
+      if(!shippingMeta) return false;
+
+      const currentCartHash = hashCart();
+      if(shippingMeta.cartHash !== currentCartHash) return false;
+
+      const currentShipHash = hashShipTo(shipToObj());
+      if(shippingMeta.shipHash !== currentShipHash) return false;
+
+      const mxn = Number(shippingQuote.mxn||0);
+      if(mxn <= 0) return false;
+
+      return true;
     }
 
     function updateCartUI(){
@@ -1727,32 +1831,36 @@
 
       const subtotal = cartSubtotalMXN();
 
-      // shipping
       const shipLine = document.getElementById("shipLine");
+      const shipTotalLine = document.getElementById("shipTotalLine");
+      const shipNote = document.getElementById("shipNote");
+
       let shipMXN = 0;
-      if(isFreeShipping()){
+
+      if(isFreeTotal()){
         shipMXN = 0;
-        shipLine.style.display = "flex";
-        document.getElementById("shipTotalLine").textContent = moneyMXN(0);
+        if(shipLine) shipLine.style.display = "flex";
+        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(0);
+        if(shipNote) shipNote.textContent = "Cupón aplicado: envío $0.";
+      } else if(isFreeShipping()){
+        shipMXN = 0;
+        if(shipLine) shipLine.style.display = "flex";
+        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(0);
+        if(shipNote) shipNote.innerHTML = `Cupón aplicado: <b>ENVIOFREE</b> (envío $0).`;
       } else if(shippingQuote && shippingQuote.ok){
         shipMXN = Number(shippingQuote.mxn||0);
-        shipLine.style.display = "flex";
-        document.getElementById("shipTotalLine").textContent = moneyMXN(shipMXN);
+        if(shipLine) shipLine.style.display = "flex";
+        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(shipMXN);
       } else {
-        shipLine.style.display = "none";
+        if(shipLine) shipLine.style.display = "none";
       }
 
       const off = computeDiscount(subtotal);
       let totalMXN = Math.max(0, subtotal - off) + Math.max(0, shipMXN);
-
-      // secreto: total gratis (merch+envío)
-      if(promoApplied && promoApplied.type === "free_total"){
-        totalMXN = 0;
-      }
+      if(isFreeTotal()) totalMXN = 0;
 
       const totalUSD = mxnToUsd(totalMXN);
 
-      // paybar
       const pbLabel = document.getElementById("pbLabel");
       pbLabel.textContent = promoApplied ? "TOTAL (MXN) · Cupón aplicado" : "TOTAL (MXN)";
       pb.classList.toggle("visible", cartCount() > 0);
@@ -1762,14 +1870,13 @@
         <small>${moneyUSD(totalUSD)} USD</small>
       `;
 
-      // summary lines
       document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
 
       const promoLine = document.getElementById("promoLine");
-      if(off > 0 && !(promoApplied && promoApplied.type === "free_total")){
+      if(off > 0 && !isFreeTotal()){
         promoLine.style.display = "flex";
         document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(off)}`;
-      } else if(promoApplied && promoApplied.type === "free_total"){
+      } else if(isFreeTotal()){
         promoLine.style.display = "flex";
         document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(subtotal)}`;
       } else {
@@ -1779,15 +1886,14 @@
       document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
       document.getElementById("usdTotalLine").textContent = moneyUSD(totalUSD);
 
-      // render cart items
       const body = document.getElementById("cartBody");
+      const payBtn = document.getElementById("payBtn");
+
       if(!cart.length){
         body.innerHTML = `<div class="cartEmpty">CARRITO VACÍO</div>`;
-        document.getElementById("payBtn").disabled = true;
+        payBtn.disabled = true;
         return;
       }
-
-      document.getElementById("payBtn").disabled = false;
 
       body.innerHTML = cart.map((it, idx) => `
         <div class="cItem">
@@ -1806,6 +1912,20 @@
           </div>
         </div>
       `).join("");
+
+      // ✅ SIEMPRE ENVÍO
+      const canPay = canBypassShipping() || shippingIsValidForCurrent();
+      payBtn.disabled = !canPay;
+
+      if(!canPay && shipNote){
+        shipNote.textContent = "⚠️ Para pagar primero cotiza el envío (obligatorio).";
+      }
+
+      // render shipping line when valid quote exists
+      if(!canBypassShipping() && shippingQuote && shippingQuote.ok && shippingIsValidForCurrent()){
+        if(shipLine) shipLine.style.display = "flex";
+        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(Number(shippingQuote.mxn||0));
+      }
     }
 
     async function goCheckout(){
@@ -1814,16 +1934,21 @@
         return;
       }
 
-      // si no hay shippingQuote y no hay ENVIOFREE, dejamos pagar (puede ser pickup o cotiza en backend)
-      const promoCode = normCode(document.getElementById("promoInput").value || (promoApplied?.code || ""));
+      const canPay = canBypassShipping() || shippingIsValidForCurrent();
+      if(!canPay){
+        toast("Cotiza el envío antes de pagar");
+        if(!drawer.classList.contains("active")) toggleCart();
+        return;
+      }
 
-      const shipTo = {
-        postal_code: String(document.getElementById("shipPostal").value || "").trim(),
-        state_code: String(document.getElementById("shipState").value || "").trim().toUpperCase(),
-        city: String(document.getElementById("shipCity").value || "").trim(),
-        address1: String(document.getElementById("shipAddress1").value || "").trim(),
-        country_code: "MX"
-      };
+      const promoCode = normCode(document.getElementById("promoInput")?.value || (promoApplied?.code || ""));
+      const to = shipToObj();
+
+      if(!isFreeTotal() && !isFreeShipping() && !isShipToValid(to)){
+        toast("Completa datos de envío (obligatorio)");
+        if(!drawer.classList.contains("active")) toggleCart();
+        return;
+      }
 
       try{
         const res = await fetch(API_CHECKOUT, {
@@ -1832,7 +1957,7 @@
           body: JSON.stringify({
             cart,
             promoCode: promoApplied?.code || promoCode || "",
-            shipTo
+            shipTo: to
           })
         });
 
@@ -1863,8 +1988,8 @@
       try{
         await loadCatalog();
         await loadPromos();
+        bindShippingInputs(); // ✅ crucial
 
-        // si ya tenías promo aplicada, revalidar en UI
         updateCartUI();
       }catch(e){
         toast("Error cargando tienda");
