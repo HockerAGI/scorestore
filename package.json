@@ -2,12 +2,11 @@
   "name": "scorestore",
   "version": "1.0.0",
   "private": true,
-  "description": "SCORE Store - Netlify + Stripe + Envia + Telegram + WhatsApp",
-  "scripts": {
-    "dev": "netlify dev",
-    "build": "echo \"Static site\""
+  "description": "SCORE Store (Netlify) — Stripe + Envia shipping + Telegram notifications",
+  "engines": {
+    "node": "18.x"
   },
   "dependencies": {
-    "stripe": "^17.5.0"
+    "stripe": "^16.12.0"
   }
 }
