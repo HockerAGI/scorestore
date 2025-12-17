@@ -4,73 +4,94 @@
     "currency": "MXN",
     "fx_mxn_per_usd": 17.5
   },
-  "pricing": {
-    "markup_pct": 0.2,
-    "discount_pct": 0.1
-  },
+  "sections": [
+    {
+      "id": "EDICION_2025",
+      "title": "EDICIÓN 2025",
+      "subtitle": "Drop oficial — edición limitada",
+      "badge": "HOT",
+      "order": 10
+    },
+    {
+      "id": "OTRAS_EDICIONES",
+      "title": "OTRAS EDICIONES",
+      "subtitle": "Modelos anteriores (colección)",
+      "badge": "ARCHIVO",
+      "order": 20
+    }
+  ],
   "products": [
     {
       "id": "chamarra-baja1000",
-      "name": "Chaqueta Oficial SCORE “Baja 1000”",
+      "name": "Chaqueta Oficial SCORE \"Baja 1000\"",
       "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
       "baseMXN": 1490,
+      "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "camisa-pits-baja1000",
-      "name": "Camisa de Pits “Baja 1000”",
+      "name": "Camisa de Pits \"Baja 1000\"",
       "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
       "baseMXN": 899,
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-baja1000-azul",
-      "name": "Camiseta Mapa “Baja 1000” (Azul)",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
-      "baseMXN": 399,
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-baja1000-cafe",
-      "name": "Camiseta Mapa “Baja 1000” (Café)",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
-      "baseMXN": 399,
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-baja1000-negra",
-      "name": "Camiseta Mapa “Baja 1000” (Negra)",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
-      "baseMXN": 399,
+      "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
     },
     {
       "id": "sudadera-world-desert-negra",
-      "name": "Sudadera “SCORE World Desert” (Negra)",
+      "name": "Sudadera \"SCORE World Desert\" (Negra)",
       "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
       "baseMXN": 749,
+      "tags": ["Edición 2025"],
       "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-world-desert-cafe",
-      "name": "Sudadera “SCORE World Desert” (Café)",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 749,
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-world-desert-roja",
-      "name": "Sudadera “SCORE World Desert” (Roja)",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg",
-      "baseMXN": 749,
-      "sectionId": "OTRAS_EDICIONES"
     },
     {
       "id": "sudadera-world-desert-rosa",
-      "name": "Sudadera “SCORE World Desert” (Rosa)",
+      "name": "Sudadera \"SCORE World Desert\" (Rosa)",
       "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
       "baseMXN": 749,
+      "tags": ["Archivo"],
       "sectionId": "OTRAS_EDICIONES"
+    },
+    {
+      "id": "sudadera-world-desert-cafe",
+      "name": "Sudadera \"SCORE World Desert\" (Café)",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
+      "baseMXN": 749,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "camiseta-mapa-baja1000",
+      "name": "Camiseta Mapa \"Baja 1000\"",
+      "img": "/assets/EDICION_2025/camiseta-mapa-baja1000.jpg",
+      "baseMXN": 399,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "sudadera-infantil-baja1000",
+      "name": "Sudadera Infantil \"Baja 1000\"",
+      "img": "/assets/EDICION_2025/sudadera-infantil-baja1000.jpg",
+      "baseMXN": 749,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "sudadera-paneles-baja1000",
+      "name": "Sudadera SCORE Baja 1000 a Paneles",
+      "img": "/assets/EDICION_2025/sudadera-paneles-baja1000.jpg",
+      "baseMXN": 749,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "gorra-trucker-score",
+      "name": "Gorra Trucker SCORE",
+      "img": "/assets/EDICION_2025/gorra-trucker-score.jpg",
+      "baseMXN": 650,
+      "tags": ["Edición 2025"],
+      "sectionId": "EDICION_2025"
     }
   ]
 }
