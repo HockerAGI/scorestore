@@ -2,356 +2,1040 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <meta name="theme-color" content="#E10600" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0f14" />
+
   <title>SCORE | Official Baja Gear</title>
-  
+  <meta name="description" content="Merch oficial del desierto. Drops limitados. Compra segura en México. Usa SCORE10 al final si lo traes." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SCORE | Official Baja Gear" />
+  <meta property="og:description" content="Inventario limitado + drops oficiales. Compra segura en México. Cupón SCORE10 disponible." />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+
+  <link rel="icon" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <script src="https://js.stripe.com/v3/"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <link rel="preload" as="image" href="/assets/hero.png" />
+  <link rel="preload" as="image" href="/assets/fondo-pagina-score.png" />
 
   <style>
     :root{
-      --red: #E10600;
-      /* Paleta "Desert Ops" */
-      --carbon: #1a1a1a;
-      --charcoal: #262626;
-      --sand: #f0f0f0;
-      /* 🔥 AJUSTE: Más transparencia para que se vea el fondo (0.60) */
-      --brown-glass: rgba(60, 45, 35, 0.60); 
-      
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
-      
-      --bgTexture: url("assets/baja1000-texture.png"); 
+
+      --red: #E10600;
+      --carbon: #0b0f14;
+      --sand: #f0f0f0;
+
+      --pageBg: url("/assets/fondo-pagina-score.png");
+      --pageBgOpacity: .78;
+
+      --shadow: 0 20px 50px rgba(0,0,0,.18);
+      --shadow2: 0 12px 30px rgba(0,0,0,.22);
+      --radius: 16px;
+
+      /* glass overlays (tarjetas transparentes) */
+      --cardGlassA: rgba(255,255,255,.10);
+      --cardGlassB: rgba(255,255,255,.05);
+      --cardVignette: rgba(0,0,0,.60);
+
+      /* HERO overlay café oscuro (más legible) */
+      --heroCafeA: rgba(72, 49, 33, .90);
+      --heroCafeB: rgba(72, 49, 33, .45);
+
+      /* season tokens */
+      --seasonTint: rgba(105, 180, 255, .10);
+      --seasonGlow: rgba(255,255,255,.18);
+      --partnersTint: rgba(105, 180, 255, .10);
+    }
+
+    body[data-theme="xmas"]{
+      --seasonTint: rgba(105, 180, 255, .10);
+      --seasonGlow: rgba(255,255,255,.18);
+      --partnersTint: rgba(105, 180, 255, .10);
+    }
+    body[data-theme="halloween"]{
+      --seasonTint: rgba(255, 132, 0, .14);
+      --seasonGlow: rgba(255, 80, 0, .10);
+      --partnersTint: rgba(255, 132, 0, .10);
+    }
+    body[data-theme="patrio"]{
+      --seasonTint: rgba(0, 180, 90, .12);
+      --seasonGlow: rgba(255,255,255,.10);
+      --partnersTint: rgba(0, 180, 90, .09);
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
-    
     body{
-      margin:0; font-family: var(--fontBody);
-      color: #111; 
+      margin:0;
+      font-family: var(--fontBody);
+      color:#111;
       background-color: var(--sand);
       overflow-x:hidden;
-      padding-bottom: 90px;
+      padding-bottom: 95px;
+      position: relative;
+    }
+    body.modalOpen{ overflow:hidden; }
+
+    /* Fondo base */
+    body::after{
+      content:"";
+      position:fixed; inset:0;
+      background-image: var(--pageBg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: var(--pageBgOpacity);
+      z-index:-6;
+      pointer-events:none;
     }
 
-    body::before {
-      content: ""; position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.05'/%3E%3C/svg%3E");
-      z-index: -2; pointer-events: none; mix-blend-mode: multiply;
+    /* Tinte temporada */
+    .seasonTint{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(circle at 20% 10%, var(--seasonGlow), transparent 48%),
+        radial-gradient(circle at 80% 0%, var(--seasonGlow), transparent 52%),
+        linear-gradient(180deg, var(--seasonTint), transparent 55%);
+      z-index:-5;
+      pointer-events:none;
+      mix-blend-mode: multiply;
+      opacity:.95;
     }
+
+    /* ❄️ Nieve sutil */
+    .seasonSnow{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:-4;
+      opacity:.22;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.80) 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 2px);
+      background-size: 240px 240px, 360px 360px, 520px 520px;
+      background-position: 0 0, 80px 120px, 160px 40px;
+      animation: snowFall 10.5s linear infinite;
+      display:none;
+    }
+    body[data-theme="xmas"] .seasonSnow{ display:block; }
+    @keyframes snowFall{
+      from{ transform: translateY(-24px); }
+      to{ transform: translateY(240px); }
+    }
+
+    /* ✨ Sparkles ultra sutiles */
+    .seasonSparkles{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:-3;
+      opacity:.18;
+      display:none;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.65) 0 1px, transparent 2px),
+        radial-gradient(circle at 78% 22%, rgba(255,255,255,.55) 0 1px, transparent 2px),
+        radial-gradient(circle at 36% 62%, rgba(255,255,255,.50) 0 1px, transparent 2px),
+        radial-gradient(circle at 64% 78%, rgba(255,255,255,.55) 0 1px, transparent 2px),
+        radial-gradient(circle at 88% 64%, rgba(255,255,255,.45) 0 1px, transparent 2px);
+      animation: twinkle 3.2s ease-in-out infinite alternate;
+    }
+    body[data-theme="xmas"] .seasonSparkles{ display:block; }
+    @keyframes twinkle{
+      from{ opacity:.14; transform: translateY(0px); }
+      to{ opacity:.22; transform: translateY(2px); }
+    }
+
+    /* overlay */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      opacity:0; pointer-events:none;
+      z-index:95;
+      transition: opacity .18s ease;
+    }
+    .overlay.active{ opacity:1; pointer-events:auto; }
+
+    /* toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 92px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.88);
+      color:#fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      box-shadow: var(--shadow2);
+      opacity: 0;
+      pointer-events:none;
+      z-index: 130;
+      transition: opacity .18s ease, transform .18s ease;
+      max-width: min(92vw, 520px);
+      text-align:center;
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
 
     .wrap{
-      width: min(1200px, 94vw); margin: 0 auto;
-      padding-top: 90px; padding-bottom: 60px;
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      padding-top: 92px;
+      padding-bottom: 60px;
     }
 
-    /* === NAVBAR === */
+    /* topbar */
     .topbar{
-      position: fixed; top:0; left:0; right:0; z-index: 90;
+      position:fixed; top:0; left:0; right:0; z-index:90;
       background: rgba(245,245,245,0.96);
       border-bottom: 3px solid var(--red);
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     .topInner{
-      width: min(1200px, 94vw); margin: 0 auto; height: 75px;
-      display: flex; align-items: center; justify-content: space-between;
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      height:76px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
     }
-    .brandLogo img{ height:55px; display:block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+    .brandLogo img{
+      height:55px;
+      width:auto;
+      display:block;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+    }
+    .navRight{ display:flex; align-items:center; gap:10px; }
 
-    .navRight{ display:flex; align-items:center; gap:15px; }
-    
+    /* Banner promo (estratégico) */
+    .promoPill{
+      display:flex; align-items:center; justify-content:center;
+      height: 38px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.92);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .08em;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .promoPill span{ color: rgba(255,255,255,.86); }
+    @media (max-width: 520px){ .promoPill{ display:none; } }
+
+    /* carrito */
     .cartTrigger{
-      position: relative;
-      background: var(--carbon); color: #fff; border: none;
-      height: 46px; padding: 0 18px;
-      display: flex; align-items: center; gap: 10px;
-      font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
+      position:relative;
+      background: #0c0f14; color:#fff; border:none;
+      height:54px; padding:0 18px;
+      display:flex; align-items:center; gap:12px;
+      font-family: var(--fontTitle); font-weight:700; font-size:22px;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      overflow:hidden;
+      transition: transform .15s ease;
     }
-    .cartIconImg{ width:28px; height:28px; filter: invert(1); object-fit:contain; }
+    .cartTrigger:hover{ transform: translateY(-1px); }
+    .cartIconSvg{
+      width:36px; height:36px;
+      stroke:#fff; stroke-width:2.2; fill:none;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+    }
     .cartCount{
-      position: absolute; top: 4px; right: 4px;
-      background: var(--red); color:#fff; font-size: 11px; padding: 2px 6px; border-radius: 4px;
-      line-height: 1;
+      position:absolute; top:6px; right:6px;
+      background: var(--red);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      line-height:1;
+      font-weight:900;
     }
 
-    /* === HERO === */
+    /* HERO */
     .hero{
-      position: relative; border-radius: 12px; overflow: hidden;
-      min-height: 540px; display: flex; align-items: center;
-      background: var(--carbon); color: #fff;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      position:relative;
+      border-radius: var(--radius);
+      overflow:hidden;
+      min-height: 540px;
+      display:flex;
+      align-items:center;
+      background: #0b0f14;
+      color:#fff;
+      box-shadow: var(--shadow);
     }
     .heroBg{
-      position: absolute; inset: 0;
-      background: url('assets/hero.png') center/cover no-repeat;
-      opacity: 0.95;
+      position:absolute; inset:0;
+      background: url('/assets/hero.png') center/cover no-repeat;
+      opacity:.96;
+      transform: scale(1.03);
     }
     .heroOverlay{
-      position: absolute; inset:0;
-      background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+      position:absolute; inset:0;
+      background:
+        linear-gradient(to right, var(--heroCafeA) 0%, var(--heroCafeB) 66%, transparent 100%),
+        radial-gradient(circle at 78% 18%, rgba(225,6,0,0.12), transparent 52%),
+        radial-gradient(circle at 18% 74%, rgba(255,255,255,0.10), transparent 56%);
     }
+    .heroDecor{
+      position:absolute; inset:0;
+      pointer-events:none;
+      z-index:1;
+      display:none;
+      background:
+        radial-gradient(circle at 88% 20%, rgba(255,255,255,.20) 0 2px, transparent 3px),
+        radial-gradient(circle at 92% 28%, rgba(255,255,255,.16) 0 2px, transparent 3px),
+        radial-gradient(circle at 84% 34%, rgba(255,255,255,.14) 0 2px, transparent 3px),
+        radial-gradient(circle at 78% 16%, rgba(255,255,255,.10) 0 2px, transparent 3px);
+      opacity:.22;
+      animation: decorFloat 4.4s ease-in-out infinite alternate;
+    }
+    body[data-theme="xmas"] .heroDecor{ display:block; }
+    @keyframes decorFloat{
+      from{ transform: translateY(0px); }
+      to{ transform: translateY(4px); }
+    }
+
+    .seasonRibbon{
+      position:absolute;
+      top:18px; right:18px;
+      z-index:3;
+      background: rgba(255,255,255,.92);
+      color:#111;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .10em;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 12px 22px rgba(0,0,0,.16);
+      text-transform: uppercase;
+      text-align:center;
+    }
+    .seasonRibbon b{ color: var(--red); }
+    body[data-theme="xmas"] .seasonRibbon::before{ content:"🎄 "; }
+
     .heroContent{
-      position: relative; z-index: 2; padding: 40px; max-width: 650px;
+      position:relative; z-index:2;
+      padding: 50px;
+      max-width: 720px;
+      text-align:left;
     }
     .heroTag{
-      background: var(--red); color: #fff; padding: 4px 14px;
-      font-family: var(--fontTitle); font-size: 22px; font-weight: 700;
-      transform: skew(-10deg); display: inline-block; margin-bottom: 15px;
+      background: var(--red); color:#fff;
+      padding: 6px 16px;
+      font-family: var(--fontTitle);
+      font-size:22px;
+      font-weight:700;
+      transform: skew(-10deg);
+      display:inline-block;
+      margin-bottom: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      letter-spacing: .02em;
+      text-transform: uppercase;
     }
     .heroTitle{
-      font-family: var(--fontTitle); font-size: 85px; line-height: 0.85; margin: 0 0 20px;
-      text-transform: uppercase; text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      font-family: var(--fontTitle);
+      font-size: 90px;
+      line-height: .85;
+      margin:0 0 16px;
+      text-transform:uppercase;
+      text-shadow: 0 5px 20px rgba(0,0,0,0.55);
     }
-    .heroTitle span{ color: var(--red); }
     .heroSub{
-      font-size: 17px; line-height: 1.5; color: #ddd; margin-bottom: 30px;
-      border-left: 4px solid var(--red); padding-left: 20px; font-weight:500;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      font-size: 17px;
+      line-height: 1.5;
+      color: rgba(255,255,255,.92);
+      margin-bottom: 18px;
+      border-left: 4px solid var(--red);
+      padding-left: 18px;
+      font-weight: 800;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.65);
     }
+    .heroActions{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
     .btnHero{
-      background: #fff; color: var(--carbon); border: none;
-      padding: 14px 35px; font-family: var(--fontTitle); font-size: 26px; font-weight: 700;
-      cursor: pointer; clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
-      transition: transform 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      background:#fff; color: #111;
+      border:none;
+      padding: 14px 34px;
+      font-family: var(--fontTitle);
+      font-size: 26px;
+      font-weight: 700;
+      cursor:pointer;
+      clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+      transition: transform .2s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
     .btnHero:hover{ transform: translateY(-2px); }
 
+    /* mención estratégica del cupón */
+    .heroHint{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .10em;
+      color: rgba(255,255,255,.90);
+      text-transform: uppercase;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 10px 12px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      max-width: min(92vw, 420px);
+      text-align:left;
+    }
+
     @media (max-width: 768px){
-      .hero{ align-items: flex-end; min-height: 480px; }
-      .heroOverlay{ background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.2) 70%, transparent 100%); }
-      .heroTitle{ font-size: 55px; }
-      .heroContent{ padding: 25px; width: 100%; }
+      .hero{ align-items:flex-end; min-height: 520px; }
+      .heroOverlay{
+        background:
+          linear-gradient(to top, rgba(74,50,33,.92) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
+          radial-gradient(circle at 60% 25%, rgba(225,6,0,0.10), transparent 52%);
+      }
+      .heroTitle{ font-size: 56px; }
+      .heroContent{ padding: 22px; width: 100%; }
+      .seasonRibbon{ top:14px; right:14px; }
     }
 
-    /* === GRID EDICIONES === */
+    /* section headers */
     .secHeader{
-      display: flex; align-items: baseline; justify-content: space-between;
-      margin: 60px 0 25px; border-bottom: 2px solid #ccc; padding-bottom: 10px;
+      margin: 26px 4px 12px;
+      display:flex; align-items:baseline; justify-content:space-between;
+      gap:12px;
     }
-    .secTitle{ font-family: var(--fontTitle); font-size: 42px; color: var(--carbon); }
-    .secMeta{ font-weight: 700; color: #888; letter-spacing: 1px; }
-    
-    .gridDrops{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+    .secTitle{
+      margin:0;
+      font-family: var(--fontTitle);
+      font-size: 34px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color:#111;
+    }
+    .secMeta{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .12em;
+      color: rgba(0,0,0,.55);
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-align:right;
+    }
 
-    /* TARJETA EDICIÓN MEJORADA */
-    .cardDrop{
-      position: relative; height: 300px; border-radius: 10px; overflow: hidden;
-      cursor: pointer; transition: transform 0.3s;
-      background: var(--charcoal);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      border: 1px solid rgba(0,0,0,0.05);
+    /* drops grid */
+    .gridDrops{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
     }
-    .cardDrop:hover{ transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    @media (max-width: 980px){ .gridDrops{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px){ .gridDrops{ grid-template-columns: 1fr; } }
+
+    /* TARJETA DROP */
+    .cardDrop{
+      position:relative;
+      border-radius: var(--radius);
+      overflow:hidden;
+      cursor:pointer;
+      min-height: 240px;
+      box-shadow: var(--shadow2);
+      background: #0b0f14;
+      transform: translateZ(0);
+      transition: transform .18s ease, box-shadow .18s ease;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .cardDrop:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 18px 44px rgba(0,0,0,.28);
+    }
 
     .dropBg{
-      position: absolute; inset: 0;
-      background-image: var(--bgTexture); /* TEXTURA */
-      background-size: cover; background-position: center;
-      /* Filtro Táctico: Tono tierra/polvo oscuro */
-      filter: brightness(0.6) sepia(0.25) contrast(1.15); 
-      transition: 0.5s;
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.10), transparent 52%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.34)),
+        url("/assets/baja1000-texture.png");
+      background-size: cover;
+      background-position: center;
+      opacity: .95;
+      filter: saturate(1.05) contrast(1.05);
     }
-    .cardDrop:hover .dropBg{ transform: scale(1.05); filter: brightness(0.75); }
+    .dropBg::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 50% 30%, transparent 30%, var(--cardVignette) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.58) 88%);
+      opacity:.92;
+    }
 
-    /* FONDO CAFÉ TRANSPARENTE (Logos) */
+    /* overlay MÁS TRANSPARENTE */
     .dropGlass{
-      position: absolute; inset: 15px;
-      background: var(--brown-glass); 
-      backdrop-filter: blur(4px); /* Blur un poco menor para ver textura */
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 8px; padding: 25px;
-      display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+      position:absolute; inset:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding: 14px;
+      background:
+        linear-gradient(135deg, var(--cardGlassA) 0%, var(--cardGlassB) 62%, rgba(0,0,0,.08) 100%);
+      backdrop-filter: blur(8px);
     }
 
-    /* 🔥 LOGOS CON CONTORNO SÓLIDO */
-    .dropLogo{ 
-      height: 90px; width: auto; object-fit: contain; 
-      /* Truco CSS para borde blanco sólido */
-      filter: 
-        drop-shadow(1px 1px 0 white) 
-        drop-shadow(-1px 1px 0 white) 
-        drop-shadow(1px -1px 0 white) 
-        drop-shadow(-1px -1px 0 white);
+    /* centrado total */
+    .dropContent{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      gap:10px;
+      padding: 6px 6px 10px;
     }
-    
-    .dropInfo{ width: 100%; text-align: center; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 15px; }
-    .dropInfo h3{ color: #fff; font-size: 34px; line-height: 0.9; margin: 0; letter-spacing: 1px; }
-    .dropInfo p{ color: #e0e0e0; font-size: 13px; font-weight: 600; margin: 6px 0 0; text-transform: uppercase; }
-
-    .btnDrop{
-      margin-top: 12px; background: transparent; color: #fff; 
-      border: 2px solid rgba(255,255,255,0.7);
-      padding: 10px 24px; font-weight: 800; font-size: 14px; text-transform: uppercase;
-      cursor: pointer; transition: 0.2s;
-    }
-    .btnDrop:hover{ background: #fff; color: #000; border-color: #fff; }
 
     .statusBadge{
-      position: absolute; top: 12px; left: 12px;
-      background: var(--red); color: #fff; font-weight: 800; font-size: 11px; 
-      padding: 5px 10px; border-radius: 4px; letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      align-self:flex-start;
+      background: var(--red);
+      color:#fff;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .12em;
+      padding: 6px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+    }
+    .dropLogo{
+      width: 160px; height: 64px;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 16px rgba(0,0,0,.35));
+      opacity:.96;
+      margin: 0 auto;
+    }
+    .dropInfo h3{
+      margin: 6px 0 0;
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      letter-spacing: .02em;
+      color:#fff;
+      text-transform: uppercase;
+      text-align:center;
+    }
+    .dropInfo p{
+      margin:0;
+      color: rgba(255,255,255,.88);
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 32ch;
+      text-align:center;
+    }
+    .btnDrop{
+      border:none;
+      background:#fff;
+      color:#111;
+      font-weight: 900;
+      padding: 10px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      width: fit-content;
+      transition: transform .15s ease;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .btnDrop:hover{ transform: translateY(-1px); }
+
+    /* PARTNERS */
+    .partnersStrip{
+      margin-top: 22px;
+      padding: 18px 6px 6px;
+      border-top: 3px solid rgba(225,6,0,.85);
+      border-bottom: 3px solid rgba(225,6,0,.25);
+      background: linear-gradient(180deg, var(--partnersTint), transparent 72%);
+      border-radius: 18px;
+    }
+    .partnersTitle{
+      font-family: var(--fontTitle);
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: rgba(0,0,0,.55);
+      margin: 0 0 16px;
+      text-transform: uppercase;
+      padding: 0 12px;
+      text-align:center;
+    }
+    .spGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-items:center;
+      padding: 0 12px 12px;
+    }
+    @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
+    .spLogo{
+      width: 100%;
+      height: 48px;
+      object-fit: contain;
+      filter: grayscale(1) contrast(1.05);
+      opacity: .92;
     }
 
-    /* === SPONSORS === */
-    .sponsors{
-      margin-top: 80px; padding: 40px 0; border-top: 1px solid #ddd;
-      text-align: center; opacity: 0.7;
-    }
-    .spGrid{ display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; margin-top: 25px; }
-    .spLogo{ height: 45px; filter: grayscale(1); transition: 0.3s; opacity: 0.7; }
-    .spLogo:hover{ filter: grayscale(0); opacity: 1; }
-
-    /* === FOOTER === */
+    /* footer */
     footer{
-      background: var(--charcoal); color: #ccc; padding: 60px 20px 100px;
-      border-top: 4px solid var(--red); margin-top: 0;
+      margin-top: 28px;
+      background: #080b10;
+      color:#fff;
+      padding: 28px 0;
+      border-top: 3px solid var(--red);
     }
     .footGrid{
-      width: min(1200px, 94vw); margin: 0 auto;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+      width:min(1200px, 94vw);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 18px;
     }
-    @media(max-width:700px){ .footGrid{ grid-template-columns: 1fr; } }
-    
-    .footTitle{ font-family: var(--fontTitle); font-size: 26px; color: #fff; margin-bottom: 20px; }
-    .footText{ line-height: 1.6; font-size: 14px; color: #aaa; }
-    
-    .fLink{ 
-      display: block; color: #999; text-decoration: none; margin-bottom: 8px; 
-      font-size: 13px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid transparent; width: fit-content;
+    @media (max-width: 820px){ .footGrid{ grid-template-columns: 1fr; } }
+    .fLink{
+      display:block;
+      padding: 10px 0;
+      color: rgba(255,255,255,.86);
+      font-weight: 800;
+      cursor:pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
-    .fLink:hover{ color: #fff; border-color: var(--red); }
+    .fLink:hover{ color:#fff; }
 
-    /* === MODAL PRODUCTOS (FULL SCREEN) === */
-    .prodModal{
-      position: fixed; inset: 0; z-index: 2000;
-      background: var(--white-off);
-      display: flex; flex-direction: column;
-      transform: translateY(100%); transition: transform 0.35s ease-out;
-    }
-    .prodModal.active{ transform: translateY(0); }
-
-    .pmHead{
-      background: var(--carbon); color: #fff; padding: 15px 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 4px solid var(--red); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .pmTitle{ font-size: 26px; }
-    .pmClose{ background: none; border: none; color: #fff; font-size: 32px; cursor: pointer; }
-
-    .pmBody{ flex: 1; overflow-y: auto; padding: 20px; }
-    
-    .pmGrid{
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px;
-      max-width: 1000px; margin: 0 auto;
-    }
-
-    /* Tarjeta Producto */
-    .pCard{
-      background: #fff; border-radius: 8px; overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: 0.2s;
-    }
-    .pImg{ height: 220px; background: #e5e5e5; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .pImg img{ width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-    .pCard:hover .pImg img{ transform: scale(1.05); }
-    
-    .pInfo{ padding: 15px; text-align: center; }
-    .pName{ font-weight: 800; font-size: 13px; text-transform: uppercase; margin-bottom: 5px; color: #333; }
-    .pPrice{ font-family: var(--fontTitle); font-size: 24px; color: var(--red); font-weight: 600; }
-    .pBtn{
-      width: 100%; margin-top: 10px; background: var(--carbon); color: #fff; border: none;
-      padding: 12px; font-weight: 700; font-size: 13px; text-transform: uppercase;
-      cursor: pointer; transition: 0.2s;
-    }
-    .pBtn:hover{ background: var(--red); }
-
-    /* === STICKY PAYBAR === */
+    /* paybar */
     .paybar{
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1500;
-      background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-      border-top: 1px solid #ddd; padding: 15px 20px;
-      box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-      display: flex; justify-content: space-between; align-items: center;
-      transform: translateY(100%); transition: transform 0.3s;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 16px;
+      width: min(1200px, 94vw);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: var(--shadow2);
+      opacity:0;
+      pointer-events:none;
+      z-index: 120;
+      transition: opacity .18s ease, transform .18s ease;
     }
-    .paybar.visible{ transform: translateY(0); }
-    
-    .pbTotal{ font-size: 12px; color: #666; font-weight: 700; text-transform: uppercase; }
-    .pbPrice{ display: block; font-family: var(--fontTitle); font-size: 32px; color: var(--carbon); line-height: 0.9; }
-    
+    .paybar.visible{ opacity:1; pointer-events:auto; }
+    .pbTotal{
+      font-weight: 900;
+      font-size: 11px;
+      color: rgba(0,0,0,.60);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      text-align:left;
+    }
+    .pbPrice{
+      font-weight: 900;
+      font-size: 18px;
+      margin-top: 2px;
+      color:#111;
+    }
+    .pbPrice small{
+      display:block;
+      font-size: 12px;
+      color: rgba(0,0,0,.55);
+      font-weight: 900;
+      margin-top: 2px;
+    }
     .pbBtn{
-      background: var(--red); color: #fff; border: none;
-      padding: 12px 30px; font-family: var(--fontTitle); font-size: 24px; font-weight: 700;
-      text-transform: uppercase; cursor: pointer; clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+      border:none;
+      background:#111;
+      color:#fff;
+      font-weight: 900;
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
-    /* === DRAWER CARRITO === */
-    .overlay{ position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1900; display: none; }
-    .overlay.active{ display: block; }
-
+    /* drawer carrito */
     .drawer{
-      position: fixed; right: 0; top: 0; bottom: 0;
-      width: 90vw; max-width: 420px;
-      background: #fff; z-index: 2000; transform: translateX(100%); transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      display: flex; flex-direction: column;
+      position: fixed; top:0; right:0;
+      width: min(420px, 92vw);
+      height: 100%;
+      background: rgba(255,255,255,.96);
+      border-left: 1px solid rgba(0,0,0,.10);
+      box-shadow: -20px 0 50px rgba(0,0,0,.22);
+      transform: translateX(102%);
+      transition: transform .2s ease;
+      z-index: 110;
+      display:flex;
+      flex-direction:column;
     }
     .drawer.active{ transform: translateX(0); }
-    
-    .dHead{ background: var(--carbon); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-    .dTitle{ font-family: var(--fontTitle); font-size: 26px; margin: 0; }
-    
-    .dBody{ flex: 1; overflow-y: auto; padding: 20px; background: #f4f4f4; }
-    .cartEmpty{ text-align: center; color: #888; margin-top: 50px; font-weight: 700; }
-    
-    .cItem{ background: #fff; padding: 10px; border-radius: 6px; display: flex; gap: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .cImg{ width: 70px; height: 70px; background: #eee; object-fit: cover; border-radius: 4px; }
-    
-    .dFoot{ padding: 20px; background: #fff; border-top: 1px solid #ddd; }
-    .dfBtn{ width: 100%; background: var(--carbon); color: #fff; padding: 16px; border: none; font-weight: 800; font-size: 18px; cursor: pointer; clip-path: polygon(2% 0, 100% 0, 98% 100%, 0% 100%); }
-    
-    .clearLink{ display: block; text-align: center; margin-top: 15px; color: #999; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+    .dHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .dTitle{
+      margin:0;
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      text-align:center;
+    }
+    .pmClose{
+      border:none; background: transparent;
+      cursor:pointer; font-weight: 900;
+      line-height: 1;
+      padding: 6px 10px;
+      border-radius: 12px;
+    }
+    .dBody{ padding: 12px 16px; overflow:auto; flex: 1; }
+    .cartEmpty{
+      font-weight: 900;
+      color: rgba(0,0,0,.55);
+      text-align:center;
+      padding: 24px 0;
+      letter-spacing: .08em;
+    }
+    .cItem{
+      display:flex; gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+      margin-bottom: 10px;
+    }
+    .cImg{
+      width: 66px;
+      height: 66px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: rgba(0,0,0,.08);
+      flex:0 0 auto;
+    }
+    .cMetaLine{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(0,0,0,.65);
+      font-weight: 800;
+    }
+    .cPrice{
+      margin-top: 6px;
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .cActions{
+      margin-top: 8px;
+      display:flex; gap:8px;
+      align-items:center;
+    }
+    .qtyBtn{
+      border:none;
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      width:34px; height:34px;
+      border-radius: 12px;
+      cursor:pointer;
+    }
+    .rmBtn{
+      border:none;
+      background: rgba(225,6,0,.12);
+      color:#a30000;
+      font-weight:900;
+      height:34px;
+      padding:0 10px;
+      border-radius: 12px;
+      cursor:pointer;
+    }
 
-    /* Modal Legal Simple */
-    .legalBox{ position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 500px; background: #fff; padding: 30px; border-radius: 12px; z-index: 2100; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-    .legalBox.active{ display: block; }
+    .dFoot{
+      padding: 12px 16px 16px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+    .sumRow{
+      display:flex; justify-content:space-between; align-items:center;
+      font-size: 13px;
+      color: rgba(0,0,0,.70);
+      font-weight: 800;
+      margin: 6px 0;
+    }
+    .sumRow strong{ color:#111; font-weight: 900; }
+
+    /* promoBox */
+    .promoBox{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .promoRow{ display:flex; gap: 10px; margin-top: 8px; }
+    .promoInput{
+      flex:1;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.14);
+      padding: 0 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .promoBtn{
+      height: 42px;
+      border-radius: 12px;
+      border:none;
+      background:#111;
+      color:#fff;
+      font-weight: 900;
+      padding: 0 14px;
+      cursor:pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space:nowrap;
+    }
+    .promoNote{
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(0,0,0,.68);
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    /* shipping box */
+    .shipBox{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .shipGrid{
+      margin-top: 8px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .shipGrid .full{ grid-column: 1 / -1; }
+    @media (max-width: 420px){ .shipGrid{ grid-template-columns:1fr; } }
+
+    .shipInput{
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.14);
+      padding: 0 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+    .shipBtn{
+      height: 42px;
+      border-radius: 12px;
+      border:none;
+      background:#111;
+      color:#fff;
+      font-weight: 900;
+      padding: 0 14px;
+      cursor:pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space:nowrap;
+    }
+    .shipNote{
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(0,0,0,.68);
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .dfBtn{
+      width:100%;
+      margin-top: 12px;
+      border:none;
+      background: #111;
+      color:#fff;
+      font-weight: 900;
+      padding: 14px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .dfBtn:disabled{ opacity:.5; cursor:not-allowed; }
+    .clearLink{
+      display:block;
+      text-align:center;
+      margin-top: 10px;
+      color: rgba(0,0,0,.65);
+      font-weight: 900;
+      cursor:pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* modal catálogo (mobile-first vertical) */
+    .prodModal{
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(.98);
+      width: min(980px, 94vw);
+      height: min(86vh, 760px);
+      background: rgba(255,255,255,.98);
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: var(--shadow2);
+      z-index: 120;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .prodModal.active{
+      opacity:1;
+      pointer-events:auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .pmHead{
+      position: sticky;
+      top: 0;
+      display:flex; justify-content:space-between; align-items:center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      z-index: 2;
+    }
+    .pmTitle{
+      font-family: var(--fontTitle);
+      font-size: 30px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      text-align:center;
+      width: 100%;
+    }
+    .pmBody{ padding: 14px 16px; overflow:auto; flex:1; }
+    .pmGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 980px){ .pmGrid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px){
+      .prodModal{ width: 96vw; height: 88vh; border-radius: 16px; }
+      .pmGrid{ grid-template-columns: 1fr; }
+      .pmBody{ padding: 12px; }
+    }
+
+    .pCard{
+      border-radius: 16px;
+      overflow:hidden;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+      display:flex;
+      flex-direction:column;
+      text-align:center;
+    }
+
+    /* imágenes verticales */
+    .pImg{
+      width:100%;
+      aspect-ratio: 4 / 5;
+      background: rgba(0,0,0,.04);
+      overflow:hidden;
+    }
+    .pImg img{ width:100%; height:100%; object-fit: cover; display:block; }
+
+    .pInfo{ padding: 12px; text-align:center; }
+    .pName{
+      font-weight: 900;
+      font-size: 13px;
+      line-height: 1.25;
+      color:#111;
+      text-align:center;
+    }
+    .pPrice{
+      margin-top: 10px;
+      text-align:center;
+      font-weight: 900;
+      font-size: 16px;
+    }
+    .pCoupon{
+      margin-top: 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+      padding: 10px 10px;
+      border-radius: 12px;
+    }
+    .pCoupon b{ color: var(--red); }
+    .pBtn{
+      width: 100%;
+      margin-top: 10px;
+      border:none;
+      background: #111;
+      color:#fff;
+      font-weight: 900;
+      padding: 12px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 
-<body>
-  <div class="overlay" id="globalOverlay"></div>
+<body data-theme="xmas">
+  <div class="seasonTint" aria-hidden="true"></div>
+  <div class="seasonSnow" aria-hidden="true"></div>
+  <div class="seasonSparkles" aria-hidden="true"></div>
 
-  <aside class="drawer" id="cartDrawer">
-    <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button class="pmClose" onclick="toggleCart()" style="font-size:28px">&times;</button>
-    </div>
-    <div class="dBody" id="cartBody">
-      <div class="cartEmpty">CARRITO VACÍO</div>
-    </div>
-    <div class="dFoot">
-      <div class="sumRow"><span>Total:</span><span id="drawerTotal">$0.00</span></div>
-      <button class="dfBtn" onclick="goCheckout()">IR A PAGAR</button>
-      <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
-    </div>
-  </aside>
+  <div class="overlay" id="globalOverlay"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <header class="topbar">
     <div class="topInner">
-      <a href="#" class="brandLogo">
-        <img src="assets/logo-score.png" alt="SCORE">
+      <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
+        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async">
       </a>
+
       <div class="navRight">
-        <div class="miniPill">ENVÍOS MX</div>
-        <button class="cartTrigger" onclick="toggleCart()">
-          <img src="assets/Icono-carrito-compra.png" class="cartIconImg" alt="Cart">
+        <div class="promoPill" title="Cupón disponible">
+          <span>10% OFF con</span>&nbsp;<b>SCORE10</b>
+        </div>
+
+        <button class="cartTrigger" id="cartTrigger" type="button" onclick="toggleCart()" aria-label="Abrir carrito">
+          <svg class="cartIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6.5 6h14l-1.6 7.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.1 3.8A1.5 1.5 0 0 0 3.6 2.6H2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="cartCount" id="cartCount">0</span>
         </button>
       </div>
@@ -359,67 +1043,100 @@
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
+    <section class="hero" aria-label="Hero">
+      <div class="heroBg" aria-hidden="true"></div>
+      <div class="heroOverlay" aria-hidden="true"></div>
+      <div class="heroDecor" aria-hidden="true"></div>
+
+      <div class="seasonRibbon"><b>NAVIDAD</b> · Año Nuevo</div>
+
       <div class="heroContent">
-        <div class="heroTag">OFFICIAL GEAR</div>
+        <div class="heroTag">MERCH OFICIAL</div>
         <h1 class="heroTitle">LEYENDAS<br><span>DEL DESIERTO</span></h1>
-        <p class="heroSub">Colección oficial inspirada en la brutalidad de la Baja. Ediciones limitadas disponibles ahora.</p>
-        <button class="btnHero" onclick="openProductModal('b1000')">VER DROPS</button>
+
+        <p class="heroSub">
+          Drops limitados. Compra segura en México. Entra, elige y listo.
+        </p>
+
+        <div class="heroActions">
+          <button class="btnHero" type="button" onclick="openProductModal('ALL')">VER DROPS</button>
+          <div class="heroHint">Tip rápido: si ya traes cupón, aplícalo al final. <b>SCORE10</b> te baja el total.</div>
+        </div>
       </div>
     </section>
 
     <div class="secHeader">
-      <h2 class="secTitle">ACTIVE DROPS</h2>
-      <span class="secMeta">2024-25 SERIES</span>
+      <h2 class="secTitle">DROPS</h2>
+      <span class="secMeta">MX · Official Baja Gear</span>
     </div>
 
     <div class="gridDrops">
-      <div class="cardDrop" onclick="openProductModal('b1000')">
-        <div class="dropBg"></div>
+      <div class="cardDrop" onclick="openProductModal('ALL')" role="button" tabindex="0" aria-label="Abrir catálogo">
+        <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
           <div class="statusBadge">ACTIVO</div>
-          <img src="assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000">
-          <div class="dropInfo">
-            <h3>BAJA 1000</h3>
-            <p>La carrera madre. Colección completa.</p>
-            <button class="btnDrop">VER PRODUCTOS</button>
+
+          <div class="dropContent">
+            <img src="/assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000" loading="lazy" decoding="async">
+            <div class="dropInfo">
+              <h3>BAJA 1000</h3>
+              <p>Edición 2025 · piezas limitadas.</p>
+            </div>
+            <button class="btnDrop" type="button" onclick="event.stopPropagation(); openProductModal('ALL')">VER PRODUCTOS</button>
           </div>
         </div>
       </div>
 
-      <div class="cardDrop">
-        <div class="dropBg"></div>
-        <div class="dropGlass" style="background:rgba(50,35,25,0.95)">
-          <img src="assets/logo-sf250.png" class="dropLogo" style="opacity:0.7" alt="SF250">
-          <div class="dropInfo">
-            <h3 style="color:#ccc">PRÓXIMAMENTE</h3>
-            <p>San Felipe 250</p>
+      <div class="cardDrop" onclick="notifyDrop('San Felipe 250')" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
+        <div class="dropBg" aria-hidden="true"></div>
+        <div class="dropGlass">
+          <div class="dropContent">
+            <img src="/assets/logo-sf250.png" class="dropLogo" alt="San Felipe 250" loading="lazy" decoding="async" style="opacity:.92">
+            <div class="dropInfo">
+              <h3>PRÓXIMAMENTE</h3>
+              <p>San Felipe 250</p>
+            </div>
+            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('San Felipe 250')">AVÍSAME</button>
           </div>
         </div>
       </div>
 
-      <div class="cardDrop">
-        <div class="dropBg"></div>
-        <div class="dropGlass" style="background:rgba(50,35,25,0.95)">
-          <img src="assets/logo-baja500.png" class="dropLogo" style="opacity:0.7" alt="B500">
-          <div class="dropInfo">
-            <h3 style="color:#ccc">PRÓXIMAMENTE</h3>
-            <p>Baja 500</p>
+      <div class="cardDrop" onclick="notifyDrop('Baja 500')" role="button" tabindex="0" aria-label="Avísame Baja 500">
+        <div class="dropBg" aria-hidden="true"></div>
+        <div class="dropGlass">
+          <div class="dropContent">
+            <img src="/assets/logo-baja500.png" class="dropLogo" alt="Baja 500" loading="lazy" decoding="async" style="opacity:.92">
+            <div class="dropInfo">
+              <h3>PRÓXIMAMENTE</h3>
+              <p>Baja 500</p>
+            </div>
+            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 500')">AVÍSAME</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cardDrop" onclick="notifyDrop('Baja 400')" role="button" tabindex="0" aria-label="Avísame Baja 400">
+        <div class="dropBg" aria-hidden="true"></div>
+        <div class="dropGlass">
+          <div class="dropContent">
+            <img src="/assets/logo-baja400.png" class="dropLogo" alt="Baja 400" loading="lazy" decoding="async" style="opacity:.92">
+            <div class="dropInfo">
+              <h3>PRÓXIMAMENTE</h3>
+              <p>Baja 400</p>
+            </div>
+            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 400')">AVÍSAME</button>
           </div>
         </div>
       </div>
     </div>
 
-    <section class="sponsors">
-      <div style="font-family:var(--fontTitle); font-size:20px; color:#999; margin-bottom:20px; letter-spacing:2px;">OFFICIAL PARTNERS</div>
+    <section class="partnersStrip" aria-label="Partners">
+      <div class="partnersTitle">OFFICIAL PARTNERS</div>
       <div class="spGrid">
-        <img src="assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'">
-        <img src="assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'">
-        <img src="assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'">
-        <img src="assets/logo-king.png" class="spLogo" alt="King" onerror="this.style.display='none'">
-        <img src="assets/logo-polaris.png" class="spLogo" alt="Polaris" onerror="this.style.display='none'">
+        <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async">
       </div>
     </section>
   </main>
@@ -427,259 +1144,733 @@
   <footer>
     <div class="footGrid">
       <div>
-        <h4 class="footTitle">SCORE INTERNATIONAL</h4>
-        <p class="footText">
-          Operado por <b>Unico Textil</b>.<br>
-          Tijuana, B.C. México.<br><br>
+        <h4 style="color:#fff; font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">ÚNICO UNIFORMES</h4>
+        <p style="font-size:14px; line-height:1.6; color:#b9b9b9; margin:0;">
+          Fabricante y Patrocinador oficial.<br>
+          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br>
+          <b>unicouniformes.com</b><br><br>
           ventas.unicotextil@gmail.com<br>
           WhatsApp: 664 236 8701
         </p>
       </div>
+
       <div>
-        <h4 class="footTitle">LEGAL</h4>
+        <h4 style="color:var(--red); font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">LEGAL</h4>
         <div>
-          <span class="fLink" onclick="showLegal('terms')">Términos</span>
-          <span class="fLink" onclick="showLegal('privacy')">Privacidad</span>
-          <span class="fLink" onclick="showLegal('returns')">Devoluciones</span>
-          <span class="fLink" onclick="showLegal('fiscal')">Facturación</span>
+          <a class="fLink" href="/#terms" data-legal="terms">Términos y condiciones</a>
+          <a class="fLink" href="/#privacy" data-legal="privacy">Aviso de privacidad</a>
+          <a class="fLink" href="/#shipping" data-legal="shipping">Envíos y entregas</a>
+          <a class="fLink" href="/#returns" data-legal="returns">Cambios y devoluciones</a>
+          <a class="fLink" href="/#fiscal" data-legal="fiscal">Facturación</a>
+          <a class="fLink" href="/#cookies" data-legal="cookies">Cookies</a>
         </div>
       </div>
     </div>
   </footer>
 
-  <div class="paybar" id="paybar">
+  <div class="paybar" id="paybar" aria-label="Resumen de compra">
     <div>
-      <div class="pbTotal">TOTAL</div>
-      <div class="pbPrice" id="pbTotal">$0.00</div>
+      <div class="pbTotal" id="pbLabel">TOTAL (MXN)</div>
+      <div class="pbPrice" id="pbTotal">$0 MXN <small>$0 USD</small></div>
     </div>
-    <button class="pbBtn" onclick="toggleCart()">VER CARRITO</button>
+    <button class="pbBtn" type="button" onclick="toggleCart()">VER CARRITO</button>
   </div>
 
-  <div class="prodModal" id="pmB1000">
-    <div class="pmHead">
-      <div class="pmTitle">COLECCIÓN BAJA 1000</div>
-      <button class="pmClose" onclick="closeProductModal()">&times;</button>
+  <aside class="drawer" id="cartDrawer" aria-label="Carrito">
+    <div class="dHead">
+      <h3 class="dTitle">TU EQUIPO</h3>
+      <button class="pmClose" type="button" onclick="toggleCart()" style="font-size:28px" aria-label="Cerrar">&times;</button>
     </div>
-    <div class="pmBody">
-      <div class="pmGrid">
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/chamarra-baja1000.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Chamarra Oficial</div>
-            <div class="pPrice">$1,490 MXN</div>
-            <button class="pBtn" onclick="add('chamarra-baja1000')">AGREGAR</button>
-          </div>
+
+    <div class="dBody" id="cartBody">
+      <div class="cartEmpty">CARRITO VACÍO</div>
+    </div>
+
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
+
+      <div class="sumRow" id="shipLine" style="display:none;">
+        <span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong>
+      </div>
+
+      <div class="sumRow" id="promoLine" style="display:none;"><span>Descuento:</span><strong id="promoTotalLine">-$0 MXN</strong></div>
+      <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
+      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
+
+      <!-- SHIPPING (real por Envia desde Netlify Function) -->
+      <div class="shipBox" aria-label="Envío">
+        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
+          Calcular envío (real)
         </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/camisa-pits-baja1000.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Camisa de Pits</div>
-            <div class="pPrice">$899 MXN</div>
-            <button class="pBtn" onclick="add('camisa-pits-baja1000')">AGREGAR</button>
-          </div>
+
+        <div class="shipGrid">
+          <input class="shipInput" id="shipPostal" placeholder="C.P." inputmode="numeric" maxlength="5" />
+          <input class="shipInput" id="shipState" placeholder="Estado (Ej: BC)" maxlength="3" />
+          <input class="shipInput full" id="shipCity" placeholder="Ciudad" maxlength="40" />
+          <input class="shipInput full" id="shipAddress1" placeholder="Calle y número" maxlength="80" />
+          <button class="shipBtn full" type="button" onclick="quoteShipping()">CALCULAR</button>
         </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/camiseta-baja1000-azul.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Camiseta Mapa Azul</div>
-            <div class="pPrice">$399 MXN</div>
-            <button class="pBtn" onclick="add('camiseta-baja1000-azul')">AGREGAR</button>
-          </div>
-        </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/camiseta-baja1000-cafe.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Camiseta Mapa Café</div>
-            <div class="pPrice">$399 MXN</div>
-            <button class="pBtn" onclick="add('camiseta-baja1000-cafe')">AGREGAR</button>
-          </div>
-        </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/camiseta-baja1000-negra.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Camiseta Mapa Negra</div>
-            <div class="pPrice">$399 MXN</div>
-            <button class="pBtn" onclick="add('camiseta-baja1000-negra')">AGREGAR</button>
-          </div>
-        </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/sudadera-world-desert-negra.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Sudadera World Desert Negra</div>
-            <div class="pPrice">$749 MXN</div>
-            <button class="pBtn" onclick="add('sudadera-world-desert-negra')">AGREGAR</button>
-          </div>
-        </div>
-        <div class="pCard">
-          <div class="pImg"><img src="assets/EDICION_2025/sudadera-world-desert-cafe.jpg"></div>
-          <div class="pInfo">
-            <div class="pName">Sudadera World Desert Café</div>
-            <div class="pPrice">$749 MXN</div>
-            <button class="pBtn" onclick="add('sudadera-world-desert-cafe')">AGREGAR</button>
-          </div>
+
+        <div class="shipNote" id="shipNote">
+          Tip: con <b>ENVIOFREE</b> el envío se vuelve $0.
         </div>
       </div>
+
+      <!-- PROMOS -->
+      <div class="promoBox" aria-label="Código de promoción">
+        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
+          ¿Tienes cupón?
+        </div>
+        <div class="promoRow">
+          <input class="promoInput" id="promoInput" maxlength="24" placeholder="SCORE10" autocomplete="off" inputmode="text">
+          <button class="promoBtn" type="button" onclick="applyPromo()">APLICAR</button>
+        </div>
+        <div class="promoNote" id="promoNote">Puedes probar <b>SCORE10</b> para bajar el total.</div>
+      </div>
+
+      <button class="dfBtn" id="payBtn" type="button" onclick="goCheckout()">IR A PAGAR</button>
+      <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
+
+      <div style="margin-top:12px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
+        Temporada:
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('xmas')">Navidad</span> ·
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('halloween')">Halloween</span> ·
+        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('patrio')">Patrio</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="prodModal" id="pmAll" aria-label="Catálogo">
+    <div class="pmHead">
+      <div class="pmTitle" id="pmAllTitle">CATÁLOGO</div>
+      <button class="pmClose" type="button" onclick="closeProductModal()" aria-label="Cerrar" style="font-size:28px">&times;</button>
+    </div>
+    <div class="pmBody">
+      <div class="pmGrid" id="pmGridAll"></div>
     </div>
   </div>
+<script>
+    /* =========================
+       SCORE STORE — JS (PRO)
+       Precios: baseMXN (original) +20% (NO mostramos "original")
+       Cupón visible: SCORE10 = -10%
+       Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
+       Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
+       Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
+       ========================= */
 
-  <div class="legalBox" id="legalBox">
-    <h3 id="lbTitle" style="margin-top:0; color:var(--red);"></h3>
-    <p id="lbBody" style="font-size:13px; line-height:1.5; color:#333;"></p>
-    <button onclick="closeOverlay()" style="background:#000; color:#fff; border:none; padding:10px; width:100%; cursor:pointer; font-weight:800; margin-top:15px;">CERRAR</button>
-  </div>
-
-  <script>
-    const STRIPE_PK = 'pk_live_51Se6fsGUCnsKfgrBl99sVAcl';
-    const API_URL = '/.netlify/functions/create_checkout';
-    
-    let cart = JSON.parse(localStorage.getItem('score_cart')) || [];
-    let CATALOG = [];
-
-    // Cargar catálogo desde JSON real
-    async function loadCatalog() {
-      try {
-        const res = await fetch('data/catalog.json');
-        const data = await res.json();
-        CATALOG = data.products;
-      } catch (e) { console.error("Error loading catalog", e); }
+    // PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(()=>{});
+      });
     }
 
-    const overlay = document.getElementById('globalOverlay');
-    const drawer = document.getElementById('cartDrawer');
-    const legal = document.getElementById('legalBox');
-    const pb = document.getElementById('paybar');
+    let FX_MXN_PER_USD = 17.50;
+
+    // ✅ TU REGLA FIJA
+    const PRICE_MARKUP = 0.20;         // +20% al baseMXN
+    const PUBLIC_COUPON = "SCORE10";   // visible
+    const SECRET_FREE_CODE = "GRTS10"; // secreto NO visible
+
+    const API_CHECKOUT = "/.netlify/functions/create_checkout";
+    const API_SHIPPING = "/.netlify/functions/quote_shipping";
+
+    const LS_KEY = "score_cart_v7";
+    const LS_SHIP = "score_ship_v1";
+    const THEME_KEY = "score_theme";
+
+    const SIZES = ["S","M","L","XL","2XL"];
+
+    let cart = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+    let CATALOG = null;
+    let PROMOS = null;
+
+    // promoApplied: { code, type: "percent"|"fixed_mxn"|"free_total"|"free_shipping", value }
+    let promoApplied = null;
+
+    // shippingQuote: { ok, mxn, carrier, service, eta_days, raw }
+    let shippingQuote = JSON.parse(localStorage.getItem(LS_SHIP) || "null");
+
+    function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
+    function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
+    function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
+    function escapeHtml(str){
+      return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+    function normCode(s){
+      return String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
+    }
+    function roundMXN(n){ return Math.round(Number(n||0)); }
+
+    function toast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2400);
+    }
+
+    // Temas
+    function setTheme(theme){
+      document.body.setAttribute("data-theme", theme);
+      localStorage.setItem(THEME_KEY, theme);
+      toast(`Tema: ${theme}`);
+    }
+    (function initTheme(){
+      const saved = localStorage.getItem(THEME_KEY);
+      if(saved) document.body.setAttribute("data-theme", saved);
+    })();
+
+    const overlay = document.getElementById("globalOverlay");
+    const drawer  = document.getElementById("cartDrawer");
+    const pb      = document.getElementById("paybar");
 
     function closeOverlay(){
-      overlay.classList.remove('active');
-      drawer.classList.remove('active');
-      legal.classList.remove('active');
+      overlay.classList.remove("active");
+      drawer.classList.remove("active");
+      closeProductModal();
+      document.body.classList.remove("modalOpen");
     }
-    overlay.addEventListener('click', closeOverlay);
+    overlay.addEventListener("click", closeOverlay);
 
-    function openProductModal(id){
-      if(id === 'b1000') document.getElementById('pmB1000').classList.add('active');
-    }
-    function closeProductModal(){
-      document.querySelectorAll('.prodModal').forEach(el => el.classList.remove('active'));
-    }
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape") closeOverlay();
+    });
+
+    function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
+    function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
+    function cartSubtotalMXN(){ return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0); }
 
     function toggleCart(){
-      if(drawer.classList.contains('active')) closeOverlay();
-      else {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
+      if(drawer.classList.contains("active")) closeOverlay();
+      else{
+        overlay.classList.add("active");
+        drawer.classList.add("active");
+        document.body.classList.add("modalOpen");
+        updateCartUI();
       }
     }
 
-    function add(id){
-      if (!CATALOG.length) {
-        // Fallback si no ha cargado JSON, usando datos hardcodeados en HTML
-        const btn = document.querySelector(`button[onclick="add('${id}')"]`);
-        const pCard = btn.closest('.pCard');
-        const name = pCard.querySelector('.pName').innerText;
-        const priceStr = pCard.querySelector('.pPrice').innerText;
-        const price = parseInt(priceStr.replace(/[^0-9]/g, ''));
-        const img = pCard.querySelector('img').src;
-        
-        const exist = cart.find(i => i.id === id);
-        if(exist) exist.qty++;
-        else cart.push({id, name, price, img, qty:1});
-      } else {
-        const p = CATALOG.find(x => x.id === id);
-        const exist = cart.find(i => i.id === id);
-        if(exist) exist.qty++;
-        else {
-          // Precios calculados: Base + Markup (20%) - Discount (10%)
-          const price = Math.round(p.baseMXN * 1.2 * 0.9);
-          cart.push({
-            id: p.id, 
-            name: p.name, 
-            price: price, 
-            img: p.img, 
-            qty: 1
-          });
-        }
+    // Accesibilidad: Enter/Space en cardDrop
+    document.addEventListener("keydown", (e)=>{
+      const el = e.target;
+      if(!el) return;
+      if((e.key === "Enter" || e.key === " ") && el.classList?.contains("cardDrop")){
+        e.preventDefault();
+        el.click();
       }
-      updateCart();
-      alert("Agregado al carrito");
+    });
+
+    function notifyDrop(dropName){
+      const subject = encodeURIComponent(`Avísame cuando salga: ${dropName}`);
+      const body = encodeURIComponent(
+        `Hola, quiero que me avisen cuando esté disponible el drop "${dropName}".\n\n` +
+        `Mi nombre:\nMi WhatsApp:\nMi correo:\n\nGracias.`
+      );
+      window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
     }
 
-    function updateCart(){
-      localStorage.setItem('score_cart', JSON.stringify(cart));
-      
-      const total = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-      const count = cart.reduce((a,b)=>a+b.qty,0);
-      const totalFmt = "$" + total.toLocaleString();
-      
-      document.getElementById('cartCount').innerText = count;
-      document.getElementById('pbTotal').innerText = totalFmt;
-      document.getElementById('drawerTotal').innerText = totalFmt;
-      
-      if(total > 0) pb.classList.add('visible');
-      else pb.classList.remove('visible');
+    function needsSize(name){
+      return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
+    }
 
-      const body = document.getElementById('cartBody');
-      if(cart.length === 0){
-        body.innerHTML = "<div class='cartEmpty'>TU CARRITO ESTÁ VACÍO.</div>";
-      } else {
-        body.innerHTML = cart.map((i, idx) => `
-          <div class="cItem">
-            <img src="${i.img}" class="cImg">
-            <div style="flex:1">
-              <div style="font-weight:800; font-size:13px;">${i.name}</div>
-              <div style="color:var(--red); font-weight:700;">$${i.price}</div>
-              <div style="font-size:12px; margin-top:5px;">Cant: <b>${i.qty}</b></div>
-            </div>
-            <button onclick="rem(${idx})" style="border:none; background:none; color:#888; font-weight:900; font-size:18px;">&times;</button>
+    // Pricing: baseMXN +20%
+    function priceListFromBase(baseMXN){
+      return roundMXN(Number(baseMXN||0) * (1 + PRICE_MARKUP));
+    }
+    function priceWithPercent(listMXN, pct){
+      return roundMXN(Number(listMXN||0) * (1 - Number(pct||0)));
+    }
+
+    async function loadCatalog(){
+      const v = Date.now().toString().slice(-6);
+
+      // ✅ fallback: /data/catalog.json -> /catalog.json
+      let res = await fetch(`/data/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
+      if(!res || !res.ok){
+        res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
+      }
+      if(!res || !res.ok) throw new Error("catalog_not_found");
+
+      CATALOG = await res.json();
+
+      if(CATALOG?.site?.fx_mxn_per_usd){
+        const fx = Number(CATALOG.site.fx_mxn_per_usd);
+        if(!Number.isNaN(fx) && fx > 0) FX_MXN_PER_USD = fx;
+      }
+    }
+
+    async function loadPromos(){
+      const v = Date.now().toString().slice(-6);
+
+      // ✅ fallback: /data/promos.json -> /promos.json
+      let res = await fetch(`/data/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
+      if(!res || !res.ok){
+        res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
+      }
+      if(!res || !res.ok){
+        PROMOS = { rules: [
+          { code: "SCORE10", type:"percent", value:0.10, active:true },
+          { code: "ENVIOFREE", type:"free_shipping", value:0, active:true },
+          { code: "BAJA200", type:"fixed_mxn", value:200, active:true },
+        ]};
+        return;
+      }
+      PROMOS = await res.json().catch(()=>null);
+      if(!PROMOS) PROMOS = { rules: [] };
+    }
+
+    function pmDivider(label){
+      return `
+        <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px; margin:10px 0 2px; opacity:.9;">
+          <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
+          <div style="font-weight:900; letter-spacing:.12em; font-size:11px; color: rgba(0,0,0,.65); text-transform:uppercase; white-space: nowrap; text-align:center;">
+            ${escapeHtml(label)}
           </div>
-        `).join('');
-      }
+          <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
+        </div>
+      `;
     }
 
+    function cardTpl(p){
+      const base = Number(p.baseMXN||0);
+      const list = priceListFromBase(base);
+
+      // ✅ SOLO precio final (+20%) — NO “original”
+      // ✅ SCORE10 se menciona como “ancla” (sin gritar)
+      const withScore10 = priceWithPercent(list, 0.10);
+
+      const sized = needsSize(p.name);
+
+      return `
+        <div class="pCard">
+          <div class="pImg">
+            <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" width="900" height="1125"
+                 onerror="this.onerror=null;this.src='/assets/placeholder.jpg';">
+          </div>
+          <div class="pInfo">
+            <div class="pName">${escapeHtml(p.name)}</div>
+
+            <div class="pPrice">${moneyMXN(list)} MXN</div>
+
+            <div class="pCoupon" title="Cupón disponible">
+              <span>Con <b>${PUBLIC_COUPON}</b></span>
+              <span><b>${moneyMXN(withScore10)}</b></span>
+            </div>
+
+            ${sized ? `
+              <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <label style="font-size:12px; font-weight:900; color: rgba(0,0,0,.70);" for="size_${p.id}">Talla</label>
+                <select style="flex:1; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.14); padding:0 10px; font-weight:900; letter-spacing:.06em;"
+                        id="size_${p.id}">
+                  ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
+                </select>
+              </div>
+            ` : ``}
+
+            <button class="pBtn" type="button" onclick="addToCart('${escapeHtml(p.id)}')">AGREGAR</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCatalogAll(){
+      const grid = document.getElementById("pmGridAll");
+      if(!CATALOG || !Array.isArray(CATALOG.products)){
+        grid.innerHTML = `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">
+          No se pudo cargar el catálogo. Revisa <code>/data/catalog.json</code>.
+        </div>`;
+        return;
+      }
+
+      const sections = Array.isArray(CATALOG.sections) ? [...CATALOG.sections] : [];
+      sections.sort((a,b)=> (a.order||0) - (b.order||0));
+
+      const products = CATALOG.products;
+      let html = "";
+
+      if(sections.length){
+        for(const s of sections){
+          const items = products.filter(p => String(p.sectionId||"") === String(s.id||""));
+          if(!items.length) continue;
+          html += pmDivider(s.title || s.id);
+          html += items.map(cardTpl).join("");
+        }
+        const orphan = products.filter(p => !p.sectionId);
+        if(orphan.length){
+          html += pmDivider("Más productos");
+          html += orphan.map(cardTpl).join("");
+        }
+      } else {
+        html = products.map(cardTpl).join("");
+      }
+
+      grid.innerHTML = html || `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">Catálogo vacío.</div>`;
+    }
+
+    function openProductModal(id){
+      if(id === "ALL"){
+        renderCatalogAll();
+        document.getElementById("pmAll").classList.add("active");
+        overlay.classList.add("active");
+        document.body.classList.add("modalOpen");
+      }
+    }
+    function closeProductModal(){
+      document.querySelectorAll(".prodModal").forEach(el => el.classList.remove("active"));
+    }
+
+    function addToCart(productId){
+      if(!CATALOG || !Array.isArray(CATALOG.products)){
+        toast("Catálogo no cargado…");
+        return;
+      }
+      const p = CATALOG.products.find(x => String(x.id) === String(productId));
+      if(!p) return;
+
+      const base = Number(p.baseMXN||0);
+      const list = priceListFromBase(base);
+      if(!list){
+        toast("Falta baseMXN en el producto.");
+        return;
+      }
+
+      const sizeEl = document.getElementById(`size_${productId}`);
+      const size = sizeEl ? sizeEl.value : "ÚNICA";
+
+      const key = `${p.id}_${size}`;
+      const exist = cart.find(i => i.key === key);
+
+      if(exist) exist.qty++;
+      else cart.push({
+        key,
+        id: p.id,
+        name: p.name,
+        img: p.img,
+        size,
+        priceMXN: list,   // ✅ solo precio final (+20%)
+        qty: 1
+      });
+
+      saveCart();
+      updateCartUI();
+      toast("Agregado al carrito");
+    }
+
+    function inc(idx){
+      cart[idx].qty++;
+      saveCart();
+      updateCartUI();
+    }
+    function dec(idx){
+      cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1);
+      saveCart();
+      updateCartUI();
+    }
     function rem(idx){
       cart.splice(idx,1);
-      updateCart();
+      saveCart();
+      updateCartUI();
+      toast("Producto eliminado");
     }
+
     function clearCart(){
-      if(confirm('¿Vaciar carrito?')){ cart=[]; updateCart(); }
+      if(confirm("¿Vaciar carrito?")){
+        cart = [];
+        promoApplied = null;
+        shippingQuote = null;
+        localStorage.removeItem(LS_SHIP);
+        saveCart();
+        updateCartUI();
+        toast("Carrito vacío");
+      }
+    }
+
+    function findPromoRule(code){
+      const c = normCode(code);
+      if(!c) return null;
+
+      // secreto: NO se sugiere ni se muestra
+      if(c === SECRET_FREE_CODE){
+        return { code: c, type:"free_total", value: 0, active:true };
+      }
+
+      const rules = PROMOS?.rules;
+      if(Array.isArray(rules)){
+        const r = rules.find(x => normCode(x.code) === c && x.active);
+        if(r) return r;
+      }
+
+      // fallback mínimo
+      if(c === PUBLIC_COUPON){
+        return { code: c, type:"percent", value: 0.10, active:true };
+      }
+
+      return null;
+    }
+
+    function computeDiscount(subtotal){
+      if(!promoApplied) return 0;
+
+      if(promoApplied.type === "percent"){
+        return Math.max(0, roundMXN(subtotal * Number(promoApplied.value||0)));
+      }
+      if(promoApplied.type === "fixed_mxn"){
+        return Math.max(0, roundMXN(Number(promoApplied.value||0)));
+      }
+      if(promoApplied.type === "free_total"){
+        return subtotal; // total gratis (merch)
+      }
+      return 0;
+    }
+
+    function isFreeShipping(){
+      return promoApplied && promoApplied.type === "free_shipping";
+    }
+
+    function applyPromo(){
+      const input = document.getElementById("promoInput");
+      const note  = document.getElementById("promoNote");
+      const code  = normCode(input.value);
+
+      const rule = findPromoRule(code);
+      if(!rule){
+        promoApplied = null;
+        note.textContent = code ? `Código no válido.` : `Escribe un código para aplicarlo.`;
+        toast(code ? "Código no válido" : "Escribe un código");
+        updateCartUI();
+        return;
+      }
+
+      promoApplied = { code: normCode(rule.code), type: rule.type, value: Number(rule.value||0) };
+
+      // NO revelar el secreto
+      note.innerHTML = `✅ Cupón aplicado.`;
+      toast("Cupón aplicado");
+
+      // si es ENVIOFREE, fuerza shippingQuote a 0
+      if(isFreeShipping()){
+        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+      }
+
+      updateCartUI();
+    }
+
+    async function quoteShipping(){
+      const cp = String(document.getElementById("shipPostal").value || "").trim();
+      const st = String(document.getElementById("shipState").value || "").trim().toUpperCase();
+      const city = String(document.getElementById("shipCity").value || "").trim();
+      const addr1 = String(document.getElementById("shipAddress1").value || "").trim();
+      const note = document.getElementById("shipNote");
+
+      if(isFreeShipping()){
+        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+        note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
+        toast("Envío gratis aplicado");
+        updateCartUI();
+        return;
+      }
+
+      if(cp.length !== 5){
+        toast("Pon un C.P. válido");
+        return;
+      }
+      if(st.length < 2 || city.length < 2 || addr1.length < 5){
+        toast("Faltan datos (Estado, Ciudad y Calle)");
+        return;
+      }
+
+      note.textContent = "Cotizando envío…";
+
+      try{
+        const payload = {
+          to: { postal_code: cp, state_code: st, city, address1: addr1, country_code:"MX" },
+          items: cart.map(i => ({ id:i.id, qty:i.qty, name:i.name }))
+        };
+
+        const res = await fetch(API_SHIPPING, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(()=>null);
+        if(!res.ok || !data || !data.ok){
+          shippingQuote = null;
+          localStorage.removeItem(LS_SHIP);
+          note.textContent = "No se pudo cotizar. Intenta de nuevo.";
+          toast("No se pudo cotizar envío");
+          updateCartUI();
+          return;
+        }
+
+        shippingQuote = data.quote;
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
+
+        note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
+        toast("Envío cotizado");
+        updateCartUI();
+      }catch(e){
+        shippingQuote = null;
+        localStorage.removeItem(LS_SHIP);
+        note.textContent = "No se pudo cotizar. Intenta de nuevo.";
+        toast("Error cotizando envío");
+        updateCartUI();
+      }
+    }
+
+    function updateCartUI(){
+      document.getElementById("cartCount").innerText = cartCount();
+
+      const subtotal = cartSubtotalMXN();
+
+      // shipping
+      const shipLine = document.getElementById("shipLine");
+      let shipMXN = 0;
+      if(isFreeShipping()){
+        shipMXN = 0;
+        shipLine.style.display = "flex";
+        document.getElementById("shipTotalLine").textContent = moneyMXN(0);
+      } else if(shippingQuote && shippingQuote.ok){
+        shipMXN = Number(shippingQuote.mxn||0);
+        shipLine.style.display = "flex";
+        document.getElementById("shipTotalLine").textContent = moneyMXN(shipMXN);
+      } else {
+        shipLine.style.display = "none";
+      }
+
+      const off = computeDiscount(subtotal);
+      let totalMXN = Math.max(0, subtotal - off) + Math.max(0, shipMXN);
+
+      // secreto: total gratis (merch+envío)
+      if(promoApplied && promoApplied.type === "free_total"){
+        totalMXN = 0;
+      }
+
+      const totalUSD = mxnToUsd(totalMXN);
+
+      // paybar
+      const pbLabel = document.getElementById("pbLabel");
+      pbLabel.textContent = promoApplied ? "TOTAL (MXN) · Cupón aplicado" : "TOTAL (MXN)";
+      pb.classList.toggle("visible", cartCount() > 0);
+
+      document.getElementById("pbTotal").innerHTML = `
+        ${moneyMXN(totalMXN)}
+        <small>${moneyUSD(totalUSD)} USD</small>
+      `;
+
+      // summary lines
+      document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
+
+      const promoLine = document.getElementById("promoLine");
+      if(off > 0 && !(promoApplied && promoApplied.type === "free_total")){
+        promoLine.style.display = "flex";
+        document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(off)}`;
+      } else if(promoApplied && promoApplied.type === "free_total"){
+        promoLine.style.display = "flex";
+        document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(subtotal)}`;
+      } else {
+        promoLine.style.display = "none";
+      }
+
+      document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
+      document.getElementById("usdTotalLine").textContent = moneyUSD(totalUSD);
+
+      // render cart items
+      const body = document.getElementById("cartBody");
+      if(!cart.length){
+        body.innerHTML = `<div class="cartEmpty">CARRITO VACÍO</div>`;
+        document.getElementById("payBtn").disabled = true;
+        return;
+      }
+
+      document.getElementById("payBtn").disabled = false;
+
+      body.innerHTML = cart.map((it, idx) => `
+        <div class="cItem">
+          <img class="cImg" src="${escapeHtml(it.img)}" alt="${escapeHtml(it.name)}"
+               onerror="this.onerror=null;this.src='/assets/placeholder.jpg';" />
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(it.name)}</div>
+            <div class="cMetaLine">Talla: <b>${escapeHtml(it.size)}</b> · Cantidad: <b>${it.qty}</b></div>
+            <div class="cPrice">${moneyMXN(it.priceMXN)} MXN</div>
+
+            <div class="cActions">
+              <button class="qtyBtn" onclick="dec(${idx})" aria-label="menos">-</button>
+              <button class="qtyBtn" onclick="inc(${idx})" aria-label="más">+</button>
+              <button class="rmBtn" onclick="rem(${idx})">Quitar</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
     }
 
     async function goCheckout(){
-      if(cart.length===0) return;
-      const btn = document.querySelector('.dfBtn');
-      btn.innerText = "PROCESANDO..."; 
-      
-      try {
-        const stripe = Stripe(STRIPE_PK);
-        const res = await fetch(API_URL, {
-          method:'POST', 
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({items:cart})
-        });
-        const data = await res.json();
-        if(data.id) stripe.redirectToCheckout({sessionId: data.id});
-        else alert("Error iniciando pago");
-      } catch(e){
-        alert("Error de conexión");
+      if(!cart.length){
+        toast("Carrito vacío");
+        return;
       }
-      btn.innerText = "IR A PAGAR";
-    }
 
-    function showLegal(t){
-      const txts = {
-        terms: "Términos y condiciones oficiales Unico Textil para productos SCORE.",
-        privacy: "Datos personales (Nombre, Dirección) usados exclusivamente para el envío.",
-        returns: "Cambios por defecto de fábrica (15 días). Cliente cubre envío en cambios de talla.",
-        fiscal: "Para facturar envía tu constancia fiscal y # de pedido a ventas.unicotextil@gmail.com"
+      // si no hay shippingQuote y no hay ENVIOFREE, dejamos pagar (puede ser pickup o cotiza en backend)
+      const promoCode = normCode(document.getElementById("promoInput").value || (promoApplied?.code || ""));
+
+      const shipTo = {
+        postal_code: String(document.getElementById("shipPostal").value || "").trim(),
+        state_code: String(document.getElementById("shipState").value || "").trim().toUpperCase(),
+        city: String(document.getElementById("shipCity").value || "").trim(),
+        address1: String(document.getElementById("shipAddress1").value || "").trim(),
+        country_code: "MX"
       };
-      document.getElementById('lbTitle').innerText = t.toUpperCase();
-      document.getElementById('lbBody').innerText = txts[t];
-      overlay.classList.add('active');
-      legal.classList.add('active');
+
+      try{
+        const res = await fetch(API_CHECKOUT, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({
+            cart,
+            promoCode: promoApplied?.code || promoCode || "",
+            shipTo
+          })
+        });
+
+        const data = await res.json().catch(()=>null);
+        if(!res.ok || !data){
+          toast("No se pudo iniciar el pago");
+          return;
+        }
+
+        if(data.free && data.redirect_url){
+          window.location.href = data.redirect_url;
+          return;
+        }
+
+        if(data.url){
+          window.location.href = data.url;
+          return;
+        }
+
+        toast("No se pudo iniciar el pago");
+      }catch(e){
+        toast("Error iniciando pago");
+      }
     }
 
-    loadCatalog();
-    updateCart();
+    // Boot
+    (async function init(){
+      try{
+        await loadCatalog();
+        await loadPromos();
+
+        // si ya tenías promo aplicada, revalidar en UI
+        updateCartUI();
+      }catch(e){
+        toast("Error cargando tienda");
+        console.error(e);
+      }
+    })();
   </script>
 </body>
 </html>
