@@ -1,103 +1,105 @@
+// /netlify/functions/stripe_webhook.js
+// Stripe webhook: checkout.session.completed -> notificaciones (Telegram + WhatsApp)
+
 const Stripe = require("stripe");
 
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const WHATSAPP_TO = process.env.WHATSAPP_TO;
+
+function json(statusCode, body) {
+  return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+}
+
+async function sendTelegram(text) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
+  }).catch(() => {});
+}
+
+async function sendWhatsApp(text) {
+  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_TO) return;
+  const url = `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: WHATSAPP_TO,
+      type: "text",
+      text: { body: text },
+    }),
+  }).catch(() => {});
+}
+
 exports.handler = async (event) => {
-  try {
-    if (event.httpMethod !== "POST") {
-      return resp(405, "method_not_allowed");
-    }
+  if (event.httpMethod !== "POST") return json(405, { ok: false });
 
-    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-
-    if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
-      return resp(500, "missing_stripe_env");
-    }
-
-    const stripe = new Stripe(STRIPE_SECRET_KEY);
-
-    const sig = event.headers["stripe-signature"];
-    if (!sig) return resp(400, "missing_signature");
-
-    let evt;
-    try {
-      evt = stripe.webhooks.constructEvent(event.body, sig, STRIPE_WEBHOOK_SECRET);
-    } catch (err) {
-      return resp(400, "invalid_signature");
-    }
-
-    if (evt.type === "checkout.session.completed") {
-      const session = evt.data.object;
-
-      const promo = session.metadata?.promo_code || "";
-      const discount = session.metadata?.discount_mxn || "0";
-      const ship = session.metadata?.shipping_mxn || "0";
-      const items = session.metadata?.items || "[]";
-      const shipTo = session.metadata?.ship_to || "{}";
-
-      const msg =
-`✅ [SCORE] Pago confirmado
-Session: ${session.id}
-Total: ${session.amount_total ? (session.amount_total/100) : "N/A"} ${session.currency?.toUpperCase()}
-Promo: ${promo}
-Descuento: ${discount} MXN
-Envío: ${ship} MXN
-ShipTo: ${shipTo}
-Items: ${items}`.slice(0, 3900);
-
-      await sendTelegram(msg);
-      await sendWhatsApp(msg);
-
-      // Si luego quieres: aquí puedes llamar envia_webhook con el pedido completo
-      // await fetch(`${process.env.URL_SCORE}/.netlify/functions/envia_webhook`, ...)
-    }
-
-    return resp(200, "ok");
-  } catch (e) {
-    return resp(500, "server_error");
+  if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
+    return json(500, { ok: false, error: "Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET" });
   }
+
+  const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+
+  const sig = event.headers["stripe-signature"];
+  if (!sig) return json(400, { ok: false, error: "Missing stripe-signature" });
+
+  let evt;
+  try {
+    // En Netlify, event.body llega string. OJO: si algún día activas base64, hay que adaptar.
+    evt = stripe.webhooks.constructEvent(event.body, sig, STRIPE_WEBHOOK_SECRET);
+  } catch (e) {
+    return json(400, { ok: false, error: "Invalid signature" });
+  }
+
+  if (evt.type === "checkout.session.completed") {
+    const session = evt.data.object;
+
+    // Traemos detalles extendidos (line items)
+    const full = await stripe.checkout.sessions.retrieve(session.id, {
+      expand: ["line_items", "customer_details"],
+    });
+
+    const items = full?.line_items?.data || [];
+    const total = (full.amount_total || 0) / 100;
+    const currency = String(full.currency || "mxn").toUpperCase();
+
+    const promo = full.metadata?.promo_code || "";
+    const ship = [
+      full.metadata?.ship_postal_code,
+      full.metadata?.ship_state_code,
+      full.metadata?.ship_city,
+      full.metadata?.ship_address1,
+    ].filter(Boolean).join(", ");
+
+    const list = items
+      .map(i => `• ${i.quantity} x ${i.description} — ${(i.amount_total || 0) / 100} ${currency}`)
+      .join("\n");
+
+    const msg =
+      `✅ COMPRA CONFIRMADA (SCORE Store)\n` +
+      `ID: ${full.id}\n` +
+      `Total: ${total} ${currency}\n` +
+      (promo ? `Cupón: ${promo}\n` : "") +
+      (ship ? `Envío: ${ship}\n` : "") +
+      `\n${list}`;
+
+    await sendTelegram(msg);
+    await sendWhatsApp(msg);
+  }
+
+  return json(200, { received: true });
 };
-
-async function sendTelegram(text){
-  try{
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-    if(!token || !chatId) return;
-
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ chat_id: chatId, text })
-    }).catch(()=>{});
-  }catch(e){}
-}
-
-async function sendWhatsApp(text){
-  try{
-    const token = process.env.WHATSAPP_TOKEN;
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    if(!token || !phoneId) return;
-
-    // OJO: aquí necesitarías un destinatario real.
-    // Si quieres, lo conectamos a un "admin phone" en env (ej: WHATSAPP_ADMIN_TO)
-    const to = process.env.WHATSAPP_TO;
-    if(!to) return;
-
-    await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: { body: text.slice(0, 3800) }
-      })
-    }).catch(()=>{});
-  }catch(e){}
-}
-
-function resp(statusCode, body){
-  return { statusCode, body };
-}
