@@ -1,182 +1,167 @@
-/**
- * SCORE STORE — Create Stripe Checkout
- *
- * Reglas (alineadas con frontend):
- * - Precio tienda = baseMXN +20%
- * - Cupón público: SCORE10 = -10% (solo productos)
- * - Cupones en /data/promos.json: percent | fixed_mxn | free_shipping
- * - Cupón secreto (NO en JSON): GRTS10 => total GRATIS (productos+envío)
- * - Envío: se recibe como shippingMXN + shippingLabel
- */
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const fs = require('fs');
+const path = require('path');
+const Stripe = require('stripe');
 
-const PRICE_MARKUP = 0.20;
-const PUBLIC_COUPON = "SCORE10";
-const SECRET_FREE_CODE = ["GR", "TS10"].join(""); // secreto
+// Función segura para leer archivos en Netlify Lambda
+const readFile = (fileName) => {
+  // En producción (Netlify), los archivos incluidos están en la raíz de la tarea
+  const prodPath = path.resolve(fileName); 
+  // En desarrollo local
+  const devPath = path.resolve(__dirname, '../../data', fileName);
+  
+  if (fs.existsSync(prodPath)) return JSON.parse(fs.readFileSync(prodPath, 'utf8'));
+  if (fs.existsSync(devPath)) return JSON.parse(fs.readFileSync(devPath, 'utf8'));
+  
+  // Intento final para estructura de carpetas data/
+  const fallback = path.resolve('data', fileName);
+  if (fs.existsSync(fallback)) return JSON.parse(fs.readFileSync(fallback, 'utf8'));
 
-function json(status, obj) {
-  return {
-    statusCode: status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify(obj),
-  };
-}
+  throw new Error(`File not found: ${fileName}`);
+};
 
-function roundMXN(n) { return Math.round(Number(n || 0)); }
-function normCode(s) {
-  return String(s || "").toUpperCase().replace(/[^A-Z0-9_-]/g, "").trim();
-}
-function unitPriceFromBase(baseMXN) {
-  return roundMXN(Number(baseMXN || 0) * (1 + PRICE_MARKUP));
-}
+const norm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '').trim();
 
-async function loadJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
-  return res.json();
-}
-
-function findPromoRule(code, promosJson) {
-  const c = normCode(code);
-  if (!c) return null;
-
-  if (c === SECRET_FREE_CODE) {
-    return { code: c, type: "free_total", value: 0, active: true };
-  }
-
-  const rules = promosJson?.rules;
-  if (Array.isArray(rules)) {
-    const r = rules.find((x) => normCode(x.code) === c && x.active);
-    if (r) return r;
-  }
-
-  if (c === PUBLIC_COUPON) {
-    return { code: c, type: "percent", value: 0.10, active: true };
-  }
-
-  return null;
-}
-
-function computeDiscountTotals({ promo, subtotalProductsMXN, shippingMXN }) {
-  let discProducts = 0;
-  let discShipping = 0;
-
-  if (!promo) return { discProducts, discShipping, discTotal: 0 };
-
-  if (promo.type === "percent") {
-    discProducts = roundMXN(subtotalProductsMXN * Number(promo.value || 0));
-  } else if (promo.type === "fixed_mxn") {
-    discProducts = roundMXN(Number(promo.value || 0));
-  } else if (promo.type === "free_shipping") {
-    discShipping = roundMXN(shippingMXN);
-  } else if (promo.type === "free_total") {
-    return { discProducts: subtotalProductsMXN, discShipping: shippingMXN, discTotal: subtotalProductsMXN + shippingMXN };
-  }
-
-  // clamp
-  discProducts = Math.max(0, Math.min(discProducts, subtotalProductsMXN));
-  discShipping = Math.max(0, Math.min(discShipping, shippingMXN));
-  const discTotal = discProducts + discShipping;
-
-  return { discProducts, discShipping, discTotal };
-}
+const j = (s, b) => ({
+  statusCode: s,
+  headers: { 'Content-Type': 'application/json; charset=utf-8' },
+  body: JSON.stringify(b)
+});
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return json(200, { ok: true });
-  if (event.httpMethod !== "POST") return json(405, { ok: false, error: "Method not allowed" });
-
-  let body = {};
-  try { body = JSON.parse(event.body || "{}"); } catch {}
-
-  const items = Array.isArray(body.items) ? body.items : [];
-  const promoCode = normCode(body.promoCode || "");
-  const shippingMXN = roundMXN(body.shippingMXN || 0);
-  const shippingLabel = String(body.shippingLabel || "Envío");
-
-  if (!items.length) return json(400, { ok: false, error: "Cart vacío" });
+  if (event.httpMethod !== 'POST') return j(405, { error: 'Method Not Allowed' });
 
   try {
-    // Cargar catálogo y promos desde el repo (Netlify deploy)
-    const baseURL = body.siteUrl || "https://scorestore.netlify.app";
-    const catalog = await loadJSON(`${baseURL}/data/catalog.json?v=${Date.now()}`);
-    const promos = await loadJSON(`${baseURL}/data/promos.json?v=${Date.now()}`).catch(() => null);
+    // 1. Cargar Datos
+    let catalog, promos;
+    try {
+      catalog = readFile('catalog.json');
+      promos = readFile('promos.json');
+    } catch (e) {
+      console.error("Error reading data:", e);
+      return j(500, { error: "Database error" });
+    }
 
-    const catalogProducts = Array.isArray(catalog.products) ? catalog.products : [];
+    // 2. Config Stripe
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return j(500, { error: 'Missing STRIPE_SECRET_KEY' });
+    
+    const SITE_URL = process.env.SITE_URL || catalog?.site?.url || 'https://scorestore.netlify.app';
+    const stripe = new Stripe(key);
 
-    // Construir line_items con precio server-side (anti-tamper)
-    let subtotalProductsMXN = 0;
+    const discountPct = Number(catalog?.pricing?.discount_pct || 0);
+    const markupPct = Number(catalog?.pricing?.markup_pct || 0);
+    const products = Array.isArray(catalog?.products) ? catalog.products : [];
+    const pIndex = new Map(products.map(p => [String(p.id), p]));
 
-    const line_items = items.map((it) => {
-      const id = String(it.id || "");
-      const qty = Math.max(1, Number(it.qty || 1));
-      const size = String(it.size || "ÚNICA");
+    // 3. Procesar Body
+    const body = JSON.parse(event.body || '{}');
+    const items = Array.isArray(body.items) ? body.items : [];
+    const shippingMXN = Math.max(0, Math.round(Number(body.shippingMXN || 0)));
+    const promoCode = norm(body?.promo?.code || '');
 
-      const p = catalogProducts.find((x) => String(x.id) === id);
-      if (!p || !p.baseMXN) throw new Error(`Producto inválido o sin baseMXN: ${id}`);
+    if (!items.length) return j(400, { error: 'No items' });
 
-      const unitMXN = unitPriceFromBase(p.baseMXN);
-      subtotalProductsMXN += unitMXN * qty;
+    // 4. Construir Line Items
+    const line_items = [];
+    
+    const getPriceMXN = (p) => {
+      const was = Number(p.wasMXN || 0);
+      const base = Number(p.baseMXN || 0);
+      // Lógica de precio: Si hay "was", usa ese. Si no, usa base + markup.
+      // Aplicar descuento global si existe.
+      let price = was > 0 ? was : base * (1 + markupPct);
+      return Math.max(0, Math.round(price * (1 - discountPct)));
+    };
 
-      return {
-        price_data: {
-          currency: "mxn",
-          product_data: {
-            name: `${p.name}${size && size !== "ÚNICA" ? ` — ${size}` : ""}`,
-            images: p.img ? [`${baseURL}${p.img}`] : undefined,
-          },
-          unit_amount: unitMXN * 100,
-        },
+    for (const it of items) {
+      const id = String(it.id || '');
+      const p = pIndex.get(id);
+      if (!p) return j(400, { error: `Unknown product: ${id}` });
+      
+      const qty = Math.max(1, Math.min(99, parseInt(it.qty, 10) || 1));
+      const size = String(it.size || '').toUpperCase();
+      const unit = getPriceMXN(p);
+
+      // URL absoluta para imagen en Stripe
+      let imgUrl = p.img;
+      if (imgUrl && imgUrl.startsWith('/')) {
+        imgUrl = `${SITE_URL}${imgUrl}`;
+      }
+
+      line_items.push({
         quantity: qty,
-      };
-    });
+        price_data: {
+          currency: 'mxn',
+          unit_amount: unit * 100,
+          product_data: {
+            name: `${p.name}${size ? ` · ${size}` : ''}`,
+            images: imgUrl ? [imgUrl] : undefined,
+            metadata: { id, size }
+          }
+        }
+      });
+    }
 
-    subtotalProductsMXN = roundMXN(subtotalProductsMXN);
-
-    // Shipping como line item (si aplica)
+    // 5. Envío
     if (shippingMXN > 0) {
       line_items.push({
-        price_data: {
-          currency: "mxn",
-          product_data: { name: shippingLabel },
-          unit_amount: shippingMXN * 100,
-        },
         quantity: 1,
+        price_data: {
+          currency: 'mxn',
+          unit_amount: shippingMXN * 100,
+          product_data: { name: 'Envío', metadata: { kind: 'shipping' } }
+        }
       });
     }
 
-    // Promo
-    const rule = promoCode ? findPromoRule(promoCode, promos) : null;
-    const promoApplied = rule ? { code: normCode(rule.code), type: rule.type, value: Number(rule.value || 0) } : null;
+    // 6. Cupones
+    let discounts = undefined;
+    const rules = Array.isArray(promos?.rules) ? promos.rules : [];
+    const rule = rules.find(x => norm(x.code) === promoCode && x.active !== false);
 
-    const { discTotal } = computeDiscountTotals({
-      promo: promoApplied,
-      subtotalProductsMXN,
-      shippingMXN,
-    });
+    if (rule) {
+      const t = String(rule.type || '');
+      const couponObj = { duration: 'once', name: `PROMO ${rule.code}`, metadata: { promo_code: rule.code } };
+      let apply = false;
 
-    const discounts = [];
-    if (discTotal > 0) {
-      // Cupón por monto (MXN) — permite total $0 incluso para el secreto
-      const coupon = await stripe.coupons.create({
-        name: promoApplied?.code ? `Promo ${promoApplied.code}` : "Promo",
-        amount_off: Math.min(discTotal, subtotalProductsMXN + shippingMXN) * 100,
-        currency: "mxn",
-        duration: "once",
-      });
-      discounts.push({ coupon: coupon.id });
+      if (t === 'percent') {
+        const v = Number(rule.value || 0);
+        const pct = (v > 0 && v <= 1) ? Math.round(v * 100) : Math.round(v);
+        if (pct >= 1 && pct <= 100) { couponObj.percent_off = pct; apply = true; }
+      } else if (t === 'fixed_mxn') {
+        const off = Math.max(1, Math.round(Number(rule.value || 0)));
+        couponObj.amount_off = off * 100; couponObj.currency = 'mxn'; apply = true;
+      } else if (t === 'free_shipping') {
+         // Ya manejado en frontend poniendo shippingMXN en 0, pero por seguridad:
+         if (shippingMXN > 0) {
+           couponObj.amount_off = shippingMXN * 100; couponObj.currency = 'mxn'; apply = true;
+         }
+      }
+
+      if (apply) {
+        // Crear cupón al vuelo en Stripe
+        const created = await stripe.coupons.create(couponObj);
+        discounts = [{ coupon: created.id }];
+      }
     }
 
-    // Crear sesión
+    // 7. Sesión
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: 'payment',
       line_items,
-      discounts: discounts.length ? discounts : undefined,
-      success_url: `${baseURL}/?success=1`,
-      cancel_url: `${baseURL}/?canceled=1`,
+      discounts,
+      allow_promotion_codes: false, // Usamos nuestra propia lógica
+      success_url: `${SITE_URL}/?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE_URL}/?status=cancel`,
+      metadata: { source: 'score_store', promo_code: rule ? rule.code : '' },
+      shipping_address_collection: { allowed_countries: ['MX'] },
+      phone_number_collection: { enabled: true }
     });
 
-    return json(200, { ok: true, url: session.url });
+    return j(200, { url: session.url });
+
   } catch (err) {
-    return json(500, { ok: false, error: err.message || "Checkout error" });
+    console.error(err);
+    return j(500, { error: err?.message || 'Server error' });
   }
 };
