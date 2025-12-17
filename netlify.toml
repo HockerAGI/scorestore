@@ -4,6 +4,7 @@
 
 [functions]
   included_files = ["data/*.json"]
+  node_bundler = "esbuild"
 
 [[headers]]
   for = "/*"
