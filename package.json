@@ -1,12 +1,9 @@
 {
-  "name": "scorestore",
+  "name": "score-store",
   "version": "1.0.0",
   "private": true,
-  "description": "SCORE Store (Netlify) — Stripe + Envia shipping + Telegram notifications",
-  "engines": {
-    "node": "18.x"
-  },
+  "type": "commonjs",
   "dependencies": {
-    "stripe": "^16.12.0"
+    "stripe": "^16.7.0"
   }
 }
