@@ -5,13 +5,23 @@
 [functions]
   node_bundler = "esbuild"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
 
-# (Opcional) si quieres forzar data en root
-# [[redirects]]
-#   from = "/data/*"
-#   to = "/:splat"
-#   status = 200
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+
+[[headers]]
+  for = "/catalog.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+
+[[headers]]
+  for = "/promos.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
