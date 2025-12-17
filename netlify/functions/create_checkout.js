@@ -1,119 +1,182 @@
-const fs=require('fs');
-const path=require('path');
-const Stripe=require('stripe');
-const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
-const norm=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').trim();
+/**
+ * SCORE STORE — Create Stripe Checkout
+ *
+ * Reglas (alineadas con frontend):
+ * - Precio tienda = baseMXN +20%
+ * - Cupón público: SCORE10 = -10% (solo productos)
+ * - Cupones en /data/promos.json: percent | fixed_mxn | free_shipping
+ * - Cupón secreto (NO en JSON): GRTS10 => total GRATIS (productos+envío)
+ * - Envío: se recibe como shippingMXN + shippingLabel
+ */
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-const catalog=read(path.join(__dirname,'..','..','data','catalog.json'));
-const promos=read(path.join(__dirname,'..','..','data','promos.json'));
+const PRICE_MARKUP = 0.20;
+const PUBLIC_COUPON = "SCORE10";
+const SECRET_FREE_CODE = ["GR", "TS10"].join(""); // secreto
 
-const discountPct=Number(catalog?.pricing?.discount_pct||0);
-const markupPct=Number(catalog?.pricing?.markup_pct||0);
-const products=Array.isArray(catalog?.products)?catalog.products:[];
-const pIndex=new Map(products.map(p=>[String(p.id),p]));
+function json(status, obj) {
+  return {
+    statusCode: status,
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    body: JSON.stringify(obj),
+  };
+}
 
-const getPriceMXN=(p)=>{
-  const was=Number(p.wasMXN||0);
-  const base=Number(p.baseMXN||0);
-  if(was>0) return Math.max(0,Math.round(was*(1-discountPct)));
-  if(base>0) return Math.max(0,Math.round(base*(1+markupPct)*(1-discountPct)));
-  return 0;
-};
+function roundMXN(n) { return Math.round(Number(n || 0)); }
+function normCode(s) {
+  return String(s || "").toUpperCase().replace(/[^A-Z0-9_-]/g, "").trim();
+}
+function unitPriceFromBase(baseMXN) {
+  return roundMXN(Number(baseMXN || 0) * (1 + PRICE_MARKUP));
+}
 
-const ruleFor=(code)=>{
-  const c=norm(code);
-  if(!c) return null;
-  const rules=Array.isArray(promos?.rules)?promos.rules:[];
-  const r=rules.find(x=>norm(x.code)===c && x.active!==false);
-  return r?{...r,code:c}:null;
-};
+async function loadJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fetch failed ${res.status}`);
+  return res.json();
+}
 
-const j=(s,b)=>({statusCode:s,headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify(b)});
+function findPromoRule(code, promosJson) {
+  const c = normCode(code);
+  if (!c) return null;
 
-exports.handler=async(event)=>{
-  try{
-    const key=process.env.STRIPE_SECRET_KEY;
-    if(!key) return j(500,{error:'Missing STRIPE_SECRET_KEY'});
-    const SITE_URL=process.env.SITE_URL||catalog?.site?.url||'https://scorestore.netlify.app';
-    const stripe=new Stripe(key,{apiVersion:'2024-06-20'});
+  if (c === SECRET_FREE_CODE) {
+    return { code: c, type: "free_total", value: 0, active: true };
+  }
 
-    const body=JSON.parse(event.body||'{}');
-    const items=Array.isArray(body.items)?body.items:[];
-    const shippingMXN=Math.max(0,Math.round(Number(body.shippingMXN||0)));
-    const promoCode=norm(body?.promo?.code||'');
+  const rules = promosJson?.rules;
+  if (Array.isArray(rules)) {
+    const r = rules.find((x) => normCode(x.code) === c && x.active);
+    if (r) return r;
+  }
 
-    if(!items.length) return j(400,{error:'No items'});
+  if (c === PUBLIC_COUPON) {
+    return { code: c, type: "percent", value: 0.10, active: true };
+  }
 
-    const line_items=[];
-    for(const it of items){
-      const id=String(it.id||'');
-      const p=pIndex.get(id);
-      if(!p) return j(400,{error:`Unknown product: ${id}`});
-      const qty=Math.max(1,Math.min(99,parseInt(it.qty,10)||1));
-      const size=String(it.size||'').toUpperCase();
-      const unit=getPriceMXN(p);
-      line_items.push({
-        quantity:qty,
-        price_data:{
-          currency:'mxn',
-          unit_amount:unit*100,
-          product_data:{
-            name:`${p.name}${size?` · ${size}`:''}`,
-            images:p.img?[new URL(p.img,SITE_URL).toString()]:undefined,
-            metadata:{id,size}
-          }
-        }
-      });
-    }
+  return null;
+}
 
-    if(shippingMXN>0){
-      line_items.push({
-        quantity:1,
-        price_data:{
-          currency:'mxn',
-          unit_amount:shippingMXN*100,
-          product_data:{name:'Envío',metadata:{kind:'shipping'}}
-        }
-      });
-    }
+function computeDiscountTotals({ promo, subtotalProductsMXN, shippingMXN }) {
+  let discProducts = 0;
+  let discShipping = 0;
 
-    const rule=ruleFor(promoCode);
-    let discounts=undefined;
+  if (!promo) return { discProducts, discShipping, discTotal: 0 };
 
-    if(rule){
-      const t=String(rule.type||'');
-      const coupon={duration:'once',name:`PROMO ${rule.code}`,metadata:{promo_code:rule.code}};
+  if (promo.type === "percent") {
+    discProducts = roundMXN(subtotalProductsMXN * Number(promo.value || 0));
+  } else if (promo.type === "fixed_mxn") {
+    discProducts = roundMXN(Number(promo.value || 0));
+  } else if (promo.type === "free_shipping") {
+    discShipping = roundMXN(shippingMXN);
+  } else if (promo.type === "free_total") {
+    return { discProducts: subtotalProductsMXN, discShipping: shippingMXN, discTotal: subtotalProductsMXN + shippingMXN };
+  }
 
-      if(t==='percent'){
-        const v=Number(rule.value||0);
-        const pct=(v>0 && v<=1)?Math.round(v*100):Math.round(v);
-        if(pct>=1 && pct<=90) coupon.percent_off=pct;
-      }else if(t==='fixed_mxn'){
-        const off=Math.max(1,Math.round(Number(rule.value||0)));
-        coupon.amount_off=off*100; coupon.currency='mxn';
-      }else if(t==='free_shipping'){
-        if(shippingMXN>0){ coupon.amount_off=shippingMXN*100; coupon.currency='mxn'; }
-      }
+  // clamp
+  discProducts = Math.max(0, Math.min(discProducts, subtotalProductsMXN));
+  discShipping = Math.max(0, Math.min(discShipping, shippingMXN));
+  const discTotal = discProducts + discShipping;
 
-      if(coupon.percent_off || coupon.amount_off){
-        const created=await stripe.coupons.create(coupon);
-        discounts=[{coupon:created.id}];
-      }
-    }
+  return { discProducts, discShipping, discTotal };
+}
 
-    const session=await stripe.checkout.sessions.create({
-      mode:'payment',
-      line_items,
-      discounts,
-      allow_promotion_codes:false,
-      success_url:`${SITE_URL}/?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:`${SITE_URL}/?status=cancel`,
-      metadata:{source:'score_store',promo_code:rule?rule.code:''}
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return json(200, { ok: true });
+  if (event.httpMethod !== "POST") return json(405, { ok: false, error: "Method not allowed" });
+
+  let body = {};
+  try { body = JSON.parse(event.body || "{}"); } catch {}
+
+  const items = Array.isArray(body.items) ? body.items : [];
+  const promoCode = normCode(body.promoCode || "");
+  const shippingMXN = roundMXN(body.shippingMXN || 0);
+  const shippingLabel = String(body.shippingLabel || "Envío");
+
+  if (!items.length) return json(400, { ok: false, error: "Cart vacío" });
+
+  try {
+    // Cargar catálogo y promos desde el repo (Netlify deploy)
+    const baseURL = body.siteUrl || "https://scorestore.netlify.app";
+    const catalog = await loadJSON(`${baseURL}/data/catalog.json?v=${Date.now()}`);
+    const promos = await loadJSON(`${baseURL}/data/promos.json?v=${Date.now()}`).catch(() => null);
+
+    const catalogProducts = Array.isArray(catalog.products) ? catalog.products : [];
+
+    // Construir line_items con precio server-side (anti-tamper)
+    let subtotalProductsMXN = 0;
+
+    const line_items = items.map((it) => {
+      const id = String(it.id || "");
+      const qty = Math.max(1, Number(it.qty || 1));
+      const size = String(it.size || "ÚNICA");
+
+      const p = catalogProducts.find((x) => String(x.id) === id);
+      if (!p || !p.baseMXN) throw new Error(`Producto inválido o sin baseMXN: ${id}`);
+
+      const unitMXN = unitPriceFromBase(p.baseMXN);
+      subtotalProductsMXN += unitMXN * qty;
+
+      return {
+        price_data: {
+          currency: "mxn",
+          product_data: {
+            name: `${p.name}${size && size !== "ÚNICA" ? ` — ${size}` : ""}`,
+            images: p.img ? [`${baseURL}${p.img}`] : undefined,
+          },
+          unit_amount: unitMXN * 100,
+        },
+        quantity: qty,
+      };
     });
 
-    return j(200,{url:session.url});
-  }catch(err){
-    console.error(err);
-    return j(500,{error:err?.message||'Server error'});
+    subtotalProductsMXN = roundMXN(subtotalProductsMXN);
+
+    // Shipping como line item (si aplica)
+    if (shippingMXN > 0) {
+      line_items.push({
+        price_data: {
+          currency: "mxn",
+          product_data: { name: shippingLabel },
+          unit_amount: shippingMXN * 100,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Promo
+    const rule = promoCode ? findPromoRule(promoCode, promos) : null;
+    const promoApplied = rule ? { code: normCode(rule.code), type: rule.type, value: Number(rule.value || 0) } : null;
+
+    const { discTotal } = computeDiscountTotals({
+      promo: promoApplied,
+      subtotalProductsMXN,
+      shippingMXN,
+    });
+
+    const discounts = [];
+    if (discTotal > 0) {
+      // Cupón por monto (MXN) — permite total $0 incluso para el secreto
+      const coupon = await stripe.coupons.create({
+        name: promoApplied?.code ? `Promo ${promoApplied.code}` : "Promo",
+        amount_off: Math.min(discTotal, subtotalProductsMXN + shippingMXN) * 100,
+        currency: "mxn",
+        duration: "once",
+      });
+      discounts.push({ coupon: coupon.id });
+    }
+
+    // Crear sesión
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items,
+      discounts: discounts.length ? discounts : undefined,
+      success_url: `${baseURL}/?success=1`,
+      cancel_url: `${baseURL}/?canceled=1`,
+    });
+
+    return json(200, { ok: true, url: session.url });
+  } catch (err) {
+    return json(500, { ok: false, error: err.message || "Checkout error" });
   }
 };
