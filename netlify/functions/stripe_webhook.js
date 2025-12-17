@@ -1,105 +1,76 @@
-// /netlify/functions/stripe_webhook.js
-// Stripe webhook: checkout.session.completed -> notificaciones (Telegram + WhatsApp)
-
+/**
+ * Netlify Function: stripe_webhook
+ * - Recibe eventos de Stripe y manda notificación a Telegram/WhatsApp vía envia_webhook
+ *
+ * ENV:
+ *  STRIPE_SECRET_KEY
+ *  STRIPE_WEBHOOK_SECRET
+ *  URL_SCORE (opcional)
+ */
 const Stripe = require("stripe");
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const SITE_URL = process.env.URL_SCORE || process.env.URL || "http://localhost:8888";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const WHATSAPP_TO = process.env.WHATSAPP_TO;
-
-function json(statusCode, body) {
-  return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
-}
-
-async function sendTelegram(text) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
-  }).catch(() => {});
-}
-
-async function sendWhatsApp(text) {
-  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_TO) return;
-  const url = `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to: WHATSAPP_TO,
-      type: "text",
-      text: { body: text },
-    }),
-  }).catch(() => {});
+function jsonResponse(statusCode, body) {
+  return {
+    statusCode,
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(body),
+  };
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return json(405, { ok: false });
-
-  if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
-    return json(500, { ok: false, error: "Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET" });
-  }
-
-  const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
-
-  const sig = event.headers["stripe-signature"];
-  if (!sig) return json(400, { ok: false, error: "Missing stripe-signature" });
-
-  let evt;
   try {
-    // En Netlify, event.body llega string. OJO: si algún día activas base64, hay que adaptar.
-    evt = stripe.webhooks.constructEvent(event.body, sig, STRIPE_WEBHOOK_SECRET);
-  } catch (e) {
-    return json(400, { ok: false, error: "Invalid signature" });
+    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
+    if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
+      return jsonResponse(500, { ok: false, error: "Falta STRIPE_SECRET_KEY o STRIPE_WEBHOOK_SECRET." });
+    }
+
+    const stripe = new Stripe(STRIPE_SECRET_KEY);
+    const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
+
+    let stripeEvent;
+    try {
+      stripeEvent = stripe.webhooks.constructEvent(event.body, sig, STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+      return jsonResponse(400, { ok: false, error: `Firma inválida: ${err.message}` });
+    }
+
+    if (stripeEvent.type === "checkout.session.completed") {
+      const session = stripeEvent.data.object;
+      const full = await stripe.checkout.sessions.retrieve(session.id, { expand: ["line_items"] });
+
+      const payload = {
+        source: "stripe",
+        sessionId: session.id,
+        paymentStatus: full.payment_status,
+        amountTotal: full.amount_total ? full.amount_total / 100 : null,
+        currency: full.currency || "mxn",
+        customerEmail: full.customer_details?.email || full.customer_email || null,
+        customerName: full.customer_details?.name || null,
+        phone: full.customer_details?.phone || null,
+        shipping: full.shipping_details || null,
+        metadata: full.metadata || {},
+        items: (full.line_items?.data || []).map((li) => ({
+          name: li.description,
+          qty: li.quantity,
+          unit_amount: li.price?.unit_amount ? li.price.unit_amount / 100 : null,
+          amount_total: li.amount_total ? li.amount_total / 100 : null,
+          currency: li.currency,
+        })),
+      };
+
+      await fetch(`${SITE_URL}/.netlify/functions/envia_webhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    return jsonResponse(200, { ok: true, received: true, type: stripeEvent.type });
+  } catch (err) {
+    return jsonResponse(500, { ok: false, error: err.message || String(err) });
   }
-
-  if (evt.type === "checkout.session.completed") {
-    const session = evt.data.object;
-
-    // Traemos detalles extendidos (line items)
-    const full = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ["line_items", "customer_details"],
-    });
-
-    const items = full?.line_items?.data || [];
-    const total = (full.amount_total || 0) / 100;
-    const currency = String(full.currency || "mxn").toUpperCase();
-
-    const promo = full.metadata?.promo_code || "";
-    const ship = [
-      full.metadata?.ship_postal_code,
-      full.metadata?.ship_state_code,
-      full.metadata?.ship_city,
-      full.metadata?.ship_address1,
-    ].filter(Boolean).join(", ");
-
-    const list = items
-      .map(i => `• ${i.quantity} x ${i.description} — ${(i.amount_total || 0) / 100} ${currency}`)
-      .join("\n");
-
-    const msg =
-      `✅ COMPRA CONFIRMADA (SCORE Store)\n` +
-      `ID: ${full.id}\n` +
-      `Total: ${total} ${currency}\n` +
-      (promo ? `Cupón: ${promo}\n` : "") +
-      (ship ? `Envío: ${ship}\n` : "") +
-      `\n${list}`;
-
-    await sendTelegram(msg);
-    await sendWhatsApp(msg);
-  }
-
-  return json(200, { received: true });
 };
