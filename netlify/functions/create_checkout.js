@@ -23,7 +23,16 @@ exports.handler = async (event) => {
 
     if (!cart.length) return json(400, { error:"cart_empty" });
 
-    // Load catalog from /data/catalog.json or /catalog.json
+    const promo = resolvePromo(promoCode);
+    const freeShip = (promo.type === "free_shipping");
+    const freeTotal = (promo.type === "free_total" || promo.code === SECRET_FREE_CODE);
+
+    // ✅ SIEMPRE ENVÍO: si NO es free_total, shipTo es obligatorio
+    if (!freeTotal && !isShipToValid(shipTo)) {
+      return json(400, { error:"shipping_required", message:"Shipping info is required." });
+    }
+
+    // Load catalog
     const catalog = loadCatalogSafe();
     const products = Array.isArray(catalog.products) ? catalog.products : [];
 
@@ -52,54 +61,51 @@ exports.handler = async (event) => {
 
     if (!safeItems.length) return json(400, { error:"invalid_items" });
 
-    // Promo compute
-    const promo = resolvePromo(promoCode);
+    // Promo discount
     let discount = 0;
-
     if (promo.type === "percent") discount = Math.round(subtotal * promo.value);
     if (promo.type === "fixed_mxn") discount = Math.round(promo.value);
-    if (promo.type === "free_total") discount = subtotal;
+    if (freeTotal) discount = subtotal;
 
     discount = Math.max(0, Math.min(subtotal, discount));
 
-    // Shipping (real via Envia quote function)
+    // ✅ Shipping always (unless ENVIOFREE / free_total)
     let shippingMXN = 0;
-
-    if (promo.type === "free_shipping") {
+    if (freeTotal) {
+      shippingMXN = 0;
+    } else if (freeShip) {
       shippingMXN = 0;
     } else {
       shippingMXN = await quoteShippingServerSide(shipTo, safeItems);
-    }
-
-    // Secret: total gratis (incluye envío)
-    if (promo.type === "free_total") {
-      shippingMXN = 0;
+      if (!shippingMXN || shippingMXN < 1) {
+        // Nunca 0 si no hay promo de envío
+        shippingMXN = fallbackShipping(shipTo.postal_code);
+      }
     }
 
     const merchTotal = Math.max(0, subtotal - discount);
-    const grandTotal = merchTotal + Math.max(0, shippingMXN);
+    const grandTotal = freeTotal ? 0 : (merchTotal + Math.max(0, shippingMXN));
 
     const origin = process.env.URL_SCORE || "https://scorestore.netlify.app";
 
-    // Si total es 0 -> flujo FREE (sin Stripe)
-    if (promo.type === "free_total" || promo.code === SECRET_FREE_CODE || grandTotal === 0) {
+    // Free flow
+    if (freeTotal || grandTotal === 0) {
       const orderId = `FREE-${Date.now()}`;
-      // Opcional: notificar Telegram aquí (sin pago)
       await sendTelegram(`[SCORE] Pedido GRATIS (${orderId})\nItems: ${safeItems.length}\nPromo: ${promo.code || "N/A"}\nTotal: $0 MXN`);
       return json(200, { free:true, redirect_url: `${origin}/?free=1&order=${encodeURIComponent(orderId)}` });
     }
 
-    // Stripe Checkout: 2 líneas (Merch + Envío)
-    const line_items = [];
-
-    line_items.push({
-      price_data: {
-        currency: "mxn",
-        product_data: { name: "Pedido SCORE (Merch)" },
-        unit_amount: Math.max(1, Math.round(merchTotal * 100))
-      },
-      quantity: 1
-    });
+    // Stripe Checkout (Merch + Shipping)
+    const line_items = [
+      {
+        price_data: {
+          currency: "mxn",
+          product_data: { name: "Pedido SCORE (Merch)" },
+          unit_amount: Math.max(1, Math.round(merchTotal * 100))
+        },
+        quantity: 1
+      }
+    ];
 
     if (shippingMXN > 0) {
       line_items.push({
@@ -150,14 +156,20 @@ function resolvePromo(code){
   return { code:c, type:"none", value:0 };
 }
 
-async function quoteShippingServerSide(shipTo, items){
-  // Si faltan datos, 0 (puede ser pickup)
+function isShipToValid(shipTo){
   const cp = String(shipTo?.postal_code || "").trim();
-  if (cp.length !== 5) return 0;
+  const st = String(shipTo?.state_code || "").trim();
+  const city = String(shipTo?.city || "").trim();
+  const addr = String(shipTo?.address1 || "").trim();
+  return (cp.length === 5 && st.length >= 2 && city.length >= 2 && addr.length >= 5);
+}
+
+async function quoteShippingServerSide(shipTo, items){
+  const cp = String(shipTo?.postal_code || "").trim();
+  if (cp.length !== 5) return fallbackShipping(cp);
 
   try{
     const origin = process.env.URL_SCORE || "https://scorestore.netlify.app";
-    // Llamamos a nuestra propia function de quote para mantener una sola lógica
     const res = await fetch(`${origin}/.netlify/functions/quote_shipping`, {
       method: "POST",
       headers: { "Content-Type":"application/json" },
@@ -168,7 +180,8 @@ async function quoteShippingServerSide(shipTo, items){
     const data = await res.json().catch(()=>null);
     if(!data || !data.ok || !data.quote) return fallbackShipping(cp);
 
-    return Math.max(0, Math.round(Number(data.quote.mxn||0)));
+    const mxn = Math.round(Number(data.quote.mxn||0));
+    return mxn > 0 ? mxn : fallbackShipping(cp);
   }catch(e){
     return fallbackShipping(cp);
   }
