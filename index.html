@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b0f14" />
 
-  <title>SCORE | Official Store</title>
+  <title>SCORE | Official Baja Gear</title>
   <meta name="description" content="Merch oficial del desierto. Drops limitados. Compra segura en México. Usa SCORE10 al final si lo traes." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://scorestore.netlify.app/" />
@@ -43,12 +43,12 @@
       --shadow2: 0 12px 30px rgba(0,0,0,.22);
       --radius: 16px;
 
-      /* glass overlays (tarjetas transparentes) */
+      /* glass overlays */
       --cardGlassA: rgba(255,255,255,.10);
       --cardGlassB: rgba(255,255,255,.05);
       --cardVignette: rgba(0,0,0,.60);
 
-      /* HERO overlay café oscuro (más legible) */
+      /* HERO overlay café oscuro */
       --heroCafeA: rgba(72, 49, 33, .90);
       --heroCafeB: rgba(72, 49, 33, .45);
 
@@ -113,7 +113,7 @@
       opacity:.95;
     }
 
-    /* ❄️ Nieve sutil */
+    /* ❄️ Nieve sutil (Navidad) */
     .seasonSnow{
       position:fixed; inset:0;
       pointer-events:none;
@@ -134,7 +134,7 @@
       to{ transform: translateY(240px); }
     }
 
-    /* ✨ Sparkles ultra sutiles */
+    /* ✨ Sparkles (Navidad) */
     .seasonSparkles{
       position:fixed; inset:0;
       pointer-events:none;
@@ -220,7 +220,6 @@
     }
     .navRight{ display:flex; align-items:center; gap:10px; }
 
-    /* Banner promo (estratégico) */
     .promoPill{
       display:flex; align-items:center; justify-content:center;
       height: 38px;
@@ -381,7 +380,6 @@
     }
     .btnHero:hover{ transform: translateY(-2px); }
 
-    /* mención estratégica del cupón */
     .heroHint{
       font-weight: 900;
       font-size: 12px;
@@ -409,7 +407,6 @@
       .seasonRibbon{ top:14px; right:14px; }
     }
 
-    /* section headers */
     .secHeader{
       margin: 26px 4px 12px;
       display:flex; align-items:baseline; justify-content:space-between;
@@ -433,7 +430,6 @@
       text-align:right;
     }
 
-    /* drops grid */
     .gridDrops{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
@@ -443,7 +439,6 @@
     @media (max-width: 980px){ .gridDrops{ grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px){ .gridDrops{ grid-template-columns: 1fr; } }
 
-    /* TARJETA DROP */
     .cardDrop{
       position:relative;
       border-radius: var(--radius);
@@ -481,7 +476,6 @@
       opacity:.92;
     }
 
-    /* overlay MÁS TRANSPARENTE */
     .dropGlass{
       position:absolute; inset:0;
       display:flex;
@@ -493,7 +487,6 @@
       backdrop-filter: blur(8px);
     }
 
-    /* centrado total */
     .dropContent{
       flex:1;
       display:flex;
@@ -578,12 +571,13 @@
     }
     .spGrid{
       display:grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 14px;
       align-items:center;
       padding: 0 12px 12px;
     }
-    @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 420px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
     .spLogo{
       width: 100%;
       height: 48px;
@@ -619,7 +613,7 @@
     }
     .fLink:hover{ color:#fff; }
 
-    /* paybar */
+    /* ✅ PAYBAR — FIX ANTI-BLOQUEO */
     .paybar{
       position: fixed;
       left: 50%;
@@ -637,10 +631,12 @@
       box-shadow: var(--shadow2);
       opacity:0;
       pointer-events:none;
-      z-index: 120;
+      z-index: 80; /* debajo de overlay/drawer */
       transition: opacity .18s ease, transform .18s ease;
     }
     .paybar.visible{ opacity:1; pointer-events:auto; }
+    body.modalOpen .paybar{ opacity:0 !important; pointer-events:none !important; }
+
     .pbTotal{
       font-weight: 900;
       font-size: 11px;
@@ -782,8 +778,7 @@
     }
     .sumRow strong{ color:#111; font-weight: 900; }
 
-    /* promoBox */
-    .promoBox{
+    .promoBox, .shipBox{
       margin-top: 12px;
       padding: 12px;
       border-radius: 14px;
@@ -801,7 +796,7 @@
       letter-spacing: .06em;
       text-transform: uppercase;
     }
-    .promoBtn{
+    .promoBtn, .shipBtn{
       height: 42px;
       border-radius: 12px;
       border:none;
@@ -814,7 +809,7 @@
       text-transform: uppercase;
       white-space:nowrap;
     }
-    .promoNote{
+    .promoNote, .shipNote{
       margin-top: 8px;
       font-size: 11px;
       color: rgba(0,0,0,.68);
@@ -822,14 +817,6 @@
       line-height: 1.35;
     }
 
-    /* shipping box */
-    .shipBox{
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-    }
     .shipGrid{
       margin-top: 8px;
       display:grid;
@@ -846,26 +833,6 @@
       padding: 0 12px;
       font-weight: 900;
       letter-spacing: .02em;
-    }
-    .shipBtn{
-      height: 42px;
-      border-radius: 12px;
-      border:none;
-      background:#111;
-      color:#fff;
-      font-weight: 900;
-      padding: 0 14px;
-      cursor:pointer;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      white-space:nowrap;
-    }
-    .shipNote{
-      margin-top: 8px;
-      font-size: 11px;
-      color: rgba(0,0,0,.68);
-      font-weight: 900;
-      line-height: 1.35;
     }
 
     .dfBtn{
@@ -893,7 +860,7 @@
       text-underline-offset: 3px;
     }
 
-    /* modal catálogo (mobile-first vertical) */
+    /* modal catálogo */
     .prodModal{
       position: fixed;
       left: 50%;
@@ -959,8 +926,6 @@
       flex-direction:column;
       text-align:center;
     }
-
-    /* imágenes verticales */
     .pImg{
       width:100%;
       aspect-ratio: 4 / 5;
@@ -968,7 +933,6 @@
       overflow:hidden;
     }
     .pImg img{ width:100%; height:100%; object-fit: cover; display:block; }
-
     .pInfo{ padding: 12px; text-align:center; }
     .pName{
       font-weight: 900;
@@ -1075,7 +1039,6 @@
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
           <div class="statusBadge">ACTIVO</div>
-
           <div class="dropContent">
             <img src="/assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000" loading="lazy" decoding="async">
             <div class="dropInfo">
@@ -1115,6 +1078,7 @@
         </div>
       </div>
 
+      <!-- ✅ BAJA 400 (asegurado) -->
       <div class="cardDrop" onclick="notifyDrop('Baja 400')" role="button" tabindex="0" aria-label="Avísame Baja 400">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
@@ -1136,6 +1100,7 @@
         <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="/assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy" decoding="async">
         <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async">
       </div>
     </section>
@@ -1197,7 +1162,7 @@
       <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
       <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
 
-      <!-- SHIPPING (real por Envia desde Netlify Function) -->
+      <!-- SHIPPING -->
       <div class="shipBox" aria-label="Envío">
         <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
           Calcular envío (real)
@@ -1249,19 +1214,16 @@
       <div class="pmGrid" id="pmGridAll"></div>
     </div>
   </div>
-    </div>
-  </div>
 
   <script>
-  /* =========================
-     SCORE STORE — JS (PRO)
-     Precios: baseMXN (original) +20% (NO mostramos "original")
-     Cupón visible: SCORE10 = -10%
-     Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
-     Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
-     Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
-     REGLA: SIEMPRE ES ENVÍO (no se permite pagar sin cotización, excepto ENVIOFREE/GRTS10)
-     ========================= */
+    /* =========================
+       SCORE STORE — JS (PRO)
+       Precios: baseMXN +20% (NO mostramos "original")
+       Cupón visible: SCORE10 = -10%
+       Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
+       Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
+       Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
+       ========================= */
 
     // PWA
     if ("serviceWorker" in navigator) {
@@ -1272,17 +1234,15 @@
 
     let FX_MXN_PER_USD = 17.50;
 
-    // ✅ TU REGLA FIJA
-    const PRICE_MARKUP = 0.20;         // +20% al baseMXN
-    const PUBLIC_COUPON = "SCORE10";   // visible
-    const SECRET_FREE_CODE = "GRTS10"; // secreto NO visible
+    const PRICE_MARKUP = 0.20;
+    const PUBLIC_COUPON = "SCORE10";
+    const SECRET_FREE_CODE = "GRTS10";
 
     const API_CHECKOUT = "/.netlify/functions/create_checkout";
     const API_SHIPPING = "/.netlify/functions/quote_shipping";
 
     const LS_KEY = "score_cart_v7";
     const LS_SHIP = "score_ship_v1";
-    const LS_SHIP_META = "score_ship_meta_v1";
     const THEME_KEY = "score_theme";
 
     const SIZES = ["S","M","L","XL","2XL"];
@@ -1291,13 +1251,8 @@
     let CATALOG = null;
     let PROMOS = null;
 
-    // promoApplied: { code, type: "percent"|"fixed_mxn"|"free_total"|"free_shipping", value }
     let promoApplied = null;
-
-    // shippingQuote: { ok, mxn, carrier, service, eta_days, raw }
     let shippingQuote = JSON.parse(localStorage.getItem(LS_SHIP) || "null");
-    // ship meta: { shipHash, cartHash }
-    let shippingMeta = JSON.parse(localStorage.getItem(LS_SHIP_META) || "null");
 
     function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
     function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
@@ -1318,7 +1273,6 @@
       window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2400);
     }
 
-    // Temas
     function setTheme(theme){
       document.body.setAttribute("data-theme", theme);
       localStorage.setItem(THEME_KEY, theme);
@@ -1359,7 +1313,6 @@
       }
     }
 
-    // Accesibilidad: Enter/Space en cardDrop
     document.addEventListener("keydown", (e)=>{
       const el = e.target;
       if(!el) return;
@@ -1382,7 +1335,6 @@
       return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
     }
 
-    // Pricing: baseMXN +20%
     function priceListFromBase(baseMXN){
       return roundMXN(Number(baseMXN||0) * (1 + PRICE_MARKUP));
     }
@@ -1390,87 +1342,10 @@
       return roundMXN(Number(listMXN||0) * (1 - Number(pct||0)));
     }
 
-    function shipToObj(){
-      return {
-        postal_code: String(document.getElementById("shipPostal")?.value || "").trim(),
-        state_code: String(document.getElementById("shipState")?.value || "").trim().toUpperCase(),
-        city: String(document.getElementById("shipCity")?.value || "").trim(),
-        address1: String(document.getElementById("shipAddress1")?.value || "").trim(),
-        country_code: "MX"
-      };
-    }
-
-    function isShipToValid(to){
-      return (String(to.postal_code||"").trim().length === 5
-        && String(to.state_code||"").trim().length >= 2
-        && String(to.city||"").trim().length >= 2
-        && String(to.address1||"").trim().length >= 5);
-    }
-
-    function hashShipTo(to){
-      return [
-        String(to.postal_code||"").trim(),
-        String(to.state_code||"").trim().toUpperCase(),
-        String(to.city||"").trim().toUpperCase(),
-        String(to.address1||"").trim().toUpperCase()
-      ].join("|");
-    }
-
-    function hashCart(){
-      return cart
-        .map(i => `${String(i.id)}:${String(i.size)}:${Number(i.qty||0)}`)
-        .sort()
-        .join("|");
-    }
-
-    function isFreeShipping(){
-      return promoApplied && promoApplied.type === "free_shipping";
-    }
-    function isFreeTotal(){
-      return promoApplied && promoApplied.type === "free_total";
-    }
-    function canBypassShipping(){
-      return isFreeTotal() || isFreeShipping();
-    }
-
-    function invalidateShipping(reason){
-      shippingQuote = null;
-      shippingMeta = null;
-      localStorage.removeItem(LS_SHIP);
-      localStorage.removeItem(LS_SHIP_META);
-
-      const note = document.getElementById("shipNote");
-      if(note){
-        note.textContent = reason || "Cotiza el envío para continuar.";
-      }
-    }
-
-    // ✅ CLAVE: si cambian inputs de envío, invalidar en caliente
-    function bindShippingInputs(){
-      const ids = ["shipPostal","shipState","shipCity","shipAddress1"];
-      ids.forEach(id=>{
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.addEventListener("input", ()=>{
-          if(canBypassShipping()) return; // ENVIOFREE/GRTS10 no necesitan cotización
-          // si ya había cotización, la matamos al editar
-          if(shippingQuote || shippingMeta){
-            invalidateShipping("Cambiaste la dirección. Cotiza el envío otra vez.");
-          }
-          updateCartUI();
-        }, { passive:true });
-      });
-    }
-
     async function loadCatalog(){
       const v = Date.now().toString().slice(-6);
-
-      let res = await fetch(`/data/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
-      if(!res || !res.ok){
-        res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
-      }
+      let res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
       if(!res || !res.ok) throw new Error("catalog_not_found");
-
       CATALOG = await res.json();
 
       if(CATALOG?.site?.fx_mxn_per_usd){
@@ -1481,11 +1356,7 @@
 
     async function loadPromos(){
       const v = Date.now().toString().slice(-6);
-
-      let res = await fetch(`/data/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
-      if(!res || !res.ok){
-        res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
-      }
+      let res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
       if(!res || !res.ok){
         PROMOS = { rules: [
           { code: "SCORE10", type:"percent", value:0.10, active:true },
@@ -1524,9 +1395,7 @@
           </div>
           <div class="pInfo">
             <div class="pName">${escapeHtml(p.name)}</div>
-
             <div class="pPrice">${moneyMXN(list)} MXN</div>
-
             <div class="pCoupon" title="Cupón disponible">
               <span>Con <b>${PUBLIC_COUPON}</b></span>
               <span><b>${moneyMXN(withScore10)}</b></span>
@@ -1552,7 +1421,7 @@
       const grid = document.getElementById("pmGridAll");
       if(!CATALOG || !Array.isArray(CATALOG.products)){
         grid.innerHTML = `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">
-          No se pudo cargar el catálogo. Revisa <code>/data/catalog.json</code>.
+          No se pudo cargar el catálogo. Revisa <code>/catalog.json</code>.
         </div>`;
         return;
       }
@@ -1627,36 +1496,20 @@
       });
 
       saveCart();
-      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
       updateCartUI();
       toast("Agregado al carrito");
     }
 
-    function inc(idx){
-      cart[idx].qty++;
-      saveCart();
-      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
-      updateCartUI();
-    }
-    function dec(idx){
-      cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1);
-      saveCart();
-      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
-      updateCartUI();
-    }
-    function rem(idx){
-      cart.splice(idx,1);
-      saveCart();
-      if(!canBypassShipping()) invalidateShipping("Actualizaste el carrito. Cotiza el envío otra vez.");
-      updateCartUI();
-      toast("Producto eliminado");
-    }
+    function inc(idx){ cart[idx].qty++; saveCart(); updateCartUI(); }
+    function dec(idx){ cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1); saveCart(); updateCartUI(); }
+    function rem(idx){ cart.splice(idx,1); saveCart(); updateCartUI(); toast("Producto eliminado"); }
 
     function clearCart(){
       if(confirm("¿Vaciar carrito?")){
         cart = [];
         promoApplied = null;
-        invalidateShipping("Cotiza el envío para continuar.");
+        shippingQuote = null;
+        localStorage.removeItem(LS_SHIP);
         saveCart();
         updateCartUI();
         toast("Carrito vacío");
@@ -1699,6 +1552,10 @@
       return 0;
     }
 
+    function isFreeShipping(){
+      return promoApplied && promoApplied.type === "free_shipping";
+    }
+
     function applyPromo(){
       const input = document.getElementById("promoInput");
       const note  = document.getElementById("promoNote");
@@ -1709,7 +1566,6 @@
         promoApplied = null;
         note.textContent = code ? `Código no válido.` : `Escribe un código para aplicarlo.`;
         toast(code ? "Código no válido" : "Escribe un código");
-        invalidateShipping("Cotiza el envío para continuar.");
         updateCartUI();
         return;
       }
@@ -1721,59 +1577,36 @@
 
       if(isFreeShipping()){
         shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
-        shippingMeta = { shipHash: "ENVIOFREE", cartHash: hashCart() };
         localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
-        const shipNote = document.getElementById("shipNote");
-        if(shipNote) shipNote.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
-      } else {
-        if(!isFreeTotal()) invalidateShipping("Cotiza el envío para continuar.");
       }
 
       updateCartUI();
     }
 
     async function quoteShipping(){
-      if(!cart.length){
-        toast("Agrega productos primero");
-        return;
-      }
-
-      const to = shipToObj();
+      const cp = String(document.getElementById("shipPostal").value || "").trim();
+      const st = String(document.getElementById("shipState").value || "").trim().toUpperCase();
+      const city = String(document.getElementById("shipCity").value || "").trim();
+      const addr1 = String(document.getElementById("shipAddress1").value || "").trim();
       const note = document.getElementById("shipNote");
-
-      if(isFreeTotal()){
-        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"GRTS10", eta_days:null, raw:null };
-        shippingMeta = { shipHash: "GRTS10", cartHash: hashCart() };
-        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
-        if(note) note.innerHTML = `✅ Envío $0 (cupón aplicado).`;
-        toast("Envío $0");
-        updateCartUI();
-        return;
-      }
 
       if(isFreeShipping()){
         shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
-        shippingMeta = { shipHash: "ENVIOFREE", cartHash: hashCart() };
         localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
-        if(note) note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
+        note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
         toast("Envío gratis aplicado");
         updateCartUI();
         return;
       }
 
-      if(!isShipToValid(to)){
-        toast("Completa datos de envío (CP, Estado, Ciudad, Calle)");
-        return;
-      }
+      if(cp.length !== 5){ toast("Pon un C.P. válido"); return; }
+      if(st.length < 2 || city.length < 2 || addr1.length < 5){ toast("Faltan datos (Estado, Ciudad y Calle)"); return; }
 
-      if(note) note.textContent = "Cotizando envío…";
+      note.textContent = "Cotizando envío…";
 
       try{
         const payload = {
-          to,
+          to: { postal_code: cp, state_code: st, city, address1: addr1, country_code:"MX" },
           items: cart.map(i => ({ id:i.id, qty:i.qty, name:i.name }))
         };
 
@@ -1784,46 +1617,27 @@
         });
 
         const data = await res.json().catch(()=>null);
-        if(!res.ok || !data || !data.ok || !data.quote || !data.quote.ok){
-          invalidateShipping("No se pudo cotizar. Intenta de nuevo.");
+        if(!res.ok || !data || !data.ok){
+          shippingQuote = null;
+          localStorage.removeItem(LS_SHIP);
+          note.textContent = "No se pudo cotizar. Intenta de nuevo.";
           toast("No se pudo cotizar envío");
           updateCartUI();
           return;
         }
 
         shippingQuote = data.quote;
-        shippingMeta = { shipHash: hashShipTo(to), cartHash: hashCart() };
-
         localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        localStorage.setItem(LS_SHIP_META, JSON.stringify(shippingMeta));
-
-        if(note){
-          note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
-        }
+        note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
         toast("Envío cotizado");
         updateCartUI();
       }catch(e){
-        invalidateShipping("No se pudo cotizar. Intenta de nuevo.");
+        shippingQuote = null;
+        localStorage.removeItem(LS_SHIP);
+        note.textContent = "No se pudo cotizar. Intenta de nuevo.";
         toast("Error cotizando envío");
         updateCartUI();
       }
-    }
-
-    function shippingIsValidForCurrent(){
-      if(canBypassShipping()) return true;
-      if(!shippingQuote || !shippingQuote.ok) return false;
-      if(!shippingMeta) return false;
-
-      const currentCartHash = hashCart();
-      if(shippingMeta.cartHash !== currentCartHash) return false;
-
-      const currentShipHash = hashShipTo(shipToObj());
-      if(shippingMeta.shipHash !== currentShipHash) return false;
-
-      const mxn = Number(shippingQuote.mxn||0);
-      if(mxn <= 0) return false;
-
-      return true;
     }
 
     function updateCartUI(){
@@ -1832,38 +1646,31 @@
       const subtotal = cartSubtotalMXN();
 
       const shipLine = document.getElementById("shipLine");
-      const shipTotalLine = document.getElementById("shipTotalLine");
-      const shipNote = document.getElementById("shipNote");
-
       let shipMXN = 0;
-
-      if(isFreeTotal()){
+      if(isFreeShipping()){
         shipMXN = 0;
-        if(shipLine) shipLine.style.display = "flex";
-        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(0);
-        if(shipNote) shipNote.textContent = "Cupón aplicado: envío $0.";
-      } else if(isFreeShipping()){
-        shipMXN = 0;
-        if(shipLine) shipLine.style.display = "flex";
-        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(0);
-        if(shipNote) shipNote.innerHTML = `Cupón aplicado: <b>ENVIOFREE</b> (envío $0).`;
+        shipLine.style.display = "flex";
+        document.getElementById("shipTotalLine").textContent = moneyMXN(0);
       } else if(shippingQuote && shippingQuote.ok){
         shipMXN = Number(shippingQuote.mxn||0);
-        if(shipLine) shipLine.style.display = "flex";
-        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(shipMXN);
+        shipLine.style.display = "flex";
+        document.getElementById("shipTotalLine").textContent = moneyMXN(shipMXN);
       } else {
-        if(shipLine) shipLine.style.display = "none";
+        shipLine.style.display = "none";
       }
 
       const off = computeDiscount(subtotal);
       let totalMXN = Math.max(0, subtotal - off) + Math.max(0, shipMXN);
-      if(isFreeTotal()) totalMXN = 0;
+
+      if(promoApplied && promoApplied.type === "free_total"){
+        totalMXN = 0;
+      }
 
       const totalUSD = mxnToUsd(totalMXN);
 
       const pbLabel = document.getElementById("pbLabel");
       pbLabel.textContent = promoApplied ? "TOTAL (MXN) · Cupón aplicado" : "TOTAL (MXN)";
-      pb.classList.toggle("visible", cartCount() > 0);
+      pb.classList.toggle("visible", cartCount() > 0 && !document.body.classList.contains("modalOpen"));
 
       document.getElementById("pbTotal").innerHTML = `
         ${moneyMXN(totalMXN)}
@@ -1873,10 +1680,10 @@
       document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
 
       const promoLine = document.getElementById("promoLine");
-      if(off > 0 && !isFreeTotal()){
+      if(off > 0 && !(promoApplied && promoApplied.type === "free_total")){
         promoLine.style.display = "flex";
         document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(off)}`;
-      } else if(isFreeTotal()){
+      } else if(promoApplied && promoApplied.type === "free_total"){
         promoLine.style.display = "flex";
         document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(subtotal)}`;
       } else {
@@ -1887,13 +1694,13 @@
       document.getElementById("usdTotalLine").textContent = moneyUSD(totalUSD);
 
       const body = document.getElementById("cartBody");
-      const payBtn = document.getElementById("payBtn");
-
       if(!cart.length){
         body.innerHTML = `<div class="cartEmpty">CARRITO VACÍO</div>`;
-        payBtn.disabled = true;
+        document.getElementById("payBtn").disabled = true;
         return;
       }
+
+      document.getElementById("payBtn").disabled = false;
 
       body.innerHTML = cart.map((it, idx) => `
         <div class="cItem">
@@ -1912,70 +1719,33 @@
           </div>
         </div>
       `).join("");
-
-      // ✅ SIEMPRE ENVÍO
-      const canPay = canBypassShipping() || shippingIsValidForCurrent();
-      payBtn.disabled = !canPay;
-
-      if(!canPay && shipNote){
-        shipNote.textContent = "⚠️ Para pagar primero cotiza el envío (obligatorio).";
-      }
-
-      // render shipping line when valid quote exists
-      if(!canBypassShipping() && shippingQuote && shippingQuote.ok && shippingIsValidForCurrent()){
-        if(shipLine) shipLine.style.display = "flex";
-        if(shipTotalLine) shipTotalLine.textContent = moneyMXN(Number(shippingQuote.mxn||0));
-      }
     }
 
     async function goCheckout(){
-      if(!cart.length){
-        toast("Carrito vacío");
-        return;
-      }
+      if(!cart.length){ toast("Carrito vacío"); return; }
 
-      const canPay = canBypassShipping() || shippingIsValidForCurrent();
-      if(!canPay){
-        toast("Cotiza el envío antes de pagar");
-        if(!drawer.classList.contains("active")) toggleCart();
-        return;
-      }
+      const promoCode = normCode(document.getElementById("promoInput").value || (promoApplied?.code || ""));
 
-      const promoCode = normCode(document.getElementById("promoInput")?.value || (promoApplied?.code || ""));
-      const to = shipToObj();
-
-      if(!isFreeTotal() && !isFreeShipping() && !isShipToValid(to)){
-        toast("Completa datos de envío (obligatorio)");
-        if(!drawer.classList.contains("active")) toggleCart();
-        return;
-      }
+      const shipTo = {
+        postal_code: String(document.getElementById("shipPostal").value || "").trim(),
+        state_code: String(document.getElementById("shipState").value || "").trim().toUpperCase(),
+        city: String(document.getElementById("shipCity").value || "").trim(),
+        address1: String(document.getElementById("shipAddress1").value || "").trim(),
+        country_code: "MX"
+      };
 
       try{
         const res = await fetch(API_CHECKOUT, {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({
-            cart,
-            promoCode: promoApplied?.code || promoCode || "",
-            shipTo: to
-          })
+          body: JSON.stringify({ cart, promoCode: promoApplied?.code || promoCode || "", shipTo })
         });
 
         const data = await res.json().catch(()=>null);
-        if(!res.ok || !data){
-          toast("No se pudo iniciar el pago");
-          return;
-        }
+        if(!res.ok || !data){ toast("No se pudo iniciar el pago"); return; }
 
-        if(data.free && data.redirect_url){
-          window.location.href = data.redirect_url;
-          return;
-        }
-
-        if(data.url){
-          window.location.href = data.url;
-          return;
-        }
+        if(data.free && data.redirect_url){ window.location.href = data.redirect_url; return; }
+        if(data.url){ window.location.href = data.url; return; }
 
         toast("No se pudo iniciar el pago");
       }catch(e){
@@ -1983,13 +1753,10 @@
       }
     }
 
-    // Boot
     (async function init(){
       try{
         await loadCatalog();
         await loadPromos();
-        bindShippingInputs(); // ✅ crucial
-
         updateCartUI();
       }catch(e){
         toast("Error cargando tienda");
