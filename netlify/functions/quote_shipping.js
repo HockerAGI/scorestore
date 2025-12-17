@@ -1,195 +1,224 @@
-// /netlify/functions/quote_shipping.js
-// SCORE Store — Quote shipping (Envia) + fallback seguro
-// Respuesta esperada por el frontend: { ok:true, quote:{ ok:true, mxn, carrier, service, eta_days, raw } }
+/**
+ * Netlify Function: quote_shipping
+ * - Cotiza con Envia SIEMPRE
+ * - Regla de negocio:
+ *    * Si Envia < $250 MXN -> cobrar $250
+ *    * Si Envia >= $250 MXN -> cobrar (Envia + 5%)
+ *
+ * Body esperado:
+ * {
+ *   "items":[{"id":"camisa-pits-baja1000","qty":1}, ...],
+ *   "shipTo": { "postalCode":"22000", "state":"BC", "city":"Tijuana", "address1":"...", "name":"...", "phone":"..." }
+ * }
+ */
+const fs = require("fs");
+const path = require("path");
 
 const ENVIA_API_KEY = process.env.ENVIA_API_KEY;
+const ENVIA_API_BASE = process.env.ENVIA_API_BASE || "https://api.envia.com"; // puedes sobrescribir
+const SHIPPING_BASE_MXN = 250;
+const SHIPPING_MARKUP = 0.05;
 
-// Origen (pon tus datos reales en variables Netlify para cotización más exacta)
+// Dirección de recolección (Único Uniformes)
 const ORIGIN = {
-  postal_code: process.env.ORIGIN_POSTAL_CODE || "22614",
-  state_code: process.env.ORIGIN_STATE_CODE || "BC",
-  city: process.env.ORIGIN_CITY || "Tijuana",
-  address1: process.env.ORIGIN_ADDRESS1 || "Palermo 6106 Interior JK, Anexa Roma",
-  country_code: "MX",
+  name: "Único Uniformes (Recolección)",
+  address: "Palermo 6106 Interior JK",
+  district: "Anexa Roma",
+  city: "Tijuana",
+  state: "BC",
+  country: "MX",
+  postalCode: "22614",
 };
 
-// Carriers a intentar (si tu cuenta Envia no soporta alguno, lo saltamos)
-const ENVIA_CARRIERS = (process.env.ENVIA_CARRIERS || "dhl,fedex,estafeta")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
-
-function json(statusCode, body) {
+function jsonResponse(statusCode, body) {
   return {
     statusCode,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    },
     body: JSON.stringify(body),
   };
 }
 
-function roundMXN(n) {
-  return Math.round(Number(n || 0));
+function readCatalog() {
+  const abs = path.join(process.cwd(), "data", "catalog.json");
+  return JSON.parse(fs.readFileSync(abs, "utf-8"));
 }
 
-function estimatePackage(items = []) {
-  // Estimación conservadora (ajusta si quieres más exactitud)
-  const qty = items.reduce((a, b) => a + Number(b.qty || 0), 0) || 1;
-
-  // 1–2 prendas: ~1kg, 3–5 prendas: ~2kg, 6+ prendas: ~3kg
-  const weightKg = qty <= 2 ? 1 : qty <= 5 ? 2 : 3;
-
-  return {
-    content: "Merch",
-    amount: qty,
-    type: "box",
-    weight: weightKg,
-    weightUnit: "KG",
-    length: 30,
-    width: 22,
-    height: 10,
-    dimensionUnit: "CM",
-  };
+function clampQty(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 1;
+  return Math.max(1, Math.min(50, Math.floor(x)));
 }
 
-async function enviaRateOnce({ carrier, from, to, packages }) {
-  // Envia docs (endpoint): https://api.envia.com/ship/rate/
-  // ⚠️ El schema exacto puede variar por cuenta/país/servicios; por eso manejamos fallback si Envia responde error.
-  const url = "https://api.envia.com/ship/rate/";
+function buildPackage(items, catalogById) {
+  let totalWeight = 0;
+  let maxL = 0, maxW = 0, totalH = 0;
+
+  for (const it of items) {
+    const p = catalogById[it.id];
+    const qty = it.qty;
+
+    const ship = p.shipping || {};
+    const w = Number(ship.weight_kg || 0.5);
+    const dims = ship.dims_cm || [30, 25, 10];
+    const [L, W, H] = dims.map((n) => Number(n) || 0);
+
+    totalWeight += w * qty;
+    maxL = Math.max(maxL, L);
+    maxW = Math.max(maxW, W);
+    totalH += H * qty;
+  }
+
+  totalWeight = Math.max(0.2, Number(totalWeight.toFixed(2)));
+  const length = Math.max(10, Math.ceil(maxL));
+  const width = Math.max(10, Math.ceil(maxW));
+  const height = Math.max(5, Math.ceil(totalH));
+
+  return { weight: totalWeight, length, width, height };
+}
+
+async function quoteEnvia({ shipTo, pkg }) {
+  if (!ENVIA_API_KEY) throw new Error("Falta ENVIA_API_KEY en variables de entorno.");
+  if (!shipTo?.postalCode || !shipTo?.state || !shipTo?.city) {
+    throw new Error("Falta shipTo.postalCode/state/city para cotizar.");
+  }
+
+  const url = `${ENVIA_API_BASE.replace(/\/$/, "")}/ship/rate/`;
 
   const payload = {
-    carrier,
-    from,
-    to,
-    packages,
+    origin: {
+      name: ORIGIN.name,
+      street: ORIGIN.address,
+      district: ORIGIN.district,
+      city: ORIGIN.city,
+      state: ORIGIN.state,
+      country: ORIGIN.country,
+      postalCode: ORIGIN.postalCode,
+    },
+    destination: {
+      name: shipTo.name || "Cliente",
+      street: shipTo.address1 || "SIN_DIRECCION",
+      district: shipTo.district || "",
+      city: shipTo.city,
+      state: shipTo.state,
+      country: "MX",
+      postalCode: shipTo.postalCode,
+    },
+    packages: [
+      {
+        weight: pkg.weight,
+        dimensions: { length: pkg.length, width: pkg.width, height: pkg.height },
+      },
+    ],
   };
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${ENVIA_API_KEY}`,
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${ENVIA_API_KEY}`,
     },
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json().catch(() => null);
-  if (!res.ok || !data) {
-    const msg = (data && (data.message || data.error)) ? (data.message || data.error) : `HTTP ${res.status}`;
-    throw new Error(`ENVIA_RATE_FAIL: ${msg}`);
-  }
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Envia rate error (${res.status}): ${text.slice(0, 500)}`);
 
-  return data;
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+
+  const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.rates) ? data.rates : []));
+  if (!Array.isArray(list) || list.length === 0) throw new Error("Envia no regresó tarifas (rates vacíos).");
+
+  const getCost = (x) => {
+    const candidates = [
+      x.total_price, x.totalPrice,
+      x.total_amount, x.totalAmount,
+      x.price, x.amount,
+      x?.cost?.total, x?.cost?.amount
+    ];
+    for (const c of candidates) {
+      const n = Number(c);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return NaN;
+  };
+
+  let best = null;
+  for (const r of list) {
+    const cost = getCost(r);
+    if (!Number.isFinite(cost)) continue;
+    if (!best || cost < best.cost) best = { cost, raw: r };
+  }
+  if (!best) throw new Error("No pude interpretar el costo MXN de Envia.");
+
+  return best;
 }
 
-function fallbackByPostalCode(cp) {
-  // Fallback HONESTO (si Envia no responde): tabla simple por zona.
-  // Ajusta estos montos a tu política real si lo necesitas.
-  const zip = String(cp || "").slice(0, 2);
-
-  // BC (22): más barato, resto MX: estándar
-  if (zip === "22") return 149;
-  return 199;
+function applyRule(enviaCostMXN) {
+  if (enviaCostMXN < SHIPPING_BASE_MXN) {
+    return { finalMXN: SHIPPING_BASE_MXN, enviaMXN: enviaCostMXN, appliedMin: true, appliedMarkup: false };
+  }
+  return {
+    finalMXN: Math.round(enviaCostMXN * (1 + SHIPPING_MARKUP)),
+    enviaMXN: enviaCostMXN,
+    appliedMin: false,
+    appliedMarkup: true,
+  };
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return json(405, { ok: false, error: "Method not allowed" });
-
-  let body = {};
-  try { body = JSON.parse(event.body || "{}"); } catch {}
-
-  // Compatible con tu frontend:
-  const to = body.to || {};
-  const items = Array.isArray(body.items) ? body.items : [];
-
-  const postal_code = String(to.postal_code || body.zip || "").trim();
-  const state_code = String(to.state_code || "").trim().toUpperCase();
-  const city = String(to.city || "").trim();
-  const address1 = String(to.address1 || "").trim();
-
-  if (!postal_code || postal_code.length !== 5) {
-    return json(400, { ok: false, error: "postal_code inválido" });
-  }
-
-  // Si no hay API Key, usamos fallback directo (pero no mentimos)
-  if (!ENVIA_API_KEY) {
-    const mxn = fallbackByPostalCode(postal_code);
-    return json(200, {
-      ok: true,
-      quote: { ok: true, mxn, carrier: "FALLBACK", service: "STANDARD", eta_days: null, raw: null },
-      note: "ENVIA_API_KEY no configurada: se aplicó tarifa fallback.",
-    });
-  }
-
-  const from = ORIGIN;
-  const dest = {
-    postal_code,
-    state_code: state_code || "NA",
-    city: city || "NA",
-    address1: address1 || "NA",
-    country_code: "MX",
-  };
-
-  const pkg = estimatePackage(items);
-
-  let best = null;
-  let errors = [];
-
-  for (const carrier of ENVIA_CARRIERS) {
-    try {
-      const data = await enviaRateOnce({
-        carrier,
-        from,
-        to: dest,
-        packages: [pkg],
-      });
-
-      // Normalizamos posible respuesta:
-      // Si Envia regresa lista de servicios, tomamos el más barato.
-      const rates = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.rates) ? data.rates : null));
-
-      if (Array.isArray(rates) && rates.length) {
-        for (const r of rates) {
-          const price = Number(r?.total || r?.price || r?.amount || r?.rate || 0);
-          if (!price) continue;
-          const candidate = {
-            ok: true,
-            mxn: roundMXN(price),
-            carrier: r?.carrier || carrier,
-            service: r?.service || r?.service_name || r?.name || "SERVICE",
-            eta_days: r?.delivery_days ?? r?.eta_days ?? null,
-            raw: r,
-          };
-          if (!best || candidate.mxn < best.mxn) best = candidate;
-        }
-      } else {
-        // Si no viene lista, intentamos leer total directo
-        const price = Number(data?.total || data?.price || 0);
-        if (price) {
-          const candidate = {
-            ok: true,
-            mxn: roundMXN(price),
-            carrier,
-            service: "SERVICE",
-            eta_days: null,
-            raw: data,
-          };
-          if (!best || candidate.mxn < best.mxn) best = candidate;
-        }
-      }
-    } catch (e) {
-      errors.push(String(e.message || e));
+  try {
+    if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+        },
+        body: "",
+      };
     }
-  }
 
-  if (!best) {
-    const mxn = fallbackByPostalCode(postal_code);
-    return json(200, {
+    if (event.httpMethod !== "POST") {
+      return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
+    }
+
+    const body = JSON.parse(event.body || "{}");
+    const rawItems = Array.isArray(body.items) ? body.items : [];
+    const shipTo = body.shipTo || null;
+
+    if (!shipTo) return jsonResponse(400, { ok: false, error: "Falta shipTo." });
+    if (!rawItems.length) return jsonResponse(400, { ok: false, error: "Carrito vacío." });
+
+    const catalog = readCatalog();
+    const catalogById = Object.fromEntries((catalog.products || []).map((p) => [p.id, p]));
+
+    const items = rawItems.map((it) => ({ id: String(it.id || ""), qty: clampQty(it.qty) }))
+      .filter((it) => catalogById[it.id]);
+
+    if (!items.length) return jsonResponse(400, { ok: false, error: "Items no válidos contra catálogo." });
+
+    const pkg = buildPackage(items, catalogById);
+    const q = await quoteEnvia({ shipTo, pkg });
+
+    const ruled = applyRule(Number(q.cost));
+    return jsonResponse(200, {
       ok: true,
-      quote: { ok: true, mxn, carrier: "FALLBACK", service: "STANDARD", eta_days: null, raw: null },
-      note: "Envia no devolvió tarifas. Se aplicó fallback.",
-      debug: errors.slice(0, 3),
+      provider: "envia",
+      envia_cost_mxn: ruled.enviaMXN,
+      shipping_mxn: ruled.finalMXN,
+      applied_min: ruled.appliedMin,
+      applied_markup: ruled.appliedMarkup,
+      base_min_mxn: SHIPPING_BASE_MXN,
+      markup_percent: SHIPPING_MARKUP,
+      package: pkg,
+      raw: q.raw
     });
+  } catch (err) {
+    return jsonResponse(500, { ok: false, error: err.message || String(err) });
   }
-
-  return json(200, { ok: true, quote: best });
 };
