@@ -1,97 +1,91 @@
 {
   "site": {
-    "url": "https://scorestore.netlify.app",
-    "currency": "MXN",
-    "fx_mxn_per_usd": 17.5
+    "fx_mxn_per_usd": 17.5,
+    "origin": {
+      "postal_code": "22614",
+      "state_code": "BC",
+      "city": "Tijuana",
+      "address1": "Palermo 6106 Interior JK, Anexa Roma",
+      "country_code": "MX"
+    }
   },
   "sections": [
-    {
-      "id": "EDICION_2025",
-      "title": "EDICIÓN 2025",
-      "subtitle": "Drop oficial — edición limitada",
-      "badge": "HOT",
-      "order": 10
-    },
-    {
-      "id": "OTRAS_EDICIONES",
-      "title": "OTRAS EDICIONES",
-      "subtitle": "Modelos anteriores (colección)",
-      "badge": "ARCHIVO",
-      "order": 20
-    }
+    { "id": "EDICION_2025", "title": "Edición 2025", "order": 1 },
+    { "id": "OTRAS_EDICIONES", "title": "Otras ediciones", "order": 2 }
   ],
   "products": [
     {
+      "id": "camisa-pits-baja1000",
+      "sectionId": "EDICION_2025",
+      "name": "Camisa PITS · Baja 1000 (Edición 2025)",
+      "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
+      "baseMXN": 890,
+      "ship": { "weight_kg": 0.35, "length_cm": 30, "width_cm": 24, "height_cm": 3 }
+    },
+    {
+      "id": "camiseta-baja1000-azul",
+      "sectionId": "EDICION_2025",
+      "name": "Camiseta Baja 1000 · Azul (Edición 2025)",
+      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
+      "baseMXN": 690,
+      "ship": { "weight_kg": 0.25, "length_cm": 28, "width_cm": 22, "height_cm": 3 }
+    },
+    {
+      "id": "camiseta-baja1000-cafe",
+      "sectionId": "EDICION_2025",
+      "name": "Camiseta Baja 1000 · Café (Edición 2025)",
+      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
+      "baseMXN": 690,
+      "ship": { "weight_kg": 0.25, "length_cm": 28, "width_cm": 22, "height_cm": 3 }
+    },
+    {
+      "id": "camiseta-baja1000-negra",
+      "sectionId": "EDICION_2025",
+      "name": "Camiseta Baja 1000 · Negra (Edición 2025)",
+      "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
+      "baseMXN": 690,
+      "ship": { "weight_kg": 0.25, "length_cm": 28, "width_cm": 22, "height_cm": 3 }
+    },
+    {
       "id": "chamarra-baja1000",
-      "name": "Chaqueta Oficial SCORE \"Baja 1000\"",
+      "sectionId": "EDICION_2025",
+      "name": "Chamarra Baja 1000 (Edición 2025)",
       "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
       "baseMXN": 1490,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camisa-pits-baja1000",
-      "name": "Camisa de Pits \"Baja 1000\"",
-      "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
-      "baseMXN": 899,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-world-desert-negra",
-      "name": "Sudadera \"SCORE World Desert\" (Negra)",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
-      "baseMXN": 749,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-world-desert-rosa",
-      "name": "Sudadera \"SCORE World Desert\" (Rosa)",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
-      "baseMXN": 749,
-      "tags": ["Archivo"],
-      "sectionId": "OTRAS_EDICIONES"
+      "ship": { "weight_kg": 0.95, "length_cm": 38, "width_cm": 30, "height_cm": 8 }
     },
     {
       "id": "sudadera-world-desert-cafe",
-      "name": "Sudadera \"SCORE World Desert\" (Café)",
+      "sectionId": "EDICION_2025",
+      "name": "Sudadera World Desert · Café (Edición 2025)",
       "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 749,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
+      "baseMXN": 1390,
+      "ship": { "weight_kg": 0.85, "length_cm": 38, "width_cm": 30, "height_cm": 7 }
     },
     {
-      "id": "camiseta-mapa-baja1000",
-      "name": "Camiseta Mapa \"Baja 1000\"",
-      "img": "/assets/EDICION_2025/camiseta-mapa-baja1000.jpg",
-      "baseMXN": 399,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
+      "id": "sudadera-world-desert-negra",
+      "sectionId": "EDICION_2025",
+      "name": "Sudadera World Desert · Negra (Edición 2025)",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
+      "baseMXN": 1390,
+      "ship": { "weight_kg": 0.85, "length_cm": 38, "width_cm": 30, "height_cm": 7 }
+    },
+
+    {
+      "id": "sudadera-world-desert-roja",
+      "sectionId": "OTRAS_EDICIONES",
+      "name": "Sudadera World Desert · Roja",
+      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg",
+      "baseMXN": 1290,
+      "ship": { "weight_kg": 0.85, "length_cm": 38, "width_cm": 30, "height_cm": 7 }
     },
     {
-      "id": "sudadera-infantil-baja1000",
-      "name": "Sudadera Infantil \"Baja 1000\"",
-      "img": "/assets/EDICION_2025/sudadera-infantil-baja1000.jpg",
-      "baseMXN": 749,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-paneles-baja1000",
-      "name": "Sudadera SCORE Baja 1000 a Paneles",
-      "img": "/assets/EDICION_2025/sudadera-paneles-baja1000.jpg",
-      "baseMXN": 749,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "gorra-trucker-score",
-      "name": "Gorra Trucker SCORE",
-      "img": "/assets/EDICION_2025/gorra-trucker-score.jpg",
-      "baseMXN": 650,
-      "tags": ["Edición 2025"],
-      "sectionId": "EDICION_2025"
+      "id": "sudadera-world-desert-rosa",
+      "sectionId": "OTRAS_EDICIONES",
+      "name": "Sudadera World Desert · Rosa",
+      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
+      "baseMXN": 1290,
+      "ship": { "weight_kg": 0.85, "length_cm": 38, "width_cm": 30, "height_cm": 7 }
     }
   ]
 }
