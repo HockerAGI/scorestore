@@ -5,6 +5,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[build.environment]
+  NODE_VERSION = "18"
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -17,11 +20,11 @@
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
 
 [[headers]]
-  for = "/catalog.json"
+  for = "/data/catalog.json"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
 
 [[headers]]
-  for = "/promos.json"
+  for = "/data/promos.json"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
