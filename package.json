@@ -1,17 +1,18 @@
 {
-  "name": "score-store",
-  "version": "1.0.0",
-  "private": true,
-  "type": "commonjs",
+  "name": "scorestore",
+  "version": "2.0.0",
+  "description": "Tienda oficial SCORE International Racing · Merch autorizado fabricado por ÚNICO Uniformes",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo \"Static site - no build step\"",
-    "start": "netlify dev"
+    "build": "echo 'Build ready for Netlify'",
+    "start": "npx serve .",
+    "test": "echo 'No tests configured' && exit 0"
   },
   "dependencies": {
-    "stripe": "^16.7.0"
+    "stripe": "^14.11.0",
+    "node-fetch": "^3.3.2"
   },
-  "devDependencies": {
-    "netlify-cli": "^17.38.0"
-  }
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
 }
