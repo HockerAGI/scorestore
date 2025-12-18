@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo \"Static site - no build step\"",
+    "start": "netlify dev"
+  },
   "dependencies": {
     "stripe": "^16.7.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.38.0"
   }
 }
