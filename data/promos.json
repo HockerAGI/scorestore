@@ -1,30 +1,8 @@
-[
-  {
-    "code": "SCORE10",
-    "type": "percent",
-    "value": 10,
-    "label": "10% OFF",
-    "active": true
-  },
-  {
-    "code": "BAJA200",
-    "type": "fixed_mxn",
-    "value": 200,
-    "label": "$200 MXN OFF",
-    "active": true
-  },
-  {
-    "code": "ENVIOFREE",
-    "type": "free_shipping",
-    "value": 0,
-    "label": "Envío Gratis",
-    "active": true
-  },
-  {
-    "code": "GRTS10",
-    "type": "free_total",
-    "value": 0,
-    "label": "Gratis (Prueba)",
-    "active": true
-  }
-]
+{
+  "rules": [
+    { "code": "SCORE10", "type": "percent", "value": 0.1, "active": true },
+    { "code": "ENVIOFREE", "type": "free_shipping", "value": 0, "active": true },
+    { "code": "BAJA200", "type": "fixed_mxn", "value": 200, "active": true },
+    { "code": "GRTS10", "type": "free_total", "value": 0, "active": true }
+  ]
+}
