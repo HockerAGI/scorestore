@@ -1,438 +1,118 @@
 {
   "site": {
-    "brand": "SCORE Store",
+    "url": "https://scorestore.netlify.app",
     "currency": "MXN",
-    "fx_mxn_per_usd": 17,
-    "shipping_base_mxn": 250,
-    "shipping_markup": 0.05,
-    "shipping_country_only": "MX",
-    "pickup_address": {
-      "name": "Único Uniformes (Recolección)",
-      "address": "Palermo 6106 Interior JK",
-      "district": "Anexa Roma",
-      "city": "Tijuana",
-      "state": "BC",
-      "country": "MX",
-      "postalCode": "22614"
-    }
+    "fx_mxn_per_usd": 17
   },
-  "pricing": {
-    "markup_percent": 0.2,
-    "usd_rate_note": "USD calculado con tipo de cambio fijo"
-  },
+  "pricing": { "markup_pct": 0.20 },
   "sections": [
     {
       "id": "EDICION_2025",
-      "title": "Edición 2025",
-      "subtitle": "Colección oficial SCORE x Baja 1000",
-      "order": 1
+      "title": "EDICIÓN 2025",
+      "subtitle": "Mercancía oficial SCORE International Racing",
+      "badge": "OFICIAL",
+      "order": 10
     },
     {
       "id": "OTRAS_EDICIONES",
-      "title": "Otras ediciones",
-      "subtitle": "Colores y ediciones adicionales",
-      "order": 2
+      "title": "COLECCIONES ANTERIORES",
+      "subtitle": "Líneas pasadas y reediciones exclusivas",
+      "badge": "COLECCIÓN",
+      "order": 20
     }
   ],
   "products": [
     {
-      "id": "chamarra-baja1000",
-      "name": "Chaqueta Oficial SCORE \"Baja 1000\"",
+      "id": "chamarra-oficial",
+      "name": "Chaqueta Oficial Baja 1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
       "baseMXN": 1490,
       "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "CHAMARRA",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": null,
-      "groupKey": "chamarra-baja1000",
-      "shipping": {
-        "weight_kg": 1.2,
-        "dims_cm": [
-          45,
-          35,
-          12
-        ]
-      },
-      "price_mxn_retail": 1788,
-      "price_usd_retail": 105.18,
-      "description": "Chaqueta técnica unisex oficial SCORE Baja 1000.",
-      "category": "Chamarra"
+      "weight_g": 800,
+      "dimensions_cm": [40, 30, 10],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "tags": ["Oficial", "Edición 2025"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "camisa-pits-baja1000",
-      "name": "Camisa de Pits \"Baja 1000\"",
+      "id": "camisa-pits",
+      "name": "Camisa de Pits Baja 1000",
       "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
       "baseMXN": 899,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "PITS",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": null,
-      "groupKey": "camisa-pits-baja1000",
-      "shipping": {
-        "weight_kg": 0.35,
-        "dims_cm": [
-          38,
-          28,
-          6
-        ]
-      },
-      "price_mxn_retail": 1079,
-      "price_usd_retail": 63.47,
-      "description": "Camisa tipo pits oficial para vivir la carrera.",
-      "category": "Camisa"
+      "weight_g": 400,
+      "dimensions_cm": [35, 25, 4],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-mapa-baja1000-azul",
-      "name": "Camiseta Mapa \"Baja 1000\" (Azul)",
+      "id": "camiseta-azul",
+      "name": "Camiseta SCORE Baja 1000 Azul",
       "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
       "baseMXN": 399,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex",
-        "Azul"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "MAPAAZ",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Azul",
-      "groupKey": "camiseta-mapa-baja1000",
-      "shipping": {
-        "weight_kg": 0.25,
-        "dims_cm": [
-          35,
-          25,
-          5
-        ]
-      },
-      "price_mxn_retail": 479,
-      "price_usd_retail": 28.18,
-      "description": "Camiseta con mapa y esencia Baja 1000.",
-      "category": "Camiseta"
+      "weight_g": 250,
+      "dimensions_cm": [32, 25, 3],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-mapa-baja1000-cafe",
-      "name": "Camiseta Mapa \"Baja 1000\" (Café)",
+      "id": "camiseta-cafe",
+      "name": "Camiseta SCORE Baja 1000 Café",
       "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
       "baseMXN": 399,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex",
-        "Café"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "MAPACF",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Café",
-      "groupKey": "camiseta-mapa-baja1000",
-      "shipping": {
-        "weight_kg": 0.25,
-        "dims_cm": [
-          35,
-          25,
-          5
-        ]
-      },
-      "price_mxn_retail": 479,
-      "price_usd_retail": 28.18,
-      "description": "Camiseta con mapa y esencia Baja 1000.",
-      "category": "Camiseta"
+      "weight_g": 250,
+      "dimensions_cm": [32, 25, 3],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-mapa-baja1000-negra",
-      "name": "Camiseta Mapa \"Baja 1000\" (Negra)",
+      "id": "camiseta-negra",
+      "name": "Camiseta SCORE Baja 1000 Negra",
       "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
       "baseMXN": 399,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex",
-        "Negro"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "MAPANG",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Negro",
-      "groupKey": "camiseta-mapa-baja1000",
-      "shipping": {
-        "weight_kg": 0.25,
-        "dims_cm": [
-          35,
-          25,
-          5
-        ]
-      },
-      "price_mxn_retail": 479,
-      "price_usd_retail": 28.18,
-      "description": "Camiseta con mapa y esencia Baja 1000.",
-      "category": "Camiseta"
+      "weight_g": 250,
+      "dimensions_cm": [32, 25, 3],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "sudadera-world-desert-negra",
-      "name": "Sudadera \"SCORE World Desert\" (Negra)",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
-      "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex",
-        "Negro"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "SUDNEGRA",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Negro",
-      "groupKey": "sudadera-world-desert",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera oficial SCORE World Desert.",
-      "category": "Sudadera"
-    },
-    {
-      "id": "sudadera-world-desert-cafe",
-      "name": "Sudadera \"SCORE World Desert\" (Café)",
+      "id": "sudadera-cafe",
+      "name": "Sudadera World Desert Café",
       "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
       "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex",
-        "Café"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "SUDCAFE",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Café",
-      "groupKey": "sudadera-world-desert",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera oficial SCORE World Desert.",
-      "category": "Sudadera"
+      "weight_g": 500,
+      "dimensions_cm": [35, 28, 6],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "sudadera-world-desert-roja",
-      "name": "Sudadera \"SCORE World Desert\" (Roja)",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg",
+      "id": "sudadera-negra",
+      "name": "Sudadera World Desert Negra",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
       "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Otras ediciones",
-        "Unisex",
-        "Rojo"
-      ],
-      "sectionId": "OTRAS_EDICIONES",
-      "shortId": "SUDROJA",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Rojo",
-      "groupKey": "sudadera-world-desert",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera oficial SCORE World Desert.",
-      "category": "Sudadera"
+      "weight_g": 500,
+      "dimensions_cm": [35, 28, 6],
+      "sizes": ["S", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "sudadera-world-desert-rosa",
-      "name": "Sudadera \"SCORE World Desert\" (Rosa)",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
+      "id": "sudadera-infantil",
+      "name": "Sudadera Infantil Baja 1000",
+      "img": "/assets/EDICION_2025/sudadera-infantil.jpg",
       "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Otras ediciones",
-        "Unisex",
-        "Rosa"
-      ],
-      "sectionId": "OTRAS_EDICIONES",
-      "shortId": "SUDROSA",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": "Rosa",
-      "groupKey": "sudadera-world-desert",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera oficial SCORE World Desert.",
-      "category": "Sudadera"
+      "weight_g": 420,
+      "dimensions_cm": [35, 25, 3],
+      "sizes": ["4", "6", "8", "10", "12", "14"],
+      "sectionId": "EDICION_2025"
     },
     {
-      "id": "sudadera-infantil-baja1000",
-      "name": "Sudadera Infantil \"Baja 1000\"",
-      "img": "/assets/placeholder.png",
-      "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Infantil"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "INFANTIL",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": null,
-      "groupKey": "sudadera-infantil-baja1000",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera infantil Baja 1000.",
-      "category": "Sudadera"
-    },
-    {
-      "id": "sudadera-paneles-baja1000",
-      "name": "Sudadera SCORE Baja 1000 a Paneles",
-      "img": "/assets/placeholder.png",
-      "baseMXN": 749,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025",
-        "Unisex"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "PANELES",
-      "sizes": [
-        "S",
-        "L",
-        "XL",
-        "2XL"
-      ],
-      "color": null,
-      "groupKey": "sudadera-paneles-baja1000",
-      "shipping": {
-        "weight_kg": 0.85,
-        "dims_cm": [
-          38,
-          28,
-          10
-        ]
-      },
-      "price_mxn_retail": 899,
-      "price_usd_retail": 52.88,
-      "description": "Sudadera tipo paneles con espíritu Baja 1000.",
-      "category": "Sudadera"
-    },
-    {
-      "id": "gorra-trucker-score",
-      "name": "Gorra Trucker SCORE",
-      "img": "/assets/placeholder.png",
+      "id": "gorra-trucker",
+      "name": "Gorra Trucker SCORE Racing",
+      "img": "/assets/OTRAS_EDICIONES/gorra-trucker.jpg",
       "baseMXN": 650,
-      "wasMXN": 0,
-      "tags": [
-        "Edición 2025"
-      ],
-      "sectionId": "EDICION_2025",
-      "shortId": "GORRA",
-      "sizes": [
-        "Unitalla"
-      ],
-      "color": null,
-      "groupKey": "gorra-trucker-score",
-      "shipping": {
-        "weight_kg": 0.2,
-        "dims_cm": [
-          30,
-          25,
-          18
-        ]
-      },
-      "price_mxn_retail": 780,
-      "price_usd_retail": 45.88,
-      "description": "Gorra trucker oficial SCORE.",
-      "category": "Gorra"
+      "weight_g": 200,
+      "dimensions_cm": [25, 20, 10],
+      "sizes": ["ÚNICA"],
+      "sectionId": "OTRAS_EDICIONES"
     }
   ]
 }
