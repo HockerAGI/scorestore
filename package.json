@@ -1,18 +1,20 @@
 {
   "name": "scorestore",
-  "version": "2.0.0",
-  "description": "Tienda oficial SCORE International Racing · Merch autorizado fabricado por ÚNICO Uniformes",
+  "version": "1.1.0",
+  "private": true,
+  "description": "SCORE Store — Static + Netlify Functions (Stripe + Envia).",
+  "engines": {
+    "node": ">=18 <21"
+  },
   "scripts": {
-    "build": "echo 'Build ready for Netlify'",
-    "start": "npx serve .",
-    "test": "echo 'No tests configured' && exit 0"
+    "dev": "netlify dev",
+    "build": "echo \"static site\"",
+    "lint": "node -c netlify/functions/create_checkout.js && node -c netlify/functions/quote_shipping.js && node -c netlify/functions/stripe_webhook.js && node -c netlify/functions/envia_webhook.js"
   },
   "dependencies": {
-    "stripe": "^14.11.0",
-    "node-fetch": "^3.3.2"
+    "stripe": "^16.6.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "license": "MIT"
+  "devDependencies": {
+    "netlify-cli": "^17.43.0"
+  }
 }
