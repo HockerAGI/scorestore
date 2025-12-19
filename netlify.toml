@@ -1,30 +1,46 @@
+# Netlify config — SCORE STORE
+# - Publica el sitio desde la raíz del repo
+# - Funciones en /netlify/functions
+# - Node 18 (estable y compatible con Stripe)
+
 [build]
   publish = "."
   functions = "netlify/functions"
 
-[functions]
-  node_bundler = "esbuild"
-
 [build.environment]
   NODE_VERSION = "18"
+  # Opcional: mejora logs de Node
+  NODE_OPTIONS = "--enable-source-maps"
 
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    X-Content-Type-Options = "nosniff"
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["data/**"]
 
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+# Redirecciones para que el frontend consuma /catalog.json y /promos.json
+[[redirects]]
+  from = "/catalog.json"
+  to = "/data/catalog.json"
+  status = 200
 
-[[headers]]
-  for = "/data/catalog.json"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+[[redirects]]
+  from = "/promos.json"
+  to = "/data/promos.json"
+  status = 200
 
+# Endpoints de funciones
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Caching agresivo para assets (rápido en móvil)
 [[headers]]
-  for = "/data/promos.json"
+  for = "/assets/*"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# JSON con cache corto (para que actualices catálogo sin dolores)
+[[headers]]
+  for = "/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
