@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "netlify dev",
     "build": "echo \"static site\"",
-    "lint": "node -c netlify/functions/create_checkout.js && node -c netlify/functions/quote_shipping.js && node -c netlify/functions/stripe_webhook.js && node -c netlify/functions/envia_webhook.js"
+    "lint": "node --check netlify/functions/create_checkout.js && node --check netlify/functions/quote_shipping.js && node --check netlify/functions/stripe_webhook.js && node --check netlify/functions/envia_webhook.js"
   },
   "dependencies": {
     "stripe": "^16.6.0"
