@@ -472,6 +472,7 @@
       transform: translateY(-2px);
       box-shadow: 0 18px 44px rgba(0,0,0,.28);
     }
+    .drop:active{ transform: translateY(0) scale(.99); }
 
     .dropBg{
       position:absolute; inset:0;
@@ -484,15 +485,17 @@
       opacity: .96;
       filter: saturate(1.05) contrast(1.05);
     }
+    /* 🔧 overlay MÁS ligero (como pediste) */
     .dropBg::after{
       content:"";
       position:absolute; inset:0;
       background:
-        radial-gradient(circle at 50% 30%, transparent 30%, var(--cardVignette) 100%),
-        linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.58) 88%);
-      opacity:.94;
+        radial-gradient(circle at 50% 30%, transparent 34%, var(--cardVignette) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.16) 0%, rgba(0,0,0,.42) 88%);
+      opacity:.55;
     }
 
+    /* 🔧 glass MUY leve (sin capa pesada) */
     .dropGlass{
       position:absolute; inset:0;
       display:flex;
@@ -500,8 +503,8 @@
       justify-content:space-between;
       padding: 14px;
       background:
-        linear-gradient(135deg, var(--cardGlassA) 0%, var(--cardGlassB) 62%, rgba(0,0,0,.08) 100%);
-      backdrop-filter: blur(8px);
+        linear-gradient(135deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,.03) 62%, rgba(0,0,0,.02) 100%);
+      backdrop-filter: blur(4px);
     }
 
     .badge{
@@ -1113,9 +1116,39 @@
         from{ opacity:0; transform: translateY(10px); }
         to{ opacity:1; transform: translateY(0); }
       }
+
+      /* ✅ micro-anim: hero drift (temática, suave) */
+      .heroBg{
+        animation: heroDrift 18s ease-in-out infinite alternate;
+      }
+      @keyframes heroDrift{
+        from{ transform: scale(1.02) translateY(0); }
+        to{ transform: scale(1.06) translateY(10px); }
+      }
+
+      /* ✅ micro-anim: shine sutil en drops (sin capa pesada) */
+      .dropGlass::after{
+        content:"";
+        position:absolute;
+        inset:-50%;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.14) 50%, transparent 100%);
+        transform: translateX(-60%) rotate(14deg);
+        opacity:.22;
+        pointer-events:none;
+        animation: dropShine 3.2s ease-in-out infinite;
+      }
+      @keyframes dropShine{
+        0%{ transform: translateX(-60%) rotate(14deg); opacity:.0; }
+        25%{ opacity:.18; }
+        50%{ transform: translateX(60%) rotate(14deg); opacity:.14; }
+        100%{ transform: translateX(60%) rotate(14deg); opacity:0; }
+      }
     }
   </style>
 </head>
+<!-- =========================
+PARTE 2/4
+========================= -->
 <body data-theme="xmas">
   <div class="seasonTint" aria-hidden="true"></div>
   <div class="seasonSnow" aria-hidden="true"></div>
@@ -1126,12 +1159,9 @@
 
   <header class="topbar">
     <div class="topInner">
+      <!-- ✅ Logo sin texto -->
       <a class="brand" href="/" aria-label="SCORE Store">
         <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async" />
-        <div class="txt">
-          <div class="t1">SCORE STORE</div>
-          <div class="t2">Tienda Oficial</div>
-        </div>
       </a>
 
       <div class="navRight">
@@ -1161,18 +1191,16 @@
 
       <div class="heroContent">
         <div class="tagline">MERCH OFICIAL</div>
-        <h1>Leyendas<br/>del desierto</h1>
+
+        <!-- ✅ Título actualizado -->
+        <h1>Merch oficial de<br/>SCORE International</h1>
+
+        <!-- ✅ Copy corto -->
         <p class="sub">
-          Pagos con <b>tarjeta</b> u <b>OXXO</b>. En <b>Tijuana</b> puedes elegir
-          <b>recolección en fábrica</b> o <b>envío local</b>.
-          Fuera de Tijuana: envío nacional <b>desde $250</b>.
+          Pagos seguros con tarjeta o depósito OXXO a todo México.
         </p>
 
-        <div class="ctaRow">
-          <a class="btn primary" href="#productos">Ver productos</a>
-          <button class="btn" id="openCart2" type="button">Ir al carrito</button>
-          <div class="hint">Tip: si traes cupón, aplícalo al final (si está activo).</div>
-        </div>
+        <!-- ✅ Sin botones / sin tip -->
       </div>
     </section>
 
@@ -1182,8 +1210,8 @@
     </div>
 
     <div class="gridDrops">
-      <!-- EDICIÓN 2025 -->
-      <div class="drop" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025" role="button" tabindex="0" aria-label="Abrir catálogo Edición 2025">
+      <!-- BAJA 1000 (ACTIVO) -->
+      <div class="drop" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025" role="button" tabindex="0" aria-label="Abrir catálogo Baja 1000">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
           <div class="badge">ACTIVO</div>
@@ -1198,22 +1226,7 @@
         </div>
       </div>
 
-      <!-- OTRAS EDICIONES -->
-      <div class="drop" data-open="catalog" data-section="OTRAS_EDICIONES" data-title="Otras ediciones · World Desert" role="button" tabindex="0" aria-label="Abrir catálogo Otras ediciones">
-        <div class="dropBg" aria-hidden="true"></div>
-        <div class="dropGlass">
-          <div class="badge">ACTIVO</div>
-          <div class="dropCenter">
-            <img src="/assets/icons-score.svg" class="dropLogo" alt="SCORE" loading="lazy" decoding="async" style="opacity:.95" />
-            <div>
-              <h3>WORLD DESERT</h3>
-              <p>Otras ediciones · piezas limitadas.</p>
-            </div>
-            <button class="dropBtn" type="button" data-open="catalog" data-section="OTRAS_EDICIONES" data-title="Otras ediciones · World Desert">Ver productos</button>
-          </div>
-        </div>
-      </div>
-
+      <!-- SAN FELIPE 250 (PRÓXIMO) -->
       <div class="drop" data-open="notify" data-drop="San Felipe 250" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
@@ -1229,6 +1242,7 @@
         </div>
       </div>
 
+      <!-- BAJA 500 (PRÓXIMO) -->
       <div class="drop" data-open="notify" data-drop="Baja 500" role="button" tabindex="0" aria-label="Avísame Baja 500">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
@@ -1244,6 +1258,7 @@
         </div>
       </div>
 
+      <!-- BAJA 400 (PRÓXIMO) -->
       <div class="drop" data-open="notify" data-drop="Baja 400" role="button" tabindex="0" aria-label="Avísame Baja 400">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
@@ -1260,6 +1275,7 @@
       </div>
     </div>
 
+    <!-- ✅ Tarjetas verdes: SOLO lo pedido -->
     <section class="highlight" aria-label="Información rápida">
       <div class="highlightInner">
         <div class="hBox">
@@ -1271,11 +1287,7 @@
             </span>
             Compra segura
           </div>
-          <p class="hTxt">Pagos con tarjeta u OXXO. Confirmación al momento.</p>
-          <div class="tag" aria-hidden="true">
-            <b>Tijuana</b>: recolección $0 / envío local $200<br/>
-            <b>Resto de MX</b>: envío desde $250 (según cotización)
-          </div>
+          <p class="hTxt">Pagos con tarjeta o depósito OXXO.</p>
         </div>
 
         <div class="hBox">
@@ -1283,14 +1295,9 @@
             <span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:8px;background:rgba(225,6,0,.10);border:1px solid rgba(225,6,0,.14);">
               <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
                 <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
-                <path d="M9 12l2 2 4-5"/>
               </svg>
             </span>
-            Drops limitados
-          </div>
-          <p class="hTxt">Se acaban rápido. Si lo ves disponible, es ahora.</p>
-          <div class="tag" aria-hidden="true">
-            Precios en <b>MXN</b> + referencia en <b>USD</b>.
+            Edición limitada
           </div>
         </div>
       </div>
@@ -1307,7 +1314,9 @@
       </div>
     </section>
   </main>
-
+<!-- =========================
+PARTE 3/4
+========================= -->
   <footer>
     <div class="footGrid">
       <div>
@@ -1386,7 +1395,8 @@
         <div class="ok" id="shipOk" style="display:none;"></div>
       </div>
 
-      <div class="box" aria-label="Código de promoción" id="promoBox">
+      <!-- ✅ Campo queda, pero NO se muestra si no hay promos activas -->
+      <div class="box" aria-label="Código de promoción" id="promoBox" style="display:none;">
         <div class="boxTitle">Cupón</div>
         <div class="row">
           <input class="input upper" id="promoInput" maxlength="24" placeholder="Escribe tu cupón" autocomplete="off" inputmode="text" />
@@ -1416,6 +1426,9 @@
       <div class="grid" id="catalogGrid"></div>
     </div>
   </div>
+<!-- =========================
+PARTE 4/4
+========================= -->
 <script>
 /* =========================================================
   SCORE STORE — index.html (Netlify)
@@ -1524,7 +1537,11 @@
   }
 
   $("#openCart").addEventListener("click", openDrawer);
-  $("#openCart2").addEventListener("click", openDrawer);
+
+  /* ✅ ya no existe openCart2 (botones del hero eliminados), así que lo protegemos */
+  const openCart2 = $("#openCart2");
+  if(openCart2) openCart2.addEventListener("click", openDrawer);
+
   $("#openCart3").addEventListener("click", openDrawer);
   $("#closeDrawer").addEventListener("click", closeDrawer);
 
@@ -1636,6 +1653,14 @@
       PROMOS = { rules: [] };
     }
     if(!PROMOS) PROMOS = { rules: [] };
+  }
+
+  /* ✅ No menciona cupón si no hay promos activas (solo muestra el box cuando aplica) */
+  function togglePromoUI(){
+    const box = $("#promoBox");
+    if(!box) return;
+    const hasActive = Array.isArray(PROMOS?.rules) && PROMOS.rules.some(r => r && r.active);
+    box.style.display = hasActive ? "block" : "none";
   }
 
   // Catalog UI
@@ -2066,7 +2091,8 @@
     $("#lineTotal").textContent = fmtMXN(total);
     $("#lineUsd").textContent = fmtUSD(usd) + " USD";
 
-    $("#pbLabel").textContent = promoApplied ? "TOTAL (MXN) · Cupón" : "TOTAL (MXN)";
+    /* ✅ Sin mencionar cupón en el label */
+    $("#pbLabel").textContent = "TOTAL (MXN)";
     $("#pbTotal").innerHTML = `${fmtMXN(total)} <small>${fmtUSD(usd)} USD</small>`;
 
     $("#lineShip").style.display = cart.length ? "flex" : "none";
@@ -2195,6 +2221,7 @@
     try{
       await loadCatalog();
       await loadPromos();
+      togglePromoUI();
       updateShipUI();
       renderAll();
     }catch(e){
