@@ -1,7 +1,4 @@
 # Netlify config — SCORE STORE
-# - Publica el sitio desde la raíz del repo
-# - Funciones en /netlify/functions
-# - Node 18 (estable y compatible con Stripe)
 
 [build]
   publish = "."
@@ -9,14 +6,12 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  # Opcional: mejora logs de Node
   NODE_OPTIONS = "--enable-source-maps"
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["data/**"]
+  included_files = ["data/**"] # agrega "assets/**" solo si alguna function lo necesita
 
-# Redirecciones para que el frontend consuma /catalog.json y /promos.json
 [[redirects]]
   from = "/catalog.json"
   to = "/data/catalog.json"
@@ -27,20 +22,30 @@
   to = "/data/promos.json"
   status = 200
 
-# Endpoints de funciones
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Caching agresivo para assets (rápido en móvil)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# JSON con cache corto (para que actualices catálogo sin dolores)
+# Cache corto para JSON en raíz
 [[headers]]
   for = "/*.json"
   [headers.values]
     Cache-Control = "public, max-age=300"
+
+# Cache corto para JSON en /data
+[[headers]]
+  for = "/data/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+# Service Worker: evita cachearse
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0"
