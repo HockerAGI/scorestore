@@ -2,30 +2,39 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b0f14" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#E10600" />
+  <title>SCORE Store | Tienda Oficial</title>
+  <meta name="description" content="Tienda oficial SCORE. Ediciones limitadas, artículos de colección y equipo auténtico del desierto. Pagos con tarjeta u OXXO. Envíos en México y entrega en Tijuana." />
 
-  <title>SCORE | Official Baja Gear</title>
-  <meta name="description" content="Merch oficial del desierto. Drops limitados. Compra segura en México. Usa SCORE10 al final si lo traes." />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="SCORE | Official Baja Gear" />
-  <meta property="og:description" content="Inventario limitado + drops oficiales. Compra segura en México. Cupón SCORE10 disponible." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
-
-  <link rel="icon" href="/assets/favicon.png" />
-  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
+  <meta property="og:description" content="Envíos MX + recolección/entrega en Tijuana. Pagos con tarjeta u OXXO." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="SCORE Store | Tienda Oficial" />
+  <meta name="twitter:description" content="Ediciones limitadas. Pagos con tarjeta u OXXO. Envíos MX + Tijuana." />
+  <meta name="twitter:image" content="https://scorestore.netlify.app/assets/hero.png" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SCORE Store" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 
   <link rel="preload" as="image" href="/assets/hero.png" />
   <link rel="preload" as="image" href="/assets/fondo-pagina-score.png" />
+  <link rel="preload" as="image" href="/assets/baja1000-texture.png" />
 
   <style>
     :root{
@@ -34,28 +43,38 @@
 
       --red: #E10600;
       --carbon: #0b0f14;
-      --sand: #f0f0f0;
+      --sand: #f2f2f2;
+      --green: #00C853;
 
       --pageBg: url("/assets/fondo-pagina-score.png");
-      --pageBgOpacity: .78;
+      --pageBgOpacity: .82;
 
       --shadow: 0 20px 50px rgba(0,0,0,.18);
       --shadow2: 0 12px 30px rgba(0,0,0,.22);
-      --radius: 16px;
+      --radius: 18px;
 
       /* glass overlays */
-      --cardGlassA: rgba(255,255,255,.10);
-      --cardGlassB: rgba(255,255,255,.05);
+      --cardGlassA: rgba(255,255,255,.12);
+      --cardGlassB: rgba(255,255,255,.06);
       --cardVignette: rgba(0,0,0,.60);
 
       /* HERO overlay café oscuro */
-      --heroCafeA: rgba(72, 49, 33, .90);
+      --heroCafeA: rgba(72, 49, 33, .92);
       --heroCafeB: rgba(72, 49, 33, .45);
 
       /* season tokens */
       --seasonTint: rgba(105, 180, 255, .10);
       --seasonGlow: rgba(255,255,255,.18);
       --partnersTint: rgba(105, 180, 255, .10);
+
+      /* misc */
+      --border: rgba(0,0,0,.10);
+      --muted: rgba(0,0,0,.62);
+      --muted2: rgba(0,0,0,.52);
+
+      --ok: rgba(0, 200, 83, .14);
+      --warn: rgba(255, 132, 0, .14);
+      --bad: rgba(225, 6, 0, .12);
     }
 
     body[data-theme="xmas"]{
@@ -82,7 +101,7 @@
       color:#111;
       background-color: var(--sand);
       overflow-x:hidden;
-      padding-bottom: 95px;
+      padding-bottom: 96px;
       position: relative;
     }
     body.modalOpen{ overflow:hidden; }
@@ -191,7 +210,7 @@
     .wrap{
       width:min(1200px, 94vw);
       margin:0 auto;
-      padding-top: 92px;
+      padding-top: 90px;
       padding-bottom: 60px;
     }
 
@@ -212,20 +231,48 @@
       justify-content:space-between;
       gap:12px;
     }
-    .brandLogo img{
-      height:55px;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-decoration:none;
+      color:#111;
+    }
+    .brand img{
+      height:54px;
       width:auto;
       display:block;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.12));
     }
+    .brand .txt{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+    .brand .t1{
+      font-family: var(--fontTitle);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing:.05em;
+      text-transform: uppercase;
+    }
+    .brand .t2{
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing:.12em;
+      color: rgba(0,0,0,.55);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
     .navRight{ display:flex; align-items:center; gap:10px; }
 
-    .promoPill{
+    .pill{
       display:flex; align-items:center; justify-content:center;
       height: 38px;
       padding: 0 12px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.92);
+      background: rgba(0,0,0,0.90);
       border: 1px solid rgba(255,255,255,0.10);
       font-weight: 900;
       font-size: 12px;
@@ -233,8 +280,9 @@
       color: #fff;
       white-space: nowrap;
     }
-    .promoPill span{ color: rgba(255,255,255,.86); }
-    @media (max-width: 520px){ .promoPill{ display:none; } }
+    .pill b{ color: #fff; }
+    .pill span{ color: rgba(255,255,255,.86); }
+    @media (max-width: 560px){ .pill{ display:none; } }
 
     /* carrito */
     .cartTrigger{
@@ -250,11 +298,6 @@
       transition: transform .15s ease;
     }
     .cartTrigger:hover{ transform: translateY(-1px); }
-    .cartIconSvg{
-      width:36px; height:36px;
-      stroke:#fff; stroke-width:2.2; fill:none;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
-    }
     .cartCount{
       position:absolute; top:6px; right:6px;
       background: var(--red);
@@ -270,18 +313,20 @@
       position:relative;
       border-radius: var(--radius);
       overflow:hidden;
-      min-height: 540px;
+      min-height: 560px;
       display:flex;
       align-items:center;
       background: #0b0f14;
       color:#fff;
       box-shadow: var(--shadow);
+      transform: translateZ(0);
     }
     .heroBg{
       position:absolute; inset:0;
       background: url('/assets/hero.png') center/cover no-repeat;
-      opacity:.96;
-      transform: scale(1.03);
+      opacity:.98;
+      transform: scale(1.02);
+      filter: contrast(1.04) saturate(1.02);
     }
     .heroOverlay{
       position:absolute; inset:0;
@@ -290,53 +335,15 @@
         radial-gradient(circle at 78% 18%, rgba(225,6,0,0.12), transparent 52%),
         radial-gradient(circle at 18% 74%, rgba(255,255,255,0.10), transparent 56%);
     }
-    .heroDecor{
-      position:absolute; inset:0;
-      pointer-events:none;
-      z-index:1;
-      display:none;
-      background:
-        radial-gradient(circle at 88% 20%, rgba(255,255,255,.20) 0 2px, transparent 3px),
-        radial-gradient(circle at 92% 28%, rgba(255,255,255,.16) 0 2px, transparent 3px),
-        radial-gradient(circle at 84% 34%, rgba(255,255,255,.14) 0 2px, transparent 3px),
-        radial-gradient(circle at 78% 16%, rgba(255,255,255,.10) 0 2px, transparent 3px);
-      opacity:.22;
-      animation: decorFloat 4.4s ease-in-out infinite alternate;
-    }
-    body[data-theme="xmas"] .heroDecor{ display:block; }
-    @keyframes decorFloat{
-      from{ transform: translateY(0px); }
-      to{ transform: translateY(4px); }
-    }
-
-    .seasonRibbon{
-      position:absolute;
-      top:18px; right:18px;
-      z-index:3;
-      background: rgba(255,255,255,.92);
-      color:#111;
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .10em;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: 0 12px 22px rgba(0,0,0,.16);
-      text-transform: uppercase;
-      text-align:center;
-    }
-    .seasonRibbon b{ color: var(--red); }
-    body[data-theme="xmas"] .seasonRibbon::before{ content:"🎄 "; }
-
     .heroContent{
       position:relative; z-index:2;
-      padding: 50px;
-      max-width: 720px;
+      padding: 54px;
+      max-width: 780px;
       text-align:left;
     }
-    .heroTag{
+    .tagline{
       background: var(--red); color:#fff;
-      padding: 6px 16px;
+      padding: 7px 16px;
       font-family: var(--fontTitle);
       font-size:22px;
       font-weight:700;
@@ -344,49 +351,58 @@
       display:inline-block;
       margin-bottom: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      letter-spacing: .02em;
+      letter-spacing: .03em;
       text-transform: uppercase;
     }
-    .heroTitle{
+    .hero h1{
       font-family: var(--fontTitle);
-      font-size: 90px;
-      line-height: .85;
+      font-size: 92px;
+      line-height: .86;
       margin:0 0 16px;
       text-transform:uppercase;
       text-shadow: 0 5px 20px rgba(0,0,0,0.55);
     }
-    .heroSub{
-      font-size: 17px;
-      line-height: 1.5;
-      color: rgba(255,255,255,.92);
-      margin-bottom: 18px;
+    .hero .sub{
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255,255,255,.93);
+      margin: 0 0 18px;
       border-left: 4px solid var(--red);
       padding-left: 18px;
       font-weight: 800;
       text-shadow: 0 2px 4px rgba(0,0,0,0.65);
     }
-    .heroActions{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .btnHero{
-      background:#fff; color: #111;
+    .ctaRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .btn{
       border:none;
-      padding: 14px 34px;
-      font-family: var(--fontTitle);
-      font-size: 26px;
-      font-weight: 700;
       cursor:pointer;
-      clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
-      transition: transform .2s;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      font-weight: 900;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.90);
+      color:#111;
+      box-shadow: 0 10px 20px rgba(0,0,0,.26);
+      transition: transform .16s ease, filter .16s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
     }
-    .btnHero:hover{ transform: translateY(-2px); }
-
-    .heroHint{
+    .btn:hover{ transform: translateY(-2px); filter: brightness(1.02); }
+    .btn.primary{
+      background:#111;
+      color:#fff;
+    }
+    .hint{
       font-weight: 900;
       font-size: 12px;
       letter-spacing: .10em;
-      color: rgba(255,255,255,.90);
+      color: rgba(255,255,255,.92);
       text-transform: uppercase;
-      background: rgba(0,0,0,.28);
+      background: rgba(0,0,0,.26);
       border: 1px solid rgba(255,255,255,.14);
       padding: 10px 12px;
       border-radius: 14px;
@@ -395,24 +411,24 @@
       text-align:left;
     }
 
-    @media (max-width: 768px){
-      .hero{ align-items:flex-end; min-height: 520px; }
+    @media (max-width: 820px){
+      .hero{ align-items:flex-end; min-height: 560px; }
       .heroOverlay{
         background:
-          linear-gradient(to top, rgba(74,50,33,.92) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
+          linear-gradient(to top, rgba(74,50,33,.94) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
           radial-gradient(circle at 60% 25%, rgba(225,6,0,0.10), transparent 52%);
       }
-      .heroTitle{ font-size: 56px; }
+      .hero h1{ font-size: 58px; }
       .heroContent{ padding: 22px; width: 100%; }
-      .seasonRibbon{ top:14px; right:14px; }
     }
 
+    /* Section headers */
     .secHeader{
       margin: 26px 4px 12px;
       display:flex; align-items:baseline; justify-content:space-between;
       gap:12px;
     }
-    .secTitle{
+    .secHeader h2{
       margin:0;
       font-family: var(--fontTitle);
       font-size: 34px;
@@ -420,7 +436,7 @@
       text-transform: uppercase;
       color:#111;
     }
-    .secMeta{
+    .secHeader .meta{
       font-weight: 900;
       font-size: 12px;
       letter-spacing: .12em;
@@ -430,16 +446,17 @@
       text-align:right;
     }
 
+    /* Drops */
     .gridDrops{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-bottom: 22px;
+      margin-bottom: 16px;
     }
     @media (max-width: 980px){ .gridDrops{ grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px){ .gridDrops{ grid-template-columns: 1fr; } }
+    @media (max-width: 560px){ .gridDrops{ grid-template-columns: 1fr; } }
 
-    .cardDrop{
+    .drop{
       position:relative;
       border-radius: var(--radius);
       overflow:hidden;
@@ -449,9 +466,9 @@
       background: #0b0f14;
       transform: translateZ(0);
       transition: transform .18s ease, box-shadow .18s ease;
-      border: 1px solid rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
     }
-    .cardDrop:hover{
+    .drop:hover{
       transform: translateY(-2px);
       box-shadow: 0 18px 44px rgba(0,0,0,.28);
     }
@@ -464,7 +481,7 @@
         url("/assets/baja1000-texture.png");
       background-size: cover;
       background-position: center;
-      opacity: .95;
+      opacity: .96;
       filter: saturate(1.05) contrast(1.05);
     }
     .dropBg::after{
@@ -473,7 +490,7 @@
       background:
         radial-gradient(circle at 50% 30%, transparent 30%, var(--cardVignette) 100%),
         linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,.58) 88%);
-      opacity:.92;
+      opacity:.94;
     }
 
     .dropGlass{
@@ -487,18 +504,7 @@
       backdrop-filter: blur(8px);
     }
 
-    .dropContent{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      gap:10px;
-      padding: 6px 6px 10px;
-    }
-
-    .statusBadge{
+    .badge{
       align-self:flex-start;
       background: var(--red);
       color:#fff;
@@ -510,6 +516,17 @@
       text-transform: uppercase;
       box-shadow: 0 10px 18px rgba(0,0,0,.25);
     }
+    .badge.gray{ background: rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.18); }
+    .dropCenter{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      gap:10px;
+      padding: 6px 6px 10px;
+    }
     .dropLogo{
       width: 160px; height: 64px;
       object-fit: contain;
@@ -517,25 +534,23 @@
       opacity:.96;
       margin: 0 auto;
     }
-    .dropInfo h3{
+    .dropCenter h3{
       margin: 6px 0 0;
       font-family: var(--fontTitle);
       font-size: 30px;
       letter-spacing: .02em;
       color:#fff;
       text-transform: uppercase;
-      text-align:center;
     }
-    .dropInfo p{
+    .dropCenter p{
       margin:0;
       color: rgba(255,255,255,.88);
       font-weight: 800;
       font-size: 13px;
       line-height: 1.35;
-      max-width: 32ch;
-      text-align:center;
+      max-width: 34ch;
     }
-    .btnDrop{
+    .dropBtn{
       border:none;
       background:#fff;
       color:#111;
@@ -548,23 +563,90 @@
       letter-spacing: .04em;
       text-transform: uppercase;
     }
-    .btnDrop:hover{ transform: translateY(-1px); }
+    .dropBtn:hover{ transform: translateY(-1px); }
 
-    /* PARTNERS */
+    /* Highlight strip */
+    .highlight{
+      margin-top: 14px;
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+    }
+    .highlightInner{
+      display:flex;
+      gap:14px;
+      padding: 14px;
+      align-items:stretch;
+    }
+    @media (max-width: 780px){ .highlightInner{ flex-direction:column; } }
+    .hBox{
+      flex:1;
+      border-radius: 16px;
+      background: rgba(0,0,0,.04);
+      border: 1px solid rgba(0,0,0,.06);
+      padding: 14px;
+      min-height: 110px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .hBox::before{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      background: radial-gradient(circle at 20% 30%, rgba(0,200,83,.18), transparent 60%),
+                  radial-gradient(circle at 80% 70%, rgba(225,6,0,.12), transparent 55%);
+      opacity:.85;
+      pointer-events:none;
+    }
+    .hBox > *{ position:relative; z-index:1; }
+    .hTitle{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 900;
+      letter-spacing:.10em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,.74);
+      font-size: 12px;
+      margin:0 0 8px;
+    }
+    .hTxt{
+      font-weight: 900;
+      font-size: 14px;
+      color:#111;
+      margin:0;
+      line-height:1.4;
+    }
+    .tag{
+      margin-top: 10px;
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(0,0,0,.70);
+      background: rgba(255,255,255,.70);
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 10px 12px;
+      border-radius: 14px;
+      line-height:1.35;
+    }
+
+    /* Partners */
     .partnersStrip{
-      margin-top: 22px;
-      padding: 18px 6px 6px;
+      margin-top: 18px;
+      padding: 18px 8px 8px;
       border-top: 3px solid rgba(225,6,0,.85);
       border-bottom: 3px solid rgba(225,6,0,.25);
       background: linear-gradient(180deg, var(--partnersTint), transparent 72%);
       border-radius: 18px;
     }
-    .partnersTitle{
+    .partnersStrip .title{
       font-family: var(--fontTitle);
       font-size: 20px;
       letter-spacing: 2px;
       color: rgba(0,0,0,.55);
-      margin: 0 0 16px;
+      margin: 0 0 14px;
       text-transform: uppercase;
       padding: 0 12px;
       text-align:center;
@@ -613,7 +695,7 @@
     }
     .fLink:hover{ color:#fff; }
 
-    /* ✅ PAYBAR — FIX ANTI-BLOQUEO */
+    /* PAYBAR */
     .paybar{
       position: fixed;
       left: 50%;
@@ -631,19 +713,18 @@
       box-shadow: var(--shadow2);
       opacity:0;
       pointer-events:none;
-      z-index: 80; /* debajo de overlay/drawer */
+      z-index: 80;
       transition: opacity .18s ease, transform .18s ease;
     }
     .paybar.visible{ opacity:1; pointer-events:auto; }
     body.modalOpen .paybar{ opacity:0 !important; pointer-events:none !important; }
-
-    .pbTotal{
+    .pbLeft{ display:flex; flex-direction:column; }
+    .pbLabel{
       font-weight: 900;
       font-size: 11px;
       color: rgba(0,0,0,.60);
       letter-spacing: .12em;
       text-transform: uppercase;
-      text-align:left;
     }
     .pbPrice{
       font-weight: 900;
@@ -673,7 +754,7 @@
     /* drawer carrito */
     .drawer{
       position: fixed; top:0; right:0;
-      width: min(420px, 92vw);
+      width: min(440px, 92vw);
       height: 100%;
       background: rgba(255,255,255,.96);
       border-left: 1px solid rgba(0,0,0,.10);
@@ -698,20 +779,22 @@
       text-transform: uppercase;
       text-align:center;
     }
-    .pmClose{
+    .closeBtn{
       border:none; background: transparent;
       cursor:pointer; font-weight: 900;
       line-height: 1;
       padding: 6px 10px;
       border-radius: 12px;
+      font-size: 28px;
     }
     .dBody{ padding: 12px 16px; overflow:auto; flex: 1; }
-    .cartEmpty{
+    .empty{
       font-weight: 900;
       color: rgba(0,0,0,.55);
       text-align:center;
       padding: 24px 0;
       letter-spacing: .08em;
+      text-transform: uppercase;
     }
     .cItem{
       display:flex; gap: 10px;
@@ -729,7 +812,13 @@
       background: rgba(0,0,0,.08);
       flex:0 0 auto;
     }
-    .cMetaLine{
+    .cName{
+      font-weight:900;
+      font-size:13px;
+      line-height:1.2;
+      margin:0;
+    }
+    .cMeta{
       margin-top: 6px;
       font-size: 12px;
       color: rgba(0,0,0,.65);
@@ -778,38 +867,33 @@
     }
     .sumRow strong{ color:#111; font-weight: 900; }
 
-    .promoBox, .shipBox{
+    .box{
       margin-top: 12px;
       padding: 12px;
       border-radius: 14px;
       background: rgba(0,0,0,.04);
       border: 1px solid rgba(0,0,0,.06);
     }
-    .promoRow{ display:flex; gap: 10px; margin-top: 8px; }
-    .promoInput{
+    .boxTitle{
+      font-weight:900;
+      font-size:12px;
+      color:#222;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .row{ display:flex; gap:10px; margin-top: 8px; }
+    .input{
       flex:1;
       height: 42px;
       border-radius: 12px;
       border: 1px solid rgba(0,0,0,0.14);
       padding: 0 12px;
       font-weight: 900;
-      letter-spacing: .06em;
-      text-transform: uppercase;
+      letter-spacing: .04em;
     }
-    .promoBtn, .shipBtn{
-      height: 42px;
-      border-radius: 12px;
-      border:none;
-      background:#111;
-      color:#fff;
-      font-weight: 900;
-      padding: 0 14px;
-      cursor:pointer;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      white-space:nowrap;
-    }
-    .promoNote, .shipNote{
+    .input.upper{ text-transform: uppercase; }
+    .smallNote{
       margin-top: 8px;
       font-size: 11px;
       color: rgba(0,0,0,.68);
@@ -826,16 +910,44 @@
     .shipGrid .full{ grid-column: 1 / -1; }
     @media (max-width: 420px){ .shipGrid{ grid-template-columns:1fr; } }
 
-    .shipInput{
-      height: 42px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.14);
-      padding: 0 12px;
+    .radioWrap{
+      display:flex;
+      gap:10px;
+      flex-direction:column;
+      margin-top: 10px;
+    }
+    .radio{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.72);
+      cursor:pointer;
+    }
+    .radio input{ margin-top: 3px; }
+    .radio b{ font-weight: 900; }
+    .radio .desc{
+      font-weight: 800;
+      color: rgba(0,0,0,.66);
+      font-size: 12px;
+      line-height: 1.3;
+      margin-top: 3px;
+    }
+    .ok{
+      margin-top: 8px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(0,200,83,.10);
+      border: 1px solid rgba(0,200,83,.18);
       font-weight: 900;
-      letter-spacing: .02em;
+      font-size: 12px;
+      color: rgba(0,0,0,.74);
+      line-height: 1.35;
     }
 
-    .dfBtn{
+    .payBtn{
       width:100%;
       margin-top: 12px;
       border:none;
@@ -848,7 +960,7 @@
       letter-spacing: .06em;
       text-transform: uppercase;
     }
-    .dfBtn:disabled{ opacity:.5; cursor:not-allowed; }
+    .payBtn:disabled{ opacity:.5; cursor:not-allowed; }
     .clearLink{
       display:block;
       text-align:center;
@@ -861,7 +973,7 @@
     }
 
     /* modal catálogo */
-    .prodModal{
+    .modal{
       position: fixed;
       left: 50%;
       top: 50%;
@@ -880,12 +992,12 @@
       flex-direction:column;
       overflow:hidden;
     }
-    .prodModal.active{
+    .modal.active{
       opacity:1;
       pointer-events:auto;
       transform: translate(-50%, -50%) scale(1);
     }
-    .pmHead{
+    .mHead{
       position: sticky;
       top: 0;
       display:flex; justify-content:space-between; align-items:center;
@@ -894,8 +1006,9 @@
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(10px);
       z-index: 2;
+      gap: 10px;
     }
-    .pmTitle{
+    .mTitle{
       font-family: var(--fontTitle);
       font-size: 30px;
       letter-spacing: .03em;
@@ -903,20 +1016,20 @@
       text-align:center;
       width: 100%;
     }
-    .pmBody{ padding: 14px 16px; overflow:auto; flex:1; }
-    .pmGrid{
+    .mBody{ padding: 14px 16px; overflow:auto; flex:1; }
+    .grid{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
     }
-    @media (max-width: 980px){ .pmGrid{ grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px){
-      .prodModal{ width: 96vw; height: 88vh; border-radius: 16px; }
-      .pmGrid{ grid-template-columns: 1fr; }
-      .pmBody{ padding: 12px; }
+    @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px){
+      .modal{ width: 96vw; height: 88vh; border-radius: 16px; }
+      .grid{ grid-template-columns: 1fr; }
+      .mBody{ padding: 12px; }
     }
 
-    .pCard{
+    .card{
       border-radius: 16px;
       overflow:hidden;
       background: #fff;
@@ -926,41 +1039,33 @@
       flex-direction:column;
       text-align:center;
     }
-    .pImg{
+    .img{
       width:100%;
       aspect-ratio: 4 / 5;
       background: rgba(0,0,0,.04);
       overflow:hidden;
     }
-    .pImg img{ width:100%; height:100%; object-fit: cover; display:block; }
-    .pInfo{ padding: 12px; text-align:center; }
-    .pName{
+    .img img{ width:100%; height:100%; object-fit: cover; display:block; }
+    .info{ padding: 12px; text-align:center; }
+    .name{
       font-weight: 900;
       font-size: 13px;
       line-height: 1.25;
       color:#111;
-      text-align:center;
     }
-    .pPrice{
+    .price{
       margin-top: 10px;
       text-align:center;
       font-weight: 900;
       font-size: 16px;
     }
-    .pCoupon{
-      margin-top: 10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size: 12px;
+    .usd{
+      margin-top: 4px;
       font-weight: 900;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-      padding: 10px 10px;
-      border-radius: 12px;
+      font-size: 12px;
+      color: rgba(0,0,0,.55);
     }
-    .pCoupon b{ color: var(--red); }
-    .pBtn{
+    .cta{
       width: 100%;
       margin-top: 10px;
       border:none;
@@ -973,33 +1078,77 @@
       letter-spacing: .06em;
       text-transform: uppercase;
     }
+
+    .sizeRow{
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .sizeRow label{
+      font-size:12px;
+      font-weight:900;
+      color: rgba(0,0,0,.70);
+    }
+    .sizeRow select{
+      flex:1;
+      height:40px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.14);
+      padding:0 10px;
+      font-weight:900;
+      letter-spacing:.06em;
+      background:#fff;
+    }
+
+    /* Simple entrance animation */
+    @media (prefers-reduced-motion: no-preference){
+      .hero, .drop, .highlight, .partnersStrip{
+        animation: popIn .42s ease both;
+      }
+      .drop:nth-child(2){ animation-delay:.06s }
+      .drop:nth-child(3){ animation-delay:.12s }
+      .drop:nth-child(4){ animation-delay:.18s }
+      @keyframes popIn{
+        from{ opacity:0; transform: translateY(10px); }
+        to{ opacity:1; transform: translateY(0); }
+      }
+    }
   </style>
 </head>
-
 <body data-theme="xmas">
   <div class="seasonTint" aria-hidden="true"></div>
   <div class="seasonSnow" aria-hidden="true"></div>
   <div class="seasonSparkles" aria-hidden="true"></div>
 
-  <div class="overlay" id="globalOverlay"></div>
+  <div class="overlay" id="overlay"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <header class="topbar">
     <div class="topInner">
-      <a href="/" class="brandLogo" aria-label="SCORE Official Baja Gear">
-        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async">
+      <a class="brand" href="/" aria-label="SCORE Store">
+        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async" />
+        <div class="txt">
+          <div class="t1">SCORE STORE</div>
+          <div class="t2">Tienda Oficial</div>
+        </div>
       </a>
 
       <div class="navRight">
-        <div class="promoPill" title="Cupón disponible">
-          <span>10% OFF con</span>&nbsp;<b>SCORE10</b>
+        <div class="pill" title="Envío / entrega">
+          <span>MX +</span>&nbsp;<b>TIJUANA</b>
         </div>
 
-        <button class="cartTrigger" id="cartTrigger" type="button" onclick="toggleCart()" aria-label="Abrir carrito">
-          <svg class="cartIconSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M6.5 6h14l-1.6 7.2a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.1 3.8A1.5 1.5 0 0 0 3.6 2.6H2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <button class="cartTrigger" id="openCart" type="button" aria-label="Abrir carrito">
+          <span style="display:flex;align-items:center;gap:10px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+              <path d="M6 6h15l-1.5 8.5a2 2 0 0 1-2 1.6H8.2a2 2 0 0 1-2-1.6L4 3H2"/>
+              <circle cx="9" cy="20" r="1.5"/>
+              <circle cx="18" cy="20" r="1.5"/>
+            </svg>
+            <span style="font-family:var(--fontTitle);font-size:22px;">CARRITO</span>
+          </span>
           <span class="cartCount" id="cartCount">0</span>
         </button>
       </div>
@@ -1010,98 +1159,135 @@
     <section class="hero" aria-label="Hero">
       <div class="heroBg" aria-hidden="true"></div>
       <div class="heroOverlay" aria-hidden="true"></div>
-      <div class="heroDecor" aria-hidden="true"></div>
-
-      <div class="seasonRibbon"><b>NAVIDAD</b> · Año Nuevo</div>
 
       <div class="heroContent">
-        <div class="heroTag">MERCH OFICIAL</div>
-        <h1 class="heroTitle">LEYENDAS<br><span>DEL DESIERTO</span></h1>
-
-        <p class="heroSub">
-          Drops limitados. Compra segura en México. Entra, elige y listo.
+        <div class="tagline">MERCH OFICIAL</div>
+        <h1>Leyendas<br/>del desierto</h1>
+        <p class="sub">
+          Pagos con <b>tarjeta</b> u <b>OXXO</b>. En <b>Tijuana</b> puedes elegir
+          <b>recolección en fábrica</b> o <b>envío local</b>.
+          Fuera de Tijuana: envío nacional <b>desde $250</b>.
         </p>
 
-        <div class="heroActions">
-          <button class="btnHero" type="button" onclick="openProductModal('ALL')">VER DROPS</button>
-          <div class="heroHint">Tip rápido: si ya traes cupón, aplícalo al final. <b>SCORE10</b> te baja el total.</div>
+        <div class="ctaRow">
+          <a class="btn primary" href="#productos">Ver productos</a>
+          <button class="btn" id="openCart2" type="button">Ir al carrito</button>
+          <div class="hint">Tip: si traes cupón, aplícalo al final (si está activo).</div>
         </div>
       </div>
     </section>
 
-    <div class="secHeader">
-      <h2 class="secTitle">DROPS</h2>
-      <span class="secMeta">MX · Official Baja Gear</span>
+    <div class="secHeader" id="productos">
+      <h2>Drops</h2>
+      <div class="meta">MX · Official Baja Gear</div>
     </div>
 
     <div class="gridDrops">
-      <div class="cardDrop" onclick="openProductModal('ALL')" role="button" tabindex="0" aria-label="Abrir catálogo">
+      <div class="drop" data-open="catalog" role="button" tabindex="0" aria-label="Abrir catálogo">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
-          <div class="statusBadge">ACTIVO</div>
-          <div class="dropContent">
-            <img src="/assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000" loading="lazy" decoding="async">
-            <div class="dropInfo">
+          <div class="badge">ACTIVO</div>
+          <div class="dropCenter">
+            <img src="/assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000" loading="lazy" decoding="async" />
+            <div>
               <h3>BAJA 1000</h3>
               <p>Edición 2025 · piezas limitadas.</p>
             </div>
-            <button class="btnDrop" type="button" onclick="event.stopPropagation(); openProductModal('ALL')">VER PRODUCTOS</button>
+            <button class="dropBtn" type="button" data-open="catalog">Ver productos</button>
           </div>
         </div>
       </div>
 
-      <div class="cardDrop" onclick="notifyDrop('San Felipe 250')" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
+      <div class="drop" data-open="notify" data-drop="San Felipe 250" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
-          <div class="dropContent">
-            <img src="/assets/logo-sf250.png" class="dropLogo" alt="San Felipe 250" loading="lazy" decoding="async" style="opacity:.92">
-            <div class="dropInfo">
+          <div class="badge gray">PRÓXIMO</div>
+          <div class="dropCenter">
+            <img src="/assets/logo-sf250.png" class="dropLogo" alt="San Felipe 250" loading="lazy" decoding="async" style="opacity:.92" />
+            <div>
               <h3>PRÓXIMAMENTE</h3>
               <p>San Felipe 250</p>
             </div>
-            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('San Felipe 250')">AVÍSAME</button>
+            <button class="dropBtn" type="button" data-open="notify" data-drop="San Felipe 250">Avísame</button>
           </div>
         </div>
       </div>
 
-      <div class="cardDrop" onclick="notifyDrop('Baja 500')" role="button" tabindex="0" aria-label="Avísame Baja 500">
+      <div class="drop" data-open="notify" data-drop="Baja 500" role="button" tabindex="0" aria-label="Avísame Baja 500">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
-          <div class="dropContent">
-            <img src="/assets/logo-baja500.png" class="dropLogo" alt="Baja 500" loading="lazy" decoding="async" style="opacity:.92">
-            <div class="dropInfo">
+          <div class="badge gray">PRÓXIMO</div>
+          <div class="dropCenter">
+            <img src="/assets/logo-baja500.png" class="dropLogo" alt="Baja 500" loading="lazy" decoding="async" style="opacity:.92" />
+            <div>
               <h3>PRÓXIMAMENTE</h3>
               <p>Baja 500</p>
             </div>
-            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 500')">AVÍSAME</button>
+            <button class="dropBtn" type="button" data-open="notify" data-drop="Baja 500">Avísame</button>
           </div>
         </div>
       </div>
 
-      <!-- ✅ BAJA 400 (asegurado) -->
-      <div class="cardDrop" onclick="notifyDrop('Baja 400')" role="button" tabindex="0" aria-label="Avísame Baja 400">
+      <div class="drop" data-open="notify" data-drop="Baja 400" role="button" tabindex="0" aria-label="Avísame Baja 400">
         <div class="dropBg" aria-hidden="true"></div>
         <div class="dropGlass">
-          <div class="dropContent">
-            <img src="/assets/logo-baja400.png" class="dropLogo" alt="Baja 400" loading="lazy" decoding="async" style="opacity:.92">
-            <div class="dropInfo">
+          <div class="badge gray">PRÓXIMO</div>
+          <div class="dropCenter">
+            <img src="/assets/logo-baja400.png" class="dropLogo" alt="Baja 400" loading="lazy" decoding="async" style="opacity:.92" />
+            <div>
               <h3>PRÓXIMAMENTE</h3>
               <p>Baja 400</p>
             </div>
-            <button class="btnDrop" type="button" onclick="event.stopPropagation(); notifyDrop('Baja 400')">AVÍSAME</button>
+            <button class="dropBtn" type="button" data-open="notify" data-drop="Baja 400">Avísame</button>
           </div>
         </div>
       </div>
     </div>
 
+    <section class="highlight" aria-label="Información rápida">
+      <div class="highlightInner">
+        <div class="hBox">
+          <div class="hTitle">
+            <span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:8px;background:rgba(0,200,83,.16);border:1px solid rgba(0,200,83,.18);">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </span>
+            Compra segura
+          </div>
+          <p class="hTxt">Pagos con tarjeta u OXXO. Confirmación al momento.</p>
+          <div class="tag" aria-hidden="true">
+            <b>Tijuana</b>: recolección $0 / envío local $200<br/>
+            <b>Resto de MX</b>: envío desde $250 (según cotización)
+          </div>
+        </div>
+
+        <div class="hBox">
+          <div class="hTitle">
+            <span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:8px;background:rgba(225,6,0,.10);border:1px solid rgba(225,6,0,.14);">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
+                <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
+                <path d="M9 12l2 2 4-5"/>
+              </svg>
+            </span>
+            Drops limitados
+          </div>
+          <p class="hTxt">Se acaban rápido. Si lo ves disponible, es ahora.</p>
+          <div class="tag" aria-hidden="true">
+            Precios en <b>MXN</b> + referencia en <b>USD</b>.
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="partnersStrip" aria-label="Partners">
-      <div class="partnersTitle">OFFICIAL PARTNERS</div>
+      <div class="title">Official Partners</div>
       <div class="spGrid">
-        <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <img src="/assets/logo-bfgoodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <img src="/assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy" decoding="async">
-        <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async">
+        <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async" />
+        <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async" />
+        <img src="/assets/logo-bfgodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async" />
+        <img src="/assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy" decoding="async" />
+        <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async" />
       </div>
     </section>
   </main>
@@ -1111,10 +1297,10 @@
       <div>
         <h4 style="color:#fff; font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">ÚNICO UNIFORMES</h4>
         <p style="font-size:14px; line-height:1.6; color:#b9b9b9; margin:0;">
-          Fabricante y Patrocinador oficial.<br>
-          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br>
-          <b>unicouniformes.com</b><br><br>
-          ventas.unicotextil@gmail.com<br>
+          Fabricante y Patrocinador oficial.<br/>
+          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br/>
+          <b>unicouniformes.com</b><br/><br/>
+          ventas.unicotextil@gmail.com<br/>
           WhatsApp: 664 236 8701
         </p>
       </div>
@@ -1134,96 +1320,97 @@
   </footer>
 
   <div class="paybar" id="paybar" aria-label="Resumen de compra">
-    <div>
-      <div class="pbTotal" id="pbLabel">TOTAL (MXN)</div>
+    <div class="pbLeft">
+      <div class="pbLabel" id="pbLabel">TOTAL (MXN)</div>
       <div class="pbPrice" id="pbTotal">$0 MXN <small>$0 USD</small></div>
     </div>
-    <button class="pbBtn" type="button" onclick="toggleCart()">VER CARRITO</button>
+    <button class="pbBtn" id="openCart3" type="button">Ver carrito</button>
   </div>
 
-  <aside class="drawer" id="cartDrawer" aria-label="Carrito">
+  <aside class="drawer" id="drawer" aria-label="Carrito">
     <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button class="pmClose" type="button" onclick="toggleCart()" style="font-size:28px" aria-label="Cerrar">&times;</button>
+      <h3 class="dTitle">Tu equipo</h3>
+      <button class="closeBtn" id="closeDrawer" type="button" aria-label="Cerrar">&times;</button>
     </div>
 
     <div class="dBody" id="cartBody">
-      <div class="cartEmpty">CARRITO VACÍO</div>
+      <div class="empty">Carrito vacío</div>
     </div>
 
     <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span><strong id="subTotalLine">$0 MXN</strong></div>
+      <div class="sumRow"><span>Subtotal:</span><strong id="lineSubtotal">$0 MXN</strong></div>
 
-      <div class="sumRow" id="shipLine" style="display:none;">
-        <span>Envío:</span><strong id="shipTotalLine">$0 MXN</strong>
+      <div class="sumRow" id="lineShip" style="display:none;">
+        <span>Envío / entrega:</span><strong id="lineShipping">$0 MXN</strong>
       </div>
 
-      <div class="sumRow" id="promoLine" style="display:none;"><span>Descuento:</span><strong id="promoTotalLine">-$0 MXN</strong></div>
-      <div class="sumRow"><span>Total:</span><strong id="grandTotalLine">$0 MXN</strong></div>
-      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="usdTotalLine">$0 USD</div>
-
-      <!-- SHIPPING -->
-      <div class="shipBox" aria-label="Envío">
-        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          Calcular envío (real)
-        </div>
-
-        <div class="shipGrid">
-          <input class="shipInput" id="shipPostal" placeholder="C.P." inputmode="numeric" maxlength="5" />
-          <input class="shipInput" id="shipState" placeholder="Estado (Ej: BC)" maxlength="3" />
-          <input class="shipInput full" id="shipCity" placeholder="Ciudad" maxlength="40" />
-          <input class="shipInput full" id="shipAddress1" placeholder="Calle y número" maxlength="80" />
-          <button class="shipBtn full" type="button" onclick="quoteShipping()">CALCULAR</button>
-        </div>
-
-        <div class="shipNote" id="shipNote">
-          Tip: con <b>ENVIOFREE</b> el envío se vuelve $0.
-        </div>
+      <div class="sumRow" id="linePromo" style="display:none;">
+        <span>Descuento:</span><strong id="lineDiscount">-$0 MXN</strong>
       </div>
 
-      <!-- PROMOS -->
-      <div class="promoBox" aria-label="Código de promoción">
-        <div style="font-weight:900; font-size:12px; color:#222; letter-spacing:.05em; text-transform:uppercase;">
-          ¿Tienes cupón?
+      <div class="sumRow"><span>Total:</span><strong id="lineTotal">$0 MXN</strong></div>
+      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="lineUsd">$0 USD</div>
+
+      <div class="box" aria-label="Opciones de entrega">
+        <div class="boxTitle">Entrega / Envío</div>
+        <div class="smallNote" id="shipMsg">Elige una opción para calcular el total.</div>
+
+        <div class="radioWrap" id="shipOptions"></div>
+
+        <div class="shipGrid" id="shipForm" style="display:none;">
+          <input class="input full" id="shipName" placeholder="Nombre completo" autocomplete="name" />
+          <input class="input full" id="shipPhone" placeholder="WhatsApp (opcional)" inputmode="tel" autocomplete="tel" />
+          <input class="input" id="shipPostal" placeholder="Ej. 22000" inputmode="numeric" maxlength="5" autocomplete="postal-code" />
+          <input class="input" id="shipState" placeholder="Estado (Ej: BC)" maxlength="3" autocomplete="address-level1" />
+          <input class="input full" id="shipCity" placeholder="Ciudad" maxlength="40" autocomplete="address-level2" />
+          <input class="input full" id="shipAddress1" placeholder="Calle y número" maxlength="80" autocomplete="street-address" />
+          <button class="btn primary" id="btnQuote" type="button" style="width:100%;">Cotizar envío</button>
         </div>
-        <div class="promoRow">
-          <input class="promoInput" id="promoInput" maxlength="24" placeholder="SCORE10" autocomplete="off" inputmode="text">
-          <button class="promoBtn" type="button" onclick="applyPromo()">APLICAR</button>
-        </div>
-        <div class="promoNote" id="promoNote">Puedes probar <b>SCORE10</b> para bajar el total.</div>
+
+        <div class="ok" id="shipOk" style="display:none;"></div>
       </div>
 
-      <button class="dfBtn" id="payBtn" type="button" onclick="goCheckout()">IR A PAGAR</button>
-      <a class="clearLink" onclick="clearCart()">Vaciar Carrito</a>
+      <div class="box" aria-label="Código de promoción" id="promoBox">
+        <div class="boxTitle">Cupón</div>
+        <div class="row">
+          <input class="input upper" id="promoInput" maxlength="24" placeholder="Escribe tu cupón" autocomplete="off" inputmode="text" />
+          <button class="btn primary" id="btnApplyPromo" type="button">Aplicar</button>
+        </div>
+        <div class="smallNote" id="promoNote">Si tu cupón está activo, se aplicará al total.</div>
+      </div>
+
+      <button class="payBtn" id="payBtn" type="button">Ir a pagar</button>
+      <a class="clearLink" id="clearCart">Vaciar carrito</a>
 
       <div style="margin-top:12px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
-        Temporada:
-        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('xmas')">Navidad</span> ·
-        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('halloween')">Halloween</span> ·
-        <span style="text-decoration:underline; cursor:pointer" onclick="setTheme('patrio')">Patrio</span>
+        Tema:
+        <span style="text-decoration:underline; cursor:pointer" data-theme="xmas">Navidad</span> ·
+        <span style="text-decoration:underline; cursor:pointer" data-theme="halloween">Halloween</span> ·
+        <span style="text-decoration:underline; cursor:pointer" data-theme="patrio">Patrio</span>
       </div>
     </div>
   </aside>
 
-  <div class="prodModal" id="pmAll" aria-label="Catálogo">
-    <div class="pmHead">
-      <div class="pmTitle" id="pmAllTitle">CATÁLOGO</div>
-      <button class="pmClose" type="button" onclick="closeProductModal()" aria-label="Cerrar" style="font-size:28px">&times;</button>
+  <div class="modal" id="modalCatalog" aria-label="Catálogo">
+    <div class="mHead">
+      <div class="mTitle" id="catalogTitle">Catálogo</div>
+      <button class="closeBtn" id="closeCatalog" type="button" aria-label="Cerrar">&times;</button>
     </div>
-    <div class="pmBody">
-      <div class="pmGrid" id="pmGridAll"></div>
+    <div class="mBody">
+      <div class="grid" id="catalogGrid"></div>
     </div>
   </div>
-
-  <script>
-    /* =========================
-       SCORE STORE — JS (PRO)
-       Precios: baseMXN +20% (NO mostramos "original")
-       Cupón visible: SCORE10 = -10%
-       Otros cupones: ENVIOFREE (envío $0), BAJA200 (-$200)
-       Cupón secreto (NO visible / NO sugerido): GRTS10 = total GRATIS
-       Envío real: Netlify Function quote_shipping.js (ENVIA_API_KEY)
-       ========================= */
+<script>
+    /* =========================================================
+      SCORE STORE — index.html (Netlify)
+      - Catálogo: /catalog.json (redirect a /data/catalog.json)
+      - Promos: /promos.json (redirect a /data/promos.json)
+      - Checkout: POST /api/create_checkout (redirect -> Netlify Function)
+      - Shipping: POST /api/quote_shipping (redirect -> Netlify Function)
+      - Reglas pedidas:
+        * Tijuana: recolección $0 / envío local $200
+        * Resto de MX: envío desde $250 (según cotización) + mínimo $250
+      ========================================================= */
 
     // PWA
     if ("serviceWorker" in navigator) {
@@ -1232,93 +1419,119 @@
       });
     }
 
-    let FX_MXN_PER_USD = 17.50;
+    // Config
+    const API_CHECKOUT = "/api/create_checkout";
+    const API_SHIPPING = "/api/quote_shipping";
 
-    const PRICE_MARKUP = 0.20;
-    const PUBLIC_COUPON = "SCORE10";
-    const SECRET_FREE_CODE = "GRTS10";
+    const LS_CART = "score_cart_v9";
+    const LS_SHIP = "score_ship_v3";
+    const LS_THEME = "score_theme_v2";
 
-    const API_CHECKOUT = "/.netlify/functions/create_checkout";
-    const API_SHIPPING = "/.netlify/functions/quote_shipping";
+    const PRICE_MARKUP = 0.20; // UI markup (si tu catálogo ya trae precio final, pon 0)
+    let FX_MXN_PER_USD = 17.00; // default, puede venir del catalog
 
-    const LS_KEY = "score_cart_v7";
-    const LS_SHIP = "score_ship_v1";
-    const THEME_KEY = "score_theme";
+    // Helpers
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 
-    const SIZES = ["S","M","L","XL","2XL"];
+    const fmtMXN = (n)=> Number(n||0).toLocaleString("es-MX",{style:"currency",currency:"MXN"});
+    const fmtUSD = (n)=> Number(n||0).toLocaleString("en-US",{style:"currency",currency:"USD"});
+    const mxnToUsd = (mxn)=> Number(mxn||0) / Number(FX_MXN_PER_USD||17);
 
-    let cart = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
-    let CATALOG = null;
-    let PROMOS = null;
+    const escapeHtml = (str)=> String(str||"").replace(/[&<>"']/g,(s)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
 
-    let promoApplied = null;
-    let shippingQuote = JSON.parse(localStorage.getItem(LS_SHIP) || "null");
+    const normCode = (s)=> String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
+    const roundMXN = (n)=> Math.round(Number(n||0));
 
-    function mxnToUsd(mxn){ return Number(mxn || 0) / FX_MXN_PER_USD; }
-    function moneyMXN(n){ return Number(n||0).toLocaleString("es-MX", { style:"currency", currency:"MXN" }); }
-    function moneyUSD(n){ return Number(n||0).toLocaleString("en-US", { style:"currency", currency:"USD" }); }
-    function escapeHtml(str){
-      return String(str||"").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-    }
-    function normCode(s){
-      return String(s||"").toUpperCase().replace(/[^A-Z0-9_-]/g,"").trim();
-    }
-    function roundMXN(n){ return Math.round(Number(n||0)); }
+    const needsSize = (name)=> /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
 
     function toast(msg){
-      const el = document.getElementById("toast");
+      const el = $("#toast");
       el.textContent = msg;
       el.classList.add("show");
-      clearTimeout(window.__toastTimer);
-      window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2400);
+      clearTimeout(window.__t);
+      window.__t = setTimeout(()=> el.classList.remove("show"), 2400);
     }
 
+    // Theme
     function setTheme(theme){
       document.body.setAttribute("data-theme", theme);
-      localStorage.setItem(THEME_KEY, theme);
+      localStorage.setItem(LS_THEME, theme);
       toast(`Tema: ${theme}`);
     }
     (function initTheme(){
-      const saved = localStorage.getItem(THEME_KEY);
+      const saved = localStorage.getItem(LS_THEME);
       if(saved) document.body.setAttribute("data-theme", saved);
     })();
+    $$("[data-theme]").forEach(el=>{
+      el.addEventListener("click", ()=> setTheme(el.getAttribute("data-theme")));
+    });
 
-    const overlay = document.getElementById("globalOverlay");
-    const drawer  = document.getElementById("cartDrawer");
-    const pb      = document.getElementById("paybar");
+    // Modal / Drawer / Overlay
+    const overlay = $("#overlay");
+    const drawer = $("#drawer");
+    const paybar = $("#paybar");
+    const modalCatalog = $("#modalCatalog");
 
+    function openOverlay(){
+      overlay.classList.add("active");
+      document.body.classList.add("modalOpen");
+    }
     function closeOverlay(){
       overlay.classList.remove("active");
       drawer.classList.remove("active");
-      closeProductModal();
+      modalCatalog.classList.remove("active");
       document.body.classList.remove("modalOpen");
+      renderPaybar();
     }
     overlay.addEventListener("click", closeOverlay);
+    document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeOverlay(); });
 
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape") closeOverlay();
-    });
-
-    function saveCart(){ localStorage.setItem(LS_KEY, JSON.stringify(cart)); }
-    function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
-    function cartSubtotalMXN(){ return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0); }
-
-    function toggleCart(){
-      if(drawer.classList.contains("active")) closeOverlay();
-      else{
-        overlay.classList.add("active");
-        drawer.classList.add("active");
-        document.body.classList.add("modalOpen");
-        updateCartUI();
-      }
+    function openDrawer(){
+      drawer.classList.add("active");
+      openOverlay();
+      renderCart();
+    }
+    function closeDrawer(){
+      drawer.classList.remove("active");
+      if(!modalCatalog.classList.contains("active")) closeOverlay();
     }
 
-    document.addEventListener("keydown", (e)=>{
-      const el = e.target;
-      if(!el) return;
-      if((e.key === "Enter" || e.key === " ") && el.classList?.contains("cardDrop")){
+    $("#openCart").addEventListener("click", openDrawer);
+    $("#openCart2").addEventListener("click", openDrawer);
+    $("#openCart3").addEventListener("click", openDrawer);
+    $("#closeDrawer").addEventListener("click", closeDrawer);
+
+    // Open catalog
+    function openCatalog(){
+      modalCatalog.classList.add("active");
+      openOverlay();
+      renderCatalog();
+    }
+    $("#closeCatalog").addEventListener("click", ()=>{
+      modalCatalog.classList.remove("active");
+      if(!drawer.classList.contains("active")) closeOverlay();
+    });
+
+    // Drop click handlers
+    $$("[data-open='catalog']").forEach(el=>{
+      el.addEventListener("click",(e)=>{ e.preventDefault(); openCatalog(); });
+    });
+    $$("[data-open='notify']").forEach(el=>{
+      el.addEventListener("click",(e)=>{
         e.preventDefault();
-        el.click();
+        notifyDrop(el.getAttribute("data-drop") || "Drop");
+      });
+    });
+
+    // Keyboard for drops
+    document.addEventListener("keydown",(e)=>{
+      const t = e.target;
+      if(!t) return;
+      if((e.key==="Enter" || e.key===" ") && t.classList?.contains("drop")){
+        e.preventDefault(); t.click();
       }
     });
 
@@ -1331,103 +1544,87 @@
       window.location.href = `mailto:ventas.unicotextil@gmail.com?subject=${subject}&body=${body}`;
     }
 
-    function needsSize(name){
-      return /sudadera|camisa|chamarra|chaqueta|hoodie|playera|camiseta/i.test(String(name||""));
-    }
+    // Data
+    let CATALOG = null;
+    let PROMOS = null;
+
+    // Cart state
+    let cart = JSON.parse(localStorage.getItem(LS_CART) || "[]");
+    let promoApplied = null;
+    let shippingState = JSON.parse(localStorage.getItem(LS_SHIP) || "null");
+
+    function saveCart(){ localStorage.setItem(LS_CART, JSON.stringify(cart)); }
+    function cartCount(){ return cart.reduce((a,b)=> a + Number(b.qty||0), 0); }
 
     function priceListFromBase(baseMXN){
-      return roundMXN(Number(baseMXN||0) * (1 + PRICE_MARKUP));
-    }
-    function priceWithPercent(listMXN, pct){
-      return roundMXN(Number(listMXN||0) * (1 - Number(pct||0)));
+      return roundMXN(Number(baseMXN||0) * (1 + Number(PRICE_MARKUP||0)));
     }
 
+    // Load catalog/promos
     async function loadCatalog(){
       const v = Date.now().toString().slice(-6);
-      let res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
-      if(!res || !res.ok) throw new Error("catalog_not_found");
+      const res = await fetch(`/catalog.json?v=${v}`, { cache:"no-store" });
+      if(!res.ok) throw new Error("catalog_not_found");
       CATALOG = await res.json();
 
-      if(CATALOG?.site?.fx_mxn_per_usd){
-        const fx = Number(CATALOG.site.fx_mxn_per_usd);
-        if(!Number.isNaN(fx) && fx > 0) FX_MXN_PER_USD = fx;
-      }
+      const fx = Number(CATALOG?.site?.fx_mxn_per_usd || CATALOG?.fx_mxn_per_usd);
+      if(!Number.isNaN(fx) && fx>0) FX_MXN_PER_USD = fx;
     }
 
     async function loadPromos(){
       const v = Date.now().toString().slice(-6);
-      let res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
+      const res = await fetch(`/promos.json?v=${v}`, { cache:"no-store" }).catch(()=>null);
       if(!res || !res.ok){
-        PROMOS = { rules: [
-          { code: "SCORE10", type:"percent", value:0.10, active:true },
-          { code: "ENVIOFREE", type:"free_shipping", value:0, active:true },
-          { code: "BAJA200", type:"fixed_mxn", value:200, active:true },
-        ]};
+        PROMOS = { rules: [] };
         return;
       }
-      PROMOS = await res.json().catch(()=>null);
+      PROMOS = await res.json().catch(()=>({rules:[]}));
       if(!PROMOS) PROMOS = { rules: [] };
     }
 
-    function pmDivider(label){
-      return `
-        <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px; margin:10px 0 2px; opacity:.9;">
-          <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
-          <div style="font-weight:900; letter-spacing:.12em; font-size:11px; color: rgba(0,0,0,.65); text-transform:uppercase; white-space: nowrap; text-align:center;">
-            ${escapeHtml(label)}
-          </div>
-          <div style="flex:1; height:1px; background: rgba(0,0,0,.16);"></div>
-        </div>
-      `;
-    }
-
+    // Catalog UI
+    const SIZES = ["S","M","L","XL","2XL"];
     function cardTpl(p){
       const base = Number(p.baseMXN||0);
       const list = priceListFromBase(base);
-      const withScore10 = priceWithPercent(list, 0.10);
+      const usd = mxnToUsd(list);
       const sized = needsSize(p.name);
 
       return `
-        <div class="pCard">
-          <div class="pImg">
-            <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" width="900" height="1125"
-                 onerror="this.onerror=null;this.src='/assets/placeholder.jpg';">
+        <div class="card">
+          <div class="img">
+            <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async"
+              onerror="this.onerror=null;this.src='/assets/hero.png';" />
           </div>
-          <div class="pInfo">
-            <div class="pName">${escapeHtml(p.name)}</div>
-            <div class="pPrice">${moneyMXN(list)} MXN</div>
-            <div class="pCoupon" title="Cupón disponible">
-              <span>Con <b>${PUBLIC_COUPON}</b></span>
-              <span><b>${moneyMXN(withScore10)}</b></span>
-            </div>
+          <div class="info">
+            <div class="name">${escapeHtml(p.name)}</div>
+            <div class="price">${fmtMXN(list)}</div>
+            <div class="usd">${fmtUSD(usd)} USD</div>
 
             ${sized ? `
-              <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                <label style="font-size:12px; font-weight:900; color: rgba(0,0,0,.70);" for="size_${p.id}">Talla</label>
-                <select style="flex:1; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.14); padding:0 10px; font-weight:900; letter-spacing:.06em;"
-                        id="size_${p.id}">
-                  ${SIZES.map(s => `<option value="${s}">${s}</option>`).join("")}
+              <div class="sizeRow">
+                <label for="size_${escapeHtml(p.id)}">Talla</label>
+                <select id="size_${escapeHtml(p.id)}">
+                  ${SIZES.map(s=>`<option value="${s}">${s}</option>`).join("")}
                 </select>
               </div>
             ` : ``}
 
-            <button class="pBtn" type="button" onclick="addToCart('${escapeHtml(p.id)}')">AGREGAR</button>
+            <button class="cta" type="button" data-add="${escapeHtml(p.id)}">Agregar</button>
           </div>
         </div>
       `;
     }
 
-    function renderCatalogAll(){
-      const grid = document.getElementById("pmGridAll");
+    function renderCatalog(){
+      const grid = $("#catalogGrid");
       if(!CATALOG || !Array.isArray(CATALOG.products)){
-        grid.innerHTML = `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">
-          No se pudo cargar el catálogo. Revisa <code>/catalog.json</code>.
-        </div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1;font-weight:900;">No se pudo cargar el catálogo.</div>`;
         return;
       }
 
       const sections = Array.isArray(CATALOG.sections) ? [...CATALOG.sections] : [];
-      sections.sort((a,b)=> (a.order||0) - (b.order||0));
+      sections.sort((a,b)=> (a.order||0)-(b.order||0));
 
       const products = CATALOG.products;
       let html = "";
@@ -1436,54 +1633,42 @@
         for(const s of sections){
           const items = products.filter(p => String(p.sectionId||"") === String(s.id||""));
           if(!items.length) continue;
-          html += pmDivider(s.title || s.id);
+          html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:8px 0 0;">
+            <div style="flex:1;height:1px;background:rgba(0,0,0,.14);"></div>
+            <div style="font-weight:900;letter-spacing:.12em;font-size:11px;color:rgba(0,0,0,.65);text-transform:uppercase;white-space:nowrap;">
+              ${escapeHtml(s.title || s.id)}
+            </div>
+            <div style="flex:1;height:1px;background:rgba(0,0,0,.14);"></div>
+          </div>`;
           html += items.map(cardTpl).join("");
-        }
-        const orphan = products.filter(p => !p.sectionId);
-        if(orphan.length){
-          html += pmDivider("Más productos");
-          html += orphan.map(cardTpl).join("");
         }
       } else {
         html = products.map(cardTpl).join("");
       }
 
-      grid.innerHTML = html || `<div style="grid-column:1/-1; padding:10px; font-weight:900; color:#111;">Catálogo vacío.</div>`;
-    }
+      grid.innerHTML = html || `<div style="grid-column:1/-1;font-weight:900;">Catálogo vacío.</div>`;
 
-    function openProductModal(id){
-      if(id === "ALL"){
-        renderCatalogAll();
-        document.getElementById("pmAll").classList.add("active");
-        overlay.classList.add("active");
-        document.body.classList.add("modalOpen");
-      }
-    }
-    function closeProductModal(){
-      document.querySelectorAll(".prodModal").forEach(el => el.classList.remove("active"));
+      // Add listeners
+      $$("[data-add]", grid).forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          addToCart(btn.getAttribute("data-add"));
+        });
+      });
     }
 
     function addToCart(productId){
-      if(!CATALOG || !Array.isArray(CATALOG.products)){
-        toast("Catálogo no cargado…");
-        return;
-      }
-      const p = CATALOG.products.find(x => String(x.id) === String(productId));
+      const p = CATALOG?.products?.find(x => String(x.id)===String(productId));
       if(!p) return;
 
       const base = Number(p.baseMXN||0);
       const list = priceListFromBase(base);
-      if(!list){
-        toast("Falta baseMXN en el producto.");
-        return;
-      }
+      if(!list){ toast("Falta baseMXN"); return; }
 
-      const sizeEl = document.getElementById(`size_${productId}`);
+      const sizeEl = $(`#size_${CSS.escape(String(productId))}`);
       const size = sizeEl ? sizeEl.value : "ÚNICA";
 
       const key = `${p.id}_${size}`;
-      const exist = cart.find(i => i.key === key);
-
+      const exist = cart.find(i => i.key===key);
       if(exist) exist.qty++;
       else cart.push({
         key,
@@ -1496,114 +1681,152 @@
       });
 
       saveCart();
-      updateCartUI();
+      promoApplied = promoApplied; // keep
       toast("Agregado al carrito");
+      renderAll();
     }
+function inc(idx){ cart[idx].qty++; saveCart(); renderAll(); }
+    function dec(idx){ cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1); saveCart(); renderAll(); }
+    function rem(idx){ cart.splice(idx,1); saveCart(); toast("Producto eliminado"); renderAll(); }
 
-    function inc(idx){ cart[idx].qty++; saveCart(); updateCartUI(); }
-    function dec(idx){ cart[idx].qty = Math.max(1, (cart[idx].qty||1) - 1); saveCart(); updateCartUI(); }
-    function rem(idx){ cart.splice(idx,1); saveCart(); updateCartUI(); toast("Producto eliminado"); }
-
-    function clearCart(){
+    $("#clearCart").addEventListener("click", ()=>{
       if(confirm("¿Vaciar carrito?")){
         cart = [];
         promoApplied = null;
-        shippingQuote = null;
+        shippingState = null;
         localStorage.removeItem(LS_SHIP);
         saveCart();
-        updateCartUI();
         toast("Carrito vacío");
+        renderAll();
       }
+    });
+
+    // Shipping rules
+    function isTijuanaByPostal(cp){
+      // “Tijuana-ish” cp ranges (heurística simple)
+      const n = Number(String(cp||"").trim());
+      if(!n) return false;
+      return (n>=22000 && n<=22699);
     }
 
-    function findPromoRule(code){
-      const c = normCode(code);
-      if(!c) return null;
-
-      if(c === SECRET_FREE_CODE){
-        return { code: c, type:"free_total", value: 0, active:true };
-      }
-
-      const rules = PROMOS?.rules;
-      if(Array.isArray(rules)){
-        const r = rules.find(x => normCode(x.code) === c && x.active);
-        if(r) return r;
-      }
-
-      if(c === PUBLIC_COUPON){
-        return { code: c, type:"percent", value: 0.10, active:true };
-      }
-
-      return null;
+    function shipRadio(value, title, priceLabel, desc){
+      const id = `ship_${value}`;
+      const wrap = document.createElement("label");
+      wrap.className = "radio";
+      wrap.innerHTML = `
+        <input type="radio" name="shipMethod" value="${escapeHtml(value)}" ${shippingState?.method===value?"checked":""}/>
+        <div>
+          <b>${escapeHtml(title)}</b> · ${escapeHtml(priceLabel)}
+          <div class="desc">${escapeHtml(desc||"")}</div>
+        </div>
+      `;
+      wrap.addEventListener("click", ()=>{
+        const r = wrap.querySelector("input");
+        r.checked = true;
+        onShipMethodChange(value);
+      });
+      return wrap;
     }
 
-    function computeDiscount(subtotal){
-      if(!promoApplied) return 0;
+    function onShipMethodChange(method){
+      shippingState = shippingState || {};
+      shippingState.method = method;
 
-      if(promoApplied.type === "percent"){
-        return Math.max(0, roundMXN(subtotal * Number(promoApplied.value||0)));
+      // reset quote if switching
+      if(method !== "national"){
+        shippingState.quote = null;
       }
-      if(promoApplied.type === "fixed_mxn"){
-        return Math.max(0, roundMXN(Number(promoApplied.value||0)));
-      }
-      if(promoApplied.type === "free_total"){
-        return subtotal;
-      }
-      return 0;
+      localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+      updateShipUI();
+      renderAll();
     }
 
-    function isFreeShipping(){
-      return promoApplied && promoApplied.type === "free_shipping";
+    function onShipChange(){
+      // Keep shippingState fields updated
+      shippingState = shippingState || {};
+      shippingState.name = $("#shipName").value.trim();
+      shippingState.phone = $("#shipPhone").value.trim();
+      shippingState.cp = $("#shipPostal").value.trim();
+      shippingState.state = $("#shipState").value.trim().toUpperCase();
+      shippingState.city = $("#shipCity").value.trim();
+      shippingState.addr1 = $("#shipAddress1").value.trim();
+      localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+      renderAll(false);
     }
 
-    function applyPromo(){
-      const input = document.getElementById("promoInput");
-      const note  = document.getElementById("promoNote");
-      const code  = normCode(input.value);
+    function updateShipUI(){
+      const optWrap = $("#shipOptions");
+      optWrap.innerHTML = "";
 
-      const rule = findPromoRule(code);
-      if(!rule){
-        promoApplied = null;
-        note.textContent = code ? `Código no válido.` : `Escribe un código para aplicarlo.`;
-        toast(code ? "Código no válido" : "Escribe un código");
-        updateCartUI();
-        return;
+      // Methods (Tijuana pickup / Tijuana delivery / national)
+      optWrap.appendChild(shipRadio(
+        "tijuana_pickup",
+        "Recolección en fábrica (Tijuana)",
+        "$0",
+        "Pasa por tu pedido (te contactamos para coordinar)."
+      ));
+      optWrap.appendChild(shipRadio(
+        "tijuana_delivery",
+        "Envío local (Tijuana)",
+        "$200",
+        "Entregas dentro de Tijuana."
+      ));
+      optWrap.appendChild(shipRadio(
+        "national",
+        "Envío nacional (MX)",
+        "desde $250",
+        "Cotización automática por C.P. (mínimo $250)."
+      ));
+
+      const method = shippingState?.method || "tijuana_pickup";
+      shippingState = shippingState || {};
+      shippingState.method = method;
+
+      // Toggle form
+      const showForm = (method === "national");
+      $("#shipForm").style.display = showForm ? "grid" : "none";
+      $("#shipOk").style.display = "none";
+
+      $("#shipMsg").textContent = "Elige una opción para calcular el total.";
+
+      if(showForm){
+        $("#shipPostal").value = shippingState.cp || "";
+        $("#shipState").value = shippingState.state || "";
+        $("#shipCity").value = shippingState.city || "";
+        $("#shipAddress1").value = shippingState.addr1 || "";
+        $("#shipName").value = shippingState.name || "";
+        $("#shipPhone").value = shippingState.phone || "";
+
+        const q = shippingState.quote;
+        if(q?.ok){
+          const mxn = q.options?.[0]?.mxn ?? 250;
+          renderShipMsg("Envío estimado", "Estimado: " + fmtMXN(mxn) + " (mínimo $250 aplicado).");
+        } else {
+          renderShipMsg("Envío nacional", "Escribe tu dirección y toca “Cotizar envío”.");
+        }
+      } else {
+        // Tijuana methods
+        if(method==="tijuana_pickup") renderShipMsg("Recolección en fábrica", "Te contactamos para coordinar horario y entrega.");
+        if(method==="tijuana_delivery") renderShipMsg("Envío local", "Costo fijo: $200 MXN. (Si hay zona especial, te avisamos).");
       }
 
-      promoApplied = { code: normCode(rule.code), type: rule.type, value: Number(rule.value||0) };
+      localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+    }
 
-      note.innerHTML = `✅ Cupón aplicado.`;
-      toast("Cupón aplicado");
-
-      if(isFreeShipping()){
-        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
-        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-      }
-
-      updateCartUI();
+    function renderShipMsg(title, msg){
+      $("#shipMsg").innerHTML = `<b>${escapeHtml(title)}:</b> ${escapeHtml(msg)}`;
     }
 
     async function quoteShipping(){
-      const cp = String(document.getElementById("shipPostal").value || "").trim();
-      const st = String(document.getElementById("shipState").value || "").trim().toUpperCase();
-      const city = String(document.getElementById("shipCity").value || "").trim();
-      const addr1 = String(document.getElementById("shipAddress1").value || "").trim();
-      const note = document.getElementById("shipNote");
-
-      if(isFreeShipping()){
-        shippingQuote = { ok:true, mxn:0, carrier:"PROMO", service:"ENVIOFREE", eta_days:null, raw:null };
-        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        note.innerHTML = `✅ Envío en $0 por cupón <b>ENVIOFREE</b>.`;
-        toast("Envío gratis aplicado");
-        updateCartUI();
-        return;
-      }
+      const cp = ($("#shipPostal").value || "").trim();
+      const st = ($("#shipState").value || "").trim().toUpperCase();
+      const city = ($("#shipCity").value || "").trim();
+      const addr1 = ($("#shipAddress1").value || "").trim();
 
       if(cp.length !== 5){ toast("Pon un C.P. válido"); return; }
-      if(st.length < 2 || city.length < 2 || addr1.length < 5){ toast("Faltan datos (Estado, Ciudad y Calle)"); return; }
+      if(st.length < 2 || city.length < 2 || addr1.length < 5){ toast("Faltan datos"); return; }
 
-      note.textContent = "Cotizando envío…";
-
+      renderShipMsg("Cotizando", "Un momento…");
       try{
         const payload = {
           to: { postal_code: cp, state_code: st, city, address1: addr1, country_code:"MX" },
@@ -1618,151 +1841,304 @@
 
         const data = await res.json().catch(()=>null);
         if(!res.ok || !data || !data.ok){
-          shippingQuote = null;
-          localStorage.removeItem(LS_SHIP);
-          note.textContent = "No se pudo cotizar. Intenta de nuevo.";
-          toast("No se pudo cotizar envío");
-          updateCartUI();
+          // fallback: use minimum 250
+          shippingState.quote = { ok:false, options:[{mxn:250}] };
+          localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+          renderShipMsg("Sin cotización automática", "Usando mínimo 250 MXN. (Si falla al pagar, te pedirá cotización manual).");
+          toast("Cotización no disponible, usando mínimo $250");
+          renderAll();
           return;
         }
 
-        shippingQuote = data.quote;
-        localStorage.setItem(LS_SHIP, JSON.stringify(shippingQuote));
-        note.innerHTML = `✅ ${moneyMXN(shippingQuote.mxn)} — ${escapeHtml(shippingQuote.carrier || "Carrier")} / ${escapeHtml(shippingQuote.service || "Servicio")}`;
+        // normalize & apply minimum 250
+        const mxn = data.options?.[0]?.mxn ?? 250;
+        const fixed = Math.max(250, Number(mxn||0));
+        shippingState.quote = data;
+        shippingState.quote.options = [{...data.options?.[0], mxn: fixed}];
+
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+        $("#shipOk").style.display = "block";
+        $("#shipOk").textContent = `✅ Envío estimado: ${fmtMXN(fixed)} (mínimo $250)`;
+        renderShipMsg("Cotización lista", "Ya puedes pagar.");
         toast("Envío cotizado");
-        updateCartUI();
+        renderAll();
       }catch(e){
-        shippingQuote = null;
-        localStorage.removeItem(LS_SHIP);
-        note.textContent = "No se pudo cotizar. Intenta de nuevo.";
-        toast("Error cotizando envío");
-        updateCartUI();
+        shippingState.quote = { ok:false, options:[{mxn:250}] };
+        localStorage.setItem(LS_SHIP, JSON.stringify(shippingState));
+        renderShipMsg("Error", "Usando mínimo 250 MXN.");
+        toast("Error al cotizar, usando mínimo $250");
+        renderAll();
       }
     }
 
-    function updateCartUI(){
-      document.getElementById("cartCount").innerText = cartCount();
+    $("#btnQuote").addEventListener("click", quoteShipping);
 
-      const subtotal = cartSubtotalMXN();
+    // Promo logic (UI visible; promos pueden estar desactivadas desde promos.json)
+    function findPromoRule(code){
+      const c = normCode(code);
+      if(!c) return null;
 
-      const shipLine = document.getElementById("shipLine");
-      let shipMXN = 0;
-      if(isFreeShipping()){
-        shipMXN = 0;
-        shipLine.style.display = "flex";
-        document.getElementById("shipTotalLine").textContent = moneyMXN(0);
-      } else if(shippingQuote && shippingQuote.ok){
-        shipMXN = Number(shippingQuote.mxn||0);
-        shipLine.style.display = "flex";
-        document.getElementById("shipTotalLine").textContent = moneyMXN(shipMXN);
+      const rules = PROMOS?.rules;
+      if(Array.isArray(rules)){
+        const r = rules.find(x => normCode(x.code)===c && x.active);
+        if(r) return r;
+      }
+      return null;
+    }
+
+    function computeDiscount(subtotal){
+      if(!promoApplied) return 0;
+      const type = promoApplied.type;
+
+      if(type==="percent"){
+        return Math.max(0, roundMXN(subtotal * Number(promoApplied.value||0)));
+      }
+      if(type==="fixed_mxn"){
+        return Math.max(0, roundMXN(Number(promoApplied.value||0)));
+      }
+      if(type==="free_total"){
+        return subtotal;
+      }
+      return 0;
+    }
+
+    function getShippingMXN(subtotal){
+      const method = shippingState?.method || "tijuana_pickup";
+
+      if(method === "tijuana_pickup") return 0;
+      if(method === "tijuana_delivery") return 200;
+
+      // national
+      const q = shippingState?.quote;
+      let shipping = 0;
+
+      if(q?.ok){
+        shipping = q?.options?.[0]?.mxn ?? 250;
+        shipping = Math.max(250, Number(shipping||0));
       } else {
-        shipLine.style.display = "none";
+        // minimum fallback
+        const cp = shippingState?.cp || "";
+        const tij = isTijuanaByPostal(cp); // if someone enters TJ cp but picks national, keep min
+        shipping = tij ? 0 : 250;
       }
 
-      const off = computeDiscount(subtotal);
-      let totalMXN = Math.max(0, subtotal - off) + Math.max(0, shipMXN);
+      return Number(shipping||0);
+    }
 
-      if(promoApplied && promoApplied.type === "free_total"){
-        totalMXN = 0;
-      }
-
-      const totalUSD = mxnToUsd(totalMXN);
-
-      const pbLabel = document.getElementById("pbLabel");
-      pbLabel.textContent = promoApplied ? "TOTAL (MXN) · Cupón aplicado" : "TOTAL (MXN)";
-      pb.classList.toggle("visible", cartCount() > 0 && !document.body.classList.contains("modalOpen"));
-
-      document.getElementById("pbTotal").innerHTML = `
-        ${moneyMXN(totalMXN)}
-        <small>${moneyUSD(totalUSD)} USD</small>
-      `;
-
-      document.getElementById("subTotalLine").textContent = moneyMXN(subtotal);
-
-      const promoLine = document.getElementById("promoLine");
-      if(off > 0 && !(promoApplied && promoApplied.type === "free_total")){
-        promoLine.style.display = "flex";
-        document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(off)}`;
-      } else if(promoApplied && promoApplied.type === "free_total"){
-        promoLine.style.display = "flex";
-        document.getElementById("promoTotalLine").textContent = `- ${moneyMXN(subtotal)}`;
+    function renderPaybar(){
+      const count = cartCount();
+      if(count>0 && !document.body.classList.contains("modalOpen")){
+        paybar.classList.add("visible");
       } else {
-        promoLine.style.display = "none";
+        paybar.classList.remove("visible");
       }
+    }
 
-      document.getElementById("grandTotalLine").textContent = moneyMXN(totalMXN);
-      document.getElementById("usdTotalLine").textContent = moneyUSD(totalUSD);
+    function cartSubtotalMXN(){
+      return cart.reduce((a,b)=> a + (Number(b.priceMXN||0) * Number(b.qty||0)), 0);
+    }
 
-      const body = document.getElementById("cartBody");
+    function renderCart(){
+      $("#cartCount").textContent = String(cartCount());
+
+      const body = $("#cartBody");
       if(!cart.length){
-        body.innerHTML = `<div class="cartEmpty">CARRITO VACÍO</div>`;
-        document.getElementById("payBtn").disabled = true;
+        body.innerHTML = `<div class="empty">Carrito vacío</div>`;
+        $("#payBtn").disabled = true;
+        renderAll(false);
         return;
       }
 
-      document.getElementById("payBtn").disabled = false;
+      $("#payBtn").disabled = false;
 
-      body.innerHTML = cart.map((it, idx) => `
+      body.innerHTML = cart.map((it, idx)=>`
         <div class="cItem">
           <img class="cImg" src="${escapeHtml(it.img)}" alt="${escapeHtml(it.name)}"
-               onerror="this.onerror=null;this.src='/assets/placeholder.jpg';" />
+            onerror="this.onerror=null;this.src='/assets/hero.png';" />
           <div style="flex:1; min-width:0;">
-            <div style="font-weight:900; font-size:13px; line-height:1.2;">${escapeHtml(it.name)}</div>
-            <div class="cMetaLine">Talla: <b>${escapeHtml(it.size)}</b> · Cantidad: <b>${it.qty}</b></div>
-            <div class="cPrice">${moneyMXN(it.priceMXN)} MXN</div>
+            <p class="cName">${escapeHtml(it.name)}</p>
+            <div class="cMeta">Talla: <b>${escapeHtml(it.size)}</b> · Cantidad: <b>${it.qty}</b></div>
+            <div class="cPrice">${fmtMXN(it.priceMXN)}</div>
 
             <div class="cActions">
-              <button class="qtyBtn" onclick="dec(${idx})" aria-label="menos">-</button>
-              <button class="qtyBtn" onclick="inc(${idx})" aria-label="más">+</button>
-              <button class="rmBtn" onclick="rem(${idx})">Quitar</button>
+              <button class="qtyBtn" type="button" data-dec="${idx}">-</button>
+              <button class="qtyBtn" type="button" data-inc="${idx}">+</button>
+              <button class="rmBtn" type="button" data-rm="${idx}">Quitar</button>
             </div>
           </div>
         </div>
       `).join("");
+
+      $$("[data-inc]").forEach(b=> b.addEventListener("click", ()=> inc(Number(b.getAttribute("data-inc")))));
+      $$("[data-dec]").forEach(b=> b.addEventListener("click", ()=> dec(Number(b.getAttribute("data-dec")))));
+      $$("[data-rm]").forEach(b=> b.addEventListener("click", ()=> rem(Number(b.getAttribute("data-rm")))));
     }
 
+    function renderTotals(){
+      const subtotal = cartSubtotalMXN();
+      const shipping = cart.length ? getShippingMXN(subtotal) : 0;
+      const discount = computeDiscount(subtotal);
+
+      let total = Math.max(0, subtotal - discount) + Math.max(0, shipping);
+      if(promoApplied?.type==="free_total") total = 0;
+
+      const usd = mxnToUsd(total);
+
+      $("#lineSubtotal").textContent = fmtMXN(subtotal);
+      $("#lineTotal").textContent = fmtMXN(total);
+      $("#lineUsd").textContent = fmtUSD(usd) + " USD";
+
+      $("#pbLabel").textContent = promoApplied ? "TOTAL (MXN) · Cupón" : "TOTAL (MXN)";
+      $("#pbTotal").innerHTML = `${fmtMXN(total)} <small>${fmtUSD(usd)} USD</small>`;
+
+      // shipping line
+      if(cart.length){
+        $("#lineShip").style.display = "flex";
+        $("#lineShipping").textContent = fmtMXN(shipping);
+      } else {
+        $("#lineShip").style.display = "none";
+      }
+
+      // promo line
+      if(discount>0 && !(promoApplied?.type==="free_total")){
+        $("#linePromo").style.display = "flex";
+        $("#lineDiscount").textContent = "- " + fmtMXN(discount);
+      } else if(promoApplied?.type==="free_total"){
+        $("#linePromo").style.display = "flex";
+        $("#lineDiscount").textContent = "- " + fmtMXN(subtotal);
+      } else {
+        $("#linePromo").style.display = "none";
+      }
+    }
+
+    function applyPromo(){
+      const code = normCode($("#promoInput").value);
+      const note = $("#promoNote");
+      if(!code){
+        promoApplied = null;
+        note.textContent = "Escribe tu cupón para aplicarlo.";
+        toast("Escribe un cupón");
+        renderAll();
+        return;
+      }
+
+      const rule = findPromoRule(code);
+      if(!rule){
+        promoApplied = null;
+        note.textContent = "Cupón no válido o no activo.";
+        toast("Cupón no válido");
+        renderAll();
+        return;
+      }
+
+      promoApplied = { code: normCode(rule.code), type: rule.type, value: Number(rule.value||0) };
+      note.textContent = "✅ Cupón aplicado.";
+      toast("Cupón aplicado");
+      renderAll();
+    }
+
+    $("#btnApplyPromo").addEventListener("click", applyPromo);
+    $("#promoInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter") applyPromo(); });
+
+    // Update ship state on input
+    ["#shipName","#shipPhone","#shipPostal","#shipState","#shipCity","#shipAddress1"].forEach(sel=>{
+      const el = $(sel);
+      if(el) el.addEventListener("input", onShipChange);
+    });
+
+    function renderAll(updateUI=true){
+      if(updateUI){
+        updateShipUI();
+        renderCart();
+      }
+      renderTotals();
+      renderPaybar();
+    }
+
+    // Checkout
     async function goCheckout(){
       if(!cart.length){ toast("Carrito vacío"); return; }
 
-      const promoCode = normCode(document.getElementById("promoInput").value || (promoApplied?.code || ""));
+      // Require shipping method
+      shippingState = shippingState || {};
+      const method = shippingState.method || "tijuana_pickup";
 
-      const shipTo = {
-        postal_code: String(document.getElementById("shipPostal").value || "").trim(),
-        state_code: String(document.getElementById("shipState").value || "").trim().toUpperCase(),
-        city: String(document.getElementById("shipCity").value || "").trim(),
-        address1: String(document.getElementById("shipAddress1").value || "").trim(),
-        country_code: "MX"
+      // If national, basic validation
+      if(method==="national"){
+        const cp = ($("#shipPostal").value||"").trim();
+        const st = ($("#shipState").value||"").trim();
+        const city = ($("#shipCity").value||"").trim();
+        const addr1 = ($("#shipAddress1").value||"").trim();
+        if(cp.length!==5 || st.length<2 || city.length<2 || addr1.length<5){
+          toast("Completa tu dirección para envío nacional");
+          return;
+        }
+      }
+
+      const payload = {
+        cart,
+        promoCode: promoApplied?.code || normCode($("#promoInput").value || ""),
+        ship: {
+          method,
+          name: ($("#shipName").value||"").trim(),
+          phone: ($("#shipPhone").value||"").trim(),
+          postal_code: ($("#shipPostal").value||"").trim(),
+          state_code: ($("#shipState").value||"").trim().toUpperCase(),
+          city: ($("#shipCity").value||"").trim(),
+          address1: ($("#shipAddress1").value||"").trim(),
+          country_code: "MX",
+          quote: shippingState.quote || null
+        }
       };
+
+      $("#payBtn").disabled = true;
+      $("#payBtn").textContent = "Abriendo pago…";
 
       try{
         const res = await fetch(API_CHECKOUT, {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ cart, promoCode: promoApplied?.code || promoCode || "", shipTo })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json().catch(()=>null);
-        if(!res.ok || !data){ toast("No se pudo iniciar el pago"); return; }
+        if(!res.ok || !data){
+          toast("No se pudo iniciar el pago");
+          $("#payBtn").disabled = false;
+          $("#payBtn").textContent = "Ir a pagar";
+          return;
+        }
 
-        if(data.free && data.redirect_url){ window.location.href = data.redirect_url; return; }
-        if(data.url){ window.location.href = data.url; return; }
+        if(data.url){
+          window.location.href = data.url;
+          return;
+        }
 
         toast("No se pudo iniciar el pago");
+        $("#payBtn").disabled = false;
+        $("#payBtn").textContent = "Ir a pagar";
       }catch(e){
         toast("Error iniciando pago");
+        $("#payBtn").disabled = false;
+        $("#payBtn").textContent = "Ir a pagar";
       }
     }
 
-    (async function init(){
+    $("#payBtn").addEventListener("click", goCheckout);
+
+    // Boot
+    async function boot(){
       try{
         await loadCatalog();
         await loadPromos();
-        updateCartUI();
+        updateShipUI();
+        renderAll();
       }catch(e){
-        toast("Error cargando tienda");
         console.error(e);
+        toast("Error cargando tienda");
       }
-    })();
+    }
+boot();
   </script>
 </body>
 </html>
