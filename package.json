@@ -1,17 +1,17 @@
 {
-  "name": "scorestore",
-  "version": "1.1.0",
-  "private": true,
-  "description": "SCORE Store — Static + Netlify Functions (Stripe + Envia).",
-  "engines": {
-    "node": ">=18 <21"
-  },
-  "scripts": {
-    "dev": "npx netlify dev",
-    "build": "echo \"static site\"",
-    "lint": "node --check netlify/functions/create_checkout.js && node --check netlify/functions/quote_shipping.js && node --check netlify/functions/stripe_webhook.js && node --check netlify/functions/envia_webhook.js"
-  },
-  "dependencies": {
-    "stripe": "^16.6.0"
-  }
+  "name": "scorestore",
+  "version": "1.1.0",
+  "private": true,
+  "description": "SCORE Store — Static + Netlify Functions (Stripe + Envia).",
+  "engines": {
+    "node": ">=18 <21"
+  },
+  "scripts": {
+    "dev": "npx netlify dev",
+    "build": "echo \"static site\"",
+    "lint": "node --check netlify/functions/create_checkout.js && node --check netlify/functions/quote_shipping.js && node --check netlify/functions/stripe_webhook.js && node --check netlify/functions/envia_webhook.js"
+  },
+  "dependencies": {
+    "stripe": "^16.6.0"
+  }
 }
