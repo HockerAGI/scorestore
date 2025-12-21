@@ -22,102 +22,144 @@
 
   <style>
     :root {
+      /* --- COLORES & TEMA (Modular Baja Racing) --- */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
-      --sand: #f0f0f0;
-      --green: #00C853; /* Iconos Verdes */
-      /* Overlay Café Tierra para el Hero (Baja Style) */
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.95) 0%, rgba(45, 26, 16, 0.8) 100%);
+      --sand: #f4f4f4;
+      --green: #00C853; 
+      --carbon: #0b0f14;
       
-      --shadow: 0 10px 40px rgba(0,0,0,0.18);
+      /* Overlay Café Tierra para el Hero */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.95) 0%, rgba(45, 26, 16, 0.85) 100%);
+      
+      --shadow: 0 12px 40px rgba(0,0,0,0.18);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --radius: 18px;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
     body {
       margin: 0; font-family: var(--fontBody); background: var(--sand); color: #111;
-      overflow-x: hidden; padding-bottom: 120px;
+      overflow-x: hidden; padding-bottom: 100px;
     }
+    body.modalOpen { overflow: hidden; }
 
     /* --- ANIMACIÓN POLVO (Optimizado Móvil) --- */
-    .dust-container {
-      position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden;
-    }
+    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
     .dust {
       position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-      animation: grain 8s steps(10) infinite;
-      opacity: 0.6; mix-blend-mode: multiply;
+      animation: grain 8s steps(10) infinite; opacity: 0.6; mix-blend-mode: multiply;
     }
     @keyframes grain { 0%, 100% { transform:translate(0,0) } 10% { transform:translate(-5%,-10%) } 20% { transform:translate(-15%,5%) } 30% { transform:translate(7%,-25%) } 40% { transform:translate(-5%,25%) } 50% { transform:translate(-15%,10%) } 60% { transform:translate(15%,0%) } 70% { transform:translate(0%,15%) } 80% { transform:translate(3%,35%) } 90% { transform:translate(-10%,10%) } }
 
-    /* Topbar */
+    /* --- UTILS --- */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+    .toast {
+      position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: #111; color: #fff;
+      padding: 10px 20px; border-radius: 50px; font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, -10px); }
+
+    /* --- TOPBAR --- */
     .topbar {
-      position: fixed; top: 0; inset-inline: 0; height: 70px; z-index: 90;
+      position: fixed; top: 0; inset-inline: 0; height: 76px; z-index: 90;
       background: rgba(255,255,255,0.96); border-bottom: 3px solid var(--red);
       backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between;
       padding: 0 max(20px, 4vw);
     }
-    .brand img { height: 48px; width: auto; }
+    .brand img { height: 50px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
     
-    .cartBtn {
-      background: #000; color: #fff; border: none; height: 44px; padding: 0 20px;
-      font-family: var(--fontTitle); font-size: 24px; font-weight: 700;
-      display: flex; align-items: center; gap: 8px; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      cursor: pointer;
+    .navRight { display: flex; align-items: center; gap: 12px; }
+    
+    /* Pill Original Recuperada */
+    .pill {
+      display: flex; align-items: center; height: 36px; padding: 0 14px;
+      border-radius: 99px; background: #111; color: #fff;
+      font-weight: 900; font-size: 11px; letter-spacing: .05em;
+      border: 1px solid rgba(255,255,255,0.2);
     }
+    .pill b { color: var(--red); margin-left: 4px; }
+    @media (max-width: 600px){ .pill { display: none; } }
+
+    .cartTrigger {
+      background: var(--carbon); color: #fff; border: none; height: 48px; padding: 0 18px;
+      font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+      transition: transform 0.2s var(--ease);
+    }
+    .cartTrigger:active { transform: scale(0.95); }
     .cartCount { background: var(--red); font-size: 12px; padding: 2px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
-    /* HERO (Café Overlay) */
+    /* --- HERO --- */
     .hero {
-      position: relative; margin: 90px auto 40px; width: min(1200px, 94vw);
-      min-height: 520px; border-radius: 20px; overflow: hidden;
+      position: relative; margin: 96px auto 40px; width: min(1200px, 94vw);
+      min-height: 540px; border-radius: 20px; overflow: hidden;
       display: flex; align-items: center; box-shadow: var(--shadow);
     }
-    .heroBg {
-      position: absolute; inset: 0; background: url('/assets/hero.png') center/cover;
-    }
-    .heroOverlay {
-      position: absolute; inset: 0; background: var(--cafeOverlay); mix-blend-mode: multiply; opacity: 0.9;
-    }
-    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; color: #fff; }
-    .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(52px, 12vw, 96px); line-height: 0.85;
-      margin: 10px 0; text-transform: uppercase;
-    }
+    .heroBg { position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; }
+    .heroOverlay { position: absolute; inset: 0; background: var(--cafeOverlay); mix-blend-mode: multiply; opacity: 0.92; }
+    
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
+    
     .tagline {
-      background: var(--red); color: #fff; padding: 4px 12px; font-weight: 800;
-      transform: skew(-10deg); display: inline-block;
+      background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
+      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 10px;
+    }
+    .hero h1 {
+      font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
+      margin: 0 0 16px; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    }
+    .sub {
+      font-size: 17px; line-height: 1.5; color: rgba(255,255,255,.92); margin-bottom: 24px;
+      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500;
     }
 
-    /* BOTONES */
+    .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
     .btn {
-      border: none; background: #fff; color: #000; padding: 16px 32px;
-      font-weight: 900; text-transform: uppercase; border-radius: 12px;
-      cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-      transition: transform 0.2s var(--ease); font-size: 14px; letter-spacing: 0.5px;
+      border: none; cursor: pointer; font-weight: 900; text-transform: uppercase;
+      border-radius: 12px; padding: 14px 28px; font-size: 14px; letter-spacing: 0.5px;
+      transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 8px;
     }
     .btn:active { transform: scale(0.96); }
-    .btn.primary { background: #111; color: #fff; }
+    .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
 
-    /* GRID EDICIONES (Unificadas) */
-    .secTitle { width: min(1200px, 94vw); margin: 0 auto 20px; font-family: var(--fontTitle); font-size: 42px; display:flex; justify-content:space-between; align-items:baseline;}
-    
+    /* Chips Recuperados */
+    .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
+    .heroChip {
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+      padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.9);
+    }
+    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); }
+
+    /* --- SECCIONES --- */
+    .secHeader {
+      width: min(1200px, 94vw); margin: 0 auto 20px; display: flex;
+      align-items: baseline; justify-content: space-between;
+    }
+    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; }
+    .meta { font-weight: 900; color: rgba(0,0,0,0.5); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* --- GRID TARJETAS UNIFORMES --- */
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
     }
     .card {
-      position: relative; height: 340px; border-radius: 18px; overflow: hidden;
+      position: relative; height: 320px; border-radius: 18px; overflow: hidden;
       background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
       border: 1px solid rgba(255,255,255,0.1);
     }
-    .card:hover { transform: translateY(-5px); }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
     
-    /* Fondo IGUAL para todas (Textura Fibra/Asfalto) */
     .cardBg {
-      position: absolute; inset: 0; opacity: 0.5;
+      position: absolute; inset: 0; opacity: 0.6;
       background: url('/assets/baja1000-texture.png') center/cover;
       transition: opacity 0.3s;
     }
@@ -128,71 +170,88 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .cardLogo { width: 85%; height: auto; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
-    .status {
+    .statusBadge {
       position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
-      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px;
+      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
     }
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 12px 24px;
+      background: #fff; color: #000; border: none; padding: 10px 20px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      font-size: 12px; letter-spacing: 1px;
+      font-size: 12px; letter-spacing: 1px; transition: background 0.2s;
     }
+    .card:hover .viewBtn { background: var(--red); color: #fff; }
 
-    /* PARTNERS */
+    /* --- HIGHLIGHTS (Recuperado) --- */
+    .highlight {
+      width: min(1200px, 94vw); margin: 0 auto 60px;
+      background: #fff; border-radius: 18px; padding: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);
+    }
+    .highlightInner { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hBox {
+      flex: 1; min-width: 280px; background: #f9f9f9; padding: 24px; border-radius: 14px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: rgba(0,0,0,0.5); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .hTxt { font-weight: 800; font-size: 15px; margin: 0; line-height: 1.4; color: #333; }
+
+    /* --- PARTNERS --- */
     .partners {
       width: min(1200px, 94vw); margin: 0 auto 60px; text-align: center;
       padding: 30px; background: #fff; border-radius: 20px; border-bottom: 4px solid var(--red);
     }
-    .pGrid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; align-items:center; }
-    .pLogo { height: 35px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
+    .pGrid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+    .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* FOOTER */
+    /* --- FOOTER ROBUSTO (Recuperado) --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
     .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
     
-    details {
-      background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px;
-    }
-    summary {
+    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px; overflow: hidden; }
+    details.fLegal summary {
       padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
-      display: flex; justify-content: space-between; align-items: center; color: #fff;
+      display: flex; justify-content: space-between; align-items: center; color: #eee;
     }
-    /* SVG Verdes forzados */
-    summary svg { width: 22px; height: 22px; stroke: var(--green); stroke-width: 2.5; }
-    .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 14px; line-height: 1.6; }
+    summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 2.5; }
+    .fLegalPill {
+      font-size: 10px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;
+      font-weight: 900; letter-spacing: 1px; color: #aaa;
+    }
+    .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
+    .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
-    /* DRAWER & MODALS */
+    /* --- DRAWER CARRITO (Detallado) --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
-      display: flex; flex-direction: column; box-shadow: -10px 0 50px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,0.25);
     }
     .drawer.active { transform: translateX(0); }
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150;
-      opacity: 0; pointer-events: none; transition: 0.3s;
-    }
-    .overlay.active { opacity: 1; pointer-events: auto; }
     
     .dHead { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .dBody { flex: 1; overflow-y: auto; padding: 20px; }
+    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; }
+    .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     
-    /* INPUTS MOBILE FIX */
-    input, select {
-      width: 100%; height: 50px; border: 1px solid #ddd; border-radius: 8px;
-      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px;
-      background: #fff; appearance: none;
-    }
-    input:focus, select:focus { outline: 2px solid var(--red); border-color:transparent; }
+    .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #555; font-weight: 600; }
+    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+    .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
 
-    /* Paybar */
+    /* Inputs 16px (Mobile friendly) */
+    input, select {
+      width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
+      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; background: #fff; appearance: none;
+    }
+    input:focus, select:focus { outline: 2px solid var(--red); border-color: transparent; }
+
+    /* Paybar Mobile */
     .paybar {
       position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 120px);
-      background: #111; color: #fff; padding: 15px 25px; border-radius: 50px;
+      background: #111; color: #fff; padding: 14px 24px; border-radius: 50px;
       display: flex; gap: 20px; align-items: center; z-index: 100; transition: 0.3s var(--ease);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: min(90%, 400px); justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: min(92%, 420px); justify-content: space-between;
     }
     .paybar.visible { transform: translate(-50%, 0); }
 
@@ -205,7 +264,7 @@
     .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
     @media(max-width:600px) { .modal { inset: 10px; } }
     
-    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
+    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
     .prodCard { border: 1px solid #eee; padding: 10px; border-radius: 14px; text-align: center; }
     .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 10px; }
 
@@ -215,13 +274,18 @@
 
   <div class="dust-container"><div class="dust"></div></div>
   <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast">Notificación</div>
 
   <header class="topbar">
     <a href="#" class="brand"><img src="/assets/logo-score.png" alt="SCORE"></a>
-    <button class="cartBtn" onclick="openDrawer()">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-      <span id="cartCount" class="cartCount">0</span>
-    </button>
+    
+    <div class="navRight">
+      <div class="pill">MX + <b>TIJUANA</b></div>
+      <button class="cartTrigger" onclick="openDrawer()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span id="cartCount" class="cartCount">0</span>
+      </button>
+    </div>
   </header>
 
   <section class="hero">
@@ -230,23 +294,34 @@
     <div class="heroContent">
       <div class="tagline">OFFICIAL MERCH</div>
       <h1>SCORE INTERNATIONAL</h1>
-      <p style="font-size: 18px; margin-bottom: 24px; opacity: 0.9;">Fabricado en Tijuana por ÚNICO UNIFORMES. Productos oficiales de edición limitada.</p>
-      <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">
-        Ver Colecciones
-      </button>
+      <p class="sub">
+        Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
+        Productos auténticos listos para el desierto. Ediciones limitadas.
+      </p>
+      
+      <div class="ctaRow">
+        <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">Ver Colecciones</button>
+        <button class="btn secondary" onclick="openDrawer()">Mi Equipo</button>
+      </div>
+
+      <div class="heroChips">
+        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Hecho en Tijuana</div>
+        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> Producto Auténtico</div>
+        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/></svg> Material Premium</div>
+      </div>
     </div>
   </section>
 
-  <div class="secTitle">
-    <span>EDICIONES</span>
-    <span style="font-size: 14px; color: #888; letter-spacing: 1px;">BAJA RACING</span>
+  <div class="secHeader">
+    <h2>EDICIONES</h2>
+    <div class="meta">Baja Racing Series</div>
   </div>
 
   <div class="grid">
     <div class="card" onclick="openCatalog('EDICION_2025', 'Baja 1000')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="status">ACTIVO</span>
+        <span class="statusBadge">ACTIVO</span>
         <img src="/assets/logo-baja1000.png" class="cardLogo" alt="Baja 1000">
         <button class="viewBtn">Ver Productos</button>
       </div>
@@ -254,7 +329,7 @@
     <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="status">DISPONIBLE</span>
+        <span class="statusBadge">DISPONIBLE</span>
         <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
         <button class="viewBtn">Ver Productos</button>
       </div>
@@ -262,7 +337,7 @@
     <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="status">DISPONIBLE</span>
+        <span class="statusBadge">DISPONIBLE</span>
         <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
         <button class="viewBtn">Ver Productos</button>
       </div>
@@ -270,12 +345,25 @@
     <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="status">DISPONIBLE</span>
+        <span class="statusBadge">DISPONIBLE</span>
         <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
         <button class="viewBtn">Ver Productos</button>
       </div>
     </div>
   </div>
+
+  <section class="highlight">
+    <div class="highlightInner">
+      <div class="hBox">
+        <div class="hTitle"><span style="color:var(--green)">●</span> Fabricación Oficial</div>
+        <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b> en Tijuana, B.C.</p>
+      </div>
+      <div class="hBox">
+        <div class="hTitle"><span style="color:var(--red)">●</span> Edición Limitada</div>
+        <p class="hTxt">Lanzamientos exclusivos por evento. Si está disponible, es ahora.</p>
+      </div>
+    </div>
+  </section>
 
   <div class="partners">
     <h3 style="margin:0; font-family:var(--fontTitle); color:#888;">OFFICIAL PARTNERS</h3>
@@ -292,20 +380,35 @@
     <div class="footWrap">
       <div>
         <h4 style="font-family:var(--fontTitle); font-size: 28px; margin: 0 0 10px;">ÚNICO UNIFORMES</h4>
-        <p style="color:#888; font-size:13px;">Patrocinador Oficial. Tijuana B.C.<br>ventas.unicotextil@gmail.com</p>
+        <p style="color:#aaa; font-size:13px; line-height:1.6;">
+          Fabricante y Patrocinador Oficial.<br>
+          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana B.C.<br>
+          <b>ventas.unicotextil@gmail.com</b><br>
+          WhatsApp: 664 236 8701
+        </p>
       </div>
       <div>
-        <details>
-          <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-          <div class="legalContent">Productos sujetos a disponibilidad. Ediciones limitadas.</div>
+        <h4 style="font-family:var(--fontTitle); color:var(--red); font-size:24px;">LEGAL</h4>
+        <details class="fLegal">
+          <summary>Términos y Condiciones <span class="fLegalPill">LEER</span></summary>
+          <div class="legalContent">
+            <h4>1) Identidad</h4>
+            <p>Operado por ÚNICO UNIFORMES. Productos sujetos a disponibilidad.</p>
+          </div>
         </details>
-        <details>
-          <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-          <div class="legalContent">Envíos nacionales vía Envia.com. Locales en Tijuana $80.</div>
+        <details class="fLegal">
+          <summary>Envíos y Entregas <span class="fLegalPill">LEER</span></summary>
+          <div class="legalContent">
+            <h4>Modalidades</h4>
+            <p><b>Nacional:</b> Cotización vía Envia.com.<br><b>Local (Tijuana):</b> $80 MXN.<br><b>Pickup:</b> Gratis en fábrica.</p>
+          </div>
         </details>
-        <details>
-          <summary>Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-          <div class="legalContent">Solo por defectos de fábrica (7 días).</div>
+        <details class="fLegal">
+          <summary>Cambios y Devoluciones <span class="fLegalPill">LEER</span></summary>
+          <div class="legalContent">
+            <h4>Política</h4>
+            <p>Solo por defectos de fábrica (7 días). No cambios por talla en ediciones agotadas.</p>
+          </div>
         </details>
       </div>
     </div>
@@ -313,17 +416,26 @@
 
   <aside class="drawer" id="drawer">
     <div class="dHead">
-      <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;">TU EQUIPO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:24px;">×</button>
+      <h3 class="dTitle">TU EQUIPO</h3>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:24px; cursor:pointer;">×</button>
     </div>
+    
     <div class="dBody" id="cartBody"></div>
-    <div style="padding:20px; background:#f9f9f9;">
-      <div style="display:flex; justify-content:space-between; font-weight:900; margin-bottom:10px;">
-        <span>Total:</span> <span id="drawerTotal">$0 MXN</span>
+    
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0 MXN</span></div>
+      <div class="sumRow"><span>Envío:</span> <span id="lnShip">$0 MXN</span></div>
+      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
+      <div class="usdRef" id="lnUsd">$0 USD</div>
+
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <input placeholder="CÓDIGO PROMO" id="promoInput" style="margin:0; text-transform:uppercase;">
+        <button class="btn" style="background:#000; color:#fff; padding:0 15px; font-size:12px;">APLICAR</button>
       </div>
-      <p style="font-size:12px; font-weight:700;">Método de Entrega:</p>
+
+      <p style="font-size:12px; font-weight:700; color:#555;">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod" onchange="updateCart()">
-        <option value="">-- Selecciona --</option>
+        <option value="">-- SELECCIONA --</option>
         <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
         <option value="tj">Envío Local (Tijuana) - $80 MXN</option>
         <option value="mx">Envío Nacional (México) - Cotizar</option>
@@ -336,7 +448,7 @@
       </div>
       <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:10px; display:none;"></div>
 
-      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center;" disabled onclick="checkout()">
+      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center; background:#111; color:#fff;" disabled onclick="checkout()">
         IR A PAGAR
       </button>
     </div>
@@ -345,7 +457,7 @@
   <div class="modal" id="modalCatalog">
     <div class="dHead">
       <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;" id="catTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:24px;">×</button>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:24px; cursor:pointer;">×</button>
     </div>
     <div class="catGrid" id="catGrid"></div>
   </div>
@@ -355,58 +467,34 @@
       <div style="font-size:10px; font-weight:800; opacity:0.7;">TOTAL</div>
       <div style="font-size:18px; font-weight:900;" id="barTotal">$0</div>
     </div>
-    <button class="btn" style="padding:8px 16px; font-size:12px; height:36px;" onclick="openDrawer()">CARRITO</button>
+    <button class="btn" style="padding:8px 16px; font-size:12px; height:36px; background:#fff; color:#000;" onclick="openDrawer()">VER CARRITO</button>
   </div>
 
   <script>
     // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Productos Fallback (COINCIDEN EXACTAMENTE CON catalog.json)
+    // Fallback sincronizado con catalog.json
     const PRODUCTS = [
-      // EDICION_2025
-      { 
-        id: "chamarra-oficial", // ID corregido para coincidir con catalog.json
-        name: "Chaqueta Oficial Baja 1000", 
-        price: 1490, 
-        img: "/assets/EDICION_2025/chamarra-baja1000.jpg", 
-        sizes: ["S","M","L","XL","2XL"], 
-        section: "EDICION_2025" 
-      },
-      { 
-        id: "camisa-pits", 
-        name: "Camisa de Pits Baja 1000", 
-        price: 899, 
-        img: "/assets/EDICION_2025/camisa-pits-baja1000.jpg", 
-        sizes: ["S","M","L","XL","2XL"], 
-        section: "EDICION_2025" 
-      },
-      { 
-        id: "camiseta-negra", // Asumiendo que este es el ID en tu JSON para la negra
-        name: "Camiseta SCORE Baja 1000 Negra", 
-        price: 399, 
-        img: "/assets/EDICION_2025/camiseta-baja1000-negra.jpg", 
-        sizes: ["S","M","L","XL","2XL"], 
-        section: "EDICION_2025" 
-      },
-      
-      // RELLENO (Estos deben existir en catalog.json o la compra fallará si se seleccionan)
-      { id: "tee-500", name: "Tee Baja 500", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes: ["M","L"], section: "BAJA_500" },
-      { id: "tee-400", name: "Tee Baja 400", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes: ["M","L"], section: "BAJA_400" },
-      { id: "sudadera-cafe", name: "Sudadera San Felipe", price: 749, img: "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes: ["S","M","L"], section: "SF_250" },
+      { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
+      { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
+      { id:"camiseta-negra", name:"Camiseta SCORE Baja 1000 Negra", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
+      // Relleno
+      { id:"tee-500", name:"Tee Baja 500 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["M","L"], section:"BAJA_500" },
+      { id:"tee-400", name:"Tee Baja 400 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["M","L"], section:"BAJA_400" },
+      { id:"sudadera-cafe", name:"Hoodie San Felipe", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     let ship = { method: null, cost: 0 };
+    const USD_RATE = 17.50; // Referencia visual
     const $ = id => document.getElementById(id);
 
     // --- 2. LÓGICA ---
     async function openCatalog(section, title) {
       $('catTitle').innerText = title.toUpperCase();
       let items = [];
-      
       try {
-        // Intentar cargar JSON real
         const res = await fetch('/data/catalog.json');
         if(res.ok) {
           const data = await res.json();
@@ -414,11 +502,9 @@
         }
       } catch(e) { console.log('Usando local'); }
 
-      // Si falla, usar fallback local
       if(!items.length) items = PRODUCTS.filter(p => p.section === section);
 
       const grid = $('catGrid');
-      
       if(!items.length) grid.innerHTML = "<p>Próximamente</p>";
       else grid.innerHTML = items.map(p => `
         <div class="prodCard">
@@ -445,33 +531,28 @@
       save();
       closeAll();
       openDrawer();
+      showToast("Agregado al equipo");
     }
 
-    // --- Cotizar Envío Real (Backend) ---
+    // --- Cotizar Envío Real ---
     async function quoteShipping() {
       const cp = $('cp').value;
       if(cp.length !== 5) return;
-      
       $('quoteResult').style.display = 'block';
-      $('quoteResult').innerText = 'Cotizando envío...';
-      
+      $('quoteResult').innerText = 'Cotizando...';
       try {
         const res = await fetch('/.netlify/functions/quote_shipping', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ 
-            to: { postal_code: cp, state_code: "", city: "", address1: "" },
-            items: cart 
-          })
+          body: JSON.stringify({ to: { postal_code: cp }, items: cart })
         });
         const data = await res.json();
-        
         if(data.ok) {
           ship.cost = data.mxn;
-          $('quoteResult').innerText = `Envío Cotizado: $${data.mxn} MXN (${data.carrier})`;
-          updateCart(false); 
+          $('quoteResult').innerText = `Envío: $${data.mxn} MXN (${data.carrier})`;
+          updateCart(false);
         } else {
-          ship.cost = 250; // Fallback
-          $('quoteResult').innerText = 'Tarifa estándar: $250 MXN';
+          ship.cost = 250;
+          $('quoteResult').innerText = 'Tarifa estandar: $250';
           updateCart(false);
         }
       } catch(e) { console.error(e); }
@@ -484,19 +565,21 @@
       if(resetShip) {
         if(method === 'tj') ship.cost = 80;
         else if(method === 'pickup') ship.cost = 0;
-        else if(method === 'mx') {
-             ship.cost = 0; 
-             if($('cp').value.length === 5) quoteShipping();
-        }
+        else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
 
       $('shipForm').style.display = (method === 'mx') ? 'block' : 'none';
       
       const sub = cart.reduce((a,b) => a + (b.price*b.qty), 0);
       const total = sub + ship.cost;
+      const usd = (total / USD_RATE).toFixed(2);
       
       $('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
-      $('drawerTotal').innerText = `$${total} MXN`;
+      $('lnSub').innerText = `$${sub} MXN`;
+      $('lnShip').innerText = `$${ship.cost} MXN`;
+      $('lnTotal').innerText = `$${total} MXN`;
+      $('lnUsd').innerText = `aprox $${usd} USD`;
+      
       $('barTotal').innerText = `$${total}`;
       
       $('cartBody').innerHTML = cart.map((i,x) => `
@@ -507,11 +590,11 @@
             <div style="font-size:12px; color:#666;">${i.size}</div>
           </div>
           <div>
-            <button onclick="cart.splice(${x},1);save()" style="color:red; border:none; font-size:20px;">×</button>
+            <button onclick="cart.splice(${x},1);save()" style="color:var(--red); border:none; background:none; font-weight:900;">×</button>
             <div style="font-weight:900; text-align:right;">x${i.qty}</div>
           </div>
         </div>
-      `).join('') || '<div style="text-align:center; padding:20px; opacity:0.5;">Carrito Vacío</div>';
+      `).join('') || '<div style="text-align:center; padding:20px; opacity:0.5;">Tu equipo está vacío</div>';
 
       const hasItems = cart.length > 0;
       $('paybar').classList.toggle('visible', hasItems);
@@ -524,7 +607,6 @@
     async function checkout() {
       const btn = $('payBtn');
       btn.innerText = "PROCESANDO..."; btn.disabled = true;
-      
       try {
         const stripe = Stripe(STRIPE_PK);
         const payload = {
@@ -534,32 +616,29 @@
             cost: ship.cost,
             data: { cp: $('cp').value, address: $('addr').value, name: $('name').value }
           },
-          // Datos extra para tus funciones
-          mode: ship.method, 
+          mode: ship.method,
           to: { postal_code: $('cp').value }
         };
-
         const res = await fetch('/.netlify/functions/create_checkout', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
-        
         const data = await res.json();
         if(data.url) window.location.href = data.url;
-        else throw new Error("Error iniciando pago. Revisa conexión.");
-        
+        else throw new Error("Error iniciando pago.");
       } catch(e) {
-        alert("Error: " + e.message);
-        btn.innerText = "IR A PAGAR"; btn.disabled = false;
+        alert(e.message); btn.innerText = "IR A PAGAR"; btn.disabled = false;
       }
     }
 
     function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
     function openDrawer() { $('drawer').classList.add('active'); $('overlay').classList.add('active'); updateCart(); }
     function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
-    $('overlay').onclick = closeAll;
+    function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
     
+    $('overlay').onclick = closeAll;
     ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
+    
     updateCart();
   </script>
 </body>
