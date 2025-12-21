@@ -293,9 +293,9 @@
       position:relative;
       border-radius: 18px;
       overflow:hidden;
-      min-height: 560px;
+      min-height: 520px; /* ✅ menos vacío */
       display:flex;
-      align-items:flex-start;
+      align-items:center; /* ✅ centra contenido (desktop) */
       background: #0b0f14;
       color:#fff;
       box-shadow: 0 20px 50px rgba(0,0,0,.18);
@@ -317,8 +317,8 @@
     }
     .heroContent{
       position:relative; z-index:2;
-      padding: 32px 54px 54px;
-      max-width: 920px;
+      padding: 34px 54px 34px; /* ✅ menos padding inferior */
+      max-width: 980px;
       text-align:left;
     }
     .tagline{
@@ -347,13 +347,14 @@
       font-size: 16px;
       line-height: 1.6;
       color: rgba(255,255,255,.93);
-      margin: 0 0 18px;
+      margin: 0 0 16px;
       border-left: 4px solid var(--red);
       padding-left: 18px;
       font-weight: 800;
       text-shadow: 0 2px 4px rgba(0,0,0,0.65);
-      max-width: 64ch;
+      max-width: 66ch;
     }
+
     .ctaRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
     .btn{
       border:none;
@@ -376,8 +377,8 @@
     .btn:hover{ transform: translateY(-2px); filter: brightness(1.02); }
     .btn.primary{ background:#111; color:#fff; }
 
-    /* ✅ “EDICIÓN LIMITADA” (sin tip) */
     .hint{
+      margin-top: 12px;
       font-weight: 900;
       font-size: 12px;
       letter-spacing: .12em;
@@ -390,10 +391,50 @@
       backdrop-filter: blur(8px);
       max-width: min(92vw, 420px);
       text-align:left;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .hintDot{
+      width:10px;height:10px;border-radius:999px;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 0 0 6px rgba(255,255,255,.10);
+      flex:0 0 auto;
     }
 
+    .heroChips{
+      margin-top: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      max-width: 720px;
+    }
+    .heroChip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .04em;
+      color: rgba(255,255,255,.92);
+      text-transform: uppercase;
+      box-shadow: 0 10px 22px rgba(0,0,0,.20);
+    }
+    .heroChip i{
+      width:22px;height:22px;border-radius:10px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .heroChip svg{ width:14px;height:14px; stroke:#fff; opacity:.9; }
+
     @media (max-width: 820px){
-      .hero{ align-items:flex-start; min-height: 560px; }
+      .hero{ align-items:flex-start; min-height: 500px; }
       .heroOverlay{
         background:
           linear-gradient(to top, rgba(74,50,33,.94) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
@@ -401,6 +442,11 @@
       }
       .heroContent{ padding: 22px; width: 100%; }
       .hero h1{ white-space: nowrap; }
+    }
+    @media (max-width: 420px){
+      .hero h1{ white-space: normal; }
+      .btn{ width:100%; }
+      .ctaRow{ gap:10px; }
     }
 
     /* Section headers */
@@ -428,16 +474,16 @@
     }
 
     /* Ediciones */
-    .gridDrops{
+    .editionsGrid{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 16px;
     }
-    @media (max-width: 980px){ .gridDrops{ grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 560px){ .gridDrops{ grid-template-columns: 1fr; } }
+    @media (max-width: 980px){ .editionsGrid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px){ .editionsGrid{ grid-template-columns: 1fr; } }
 
-    .drop{
+    .editionCard{
       position:relative;
       border-radius: 18px;
       overflow:hidden;
@@ -448,34 +494,32 @@
       transform: translateZ(0);
       transition: transform .18s ease, box-shadow .18s ease;
       border: 1px solid rgba(255,255,255,.12);
+      outline: none;
     }
-    .drop:hover{
+    .editionCard:hover{
       transform: translateY(-2px);
       box-shadow: 0 18px 44px rgba(0,0,0,.28);
     }
 
-    /* ✅ fondo FULL visible (sin velo/overlay) */
-    .dropBg{
+    .editionBg{
       position:absolute; inset:0;
       background: url("/assets/baja1000-texture.png") center/cover no-repeat;
       opacity: 1;
       filter: saturate(1.05) contrast(1.05);
     }
-    .dropBg::after{ display:none; } /* ✅ quitada la capa */
 
-    /* ✅ sin capa transparente encima */
-    .dropGlass{
+    .editionLayer{
       position:absolute; inset:0;
       display:flex;
       flex-direction:column;
       justify-content:center;
       align-items:center;
       padding: 18px 14px 14px;
-      background: none;          /* ✅ */
-      backdrop-filter: none;     /* ✅ */
+      background: none;
+      backdrop-filter: none;
     }
 
-    .badge{
+    .statusBadge{
       position:absolute; top:14px; left:14px;
       background: var(--red);
       color:#fff;
@@ -487,9 +531,18 @@
       text-transform: uppercase;
       box-shadow: 0 10px 18px rgba(0,0,0,.25);
     }
-    .badge.gray{ background: rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.18); }
+    /* ✅ “PRÓXIMO” tipo texto (más cercano a tus capturas) */
+    .statusBadge.upcoming{
+      background: transparent;
+      border: none;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 10px 22px rgba(0,0,0,.55);
+    }
 
-    .dropCenter{
+    .editionCenter{
       width:100%;
       display:flex;
       flex-direction:column;
@@ -500,7 +553,7 @@
       padding: 10px 6px 12px;
     }
 
-    .dropLogo{
+    .editionLogo{
       width: clamp(190px, 58vw, 280px);
       height: clamp(78px, 19vw, 110px);
       object-fit: contain;
@@ -514,7 +567,7 @@
         drop-shadow(0 14px 18px rgba(0,0,0,.38));
     }
 
-    .dropBtn{
+    .editionBtn{
       border:none;
       background:#fff;
       color:#111;
@@ -527,7 +580,7 @@
       letter-spacing: .04em;
       text-transform: uppercase;
     }
-    .dropBtn:hover{ transform: translateY(-1px); }
+    .editionBtn:hover{ transform: translateY(-1px); }
 
     /* Highlight strip */
     .highlight{
@@ -797,7 +850,7 @@
       text-transform: uppercase;
     }
 
-    /* drawer carrito (sin cambios visuales aquí) */
+    /* drawer carrito */
     .drawer{
       position: fixed; top:0; right:0;
       width: min(440px, 92vw);
@@ -1149,12 +1202,12 @@
     }
 
     @media (prefers-reduced-motion: no-preference){
-      .hero, .drop, .highlight, .partnersStrip, details.legalCard{
+      .hero, .editionCard, .highlight, .partnersStrip, details.legalCard{
         animation: popIn .42s ease both;
       }
-      .drop:nth-child(2){ animation-delay:.06s }
-      .drop:nth-child(3){ animation-delay:.12s }
-      .drop:nth-child(4){ animation-delay:.18s }
+      .editionCard:nth-child(2){ animation-delay:.06s }
+      .editionCard:nth-child(3){ animation-delay:.12s }
+      .editionCard:nth-child(4){ animation-delay:.18s }
       @keyframes popIn{
         from{ opacity:0; transform: translateY(10px); }
         to{ opacity:1; transform: translateY(0); }
@@ -1207,18 +1260,46 @@
         <div class="tagline">Merch oficial</div>
         <h1>SCORE International</h1>
 
-        <!-- ✅ Copy nuevo (sin pagos/envíos) -->
         <p class="sub">
           Somos <b>fabricantes</b> y <b>PATROCINADORES OFICIALES</b>.
           Producimos en Tijuana con materiales premium y acabados listos para el desierto.
-          Drops por evento: lo auténtico <b>se agota rápido</b>.
+          Lanzamientos por evento: lo auténtico <b>se agota rápido</b>.
         </p>
 
         <div class="ctaRow">
           <a class="btn primary" href="#productos">Ver productos</a>
           <button class="btn" id="openCart2" type="button">Ir al carrito</button>
-          <!-- ✅ sin tip -->
-          <div class="hint">EDICIÓN LIMITADA</div>
+        </div>
+
+        <div class="hint"><span class="hintDot" aria-hidden="true"></span>EDICIÓN LIMITADA</div>
+
+        <div class="heroChips" aria-label="Puntos clave">
+          <div class="heroChip">
+            <i aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+            </i>
+            Hecho en Tijuana
+          </div>
+          <div class="heroChip">
+            <i aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"></path>
+                <path d="M9 12l2 2 4-5"></path>
+              </svg>
+            </i>
+            Producto auténtico
+          </div>
+          <div class="heroChip">
+            <i aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18"></path>
+                <path d="M7 8l5-5 5 5"></path>
+              </svg>
+            </i>
+            Material premium
+          </div>
         </div>
       </div>
     </section>
@@ -1229,51 +1310,51 @@
     </div>
 
     <!-- ✅ SOLO 4 TARJETAS + ORDEN: 1000, 500, 400, SF250 -->
-    <div class="gridDrops">
+    <div class="editionsGrid">
       <!-- BAJA 1000 (ACTIVO) -->
-      <div class="drop" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025" role="button" tabindex="0" aria-label="Abrir catálogo Baja 1000 Edición 2025">
-        <div class="dropBg" aria-hidden="true"></div>
-        <div class="dropGlass">
-          <div class="badge">ACTIVO</div>
-          <div class="dropCenter">
-            <img src="/assets/logo-baja1000.png" class="dropLogo" alt="Baja 1000" loading="lazy" decoding="async" />
-            <button class="dropBtn" type="button" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025">Ver productos</button>
+      <div class="editionCard" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025" role="button" tabindex="0" aria-label="Abrir catálogo Baja 1000 Edición 2025">
+        <div class="editionBg" aria-hidden="true"></div>
+        <div class="editionLayer">
+          <div class="statusBadge">ACTIVO</div>
+          <div class="editionCenter">
+            <img src="/assets/logo-baja1000.png" class="editionLogo" alt="Baja 1000" loading="lazy" decoding="async" />
+            <button class="editionBtn" type="button" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025">Ver productos</button>
           </div>
         </div>
       </div>
 
       <!-- BAJA 500 (PRÓXIMO) -->
-      <div class="drop" data-open="notify" data-edition="Baja 500" role="button" tabindex="0" aria-label="Avísame Baja 500">
-        <div class="dropBg" aria-hidden="true"></div>
-        <div class="dropGlass">
-          <div class="badge gray">PRÓXIMO</div>
-          <div class="dropCenter">
-            <img src="/assets/logo-baja500.png" class="dropLogo" alt="Baja 500" loading="lazy" decoding="async" />
-            <button class="dropBtn" type="button" data-open="notify" data-edition="Baja 500">Avísame</button>
+      <div class="editionCard" data-open="notify" data-edition="Baja 500" role="button" tabindex="0" aria-label="Avísame Baja 500">
+        <div class="editionBg" aria-hidden="true"></div>
+        <div class="editionLayer">
+          <div class="statusBadge upcoming">PRÓXIMO</div>
+          <div class="editionCenter">
+            <img src="/assets/logo-baja500.png" class="editionLogo" alt="Baja 500" loading="lazy" decoding="async" />
+            <button class="editionBtn" type="button" data-open="notify" data-edition="Baja 500">Avísame</button>
           </div>
         </div>
       </div>
 
       <!-- BAJA 400 (PRÓXIMO) -->
-      <div class="drop" data-open="notify" data-edition="Baja 400" role="button" tabindex="0" aria-label="Avísame Baja 400">
-        <div class="dropBg" aria-hidden="true"></div>
-        <div class="dropGlass">
-          <div class="badge gray">PRÓXIMO</div>
-          <div class="dropCenter">
-            <img src="/assets/logo-baja400.png" class="dropLogo" alt="Baja 400" loading="lazy" decoding="async" />
-            <button class="dropBtn" type="button" data-open="notify" data-edition="Baja 400">Avísame</button>
+      <div class="editionCard" data-open="notify" data-edition="Baja 400" role="button" tabindex="0" aria-label="Avísame Baja 400">
+        <div class="editionBg" aria-hidden="true"></div>
+        <div class="editionLayer">
+          <div class="statusBadge upcoming">PRÓXIMO</div>
+          <div class="editionCenter">
+            <img src="/assets/logo-baja400.png" class="editionLogo" alt="Baja 400" loading="lazy" decoding="async" />
+            <button class="editionBtn" type="button" data-open="notify" data-edition="Baja 400">Avísame</button>
           </div>
         </div>
       </div>
 
       <!-- SAN FELIPE 250 (PRÓXIMO) -->
-      <div class="drop" data-open="notify" data-edition="San Felipe 250" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
-        <div class="dropBg" aria-hidden="true"></div>
-        <div class="dropGlass">
-          <div class="badge gray">PRÓXIMO</div>
-          <div class="dropCenter">
-            <img src="/assets/logo-sf250.png" class="dropLogo" alt="San Felipe 250" loading="lazy" decoding="async" />
-            <button class="dropBtn" type="button" data-open="notify" data-edition="San Felipe 250">Avísame</button>
+      <div class="editionCard" data-open="notify" data-edition="San Felipe 250" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
+        <div class="editionBg" aria-hidden="true"></div>
+        <div class="editionLayer">
+          <div class="statusBadge upcoming">PRÓXIMO</div>
+          <div class="editionCenter">
+            <img src="/assets/logo-sf250.png" class="editionLogo" alt="San Felipe 250" loading="lazy" decoding="async" />
+            <button class="editionBtn" type="button" data-open="notify" data-edition="San Felipe 250">Avísame</button>
           </div>
         </div>
       </div>
@@ -1307,7 +1388,7 @@
             </span>
             Edición limitada
           </div>
-          <p class="hTxt">Drops por evento. Reposición no garantizada.</p>
+          <p class="hTxt">Lanzamientos por evento. Reposición no garantizada.</p>
           <div class="tag" aria-hidden="true">
             Precios en <b>MXN</b> + referencia en <b>USD</b>. Si está disponible, es ahora.
           </div>
@@ -1685,6 +1766,7 @@
       <div class="grid" id="catalogGrid"></div>
     </div>
   </div>
+
 <script>
   (() => {
     /***********************
@@ -1699,12 +1781,10 @@
     const STORE = {
       name: "SCORE Store",
       email: "ventas.unicotextil@gmail.com",
-      whatsappE164: "526642368701", // 52 + 664 + 236 8701
-      usdRate: 17.50,              // Tipo de cambio REFERENCIAL (ajústalo)
+      whatsappE164: "526642368701",
+      usdRate: 17.50,
       currency: "MXN",
-      // ✅ Pega aquí tu link real de Mercado Pago (Payment Link / Link de cobro)
       MERCADO_PAGO_LINK: "https://link.mercadopago.com.mx/TU_LINK_AQUI",
-      // (Opcional) Endpoint si luego haces Netlify Function para generar Preferencia con total exacto
       MP_PREFERENCE_ENDPOINT: "/.netlify/functions/mp_preference",
     };
 
@@ -1762,54 +1842,15 @@
     const lockScroll = () => body.classList.add("modalOpen");
     const unlockScroll = () => body.classList.remove("modalOpen");
 
-    /* ====== DATA: PRODUCTS ======
-       ⚠️ Edita nombres/precios/imagenes a tus assets reales.
-       Si no existe la imagen, cae en placeholder automáticamente.
-    */
+    /* ====== DATA: PRODUCTS ====== */
     const PRODUCTS = {
       EDICION_2025: [
-        {
-          id: "tee-score-black",
-          name: "Playera Oficial SCORE (Negra)",
-          price: 499,
-          img: "/assets/prod-tee-black.png",
-          sizes: ["S","M","L","XL","XXL"]
-        },
-        {
-          id: "tee-score-sand",
-          name: "Playera Oficial SCORE (Arena)",
-          price: 499,
-          img: "/assets/prod-tee-sand.png",
-          sizes: ["S","M","L","XL","XXL"]
-        },
-        {
-          id: "hoodie-score",
-          name: "Hoodie Baja Ready (Premium)",
-          price: 899,
-          img: "/assets/prod-hoodie.png",
-          sizes: ["S","M","L","XL","XXL"]
-        },
-        {
-          id: "cap-score",
-          name: "Gorra Bordada (Edición Limitada)",
-          price: 399,
-          img: "/assets/prod-cap.png",
-          sizes: ["Unitalla"]
-        },
-        {
-          id: "jersey-score",
-          name: "Jersey Off-Road (Dry-Fit)",
-          price: 799,
-          img: "/assets/prod-jersey.png",
-          sizes: ["S","M","L","XL","XXL"]
-        },
-        {
-          id: "buff-score",
-          name: "Buff / Cuello Multiusos (Desierto)",
-          price: 249,
-          img: "/assets/prod-buff.png",
-          sizes: ["Unitalla"]
-        }
+        { id: "tee-score-black", name: "Playera Oficial SCORE (Negra)", price: 499, img: "/assets/prod-tee-black.png", sizes: ["S","M","L","XL","XXL"] },
+        { id: "tee-score-sand",  name: "Playera Oficial SCORE (Arena)", price: 499, img: "/assets/prod-tee-sand.png",  sizes: ["S","M","L","XL","XXL"] },
+        { id: "hoodie-score",    name: "Hoodie Baja Ready (Premium)",   price: 899, img: "/assets/prod-hoodie.png",    sizes: ["S","M","L","XL","XXL"] },
+        { id: "cap-score",       name: "Gorra Bordada (Edición Limitada)", price: 399, img: "/assets/prod-cap.png",     sizes: ["Unitalla"] },
+        { id: "jersey-score",    name: "Jersey Off-Road (Dry-Fit)",     price: 799, img: "/assets/prod-jersey.png",    sizes: ["S","M","L","XL","XXL"] },
+        { id: "buff-score",      name: "Buff / Cuello Multiusos (Desierto)", price: 249, img: "/assets/prod-buff.png",  sizes: ["Unitalla"] }
       ]
     };
 
@@ -1825,7 +1866,7 @@
       cart: [],
       promo: { code:null, type:null, value:0, discount:0 },
       shipping: {
-        method: null, // pickup | tj | mx
+        method: null,
         cost: 0,
         note: "",
         address: { name:"", phone:"", postal:"", state:"", city:"", address1:"" }
@@ -1925,7 +1966,6 @@
       if(!cartBody) return;
 
       const { subtotal, discount, ship, total } = calcTotal();
-
       cartCount.textContent = String(state.cart.reduce((a,it)=>a+it.qty,0));
 
       if(state.cart.length === 0){
@@ -1953,7 +1993,6 @@
 
       lineSubtotal.textContent = mxn(subtotal);
 
-      // Shipping line
       if(state.shipping.method){
         lineShip.style.display = "";
         lineShipping.textContent = mxn(ship);
@@ -1962,7 +2001,6 @@
         lineShipping.textContent = mxn(0);
       }
 
-      // Promo line
       if(discount > 0){
         linePromo.style.display = "";
         lineDiscount.textContent = `-${mxn(discount)}`;
@@ -1979,7 +2017,6 @@
       savePromo();
       saveShip();
 
-      // Habilitar/deshabilitar pago
       if(payBtn){
         payBtn.disabled = state.cart.length === 0 || !state.shipping.method;
         payBtn.textContent = payBtn.disabled ? "Selecciona entrega para pagar" : "Ir a pagar";
@@ -2120,7 +2157,6 @@
       openModal();
     };
 
-    // Delegación para botón "Agregar"
     catalogGrid?.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-add]");
       if(!btn) return;
@@ -2131,8 +2167,14 @@
       addToCart(p, sel?.value);
     });
 
-    // Tarjetas de edición / notify
-    const handleDropAction = (el) => {
+    const notifyEdition = (editionName) => {
+      const msg = `Hola, quiero que me avisen cuando esté disponible: ${editionName}.`;
+      const url = `https://wa.me/${STORE.whatsappE164}?text=${encodeURIComponent(msg)}`;
+      toast("Abriendo WhatsApp para avisarte ✅");
+      window.open(url, "_blank", "noopener");
+    };
+
+    const handleAction = (el) => {
       const action = el.getAttribute("data-open");
       if(action === "catalog"){
         const section = el.getAttribute("data-section");
@@ -2145,26 +2187,21 @@
       }
     };
 
-    $$(".drop,[data-open='catalog'],[data-open='notify']").forEach(el => {
-      el.addEventListener("click", (e) => {
-        const target = e.target.closest(".drop,[data-open='catalog'],[data-open='notify']");
-        if(!target) return;
-        handleDropAction(target.classList.contains("drop") ? target : target);
-      });
-      el.addEventListener("keydown", (e) => {
-        if(e.key === "Enter" || e.key === " "){
-          e.preventDefault();
-          handleDropAction(el);
-        }
-      });
+    document.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-open]");
+      if(!target) return;
+      handleAction(target);
     });
 
-    const notifyEdition = (editionName) => {
-      const msg = `Hola, quiero que me avisen cuando esté disponible: ${editionName}.`;
-      const url = `https://wa.me/${STORE.whatsappE164}?text=${encodeURIComponent(msg)}`;
-      toast("Abriendo WhatsApp para avisarte ✅");
-      window.open(url, "_blank", "noopener");
-    };
+    document.addEventListener("keydown", (e) => {
+      if(e.key !== "Enter" && e.key !== " ") return;
+      const ae = document.activeElement;
+      if(!ae || !ae.closest) return;
+      const target = ae.closest("[data-open]");
+      if(!target) return;
+      e.preventDefault();
+      handleAction(target);
+    });
 
     /* ====== SHIPPING ====== */
     const SHIPPING_METHODS = [
@@ -2189,12 +2226,10 @@
         `;
       }).join("");
 
-      // Form show/hide
       const method = SHIPPING_METHODS.find(x => x.id === state.shipping.method);
       const needsForm = !!method?.needsForm;
       shipForm.style.display = needsForm ? "" : "none";
 
-      // Copy / status
       if(!state.shipping.method){
         shipMsg.textContent = "Elige una opción para calcular el total.";
         shipOk.style.display = "none";
@@ -2210,7 +2245,6 @@
         shipOk.textContent = state.shipping.note || "";
       }
 
-      // Prefill form
       shipName.value = state.shipping.address.name || "";
       shipPhone.value = state.shipping.address.phone || "";
       shipPostal.value = state.shipping.address.postal || "";
@@ -2236,7 +2270,6 @@
     });
 
     const quoteNational = () => {
-      // Validación básica
       const name = (shipName.value || "").trim();
       const postal = (shipPostal.value || "").trim();
       const st = (shipState.value || "").trim().toUpperCase();
@@ -2250,14 +2283,12 @@
       if(city.length < 2) return toast("Falta ciudad.");
       if(addr.length < 6) return toast("Falta calle y número.");
 
-      // Guardar address
       state.shipping.address = { name, phone, postal, state: st, city, address1: addr };
 
-      // Estimación SIMPLE (referencial)
       const units = state.cart.reduce((a,it)=>a+it.qty,0);
       const base = 165;
       const perItem = 18;
-      const zoneFactor = postal.startsWith("2") ? 1.0 : 1.15; // Baja/sonora aprox vs resto (referencial)
+      const zoneFactor = postal.startsWith("2") ? 1.0 : 1.15;
       const est = Math.round((base + units*perItem) * zoneFactor);
 
       state.shipping.cost = est;
@@ -2279,9 +2310,7 @@
       quoteNational();
     });
 
-    /* ====== PROMOS ======
-       ⚠️ Pon aquí tus códigos reales.
-    */
+    /* ====== PROMOS ====== */
     const PROMOS = {
       // "BAJA10": { type:"percent", value:10 },
       // "UNICO50": { type:"fixed", value:50 },
@@ -2361,7 +2390,6 @@
       if(state.cart.length === 0){ toast("Tu carrito está vacío."); return; }
       if(!state.shipping.method){ toast("Selecciona entrega para continuar."); return; }
 
-      // Intentar checkout dinámico (si existe endpoint)
       const { total } = calcTotal();
       const payload = {
         currency: STORE.currency,
@@ -2372,7 +2400,6 @@
         created_at: nowISO()
       };
 
-      // 1) Intento: Netlify Function (si la montas)
       try{
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 4500);
@@ -2394,15 +2421,13 @@
             return;
           }
         }
-      }catch{ /* cae a fallback */ }
+      }catch{}
 
-      // 2) Fallback: abrir link de Mercado Pago (debes pegar el real)
       const mp = STORE.MERCADO_PAGO_LINK || "";
       const hasRealMpLink = mp.startsWith("https://") && !mp.includes("TU_LINK_AQUI");
 
       if(hasRealMpLink){
         try{
-          // Copiar resumen al portapapeles para que no se pierda el pedido
           const summary = buildOrderSummary();
           await navigator.clipboard.writeText(summary);
           toast("Pedido copiado ✅ Abriendo Mercado Pago…");
@@ -2410,13 +2435,11 @@
           toast("Abriendo Mercado Pago…");
         }
         window.open(mp, "_blank", "noopener");
-        // Y también abrir WhatsApp con el pedido (para validar)
         await sleep(350);
         await openWhatsAppWithOrder();
         return;
       }
 
-      // 3) Sin link real: directo a WhatsApp
       toast("Falta configurar link de pago. Enviando pedido por WhatsApp…");
       await openWhatsAppWithOrder();
     };
@@ -2428,7 +2451,6 @@
       const wrap = e.target.closest(".cItem");
       if(!wrap) return;
 
-      // key por id+talla
       const id = wrap.getAttribute("data-id");
       const size = wrap.getAttribute("data-size");
       const key = `${id}__${size}`;
@@ -2455,7 +2477,7 @@
       });
     });
 
-    /* ====== LEGAL LINKS (abre details) ====== */
+    /* ====== LEGAL LINKS ====== */
     $$("[data-legal]").forEach(a => {
       a.addEventListener("click", (e) => {
         e.preventDefault();
@@ -2474,14 +2496,13 @@
     renderCart();
     renderShippingUI();
 
-    // Si hay shipping seleccionado, asegurar radio
     if(state.shipping.method){
       const radio = shipOptions?.querySelector(`input[value="${CSS.escape(state.shipping.method)}"]`);
       if(radio) radio.checked = true;
     }
 
   })();
-  </script>
+</script>
 
 </body>
 </html>
