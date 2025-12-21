@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
-  
-  <title>SCORE Store | Official Off-Road Merch</title>
-  <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES. Envíos internacionales." />
+  <meta name="color-scheme" content="light dark" />
+
+  <title>SCORE Store | Tienda Oficial</title>
+  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México y USA." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -21,7 +22,7 @@
 
   <style>
     :root {
-      /* PALETA SCORE RACING */
+      /* --- PALETA BAJA RACING --- */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
@@ -29,126 +30,136 @@
       --sand: #f8f8f8;
       --green: #00C853; 
       
-      /* Overlay Café Tierra (Más Transparente) */
-      --cafeOverlay: linear-gradient(90deg, rgba(45, 26, 16, 0.85) 0%, rgba(62, 39, 35, 0.4) 100%);
+      /* Overlay Tierra/Café (Transparencia ajustada) */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.85) 0%, rgba(40, 20, 10, 0.65) 100%);
       
-      --shadow: 0 15px 40px rgba(0,0,0,0.12);
+      --shadow: 0 15px 40px rgba(0,0,0,0.2);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-      --radius: 14px;
+      --radius: 16px;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body {
-      margin: 0; font-family: var(--fontBody); background: var(--sand); color: #111;
-      overflow-x: hidden; padding-bottom: 110px;
+      margin: 0; font-family: var(--fontBody); background-color: var(--sand); color: #111;
+      overflow-x: hidden; padding-bottom: 120px; position: relative;
     }
     body.modalOpen { overflow: hidden; }
 
-    /* --- ANIMACIÓN POLVO (Optimizado) --- */
-    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+    /* --- 1. FONDO DE PÁGINA (RECUPERADO) --- */
+    .page-bg {
+      position: fixed; inset: 0; z-index: -10; pointer-events: none;
+      background-image: url('/assets/fondo-pagina-score.png');
+      background-size: cover; background-position: center;
+      opacity: 0.6; /* Sutil textura de fondo */
+    }
+
+    /* --- 2. ANIMACIÓN POLVO (Optimizado Móvil) --- */
+    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -5; overflow: hidden; }
     .dust {
       position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E");
       opacity: 0.5; mix-blend-mode: multiply;
-      animation: grain 12s steps(10) infinite;
+      animation: grain 10s steps(10) infinite;
       will-change: transform;
     }
     @keyframes grain { 
       0% { transform: translate3d(0,0,0); } 
-      100% { transform: translate3d(-5%,-5%,0); } 
+      100% { transform: translate3d(-10%,-10%,0); } 
     }
 
     /* --- UI UTILS --- */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(6px); }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
     .toast {
       position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
       background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
       font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s var(--ease);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap; font-size: 13px; letter-spacing: 0.5px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; }
+
     /* --- TOPBAR --- */
     .topbar {
-      position: fixed; top: 0; inset-inline: 0; height: 74px; z-index: 90;
-      background: rgba(255,255,255,0.94); border-bottom: 2px solid var(--red);
-      backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between;
-      padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      position: fixed; top: 0; inset-inline: 0; height: 76px; z-index: 90;
+      background: rgba(255,255,255,0.96); border-bottom: 3px solid var(--red);
+      backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
-    .brand img { height: 48px; width: auto; display: block; }
+    .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
     
     .navRight { display: flex; align-items: center; gap: 12px; }
     
+    /* PILL (Recuperado) */
     .pill {
-      display: flex; align-items: center; height: 32px; padding: 0 14px;
+      display: flex; align-items: center; height: 34px; padding: 0 14px;
       border-radius: 99px; background: #111; color: #fff;
-      font-weight: 800; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      font-weight: 900; font-size: 11px; letter-spacing: .05em;
+      border: 1px solid rgba(255,255,255,0.2);
     }
     .pill b { color: var(--red); margin-left: 4px; }
     @media (max-width: 600px){ .pill { display: none; } }
 
     .cartTrigger {
-      background: var(--carbon); color: #fff; border: none; height: 44px; padding: 0 16px;
-      font-family: var(--fontTitle); font-weight: 700; font-size: 20px; letter-spacing: 1px;
-      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      background: var(--carbon); color: #fff; border: none; height: 46px; padding: 0 18px;
+      font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
       transition: transform 0.1s;
     }
     .cartTrigger:active { transform: scale(0.96); }
-    .cartCount { background: var(--red); font-size: 12px; padding: 1px 6px; border-radius: 3px; font-family: var(--fontBody); }
+    .cartCount { background: var(--red); font-size: 12px; padding: 1px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
-    /* --- HERO (Transparente y Texto Legible) --- */
+    /* --- HERO (Textura & Transparencia) --- */
     .hero {
-      position: relative; margin: 94px auto 50px; width: min(1200px, 94vw);
-      min-height: 520px; border-radius: 16px; overflow: hidden;
+      position: relative; margin: 96px auto 40px; width: min(1200px, 94vw);
+      min-height: 540px; border-radius: 20px; overflow: hidden;
       display: flex; align-items: center; box-shadow: var(--shadow);
     }
     .heroBg { 
       position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
-      transform: scale(1.05); /* Zoom ligero */
+      transform: scale(1.02);
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
-      mix-blend-mode: normal; /* Cambiado para mejor control de transparencia */
+      mix-blend-mode: multiply; opacity: 0.75; /* Más transparente como pediste */
     }
     
-    .heroContent { position: relative; z-index: 2; padding: 40px 50px; max-width: 800px; color: #fff; }
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
     
     .tagline {
       background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
-      font-size: 18px; font-weight: 700; letter-spacing: 1px; 
-      transform: skew(-10deg); display: inline-block; margin-bottom: 16px;
+      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 12px;
     }
     .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(56px, 12vw, 110px); line-height: 0.85;
-      margin: 0 0 20px; text-transform: uppercase; 
-      text-shadow: 0 4px 16px rgba(0,0,0,0.4); /* Sombra para legibilidad */
+      font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
+      margin: 0 0 16px; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
     }
     .sub {
-      font-size: 17px; line-height: 1.5; color: rgba(255,255,255,0.95); margin-bottom: 30px;
-      border-left: 3px solid var(--red); padding-left: 18px; font-weight: 500; max-width: 600px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+      font-size: 17px; line-height: 1.5; color: rgba(255,255,255,0.95); margin-bottom: 24px;
+      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500; max-width: 600px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
     .btn {
       border: none; cursor: pointer; font-weight: 900; text-transform: uppercase;
-      border-radius: 8px; padding: 14px 28px; font-size: 13px; letter-spacing: 1px;
+      border-radius: 12px; padding: 14px 28px; font-size: 14px; letter-spacing: 0.5px;
       transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 8px;
       text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
     .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-    .btn.secondary { background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px); }
+    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px); }
 
-    /* Chips del Hero */
+    /* CHIPS HERO (Recuperados) */
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
-      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
-      padding: 8px 12px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;
       text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #fff;
       backdrop-filter: blur(4px);
     }
@@ -156,26 +167,26 @@
 
     /* --- SECCIONES --- */
     .secHeader {
-      width: min(1200px, 94vw); margin: 0 auto 24px; display: flex;
-      align-items: baseline; justify-content: space-between; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;
+      width: min(1200px, 94vw); margin: 0 auto 20px; display: flex;
+      align-items: baseline; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 10px;
     }
     .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; line-height: 1; }
-    .meta { font-weight: 900; color: #888; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .meta { font-weight: 900; color: #888; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- GRID TARJETAS --- */
+    /* --- GRID TARJETAS UNIFORMES --- */
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
     }
     .card {
-      position: relative; height: 360px; border-radius: 12px; overflow: hidden;
+      position: relative; height: 340px; border-radius: 18px; overflow: hidden;
       background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
-      border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
     
     .cardBg {
-      position: absolute; inset: 0; opacity: 0.65;
+      position: absolute; inset: 0; opacity: 0.6;
       background: url('/assets/baja1000-texture.png') center/cover;
       transition: opacity 0.3s;
     }
@@ -189,108 +200,110 @@
     
     .statusBadge {
       position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
-      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; 
-      letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
     }
-    
+    /* Estilo diferente para "Próximamente" */
+    .statusBadge.soon { background: #333; color: #fff; border: 1px solid #555; }
+
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 12px 24px;
+      background: #fff; color: #000; border: none; padding: 10px 24px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
       font-size: 12px; letter-spacing: 1px; transition: background 0.2s, transform 0.2s;
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; transform: scale(1.05); }
 
-    /* --- HIGHLIGHTS --- */
+    /* --- HIGHLIGHTS (Recuperado) --- */
     .highlight {
       width: min(1200px, 94vw); margin: 0 auto 60px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;
+      background: #fff; border-radius: 18px; padding: 10px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);
     }
     .hBox {
-      background: #fff; padding: 24px; border-radius: 12px;
+      background: #f9f9f9; padding: 24px; border-radius: 14px;
       display: flex; flex-direction: column; justify-content: center;
-      border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 10px rgba(0,0,0,0.03);
     }
-    .hTitle { font-weight: 900; font-size: 11px; letter-spacing: 1.5px; color: #888; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .hTxt { font-weight: 800; font-size: 16px; margin: 0; line-height: 1.4; color: #222; }
+    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .hTxt { font-weight: 800; font-size: 15px; margin: 0; line-height: 1.4; color: #333; }
 
     /* --- PARTNERS --- */
     .partners {
       width: min(1200px, 94vw); margin: 0 auto 60px; text-align: center;
-      padding: 40px 20px; background: #fff; border-radius: 16px; border-bottom: 4px solid var(--red);
+      padding: 30px; background: #fff; border-radius: 20px; border-bottom: 4px solid var(--red);
     }
     .pGrid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
-    .pLogo { height: 38px; opacity: 0.5; filter: grayscale(1); transition: 0.3s; }
+    .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* --- FOOTER --- */
+    /* --- FOOTER ROBUSTO (Recuperado) --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
-    .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
-    @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; gap: 30px; } }
+    .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
     
-    .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; letter-spacing: 0.5px; }
-    .footBlock p { color: #aaa; font-size: 13px; line-height: 1.6; margin: 0; }
-    
-    details.fLegal { background: rgba(255,255,255,0.03); margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
     details.fLegal summary {
       padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
-      display: flex; justify-content: space-between; align-items: center; color: #ddd; font-size: 13px; letter-spacing: 0.5px;
+      display: flex; justify-content: space-between; align-items: center; color: #eee;
     }
-    summary svg { width: 18px; height: 18px; stroke: var(--green); stroke-width: 2.5; }
-    .legalContent { padding: 0 16px 16px; color: #999; font-size: 13px; line-height: 1.5; }
-    .legalContent h4 { font-family: var(--fontBody); font-weight: 800; font-size: 13px; color: #fff; margin: 10px 0 4px; }
+    summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 2.5; }
+    .fLegalPill {
+      font-size: 10px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;
+      font-weight: 900; letter-spacing: 1px; color: #aaa;
+    }
+    .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
+    .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
     /* --- DRAWER CARRITO --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
-      background: #fff; z-index: 200; transform: translateX(105%); transition: 0.35s var(--ease);
+      background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
       display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,0.25);
     }
     .drawer.active { transform: translateX(0); }
     
-    .dHead { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 32px; text-transform: uppercase; color: #111; }
-    .dBody { flex: 1; overflow-y: auto; padding: 24px; background: #fff; }
+    .dHead { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; color: #111; }
+    .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     
-    .dFoot { padding: 24px; background: #fcfcfc; border-top: 1px solid #eee; }
-    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #666; font-weight: 600; }
-    .sumRow.total { font-size: 20px; color: #000; font-weight: 900; margin-top: 16px; border-top: 1px solid #ddd; padding-top: 12px; }
-    .usdRef { text-align: right; font-size: 11px; color: #999; font-weight: 700; margin-bottom: 20px; }
+    .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #555; font-weight: 600; }
+    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+    .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
 
-    /* Inputs Mobile Friendly */
+    /* Inputs 16px (Mobile friendly) */
     input, select {
-      width: 100%; height: 50px; border: 1px solid #e0e0e0; border-radius: 8px;
-      padding: 0 16px; font-size: 16px !important; margin-bottom: 12px; background: #fff; appearance: none;
-      font-family: var(--fontBody); font-weight: 500;
+      width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
+      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; background: #fff; appearance: none;
     }
     input:focus, select:focus { outline: 2px solid var(--red); border-color: transparent; }
 
     /* Paybar Mobile */
     .paybar {
       position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 120px);
-      background: #111; color: #fff; padding: 12px 24px; border-radius: 50px;
+      background: #111; color: #fff; padding: 14px 24px; border-radius: 50px;
       display: flex; gap: 20px; align-items: center; z-index: 100; transition: 0.3s var(--ease);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: min(92%, 400px); justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: min(92%, 420px); justify-content: space-between;
     }
     .paybar.visible { transform: translate(-50%, 0); }
 
     /* Modal Catálogo */
     .modal {
       position: fixed; inset: 40px; background: #fff; border-radius: 20px; z-index: 250;
-      transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s var(--ease);
-      display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s;
+      display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
     .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
-    @media(max-width:600px) { .modal { inset: 0; border-radius: 0; } }
+    @media(max-width:600px) { .modal { inset: 10px; } }
     
-    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; background: #f9f9f9; }
-    .prodCard { border: 1px solid #eee; padding: 12px; border-radius: 12px; text-align: center; background: #fff; transition: transform 0.2s; }
-    .prodCard:hover { transform: translateY(-2px); border-color: #ddd; }
-    .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply; }
+    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
+    .prodCard { border: 1px solid #eee; padding: 10px; border-radius: 14px; text-align: center; }
+    .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 10px; mix-blend-mode: multiply; }
 
   </style>
 </head>
 <body>
 
+  <div class="page-bg"></div>
   <div class="dust-container"><div class="dust"></div></div>
   <div class="overlay" id="overlay"></div>
   <div class="toast" id="toast">Notificación</div>
@@ -314,13 +327,13 @@
       <div class="tagline">OFICIAL MERCH</div>
       <h1>SCORE INTERNATIONAL</h1>
       <p class="sub">
-        Equipamiento oficial para el desierto. Diseñado y fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>.
-        Productos auténticos de edición limitada.
+        Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
+        Productos auténticos listos para el desierto.
       </p>
       
       <div class="ctaRow">
         <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">EXPLORAR EQUIPO</button>
-        <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
+        <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
       </div>
 
       <div class="heroChips">
@@ -348,25 +361,25 @@
     <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="statusBadge">DISPONIBLE</span>
+        <span class="statusBadge soon">PRÓXIMAMENTE</span>
         <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
-        <button class="viewBtn">Ver Productos</button>
+        <button class="viewBtn">Ver Info</button>
       </div>
     </div>
     <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="statusBadge">DISPONIBLE</span>
+        <span class="statusBadge soon">PRÓXIMAMENTE</span>
         <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
-        <button class="viewBtn">Ver Productos</button>
+        <button class="viewBtn">Ver Info</button>
       </div>
     </div>
     <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
       <div class="cardBg"></div>
       <div class="cardContent">
-        <span class="statusBadge">DISPONIBLE</span>
+        <span class="statusBadge soon">PRÓXIMAMENTE</span>
         <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
-        <button class="viewBtn">Ver Productos</button>
+        <button class="viewBtn">Ver Info</button>
       </div>
     </div>
   </div>
@@ -395,33 +408,33 @@
 
   <footer>
     <div class="footWrap">
-      <div class="footBlock">
-        <h4>ÚNICO UNIFORMES</h4>
-        <p>
+      <div>
+        <h4 style="font-family:var(--fontTitle); font-size: 28px; margin: 0 0 10px;">ÚNICO UNIFORMES</h4>
+        <p style="color:#aaa; font-size:13px; line-height:1.6;">
           Fabricante y Patrocinador Oficial.<br>
-          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana B.C.<br><br>
+          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana B.C.<br>
           <b>ventas.unicotextil@gmail.com</b><br>
           WhatsApp: 664 236 8701
         </p>
       </div>
-      <div class="footBlock">
-        <h4 style="color:var(--red);">LEGAL</h4>
+      <div>
+        <h4 style="font-family:var(--fontTitle); color:var(--red); font-size:24px;">LEGAL</h4>
         <details class="fLegal">
-          <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></summary>
+          <summary>Términos y Condiciones <span class="fLegalPill">LEER</span></summary>
           <div class="legalContent">
             <h4>1) Identidad</h4>
             <p>Operado por ÚNICO UNIFORMES. Productos sujetos a disponibilidad.</p>
           </div>
         </details>
         <details class="fLegal">
-          <summary>Envíos y Entregas <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></summary>
+          <summary>Envíos y Entregas <span class="fLegalPill">LEER</span></summary>
           <div class="legalContent">
             <h4>Modalidades</h4>
             <p><b>Nacional:</b> Cotización vía Envia.com.<br><b>Local (Tijuana):</b> $200 MXN.<br><b>Pickup:</b> Gratis en fábrica.</p>
           </div>
         </details>
         <details class="fLegal">
-          <summary>Cambios y Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></summary>
+          <summary>Cambios y Devoluciones <span class="fLegalPill">LEER</span></summary>
           <div class="legalContent">
             <h4>Política</h4>
             <p>Solo por defectos de fábrica (7 días). No cambios por talla en ediciones agotadas.</p>
@@ -434,7 +447,7 @@
   <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer; line-height:1;">&times;</button>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer;">&times;</button>
     </div>
     
     <div class="dBody" id="cartBody"></div>
@@ -450,7 +463,7 @@
         <button class="btn" style="background:#000; color:#fff; padding:0 15px; font-size:12px;">APLICAR</button>
       </div>
 
-      <p style="font-size:12px; font-weight:800; color:#555; margin-bottom:8px;">MÉTODO DE ENTREGA:</p>
+      <p style="font-size:12px; font-weight:700; color:#555;">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod" onchange="updateCart()">
         <option value="">-- SELECCIONA --</option>
         <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
@@ -463,9 +476,9 @@
         <input id="addr" placeholder="Dirección completa">
         <input id="name" placeholder="Nombre completo">
       </div>
-      <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:15px; display:none;"></div>
+      <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:10px; display:none;"></div>
 
-      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center; background:#111; color:#fff; font-size:16px;" disabled onclick="checkout()">
+      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center; background:#111; color:#fff;" disabled onclick="checkout()">
         IR A PAGAR
       </button>
     </div>
@@ -474,7 +487,7 @@
   <div class="modal" id="modalCatalog">
     <div class="dHead">
       <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;" id="catTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer; line-height:1;">&times;</button>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer;">&times;</button>
     </div>
     <div class="catGrid" id="catGrid"></div>
   </div>
@@ -484,22 +497,19 @@
       <div style="font-size:10px; font-weight:800; opacity:0.7;">TOTAL</div>
       <div style="font-size:18px; font-weight:900;" id="barTotal">$0</div>
     </div>
-    <button class="btn" style="padding:8px 20px; font-size:12px; height:36px; background:#fff; color:#000;" onclick="openDrawer()">VER CARRITO</button>
+    <button class="btn" style="padding:8px 16px; font-size:12px; height:36px; background:#fff; color:#000;" onclick="openDrawer()">VER CARRITO</button>
   </div>
 
   <script>
-    // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Fallback Sincronizado con catalog.json
+    // Productos Fallback (Solo lo REAL + Placeholder de las otras secciones para evitar errores)
     const PRODUCTS = [
       { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camiseta-negra", name:"Camiseta SCORE Baja 1000 Negra", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      // Relleno (Items que deben existir en catalog.json)
-      { id:"tee-500", name:"Camiseta Oficial Baja 500", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L"], section:"BAJA_500" },
-      { id:"tee-400", name:"Camiseta Oficial Baja 400", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["S","M","L"], section:"BAJA_400" },
-      { id:"hoodie-sf", name:"Hoodie San Felipe 250", price:799, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
+      { id:"sudadera-cafe", name:"Sudadera World Desert Café", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
+      { id:"sudadera-negra", name:"Sudadera World Desert Negra", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" }
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -507,7 +517,7 @@
     const USD_RATE = 17.50; 
     const $ = id => document.getElementById(id);
 
-    // --- 2. LÓGICA ---
+    // --- Cargar Catálogo ---
     async function openCatalog(section, title) {
       $('catTitle').innerText = title.toUpperCase();
       let items = [];
@@ -522,19 +532,29 @@
       if(!items.length) items = PRODUCTS.filter(p => p.section === section);
 
       const grid = $('catGrid');
-      if(!items.length) grid.innerHTML = "<p style='text-align:center; padding:20px; font-weight:700; color:#888;'>Próximamente</p>";
-      else grid.innerHTML = items.map(p => `
-        <div class="prodCard">
-          <img src="${p.img || p.image}" onerror="this.src='/assets/logo-score.png'">
-          <div style="font-weight:800; font-size:14px; margin:5px 0; line-height:1.2;">${p.name}</div>
-          <div style="color:var(--red); font-weight:900; font-size:15px;">$${p.baseMXN || p.price}</div>
-          <select id="size_${p.id}" style="margin:8px 0; height:36px; font-size:14px !important;">
-            ${(p.sizes || ['Unitalla']).map(s=>`<option>${s}</option>`)}
-          </select>
-          <button class="btn primary" style="width:100%; justify-content:center; padding:10px; font-size:12px;" 
-            onclick="add('${p.id}','${p.name}',${p.baseMXN || p.price},'${p.img || p.image}')">AGREGAR</button>
-        </div>
-      `).join('');
+      
+      // LOGICA VISUAL: Si está vacío, mostrar mensaje elegante
+      if(!items.length) {
+        grid.innerHTML = `
+          <div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'>
+            <div style="font-size:40px; margin-bottom:10px; opacity:0.3;">🚦</div>
+            <h3 style="margin:0; text-transform:uppercase;">Próximamente</h3>
+            <p style="font-size:14px; max-width:300px; margin:10px auto;">Estamos preparando el equipo oficial para esta edición.</p>
+          </div>`;
+      } else {
+        grid.innerHTML = items.map(p => `
+          <div class="prodCard">
+            <img src="${p.img || p.image}" onerror="this.src='/assets/logo-score.png'">
+            <div style="font-weight:700; font-size:14px; margin:5px 0;">${p.name}</div>
+            <div style="color:var(--red); font-weight:900;">$${p.baseMXN || p.price}</div>
+            <select id="size_${p.id}" style="margin:5px 0; height:36px; font-size:14px !important;">
+              ${(p.sizes || ['Unitalla']).map(s=>`<option>${s}</option>`)}
+            </select>
+            <button class="btn primary" style="width:100%; justify-content:center; padding:8px;" 
+              onclick="add('${p.id}','${p.name}',${p.baseMXN || p.price},'${p.img || p.image}')">AGREGAR</button>
+          </div>
+        `).join('');
+      }
       
       $('modalCatalog').classList.add('active');
       $('overlay').classList.add('active');
@@ -551,7 +571,6 @@
       showToast("Agregado al equipo");
     }
 
-    // --- Cotizar Envío Real (Backend) ---
     async function quoteShipping() {
       const cp = $('cp').value;
       if(cp.length !== 5) return;
@@ -580,7 +599,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; // PRECIO ACTUALIZADO
+        if(method === 'tj') ship.cost = 200; // COSTO TIJUANA $200
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
@@ -653,7 +672,6 @@
     function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
     function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
     
-    // PWA & Event Listeners
     if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
     $('overlay').onclick = closeAll;
     ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
