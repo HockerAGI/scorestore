@@ -4,10 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
-  <meta name="color-scheme" content="light dark" />
-
+  
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México." />
+  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -28,12 +27,12 @@
       --red: #E10600;
       --carbon: #0b0f14;
       --sand: #f4f4f4;
-      --green: #00C853; /* Verde Oficial */
+      --green: #00C853; 
       
-      /* Overlay Tierra/Café para Hero */
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.90) 0%, rgba(40, 20, 10, 0.85) 100%);
+      /* Overlay Tierra/Café (Identidad Baja) */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.92) 0%, rgba(40, 20, 10, 0.88) 100%);
       
-      --shadow: 0 12px 40px rgba(0,0,0,0.18);
+      --shadow: 0 12px 40px rgba(0,0,0,0.2);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
       --radius: 18px;
     }
@@ -42,7 +41,7 @@
     
     body {
       margin: 0; font-family: var(--fontBody); background: var(--sand); color: #111;
-      overflow-x: hidden; padding-bottom: 110px;
+      overflow-x: hidden; padding-bottom: 120px;
     }
     body.modalOpen { overflow: hidden; }
 
@@ -51,20 +50,18 @@
     .dust {
       position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
-      opacity: 0.4; mix-blend-mode: multiply;
+      opacity: 0.5; mix-blend-mode: multiply;
       animation: grain 8s steps(10) infinite;
-      will-change: transform; /* Forza GPU en iOS */
+      will-change: transform;
     }
     @keyframes grain { 
       0% { transform: translate3d(0,0,0); } 
       10% { transform: translate3d(-5%,-5%,0); } 
-      30% { transform: translate3d(5%,-10%,0); } 
-      50% { transform: translate3d(-5%,5%,0); } 
-      70% { transform: translate3d(5%,5%,0); } 
+      50% { transform: translate3d(5%,5%,0); } 
       100% { transform: translate3d(0,0,0); } 
     }
 
-    /* --- UI UTILS --- */
+    /* --- UTILS --- */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
@@ -75,6 +72,8 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; }
 
     /* --- TOPBAR --- */
     .topbar {
@@ -87,7 +86,7 @@
     
     .navRight { display: flex; align-items: center; gap: 12px; }
     
-    /* Pill "MX + TIJUANA" */
+    /* Pill "MX + TIJUANA" (Recuperado) */
     .pill {
       display: flex; align-items: center; height: 34px; padding: 0 14px;
       border-radius: 99px; background: #111; color: #fff;
@@ -115,7 +114,7 @@
     }
     .heroBg { 
       position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
-      transform: scale(1.02); /* Evita bordes blancos */
+      transform: scale(1.02);
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
@@ -148,14 +147,14 @@
     .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
 
-    /* Chips del Hero */
+    /* Chips del Hero (Recuperados) */
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
       padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;
       text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.9);
     }
-    /* ICONOS VERDES FORZADOS */
+    /* Iconos Verdes Forzados */
     .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 2.5; }
 
     /* --- SECCIONES --- */
@@ -166,7 +165,7 @@
     .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; }
     .meta { font-weight: 900; color: rgba(0,0,0,0.5); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- GRID TARJETAS (Unificadas) --- */
+    /* --- GRID TARJETAS UNIFORMES --- */
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
@@ -195,13 +194,13 @@
       font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
     }
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 12px 24px;
+      background: #fff; color: #000; border: none; padding: 10px 20px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
       font-size: 12px; letter-spacing: 1px; transition: background 0.2s;
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; }
 
-    /* --- HIGHLIGHTS --- */
+    /* --- HIGHLIGHTS (Recuperado) --- */
     .highlight {
       width: min(1200px, 94vw); margin: 0 auto 60px;
       background: #fff; border-radius: 18px; padding: 8px;
@@ -224,7 +223,7 @@
     .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* --- FOOTER ROBUSTO --- */
+    /* --- FOOTER DETALLADO (Recuperado) --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
     .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
@@ -242,7 +241,7 @@
     .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
     .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
-    /* --- DRAWER CARRITO --- */
+    /* --- DRAWER CARRITO DETALLADO --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
@@ -257,9 +256,10 @@
     .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
     .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #555; font-weight: 600; }
     .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+    /* Referencia USD recuperada */
     .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
 
-    /* Inputs 16px (Mobile friendly, no zoom) */
+    /* Inputs 16px (Mobile friendly) */
     input, select {
       width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
       padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; background: #fff; appearance: none;
@@ -491,25 +491,26 @@
   </div>
 
   <script>
-    // --- 1. CONFIGURACIÓN ---
+    // --- CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // 🔥 IMPORTANTE: Los IDs aquí deben coincidir exactamente con catalog.json
-    // Si usas productos genéricos para Baja 500/400, asegúrate de agregarlos a catalog.json o usar IDs existentes.
+    // Fallback EXACTO con catalog.json actualizado
     const PRODUCTS = [
+      // Baja 1000
       { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camiseta-negra", name:"Camiseta SCORE Baja 1000 Negra", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      // REUTILIZACIÓN DE PRODUCTOS PARA QUE LAS OTRAS TARJETAS NO ABRAN VACÍAS
-      // Mapeamos los mismos productos a las otras secciones visualmente
-      { id:"camiseta-azul", name:"Tee Baja 500 Oficial", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L"], section:"BAJA_500" },
-      { id:"camiseta-cafe", name:"Tee Baja 400 Oficial", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["S","M","L"], section:"BAJA_400" },
-      { id:"sudadera-cafe", name:"Hoodie San Felipe", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
+      // Relleno Baja 500
+      { id:"tee-500", name:"Camiseta Oficial Baja 500", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L","XL"], section:"BAJA_500" },
+      // Relleno Baja 400
+      { id:"tee-400", name:"Camiseta Oficial Baja 400", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["S","M","L"], section:"BAJA_400" },
+      // Relleno SF250
+      { id:"hoodie-sf", name:"Hoodie San Felipe 250", price:799, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L","XL"], section:"SF_250" },
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     let ship = { method: null, cost: 0 };
-    const USD_RATE = 17.50; // Referencia visual
+    const USD_RATE = 17.50; 
     const $ = id => document.getElementById(id);
 
     // --- 2. LÓGICA ---
@@ -520,7 +521,6 @@
         const res = await fetch('/data/catalog.json');
         if(res.ok) {
           const data = await res.json();
-          // Intenta cargar del JSON, si está vacío usa el fallback local
           items = data.products.filter(p => p.sectionId === section);
         }
       } catch(e) { console.log('Usando local'); }
@@ -557,7 +557,6 @@
       showToast("Agregado al equipo");
     }
 
-    // --- Cotizar Envío Real ---
     async function quoteShipping() {
       const cp = $('cp').value;
       if(cp.length !== 5) return;
@@ -659,6 +658,9 @@
     function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
     function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
     
+    // SW PWA
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
     $('overlay').onclick = closeAll;
     ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
     
