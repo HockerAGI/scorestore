@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light dark" />
 
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES. Ediciones limitadas por evento." />
+  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -22,16 +22,16 @@
 
   <style>
     :root {
-      /* --- COLORES & TEMA (Modular Baja Racing) --- */
+      /* --- PALETA BAJA RACING --- */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
-      --sand: #f4f4f4;
-      --green: #00C853; 
       --carbon: #0b0f14;
+      --sand: #f4f4f4;
+      --green: #00C853; /* Verde Oficial */
       
-      /* Overlay Café Tierra para el Hero */
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.95) 0%, rgba(45, 26, 16, 0.85) 100%);
+      /* Overlay Tierra/Café para Hero */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.90) 0%, rgba(40, 20, 10, 0.85) 100%);
       
       --shadow: 0 12px 40px rgba(0,0,0,0.18);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -42,42 +42,54 @@
     
     body {
       margin: 0; font-family: var(--fontBody); background: var(--sand); color: #111;
-      overflow-x: hidden; padding-bottom: 100px;
+      overflow-x: hidden; padding-bottom: 110px;
     }
     body.modalOpen { overflow: hidden; }
 
-    /* --- ANIMACIÓN POLVO (Optimizado Móvil) --- */
+    /* --- ANIMACIÓN POLVO (Optimizado GPU Móvil) --- */
     .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
     .dust {
-      position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-      animation: grain 8s steps(10) infinite; opacity: 0.6; mix-blend-mode: multiply;
+      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
+      opacity: 0.4; mix-blend-mode: multiply;
+      animation: grain 8s steps(10) infinite;
+      will-change: transform; /* Forza GPU en iOS */
     }
-    @keyframes grain { 0%, 100% { transform:translate(0,0) } 10% { transform:translate(-5%,-10%) } 20% { transform:translate(-15%,5%) } 30% { transform:translate(7%,-25%) } 40% { transform:translate(-5%,25%) } 50% { transform:translate(-15%,10%) } 60% { transform:translate(15%,0%) } 70% { transform:translate(0%,15%) } 80% { transform:translate(3%,35%) } 90% { transform:translate(-10%,10%) } }
+    @keyframes grain { 
+      0% { transform: translate3d(0,0,0); } 
+      10% { transform: translate3d(-5%,-5%,0); } 
+      30% { transform: translate3d(5%,-10%,0); } 
+      50% { transform: translate3d(-5%,5%,0); } 
+      70% { transform: translate3d(5%,5%,0); } 
+      100% { transform: translate3d(0,0,0); } 
+    }
 
-    /* --- UTILS --- */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; }
+    /* --- UI UTILS --- */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); }
     .overlay.active { opacity: 1; pointer-events: auto; }
+    
     .toast {
-      position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: #111; color: #fff;
-      padding: 10px 20px; border-radius: 50px; font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s;
+      position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
+      background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
+      font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s var(--ease);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
     }
-    .toast.show { opacity: 1; transform: translate(-50%, -10px); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* --- TOPBAR --- */
     .topbar {
       position: fixed; top: 0; inset-inline: 0; height: 76px; z-index: 90;
       background: rgba(255,255,255,0.96); border-bottom: 3px solid var(--red);
       backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between;
-      padding: 0 max(20px, 4vw);
+      padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
-    .brand img { height: 50px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
     
     .navRight { display: flex; align-items: center; gap: 12px; }
     
-    /* Pill Original Recuperada */
+    /* Pill "MX + TIJUANA" */
     .pill {
-      display: flex; align-items: center; height: 36px; padding: 0 14px;
+      display: flex; align-items: center; height: 34px; padding: 0 14px;
       border-radius: 99px; background: #111; color: #fff;
       font-weight: 900; font-size: 11px; letter-spacing: .05em;
       border: 1px solid rgba(255,255,255,0.2);
@@ -86,14 +98,14 @@
     @media (max-width: 600px){ .pill { display: none; } }
 
     .cartTrigger {
-      background: var(--carbon); color: #fff; border: none; height: 48px; padding: 0 18px;
+      background: var(--carbon); color: #fff; border: none; height: 46px; padding: 0 18px;
       font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
       display: flex; align-items: center; gap: 10px; cursor: pointer;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      transition: transform 0.2s var(--ease);
+      transition: transform 0.1s;
     }
-    .cartTrigger:active { transform: scale(0.95); }
-    .cartCount { background: var(--red); font-size: 12px; padding: 2px 6px; border-radius: 4px; font-family: var(--fontBody); }
+    .cartTrigger:active { transform: scale(0.96); }
+    .cartCount { background: var(--red); font-size: 12px; padding: 1px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
     /* --- HERO --- */
     .hero {
@@ -101,14 +113,20 @@
       min-height: 540px; border-radius: 20px; overflow: hidden;
       display: flex; align-items: center; box-shadow: var(--shadow);
     }
-    .heroBg { position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; }
-    .heroOverlay { position: absolute; inset: 0; background: var(--cafeOverlay); mix-blend-mode: multiply; opacity: 0.92; }
+    .heroBg { 
+      position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
+      transform: scale(1.02); /* Evita bordes blancos */
+    }
+    .heroOverlay { 
+      position: absolute; inset: 0; background: var(--cafeOverlay); 
+      mix-blend-mode: multiply; opacity: 0.95; 
+    }
     
     .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
     
     .tagline {
       background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
-      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 10px;
+      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 12px;
     }
     .hero h1 {
       font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
@@ -116,7 +134,7 @@
     }
     .sub {
       font-size: 17px; line-height: 1.5; color: rgba(255,255,255,.92); margin-bottom: 24px;
-      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500;
+      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500; max-width: 600px;
     }
 
     .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
@@ -124,35 +142,37 @@
       border: none; cursor: pointer; font-weight: 900; text-transform: uppercase;
       border-radius: 12px; padding: 14px 28px; font-size: 14px; letter-spacing: 0.5px;
       transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
     .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
 
-    /* Chips Recuperados */
+    /* Chips del Hero */
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
       padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;
       text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.9);
     }
-    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); }
+    /* ICONOS VERDES FORZADOS */
+    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 2.5; }
 
     /* --- SECCIONES --- */
     .secHeader {
       width: min(1200px, 94vw); margin: 0 auto 20px; display: flex;
       align-items: baseline; justify-content: space-between;
     }
-    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; }
+    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; }
     .meta { font-weight: 900; color: rgba(0,0,0,0.5); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- GRID TARJETAS UNIFORMES --- */
+    /* --- GRID TARJETAS (Unificadas) --- */
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
     }
     .card {
-      position: relative; height: 320px; border-radius: 18px; overflow: hidden;
+      position: relative; height: 340px; border-radius: 18px; overflow: hidden;
       background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
       border: 1px solid rgba(255,255,255,0.1);
     }
@@ -175,13 +195,13 @@
       font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
     }
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 10px 20px;
+      background: #fff; color: #000; border: none; padding: 12px 24px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
       font-size: 12px; letter-spacing: 1px; transition: background 0.2s;
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; }
 
-    /* --- HIGHLIGHTS (Recuperado) --- */
+    /* --- HIGHLIGHTS --- */
     .highlight {
       width: min(1200px, 94vw); margin: 0 auto 60px;
       background: #fff; border-radius: 18px; padding: 8px;
@@ -204,7 +224,7 @@
     .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* --- FOOTER ROBUSTO (Recuperado) --- */
+    /* --- FOOTER ROBUSTO --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
     .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
@@ -222,7 +242,7 @@
     .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
     .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
-    /* --- DRAWER CARRITO (Detallado) --- */
+    /* --- DRAWER CARRITO --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
@@ -231,7 +251,7 @@
     .drawer.active { transform: translateX(0); }
     
     .dHead { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; }
+    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; color: #111; }
     .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     
     .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
@@ -239,7 +259,7 @@
     .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
     .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
 
-    /* Inputs 16px (Mobile friendly) */
+    /* Inputs 16px (Mobile friendly, no zoom) */
     input, select {
       width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
       padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; background: #fff; appearance: none;
@@ -292,11 +312,11 @@
     <div class="heroBg"></div>
     <div class="heroOverlay"></div>
     <div class="heroContent">
-      <div class="tagline">OFFICIAL MERCH</div>
+      <div class="tagline">OFICIAL MERCH</div>
       <h1>SCORE INTERNATIONAL</h1>
       <p class="sub">
         Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
-        Productos auténticos listos para el desierto. Ediciones limitadas.
+        Productos auténticos listos para el desierto.
       </p>
       
       <div class="ctaRow">
@@ -474,14 +494,16 @@
     // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Fallback sincronizado con catalog.json
+    // 🔥 IMPORTANTE: Los IDs aquí deben coincidir exactamente con catalog.json
+    // Si usas productos genéricos para Baja 500/400, asegúrate de agregarlos a catalog.json o usar IDs existentes.
     const PRODUCTS = [
       { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camiseta-negra", name:"Camiseta SCORE Baja 1000 Negra", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      // Relleno
-      { id:"tee-500", name:"Tee Baja 500 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["M","L"], section:"BAJA_500" },
-      { id:"tee-400", name:"Tee Baja 400 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["M","L"], section:"BAJA_400" },
+      // REUTILIZACIÓN DE PRODUCTOS PARA QUE LAS OTRAS TARJETAS NO ABRAN VACÍAS
+      // Mapeamos los mismos productos a las otras secciones visualmente
+      { id:"camiseta-azul", name:"Tee Baja 500 Oficial", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L"], section:"BAJA_500" },
+      { id:"camiseta-cafe", name:"Tee Baja 400 Oficial", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["S","M","L"], section:"BAJA_400" },
       { id:"sudadera-cafe", name:"Hoodie San Felipe", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
     ];
 
@@ -498,6 +520,7 @@
         const res = await fetch('/data/catalog.json');
         if(res.ok) {
           const data = await res.json();
+          // Intenta cargar del JSON, si está vacío usa el fallback local
           items = data.products.filter(p => p.sectionId === section);
         }
       } catch(e) { console.log('Usando local'); }
@@ -505,7 +528,7 @@
       if(!items.length) items = PRODUCTS.filter(p => p.section === section);
 
       const grid = $('catGrid');
-      if(!items.length) grid.innerHTML = "<p>Próximamente</p>";
+      if(!items.length) grid.innerHTML = "<p style='text-align:center; padding:20px; font-weight:700; color:#888;'>Próximamente</p>";
       else grid.innerHTML = items.map(p => `
         <div class="prodCard">
           <img src="${p.img || p.image}" onerror="this.src='/assets/logo-score.png'">
