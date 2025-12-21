@@ -2,24 +2,14 @@
   "site": {
     "url": "https://scorestore.netlify.app",
     "currency": "MXN",
-    "fx_mxn_per_usd": 17
+    "fx_mxn_per_usd": 17.50
   },
-  "pricing": { "markup_pct": 0.20 },
+  "pricing": { "markup_pct": 0.00 },
   "sections": [
-    {
-      "id": "EDICION_2025",
-      "title": "EDICIÓN 2025",
-      "subtitle": "Mercancía oficial SCORE International Racing",
-      "badge": "OFICIAL",
-      "order": 10
-    },
-    {
-      "id": "OTRAS_EDICIONES",
-      "title": "COLECCIONES ANTERIORES",
-      "subtitle": "Líneas pasadas y reediciones exclusivas",
-      "badge": "COLECCIÓN",
-      "order": 20
-    }
+    { "id": "EDICION_2025", "title": "BAJA 1000", "badge": "ACTIVO", "order": 1 },
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "DISPONIBLE", "order": 2 },
+    { "id": "BAJA_400", "title": "BAJA 400", "badge": "DISPONIBLE", "order": 3 },
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "DISPONIBLE", "order": 4 }
   ],
   "products": [
     {
@@ -27,11 +17,9 @@
       "name": "Chaqueta Oficial Baja 1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
       "baseMXN": 1490,
-      "wasMXN": 0,
       "weight_g": 800,
       "dimensions_cm": [40, 30, 10],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "tags": ["Oficial", "Edición 2025"],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
       "sectionId": "EDICION_2025"
     },
     {
@@ -39,29 +27,9 @@
       "name": "Camisa de Pits Baja 1000",
       "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
       "baseMXN": 899,
-      "weight_g": 400,
-      "dimensions_cm": [35, 25, 4],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-azul",
-      "name": "Camiseta SCORE Baja 1000 Azul",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
-      "baseMXN": 399,
-      "weight_g": 250,
-      "dimensions_cm": [32, 25, 3],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-cafe",
-      "name": "Camiseta SCORE Baja 1000 Café",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
-      "baseMXN": 399,
-      "weight_g": 250,
-      "dimensions_cm": [32, 25, 3],
-      "sizes": ["S", "L", "XL", "2XL"],
+      "weight_g": 300,
+      "dimensions_cm": [35, 25, 5],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
       "sectionId": "EDICION_2025"
     },
     {
@@ -69,50 +37,40 @@
       "name": "Camiseta SCORE Baja 1000 Negra",
       "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
       "baseMXN": 399,
-      "weight_g": 250,
-      "dimensions_cm": [32, 25, 3],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-cafe",
-      "name": "Sudadera World Desert Café",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 749,
-      "weight_g": 500,
-      "dimensions_cm": [35, 28, 6],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-negra",
-      "name": "Sudadera World Desert Negra",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
-      "baseMXN": 749,
-      "weight_g": 500,
-      "dimensions_cm": [35, 28, 6],
-      "sizes": ["S", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "sudadera-infantil",
-      "name": "Sudadera Infantil Baja 1000",
-      "img": "/assets/EDICION_2025/sudadera-infantil.jpg",
-      "baseMXN": 749,
-      "weight_g": 420,
-      "dimensions_cm": [35, 25, 3],
-      "sizes": ["4", "6", "8", "10", "12", "14"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "gorra-trucker",
-      "name": "Gorra Trucker SCORE Racing",
-      "img": "/assets/OTRAS_EDICIONES/gorra-trucker.jpg",
-      "baseMXN": 650,
       "weight_g": 200,
-      "dimensions_cm": [25, 20, 10],
-      "sizes": ["ÚNICA"],
-      "sectionId": "OTRAS_EDICIONES"
+      "dimensions_cm": [30, 20, 2],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "tee-500",
+      "name": "Camiseta Oficial Baja 500",
+      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
+      "baseMXN": 450,
+      "weight_g": 200,
+      "dimensions_cm": [30, 20, 2],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "BAJA_500"
+    },
+    {
+      "id": "tee-400",
+      "name": "Camiseta Oficial Baja 400",
+      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
+      "baseMXN": 450,
+      "weight_g": 200,
+      "dimensions_cm": [30, 20, 2],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "BAJA_400"
+    },
+    {
+      "id": "hoodie-sf",
+      "name": "Hoodie San Felipe 250",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
+      "baseMXN": 799,
+      "weight_g": 600,
+      "dimensions_cm": [35, 30, 8],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "SF_250"
     }
   ]
 }
