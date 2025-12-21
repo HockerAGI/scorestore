@@ -59,8 +59,8 @@
       --shadow2: 0 12px 30px rgba(0,0,0,.22);
       --radius: 18px;
 
-      /* HERO overlay café oscuro */
-      --heroCafeA: rgba(72, 49, 33, .92);
+      /* HERO overlay café oscuro (más transparente solo en lo oscuro) */
+      --heroCafeA: rgba(72, 49, 33, .84);
       --heroCafeB: rgba(72, 49, 33, .45);
 
       /* season tokens */
@@ -293,9 +293,9 @@
       position:relative;
       border-radius: 18px;
       overflow:hidden;
-      min-height: 520px; /* ✅ menos vacío */
+      min-height: 520px;
       display:flex;
-      align-items:center; /* ✅ centra contenido (desktop) */
+      align-items:center;
       background: #0b0f14;
       color:#fff;
       box-shadow: 0 20px 50px rgba(0,0,0,.18);
@@ -311,13 +311,13 @@
     .heroOverlay{
       position:absolute; inset:0;
       background:
-        linear-gradient(to right, rgba(72, 49, 33, .92) 0%, rgba(72, 49, 33, .45) 66%, transparent 100%),
+        linear-gradient(to right, var(--heroCafeA) 0%, var(--heroCafeB) 66%, transparent 100%),
         radial-gradient(circle at 78% 18%, rgba(225,6,0,0.12), transparent 52%),
         radial-gradient(circle at 18% 74%, rgba(255,255,255,0.10), transparent 56%);
     }
     .heroContent{
       position:relative; z-index:2;
-      padding: 34px 54px 34px; /* ✅ menos padding inferior */
+      padding: 34px 54px 34px;
       max-width: 980px;
       text-align:left;
     }
@@ -437,7 +437,7 @@
       .hero{ align-items:flex-start; min-height: 500px; }
       .heroOverlay{
         background:
-          linear-gradient(to top, rgba(74,50,33,.94) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
+          linear-gradient(to top, var(--heroCafeA) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
           radial-gradient(circle at 60% 25%, rgba(225,6,0,0.10), transparent 52%);
       }
       .heroContent{ padding: 22px; width: 100%; }
@@ -531,7 +531,7 @@
       text-transform: uppercase;
       box-shadow: 0 10px 18px rgba(0,0,0,.25);
     }
-    /* ✅ “PRÓXIMO” tipo texto (más cercano a tus capturas) */
+    /* ✅ “PRÓXIMO” tipo texto */
     .statusBadge.upcoming{
       background: transparent;
       border: none;
@@ -683,88 +683,6 @@
       object-fit: contain;
       filter: grayscale(1) contrast(1.05);
       opacity: .92;
-    }
-
-    /* ✅ LEGAL */
-    .legalWrap{
-      margin-top: 18px;
-      padding: 12px 4px 0;
-    }
-    .legalIntro{
-      background: rgba(255,255,255,.86);
-      border: 1px solid rgba(0,0,0,.10);
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.10);
-      margin-bottom: 14px;
-    }
-    .legalIntro p{
-      margin: 0;
-      font-weight: 900;
-      color: rgba(0,0,0,.70);
-      line-height: 1.5;
-      font-size: 13px;
-    }
-    details.legalCard{
-      background: rgba(255,255,255,.90);
-      border: 1px solid rgba(0,0,0,.10);
-      border-radius: 18px;
-      padding: 0;
-      overflow:hidden;
-      box-shadow: 0 10px 22px rgba(0,0,0,.10);
-      margin-bottom: 12px;
-    }
-    details.legalCard summary{
-      list-style:none;
-      cursor:pointer;
-      padding: 14px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      font-weight: 900;
-      letter-spacing:.06em;
-      text-transform: uppercase;
-      color:#111;
-      user-select:none;
-    }
-    details.legalCard summary::-webkit-details-marker{ display:none; }
-    .legalPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing:.10em;
-      color:#fff;
-      background: #111;
-      white-space:nowrap;
-    }
-    .legalBody{
-      padding: 0 14px 14px;
-      border-top: 1px solid rgba(0,0,0,.08);
-      color: rgba(0,0,0,.78);
-      font-weight: 800;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .legalBody h4{
-      margin: 12px 0 6px;
-      font-family: var(--fontTitle);
-      font-size: 22px;
-      letter-spacing:.03em;
-      text-transform: uppercase;
-      color:#111;
-    }
-    .legalBody ul{ margin: 8px 0 0 18px; }
-    .legalBody li{ margin: 6px 0; }
-    .legalSmall{
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(0,0,0,.62);
-      font-weight: 900;
     }
 
     /* footer */
@@ -1201,8 +1119,121 @@
       background:#fff;
     }
 
+    /* ✅ Radios verdes (entrega/envío) */
+    input[type="radio"]{ accent-color: var(--green); }
+
+    /* ===== Footer Legal (solo abajo, fondo negro) ===== */
+    footer .legalFooterWrap{
+      margin-top: 12px;
+    }
+    footer .fLegalIntro{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 14px;
+      color: rgba(255,255,255,.86);
+      font-weight: 800;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    footer details.fLegal{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    footer details.fLegal summary{
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.92);
+      user-select: none;
+    }
+    footer details.fLegal summary::-webkit-details-marker{ display:none; }
+    footer .fLegalLeft{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    footer .fIcon{
+      width: 26px; height: 26px;
+      border-radius: 10px;
+      background: rgba(0,200,83,.12);
+      border: 1px solid rgba(0,200,83,.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+    footer .fIcon svg{
+      width: 16px; height: 16px;
+      stroke: var(--green);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    footer .fLegalPill{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      color: #fff;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.10);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    footer details.fLegal[open] summary .fLegalPill{
+      background: rgba(0,200,83,.18);
+      border-color: rgba(0,200,83,.22);
+    }
+    footer .fLegalBody{
+      border-top: 1px solid rgba(255,255,255,.10);
+      padding: 0 14px 14px;
+      color: rgba(255,255,255,.84);
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.7;
+
+      /* ✅ “se tiene que deslizar” */
+      max-height: 60vh;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    footer .fLegalBody h4{
+      margin: 14px 0 6px;
+      font-family: var(--fontTitle);
+      font-size: 22px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    footer .fLegalBody ul{ margin: 8px 0 0 18px; }
+    footer .fLegalBody li{ margin: 6px 0; }
+    footer .fLegalSmall{
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,.65);
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
     @media (prefers-reduced-motion: no-preference){
-      .hero, .editionCard, .highlight, .partnersStrip, details.legalCard{
+      .hero, .editionCard, .highlight, .partnersStrip{
         animation: popIn .42s ease both;
       }
       .editionCard:nth-child(2){ animation-delay:.06s }
@@ -1407,252 +1438,7 @@
       </div>
     </section>
 
-    <!-- ✅ LEGAL COMPLETO -->
-    <section class="legalWrap" aria-label="Legal y políticas">
-      <div class="secHeader" id="legal">
-        <h2>Legal y políticas</h2>
-        <div class="meta">Compras · Privacidad · Facturación</div>
-      </div>
-
-      <div class="legalIntro">
-        <p>
-          Esta sección explica cómo operamos la tienda, cómo protegemos tus datos y cuáles son nuestras políticas.
-          Si tienes dudas, contáctanos: <b>ventas.unicotextil@gmail.com</b>.
-        </p>
-      </div>
-
-      <details class="legalCard" id="terms">
-        <summary>
-          <span>Términos y condiciones</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Identidad del responsable</h4>
-          <p>
-            La operación de esta tienda es realizada por <b>ÚNICO UNIFORMES</b> (en adelante, “ÚNICO”),
-            con domicilio en Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C., México.
-          </p>
-
-          <h4>2) Alcance</h4>
-          <p>
-            Al acceder, navegar y/o comprar en este sitio, aceptas estos Términos. ÚNICO puede actualizar este contenido
-            para reflejar mejoras operativas, cambios comerciales o legales.
-          </p>
-
-          <h4>3) Productos, ediciones y disponibilidad</h4>
-          <ul>
-            <li>Los productos pueden ser <b>ediciones limitadas</b> y su disponibilidad depende de inventario.</li>
-            <li>Las imágenes son ilustrativas; pueden existir variaciones mínimas por iluminación o lote de producción.</li>
-            <li>Podemos corregir errores tipográficos, descripciones o precios evidentes antes de confirmar el pedido.</li>
-          </ul>
-
-          <h4>4) Precios</h4>
-          <ul>
-            <li>Los precios se muestran en <b>MXN</b>. La referencia en <b>USD</b> es informativa.</li>
-            <li>El total final incluye productos, descuentos aplicables y costos de envío/entrega según tu elección.</li>
-          </ul>
-
-          <h4>5) Pedidos y confirmación</h4>
-          <ul>
-            <li>Tu compra queda confirmada cuando el sistema registra el pago y emite confirmación.</li>
-            <li>Podemos contactarte para validar datos de entrega o aclaraciones necesarias.</li>
-          </ul>
-
-          <h4>6) Pagos y proveedores</h4>
-          <ul>
-            <li>El procesamiento de pago puede realizarse mediante un proveedor externo (por ejemplo, plataforma de pagos).</li>
-            <li>El proveedor puede solicitar validaciones antifraude; en ciertos casos el pago puede ser rechazado.</li>
-          </ul>
-
-          <h4>7) Promociones</h4>
-          <ul>
-            <li>Los cupones tienen vigencia y condiciones (porcentaje, monto fijo, etc.).</li>
-            <li>ÚNICO puede desactivar promociones por error, uso indebido o finalización de campaña.</li>
-          </ul>
-
-          <h4>8) Propiedad intelectual</h4>
-          <p>
-            Los logotipos, marcas, diseños y contenidos pertenecen a sus respectivos titulares y están protegidos por leyes aplicables.
-            No está permitida su reproducción o uso comercial sin autorización.
-          </p>
-
-          <h4>9) Responsabilidad</h4>
-          <p>
-            ÚNICO no será responsable por interrupciones del servicio, fallas de terceros (pasarelas de pago, mensajerías),
-            o eventos fuera de control razonable. En cualquier caso, la responsabilidad se limita al monto pagado por el pedido afectado.
-          </p>
-
-          <h4>10) Ley aplicable y contacto</h4>
-          <p>
-            Estos términos se interpretan conforme a las leyes de México. Contacto: <b>ventas.unicotextil@gmail.com</b>.
-          </p>
-
-          <div class="legalSmall">Última actualización: se recomienda revisar esta sección periódicamente.</div>
-        </div>
-      </details>
-
-      <details class="legalCard" id="privacy">
-        <summary>
-          <span>Aviso de privacidad</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Datos que recopilamos</h4>
-          <ul>
-            <li>Identificación y contacto: nombre, correo, teléfono/WhatsApp (si lo proporcionas).</li>
-            <li>Entrega: dirección, ciudad, estado, código postal.</li>
-            <li>Compra: productos, cantidades, promociones aplicadas, historial de pedidos.</li>
-            <li>Datos técnicos: cookies y analítica básica (navegación y uso del sitio).</li>
-          </ul>
-
-          <h4>2) Finalidades</h4>
-          <ul>
-            <li>Procesar y administrar tu compra (pedido, cobro, confirmación y entrega).</li>
-            <li>Atención a clientes y seguimiento (aclaraciones, cambios/devoluciones, facturación).</li>
-            <li>Seguridad y prevención de fraude.</li>
-            <li>Mejoras de experiencia, operación y métricas del sitio.</li>
-          </ul>
-
-          <h4>3) Transferencias / terceros</h4>
-          <p>
-            Podemos compartir datos mínimos necesarios con proveedores de pago, mensajería/entrega y plataformas técnicas
-            (hosting, analítica). Estos terceros usan la información solo para prestar el servicio.
-          </p>
-
-          <h4>4) Conservación</h4>
-          <p>
-            Conservamos datos el tiempo necesario para cumplir la relación comercial, obligaciones fiscales/contables y/o
-            para atender solicitudes de garantía o aclaraciones.
-          </p>
-
-          <h4>5) Derechos (ARCO) y contacto</h4>
-          <p>
-            Puedes solicitar Acceso, Rectificación, Cancelación u Oposición (ARCO) escribiendo a
-            <b>ventas.unicotextil@gmail.com</b>, indicando tu nombre y la solicitud.
-          </p>
-
-          <div class="legalSmall">Nota: No almacenamos datos sensibles de tarjetas; el procesamiento ocurre en el proveedor de pago.</div>
-        </div>
-      </details>
-
-      <details class="legalCard" id="shipping">
-        <summary>
-          <span>Envíos y entregas</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Modalidades</h4>
-          <ul>
-            <li><b>Recolección en fábrica (Tijuana)</b>: coordinamos contigo tras la compra.</li>
-            <li><b>Envío local (Tijuana)</b>: entregas dentro de la ciudad (sujeto a validación de zona).</li>
-            <li><b>Envío nacional (MX)</b>: requiere dirección completa para cotización/estimación.</li>
-          </ul>
-
-          <h4>2) Tiempos</h4>
-          <ul>
-            <li>Los tiempos son estimados y dependen de inventario, preparación y proveedor de logística.</li>
-            <li>En temporadas altas o lanzamientos, los tiempos pueden extenderse.</li>
-          </ul>
-
-          <h4>3) Dirección y responsabilidad</h4>
-          <ul>
-            <li>Es responsabilidad del cliente proporcionar datos correctos y completos.</li>
-            <li>Si la mensajería no puede entregar por datos incorrectos, costos extra pueden aplicar.</li>
-          </ul>
-
-          <h4>4) Incidencias</h4>
-          <p>
-            Si tu paquete presenta daño visible o falta, repórtalo lo antes posible a <b>ventas.unicotextil@gmail.com</b>
-            con fotos del empaque y del producto.
-          </p>
-        </div>
-      </details>
-
-      <details class="legalCard" id="returns">
-        <summary>
-          <span>Cambios y devoluciones</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Elegibilidad</h4>
-          <ul>
-            <li>El producto debe estar <b>sin uso</b>, con etiquetas, en condiciones originales.</li>
-            <li>Para cambios por talla, el producto debe conservar su estado original.</li>
-          </ul>
-
-          <h4>2) Plazos</h4>
-          <ul>
-            <li>Solicitudes dentro de un plazo razonable desde la recepción (recomendado: <b>7 días naturales</b>).</li>
-          </ul>
-
-          <h4>3) Defectos o error de surtido</h4>
-          <ul>
-            <li>Si recibes un producto incorrecto o con defecto de fabricación, lo revisamos y te damos solución.</li>
-            <li>En estos casos, ÚNICO indicará el proceso y la logística para el retorno/cambio.</li>
-          </ul>
-
-          <h4>4) No aplican</h4>
-          <ul>
-            <li>Productos dañados por mal uso o desgaste normal.</li>
-            <li>Artículos personalizados o bajo pedido especial (si aplica en el futuro).</li>
-          </ul>
-
-          <div class="legalSmall">Para iniciar: escribe a <b>ventas.unicotextil@gmail.com</b> con tu número de pedido y fotos.</div>
-        </div>
-      </details>
-
-      <details class="legalCard" id="fiscal">
-        <summary>
-          <span>Facturación</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Solicitud</h4>
-          <p>
-            Si requieres factura, solicítala por correo a <b>ventas.unicotextil@gmail.com</b> indicando:
-            <b>número de pedido</b>, RFC, razón social, uso de CFDI, régimen fiscal, correo y código postal fiscal.
-          </p>
-
-          <h4>2) Plazos y validación</h4>
-          <ul>
-            <li>La emisión está sujeta a validación de datos. Datos incompletos pueden retrasar la facturación.</li>
-            <li>Podemos requerir confirmación adicional para corregir errores antes de emitir.</li>
-          </ul>
-
-          <h4>3) Consideraciones</h4>
-          <ul>
-            <li>La facturación se realiza conforme a disposiciones fiscales vigentes en México.</li>
-            <li>Conserva tu comprobante de pago/confirmación como respaldo.</li>
-          </ul>
-        </div>
-      </details>
-
-      <details class="legalCard" id="cookies">
-        <summary>
-          <span>Cookies</span>
-          <span class="legalPill">LEER</span>
-        </summary>
-        <div class="legalBody">
-          <h4>1) Qué son</h4>
-          <p>
-            Las cookies son archivos pequeños que ayudan a recordar preferencias y mejorar tu experiencia.
-          </p>
-
-          <h4>2) Tipos</h4>
-          <ul>
-            <li><b>Necesarias</b>: para funciones básicas (carrito, sesión, seguridad).</li>
-            <li><b>Preferencias</b>: tema/ajustes del sitio.</li>
-            <li><b>Analítica</b>: métricas para mejorar navegación y rendimiento.</li>
-          </ul>
-
-          <h4>3) Cómo desactivarlas</h4>
-          <p>
-            Puedes administrar cookies desde la configuración de tu navegador. Si desactivas cookies necesarias,
-            algunas funciones pueden no operar correctamente.
-          </p>
-        </div>
-      </details>
-    </section>
+    <!-- ✅ LEGAL EN MAIN ELIMINADO (queda SOLO en el footer) -->
   </main>
 
   <footer>
@@ -1671,15 +1457,300 @@
         </p>
       </div>
 
+      <!-- ✅ LEGAL COMPLETO SOLO EN FOOTER + DESPLEGABLE + SCROLL -->
       <div>
         <h4 style="color:var(--red); font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">LEGAL</h4>
-        <div>
-          <a class="fLink" href="/#terms" data-legal="terms">Términos y condiciones</a>
-          <a class="fLink" href="/#privacy" data-legal="privacy">Aviso de privacidad</a>
-          <a class="fLink" href="/#shipping" data-legal="shipping">Envíos y entregas</a>
-          <a class="fLink" href="/#returns" data-legal="returns">Cambios y devoluciones</a>
-          <a class="fLink" href="/#fiscal" data-legal="fiscal">Facturación</a>
-          <a class="fLink" href="/#cookies" data-legal="cookies">Cookies</a>
+
+        <div class="legalFooterWrap" id="legal">
+          <div class="fLegalIntro">
+            Esta sección explica cómo operamos la tienda, cómo protegemos tus datos y cuáles son nuestras políticas.
+            Si tienes dudas, contáctanos: <b>ventas.unicotextil@gmail.com</b>.
+          </div>
+
+          <details class="fLegal" id="terms">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                </span>
+                <span>Términos y condiciones</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Identidad del responsable</h4>
+              <p>
+                La operación de esta tienda es realizada por <b>ÚNICO UNIFORMES</b> (en adelante, “ÚNICO”),
+                con domicilio en Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C., México.
+              </p>
+
+              <h4>2) Alcance</h4>
+              <p>
+                Al acceder, navegar y/o comprar en este sitio, aceptas estos Términos. ÚNICO puede actualizar este contenido
+                para reflejar mejoras operativas, cambios comerciales o legales.
+              </p>
+
+              <h4>3) Productos, ediciones y disponibilidad</h4>
+              <ul>
+                <li>Los productos pueden ser <b>ediciones limitadas</b> y su disponibilidad depende de inventario.</li>
+                <li>Las imágenes son ilustrativas; pueden existir variaciones mínimas por iluminación o lote de producción.</li>
+                <li>Podemos corregir errores tipográficos, descripciones o precios evidentes antes de confirmar el pedido.</li>
+              </ul>
+
+              <h4>4) Precios</h4>
+              <ul>
+                <li>Los precios se muestran en <b>MXN</b>. La referencia en <b>USD</b> es informativa.</li>
+                <li>El total final incluye productos, descuentos aplicables y costos de envío/entrega según tu elección.</li>
+              </ul>
+
+              <h4>5) Pedidos y confirmación</h4>
+              <ul>
+                <li>Tu compra queda confirmada cuando el sistema registra el pago y emite confirmación.</li>
+                <li>Podemos contactarte para validar datos de entrega o aclaraciones necesarias.</li>
+              </ul>
+
+              <h4>6) Pagos y proveedores</h4>
+              <ul>
+                <li>El procesamiento de pago puede realizarse mediante un proveedor externo (por ejemplo, plataforma de pagos).</li>
+                <li>El proveedor puede solicitar validaciones antifraude; en ciertos casos el pago puede ser rechazado.</li>
+              </ul>
+
+              <h4>7) Promociones</h4>
+              <ul>
+                <li>Los cupones tienen vigencia y condiciones (porcentaje, monto fijo, etc.).</li>
+                <li>ÚNICO puede desactivar promociones por error, uso indebido o finalización de campaña.</li>
+              </ul>
+
+              <h4>8) Propiedad intelectual</h4>
+              <p>
+                Los logotipos, marcas, diseños y contenidos pertenecen a sus respectivos titulares y están protegidos por leyes aplicables.
+                No está permitida su reproducción o uso comercial sin autorización.
+              </p>
+
+              <h4>9) Responsabilidad</h4>
+              <p>
+                ÚNICO no será responsable por interrupciones del servicio, fallas de terceros (pasarelas de pago, mensajerías),
+                o eventos fuera de control razonable. En cualquier caso, la responsabilidad se limita al monto pagado por el pedido afectado.
+              </p>
+
+              <h4>10) Ley aplicable y contacto</h4>
+              <p>
+                Estos términos se interpretan conforme a las leyes de México. Contacto: <b>ventas.unicotextil@gmail.com</b>.
+              </p>
+
+              <div class="fLegalSmall">Última actualización: se recomienda revisar esta sección periódicamente.</div>
+            </div>
+          </details>
+
+          <details class="fLegal" id="privacy">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
+                    <path d="M9 12l2 2 4-5"/>
+                  </svg>
+                </span>
+                <span>Aviso de privacidad</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Datos que recopilamos</h4>
+              <ul>
+                <li>Identificación y contacto: nombre, correo, teléfono/WhatsApp (si lo proporcionas).</li>
+                <li>Entrega: dirección, ciudad, estado, código postal.</li>
+                <li>Compra: productos, cantidades, promociones aplicadas, historial de pedidos.</li>
+                <li>Datos técnicos: cookies y analítica básica (navegación y uso del sitio).</li>
+              </ul>
+
+              <h4>2) Finalidades</h4>
+              <ul>
+                <li>Procesar y administrar tu compra (pedido, cobro, confirmación y entrega).</li>
+                <li>Atención a clientes y seguimiento (aclaraciones, cambios/devoluciones, facturación).</li>
+                <li>Seguridad y prevención de fraude.</li>
+                <li>Mejoras de experiencia, operación y métricas del sitio.</li>
+              </ul>
+
+              <h4>3) Transferencias / terceros</h4>
+              <p>
+                Podemos compartir datos mínimos necesarios con proveedores de pago, mensajería/entrega y plataformas técnicas
+                (hosting, analítica). Estos terceros usan la información solo para prestar el servicio.
+              </p>
+
+              <h4>4) Conservación</h4>
+              <p>
+                Conservamos datos el tiempo necesario para cumplir la relación comercial, obligaciones fiscales/contables y/o
+                para atender solicitudes de garantía o aclaraciones.
+              </p>
+
+              <h4>5) Derechos (ARCO) y contacto</h4>
+              <p>
+                Puedes solicitar Acceso, Rectificación, Cancelación u Oposición (ARCO) escribiendo a
+                <b>ventas.unicotextil@gmail.com</b>, indicando tu nombre y la solicitud.
+              </p>
+
+              <div class="fLegalSmall">Nota: No almacenamos datos sensibles de tarjetas; el procesamiento ocurre en el proveedor de pago.</div>
+            </div>
+          </details>
+
+          <details class="fLegal" id="shipping">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 7h12v10H3z"/>
+                    <path d="M15 10h4l2 3v4h-6z"/>
+                    <circle cx="7" cy="19" r="1.5"/>
+                    <circle cx="18" cy="19" r="1.5"/>
+                  </svg>
+                </span>
+                <span>Envíos y entregas</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Modalidades</h4>
+              <ul>
+                <li><b>Recolección en fábrica (Tijuana)</b>: coordinamos contigo tras la compra.</li>
+                <li><b>Envío local (Tijuana)</b>: entregas dentro de la ciudad (sujeto a validación de zona).</li>
+                <li><b>Envío nacional (MX)</b>: requiere dirección completa para cotización/estimación.</li>
+              </ul>
+
+              <h4>2) Tiempos</h4>
+              <ul>
+                <li>Los tiempos son estimados y dependen de inventario, preparación y proveedor de logística.</li>
+                <li>En temporadas altas o lanzamientos, los tiempos pueden extenderse.</li>
+              </ul>
+
+              <h4>3) Dirección y responsabilidad</h4>
+              <ul>
+                <li>Es responsabilidad del cliente proporcionar datos correctos y completos.</li>
+                <li>Si la mensajería no puede entregar por datos incorrectos, costos extra pueden aplicar.</li>
+              </ul>
+
+              <h4>4) Incidencias</h4>
+              <p>
+                Si tu paquete presenta daño visible o falta, repórtalo lo antes posible a <b>ventas.unicotextil@gmail.com</b>
+                con fotos del empaque y del producto.
+              </p>
+            </div>
+          </details>
+
+          <details class="fLegal" id="returns">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 12a9 9 0 1 1-3-6.7"/>
+                    <path d="M21 3v6h-6"/>
+                  </svg>
+                </span>
+                <span>Cambios y devoluciones</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Elegibilidad</h4>
+              <ul>
+                <li>El producto debe estar <b>sin uso</b>, con etiquetas, en condiciones originales.</li>
+                <li>Para cambios por talla, el producto debe conservar su estado original.</li>
+              </ul>
+
+              <h4>2) Plazos</h4>
+              <ul>
+                <li>Solicitudes dentro de un plazo razonable desde la recepción (recomendado: <b>7 días naturales</b>).</li>
+              </ul>
+
+              <h4>3) Defectos o error de surtido</h4>
+              <ul>
+                <li>Si recibes un producto incorrecto o con defecto de fabricación, lo revisamos y te damos solución.</li>
+                <li>En estos casos, ÚNICO indicará el proceso y la logística para el retorno/cambio.</li>
+              </ul>
+
+              <h4>4) No aplican</h4>
+              <ul>
+                <li>Productos dañados por mal uso o desgaste normal.</li>
+                <li>Artículos personalizados o bajo pedido especial (si aplica en el futuro).</li>
+              </ul>
+
+              <div class="fLegalSmall">Para iniciar: escribe a <b>ventas.unicotextil@gmail.com</b> con tu número de pedido y fotos.</div>
+            </div>
+          </details>
+
+          <details class="fLegal" id="fiscal">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M7 2h10v20l-5-3-5 3z"/>
+                    <path d="M9 7h6"/>
+                    <path d="M9 11h6"/>
+                  </svg>
+                </span>
+                <span>Facturación</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Solicitud</h4>
+              <p>
+                Si requieres factura, solicítala por correo a <b>ventas.unicotextil@gmail.com</b> indicando:
+                <b>número de pedido</b>, RFC, razón social, uso de CFDI, régimen fiscal, correo y código postal fiscal.
+              </p>
+
+              <h4>2) Plazos y validación</h4>
+              <ul>
+                <li>La emisión está sujeta a validación de datos. Datos incompletos pueden retrasar la facturación.</li>
+                <li>Podemos requerir confirmación adicional para corregir errores antes de emitir.</li>
+              </ul>
+
+              <h4>3) Consideraciones</h4>
+              <ul>
+                <li>La facturación se realiza conforme a disposiciones fiscales vigentes en México.</li>
+                <li>Conserva tu comprobante de pago/confirmación como respaldo.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="fLegal" id="cookies">
+            <summary>
+              <span class="fLegalLeft">
+                <span class="fIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 12a9 9 0 1 1-9-9 7 7 0 0 0 9 9z"/>
+                    <path d="M8 8h.01"/>
+                    <path d="M12 12h.01"/>
+                    <path d="M9 15h.01"/>
+                  </svg>
+                </span>
+                <span>Cookies</span>
+              </span>
+              <span class="fLegalPill">LEER</span>
+            </summary>
+            <div class="fLegalBody">
+              <h4>1) Qué son</h4>
+              <p>
+                Las cookies son archivos pequeños que ayudan a recordar preferencias y mejorar tu experiencia.
+              </p>
+
+              <h4>2) Tipos</h4>
+              <ul>
+                <li><b>Necesarias</b>: para funciones básicas (carrito, sesión, seguridad).</li>
+                <li><b>Preferencias</b>: tema/ajustes del sitio.</li>
+                <li><b>Analítica</b>: métricas para mejorar navegación y rendimiento.</li>
+              </ul>
+
+              <h4>3) Cómo desactivarlas</h4>
+              <p>
+                Puedes administrar cookies desde la configuración de tu navegador. Si desactivas cookies necesarias,
+                algunas funciones pueden no operar correctamente.
+              </p>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -2477,19 +2548,17 @@
       });
     });
 
-    /* ====== LEGAL LINKS ====== */
-    $$("[data-legal]").forEach(a => {
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        const id = a.getAttribute("data-legal");
-        const d = document.getElementById(id);
-        if(d && d.tagName.toLowerCase() === "details"){
-          d.open = true;
-          d.scrollIntoView({ behavior:"smooth", block:"start" });
-          toast("Listo ✅");
-        }
-      });
-    });
+    /* ====== LEGAL LINKS (si llegas con hash) ====== */
+    const openHashLegal = () => {
+      const hash = (location.hash || "").replace("#","");
+      if(!hash) return;
+      const d = document.getElementById(hash);
+      if(d && d.tagName && d.tagName.toLowerCase() === "details"){
+        d.open = true;
+        d.scrollIntoView({ behavior:"smooth", block:"start" });
+        toast("Listo ✅");
+      }
+    };
 
     /* ====== INIT ====== */
     loadState();
@@ -2500,6 +2569,10 @@
       const radio = shipOptions?.querySelector(`input[value="${CSS.escape(state.shipping.method)}"]`);
       if(radio) radio.checked = true;
     }
+
+    // auto-open si vienen con URL tipo /#terms
+    openHashLegal();
+    window.addEventListener("hashchange", openHashLegal);
 
   })();
 </script>
