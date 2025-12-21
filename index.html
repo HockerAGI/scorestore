@@ -4,10 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
-  <meta name="color-scheme" content="light dark" />
-
+  
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México y USA." />
+  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -15,27 +14,21 @@
   <link rel="apple-touch-icon" href="/assets/logo-score.png" />
 
   <script src="https://js.stripe.com/v3/"></script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      /* --- PALETA BAJA RACING --- */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --carbon: #0b0f14;
-      --sand: #f8f8f8;
+      --sand: #f4f4f4;
       --green: #00C853; 
-      
-      /* Overlay Tierra/Café (Transparencia ajustada) */
       --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.85) 0%, rgba(40, 20, 10, 0.65) 100%);
-      
       --shadow: 0 15px 40px rgba(0,0,0,0.2);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-      --radius: 16px;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -44,23 +37,25 @@
       margin: 0; font-family: var(--fontBody); background-color: var(--sand); color: #111;
       overflow-x: hidden; padding-bottom: 120px; position: relative;
     }
-    body.modalOpen { overflow: hidden; }
+    body.modalOpen { overflow: hidden; height: 100vh; }
 
-    /* --- 1. FONDO DE PÁGINA (RECUPERADO) --- */
+    /* --- FONDO FIJO --- */
     .page-bg {
-      position: fixed; inset: 0; z-index: -10; pointer-events: none;
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
       background-image: url('/assets/fondo-pagina-score.png');
       background-size: cover; background-position: center;
-      opacity: 0.6; /* Sutil textura de fondo */
+      opacity: 0.6;
     }
 
-    /* --- 2. ANIMACIÓN POLVO (Optimizado Móvil) --- */
-    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -5; overflow: hidden; }
+    /* --- ANIMACIÓN POLVO (Corregida para Móvil) --- */
+    .dust-container { 
+      position: fixed; inset: 0; pointer-events: none; z-index: 1; /* Encima del fondo */
+      overflow: hidden; opacity: 0.6;
+    }
     .dust {
       position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E");
-      opacity: 0.5; mix-blend-mode: multiply;
-      animation: grain 10s steps(10) infinite;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+      animation: grain 8s steps(10) infinite;
       will-change: transform;
     }
     @keyframes grain { 
@@ -69,13 +64,16 @@
     }
 
     /* --- UI UTILS --- */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); }
+    .overlay { 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 150; 
+      opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); 
+    }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
     .toast {
       position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
       background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
-      font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s var(--ease);
+      font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -85,15 +83,14 @@
     /* --- TOPBAR --- */
     .topbar {
       position: fixed; top: 0; inset-inline: 0; height: 76px; z-index: 90;
-      background: rgba(255,255,255,0.96); border-bottom: 3px solid var(--red);
-      backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.98); border-bottom: 3px solid var(--red);
+      display: flex; align-items: center; justify-content: space-between;
       padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
     .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
     
     .navRight { display: flex; align-items: center; gap: 12px; }
     
-    /* PILL (Recuperado) */
     .pill {
       display: flex; align-items: center; height: 34px; padding: 0 14px;
       border-radius: 99px; background: #111; color: #fff;
@@ -108,16 +105,14 @@
       font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
       display: flex; align-items: center; gap: 10px; cursor: pointer;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      transition: transform 0.1s;
     }
-    .cartTrigger:active { transform: scale(0.96); }
     .cartCount { background: var(--red); font-size: 12px; padding: 1px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
-    /* --- HERO (Textura & Transparencia) --- */
+    /* --- HERO --- */
     .hero {
       position: relative; margin: 96px auto 40px; width: min(1200px, 94vw);
       min-height: 540px; border-radius: 20px; overflow: hidden;
-      display: flex; align-items: center; box-shadow: var(--shadow);
+      display: flex; align-items: center; box-shadow: var(--shadow); z-index: 2;
     }
     .heroBg { 
       position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
@@ -125,7 +120,7 @@
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
-      mix-blend-mode: multiply; opacity: 0.75; /* Más transparente como pediste */
+      mix-blend-mode: multiply; opacity: 0.75; 
     }
     
     .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
@@ -155,11 +150,10 @@
     .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
     .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px); }
 
-    /* CHIPS HERO (Recuperados) */
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-      padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;
+      padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
       text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #fff;
       backdrop-filter: blur(4px);
     }
@@ -173,10 +167,10 @@
     .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; line-height: 1; }
     .meta { font-weight: 900; color: #888; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- GRID TARJETAS UNIFORMES --- */
+    /* --- GRID TARJETAS --- */
     .grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
+      gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px; z-index: 2; position: relative;
     }
     .card {
       position: relative; height: 340px; border-radius: 18px; overflow: hidden;
@@ -202,7 +196,6 @@
       position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
       font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
     }
-    /* Estilo diferente para "Próximamente" */
     .statusBadge.soon { background: #333; color: #fff; border: 1px solid #555; }
 
     .viewBtn {
@@ -212,7 +205,7 @@
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; transform: scale(1.05); }
 
-    /* --- HIGHLIGHTS (Recuperado) --- */
+    /* --- HIGHLIGHTS --- */
     .highlight {
       width: min(1200px, 94vw); margin: 0 auto 60px;
       background: #fff; border-radius: 18px; padding: 10px;
@@ -235,7 +228,7 @@
     .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* --- FOOTER ROBUSTO (Recuperado) --- */
+    /* --- FOOTER --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
     .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
@@ -253,7 +246,7 @@
     .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
     .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
-    /* --- DRAWER CARRITO --- */
+    /* --- DRAWER CARRITO (CORREGIDO) --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
@@ -261,21 +254,41 @@
     }
     .drawer.active { transform: translateX(0); }
     
-    .dHead { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .dHead { 
+      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; 
+      background: #fff;
+    }
     .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; color: #111; }
+    
+    /* BOTÓN CERRAR GRANDE Y CLARO */
+    .closeBtn {
+      background: #f0f0f0; border: none; font-size: 24px; cursor: pointer;
+      width: 40px; height: 40px; border-radius: 50%; color: #000;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     
     .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
-    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #555; font-weight: 600; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #666; font-weight: 600; }
     .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
     .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
 
-    /* Inputs 16px (Mobile friendly) */
+    /* INPUTS CORREGIDOS (TEXTO VISIBLE) */
     input, select {
-      width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
-      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; background: #fff; appearance: none;
+      width: 100%; height: 48px; border: 1px solid #ccc; border-radius: 8px;
+      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; 
+      background: #fff !important; color: #000 !important; /* FORZAR COLOR NEGRO */
+      appearance: none; font-family: var(--fontBody);
     }
+    input::placeholder { color: #888; }
     input:focus, select:focus { outline: 2px solid var(--red); border-color: transparent; }
+
+    /* BOTÓN CERRAR EXTRA EN FOOTER DE CARRITO */
+    .closeDrawerLink {
+      display: block; text-align: center; margin-top: 15px; color: #666; 
+      font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer;
+    }
 
     /* Paybar Mobile */
     .paybar {
@@ -288,12 +301,12 @@
 
     /* Modal Catálogo */
     .modal {
-      position: fixed; inset: 40px; background: #fff; border-radius: 20px; z-index: 250;
+      position: fixed; inset: 20px; background: #fff; border-radius: 20px; z-index: 250;
       transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s;
-      display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
     }
     .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
-    @media(max-width:600px) { .modal { inset: 10px; } }
+    @media(max-width:600px) { .modal { inset: 0; border-radius: 0; } }
     
     .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
     .prodCard { border: 1px solid #eee; padding: 10px; border-radius: 14px; text-align: center; }
@@ -387,11 +400,11 @@
   <section class="highlight">
     <div class="hBox">
       <div class="hTitle"><span style="color:var(--green)">●</span> FABRICACIÓN OFICIAL</div>
-      <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b> en Tijuana, B.C. Garantía de autenticidad.</p>
+      <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b> en Tijuana, B.C.</p>
     </div>
     <div class="hBox">
       <div class="hTitle"><span style="color:var(--red)">●</span> EDICIÓN LIMITADA</div>
-      <p class="hTxt">Lanzamientos exclusivos por evento. Disponibilidad sujeta a inventario.</p>
+      <p class="hTxt">Lanzamientos exclusivos por evento.</p>
     </div>
   </section>
 
@@ -447,7 +460,7 @@
   <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer;">&times;</button>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
     
     <div class="dBody" id="cartBody"></div>
@@ -476,18 +489,20 @@
         <input id="addr" placeholder="Dirección completa">
         <input id="name" placeholder="Nombre completo">
       </div>
-      <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:10px; display:none;"></div>
+      <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:15px; display:none;"></div>
 
-      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center; background:#111; color:#fff;" disabled onclick="checkout()">
+      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center; background:#111; color:#fff; font-size:16px;" disabled onclick="checkout()">
         IR A PAGAR
       </button>
+      
+      <span class="closeDrawerLink" onclick="closeAll()">Seguir Comprando</span>
     </div>
   </aside>
 
   <div class="modal" id="modalCatalog">
     <div class="dHead">
       <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;" id="catTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" style="background:none; border:none; font-size:28px; cursor:pointer;">&times;</button>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
     <div class="catGrid" id="catGrid"></div>
   </div>
@@ -501,9 +516,10 @@
   </div>
 
   <script>
+    // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Productos Fallback (Solo lo REAL + Placeholder de las otras secciones para evitar errores)
+    // Fallback Sincronizado
     const PRODUCTS = [
       { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
       { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
@@ -517,7 +533,7 @@
     const USD_RATE = 17.50; 
     const $ = id => document.getElementById(id);
 
-    // --- Cargar Catálogo ---
+    // --- 2. LÓGICA ---
     async function openCatalog(section, title) {
       $('catTitle').innerText = title.toUpperCase();
       let items = [];
@@ -533,13 +549,13 @@
 
       const grid = $('catGrid');
       
-      // LOGICA VISUAL: Si está vacío, mostrar mensaje elegante
+      // LOGICA VISUAL VACÍO
       if(!items.length) {
         grid.innerHTML = `
           <div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'>
             <div style="font-size:40px; margin-bottom:10px; opacity:0.3;">🚦</div>
             <h3 style="margin:0; text-transform:uppercase;">Próximamente</h3>
-            <p style="font-size:14px; max-width:300px; margin:10px auto;">Estamos preparando el equipo oficial para esta edición.</p>
+            <p style="font-size:14px; max-width:300px; margin:10px auto;">Estamos preparando el equipo oficial.</p>
           </div>`;
       } else {
         grid.innerHTML = items.map(p => `
@@ -558,6 +574,7 @@
       
       $('modalCatalog').classList.add('active');
       $('overlay').classList.add('active');
+      document.body.classList.add('modalOpen');
     }
 
     function add(id, name, price, img) {
@@ -599,7 +616,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; // COSTO TIJUANA $200
+        if(method === 'tj') ship.cost = 200; // COSTO ACTUALIZADO $200
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
@@ -626,7 +643,7 @@
             <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
           </div>
           <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
-            <button onclick="cart.splice(${x},1);save()" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px;">&times;</button>
+            <button onclick="cart.splice(${x},1);save()" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;">&times;</button>
             <div style="font-weight:900;">x${i.qty}</div>
           </div>
         </div>
@@ -668,11 +685,18 @@
     }
 
     function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
-    function openDrawer() { $('drawer').classList.add('active'); $('overlay').classList.add('active'); updateCart(); }
-    function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
+    function openDrawer() { $('drawer').classList.add('active'); $('overlay').classList.add('active'); document.body.classList.add('modalOpen'); updateCart(); }
+    function closeAll() { 
+      $('drawer').classList.remove('active'); 
+      $('modalCatalog').classList.remove('active'); 
+      $('overlay').classList.remove('active');
+      document.body.classList.remove('modalOpen');
+    }
     function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
     
+    // SW
     if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
     $('overlay').onclick = closeAll;
     ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
     
