@@ -89,7 +89,7 @@
       "baseMXN": 749,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
-      "sizes": ["S", "M", "L", "XL"],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
       "sectionId": "EDICION_2025"
     },
     {
@@ -99,7 +99,7 @@
       "baseMXN": 749,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
-      "sizes": ["S", "M", "L", "XL"],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
       "sectionId": "EDICION_2025"
     }
   ]
