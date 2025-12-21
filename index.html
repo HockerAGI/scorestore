@@ -127,10 +127,18 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       display:flex; align-items:center; justify-content:center;
       cursor:pointer; transition: transform .2s var(--ease);
+      flex-direction: column;
     }
     .editionCard:active{ transform: scale(0.98); }
-    .editionBg{ position:absolute; inset:0; opacity:0.6; background-size:cover; }
-    .editionLogo{ width: 80%; max-width: 240px; position:relative; z-index:2; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+    .editionBg{ position:absolute; inset:0; opacity:0.6; background-size:cover; background-position: center; }
+    .editionLogo{ width: 80%; max-width: 240px; position:relative; z-index:2; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); margin-bottom: 20px; }
+    .editionBtn{
+      position:relative; z-index:2;
+      border:none; background:#fff; color:#111;
+      font-weight:900; padding:10px 20px; border-radius:12px;
+      text-transform:uppercase; font-size:12px; letter-spacing:0.05em;
+      cursor:pointer;
+    }
 
     /* Drawer Carrito */
     .drawer{
@@ -152,6 +160,7 @@
       margin-bottom: 10px; appearance: none;
     }
     .input:focus{ border-color: var(--red); outline:none; }
+    select.input { background-color: #fff; }
 
     /* Paybar Flotante */
     .paybar{
@@ -215,16 +224,31 @@
     <h2 style="font-family:var(--fontTitle); font-size:42px; margin:40px 0 20px;">EDICIONES</h2>
     
     <div class="editionsGrid">
-      <div class="editionCard" data-open="catalog" data-section="EDICION_2025">
+      
+      <div class="editionCard" onclick="loadProducts('EDICION_2025')">
         <div class="editionBg" style="background-image:url('/assets/baja1000-texture.png')"></div>
         <img src="/assets/logo-baja1000.png" class="editionLogo" alt="Baja 1000">
+        <button class="editionBtn">VER PRODUCTOS</button>
       </div>
       
-      <div class="editionCard" data-open="notify" data-edition="Baja 500">
+      <div class="editionCard" onclick="loadProducts('BAJA_500')">
         <div class="editionBg" style="background-color:#222;"></div>
         <img src="/assets/logo-baja500.png" class="editionLogo" alt="Baja 500">
-        <div style="position:absolute; bottom:20px; color:#fff; font-weight:800;">PRÓXIMAMENTE</div>
+        <button class="editionBtn">VER PRODUCTOS</button>
       </div>
+
+      <div class="editionCard" onclick="loadProducts('BAJA_400')">
+        <div class="editionBg" style="background-color:#222;"></div>
+        <img src="/assets/logo-baja400.png" class="editionLogo" alt="Baja 400">
+        <button class="editionBtn">VER PRODUCTOS</button>
+      </div>
+
+      <div class="editionCard" onclick="loadProducts('SF_250')">
+        <div class="editionBg" style="background-color:#222;"></div>
+        <img src="/assets/logo-sf250.png" class="editionLogo" alt="San Felipe 250">
+        <button class="editionBtn">VER PRODUCTOS</button>
+      </div>
+
     </div>
   </main>
 
@@ -277,11 +301,25 @@
   </div>
 
   <script>
-    // --- CONFIGURACIÓN DE PAGO ---
+    // ✅ 1. CONFIGURACIÓN
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
-
-    // Configuración General
     const STORE = { api: "/.netlify/functions", catalog: "/data/catalog.json" };
+    
+    // ✅ 2. PRODUCTOS DE RESPALDO (Incluye relleno para las otras secciones)
+    const DEFAULT_PRODUCTS = [
+      // EDICION 2025 (Baja 1000)
+      { id: "chamarra-oficial", name: "Chaqueta Oficial Baja 1000", baseMXN: 1490, img: "/assets/EDICION_2025/chamarra-baja1000.jpg", sizes: ["S","L","XL","2XL"], sectionId: "EDICION_2025" },
+      { id: "camisa-pits", name: "Camisa de Pits Baja 1000", baseMXN: 899, img: "/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes: ["S","L","XL","2XL"], sectionId: "EDICION_2025" },
+      { id: "camiseta-azul", name: "Camiseta SCORE Baja 1000 Azul", baseMXN: 399, img: "/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes: ["S","L","XL","2XL"], sectionId: "EDICION_2025" },
+      // RELLENO BAJA 500
+      { id: "tee-baja500", name: "Camiseta Oficial Baja 500", baseMXN: 399, img: "/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes: ["S","M","L"], sectionId: "BAJA_500" },
+      { id: "cap-baja500", name: "Gorra Baja 500 Trucker", baseMXN: 650, img: "/assets/OTRAS_EDICIONES/gorra-trucker.jpg", sizes: ["Unitalla"], sectionId: "BAJA_500" },
+      // RELLENO BAJA 400
+      { id: "tee-baja400", name: "Camiseta Oficial Baja 400", baseMXN: 399, img: "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes: ["S","M","L"], sectionId: "BAJA_400" },
+      // RELLENO SF 250
+      { id: "hoodie-sf250", name: "Hoodie San Felipe 250", baseMXN: 799, img: "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes: ["S","M","L"], sectionId: "SF_250" },
+    ];
+
     let state = { cart: [], shipping: { method: null, cost: 0, valid: false } };
 
     // DOM Elements
@@ -299,17 +337,30 @@
     async function loadProducts(sectionId) {
       try {
         const res = await fetch(STORE.catalog);
+        if(!res.ok) throw new Error("Fallo fetch");
         const data = await res.json();
-        const products = data.products.filter(p => p.sectionId === sectionId);
+        // Filtrar del JSON si existe, si no usar Default
+        let products = data.products.filter(p => p.sectionId === sectionId);
+        if(products.length === 0) products = DEFAULT_PRODUCTS.filter(p => p.sectionId === sectionId);
+        
         renderGrid(products);
         openModal();
-      } catch (e) { alert("Error cargando catálogo"); }
+      } catch (e) { 
+        console.log("Usando catálogo offline/backup");
+        const products = DEFAULT_PRODUCTS.filter(p => p.sectionId === sectionId);
+        renderGrid(products); 
+        openModal();
+      }
     }
 
     function renderGrid(items) {
+      if(items.length === 0) {
+        $('catalogGrid').innerHTML = '<div style="text-align:center; grid-column:1/-1; padding:40px;">Próximamente más productos.</div>';
+        return;
+      }
       $('catalogGrid').innerHTML = items.map(p => `
         <div class="card">
-          <img src="${p.img}" loading="lazy" alt="${p.name}">
+          <img src="${p.img}" loading="lazy" alt="${p.name}" onerror="this.src='/assets/logo-score.png'">
           <div style="font-weight:700; font-size:14px; line-height:1.2;">${p.name}</div>
           <div style="font-weight:900; margin:6px 0;">$${p.baseMXN}</div>
           <select id="sz_${p.id}" class="input" style="height:36px; padding:0 8px; font-size:14px;">
@@ -350,7 +401,7 @@
       // Render items
       els.cartBody.innerHTML = state.cart.map((i, idx) => `
         <div style="display:flex; gap:10px; margin-bottom:12px; background:#f5f5f5; padding:8px; border-radius:12px;">
-          <img src="${i.img}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;">
+          <img src="${i.img}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;" onerror="this.src='/assets/logo-score.png'">
           <div style="flex:1;">
             <div style="font-weight:700; font-size:13px;">${i.name}</div>
             <div style="font-size:12px; color:#666;">Talla: ${i.size} | $${i.price}</div>
@@ -466,11 +517,6 @@
     $('closeCatalog').onclick = closeAll;
     $('overlay').onclick = closeAll;
     $('pbBtn').onclick = openDrawer;
-
-    document.body.addEventListener('click', (e) => {
-      const trigger = e.target.closest('[data-open="catalog"]');
-      if(trigger) loadProducts(trigger.dataset.section);
-    });
 
     // Init & PWA
     (function init(){
