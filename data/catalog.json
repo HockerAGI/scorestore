@@ -7,9 +7,9 @@
   "pricing": { "markup_pct": 0.00 },
   "sections": [
     { "id": "EDICION_2025", "title": "BAJA 1000", "badge": "ACTIVO", "order": 1 },
-    { "id": "BAJA_500", "title": "BAJA 500", "badge": "DISPONIBLE", "order": 2 },
-    { "id": "BAJA_400", "title": "BAJA 400", "badge": "DISPONIBLE", "order": 3 },
-    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "DISPONIBLE", "order": 4 }
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "PRÓXIMAMENTE", "order": 2 },
+    { "id": "BAJA_400", "title": "BAJA 400", "badge": "PRÓXIMAMENTE", "order": 3 },
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "PRÓXIMAMENTE", "order": 4 }
   ],
   "products": [
     {
@@ -43,34 +43,24 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "tee-500",
-      "name": "Camiseta Oficial Baja 500",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
-      "baseMXN": 450,
-      "weight_g": 200,
-      "dimensions_cm": [30, 20, 2],
-      "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "BAJA_500"
-    },
-    {
-      "id": "tee-400",
-      "name": "Camiseta Oficial Baja 400",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
-      "baseMXN": 450,
-      "weight_g": 200,
-      "dimensions_cm": [30, 20, 2],
-      "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "BAJA_400"
-    },
-    {
-      "id": "hoodie-sf",
-      "name": "Hoodie San Felipe 250",
+      "id": "sudadera-cafe",
+      "name": "Sudadera World Desert Café",
       "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 799,
+      "baseMXN": 749,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
-      "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "SF_250"
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "sudadera-negra",
+      "name": "Sudadera World Desert Negra",
+      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
+      "baseMXN": 749,
+      "weight_g": 600,
+      "dimensions_cm": [35, 30, 8],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
     }
   ]
 }
