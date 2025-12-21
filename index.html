@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#ffffff" />
-  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#E10600" />
+  <meta name="color-scheme" content="light dark" />
 
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Merch oficial SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México y USA." />
+  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES. Envíos nacionales e internacionales." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -18,521 +18,451 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      /* COLORES "VERDAD" & BRAND */
-      --red: #E10600;
-      --green: #00C853; /* Color pedido: Verdad/Éxito */
-      --dark: #1a1a1a;
-      --gray: #f4f6f8;
-      --white: #ffffff;
-      
-      /* UX */
-      --radius: 16px;
-      --shadow: 0 10px 30px -10px rgba(0,0,0,0.12);
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
+      --red: #E10600;
+      --carbon: #111;
+      --sand: #f4f4f4;
+      --green: #00C853; /* Iconos Verdes */
+      --cafe: rgba(62, 39, 35, 0.92); /* Overlay Café */
+      
+      --shadow: 0 10px 40px rgba(0,0,0,0.15);
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
     body {
-      margin: 0; padding: 0;
-      font-family: var(--fontBody);
-      background-color: var(--white);
-      color: var(--dark);
-      overflow-x: hidden;
-      padding-bottom: 100px;
-    }
-    
-    /* --- ANIMACIÓN POLVO (Optimizada Móvil) --- */
-    .dust-container {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      overflow: hidden;
-    }
-    .dust {
-      position: absolute; width: 100%; height: 100%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-      opacity: 0.4;
-      animation: dustFloat 20s linear infinite;
-      will-change: transform;
-    }
-    @keyframes dustFloat {
-      0% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.02); }
-      100% { transform: translateY(0) scale(1); }
+      margin: 0; font-family: var(--fontBody); background: var(--sand); color: #111;
+      overflow-x: hidden; padding-bottom: 120px;
     }
 
-    /* --- UI ELEMENTS --- */
-    .wrap { width: min(1200px, 92vw); margin: 0 auto; position: relative; z-index: 2; }
+    /* --- ANIMACIÓN POLVO (Móvil Friendly) --- */
+    .bajaDust {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjMwIiByPSIxIiBmaWxsPSIjYzg4OTAwIiBvcGFjaXR5PSIwLjQiLz48Y2lyY2xlIGN4PSIzNTAiIGN5PSIxNTAiIHI9IjEuNSIgZmlsbD0iI2M4ODkwMCIgb3BhY2l0eT0iMC4zIi8+PC9zdmc+');
+      animation: dustMove 60s linear infinite;
+    }
+    @keyframes dustMove { from { background-position: 0 0; } to { background-position: -400px 400px; } }
+
+    /* Topbar */
+    .topbar {
+      position: fixed; top: 0; inset-inline: 0; height: 70px; z-index: 90;
+      background: rgba(255,255,255,0.95); border-bottom: 3px solid var(--red);
+      backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 max(20px, 4vw);
+    }
+    .brand img { height: 48px; width: auto; }
     
+    .cartBtn {
+      background: #000; color: #fff; border: none; height: 44px; padding: 0 20px;
+      font-family: var(--fontTitle); font-size: 22px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+    .cartCount { background: var(--red); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+
+    /* HERO (Overlay Café) */
+    .hero {
+      position: relative; margin: 90px auto 40px; width: min(1200px, 94vw);
+      min-height: 500px; border-radius: 20px; overflow: hidden;
+      display: flex; align-items: center; box-shadow: var(--shadow);
+    }
+    .heroBg {
+      position: absolute; inset: 0; background: url('/assets/hero.png') center/cover;
+    }
+    .heroOverlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, var(--cafe) 0%, rgba(62,39,35,0.4) 60%, transparent 100%);
+    }
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; color: #fff; }
+    .hero h1 {
+      font-family: var(--fontTitle); font-size: clamp(48px, 10vw, 90px); line-height: 0.9;
+      margin: 10px 0; text-transform: uppercase;
+    }
+    .tagline {
+      background: var(--red); color: #fff; padding: 4px 12px; font-weight: 800;
+      transform: skew(-10deg); display: inline-block;
+    }
+
+    /* BOTONES */
     .btn {
-      border: none; cursor: pointer; font-weight: 800; text-transform: uppercase;
-      padding: 14px 24px; border-radius: 12px; letter-spacing: 0.05em;
-      transition: transform 0.1s; font-size: 14px;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: none; background: #fff; color: #000; padding: 14px 28px;
+      font-weight: 900; text-transform: uppercase; border-radius: 12px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.2s var(--ease);
     }
     .btn:active { transform: scale(0.96); }
-    .btn-primary { background: var(--dark); color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    .btn-action { background: var(--red); color: #fff; width: 100%; }
-    .btn-outline { background: transparent; border: 2px solid #eee; color: var(--dark); }
+    .btn.primary { background: #111; color: #fff; }
 
-    /* --- HEADER --- */
-    .topbar {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid #eee;
-    }
-    .nav { height: 70px; display: flex; align-items: center; justify-content: space-between; }
-    .brand img { height: 45px; display: block; }
+    /* GRID EDICIONES (Uniformes) */
+    .secTitle { width: min(1200px, 94vw); margin: 0 auto 20px; font-family: var(--fontTitle); font-size: 42px; }
     
-    .cart-btn {
-      background: #f0f0f0; color: var(--dark);
-      padding: 8px 16px; border-radius: 50px;
-      display: flex; align-items: center; gap: 8px;
-      font-weight: 700; font-size: 13px;
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px;
     }
-    .cart-badge {
-      background: var(--green); color: #fff;
-      padding: 2px 6px; border-radius: 6px; font-size: 11px;
-    }
-
-    /* --- HERO --- */
-    .hero {
-      margin-top: 20px; padding: 60px 20px;
-      border-radius: 24px; background: #f4f4f4;
-      text-align: center; position: relative; overflow: hidden;
-    }
-    .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(48px, 10vw, 120px);
-      line-height: 0.9; margin: 10px 0; color: var(--dark); text-transform: uppercase;
-    }
-    .hero p { max-width: 600px; margin: 0 auto 30px; color: #666; font-size: 16px; line-height: 1.5; }
-    .tag {
-      background: var(--green); color: #fff; padding: 4px 12px;
-      font-weight: 800; border-radius: 4px; font-size: 12px; text-transform: uppercase;
-      display: inline-block; margin-bottom: 10px;
-    }
-
-    /* --- GRID --- */
-    .section-title { font-family: var(--fontTitle); font-size: 42px; margin: 60px 0 20px; text-transform: uppercase; }
-    
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-    
     .card {
-      background: #fff; border: 1px solid #eee; border-radius: 20px;
-      overflow: hidden; cursor: pointer; transition: 0.2s; position: relative;
+      position: relative; height: 320px; border-radius: 18px; overflow: hidden;
+      background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .card:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: var(--green); }
+    .card:hover { transform: translateY(-5px); }
     
-    .card-bg {
-      height: 280px; background: #f9f9f9;
-      display: flex; align-items: center; justify-content: center; position: relative;
+    /* Fondo IGUAL para todas las tarjetas */
+    .cardBg {
+      position: absolute; inset: 0; opacity: 0.6;
+      background: url('/assets/baja1000-texture.png') center/cover;
     }
-    .card-bg img { width: 70%; height: auto; object-fit: contain; mix-blend-mode: multiply; }
-    
-    .card-info { padding: 20px; text-align: center; }
-    .card-status {
-      position: absolute; top: 15px; left: 15px;
-      background: var(--white); color: var(--green);
-      font-weight: 800; font-size: 10px; padding: 6px 12px;
-      border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      text-transform: uppercase; letter-spacing: 1px;
+    .cardContent {
+      position: absolute; inset: 0; padding: 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .cardLogo { width: 80%; height: auto; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+    .status {
+      position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
+      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px;
+    }
+    .viewBtn {
+      background: #fff; color: #000; border: none; padding: 10px 20px;
+      font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
     }
 
-    /* --- DRAWER (CARRITO) --- */
+    /* PARTNERS */
+    .partners {
+      width: min(1200px, 94vw); margin: 0 auto 60px; text-align: center;
+      padding: 30px; background: #fff; border-radius: 20px; border-bottom: 4px solid var(--red);
+    }
+    .pGrid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; }
+    .pLogo { height: 40px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
+    .pLogo:hover { opacity: 1; filter: grayscale(0); }
+
+    /* FOOTER (Iconos Verdes) */
+    footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
+    .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
+    
+    details {
+      background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px;
+    }
+    summary {
+      padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    summary svg { width: 20px; height: 20px; stroke: var(--green); } /* ICONOS VERDES */
+    .legalContent { padding: 0 16px 16px; color: #aaa; font-size: 14px; line-height: 1.6; }
+
+    /* DRAWER & MODALS */
     .drawer {
-      position: fixed; top: 0; right: 0; width: min(420px, 90vw); height: 100%;
-      background: #fff; z-index: 200; transform: translateX(110%);
-      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-      box-shadow: -10px 0 40px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column;
+      position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
+      background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
+      display: flex; flex-direction: column; box-shadow: -10px 0 50px rgba(0,0,0,0.3);
     }
-    .drawer.open { transform: translateX(0); }
+    .drawer.active { transform: translateX(0); }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 150;
+      opacity: 0; pointer-events: none; transition: 0.3s;
+    }
+    .overlay.active { opacity: 1; pointer-events: auto; }
     
-    .drawer-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
-    .drawer-footer { padding: 20px; background: #fafafa; border-top: 1px solid #eee; }
-
-    .cart-item { display: flex; gap: 15px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #eee; }
-    .cart-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+    .dHead { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .dBody { flex: 1; overflow-y: auto; padding: 20px; }
     
-    /* INPUTS MOBILE FRIENDLY (16px) */
+    /* Inputs 16px para evitar zoom en iPhone */
     input, select {
-      width: 100%; height: 48px; font-size: 16px; /* Crucial iOS */
-      padding: 0 15px; border-radius: 10px; border: 1px solid #ddd;
-      margin-bottom: 10px; background: #fff;
+      width: 100%; height: 48px; border: 1px solid #ddd; border-radius: 8px;
+      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px;
     }
-    input:focus, select:focus { outline: none; border-color: var(--green); }
 
-    /* --- PAYBAR --- */
+    /* Paybar */
     .paybar {
       position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 100px);
-      width: min(600px, 94vw); background: #1a1a1a; color: #fff;
-      padding: 12px 20px; border-radius: 16px;
-      display: flex; justify-content: space-between; align-items: center;
-      z-index: 150; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      transition: 0.3s;
+      background: #111; color: #fff; padding: 15px 25px; border-radius: 50px;
+      display: flex; gap: 20px; align-items: center; z-index: 100; transition: 0.3s var(--ease);
     }
     .paybar.visible { transform: translate(-50%, 0); }
 
-    /* --- MODAL --- */
+    /* Modal Catálogo */
     .modal {
-      position: fixed; inset: 0; z-index: 300;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: 0.2s;
+      position: fixed; inset: 40px; background: #fff; border-radius: 20px; z-index: 250;
+      transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s;
+      display: flex; flex-direction: column;
     }
-    .modal.open { opacity: 1; pointer-events: auto; }
-    .modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
-    .modal-content {
-      width: min(900px, 94vw); height: min(600px, 90vh);
-      background: #fff; border-radius: 20px; position: relative;
-      display: flex; flex-direction: column; overflow: hidden;
-    }
+    .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
+    @media(max-width:600px) { .modal { inset: 10px; } }
+    
+    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
+    .prodCard { border: 1px solid #eee; padding: 10px; border-radius: 10px; text-align: center; }
+    .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; }
 
-    /* --- FOOTER --- */
-    footer { margin-top: 80px; padding: 60px 0; border-top: 1px solid #eee; background: #fafafa; }
-    .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
-    .legal-link {
-      display: block; padding: 12px; border-bottom: 1px solid #eee;
-      color: #666; text-decoration: none; font-size: 14px; font-weight: 600;
-      display: flex; justify-content: space-between;
-    }
-    .legal-link span { color: var(--green); }
   </style>
 </head>
 <body>
 
-  <div class="dust-container"><div class="dust"></div></div>
+  <div class="bajaDust"></div>
+  <div class="overlay" id="overlay"></div>
 
   <header class="topbar">
-    <div class="wrap nav">
-      <a href="/" class="brand"><img src="/assets/logo-score.png" alt="SCORE"></a>
-      <button class="btn cart-btn" onclick="toggleDrawer()">
-        TU EQUIPO <span class="cart-badge" id="cartCount">0</span>
-      </button>
-    </div>
+    <a href="#" class="brand"><img src="/assets/logo-score.png" alt="SCORE"></a>
+    <button class="cartBtn" onclick="openDrawer()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span id="cartCount" class="cartCount">0</span>
+    </button>
   </header>
 
-  <main class="wrap">
-    <section class="hero">
-      <span class="tag">Tienda Oficial</span>
-      <h1>Score International</h1>
-      <p>Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Equipamiento oficial para la Baja 1000, 500 y San Felipe 250. Ediciones limitadas.</p>
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button class="btn btn-primary" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">VER PRODUCTOS</button>
-      </div>
-    </section>
-
-    <div style="display:flex; justify-content:center; gap:30px; margin: 40px 0; flex-wrap:wrap; opacity:0.6; filter: grayscale(1);">
-      <img src="/assets/logo-ford.png" height="30" alt="Ford">
-      <img src="/assets/logo-bfgodrich.png" height="30" alt="BFGoodrich">
-      <img src="/assets/logo-monster.png" height="30" alt="Monster">
+  <section class="hero">
+    <div class="heroBg"></div>
+    <div class="heroOverlay"></div>
+    <div class="heroContent">
+      <div class="tagline">OFFICIAL MERCH</div>
+      <h1>SCORE INTERNATIONAL</h1>
+      <p style="font-size: 18px; margin-bottom: 24px; opacity: 0.9;">Fabricado en Tijuana por ÚNICO UNIFORMES. Productos oficiales de edición limitada.</p>
+      <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">
+        Ver Colecciones
+      </button>
     </div>
+  </section>
 
-    <h2 class="section-title" id="catalog">Ediciones</h2>
+  <h2 class="secTitle">EDICIONES</h2>
 
-    <div class="grid">
-      <div class="card" onclick="loadCatalog('EDICION_2025', 'Baja 1000')">
-        <div class="card-bg">
-          <span class="card-status">● Activo</span>
-          <img src="/assets/logo-baja1000.png" alt="Baja 1000">
-        </div>
-        <div class="card-info">
-          <button class="btn btn-outline" style="width:100%">Ver Colección</button>
-        </div>
-      </div>
-
-      <div class="card" onclick="loadCatalog('BAJA_500', 'Baja 500')">
-        <div class="card-bg">
-          <span class="card-status">● Disponible</span>
-          <img src="/assets/logo-baja500.png" alt="Baja 500">
-        </div>
-        <div class="card-info">
-          <button class="btn btn-outline" style="width:100%">Ver Colección</button>
-        </div>
-      </div>
-
-      <div class="card" onclick="loadCatalog('BAJA_400', 'Baja 400')">
-        <div class="card-bg">
-          <span class="card-status">● Disponible</span>
-          <img src="/assets/logo-baja400.png" alt="Baja 400">
-        </div>
-        <div class="card-info">
-          <button class="btn btn-outline" style="width:100%">Ver Colección</button>
-        </div>
-      </div>
-
-       <div class="card" onclick="loadCatalog('SF_250', 'San Felipe 250')">
-        <div class="card-bg">
-          <span class="card-status">● Disponible</span>
-          <img src="/assets/logo-sf250.png" alt="San Felipe">
-        </div>
-        <div class="card-info">
-          <button class="btn btn-outline" style="width:100%">Ver Colección</button>
-        </div>
+  <div class="grid">
+    <div class="card" onclick="openCatalog('EDICION_2025', 'Baja 1000')">
+      <div class="cardBg"></div>
+      <div class="cardContent">
+        <span class="status">ACTIVO</span>
+        <img src="/assets/logo-baja1000.png" class="cardLogo" alt="Baja 1000">
+        <button class="viewBtn">Ver Productos</button>
       </div>
     </div>
-  </main>
+    <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
+      <div class="cardBg"></div>
+      <div class="cardContent">
+        <span class="status">DISPONIBLE</span>
+        <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
+        <button class="viewBtn">Ver Productos</button>
+      </div>
+    </div>
+    <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
+      <div class="cardBg"></div>
+      <div class="cardContent">
+        <span class="status">DISPONIBLE</span>
+        <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
+        <button class="viewBtn">Ver Productos</button>
+      </div>
+    </div>
+    <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
+      <div class="cardBg"></div>
+      <div class="cardContent">
+        <span class="status">DISPONIBLE</span>
+        <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
+        <button class="viewBtn">Ver Productos</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="partners">
+    <h3 style="margin:0; font-family:var(--fontTitle); color:#888;">OFFICIAL PARTNERS</h3>
+    <div class="pGrid">
+      <img src="/assets/logo-ford.png" class="pLogo" alt="Ford">
+      <img src="/assets/logo-bfgodrich.png" class="pLogo" alt="BFGoodrich">
+      <img src="/assets/logo-monster.png" class="pLogo" alt="Monster">
+      <img src="/assets/logo-unico.png" class="pLogo" alt="Unico">
+    </div>
+  </div>
 
   <footer>
-    <div class="wrap footer-grid">
+    <div class="footWrap">
       <div>
-        <img src="/assets/logo-unico.png" height="40" alt="Unico" style="margin-bottom:20px; opacity:0.8;">
-        <p style="color:#666; font-size:14px;">
-          <b>Ventas y Soporte:</b><br>
-          ventas.unicotextil@gmail.com<br>
-          WhatsApp: 664 236 8701<br>
-          Tijuana, B.C. México.
-        </p>
+        <h4 style="font-family:var(--fontTitle); font-size: 28px; margin: 0 0 10px;">ÚNICO UNIFORMES</h4>
+        <p style="color:#888; font-size:13px;">Patrocinador Oficial. Tijuana B.C.<br>ventas.unicotextil@gmail.com</p>
       </div>
       <div>
-        <h4 style="font-family:var(--fontTitle); font-size:24px; color:var(--red);">LEGAL</h4>
-        <a href="#" class="legal-link">Términos y Condiciones <span>+</span></a>
-        <a href="#" class="legal-link">Política de Envíos <span>+</span></a>
-        <a href="#" class="legal-link">Devoluciones <span>+</span></a>
+        <details>
+          <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="legalContent">Productos sujetos a disponibilidad.</div>
+        </details>
+        <details>
+          <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="legalContent">Envíos nacionales vía Envia.com. Locales en Tijuana $80.</div>
+        </details>
       </div>
     </div>
   </footer>
 
-  <div class="drawer" id="drawer">
-    <div class="drawer-header">
-      <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;">TU CARRITO</h3>
-      <button class="btn btn-outline" onclick="toggleDrawer()" style="padding:8px 12px;">X</button>
+  <aside class="drawer" id="drawer">
+    <div class="dHead">
+      <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;">TU EQUIPO</h3>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:24px;">×</button>
     </div>
-    <div class="drawer-body" id="cartItems">
-      <div style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío</div>
-    </div>
-    <div class="drawer-footer">
-      <div style="display:flex; justify-content:space-between; font-weight:800; font-size:18px; margin-bottom:15px;">
-        <span>Total:</span>
-        <span id="cartTotal">$0.00 MXN</span>
+    <div class="dBody" id="cartBody"></div>
+    <div style="padding:20px; background:#f9f9f9;">
+      <div style="display:flex; justify-content:space-between; font-weight:900; margin-bottom:10px;">
+        <span>Total:</span> <span id="drawerTotal">$0 MXN</span>
       </div>
-
-      <select id="shipMethod">
-        <option value="">-- Elige Entrega --</option>
+      <p style="font-size:12px; font-weight:700;">Método de Entrega:</p>
+      <select id="shipMethod" onchange="updateCart()">
+        <option value="">-- Selecciona --</option>
         <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
         <option value="tj">Envío Local (Tijuana) - $80 MXN</option>
         <option value="mx">Envío Nacional (México) - Cotizar</option>
       </select>
-
-      <div id="shipDetails" style="display:none;">
-        <input type="text" id="shipZip" placeholder="Código Postal (5 dígitos)" maxlength="5">
-        <input type="text" id="shipState" placeholder="Estado">
-        <input type="text" id="shipCity" placeholder="Ciudad">
-        <input type="text" id="shipAddress" placeholder="Dirección y Número">
-        <input type="text" id="shipName" placeholder="Nombre Completo">
-        <button id="quoteBtn" class="btn btn-outline" style="width:100%; margin-bottom:10px;">Cotizar Envío (Envia.com)</button>
+      
+      <div id="shipForm" style="display:none;">
+        <input id="cp" type="tel" placeholder="Código Postal (5 dígitos)" maxlength="5">
+        <input id="addr" placeholder="Dirección completa">
+        <input id="name" placeholder="Nombre completo">
       </div>
 
-      <button id="checkoutBtn" class="btn btn-primary" style="width:100%; background:var(--green);" disabled>PAGAR AHORA</button>
+      <button id="payBtn" class="btn primary" style="width:100%; justify-content:center;" disabled onclick="checkout()">
+        IR A PAGAR
+      </button>
     </div>
+  </aside>
+
+  <div class="modal" id="modalCatalog">
+    <div class="dHead">
+      <h3 style="margin:0; font-family:var(--fontTitle); font-size:24px;" id="catTitle">CATÁLOGO</h3>
+      <button onclick="closeAll()" style="background:none; border:none; font-size:24px;">×</button>
+    </div>
+    <div class="catGrid" id="catGrid"></div>
   </div>
 
   <div class="paybar" id="paybar">
-    <div>
-      <div style="font-size:10px; opacity:0.7;">TOTAL A PAGAR</div>
-      <div style="font-size:18px; font-weight:800;" id="barTotal">$0</div>
-    </div>
-    <button class="btn btn-action" style="padding:8px 16px;" onclick="toggleDrawer()">VER CARRITO</button>
-  </div>
-
-  <div class="modal" id="modal">
-    <div class="modal-bg" onclick="closeModal()"></div>
-    <div class="modal-content">
-      <div class="drawer-header">
-        <h3 id="modalTitle" style="margin:0; font-family:var(--fontTitle); font-size:28px;">PRODUCTOS</h3>
-        <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
-      </div>
-      <div class="drawer-body" style="background:#f9f9f9;">
-        <div class="grid" id="modalGrid"></div>
-      </div>
-    </div>
+    <span style="font-weight:900" id="barTotal">$0</span>
+    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="openDrawer()">VER CARRITO</button>
   </div>
 
   <script>
-    /* --- CONFIGURACIÓN REAL --- */
+    // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
-    const API_URL = "/.netlify/functions";
     
-    /* --- DATOS (Fallback Seguro) --- */
+    // Productos Fallback (Por si falla el JSON)
     const PRODUCTS = [
-      { id: "cham-b1000", name: "Chamarra Oficial Baja 1000", price: 1490, img: "/assets/EDICION_2025/chamarra-baja1000.jpg", sizes: ["S","M","L","XL"], cat: "EDICION_2025" },
-      { id: "tee-b1000-bk", name: "Playera Baja 1000 Negra", price: 499, img: "/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes: ["S","M","L","XL"], cat: "EDICION_2025" },
-      { id: "tee-b500", name: "Playera Oficial Baja 500", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes: ["S","M","L"], cat: "BAJA_500" },
-      { id: "hoodie-sf", name: "Hoodie San Felipe 250", price: 850, img: "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes: ["S","M","L"], cat: "SF_250" },
-      { id: "tee-b400", name: "Tee Baja 400 Desert", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes: ["S","M","L"], cat: "BAJA_400" }
+      { id:"cham-1000", name:"Chamarra Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" },
+      { id:"tee-blk", name:"Tee Baja 1000 Negra", price:499, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" },
+      { id:"tee-500", name:"Tee Baja 500", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["M","L"], section:"BAJA_500" },
+      { id:"tee-400", name:"Tee Baja 400", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["M","L"], section:"BAJA_400" },
+      { id:"hoodie-sf", name:"Hoodie San Felipe", price:799, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
     ];
 
-    let cart = [];
-    let shipping = { method: null, cost: 0 };
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    let ship = { method: null, cost: 0 };
+    const $ = id => document.getElementById(id);
 
-    /* --- UI LOGIC --- */
-    const $ = (id) => document.getElementById(id);
-
-    function toggleDrawer() { 
-      $('drawer').classList.toggle('open'); 
-      if($('drawer').classList.contains('open')) updateCart(); 
-    }
-    
-    function closeModal() { $('modal').classList.remove('open'); }
-
-    /* --- CATALOG SYSTEM --- */
-    function loadCatalog(category, title) {
-      $('modalTitle').innerText = title;
-      const items = PRODUCTS.filter(p => p.cat === category || p.cat === 'EDICION_2025'); // Fallback inteligente
+    // --- 2. LÓGICA ---
+    function openCatalog(section, title) {
+      $('catTitle').innerText = title.toUpperCase();
+      const items = PRODUCTS.filter(p => p.section === section);
+      const grid = $('catGrid');
       
-      $('modalGrid').innerHTML = items.map(p => `
-        <div class="card" style="border:none; box-shadow:none;">
-          <div class="card-bg" style="height:200px; background:#fff; border-radius:12px; border:1px solid #eee;">
-            <img src="${p.img}" onerror="this.src='/assets/logo-score.png'">
-          </div>
-          <div style="padding:10px; text-align:left;">
-            <div style="font-weight:700;">${p.name}</div>
-            <div style="color:var(--green); font-weight:800; margin:5px 0;">$${p.price} MXN</div>
-            <select id="size_${p.id}" style="height:40px; margin:5px 0;">
-              ${p.sizes.map(s => `<option>${s}</option>`).join('')}
-            </select>
-            <button class="btn btn-action" onclick="addToCart('${p.id}')">AGREGAR</button>
-          </div>
+      if(!items.length) grid.innerHTML = "<p>Próximamente</p>";
+      else grid.innerHTML = items.map(p => `
+        <div class="prodCard">
+          <img src="${p.img}" onerror="this.src='/assets/logo-score.png'">
+          <div style="font-weight:700; font-size:14px; margin:5px 0;">${p.name}</div>
+          <div style="color:var(--red); font-weight:900;">$${p.price}</div>
+          <select id="size_${p.id}" style="margin:5px 0; height:36px; font-size:14px !important;">
+            ${p.sizes.map(s=>`<option>${s}</option>`)}
+          </select>
+          <button class="btn primary" style="width:100%; justify-content:center; padding:8px;" 
+            onclick="add('${p.id}','${p.name}',${p.price},'${p.img}')">AGREGAR</button>
         </div>
       `).join('');
       
-      $('modal').classList.add('open');
+      $('modalCatalog').classList.add('active');
+      $('overlay').classList.add('active');
     }
 
-    /* --- CART SYSTEM --- */
-    function addToCart(id) {
-      const prod = PRODUCTS.find(p => p.id === id);
+    function add(id, name, price, img) {
       const size = $(`size_${id}`).value;
-      const key = `${id}-${size}`;
-      
-      const exist = cart.find(c => c.key === key);
-      if(exist) exist.qty++;
-      else cart.push({ ...prod, size, qty: 1, key });
-      
-      updateCart();
-      toggleDrawer();
-      closeModal();
+      const key = id + size;
+      const exist = cart.find(i => i.key === key);
+      if(exist) exist.qty++; else cart.push({ key, id, name, price, img, size, qty:1 });
+      save();
+      closeAll();
+      openDrawer();
     }
 
     function updateCart() {
-      const totalItems = cart.reduce((a,b) => a + b.qty, 0);
-      const subtotal = cart.reduce((a,b) => a + (b.price * b.qty), 0);
-      const total = subtotal + shipping.cost;
-
-      $('cartCount').innerText = totalItems;
-      $('cartTotal').innerText = `$${total.toLocaleString()} MXN`;
-      $('barTotal').innerText = `$${total.toLocaleString()}`;
-
-      $('cartItems').innerHTML = cart.map((item, idx) => `
-        <div class="cart-item">
-          <img src="${item.img}">
-          <div style="flex:1">
-            <div style="font-weight:700;">${item.name}</div>
-            <div style="font-size:13px; color:#666;">Talla: ${item.size}</div>
-            <div style="color:var(--green); font-weight:700;">$${item.price}</div>
+      const method = $('shipMethod').value;
+      ship.method = method;
+      ship.cost = (method === 'tj') ? 80 : 0; // Nacional se cotiza real luego
+      
+      $('shipForm').style.display = (method === 'mx') ? 'block' : 'none';
+      
+      const sub = cart.reduce((a,b) => a + (b.price*b.qty), 0);
+      const total = sub + ship.cost;
+      
+      $('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
+      $('drawerTotal').innerText = `$${total} MXN`;
+      $('barTotal').innerText = `$${total}`;
+      
+      $('cartBody').innerHTML = cart.map((i,x) => `
+        <div style="display:flex; gap:10px; margin-bottom:10px; background:#f4f4f4; padding:8px; border-radius:8px;">
+          <img src="${i.img}" style="width:50px; height:50px; object-fit:cover;">
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:13px;">${i.name}</div>
+            <div style="font-size:12px; color:#666;">${i.size}</div>
           </div>
-          <div style="display:flex; flex-direction:column; align-items:end;">
-            <button onclick="cart.splice(${idx},1); updateCart()" style="color:red; background:none; border:none; font-weight:bold;">✕</button>
-            <span style="margin-top:10px; font-weight:800;">x${item.qty}</span>
+          <div>
+            <button onclick="cart.splice(${x},1);save()" style="color:red; border:none;">×</button>
+            <div style="font-weight:900; text-align:right;">x${i.qty}</div>
           </div>
         </div>
-      `).join('') || '<div style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío</div>';
+      `).join('') || '<div style="text-align:center; padding:20px; opacity:0.5;">Carrito Vacío</div>';
 
-      $('paybar').classList.toggle('visible', totalItems > 0);
-      validateCheckout();
+      const hasItems = cart.length > 0;
+      $('paybar').classList.toggle('visible', hasItems);
+      
+      // Validación básica
+      let valid = hasItems && method;
+      if(method === 'mx') valid = valid && $('cp').value.length === 5 && $('addr').value.length > 5;
+      $('payBtn').disabled = !valid;
     }
 
-    /* --- SHIPPING LOGIC (Envia.com Automation) --- */
-    $('shipMethod').addEventListener('change', (e) => {
-      const m = e.target.value;
-      shipping.method = m;
+    async function checkout() {
+      const btn = $('payBtn');
+      btn.innerText = "PROCESANDO..."; btn.disabled = true;
       
-      if(m === 'pickup') { shipping.cost = 0; $('shipDetails').style.display = 'none'; }
-      else if(m === 'tj') { shipping.cost = 80; $('shipDetails').style.display = 'none'; }
-      else if(m === 'mx') { shipping.cost = 0; $('shipDetails').style.display = 'block'; }
-      
-      updateCart();
-    });
-
-    $('quoteBtn').addEventListener('click', async () => {
-      const btn = $('quoteBtn');
-      btn.innerText = "Cotizando...";
-      
-      const zip = $('shipZip').value;
-      
-      try {
-        // Intento de conexión real con tu backend
-        const res = await fetch(`${API_URL}/quote_shipping`, {
-          method: 'POST',
-          body: JSON.stringify({ postal_code: zip, items: cart })
-        });
-        
-        if(res.ok) {
-          const data = await res.json();
-          shipping.cost = data.rate || 180; // Fallback si la API no devuelve tarifa exacta
-        } else {
-          throw new Error("API Error");
-        }
-      } catch (e) {
-        // FALLBACK SEGURO: Si falla Envia.com, asigna tarifa plana nacional
-        console.warn("Usando tarifa plana por error de API");
-        shipping.cost = 250; 
-      }
-      
-      btn.innerText = `Envío Cotizado: $${shipping.cost}`;
-      btn.style.background = "var(--green)";
-      btn.style.color = "#fff";
-      updateCart();
-    });
-
-    /* --- STRIPE CHECKOUT --- */
-    function validateCheckout() {
-      const ok = cart.length > 0 && shipping.method && (shipping.method !== 'mx' || shipping.cost > 0);
-      $('checkoutBtn').disabled = !ok;
-    }
-
-    $('checkoutBtn').addEventListener('click', async () => {
-      const btn = $('checkoutBtn');
-      btn.innerText = "Procesando...";
-      btn.disabled = true;
-
       try {
         const stripe = Stripe(STRIPE_PK);
         const payload = {
           items: cart,
           shipping: {
-            method: shipping.method,
-            cost: shipping.cost,
-            details: {
-              name: $('shipName').value,
-              postal: $('shipZip').value,
-              address: $('shipAddress').value
+            method: ship.method,
+            cost: ship.cost,
+            data: {
+              cp: $('cp').value,
+              address: $('addr').value,
+              name: $('name').value
             }
           }
         };
 
-        const res = await fetch(`${API_URL}/create_checkout`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+        const res = await fetch('/.netlify/functions/create_checkout', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
-
-        const session = await res.json();
-        if(session.url) window.location.href = session.url;
-        else alert("Error iniciando pago. Revisa tu conexión.");
         
-      } catch (err) {
-        alert("Ocurrió un error. Intenta de nuevo.");
-        btn.innerText = "PAGAR AHORA";
-        btn.disabled = false;
+        const data = await res.json();
+        if(data.url) window.location.href = data.url;
+        else throw new Error("Error iniciando pago");
+        
+      } catch(e) {
+        alert("Error: " + e.message);
+        btn.innerText = "IR A PAGAR"; btn.disabled = false;
       }
-    });
+    }
 
+    function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
+    function openDrawer() { $('drawer').classList.add('active'); $('overlay').classList.add('active'); updateCart(); }
+    function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
+    $('overlay').onclick = closeAll;
+    
+    // Init
+    updateCart();
   </script>
 </body>
 </html>
