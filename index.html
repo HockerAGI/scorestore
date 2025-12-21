@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light dark" />
 
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES. Ediciones limitadas." />
+  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES. Ediciones limitadas por evento." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -15,6 +15,7 @@
   <link rel="apple-touch-icon" href="/assets/logo-score.png" />
 
   <script src="https://js.stripe.com/v3/"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
@@ -25,9 +26,10 @@
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --sand: #f0f0f0;
-      --green: #00C853;
-      /* Overlay Café Tierra para el Hero */
+      --green: #00C853; /* Iconos Verdes */
+      /* Overlay Café Tierra para el Hero (Baja Style) */
       --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.95) 0%, rgba(45, 26, 16, 0.8) 100%);
+      
       --shadow: 0 10px 40px rgba(0,0,0,0.18);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -67,7 +69,7 @@
     }
     .cartCount { background: var(--red); font-size: 12px; padding: 2px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
-    /* HERO */
+    /* HERO (Café Overlay) */
     .hero {
       position: relative; margin: 90px auto 40px; width: min(1200px, 94vw);
       min-height: 520px; border-radius: 20px; overflow: hidden;
@@ -99,7 +101,7 @@
     .btn:active { transform: scale(0.96); }
     .btn.primary { background: #111; color: #fff; }
 
-    /* GRID EDICIONES */
+    /* GRID EDICIONES (Unificadas) */
     .secTitle { width: min(1200px, 94vw); margin: 0 auto 20px; font-family: var(--fontTitle); font-size: 42px; display:flex; justify-content:space-between; align-items:baseline;}
     
     .grid {
@@ -113,6 +115,7 @@
     }
     .card:hover { transform: translateY(-5px); }
     
+    /* Fondo IGUAL para todas (Textura Fibra/Asfalto) */
     .cardBg {
       position: absolute; inset: 0; opacity: 0.5;
       background: url('/assets/baja1000-texture.png') center/cover;
@@ -156,6 +159,7 @@
       padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
       display: flex; justify-content: space-between; align-items: center; color: #fff;
     }
+    /* SVG Verdes forzados */
     summary svg { width: 22px; height: 22px; stroke: var(--green); stroke-width: 2.5; }
     .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 14px; line-height: 1.6; }
 
@@ -355,29 +359,54 @@
   </div>
 
   <script>
-    // --- CLAVE PÚBLICA (Frontend) ---
+    // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Fallback products (por si no carga JSON o para testing)
+    // Productos Fallback (COINCIDEN EXACTAMENTE CON catalog.json)
     const PRODUCTS = [
-      { id:"chamarra-1000", name:"Chamarra Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" },
-      { id:"camisa-pits", name:"Camisa Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" },
-      { id:"tee-azul", name:"Tee Baja 1000 Azul", price:499, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L"], section:"EDICION_2025" },
-      { id:"tee-500", name:"Tee Baja 500 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["M","L"], section:"BAJA_500" },
-      { id:"tee-400", name:"Tee Baja 400 Oficial", price:450, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["M","L"], section:"BAJA_400" },
-      { id:"hoodie-sf", name:"Hoodie San Felipe", price:799, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L"], section:"SF_250" },
+      // EDICION_2025
+      { 
+        id: "chamarra-oficial", // ID corregido para coincidir con catalog.json
+        name: "Chaqueta Oficial Baja 1000", 
+        price: 1490, 
+        img: "/assets/EDICION_2025/chamarra-baja1000.jpg", 
+        sizes: ["S","M","L","XL","2XL"], 
+        section: "EDICION_2025" 
+      },
+      { 
+        id: "camisa-pits", 
+        name: "Camisa de Pits Baja 1000", 
+        price: 899, 
+        img: "/assets/EDICION_2025/camisa-pits-baja1000.jpg", 
+        sizes: ["S","M","L","XL","2XL"], 
+        section: "EDICION_2025" 
+      },
+      { 
+        id: "camiseta-negra", // Asumiendo que este es el ID en tu JSON para la negra
+        name: "Camiseta SCORE Baja 1000 Negra", 
+        price: 399, 
+        img: "/assets/EDICION_2025/camiseta-baja1000-negra.jpg", 
+        sizes: ["S","M","L","XL","2XL"], 
+        section: "EDICION_2025" 
+      },
+      
+      // RELLENO (Estos deben existir en catalog.json o la compra fallará si se seleccionan)
+      { id: "tee-500", name: "Tee Baja 500", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes: ["M","L"], section: "BAJA_500" },
+      { id: "tee-400", name: "Tee Baja 400", price: 450, img: "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes: ["M","L"], section: "BAJA_400" },
+      { id: "sudadera-cafe", name: "Sudadera San Felipe", price: 749, img: "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes: ["S","M","L"], section: "SF_250" },
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     let ship = { method: null, cost: 0 };
     const $ = id => document.getElementById(id);
 
-    // --- Cargar Catálogo (Intenta JSON, usa fallback si falla) ---
+    // --- 2. LÓGICA ---
     async function openCatalog(section, title) {
       $('catTitle').innerText = title.toUpperCase();
       let items = [];
       
       try {
+        // Intentar cargar JSON real
         const res = await fetch('/data/catalog.json');
         if(res.ok) {
           const data = await res.json();
@@ -385,6 +414,7 @@
         }
       } catch(e) { console.log('Usando local'); }
 
+      // Si falla, usar fallback local
       if(!items.length) items = PRODUCTS.filter(p => p.section === section);
 
       const grid = $('catGrid');
@@ -417,7 +447,7 @@
       openDrawer();
     }
 
-    // --- Cotizar Envío Real (Llama a tu función backend) ---
+    // --- Cotizar Envío Real (Backend) ---
     async function quoteShipping() {
       const cp = $('cp').value;
       if(cp.length !== 5) return;
@@ -438,15 +468,13 @@
         if(data.ok) {
           ship.cost = data.mxn;
           $('quoteResult').innerText = `Envío Cotizado: $${data.mxn} MXN (${data.carrier})`;
-          updateCart(false); // Update without resetting logic
+          updateCart(false); 
         } else {
-          ship.cost = 250; // Fallback mínimo
-          $('quoteResult').innerText = 'Tarifa estándar aplicada: $250 MXN';
+          ship.cost = 250; // Fallback
+          $('quoteResult').innerText = 'Tarifa estándar: $250 MXN';
           updateCart(false);
         }
-      } catch(e) {
-        console.error(e);
-      }
+      } catch(e) { console.error(e); }
     }
 
     function updateCart(resetShip = true) {
@@ -457,7 +485,7 @@
         if(method === 'tj') ship.cost = 80;
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') {
-             ship.cost = 0; // Se espera cotización
+             ship.cost = 0; 
              if($('cp').value.length === 5) quoteShipping();
         }
       }
@@ -488,13 +516,11 @@
       const hasItems = cart.length > 0;
       $('paybar').classList.toggle('visible', hasItems);
       
-      // Validación
       let valid = hasItems && method;
       if(method === 'mx') valid = valid && $('cp').value.length === 5 && $('addr').value.length > 5 && ship.cost > 0;
       $('payBtn').disabled = !valid;
     }
 
-    // --- Checkout con tu función Backend ---
     async function checkout() {
       const btn = $('payBtn');
       btn.innerText = "PROCESANDO..."; btn.disabled = true;
@@ -508,7 +534,7 @@
             cost: ship.cost,
             data: { cp: $('cp').value, address: $('addr').value, name: $('name').value }
           },
-          // Envía datos extra que tus funciones esperan
+          // Datos extra para tus funciones
           mode: ship.method, 
           to: { postal_code: $('cp').value }
         };
@@ -533,8 +559,7 @@
     function closeAll() { $('drawer').classList.remove('active'); $('modalCatalog').classList.remove('active'); $('overlay').classList.remove('active'); }
     $('overlay').onclick = closeAll;
     
-    $('cp').addEventListener('change', quoteShipping); // Auto cotizar al cambiar CP
-    
+    ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
     updateCart();
   </script>
 </body>
