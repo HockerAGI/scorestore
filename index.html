@@ -2,2421 +2,485 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
   <meta name="color-scheme" content="light dark" />
 
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES, fabricante y patrocinador oficial. Ediciones limitadas por evento." />
+  <meta name="description" content="Tienda oficial de merch SCORE. Fabricado en Tijuana por ÚNICO UNIFORMES. Ediciones limitadas por evento." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://scorestore.netlify.app/" />
-
   <link rel="manifest" href="/site.webmanifest" />
 
-  <!-- Favicon -->
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="icon" href="/assets/logo-score.png" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/logo-score.png" />
 
-  <!-- Social -->
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:description" content="Merch oficial fabricado en Tijuana por ÚNICO UNIFORMES (Patrocinador oficial). Ediciones limitadas." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="SCORE Store | Tienda Oficial" />
-  <meta name="twitter:description" content="Fabricantes y patrocinadores oficiales. Ediciones limitadas por evento." />
-  <meta name="twitter:image" content="https://scorestore.netlify.app/assets/hero.png" />
-
-  <!-- PWA iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SCORE Store" />
-
-  <!-- Stripe (Checkout) -->
   <script src="https://js.stripe.com/v3/"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 
-  <link rel="preload" as="image" href="/assets/hero.png" />
-  <link rel="preload" as="image" href="/assets/fondo-pagina-score.png" />
-  <link rel="preload" as="image" href="/assets/baja1000-texture.png" />
-
   <style>
     :root{
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
-
       --red: #E10600;
       --carbon: #0b0f14;
       --sand: #f2f2f2;
       --green: #00C853;
-
       --pageBg: url("/assets/fondo-pagina-score.png");
-      --pageBgOpacity: .82;
-
-      --shadow: 0 20px 50px rgba(0,0,0,.18);
-      --shadow2: 0 12px 30px rgba(0,0,0,.22);
+      
+      /* UX Tokens */
       --radius: 18px;
-
-      /* HERO overlay café oscuro */
-      --heroCafeA: rgba(72, 49, 33, .84);
-      --heroCafeB: rgba(72, 49, 33, .45);
-
-      /* season tokens */
-      --seasonTint: rgba(105, 180, 255, .10);
-      --seasonGlow: rgba(255,255,255,.18);
-      --partnersTint: rgba(105, 180, 255, .10);
-
-      /* misc */
-      --border: rgba(0,0,0,.10);
-      --muted: rgba(0,0,0,.62);
-      --muted2: rgba(0,0,0,.52);
-
-      --ok: rgba(0, 200, 83, .14);
-      --warn: rgba(255, 132, 0, .14);
-      --bad: rgba(225, 6, 0, .12);
+      --shadow: 0 20px 50px rgba(0,0,0,.18);
+      --ease: cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    body[data-theme="xmas"]{
-      --seasonTint: rgba(105, 180, 255, .10);
-      --seasonGlow: rgba(255,255,255,.18);
-      --partnersTint: rgba(105, 180, 255, .10);
-    }
-    body[data-theme="halloween"]{
-      --seasonTint: rgba(255, 132, 0, .14);
-      --seasonGlow: rgba(255, 80, 0, .10);
-      --partnersTint: rgba(255, 132, 0, .10);
-    }
-    body[data-theme="patrio"]{
-      --seasonTint: rgba(0, 180, 90, .12);
-      --seasonGlow: rgba(255,255,255,.10);
-      --partnersTint: rgba(0, 180, 90, .09);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+    html,body{height:100%; margin:0;}
+    
     body{
-      margin:0;
       font-family: var(--fontBody);
       color:#111;
       background-color: var(--sand);
       overflow-x:hidden;
-      padding-bottom: 96px;
-      position: relative;
+      padding-bottom: 120px; /* Espacio para paybar móvil */
     }
     body.modalOpen{ overflow:hidden; }
 
-    [id]{ scroll-margin-top: 92px; }
-
+    /* Fondo Fijo */
     body::after{
-      content:"";
-      position:fixed; inset:0;
+      content:""; position:fixed; inset:0;
       background-image: var(--pageBg);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      opacity: var(--pageBgOpacity);
-      z-index:-6;
-      pointer-events:none;
+      background-size: cover; background-position: center;
+      opacity: .82; z-index:-6; pointer-events:none;
     }
 
-    .seasonTint{
-      position:fixed; inset:0;
-      background:
-        radial-gradient(circle at 20% 10%, var(--seasonGlow), transparent 48%),
-        radial-gradient(circle at 80% 0%, var(--seasonGlow), transparent 52%),
-        linear-gradient(180deg, var(--seasonTint), transparent 55%);
-      z-index:-5;
-      pointer-events:none;
-      mix-blend-mode: multiply;
-      opacity:.95;
-    }
-
-    .seasonSnow{
-      position:fixed; inset:0;
-      pointer-events:none;
-      z-index:-4;
-      opacity:.22;
-      background-image:
-        radial-gradient(circle, rgba(255,255,255,.95) 1px, transparent 2px),
-        radial-gradient(circle, rgba(255,255,255,.80) 1px, transparent 2px),
-        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 2px);
-      background-size: 240px 240px, 360px 360px, 520px 520px;
-      background-position: 0 0, 80px 120px, 160px 40px;
-      animation: snowFall 10.5s linear infinite;
-      display:none;
-    }
-    body[data-theme="xmas"] .seasonSnow{ display:block; }
-    @keyframes snowFall{
-      from{ transform: translateY(-24px); }
-      to{ transform: translateY(240px); }
-    }
-
-    .seasonSparkles{
-      position:fixed; inset:0;
-      pointer-events:none;
-      z-index:-3;
-      opacity:.18;
-      display:none;
-      background:
-        radial-gradient(circle at 12% 18%, rgba(255,255,255,.65) 0 1px, transparent 2px),
-        radial-gradient(circle at 78% 22%, rgba(255,255,255,.55) 0 1px, transparent 2px),
-        radial-gradient(circle at 36% 62%, rgba(255,255,255,.50) 0 1px, transparent 2px),
-        radial-gradient(circle at 64% 78%, rgba(255,255,255,.55) 0 1px, transparent 2px),
-        radial-gradient(circle at 88% 64%, rgba(255,255,255,.45) 0 1px, transparent 2px);
-      animation: twinkle 3.2s ease-in-out infinite alternate;
-    }
-    body[data-theme="xmas"] .seasonSparkles{ display:block; }
-    @keyframes twinkle{
-      from{ opacity:.14; transform: translateY(0px); }
-      to{ opacity:.22; transform: translateY(2px); }
-    }
-
-    .overlay{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
-      opacity:0; pointer-events:none;
-      z-index:95;
-      transition: opacity .18s ease;
-    }
-    .overlay.active{ opacity:1; pointer-events:auto; }
-
-    .toast{
-      position: fixed;
-      left: 50%;
-      bottom: 92px;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,.88);
-      color:#fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .02em;
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-      opacity: 0;
-      pointer-events:none;
-      z-index: 130;
-      transition: opacity .18s ease, transform .18s ease;
-      max-width: min(92vw, 520px);
-      text-align:center;
-    }
-    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
-
-    .wrap{
-      width:min(1200px, 94vw);
-      margin:0 auto;
-      padding-top: 90px;
-      padding-bottom: 60px;
-    }
-
-    /* topbar */
+    /* Topbar */
     .topbar{
       position:fixed; top:0; left:0; right:0; z-index:90;
       background: rgba(245,245,245,0.96);
       border-bottom: 3px solid var(--red);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      backdrop-filter: blur(12px);
     }
     .topInner{
-      width:min(1200px, 94vw);
-      margin:0 auto;
-      height:76px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      width:min(1200px, 94vw); margin:0 auto; height:76px;
+      display:flex; align-items:center; justify-content:space-between;
     }
+    .brand img{ height:56px; width:auto; display:block; }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:0;
-      text-decoration:none;
-      color:#111;
-    }
-    .brand img{
-      height:56px;
-      width:auto;
-      display:block;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.12));
-    }
-
-    .navRight{ display:flex; align-items:center; gap:10px; }
-
-    .pill{
-      display:flex; align-items:center; justify-content:center;
-      height: 38px;
-      padding: 0 12px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.90);
-      border: 1px solid rgba(255,255,255,0.10);
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .08em;
-      color: #fff;
-      white-space: nowrap;
-    }
-    .pill b{ color: #fff; }
-    .pill span{ color: rgba(255,255,255,.86); }
-    @media (max-width: 560px){ .pill{ display:none; } }
-
+    /* Botón Carrito */
     .cartTrigger{
-      position:relative;
       background: #0c0f14; color:#fff; border:none;
-      height:54px; padding:0 18px;
+      height:54px; padding:0 20px;
       display:flex; align-items:center; gap:12px;
-      font-family: var(--fontTitle); font-weight:700; font-size:22px;
+      font-family: var(--fontTitle); font-weight:700; font-size:24px;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      cursor:pointer;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-      overflow:hidden;
-      transition: transform .15s ease;
+      cursor:pointer; touch-action: manipulation;
     }
-    .cartTrigger:hover{ transform: translateY(-1px); }
     .cartCount{
-      position:absolute; top:6px; right:6px;
-      background: var(--red);
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 6px;
-      line-height:1;
-      font-weight:900;
+      background: var(--red); font-size: 12px; padding: 2px 6px;
+      border-radius: 6px; font-weight:900;
     }
 
-    /* HERO */
+    /* Hero */
+    .wrap{ width:min(1200px, 94vw); margin:0 auto; padding-top: 90px; }
     .hero{
-      position:relative;
-      border-radius: 18px;
-      overflow:hidden;
-      min-height: 520px;
-      display:flex;
-      align-items:center;
-      background: #0b0f14;
-      color:#fff;
-      box-shadow: 0 20px 50px rgba(0,0,0,.18);
-      transform: translateZ(0);
+      position:relative; border-radius: 18px; overflow:hidden;
+      min-height: 520px; display:flex; align-items:center;
+      background: #0b0f14; color:#fff;
+      box-shadow: var(--shadow);
     }
     .heroBg{
-      position:absolute; inset:0;
-      background: url('/assets/hero.png') center/cover no-repeat;
-      opacity:.98;
-      transform: scale(1.02);
-      filter: contrast(1.04) saturate(1.02);
+      position:absolute; inset:0; background: url('/assets/hero.png') center/cover;
+      opacity:.8; filter: contrast(1.1);
     }
-    .heroOverlay{
-      position:absolute; inset:0;
-      background:
-        linear-gradient(to right, var(--heroCafeA) 0%, var(--heroCafeB) 66%, transparent 100%),
-        radial-gradient(circle at 78% 18%, rgba(225,6,0,0.12), transparent 52%),
-        radial-gradient(circle at 18% 74%, rgba(255,255,255,0.10), transparent 56%);
-    }
-    .heroContent{
-      position:relative; z-index:2;
-      padding: 34px 54px 34px;
-      max-width: 980px;
-      text-align:left;
-    }
-    .tagline{
-      background: var(--red); color:#fff;
-      padding: 7px 16px;
-      font-family: var(--fontTitle);
-      font-size:22px;
-      font-weight:700;
-      transform: skew(-10deg);
-      display:inline-block;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      letter-spacing: .03em;
-      text-transform: none;
-    }
+    .heroContent{ position:relative; z-index:2; padding: 40px; max-width: 800px; }
     .hero h1{
-      font-family: var(--fontTitle);
-      font-size: clamp(44px, 7.4vw, 92px);
-      line-height: .92;
-      margin:0 0 12px;
-      text-transform:none;
-      white-space: nowrap;
-      text-shadow: 0 5px 20px rgba(0,0,0,0.55);
+      font-family: var(--fontTitle); font-size: clamp(48px, 9vw, 92px);
+      line-height: .9; margin: 10px 0; text-transform: uppercase;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
-    .hero .sub{
-      font-size: 16px;
-      line-height: 1.6;
-      color: rgba(255,255,255,.93);
-      margin: 0 0 16px;
-      border-left: 4px solid var(--red);
-      padding-left: 18px;
-      font-weight: 800;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.65);
-      max-width: 66ch;
-    }
-
-    .ctaRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    
+    /* Botones CTA */
     .btn{
-      border:none;
-      cursor:pointer;
-      font-weight: 900;
-      letter-spacing:.06em;
-      text-transform: uppercase;
-      border-radius: 16px;
-      padding: 14px 16px;
-      background: rgba(255,255,255,.90);
-      color:#111;
-      box-shadow: 0 10px 20px rgba(0,0,0,.26);
-      transition: transform .16s ease, filter .16s ease;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
+      border:none; cursor:pointer; font-weight: 900;
+      text-transform: uppercase; border-radius: 14px;
+      padding: 16px 24px; font-size: 14px; letter-spacing:.05em;
+      transition: transform .1s var(--ease);
+      display:inline-flex; align-items:center; justify-content:center;
+      text-decoration:none; touch-action: manipulation;
     }
-    .btn:hover{ transform: translateY(-2px); filter: brightness(1.02); }
-    .btn.primary{ background:#111; color:#fff; }
+    .btn:active{ transform: scale(0.96); }
+    .btn.primary{ background:#111; color:#fff; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 
-    .hint{
-      margin-top: 12px;
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .12em;
-      color: rgba(255,255,255,.94);
-      text-transform: uppercase;
-      background: rgba(0,0,0,.26);
-      border: 1px solid rgba(255,255,255,.14);
-      padding: 10px 12px;
-      border-radius: 14px;
-      backdrop-filter: blur(8px);
-      max-width: min(92vw, 420px);
-      text-align:left;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-    }
-    .hintDot{
-      width:10px;height:10px;border-radius:999px;
-      background: rgba(255,255,255,.9);
-      box-shadow: 0 0 0 6px rgba(255,255,255,.10);
-      flex:0 0 auto;
-    }
-
-    .heroChips{
-      margin-top: 14px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      max-width: 720px;
-    }
-    .heroChip{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(10px);
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .04em;
-      color: rgba(255,255,255,.92);
-      text-transform: uppercase;
-      box-shadow: 0 10px 22px rgba(0,0,0,.20);
-    }
-    .heroChip i{
-      width:22px;height:22px;border-radius:10px;
-      display:inline-flex;align-items:center;justify-content:center;
-      background: rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.12);
-    }
-    .heroChip svg{ width:14px;height:14px; stroke:#fff; opacity:.9; }
-
-    @media (max-width: 820px){
-      .hero{ align-items:flex-start; min-height: 500px; }
-      .heroOverlay{
-        background:
-          linear-gradient(to top, var(--heroCafeA) 18%, rgba(74,50,33,.40) 62%, transparent 100%),
-          radial-gradient(circle at 60% 25%, rgba(225,6,0,0.10), transparent 52%);
-      }
-      .heroContent{ padding: 22px; width: 100%; }
-      .hero h1{ white-space: nowrap; }
-    }
-    @media (max-width: 420px){
-      .hero h1{ white-space: normal; }
-      .btn{ width:100%; }
-      .ctaRow{ gap:10px; }
-    }
-
-    /* Section headers */
-    .secHeader{
-      margin: 26px 4px 12px;
-      display:flex; align-items:baseline; justify-content:space-between;
-      gap:12px;
-    }
-    .secHeader h2{
-      margin:0;
-      font-family: var(--fontTitle);
-      font-size: 34px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      color:#111;
-    }
-    .secHeader .meta{
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .12em;
-      color: rgba(0,0,0,.55);
-      text-transform: uppercase;
-      white-space: nowrap;
-      text-align:right;
-    }
-
-    /* Ediciones */
+    /* Grilla de Ediciones */
     .editionsGrid{
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px; margin: 20px 0;
     }
-    @media (max-width: 980px){ .editionsGrid{ grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 560px){ .editionsGrid{ grid-template-columns: 1fr; } }
-
     .editionCard{
-      position:relative;
-      border-radius: 18px;
-      overflow:hidden;
-      cursor:pointer;
-      min-height: 240px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-      background: #0b0f14;
-      transform: translateZ(0);
-      transition: transform .18s ease, box-shadow .18s ease;
-      border: 1px solid rgba(255,255,255,.12);
-      outline: none;
+      position:relative; border-radius: 18px; overflow:hidden;
+      min-height: 260px; background: #0b0f14;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition: transform .2s var(--ease);
     }
-    .editionCard:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 18px 44px rgba(0,0,0,.28);
-    }
+    .editionCard:active{ transform: scale(0.98); }
+    .editionBg{ position:absolute; inset:0; opacity:0.6; background-size:cover; }
+    .editionLogo{ width: 80%; max-width: 240px; position:relative; z-index:2; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
 
-    .editionBg{
-      position:absolute; inset:0;
-      background: url("/assets/baja1000-texture.png") center/cover no-repeat;
-      opacity: 1;
-      filter: saturate(1.05) contrast(1.05);
-    }
-
-    .editionLayer{
-      position:absolute; inset:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      padding: 18px 14px 14px;
-    }
-
-    .statusBadge{
-      position:absolute; top:14px; left:14px;
-      background: var(--red);
-      color:#fff;
-      font-weight: 900;
-      font-size: 11px;
-      letter-spacing: .12em;
-      padding: 6px 10px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      box-shadow: 0 10px 18px rgba(0,0,0,.25);
-    }
-    .statusBadge.upcoming{
-      background: transparent;
-      border: none;
-      padding: 0;
-      border-radius: 0;
-      box-shadow: none;
-      color: rgba(255,255,255,.92);
-      text-shadow: 0 10px 22px rgba(0,0,0,.55);
-    }
-
-    .editionCenter{
-      width:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      gap:14px;
-      padding: 10px 6px 12px;
-    }
-
-    .editionLogo{
-      width: clamp(190px, 58vw, 280px);
-      height: clamp(78px, 19vw, 110px);
-      object-fit: contain;
-      opacity: 1;
-      margin: 0 auto;
-      filter:
-        drop-shadow(-1px 0 0 #fff) drop-shadow(1px 0 0 #fff)
-        drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 0 #fff)
-        drop-shadow(-1px -1px 0 #fff) drop-shadow(1px -1px 0 #fff)
-        drop-shadow(-1px 1px 0 #fff) drop-shadow(1px 1px 0 #fff)
-        drop-shadow(0 14px 18px rgba(0,0,0,.38));
-    }
-
-    .editionBtn{
-      border:none;
-      background:#fff;
-      color:#111;
-      font-weight: 900;
-      padding: 10px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      width: fit-content;
-      transition: transform .15s ease;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-    .editionBtn:hover{ transform: translateY(-1px); }
-
-    /* Highlight strip */
-    .highlight{
-      margin-top: 14px;
-      border-radius: 18px;
-      overflow:hidden;
-      background: rgba(255,255,255,.82);
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: 0 10px 22px rgba(0,0,0,.10);
-    }
-    .highlightInner{
-      display:flex;
-      gap:14px;
-      padding: 14px;
-      align-items:stretch;
-    }
-    @media (max-width: 780px){ .highlightInner{ flex-direction:column; } }
-    .hBox{
-      flex:1;
-      border-radius: 16px;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-      padding: 14px;
-      min-height: 110px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      position:relative;
-      overflow:hidden;
-    }
-    .hBox::before{
-      content:"";
-      position:absolute;
-      inset:-40px;
-      background: radial-gradient(circle at 20% 30%, rgba(0,200,83,.18), transparent 60%),
-                  radial-gradient(circle at 80% 70%, rgba(225,6,0,.12), transparent 55%);
-      opacity:.85;
-      pointer-events:none;
-    }
-    .hBox > *{ position:relative; z-index:1; }
-    .hTitle{
-      display:flex; align-items:center; gap:10px;
-      font-weight: 900;
-      letter-spacing:.10em;
-      text-transform: uppercase;
-      color: rgba(0,0,0,.74);
-      font-size: 12px;
-      margin:0 0 8px;
-    }
-    .hTxt{
-      font-weight: 900;
-      font-size: 14px;
-      color:#111;
-      margin:0;
-      line-height:1.4;
-    }
-    .tag{
-      margin-top: 10px;
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(0,0,0,.70);
-      background: rgba(255,255,255,.70);
-      border: 1px solid rgba(0,0,0,.08);
-      padding: 10px 12px;
-      border-radius: 14px;
-      line-height:1.35;
-    }
-
-    /* Partners */
-    .partnersStrip{
-      margin-top: 18px;
-      padding: 18px 8px 8px;
-      border-top: 3px solid rgba(225,6,0,.85);
-      border-bottom: 3px solid rgba(225,6,0,.25);
-      background: linear-gradient(180deg, var(--partnersTint), transparent 72%);
-      border-radius: 18px;
-    }
-    .partnersStrip .title{
-      font-family: var(--fontTitle);
-      font-size: 20px;
-      letter-spacing: 2px;
-      color: rgba(0,0,0,.55);
-      margin: 0 0 14px;
-      text-transform: uppercase;
-      padding: 0 12px;
-      text-align:center;
-    }
-    .spGrid{
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
-      align-items:center;
-      padding: 0 12px 12px;
-    }
-    @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 420px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
-    .spLogo{
-      width: 100%;
-      height: 48px;
-      object-fit: contain;
-      filter: grayscale(1) contrast(1.05);
-      opacity: .92;
-    }
-
-    /* footer */
-    footer{
-      margin-top: 28px;
-      background: #080b10;
-      color:#fff;
-      padding: 28px 0;
-      border-top: 3px solid var(--red);
-    }
-    .footGrid{
-      width:min(1200px, 94vw);
-      margin:0 auto;
-      display:grid;
-      grid-template-columns: 1.3fr .7fr;
-      gap: 18px;
-    }
-    @media (max-width: 820px){ .footGrid{ grid-template-columns: 1fr; } }
-
-    /* PAYBAR */
-    .paybar{
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 16px;
-      width: min(1200px, 94vw);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-      opacity:0;
-      pointer-events:none;
-      z-index: 80;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-    .paybar.visible{ opacity:1; pointer-events:auto; }
-    body.modalOpen .paybar{ opacity:0 !important; pointer-events:none !important; }
-    .pbLeft{ display:flex; flex-direction:column; }
-    .pbLabel{
-      font-weight: 900;
-      font-size: 11px;
-      color: rgba(0,0,0,.60);
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-    .pbPrice{
-      font-weight: 900;
-      font-size: 18px;
-      margin-top: 2px;
-      color:#111;
-    }
-    .pbPrice small{
-      display:block;
-      font-size: 12px;
-      color: rgba(0,0,0,.55);
-      font-weight: 900;
-      margin-top: 2px;
-    }
-    .pbBtn{
-      border:none;
-      background:#111;
-      color:#fff;
-      font-weight: 900;
-      padding: 12px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-
-    /* drawer carrito */
+    /* Drawer Carrito */
     .drawer{
-      position: fixed; top:0; right:0;
-      width: min(440px, 92vw);
-      height: 100%;
-      background: rgba(255,255,255,.96);
-      border-left: 1px solid rgba(0,0,0,.10);
-      box-shadow: -20px 0 50px rgba(0,0,0,.22);
-      transform: translateX(102%);
-      transition: transform .2s ease;
-      z-index: 110;
-      display:flex;
-      flex-direction:column;
+      position: fixed; top:0; right:0; bottom:0;
+      width: min(450px, 90vw); background: #fff;
+      transform: translateX(105%); transition: transform .35s var(--ease);
+      z-index: 200; display:flex; flex-direction:column;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.3);
     }
     .drawer.active{ transform: translateX(0); }
-    .dHead{
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 16px 16px 10px;
-      border-bottom: 1px solid rgba(0,0,0,.08);
-    }
-    .dTitle{
-      margin:0;
-      font-family: var(--fontTitle);
-      font-size: 30px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      text-align:center;
-    }
-    .closeBtn{
-      border:none; background: transparent;
-      cursor:pointer; font-weight: 900;
-      line-height: 1;
-      padding: 6px 10px;
-      border-radius: 12px;
-      font-size: 28px;
-    }
-    .dBody{ padding: 12px 16px; overflow:auto; flex: 1; }
-    .empty{
-      font-weight: 900;
-      color: rgba(0,0,0,.55);
-      text-align:center;
-      padding: 24px 0;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .cItem{
-      display:flex; gap: 10px;
-      padding: 10px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-      margin-bottom: 10px;
-    }
-    .cImg{
-      width: 66px;
-      height: 66px;
-      border-radius: 12px;
-      object-fit: cover;
-      background: rgba(0,0,0,.08);
-      flex:0 0 auto;
-    }
-    .cName{
-      font-weight:900;
-      font-size:13px;
-      line-height:1.2;
-      margin:0;
-    }
-    .cMeta{
-      margin-top: 6px;
-      font-size: 12px;
-      color: rgba(0,0,0,.65);
-      font-weight: 800;
-    }
-    .cPrice{
-      margin-top: 6px;
-      font-weight: 900;
-      font-size: 13px;
-    }
-    .cActions{
-      margin-top: 8px;
-      display:flex; gap:8px;
-      align-items:center;
-    }
-    .qtyBtn{
-      border:none;
-      background:#111;
-      color:#fff;
-      font-weight:900;
-      width:34px; height:34px;
-      border-radius: 12px;
-      cursor:pointer;
-    }
-    .rmBtn{
-      border:none;
-      background: rgba(225,6,0,.12);
-      color:#a30000;
-      font-weight:900;
-      height:34px;
-      padding:0 10px;
-      border-radius: 12px;
-      cursor:pointer;
-    }
-
-    .dFoot{
-      padding: 12px 16px 16px;
-      border-top: 1px solid rgba(0,0,0,.08);
-    }
-    .sumRow{
-      display:flex; justify-content:space-between; align-items:center;
-      font-size: 13px;
-      color: rgba(0,0,0,.70);
-      font-weight: 800;
-      margin: 6px 0;
-    }
-    .sumRow strong{ color:#111; font-weight: 900; }
-
-    .box{
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.04);
-      border: 1px solid rgba(0,0,0,.06);
-    }
-    .boxTitle{
-      font-weight:900;
-      font-size:12px;
-      color:#222;
-      letter-spacing:.05em;
-      text-transform:uppercase;
-    }
-
-    .row{ display:flex; gap:10px; margin-top: 8px; }
+    .dHead{ padding: 20px; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+    .dBody{ flex:1; overflow-y:auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+    
+    /* Inputs Móvil Friendly (16px para evitar zoom) */
     .input{
-      flex:1;
-      height: 42px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.14);
-      padding: 0 12px;
-      font-weight: 900;
-      letter-spacing: .04em;
+      width: 100%; height: 48px; border-radius: 12px;
+      border: 1px solid #ccc; padding: 0 14px;
+      font-size: 16px; font-weight: 600; font-family: var(--fontBody);
+      margin-bottom: 10px; appearance: none;
     }
-    .input.upper{ text-transform: uppercase; }
-    .smallNote{
-      margin-top: 8px;
-      font-size: 11px;
-      color: rgba(0,0,0,.68);
-      font-weight: 900;
-      line-height: 1.35;
-    }
+    .input:focus{ border-color: var(--red); outline:none; }
 
-    .shipGrid{
-      margin-top: 8px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .shipGrid .full{ grid-column: 1 / -1; }
-    @media (max-width: 420px){ .shipGrid{ grid-template-columns:1fr; } }
-
-    .radioWrap{
-      display:flex;
-      gap:10px;
-      flex-direction:column;
-      margin-top: 10px;
-    }
-    .radio{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.72);
-      cursor:pointer;
-    }
-    .radio input{ margin-top: 3px; }
-    .radio b{ font-weight: 900; }
-    .radio .desc{
-      font-weight: 800;
-      color: rgba(0,0,0,.66);
-      font-size: 12px;
-      line-height: 1.3;
-      margin-top: 3px;
-    }
-    .ok{
-      margin-top: 8px;
-      border-radius: 14px;
-      padding: 10px 12px;
-      background: rgba(0,200,83,.10);
-      border: 1px solid rgba(0,200,83,.18);
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(0,0,0,.74);
-      line-height: 1.35;
-    }
-
-    .payBtn{
-      width:100%;
-      margin-top: 12px;
-      border:none;
-      background: #111;
-      color:#fff;
-      font-weight: 900;
-      padding: 14px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-    .payBtn:disabled{ opacity:.5; cursor:not-allowed; }
-    .clearLink{
-      display:block;
-      text-align:center;
-      margin-top: 10px;
-      color: rgba(0,0,0,.65);
-      font-weight: 900;
-      cursor:pointer;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    /* modal catálogo */
-    .modal{
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(.98);
-      width: min(980px, 94vw);
-      height: min(86vh, 760px);
-      background: rgba(255,255,255,.98);
-      border-radius: 18px;
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-      z-index: 120;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
-    .modal.active{
-      opacity:1;
-      pointer-events:auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    .mHead{
-      position: sticky;
-      top: 0;
+    /* Paybar Flotante */
+    .paybar{
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+      width: min(1200px, 94vw); background: #fff; padding: 14px 20px;
+      border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
       display:flex; justify-content:space-between; align-items:center;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(0,0,0,.08);
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(10px);
-      z-index: 2;
-      gap: 10px;
+      z-index: 100; transition: transform .3s var(--ease);
     }
-    .mTitle{
-      font-family: var(--fontTitle);
-      font-size: 30px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      text-align:center;
-      width: 100%;
+    .paybar.visible{ transform: translateX(-50%) translateY(0); }
+    
+    /* Utilería */
+    .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); opacity:0; pointer-events:none; z-index:150; transition:opacity .3s; }
+    .overlay.active{ opacity:1; pointer-events:auto; }
+    .toast{ 
+      position:fixed; bottom: 100px; left:50%; transform:translateX(-50%); 
+      background:#111; color:#fff; padding:12px 24px; border-radius:50px; 
+      font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s; z-index:300;
     }
-    .mBody{ padding: 14px 16px; overflow:auto; flex:1; }
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-    @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 560px){
-      .modal{ width: 96vw; height: 88vh; border-radius: 16px; }
-      .grid{ grid-template-columns: 1fr; }
-      .mBody{ padding: 12px; }
-    }
+    .toast.show{ opacity:1; }
 
-    .card{
-      border-radius: 16px;
-      overflow:hidden;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,.10);
-      box-shadow: 0 10px 22px rgba(0,0,0,.10);
-      display:flex;
-      flex-direction:column;
-      text-align:center;
+    /* Modal Catálogo */
+    .modal{
+      position:fixed; inset:20px; background:#fff; border-radius:24px;
+      z-index:250; display:flex; flex-direction:column;
+      transform: scale(0.95); opacity:0; pointer-events:none; transition: .25s var(--ease);
     }
-    .img{
-      width:100%;
-      aspect-ratio: 4 / 5;
-      background: rgba(0,0,0,.04);
-      overflow:hidden;
-    }
-    .img img{ width:100%; height:100%; object-fit: cover; display:block; }
-    .info{ padding: 12px; text-align:center; }
-    .name{
-      font-weight: 900;
-      font-size: 13px;
-      line-height: 1.25;
-      color:#111;
-    }
-    .price{
-      margin-top: 10px;
-      text-align:center;
-      font-weight: 900;
-      font-size: 16px;
-    }
-    .usd{
-      margin-top: 4px;
-      font-weight: 900;
-      font-size: 12px;
-      color: rgba(0,0,0,.55);
-    }
-    .cta{
-      width: 100%;
-      margin-top: 10px;
-      border:none;
-      background: #111;
-      color:#fff;
-      font-weight: 900;
-      padding: 12px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
+    .modal.active{ transform: scale(1); opacity:1; pointer-events:auto; }
+    @media(min-width: 800px){ .modal{ inset: 50px 10%; } }
 
-    .sizeRow{
-      margin-top:10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .sizeRow label{
-      font-size:12px;
-      font-weight:900;
-      color: rgba(0,0,0,.70);
-    }
-    .sizeRow select{
-      flex:1;
-      height:40px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.14);
-      padding:0 10px;
-      font-weight:900;
-      letter-spacing:.06em;
-      background:#fff;
-    }
-
-    input[type="radio"]{ accent-color: var(--green); }
-
-    /* ===== Footer Legal ===== */
-    footer .legalFooterWrap{ margin-top: 12px; }
-    footer .fLegalIntro{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      padding: 14px;
-      color: rgba(255,255,255,.86);
-      font-weight: 800;
-      line-height: 1.6;
-      margin-bottom: 12px;
-    }
-    footer details.fLegal{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    footer details.fLegal summary{
-      list-style: none;
-      cursor: pointer;
-      padding: 14px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.92);
-      user-select: none;
-    }
-    footer details.fLegal summary::-webkit-details-marker{ display:none; }
-    footer .fLegalLeft{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-    footer .fIcon{
-      width: 26px; height: 26px;
-      border-radius: 10px;
-      background: rgba(0,200,83,.12);
-      border: 1px solid rgba(0,200,83,.18);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-    }
-    footer .fIcon svg{
-      width: 16px; height: 16px;
-      stroke: var(--green);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    footer .fLegalPill{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .10em;
-      color: #fff;
-      background: rgba(0,0,0,.45);
-      border: 1px solid rgba(255,255,255,.10);
-      white-space: nowrap;
-      flex: 0 0 auto;
-    }
-    footer details.fLegal[open] summary .fLegalPill{
-      background: rgba(0,200,83,.18);
-      border-color: rgba(0,200,83,.22);
-    }
-    footer .fLegalBody{
-      border-top: 1px solid rgba(255,255,255,.10);
-      padding: 0 14px 14px;
-      color: rgba(255,255,255,.84);
-      font-weight: 700;
-      font-size: 13px;
-      line-height: 1.7;
-      max-height: 60vh;
-      overflow: auto;
-      overscroll-behavior: contain;
-    }
-    footer .fLegalBody h4{
-      margin: 14px 0 6px;
-      font-family: var(--fontTitle);
-      font-size: 22px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-    footer .fLegalBody ul{ margin: 8px 0 0 18px; }
-    footer .fLegalBody li{ margin: 6px 0; }
-    footer .fLegalSmall{
-      margin-top: 10px;
-      font-size: 11px;
-      color: rgba(255,255,255,.65);
-      font-weight: 900;
-      line-height: 1.35;
-    }
-
-    @media (prefers-reduced-motion: no-preference){
-      .hero, .editionCard, .highlight, .partnersStrip{ animation: popIn .42s ease both; }
-      .editionCard:nth-child(2){ animation-delay:.06s }
-      .editionCard:nth-child(3){ animation-delay:.12s }
-      .editionCard:nth-child(4){ animation-delay:.18s }
-      @keyframes popIn{
-        from{ opacity:0; transform: translateY(10px); }
-        to{ opacity:1; transform: translateY(0); }
-      }
-    }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:16px; padding:20px; overflow-y:auto; }
+    .card{ border:1px solid #eee; border-radius:16px; padding:12px; text-align:center; }
+    .card img{ width:100%; aspect-ratio: 1; object-fit:contain; margin-bottom:10px; }
   </style>
 </head>
-
-<body data-theme="xmas">
-  <div class="seasonTint" aria-hidden="true"></div>
-  <div class="seasonSnow" aria-hidden="true"></div>
-  <div class="seasonSparkles" aria-hidden="true"></div>
+<body>
 
   <div class="overlay" id="overlay"></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast">Agregado al carrito</div>
 
   <header class="topbar">
     <div class="topInner">
-      <a class="brand" href="/" aria-label="SCORE Store">
-        <img src="/assets/logo-score.png" alt="SCORE" loading="eager" decoding="async" />
-      </a>
-
-      <div class="navRight">
-        <div class="pill" title="Envío / entrega">
-          <span>MX +</span>&nbsp;<b>TIJUANA</b>
-        </div>
-
-        <button class="cartTrigger" id="openCart" type="button" aria-label="Abrir carrito">
-          <span style="display:flex;align-items:center;gap:10px;">
-            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
-              <path d="M6 6h15l-1.5 8.5a2 2 0 0 1-2 1.6H8.2a2 2 0 0 1-2-1.6L4 3H2"/>
-              <circle cx="9" cy="20" r="1.5"/>
-              <circle cx="18" cy="20" r="1.5"/>
-            </svg>
-            <span style="font-family:var(--fontTitle);font-size:22px;">CARRITO</span>
-          </span>
-          <span class="cartCount" id="cartCount">0</span>
-        </button>
-      </div>
+      <a class="brand" href="/"><img src="/assets/logo-score.png" alt="SCORE"></a>
+      <button class="cartTrigger" id="openCart" aria-label="Carrito">
+        SCORE STORE <span class="cartCount" id="cartCount">0</span>
+      </button>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="hero" aria-label="Hero">
-      <div class="heroBg" aria-hidden="true"></div>
-      <div class="heroOverlay" aria-hidden="true"></div>
-
+    <section class="hero">
+      <div class="heroBg"></div>
       <div class="heroContent">
-        <div class="tagline">Merch oficial</div>
-        <h1>SCORE International</h1>
-
-        <p class="sub">
-          Somos <b>fabricantes</b> y <b>PATROCINADORES OFICIALES</b>.
-          Producimos en Tijuana con materiales premium y acabados listos para el desierto.
-          Lanzamientos por evento: lo auténtico <b>se agota rápido</b>.
-        </p>
-
-        <div class="ctaRow">
-          <a class="btn primary" href="#productos">Ver productos</a>
-          <button class="btn" id="openCart2" type="button">Ir al carrito</button>
-        </div>
-
-        <div class="hint"><span class="hintDot" aria-hidden="true"></span>EDICIÓN LIMITADA</div>
-
-        <div class="heroChips" aria-label="Puntos clave">
-          <div class="heroChip">
-            <i aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 6 9 17l-5-5"></path>
-              </svg>
-            </i>
-            Hecho en Tijuana
-          </div>
-          <div class="heroChip">
-            <i aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"></path>
-                <path d="M9 12l2 2 4-5"></path>
-              </svg>
-            </i>
-            Producto auténtico
-          </div>
-          <div class="heroChip">
-            <i aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3v18"></path>
-                <path d="M7 8l5-5 5 5"></path>
-              </svg>
-            </i>
-            Material premium
-          </div>
-        </div>
+        <div style="background:var(--red); display:inline-block; padding:4px 12px; font-weight:800; transform:skew(-10deg);">OFICIAL MERCH</div>
+        <h1>SCORE INTERNATIONAL</h1>
+        <p style="font-size:18px; max-width:600px; margin-bottom:24px;">Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Productos auténticos de edición limitada.</p>
+        <button class="btn primary" onclick="document.querySelector('.editionsGrid').scrollIntoView({behavior:'smooth'})">Ver Colecciones</button>
       </div>
     </section>
 
-    <div class="secHeader" id="productos">
-      <h2>Ediciones</h2>
-      <div class="meta">MX · Official Baja Merch</div>
-    </div>
-
+    <h2 style="font-family:var(--fontTitle); font-size:42px; margin:40px 0 20px;">EDICIONES</h2>
+    
     <div class="editionsGrid">
-      <div class="editionCard" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025" role="button" tabindex="0" aria-label="Abrir catálogo Baja 1000 Edición 2025">
-        <div class="editionBg" aria-hidden="true"></div>
-        <div class="editionLayer">
-          <div class="statusBadge">ACTIVO</div>
-          <div class="editionCenter">
-            <img src="/assets/logo-baja1000.png" class="editionLogo" alt="Baja 1000" loading="lazy" decoding="async" />
-            <button class="editionBtn" type="button" data-open="catalog" data-section="EDICION_2025" data-title="Baja 1000 · Edición 2025">Ver productos</button>
-          </div>
-        </div>
+      <div class="editionCard" data-open="catalog" data-section="EDICION_2025">
+        <div class="editionBg" style="background-image:url('/assets/baja1000-texture.png')"></div>
+        <img src="/assets/logo-baja1000.png" class="editionLogo" alt="Baja 1000">
       </div>
-
-      <div class="editionCard" data-open="notify" data-edition="Baja 500" role="button" tabindex="0" aria-label="Avísame Baja 500">
-        <div class="editionBg" aria-hidden="true"></div>
-        <div class="editionLayer">
-          <div class="statusBadge upcoming">PRÓXIMO</div>
-          <div class="editionCenter">
-            <img src="/assets/logo-baja500.png" class="editionLogo" alt="Baja 500" loading="lazy" decoding="async" />
-            <button class="editionBtn" type="button" data-open="notify" data-edition="Baja 500">Avísame</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="editionCard" data-open="notify" data-edition="Baja 400" role="button" tabindex="0" aria-label="Avísame Baja 400">
-        <div class="editionBg" aria-hidden="true"></div>
-        <div class="editionLayer">
-          <div class="statusBadge upcoming">PRÓXIMO</div>
-          <div class="editionCenter">
-            <img src="/assets/logo-baja400.png" class="editionLogo" alt="Baja 400" loading="lazy" decoding="async" />
-            <button class="editionBtn" type="button" data-open="notify" data-edition="Baja 400">Avísame</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="editionCard" data-open="notify" data-edition="San Felipe 250" role="button" tabindex="0" aria-label="Avísame San Felipe 250">
-        <div class="editionBg" aria-hidden="true"></div>
-        <div class="editionLayer">
-          <div class="statusBadge upcoming">PRÓXIMO</div>
-          <div class="editionCenter">
-            <img src="/assets/logo-sf250.png" class="editionLogo" alt="San Felipe 250" loading="lazy" decoding="async" />
-            <button class="editionBtn" type="button" data-open="notify" data-edition="San Felipe 250">Avísame</button>
-          </div>
-        </div>
+      
+      <div class="editionCard" data-open="notify" data-edition="Baja 500">
+        <div class="editionBg" style="background-color:#222;"></div>
+        <img src="/assets/logo-baja500.png" class="editionLogo" alt="Baja 500">
+        <div style="position:absolute; bottom:20px; color:#fff; font-weight:800;">PRÓXIMAMENTE</div>
       </div>
     </div>
-
-    <section class="highlight" aria-label="Información rápida">
-      <div class="highlightInner">
-        <div class="hBox">
-          <div class="hTitle">
-            <span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:8px;background:rgba(0,200,83,.16);border:1px solid rgba(0,200,83,.18);">
-              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
-                <path d="M20 6 9 17l-5-5"/>
-              </svg>
-            </span>
-            Fabricación oficial
-          </div>
-          <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b>, fabricante y patrocinador oficial.</p>
-          <div class="tag" aria-hidden="true">Producción en <b>Tijuana, B.C.</b> · Materiales premium · Producto auténtico</div>
-        </div>
-
-        <div class="hBox">
-          <div class="hTitle">
-            <span style="display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:8px;background:rgba(225,6,0,.10);border:1px solid rgba(225,6,0,.14);">
-              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round">
-                <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
-                <path d="M9 12l2 2 4-5"/>
-              </svg>
-            </span>
-            Edición limitada
-          </div>
-          <p class="hTxt">Lanzamientos por evento. Reposición no garantizada.</p>
-          <div class="tag" aria-hidden="true">Precios en <b>MXN</b> + referencia en <b>USD</b>. Si está disponible, es ahora.</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="partnersStrip" aria-label="Partners">
-      <div class="title">Official Partners</div>
-      <div class="spGrid">
-        <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" loading="lazy" decoding="async" />
-        <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" loading="lazy" decoding="async" />
-        <img src="/assets/logo-bfgodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" loading="lazy" decoding="async" />
-        <img src="/assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" loading="lazy" decoding="async" />
-        <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO Uniformes" onerror="this.style.display='none'" loading="lazy" decoding="async" />
-      </div>
-    </section>
   </main>
 
-  <footer>
-    <div class="footGrid">
-      <div>
-        <h4 style="color:#fff; font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">ÚNICO UNIFORMES</h4>
-        <p style="font-size:14px; line-height:1.6; color:#b9b9b9; margin:0;">
-          Fabricante y Patrocinador oficial.<br/>
-          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br/>
-          <b>unicouniformes.com</b><br/><br/>
-          ventas.unicotextil@gmail.com<br/>
-          WhatsApp: 664 236 8701
-        </p>
-        <p style="margin:12px 0 0; font-size:11px; color:#9b9b9b; font-weight:900; line-height:1.4;">
-          Nota: “SCORE” y sus marcas/logotipos pertenecen a sus respectivos titulares. Este sitio muestra mercancía oficial y/o autorizada según aplique.
-        </p>
-      </div>
-
-      <div>
-        <h4 style="color:var(--red); font-family:var(--fontTitle); font-size:28px; margin:0 0 10px;">LEGAL</h4>
-
-        <div class="legalFooterWrap" id="legal">
-          <div class="fLegalIntro">
-            Esta sección explica cómo operamos la tienda, cómo protegemos tus datos y cuáles son nuestras políticas.
-            Si tienes dudas, contáctanos: <b>ventas.unicotextil@gmail.com</b>.
-          </div>
-
-          <details class="fLegal" id="terms">
-            <summary>
-              <span class="fLegalLeft">
-                <span class="fIcon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <path d="M14 2v6h6"/>
-                  </svg>
-                </span>
-                <span>Términos y condiciones</span>
-              </span>
-              <span class="fLegalPill">LEER</span>
-            </summary>
-            <div class="fLegalBody">
-              <h4>1) Identidad del responsable</h4>
-              <p>La operación de esta tienda es realizada por <b>ÚNICO UNIFORMES</b> (en adelante, “ÚNICO”).</p>
-
-              <h4>2) Alcance</h4>
-              <p>Al acceder, navegar y/o comprar en este sitio, aceptas estos Términos.</p>
-
-              <h4>3) Productos y disponibilidad</h4>
-              <ul>
-                <li>Los productos pueden ser <b>ediciones limitadas</b> y su disponibilidad depende de inventario.</li>
-                <li>Las imágenes son ilustrativas; pueden existir variaciones mínimas por iluminación o lote.</li>
-              </ul>
-
-              <h4>4) Pagos</h4>
-              <ul>
-                <li>El pago se procesa mediante un proveedor externo (por ejemplo, <b>Stripe</b>).</li>
-                <li>No almacenamos datos sensibles de tarjetas; el procesamiento ocurre en la pasarela.</li>
-              </ul>
-
-              <div class="fLegalSmall">Última actualización: se recomienda revisar esta sección periódicamente.</div>
-            </div>
-          </details>
-
-          <details class="fLegal" id="privacy">
-            <summary>
-              <span class="fLegalLeft">
-                <span class="fIcon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/>
-                    <path d="M9 12l2 2 4-5"/>
-                  </svg>
-                </span>
-                <span>Aviso de privacidad</span>
-              </span>
-              <span class="fLegalPill">LEER</span>
-            </summary>
-            <div class="fLegalBody">
-              <h4>1) Datos que recopilamos</h4>
-              <ul>
-                <li>Contacto y entrega: nombre, correo, teléfono y dirección (si aplica).</li>
-                <li>Compra: productos, cantidades, promociones aplicadas.</li>
-              </ul>
-
-              <h4>2) Finalidades</h4>
-              <ul>
-                <li>Procesar y administrar tu compra.</li>
-                <li>Atención a clientes, facturación y seguimiento.</li>
-              </ul>
-
-              <div class="fLegalSmall">Contacto ARCO: <b>ventas.unicotextil@gmail.com</b></div>
-            </div>
-          </details>
-
-          <details class="fLegal" id="shipping">
-            <summary>
-              <span class="fLegalLeft">
-                <span class="fIcon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M3 7h12v10H3z"/>
-                    <path d="M15 10h4l2 3v4h-6z"/>
-                    <circle cx="7" cy="19" r="1.5"/>
-                    <circle cx="18" cy="19" r="1.5"/>
-                  </svg>
-                </span>
-                <span>Envíos y entregas</span>
-              </span>
-              <span class="fLegalPill">LEER</span>
-            </summary>
-            <div class="fLegalBody">
-              <h4>Modalidades</h4>
-              <ul>
-                <li><b>Recolección en fábrica (Tijuana)</b>.</li>
-                <li><b>Envío local (Tijuana)</b>.</li>
-                <li><b>Envío nacional (MX)</b> (estimación referencial).</li>
-              </ul>
-            </div>
-          </details>
-
-          <details class="fLegal" id="returns">
-            <summary>
-              <span class="fLegalLeft">
-                <span class="fIcon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M21 12a9 9 0 1 1-3-6.7"/>
-                    <path d="M21 3v6h-6"/>
-                  </svg>
-                </span>
-                <span>Cambios y devoluciones</span>
-              </span>
-              <span class="fLegalPill">LEER</span>
-            </summary>
-            <div class="fLegalBody">
-              <h4>Elegibilidad</h4>
-              <ul>
-                <li>Producto sin uso y en condiciones originales.</li>
-                <li>Solicitudes recomendadas dentro de 7 días naturales.</li>
-              </ul>
-
-              <div class="fLegalSmall">Para iniciar: <b>ventas.unicotextil@gmail.com</b></div>
-            </div>
-          </details>
-        </div>
-      </div>
+  <div class="modal" id="modalCatalog">
+    <div class="dHead">
+      <h3 style="margin:0; font-family:var(--fontTitle); font-size:28px;">CATÁLOGO</h3>
+      <button class="btn" id="closeCatalog">X</button>
     </div>
-  </footer>
-
-  <div class="paybar" id="paybar" aria-label="Resumen de compra">
-    <div class="pbLeft">
-      <div class="pbLabel" id="pbLabel">TOTAL (MXN)</div>
-      <div class="pbPrice" id="pbTotal">$0 MXN <small>$0 USD</small></div>
-    </div>
-    <button class="pbBtn" id="openCart3" type="button">Ver carrito</button>
+    <div class="grid" id="catalogGrid"></div>
   </div>
 
-  <aside class="drawer" id="drawer" aria-label="Carrito">
+  <aside class="drawer" id="drawer">
     <div class="dHead">
-      <h3 class="dTitle">Tu equipo</h3>
-      <button class="closeBtn" id="closeDrawer" type="button" aria-label="Cerrar">&times;</button>
+      <h3 style="margin:0; font-family:var(--fontTitle); font-size:28px;">TU EQUIPO</h3>
+      <button class="btn" id="closeDrawer">Cerrar</button>
     </div>
-
-    <div class="dBody" id="cartBody">
-      <div class="empty">Carrito vacío</div>
-    </div>
-
-    <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span><strong id="lineSubtotal">$0 MXN</strong></div>
-
-      <div class="sumRow" id="lineShip" style="display:none;">
-        <span>Envío / entrega:</span><strong id="lineShipping">$0 MXN</strong>
+    <div class="dBody" id="cartBody"></div>
+    <div style="padding:20px; background:#f9f9f9; border-top:1px solid #eee;">
+      <div style="display:flex; justify-content:space-between; font-weight:900; font-size:18px; margin-bottom:10px;">
+        <span>Total Estimado:</span>
+        <span id="cartTotal">$0 MXN</span>
+      </div>
+      
+      <p style="font-size:12px; color:#666;">Selecciona entrega:</p>
+      <select class="input" id="shipMethod">
+        <option value="">-- Elige opción --</option>
+        <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
+        <option value="tj">Envío Local (Tijuana) - $80 MXN</option>
+        <option value="mx">Envío Nacional (México) - Cotizar</option>
+      </select>
+      
+      <div id="shipForm" style="display:none; margin-top:10px;">
+        <input class="input" id="shipPostal" type="tel" placeholder="Código Postal (5 dígitos)" maxlength="5">
+        <input class="input" id="shipState" placeholder="Estado (ej. BC)" maxlength="3">
+        <input class="input" id="shipCity" placeholder="Ciudad">
+        <input class="input" id="shipAddress" placeholder="Calle y número">
+        <input class="input" id="shipName" placeholder="Nombre completo">
       </div>
 
-      <div class="sumRow" id="linePromo" style="display:none;">
-        <span>Descuento:</span><strong id="lineDiscount">-$0 MXN</strong>
-      </div>
-
-      <div class="sumRow"><span>Total:</span><strong id="lineTotal">$0 MXN</strong></div>
-      <div style="margin-top:6px; font-size:11px; color:#666; font-weight:900;" id="lineUsd">$0 USD</div>
-
-      <div class="box" aria-label="Opciones de entrega">
-        <div class="boxTitle">Entrega / Envío</div>
-        <div class="smallNote" id="shipMsg">Elige una opción para calcular el total.</div>
-
-        <div class="radioWrap" id="shipOptions"></div>
-
-        <div class="shipGrid" id="shipForm" style="display:none;">
-          <input class="input full" id="shipName" placeholder="Nombre completo" autocomplete="name" />
-          <input class="input full" id="shipPhone" placeholder="WhatsApp (opcional)" inputmode="tel" autocomplete="tel" />
-          <input class="input" id="shipPostal" placeholder="Ej. 22000" inputmode="numeric" maxlength="5" autocomplete="postal-code" />
-          <input class="input" id="shipState" placeholder="Estado (Ej: BC)" maxlength="3" autocomplete="address-level1" />
-          <input class="input full" id="shipCity" placeholder="Ciudad" maxlength="40" autocomplete="address-level2" />
-          <input class="input full" id="shipAddress1" placeholder="Calle y número" maxlength="80" autocomplete="street-address" />
-          <button class="btn primary" id="btnQuote" type="button" style="width:100%;">Cotizar envío</button>
-        </div>
-
-        <div class="ok" id="shipOk" style="display:none;"></div>
-      </div>
-
-      <div class="box" aria-label="Promoción" id="promoBox">
-        <div class="boxTitle">Promoción</div>
-        <div class="row">
-          <input class="input upper" id="promoInput" maxlength="24" placeholder="Escribe tu código" autocomplete="off" inputmode="text" />
-          <button class="btn primary" id="btnApplyPromo" type="button">Aplicar</button>
-        </div>
-        <div class="smallNote" id="promoNote">Si hay una promoción activa, se aplicará al total.</div>
-      </div>
-
-      <button class="payBtn" id="payBtn" type="button">Ir a pagar</button>
-      <a class="clearLink" id="clearCart">Vaciar carrito</a>
-
-      <div style="margin-top:12px; font-size:11px; color:#666; font-weight:900; line-height:1.35;">
-        Tema:
-        <span style="text-decoration:underline; cursor:pointer" data-theme="xmas">Navidad</span> ·
-        <span style="text-decoration:underline; cursor:pointer" data-theme="halloween">Halloween</span> ·
-        <span style="text-decoration:underline; cursor:pointer" data-theme="patrio">Patrio</span>
-      </div>
+      <button class="btn primary" id="payBtn" style="width:100%; margin-top:12px;" disabled>IR A PAGAR</button>
     </div>
   </aside>
 
-  <div class="modal" id="modalCatalog" aria-label="Catálogo">
-    <div class="mHead">
-      <div class="mTitle" id="catalogTitle">Catálogo</div>
-      <button class="closeBtn" id="closeCatalog" type="button" aria-label="Cerrar">&times;</button>
+  <div class="paybar" id="paybar">
+    <div>
+      <div style="font-size:10px; font-weight:800; color:#666;">TOTAL A PAGAR</div>
+      <div style="font-size:20px; font-weight:900;" id="pbTotal">$0 MXN</div>
     </div>
-    <div class="mBody">
-      <div class="grid" id="catalogGrid"></div>
-    </div>
+    <button class="btn primary" id="pbBtn">Ver Carrito</button>
   </div>
 
-<script>
-  (() => {
-    /***********************
-     * SCORE Store — JS (Catálogo + Carrito + Shipping + Promo + Stripe Checkout)
-     * ✅ 100% Vanilla JS
-     * ✅ Pago REAL: Stripe Checkout (via Netlify Function)
-     *
-     * IMPORTANTE:
-     * 1) Pega tu Stripe Publishable Key en STRIPE_PK (abajo).
-     * 2) Tu Netlify Function debe estar en:
-     *    /.netlify/functions/create_checkout
-     *    y regresar { url } (o { sessionId }).
-     ***********************/
+  <script>
+    // --- CONFIGURACIÓN DE PAGO ---
+    const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
 
-    /* ====== STRIPE CONFIG ====== */
-    const STRIPE_PK = "pk_live_REEMPLAZA_CON_TU_PUBLIC_KEY"; // ✅ Publishable key (no es secreto)
+    // Configuración General
+    const STORE = { api: "/.netlify/functions", catalog: "/data/catalog.json" };
+    let state = { cart: [], shipping: { method: null, cost: 0, valid: false } };
 
-    /* ====== STORE CONFIG ====== */
-    const STORE = {
-      name: "SCORE Store",
-      email: "ventas.unicotextil@gmail.com",
-      whatsappE164: "526642368701",
-      usdRate: 17.50,
-      currency: "MXN",
-      CHECKOUT_ENDPOINT: "/.netlify/functions/create_checkout",
-      CATALOG_URL: "data/catalog.json" // ✅ usa tu catálogo real (mismo esquema del primer código)
+    // DOM Elements
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      drawer: $('drawer'), modal: $('modalCatalog'), overlay: $('overlay'),
+      cartCount: $('cartCount'), cartBody: $('cartBody'), cartTotal: $('cartTotal'),
+      payBtn: $('payBtn'), pbTotal: $('pbTotal'), paybar: $('paybar'),
+      shipMethod: $('shipMethod'), shipForm: $('shipForm')
     };
 
-    /* ====== HELPERS ====== */
-    const $ = (q, el=document) => el.querySelector(q);
-    const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
-    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-    const mxn = (n) => new Intl.NumberFormat("es-MX", { style:"currency", currency:"MXN", maximumFractionDigits:0 }).format(n || 0);
-    const usd = (mxnVal) => {
-      const v = (mxnVal || 0) / (STORE.usdRate || 1);
-      return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }).format(v || 0);
-    };
-    const safeText = (s) => String(s ?? "").replace(/[<>]/g, "");
-    const nowISO = () => new Date().toISOString();
+    // --- LÓGICA CORE ---
 
-    const placeholderDataUri = (label="SCORE") => {
-      const txt = encodeURIComponent(label);
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#111"/>
-              <stop offset="1" stop-color="#1a1a1a"/>
-            </linearGradient>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#g)"/>
-          <rect x="40" y="40" width="720" height="920" rx="36" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="4"/>
-          <text x="50%" y="50%" text-anchor="middle" fill="rgba(255,255,255,.82)" font-family="Inter, Arial" font-size="48" font-weight="900">${txt}</text>
-          <text x="50%" y="56%" text-anchor="middle" fill="rgba(255,255,255,.55)" font-family="Inter, Arial" font-size="18" font-weight="800">Imagen pendiente</text>
-        </svg>`;
-      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-    };
+    // 1. Cargar Catálogo
+    async function loadProducts(sectionId) {
+      try {
+        const res = await fetch(STORE.catalog);
+        const data = await res.json();
+        const products = data.products.filter(p => p.sectionId === sectionId);
+        renderGrid(products);
+        openModal();
+      } catch (e) { alert("Error cargando catálogo"); }
+    }
 
-    const toastEl = $("#toast");
-    let toastTimer = null;
-    const toast = (msg="Listo") => {
-      if(!toastEl) return;
-      toastEl.textContent = msg;
-      toastEl.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1900);
-    };
+    function renderGrid(items) {
+      $('catalogGrid').innerHTML = items.map(p => `
+        <div class="card">
+          <img src="${p.img}" loading="lazy" alt="${p.name}">
+          <div style="font-weight:700; font-size:14px; line-height:1.2;">${p.name}</div>
+          <div style="font-weight:900; margin:6px 0;">$${p.baseMXN}</div>
+          <select id="sz_${p.id}" class="input" style="height:36px; padding:0 8px; font-size:14px;">
+            ${(p.sizes||['Unitalla']).map(s=>`<option>${s}</option>`)}
+          </select>
+          <button class="btn primary" style="width:100%; padding:10px;" 
+            onclick="addToCart('${p.id}', '${p.name}', ${p.baseMXN}, '${p.img}')">
+            AGREGAR
+          </button>
+        </div>
+      `).join('');
+    }
 
-    /* ====== UI STATE ====== */
-    const overlay = $("#overlay");
-    const drawer = $("#drawer");
-    const modal = $("#modalCatalog");
-    const body = document.body;
-
-    const openOverlay = () => overlay?.classList.add("active");
-    const closeOverlay = () => overlay?.classList.remove("active");
-    const lockScroll = () => body.classList.add("modalOpen");
-    const unlockScroll = () => body.classList.remove("modalOpen");
-
-    /* ====== DATA: CATALOG (Dynamic) ====== */
-    // Esperado (compatible con tu primer código):
-    // { products: [ { id, name, baseMXN, img, sectionId, sizes? } ] }
-    const catalog = {
-      bySection: Object.create(null)
-    };
-
-    const DEFAULT_PRODUCTS = {
-      EDICION_2025: [
-        { id:"tee-score-black", name:"Playera Oficial SCORE (Negra)", baseMXN:499, img:"/assets/prod-tee-black.png", sizes:["S","M","L","XL","XXL"] },
-        { id:"tee-score-sand",  name:"Playera Oficial SCORE (Arena)", baseMXN:499, img:"/assets/prod-tee-sand.png",  sizes:["S","M","L","XL","XXL"] },
-        { id:"hoodie-score",    name:"Hoodie Baja Ready (Premium)",   baseMXN:899, img:"/assets/prod-hoodie.png",    sizes:["S","M","L","XL","XXL"] },
-        { id:"cap-score",       name:"Gorra Bordada (Edición Limitada)", baseMXN:399, img:"/assets/prod-cap.png",     sizes:["Unitalla"] },
-        { id:"jersey-score",    name:"Jersey Off-Road (Dry-Fit)",     baseMXN:799, img:"/assets/prod-jersey.png",    sizes:["S","M","L","XL","XXL"] },
-        { id:"buff-score",      name:"Buff / Cuello Multiusos (Desierto)", baseMXN:249, img:"/assets/prod-buff.png",  sizes:["Unitalla"] }
-      ]
-    };
-
-    const normalizeProduct = (p) => {
-      const price = Number.isFinite(+p.price) ? Math.round(+p.price) : Math.round(+p.baseMXN || 0);
-      const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
-      return {
-        id: String(p.id || ""),
-        name: String(p.name || "Producto"),
-        price,
-        img: String(p.img || p.image || placeholderDataUri(p.name || "SCORE")),
-        sizes,
-        sectionId: String(p.sectionId || p.section || "")
-      };
-    };
-
-    const buildCatalogIndex = (productsArr) => {
-      const bySection = Object.create(null);
-      for(const raw of productsArr){
-        const p = normalizeProduct(raw);
-        const sid = p.sectionId || "DEFAULT";
-        if(!bySection[sid]) bySection[sid] = [];
-        bySection[sid].push(p);
-      }
-      catalog.bySection = bySection;
-    };
-
-    const loadCatalog = async () => {
-      try{
-        const r = await fetch(STORE.CATALOG_URL, { cache: "no-cache" });
-        if(!r.ok) throw new Error("catalog fetch failed");
-        const data = await r.json();
-        const productsArr = Array.isArray(data?.products) ? data.products : [];
-        if(productsArr.length){
-          buildCatalogIndex(productsArr);
-          return;
-        }
-        throw new Error("catalog empty");
-      } catch {
-        // Fallback
-        buildCatalogIndex((DEFAULT_PRODUCTS.EDICION_2025 || []).map(p => ({...p, sectionId:"EDICION_2025"})));
-      }
-    };
-
-    /* ====== STATE (persist) ====== */
-    const LS_KEYS = {
-      cart_new: "score_cart_v1",
-      cart_old: "score_cart",     // compat con el primer código
-      theme: "score_theme_v1",
-      promo: "score_promo_v1",
-      ship: "score_ship_v1",
-    };
-
-    const state = {
-      cart: [],
-      promo: { code:null, type:null, value:0 },
-      shipping: {
-        method: null,
-        cost: 0,
-        note: "",
-        address: { name:"", phone:"", postal:"", state:"", city:"", address1:"" }
-      },
-      catalog: { section:null, title:"Catálogo" },
-    };
-
-    const loadState = () => {
-      try{
-        const raw = localStorage.getItem(LS_KEYS.cart_new) || localStorage.getItem(LS_KEYS.cart_old) || "[]";
-        const cart = JSON.parse(raw);
-        if(Array.isArray(cart)) state.cart = cart;
-      }catch{}
-
-      try{
-        const theme = localStorage.getItem(LS_KEYS.theme);
-        if(theme) body.setAttribute("data-theme", theme);
-      }catch{}
-
-      try{
-        const promo = JSON.parse(localStorage.getItem(LS_KEYS.promo) || "null");
-        if(promo && typeof promo === "object") state.promo = { ...state.promo, ...promo };
-      }catch{}
-
-      try{
-        const ship = JSON.parse(localStorage.getItem(LS_KEYS.ship) || "null");
-        if(ship && typeof ship === "object") state.shipping = { ...state.shipping, ...ship };
-      }catch{}
-    };
-
-    const saveCart = () => localStorage.setItem(LS_KEYS.cart_new, JSON.stringify(state.cart));
-    const saveTheme = (t) => localStorage.setItem(LS_KEYS.theme, t);
-    const savePromo = () => localStorage.setItem(LS_KEYS.promo, JSON.stringify(state.promo));
-    const saveShip = () => localStorage.setItem(LS_KEYS.ship, JSON.stringify(state.shipping));
-
-    /* ====== CART OPS ====== */
-    const cartCount = $("#cartCount");
-    const cartBody = $("#cartBody");
-    const lineSubtotal = $("#lineSubtotal");
-    const lineShip = $("#lineShip");
-    const lineShipping = $("#lineShipping");
-    const linePromo = $("#linePromo");
-    const lineDiscount = $("#lineDiscount");
-    const lineTotal = $("#lineTotal");
-    const lineUsd = $("#lineUsd");
-
-    const paybar = $("#paybar");
-    const pbLabel = $("#pbLabel");
-    const pbTotal = $("#pbTotal");
-
-    const shipOptions = $("#shipOptions");
-    const shipForm = $("#shipForm");
-    const shipMsg = $("#shipMsg");
-    const shipOk = $("#shipOk");
-
-    const shipName = $("#shipName");
-    const shipPhone = $("#shipPhone");
-    const shipPostal = $("#shipPostal");
-    const shipState = $("#shipState");
-    const shipCity = $("#shipCity");
-    const shipAddress1 = $("#shipAddress1");
-    const btnQuote = $("#btnQuote");
-
-    const promoInput = $("#promoInput");
-    const btnApplyPromo = $("#btnApplyPromo");
-    const promoNote = $("#promoNote");
-
-    const payBtn = $("#payBtn");
-    const clearCart = $("#clearCart");
-
-    const calcSubtotal = () => state.cart.reduce((acc, it) => acc + (it.price * it.qty), 0);
-
-    const calcDiscount = (subtotal) => {
-      const p = state.promo;
-      if(!p?.code) return 0;
-      let d = 0;
-      if(p.type === "percent") d = Math.round(subtotal * (p.value/100));
-      if(p.type === "fixed") d = Math.round(p.value);
-      return clamp(d, 0, subtotal);
-    };
-
-    const calcTotal = () => {
-      const subtotal = calcSubtotal();
-      const discount = calcDiscount(subtotal);
-      const ship = Math.max(0, state.shipping.cost || 0);
-      return { subtotal, discount, ship, total: Math.max(0, subtotal - discount + ship) };
-    };
-
-    const setPaybar = () => {
-      const { total } = calcTotal();
-      if(state.cart.length > 0){
-        paybar?.classList.add("visible");
-        pbLabel.textContent = "TOTAL (MXN)";
-        pbTotal.innerHTML = `${mxn(total)} <small>${usd(total)}</small>`;
-      } else {
-        paybar?.classList.remove("visible");
-      }
-    };
-
-    const renderCart = () => {
-      if(!cartBody) return;
-
-      const { subtotal, discount, ship, total } = calcTotal();
-      cartCount.textContent = String(state.cart.reduce((a,it)=>a+it.qty,0));
-
-      if(state.cart.length === 0){
-        cartBody.innerHTML = `<div class="empty">Carrito vacío</div>`;
-      } else {
-        cartBody.innerHTML = state.cart.map((it) => `
-          <div class="cItem" data-id="${safeText(it.id)}" data-size="${safeText(it.size)}">
-            <img class="cImg" src="${safeText(it.img || placeholderDataUri(it.name))}" alt="${safeText(it.name)}"
-                 loading="lazy" decoding="async"
-                 onerror="this.onerror=null;this.src='${placeholderDataUri("SCORE")}';" />
-            <div style="flex:1;">
-              <p class="cName">${safeText(it.name)}</p>
-              <div class="cMeta">Talla: <b>${safeText(it.size)}</b> · Cantidad: <b>${it.qty}</b></div>
-              <div class="cPrice">${mxn(it.price)} <span style="font-weight:800;color:rgba(0,0,0,.55);font-size:12px;">(${usd(it.price)})</span></div>
-
-              <div class="cActions">
-                <button class="qtyBtn" type="button" data-act="dec" aria-label="Quitar">−</button>
-                <button class="qtyBtn" type="button" data-act="inc" aria-label="Agregar">+</button>
-                <button class="rmBtn" type="button" data-act="rm">Eliminar</button>
-              </div>
-            </div>
-          </div>
-        `).join("");
-      }
-
-      lineSubtotal.textContent = mxn(subtotal);
-
-      if(state.shipping.method){
-        lineShip.style.display = "";
-        lineShipping.textContent = mxn(ship);
-      } else {
-        lineShip.style.display = "none";
-        lineShipping.textContent = mxn(0);
-      }
-
-      if(discount > 0){
-        linePromo.style.display = "";
-        lineDiscount.textContent = `-${mxn(discount)}`;
-      } else {
-        linePromo.style.display = "none";
-        lineDiscount.textContent = `-${mxn(0)}`;
-      }
-
-      lineTotal.textContent = mxn(total);
-      lineUsd.textContent = usd(total);
-
-      setPaybar();
-      saveCart();
-      savePromo();
-      saveShip();
-
-      if(payBtn){
-        payBtn.disabled = state.cart.length === 0 || !state.shipping.method;
-        payBtn.textContent = payBtn.disabled ? "Selecciona entrega para pagar" : "Ir a pagar";
-      }
-    };
-
-    const addToCart = (product, size) => {
-      const s = size || (product.sizes?.[0] || "Unitalla");
-      const keyId = `${product.id}__${s}`;
-      const found = state.cart.find(x => x.key === keyId);
-      if(found){
-        found.qty += 1;
-      } else {
-        state.cart.push({
-          key: keyId,
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          img: product.img || placeholderDataUri(product.name),
-          size: s,
-          qty: 1
-        });
-      }
-      toast("Agregado al carrito ✅");
-      renderCart();
+    // 2. Carrito
+    function addToCart(id, name, price, img) {
+      const size = $(`sz_${id}`).value;
+      const key = `${id}-${size}`;
+      const exists = state.cart.find(i => i.key === key);
+      
+      if(exists) exists.qty++;
+      else state.cart.push({ key, id, name, price, img, size, qty: 1 });
+      
+      updateCartUI();
+      showToast("Agregado al carrito");
+      closeModal(); 
       openDrawer();
-    };
+    }
 
-    const incDecRemove = (key, act) => {
-      const idx = state.cart.findIndex(x => x.key === key);
-      if(idx < 0) return;
-      if(act === "inc") state.cart[idx].qty += 1;
-      if(act === "dec") state.cart[idx].qty = Math.max(1, state.cart[idx].qty - 1);
-      if(act === "rm") state.cart.splice(idx, 1);
-      renderCart();
-    };
+    function updateCartUI() {
+      const totalItems = state.cart.reduce((a, b) => a + b.qty, 0);
+      const subtotal = state.cart.reduce((a, b) => a + (b.price * b.qty), 0);
+      const total = subtotal + (state.shipping.cost || 0);
 
-    const clearAll = () => {
-      state.cart = [];
-      state.promo = { code:null, type:null, value:0 };
-      state.shipping.method = null;
-      state.shipping.cost = 0;
-      state.shipping.note = "";
-      toast("Carrito limpio 🧼");
-      renderCart();
-      renderShippingUI();
-    };
+      els.cartCount.innerText = totalItems;
+      els.cartTotal.innerText = `$${total} MXN`;
+      els.pbTotal.innerText = `$${total} MXN`;
 
-    /* ====== DRAWER / MODAL ====== */
-    const openDrawer = () => {
-      drawer?.classList.add("active");
-      openOverlay();
-      lockScroll();
-    };
-    const closeDrawer = () => {
-      drawer?.classList.remove("active");
-      if(!modal?.classList.contains("active")){
-        closeOverlay();
-        unlockScroll();
-      }
-    };
-
-    const openModal = () => {
-      modal?.classList.add("active");
-      openOverlay();
-      lockScroll();
-    };
-    const closeModal = () => {
-      modal?.classList.remove("active");
-      if(!drawer?.classList.contains("active")){
-        closeOverlay();
-        unlockScroll();
-      }
-    };
-
-    overlay?.addEventListener("click", () => {
-      closeModal();
-      closeDrawer();
-    });
-
-    $("#openCart")?.addEventListener("click", openDrawer);
-    $("#openCart2")?.addEventListener("click", openDrawer);
-    $("#openCart3")?.addEventListener("click", openDrawer);
-    $("#closeDrawer")?.addEventListener("click", closeDrawer);
-    $("#closeCatalog")?.addEventListener("click", closeModal);
-
-    /* ====== CATALOG ====== */
-    const catalogGrid = $("#catalogGrid");
-    const catalogTitle = $("#catalogTitle");
-
-    const getProductsForSection = (section) => {
-      const fromJson = catalog.bySection?.[section];
-      if(Array.isArray(fromJson) && fromJson.length) return fromJson;
-
-      const fallback = DEFAULT_PRODUCTS?.[section];
-      if(Array.isArray(fallback) && fallback.length){
-        return fallback.map(p => normalizeProduct({ ...p, sectionId: section }));
-      }
-      return [];
-    };
-
-    const renderCatalog = (section, title) => {
-      state.catalog.section = section;
-      state.catalog.title = title || "Catálogo";
-      if(catalogTitle) catalogTitle.textContent = state.catalog.title;
-
-      const items = getProductsForSection(section);
-      if(!catalogGrid) return;
-
-      if(items.length === 0){
-        catalogGrid.innerHTML = `
-          <div style="grid-column:1/-1; padding:18px; border-radius:18px; background:rgba(0,0,0,.04); border:1px solid rgba(0,0,0,.08); font-weight:900; text-align:center;">
-            Aún no hay productos cargados para esta edición.
+      // Render items
+      els.cartBody.innerHTML = state.cart.map((i, idx) => `
+        <div style="display:flex; gap:10px; margin-bottom:12px; background:#f5f5f5; padding:8px; border-radius:12px;">
+          <img src="${i.img}" style="width:50px; height:50px; object-fit:cover; border-radius:8px;">
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:13px;">${i.name}</div>
+            <div style="font-size:12px; color:#666;">Talla: ${i.size} | $${i.price}</div>
           </div>
-        `;
-        return;
-      }
-
-      catalogGrid.innerHTML = items.map((p) => {
-        const first = p.sizes?.[0] || "Unitalla";
-        return `
-          <div class="card" data-pid="${safeText(p.id)}">
-            <div class="img">
-              <img src="${safeText(p.img || placeholderDataUri(p.name))}" alt="${safeText(p.name)}"
-                   loading="lazy" decoding="async"
-                   onerror="this.onerror=null;this.src='${placeholderDataUri("SCORE")}';" />
-            </div>
-            <div class="info">
-              <div class="name">${safeText(p.name)}</div>
-              <div class="price">${mxn(p.price)}</div>
-              <div class="usd">${usd(p.price)}</div>
-
-              <div class="sizeRow">
-                <label for="sz_${safeText(p.id)}">Talla</label>
-                <select id="sz_${safeText(p.id)}" aria-label="Talla">
-                  ${(p.sizes || [first]).map(s => `<option value="${safeText(s)}">${safeText(s)}</option>`).join("")}
-                </select>
-              </div>
-
-              <button class="cta" type="button" data-add="${safeText(p.id)}">Agregar</button>
-            </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between;">
+            <button onclick="removeItem(${idx})" style="border:none; background:none; color:red; font-weight:900;">×</button>
+            <div style="font-weight:900;">x${i.qty}</div>
           </div>
-        `;
-      }).join("");
-    };
+        </div>
+      `).join('') || '<div style="text-align:center; padding:40px; opacity:0.5;">Carrito Vacío</div>';
 
-    const openCatalog = (section, title) => {
-      renderCatalog(section, title);
-      openModal();
-    };
+      // Paybar visibility
+      if(totalItems > 0) els.paybar.classList.add('visible');
+      else els.paybar.classList.remove('visible');
 
-    catalogGrid?.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-add]");
-      if(!btn) return;
-      const pid = btn.getAttribute("data-add");
-      const items = getProductsForSection(state.catalog.section);
-      const p = items.find(x => x.id === pid);
-      if(!p) return;
+      validateCheckout();
+      localStorage.setItem('score_cart', JSON.stringify(state.cart));
+    }
 
-      const sel = document.getElementById(`sz_${pid}`);
-      addToCart(p, sel?.value);
+    function removeItem(idx) {
+      state.cart.splice(idx, 1);
+      updateCartUI();
+    }
+
+    // 3. Checkout y Envíos
+    els.shipMethod.addEventListener('change', (e) => {
+      const method = e.target.value;
+      state.shipping.method = method;
+      
+      if(method === 'pickup') { state.shipping.cost = 0; els.shipForm.style.display = 'none'; }
+      else if(method === 'tj') { state.shipping.cost = 80; els.shipForm.style.display = 'none'; }
+      else if(method === 'mx') { state.shipping.cost = 0; els.shipForm.style.display = 'block'; }
+      else { state.shipping.cost = 0; els.shipForm.style.display = 'none'; }
+      
+      updateCartUI();
     });
 
-    const notifyEdition = (editionName) => {
-      const msg = `Hola, quiero que me avisen cuando esté disponible: ${editionName}.`;
-      const url = `https://wa.me/${STORE.whatsappE164}?text=${encodeURIComponent(msg)}`;
-      toast("Abriendo WhatsApp ✅");
-      window.open(url, "_blank", "noopener");
-    };
+    function validateCheckout() {
+      const hasItems = state.cart.length > 0;
+      const method = state.shipping.method;
+      let isValid = false;
 
-    const handleAction = (el) => {
-      const action = el.getAttribute("data-open");
-      if(action === "catalog"){
-        const section = el.getAttribute("data-section");
-        const title = el.getAttribute("data-title") || "Catálogo";
-        openCatalog(section, title);
+      if(hasItems && method) {
+        if(method === 'mx') {
+          // Validar campos mínimos para envíos nacionales
+          if($('shipPostal').value.length === 5 && $('shipState').value.length > 1 && $('shipAddress').value.length > 5) isValid = true;
+        } else {
+          isValid = true;
+        }
       }
-      if(action === "notify"){
-        const edition = el.getAttribute("data-edition") || "Edición";
-        notifyEdition(edition);
-      }
-    };
-
-    document.addEventListener("click", (e) => {
-      const target = e.target.closest("[data-open]");
-      if(!target) return;
-      handleAction(target);
+      els.payBtn.disabled = !isValid;
+    }
+    
+    // Listeners de inputs para validar en tiempo real
+    ['shipPostal', 'shipState', 'shipAddress', 'shipName'].forEach(id => {
+      $(id).addEventListener('input', validateCheckout);
     });
 
-    document.addEventListener("keydown", (e) => {
-      if(e.key !== "Enter" && e.key !== " ") return;
-      const ae = document.activeElement;
-      if(!ae || !ae.closest) return;
-      const target = ae.closest("[data-open]");
-      if(!target) return;
-      e.preventDefault();
-      handleAction(target);
-    });
+    els.payBtn.addEventListener('click', async () => {
+      els.payBtn.innerText = "PROCESANDO...";
+      els.payBtn.disabled = true;
 
-    /* ====== SHIPPING ====== */
-    const SHIPPING_METHODS = [
-      { id:"pickup", label:"Recolección en fábrica (Tijuana)", desc:"Sin costo. Coordinamos contigo después de tu compra.", cost:0, needsForm:false },
-      { id:"tj",     label:"Envío local (Tijuana)",            desc:"Entrega dentro de Tijuana (sujeto a zona).",       cost:80, needsForm:false },
-      { id:"mx",     label:"Envío nacional (México)",          desc:"Requiere dirección para estimación.",             cost:0, needsForm:true  },
-    ];
+      try {
+        const payload = {
+          items: state.cart,
+          shipping: {
+            mode: state.shipping.method,
+            to: {
+              postal_code: $('shipPostal').value,
+              state: $('shipState').value,
+              city: $('shipCity').value,
+              address1: $('shipAddress').value,
+              name: $('shipName').value
+            }
+          }
+        };
 
-    const renderShippingUI = () => {
-      if(!shipOptions) return;
-
-      shipOptions.innerHTML = SHIPPING_METHODS.map(m => {
-        const checked = state.shipping.method === m.id ? "checked" : "";
-        return `
-          <label class="radio" data-ship="${m.id}">
-            <input type="radio" name="ship" value="${m.id}" ${checked} />
-            <div>
-              <b>${m.label}</b>
-              <div class="desc">${m.desc}</div>
-            </div>
-          </label>
-        `;
-      }).join("");
-
-      const method = SHIPPING_METHODS.find(x => x.id === state.shipping.method);
-      const needsForm = !!method?.needsForm;
-      shipForm.style.display = needsForm ? "" : "none";
-
-      if(!state.shipping.method){
-        shipMsg.textContent = "Elige una opción para calcular el total.";
-        shipOk.style.display = "none";
-      } else if(state.shipping.method === "pickup"){
-        shipMsg.textContent = "Recolectas en fábrica. Te contactamos para coordinar horario.";
-        shipOk.style.display = "none";
-      } else if(state.shipping.method === "tj"){
-        shipMsg.textContent = "Entrega local en Tijuana. Si tu zona aplica, se confirma por WhatsApp.";
-        shipOk.style.display = "none";
-      } else {
-        shipMsg.textContent = "Captura tu dirección para estimar envío. (Estimación referencial)";
-        shipOk.style.display = state.shipping.note ? "" : "none";
-        shipOk.textContent = state.shipping.note || "";
-      }
-
-      shipName.value = state.shipping.address.name || "";
-      shipPhone.value = state.shipping.address.phone || "";
-      shipPostal.value = state.shipping.address.postal || "";
-      shipState.value = state.shipping.address.state || "";
-      shipCity.value = state.shipping.address.city || "";
-      shipAddress1.value = state.shipping.address.address1 || "";
-    };
-
-    shipOptions?.addEventListener("click", (e) => {
-      const lab = e.target.closest("[data-ship]");
-      if(!lab) return;
-      const id = lab.getAttribute("data-ship");
-      const method = SHIPPING_METHODS.find(x => x.id === id);
-      if(!method) return;
-
-      state.shipping.method = id;
-      state.shipping.cost = method.cost;
-      state.shipping.note = "";
-      saveShip();
-      renderShippingUI();
-      renderCart();
-      toast("Entrega actualizada ✅");
-    });
-
-    const quoteNational = () => {
-      const name = (shipName.value || "").trim();
-      const postal = (shipPostal.value || "").trim();
-      const st = (shipState.value || "").trim().toUpperCase();
-      const city = (shipCity.value || "").trim();
-      const addr = (shipAddress1.value || "").trim();
-      const phone = (shipPhone.value || "").trim();
-
-      if(name.length < 3) return toast("Falta tu nombre.");
-      if(postal.length !== 5) return toast("CP inválido (5 dígitos).");
-      if(st.length < 2) return toast("Estado inválido (Ej: BC).");
-      if(city.length < 2) return toast("Falta ciudad.");
-      if(addr.length < 6) return toast("Falta calle y número.");
-
-      state.shipping.address = { name, phone, postal, state: st, city, address1: addr };
-
-      const units = state.cart.reduce((a,it)=>a+it.qty,0);
-      const base = 165;
-      const perItem = 18;
-      const zoneFactor = postal.startsWith("2") ? 1.0 : 1.15;
-      const est = Math.round((base + units*perItem) * zoneFactor);
-
-      state.shipping.cost = est;
-      state.shipping.note = `Envío nacional estimado: ${mxn(est)} (referencial). Confirmación final por logística.`;
-      saveShip();
-
-      shipOk.style.display = "";
-      shipOk.textContent = state.shipping.note;
-
-      toast("Cotización estimada ✅");
-      renderCart();
-    };
-
-    btnQuote?.addEventListener("click", () => {
-      if(state.shipping.method !== "mx"){
-        toast("Selecciona Envío nacional.");
-        return;
-      }
-      quoteNational();
-    });
-
-    /* ====== PROMOS ====== */
-    const PROMOS = {
-      // "BAJA10": { type:"percent", value:10 },
-      // "UNICO50": { type:"fixed", value:50 },
-    };
-
-    const applyPromo = () => {
-      const code = (promoInput.value || "").trim().toUpperCase();
-      if(!code){ toast("Escribe un código."); return; }
-
-      const p = PROMOS[code];
-      if(!p){
-        state.promo = { code:null, type:null, value:0 };
-        savePromo();
-        promoNote.textContent = "Código no válido o promoción no activa.";
-        toast("Código no válido.");
-        renderCart();
-        return;
-      }
-
-      state.promo.code = code;
-      state.promo.type = p.type;
-      state.promo.value = p.value;
-
-      promoNote.textContent = `Promoción aplicada: ${code}`;
-      toast("Promo aplicada ✅");
-      renderCart();
-    };
-
-    btnApplyPromo?.addEventListener("click", applyPromo);
-    promoInput?.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){ e.preventDefault(); applyPromo(); }
-    });
-
-    /* ====== STRIPE CHECKOUT ====== */
-    const goStripeCheckout = async () => {
-      if(state.cart.length === 0){ toast("Tu carrito está vacío."); return; }
-      if(!state.shipping.method){ toast("Selecciona entrega para continuar."); return; }
-
-      if(!STRIPE_PK || STRIPE_PK.includes("REEMPLAZA")){
-        toast("Falta configurar Stripe PK.");
-        return;
-      }
-
-      const btn = payBtn;
-      const prev = btn?.textContent || "Ir a pagar";
-      if(btn){
-        btn.disabled = true;
-        btn.textContent = "Procesando…";
-      }
-
-      const { subtotal, discount, ship, total } = calcTotal();
-
-      // ⚠️ Tu backend (Netlify Function) DEBE recalcular precios en servidor si quieres 100% antifraude.
-      const payload = {
-        currency: STORE.currency,
-        totals: { subtotal, discount, shipping: ship, total },
-        promo: state.promo,
-        shipping: state.shipping,
-        items: state.cart.map(it => ({
-          id: it.id,
-          name: it.name,
-          qty: it.qty,
-          unit_price_mxn: it.price,
-          size: it.size
-        })),
-        meta: { store: STORE.name, created_at: nowISO() }
-      };
-
-      try{
-        const stripe = window.Stripe(STRIPE_PK);
-
-        const res = await fetch(STORE.CHECKOUT_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const stripe = Stripe(STRIPE_PK);
+        const res = await fetch(`${STORE.api}/create_checkout`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(payload)
         });
+        
+        const data = await res.json();
+        if(data.url) window.location.href = data.url;
+        else throw new Error(data.error || "Error iniciando pago");
 
-        const data = await res.json().catch(() => ({}));
-
-        if(!res.ok){
-          toast(data?.error || "Error al crear checkout.");
-          if(btn){ btn.disabled = false; btn.textContent = prev; }
-          return;
-        }
-
-        // Preferido: URL directa
-        if(data?.url){
-          window.location.href = data.url;
-          return;
-        }
-
-        // Alternativa: sessionId
-        if(data?.sessionId){
-          const r = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-          if(r?.error) toast(r.error.message || "Stripe error");
-          if(btn){ btn.disabled = false; btn.textContent = prev; }
-          return;
-        }
-
-        toast("Respuesta inválida del checkout.");
-        if(btn){ btn.disabled = false; btn.textContent = prev; }
-      } catch (e){
-        toast("Error de conexión / checkout.");
-        if(btn){ btn.disabled = false; btn.textContent = prev; }
+      } catch (err) {
+        alert(err.message);
+        els.payBtn.innerText = "IR A PAGAR";
+        els.payBtn.disabled = false;
       }
-    };
-
-    payBtn?.addEventListener("click", goStripeCheckout);
-
-    /* ====== EVENTOS CARRITO ====== */
-    cartBody?.addEventListener("click", (e) => {
-      const wrap = e.target.closest(".cItem");
-      if(!wrap) return;
-
-      const id = wrap.getAttribute("data-id");
-      const size = wrap.getAttribute("data-size");
-      const key = `${id}__${size}`;
-
-      const btn = e.target.closest("[data-act]");
-      if(!btn) return;
-      const act = btn.getAttribute("data-act");
-      incDecRemove(key, act);
     });
 
-    clearCart?.addEventListener("click", (e) => {
-      e.preventDefault();
-      clearAll();
+    // --- UI HELPERS ---
+    function openDrawer() { els.drawer.classList.add('active'); els.overlay.classList.add('active'); document.body.classList.add('modalOpen'); }
+    function closeAll() { 
+      els.drawer.classList.remove('active'); 
+      els.modal.classList.remove('active'); 
+      els.overlay.classList.remove('active');
+      document.body.classList.remove('modalOpen');
+    }
+    function openModal() { els.modal.classList.add('active'); els.overlay.classList.add('active'); document.body.classList.add('modalOpen'); }
+    function showToast(msg) { 
+      const t = $('toast'); t.innerText = msg; t.classList.add('show'); 
+      setTimeout(() => t.classList.remove('show'), 2000); 
+    }
+
+    // Event Listeners Globales
+    $('openCart').onclick = openDrawer;
+    $('closeDrawer').onclick = closeAll;
+    $('closeCatalog').onclick = closeAll;
+    $('overlay').onclick = closeAll;
+    $('pbBtn').onclick = openDrawer;
+
+    document.body.addEventListener('click', (e) => {
+      const trigger = e.target.closest('[data-open="catalog"]');
+      if(trigger) loadProducts(trigger.dataset.section);
     });
 
-    /* ====== THEMES ====== */
-    $$("[data-theme]").forEach(el => {
-      el.addEventListener("click", () => {
-        const t = el.getAttribute("data-theme");
-        if(!t) return;
-        body.setAttribute("data-theme", t);
-        saveTheme(t);
-        toast(`Tema: ${t}`);
-      });
-    });
-
-    /* ====== LEGAL LINKS (hash) ====== */
-    const openHashLegal = () => {
-      const hash = (location.hash || "").replace("#","");
-      if(!hash) return;
-      const d = document.getElementById(hash);
-      if(d && d.tagName && d.tagName.toLowerCase() === "details"){
-        d.open = true;
-        d.scrollIntoView({ behavior:"smooth", block:"start" });
-        toast("Listo ✅");
+    // Init & PWA
+    (function init(){
+      const saved = localStorage.getItem('score_cart');
+      if(saved) { state.cart = JSON.parse(saved); updateCartUI(); }
+      
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
       }
-    };
-
-    /* ====== INIT ====== */
-    (async () => {
-      loadState();
-      await loadCatalog();
-
-      renderCart();
-      renderShippingUI();
-
-      if(state.shipping.method){
-        const radio = shipOptions?.querySelector(`input[value="${CSS.escape(state.shipping.method)}"]`);
-        if(radio) radio.checked = true;
-      }
-
-      openHashLegal();
-      window.addEventListener("hashchange", openHashLegal);
     })();
-
-  })();
-</script>
+  </script>
 </body>
 </html>
