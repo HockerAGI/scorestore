@@ -1,51 +1,23 @@
-# Netlify config — SCORE STORE
-
 [build]
   publish = "."
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
-  NODE_OPTIONS = "--enable-source-maps"
-
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["data/**"] # agrega "assets/**" solo si alguna function lo necesita
-
-[[redirects]]
-  from = "/catalog.json"
-  to = "/data/catalog.json"
-  status = 200
-
-[[redirects]]
-  from = "/promos.json"
-  to = "/data/promos.json"
-  status = 200
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Cache agresivo para assets (imágenes)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Cache corto para JSON en raíz
-[[headers]]
-  for = "/*.json"
-  [headers.values]
-    Cache-Control = "public, max-age=300"
-
-# Cache corto para JSON en /data
-[[headers]]
-  for = "/data/*.json"
-  [headers.values]
-    Cache-Control = "public, max-age=300"
-
-# Service Worker: evita cachearse
+# Sin cache para el Service Worker (Crítico para actualizaciones)
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-store, max-age=0"
+    Cache-Control = "no-cache"
