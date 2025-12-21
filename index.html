@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#E10600" />
   
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Tienda oficial de merch SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -24,9 +23,10 @@
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --carbon: #0b0f14;
-      --sand: #f4f4f4;
+      --sand: #f8f8f8;
       --green: #00C853; 
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.85) 0%, rgba(40, 20, 10, 0.65) 100%);
+      /* Overlay más transparente (0.65) */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.75) 0%, rgba(40, 20, 10, 0.55) 100%);
       --shadow: 0 15px 40px rgba(0,0,0,0.2);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -37,36 +37,34 @@
       margin: 0; font-family: var(--fontBody); background-color: var(--sand); color: #111;
       overflow-x: hidden; padding-bottom: 120px; position: relative;
     }
-    body.modalOpen { overflow: hidden; height: 100vh; }
+    body.modalOpen { overflow: hidden; height: 100vh; width: 100%; position: fixed; }
 
-    /* --- FONDO FIJO --- */
+    /* --- FONDO Y ANIMACIÓN (Corregido Móvil) --- */
     .page-bg {
-      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      position: fixed; inset: 0; z-index: -10; pointer-events: none;
       background-image: url('/assets/fondo-pagina-score.png');
-      background-size: cover; background-position: center;
-      opacity: 0.6;
+      background-size: cover; background-position: center; opacity: 0.5;
     }
 
-    /* --- ANIMACIÓN POLVO (Corregida para Móvil) --- */
     .dust-container { 
-      position: fixed; inset: 0; pointer-events: none; z-index: 1; /* Encima del fondo */
+      position: fixed; inset: 0; pointer-events: none; z-index: -5; 
       overflow: hidden; opacity: 0.6;
     }
+    /* Animación simplificada para que se vea en todos los móviles */
     .dust {
-      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
-      animation: grain 8s steps(10) infinite;
-      will-change: transform;
+      position: absolute; top: -100%; left: -50%; width: 300%; height: 300%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+      animation: grain 10s steps(10) infinite;
     }
     @keyframes grain { 
-      0% { transform: translate3d(0,0,0); } 
-      100% { transform: translate3d(-10%,-10%,0); } 
+      0% { transform: translate(0,0); } 
+      100% { transform: translate(-10%,-10%); } 
     }
 
-    /* --- UI UTILS --- */
+    /* --- UTILS --- */
     .overlay { 
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 150; 
-      opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(4px); 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; 
+      opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); 
     }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
@@ -90,7 +88,6 @@
     .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
     
     .navRight { display: flex; align-items: center; gap: 12px; }
-    
     .pill {
       display: flex; align-items: center; height: 34px; padding: 0 14px;
       border-radius: 99px; background: #111; color: #fff;
@@ -120,9 +117,8 @@
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
-      mix-blend-mode: multiply; opacity: 0.75; 
+      mix-blend-mode: multiply; opacity: 0.8; /* Transparencia ajustada */
     }
-    
     .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
     
     .tagline {
@@ -131,12 +127,13 @@
     }
     .hero h1 {
       font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
-      margin: 0 0 16px; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+      margin: 0 0 16px; text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Sombra para leer mejor */
     }
     .sub {
-      font-size: 17px; line-height: 1.5; color: rgba(255,255,255,0.95); margin-bottom: 24px;
+      font-size: 17px; line-height: 1.5; color: #fff; margin-bottom: 24px;
       border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500; max-width: 600px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     }
 
     .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
@@ -147,15 +144,14 @@
       text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
-    .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px); }
+    .btn.primary { background: #fff; color: #111; }
+    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
       padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
       text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #fff;
-      backdrop-filter: blur(4px);
     }
     .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 2.5; }
 
@@ -177,15 +173,12 @@
       background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
       border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+    .card:hover { transform: translateY(-6px); }
     
     .cardBg {
       position: absolute; inset: 0; opacity: 0.6;
       background: url('/assets/baja1000-texture.png') center/cover;
-      transition: opacity 0.3s;
     }
-    .card:hover .cardBg { opacity: 0.8; }
-
     .cardContent {
       position: absolute; inset: 0; padding: 20px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -201,32 +194,9 @@
     .viewBtn {
       background: #fff; color: #000; border: none; padding: 10px 24px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      font-size: 12px; letter-spacing: 1px; transition: background 0.2s, transform 0.2s;
+      font-size: 12px; letter-spacing: 1px;
     }
-    .card:hover .viewBtn { background: var(--red); color: #fff; transform: scale(1.05); }
-
-    /* --- HIGHLIGHTS --- */
-    .highlight {
-      width: min(1200px, 94vw); margin: 0 auto 60px;
-      background: #fff; border-radius: 18px; padding: 10px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);
-    }
-    .hBox {
-      background: #f9f9f9; padding: 24px; border-radius: 14px;
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .hTxt { font-weight: 800; font-size: 15px; margin: 0; line-height: 1.4; color: #333; }
-
-    /* --- PARTNERS --- */
-    .partners {
-      width: min(1200px, 94vw); margin: 0 auto 60px; text-align: center;
-      padding: 30px; background: #fff; border-radius: 20px; border-bottom: 4px solid var(--red);
-    }
-    .pGrid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
-    .pLogo { height: 38px; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
-    .pLogo:hover { opacity: 1; filter: grayscale(0); }
+    .card:hover .viewBtn { background: var(--red); color: #fff; }
 
     /* --- FOOTER --- */
     footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
@@ -238,19 +208,13 @@
       padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
       display: flex; justify-content: space-between; align-items: center; color: #eee;
     }
-    summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 2.5; }
-    .fLegalPill {
-      font-size: 10px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;
-      font-weight: 900; letter-spacing: 1px; color: #aaa;
-    }
     .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
-    .legalContent h4 { margin: 10px 0 5px; color: #fff; font-size: 14px; text-transform: uppercase; }
 
-    /* --- DRAWER CARRITO (CORREGIDO) --- */
+    /* --- DRAWER CARRITO (CORREGIDO TEXTO INVISIBLE) --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
-      display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,0.25);
+      display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,0.5);
     }
     .drawer.active { transform: translateX(0); }
     
@@ -262,55 +226,60 @@
     
     /* BOTÓN CERRAR GRANDE Y CLARO */
     .closeBtn {
-      background: #f0f0f0; border: none; font-size: 24px; cursor: pointer;
-      width: 40px; height: 40px; border-radius: 50%; color: #000;
-      display: flex; align-items: center; justify-content: center;
+      background: #f0f0f0; border: 2px solid #ddd; font-size: 24px; cursor: pointer;
+      width: 44px; height: 44px; border-radius: 50%; color: #000;
+      display: flex; align-items: center; justify-content: center; font-weight: bold;
+      transition: background 0.2s;
     }
+    .closeBtn:hover { background: #e0e0e0; color: var(--red); }
 
     .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     
-    .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #eee; }
-    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #666; font-weight: 600; }
-    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
-    .usdRef { text-align: right; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 15px; }
+    .dFoot { padding: 20px; background: #f8f8f8; border-top: 1px solid #ddd; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #333; font-weight: 600; }
+    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ccc; padding-top: 10px; }
 
-    /* INPUTS CORREGIDOS (TEXTO VISIBLE) */
+    /* !!! CORRECCIÓN DE INPUTS (TEXTO NEGRO) !!! */
     input, select {
-      width: 100%; height: 48px; border: 1px solid #ccc; border-radius: 8px;
-      padding: 0 15px; font-size: 16px !important; margin-bottom: 10px; 
-      background: #fff !important; color: #000 !important; /* FORZAR COLOR NEGRO */
-      appearance: none; font-family: var(--fontBody);
+      width: 100%; height: 52px; border: 1px solid #aaa; border-radius: 8px;
+      padding: 0 15px; font-size: 16px !important; margin-bottom: 12px; 
+      background-color: #ffffff !important; 
+      color: #000000 !important; /* Texto negro forzado */
+      -webkit-text-fill-color: #000000 !important; /* Fix Safari */
+      appearance: none; font-family: var(--fontBody); font-weight: 500;
+      opacity: 1 !important;
     }
-    input::placeholder { color: #888; }
+    input::placeholder { color: #666; opacity: 1; }
     input:focus, select:focus { outline: 2px solid var(--red); border-color: transparent; }
 
-    /* BOTÓN CERRAR EXTRA EN FOOTER DE CARRITO */
-    .closeDrawerLink {
-      display: block; text-align: center; margin-top: 15px; color: #666; 
-      font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer;
+    /* BOTÓN CERRAR EXTRA EN FOOTER DEL CARRITO */
+    .closeLink {
+      display: block; text-align: center; margin-top: 15px; color: #555; 
+      font-size: 13px; font-weight: 800; text-transform: uppercase;
+      text-decoration: underline; cursor: pointer; padding: 10px;
     }
+
+    /* Modal Catálogo */
+    .modal {
+      position: fixed; inset: 0; background: #fff; z-index: 250;
+      transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex; flex-direction: column;
+    }
+    @media(min-width:600px) { .modal { inset: 40px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); transform: scale(0.95); opacity: 0; pointer-events: none; } .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; } }
+    @media(max-width:599px) { .modal.active { transform: translateY(0); } }
+    
+    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; background: #f9f9f9; }
+    .prodCard { border: 1px solid #eee; padding: 12px; border-radius: 12px; text-align: center; background: #fff; }
+    .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply; }
 
     /* Paybar Mobile */
     .paybar {
-      position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 120px);
+      position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 150px);
       background: #111; color: #fff; padding: 14px 24px; border-radius: 50px;
       display: flex; gap: 20px; align-items: center; z-index: 100; transition: 0.3s var(--ease);
       box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: min(92%, 420px); justify-content: space-between;
     }
     .paybar.visible { transform: translate(-50%, 0); }
-
-    /* Modal Catálogo */
-    .modal {
-      position: fixed; inset: 20px; background: #fff; border-radius: 20px; z-index: 250;
-      transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s;
-      display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-    }
-    .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
-    @media(max-width:600px) { .modal { inset: 0; border-radius: 0; } }
-    
-    .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; }
-    .prodCard { border: 1px solid #eee; padding: 10px; border-radius: 14px; text-align: center; }
-    .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 10px; mix-blend-mode: multiply; }
 
   </style>
 </head>
@@ -352,7 +321,6 @@
       <div class="heroChips">
         <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
         <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
-        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/></svg> CALIDAD PREMIUM</div>
       </div>
     </div>
   </section>
@@ -397,17 +365,6 @@
     </div>
   </div>
 
-  <section class="highlight">
-    <div class="hBox">
-      <div class="hTitle"><span style="color:var(--green)">●</span> FABRICACIÓN OFICIAL</div>
-      <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b> en Tijuana, B.C.</p>
-    </div>
-    <div class="hBox">
-      <div class="hTitle"><span style="color:var(--red)">●</span> EDICIÓN LIMITADA</div>
-      <p class="hTxt">Lanzamientos exclusivos por evento.</p>
-    </div>
-  </section>
-
   <div class="partners">
     <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px;">OFFICIAL PARTNERS</h3>
     <div class="pGrid">
@@ -433,24 +390,17 @@
       <div>
         <h4 style="font-family:var(--fontTitle); color:var(--red); font-size:24px;">LEGAL</h4>
         <details class="fLegal">
-          <summary>Términos y Condiciones <span class="fLegalPill">LEER</span></summary>
+          <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
           <div class="legalContent">
             <h4>1) Identidad</h4>
             <p>Operado por ÚNICO UNIFORMES. Productos sujetos a disponibilidad.</p>
           </div>
         </details>
         <details class="fLegal">
-          <summary>Envíos y Entregas <span class="fLegalPill">LEER</span></summary>
+          <summary>Envíos y Entregas <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
           <div class="legalContent">
             <h4>Modalidades</h4>
             <p><b>Nacional:</b> Cotización vía Envia.com.<br><b>Local (Tijuana):</b> $200 MXN.<br><b>Pickup:</b> Gratis en fábrica.</p>
-          </div>
-        </details>
-        <details class="fLegal">
-          <summary>Cambios y Devoluciones <span class="fLegalPill">LEER</span></summary>
-          <div class="legalContent">
-            <h4>Política</h4>
-            <p>Solo por defectos de fábrica (7 días). No cambios por talla en ediciones agotadas.</p>
           </div>
         </details>
       </div>
@@ -476,7 +426,7 @@
         <button class="btn" style="background:#000; color:#fff; padding:0 15px; font-size:12px;">APLICAR</button>
       </div>
 
-      <p style="font-size:12px; font-weight:700; color:#555;">MÉTODO DE ENTREGA:</p>
+      <p style="font-size:12px; font-weight:700; color:#333; margin-bottom:8px;">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod" onchange="updateCart()">
         <option value="">-- SELECCIONA --</option>
         <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
@@ -495,7 +445,7 @@
         IR A PAGAR
       </button>
       
-      <span class="closeDrawerLink" onclick="closeAll()">Seguir Comprando</span>
+      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
     </div>
   </aside>
 
@@ -516,7 +466,6 @@
   </div>
 
   <script>
-    // --- 1. CONFIGURACIÓN ---
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
     // Fallback Sincronizado
@@ -533,7 +482,6 @@
     const USD_RATE = 17.50; 
     const $ = id => document.getElementById(id);
 
-    // --- 2. LÓGICA ---
     async function openCatalog(section, title) {
       $('catTitle').innerText = title.toUpperCase();
       let items = [];
@@ -549,14 +497,8 @@
 
       const grid = $('catGrid');
       
-      // LOGICA VISUAL VACÍO
       if(!items.length) {
-        grid.innerHTML = `
-          <div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'>
-            <div style="font-size:40px; margin-bottom:10px; opacity:0.3;">🚦</div>
-            <h3 style="margin:0; text-transform:uppercase;">Próximamente</h3>
-            <p style="font-size:14px; max-width:300px; margin:10px auto;">Estamos preparando el equipo oficial.</p>
-          </div>`;
+        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3></div>`;
       } else {
         grid.innerHTML = items.map(p => `
           <div class="prodCard">
@@ -616,7 +558,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; // COSTO ACTUALIZADO $200
+        if(method === 'tj') ship.cost = 200; /* $200 MXN TIJUANA */
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
@@ -694,9 +636,7 @@
     }
     function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
     
-    // SW
     if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-
     $('overlay').onclick = closeAll;
     ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
     
