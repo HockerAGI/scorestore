@@ -13,6 +13,7 @@
   <link rel="apple-touch-icon" href="/assets/logo-score.png" />
 
   <script src="https://js.stripe.com/v3/"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
@@ -23,23 +24,25 @@
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --carbon: #0b0f14;
-      --sand: #f8f8f8;
+      --sand: #f4f4f4;
       --green: #00C853; 
-      /* Overlay más transparente (0.65) */
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.75) 0%, rgba(40, 20, 10, 0.55) 100%);
-      --shadow: 0 15px 40px rgba(0,0,0,0.2);
+      /* Overlay Tierra (Café) para Hero */
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.8) 0%, rgba(40, 20, 10, 0.6) 100%);
+      
+      --shadow: 0 10px 40px rgba(0,0,0,0.15);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --radius: 16px;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body {
       margin: 0; font-family: var(--fontBody); background-color: var(--sand); color: #111;
-      overflow-x: hidden; padding-bottom: 120px; position: relative;
+      overflow-x: hidden; padding-bottom: 120px;
     }
-    body.modalOpen { overflow: hidden; height: 100vh; width: 100%; position: fixed; }
+    body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
 
-    /* --- FONDO Y ANIMACIÓN (Corregido Móvil) --- */
+    /* --- FONDO Y EFECTOS --- */
     .page-bg {
       position: fixed; inset: 0; z-index: -10; pointer-events: none;
       background-image: url('/assets/fondo-pagina-score.png');
@@ -48,169 +51,176 @@
 
     .dust-container { 
       position: fixed; inset: 0; pointer-events: none; z-index: -5; 
-      overflow: hidden; opacity: 0.6;
+      overflow: hidden; opacity: 0.5;
     }
-    /* Animación simplificada para que se vea en todos los móviles */
     .dust {
-      position: absolute; top: -100%; left: -50%; width: 300%; height: 300%;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E");
       animation: grain 10s steps(10) infinite;
+      mix-blend-mode: multiply;
     }
-    @keyframes grain { 
-      0% { transform: translate(0,0); } 
-      100% { transform: translate(-10%,-10%); } 
-    }
+    @keyframes grain { 0% { transform: translate(0,0); } 100% { transform: translate(-5%,-5%); } }
 
-    /* --- UTILS --- */
-    .overlay { 
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; 
-      opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); 
+    /* --- CONTENEDOR PRINCIPAL (Anti-Deformación) --- */
+    .wrap { 
+      width: min(1200px, 94vw); margin: 0 auto; 
+      padding-top: 100px; /* Espacio para el header fijo */
+      position: relative; z-index: 1;
     }
-    .overlay.active { opacity: 1; pointer-events: auto; }
-    
-    .toast {
-      position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
-      background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
-      font-weight: 700; opacity: 0; pointer-events: none; z-index: 300; transition: 0.3s;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; }
 
     /* --- TOPBAR --- */
     .topbar {
-      position: fixed; top: 0; inset-inline: 0; height: 76px; z-index: 90;
+      position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 100;
       background: rgba(255,255,255,0.98); border-bottom: 3px solid var(--red);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      padding: 0 max(20px, 4vw); box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+    .brand img { height: 54px; width: auto; display: block; }
     
-    .navRight { display: flex; align-items: center; gap: 12px; }
+    .navRight { display: flex; align-items: center; gap: 15px; }
     .pill {
-      display: flex; align-items: center; height: 34px; padding: 0 14px;
-      border-radius: 99px; background: #111; color: #fff;
-      font-weight: 900; font-size: 11px; letter-spacing: .05em;
-      border: 1px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; height: 36px; padding: 0 16px;
+      border-radius: 50px; background: #111; color: #fff;
+      font-weight: 800; font-size: 11px; letter-spacing: 1px;
     }
-    .pill b { color: var(--red); margin-left: 4px; }
+    .pill b { color: var(--red); margin-left: 5px; }
     @media (max-width: 600px){ .pill { display: none; } }
 
     .cartTrigger {
-      background: var(--carbon); color: #fff; border: none; height: 46px; padding: 0 18px;
-      font-family: var(--fontTitle); font-weight: 700; font-size: 22px;
+      background: var(--carbon); color: #fff; border: none; height: 48px; padding: 0 20px;
+      font-family: var(--fontTitle); font-weight: 700; font-size: 24px;
       display: flex; align-items: center; gap: 10px; cursor: pointer;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
     }
-    .cartCount { background: var(--red); font-size: 12px; padding: 1px 6px; border-radius: 4px; font-family: var(--fontBody); }
+    .cartCount { background: var(--red); font-size: 12px; padding: 2px 6px; border-radius: 4px; font-family: var(--fontBody); }
 
     /* --- HERO --- */
     .hero {
-      position: relative; margin: 96px auto 40px; width: min(1200px, 94vw);
-      min-height: 540px; border-radius: 20px; overflow: hidden;
-      display: flex; align-items: center; box-shadow: var(--shadow); z-index: 2;
+      position: relative; border-radius: 20px; overflow: hidden;
+      min-height: 520px; display: flex; align-items: center;
+      background: #000; color: #fff; margin-bottom: 50px;
+      box-shadow: var(--shadow);
     }
     .heroBg { 
       position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
-      transform: scale(1.02);
+      transform: scale(1.05);
     }
     .heroOverlay { 
-      position: absolute; inset: 0; background: var(--cafeOverlay); 
-      mix-blend-mode: multiply; opacity: 0.8; /* Transparencia ajustada */
+      position: absolute; inset: 0; background: var(--cafeOverlay); opacity: 0.8; 
     }
-    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; }
     
     .tagline {
-      background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
-      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 12px;
+      background: var(--red); padding: 5px 12px; font-family: var(--fontTitle);
+      font-size: 22px; font-weight: 700; transform: skew(-10deg); 
+      display: inline-block; margin-bottom: 15px; color: #fff;
     }
     .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
-      margin: 0 0 16px; text-transform: uppercase;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Sombra para leer mejor */
+      font-family: var(--fontTitle); font-size: clamp(50px, 10vw, 100px); line-height: 0.9;
+      margin: 0 0 20px; text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .sub {
-      font-size: 17px; line-height: 1.5; color: #fff; margin-bottom: 24px;
-      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500; max-width: 600px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      font-size: 18px; line-height: 1.5; color: #eee; margin-bottom: 30px;
+      border-left: 4px solid var(--red); padding-left: 20px; font-weight: 500;
     }
 
-    .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
+    .ctaRow { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }
     .btn {
       border: none; cursor: pointer; font-weight: 900; text-transform: uppercase;
-      border-radius: 12px; padding: 14px 28px; font-size: 14px; letter-spacing: 0.5px;
-      transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 8px;
-      text-decoration: none;
+      border-radius: 10px; padding: 15px 30px; font-size: 14px; letter-spacing: 1px;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
     .btn.primary { background: #fff; color: #111; }
-    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+    .btn.secondary { background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-      padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
-      text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #fff;
+      padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; color: #fff; display: flex; align-items: center; gap: 6px;
     }
-    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 2.5; }
+    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 3; }
 
     /* --- SECCIONES --- */
     .secHeader {
-      width: min(1200px, 94vw); margin: 0 auto 20px; display: flex;
-      align-items: baseline; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 10px;
+      display: flex; align-items: baseline; justify-content: space-between; 
+      margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 10px;
     }
-    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; line-height: 1; }
-    .meta { font-weight: 900; color: #888; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 48px; color: #111; line-height: 1; }
+    .meta { font-weight: 900; color: #777; font-size: 14px; letter-spacing: 2px; }
 
-    /* --- GRID TARJETAS --- */
+    /* --- GRID --- */
     .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px; width: min(1200px, 94vw); margin: 0 auto 60px; z-index: 2; position: relative;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px; margin-bottom: 60px;
     }
     .card {
-      position: relative; height: 340px; border-radius: 18px; overflow: hidden;
-      background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
-      border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: relative; height: 350px; border-radius: 18px; overflow: hidden;
+      background: #000; cursor: pointer; transition: transform 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
-    .card:hover { transform: translateY(-6px); }
+    .card:hover { transform: translateY(-5px); }
     
     .cardBg {
       position: absolute; inset: 0; opacity: 0.6;
       background: url('/assets/baja1000-texture.png') center/cover;
     }
     .cardContent {
-      position: absolute; inset: 0; padding: 20px;
+      position: absolute; inset: 0; padding: 25px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .cardLogo { width: 85%; height: auto; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
+    .cardLogo { width: 85%; height: auto; object-fit: contain; margin-bottom: 30px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
     
     .statusBadge {
       position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
-      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
+      font-weight: 900; font-size: 11px; padding: 5px 10px; border-radius: 4px; letter-spacing: 1px;
     }
-    .statusBadge.soon { background: #333; color: #fff; border: 1px solid #555; }
+    .statusBadge.soon { background: #333; color: #fff; }
 
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 10px 24px;
+      background: #fff; color: #000; border: none; padding: 12px 25px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      font-size: 12px; letter-spacing: 1px;
+      font-size: 14px; letter-spacing: 1px;
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; }
 
+    /* --- HIGHLIGHTS --- */
+    .highlight {
+      background: #fff; border-radius: 20px; padding: 15px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 60px;
+    }
+    .hBox {
+      background: #f9f9f9; padding: 30px; border-radius: 15px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #888; margin-bottom: 10px; text-transform: uppercase; }
+    .hTxt { font-weight: 800; font-size: 18px; margin: 0; line-height: 1.4; color: #222; }
+
     /* --- FOOTER --- */
-    footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
-    .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 5px solid var(--red); }
+    .footWrap { width: min(1200px, 94vw); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
     
-    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+    .footBlock h4 { font-family: var(--fontTitle); font-size: 32px; margin: 0 0 15px; color: #fff; }
+    .footBlock p { color: #aaa; font-size: 14px; line-height: 1.6; margin: 0; }
+    
+    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 10px; overflow: hidden; }
     details.fLegal summary {
-      padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
+      padding: 18px; font-weight: 700; cursor: pointer; list-style: none;
       display: flex; justify-content: space-between; align-items: center; color: #eee;
     }
-    .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
+    summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 3; }
+    .legalContent { padding: 0 18px 18px; color: #bbb; font-size: 13px; line-height: 1.6; }
 
-    /* --- DRAWER CARRITO (CORREGIDO TEXTO INVISIBLE) --- */
+    /* --- UI ELEMENTS (Overlays, Drawers) --- */
+    .overlay { 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; 
+      opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); 
+    }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
@@ -219,60 +229,47 @@
     .drawer.active { transform: translateX(0); }
     
     .dHead { 
-      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; 
+      padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; 
       background: #fff;
     }
-    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; color: #111; }
-    
-    /* BOTÓN CERRAR GRANDE Y CLARO */
+    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 30px; text-transform: uppercase; color: #111; }
     .closeBtn {
-      background: #f0f0f0; border: 2px solid #ddd; font-size: 24px; cursor: pointer;
-      width: 44px; height: 44px; border-radius: 50%; color: #000;
-      display: flex; align-items: center; justify-content: center; font-weight: bold;
-      transition: background 0.2s;
+      background: #f0f0f0; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; color: #000;
+      display: flex; align-items: center; justify-content: center;
     }
-    .closeBtn:hover { background: #e0e0e0; color: var(--red); }
 
     .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
+    .dFoot { padding: 20px; background: #f9f9f9; border-top: 1px solid #ddd; }
     
-    .dFoot { padding: 20px; background: #f8f8f8; border-top: 1px solid #ddd; }
-    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #333; font-weight: 600; }
-    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ccc; padding-top: 10px; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #333; font-weight: 600; }
+    .sumRow.total { font-size: 20px; color: #000; font-weight: 900; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; }
 
-    /* !!! CORRECCIÓN DE INPUTS (TEXTO NEGRO) !!! */
+    /* !!! INPUTS CORREGIDOS (Negro sobre Blanco) !!! */
     input, select {
-      width: 100%; height: 52px; border: 1px solid #aaa; border-radius: 8px;
+      width: 100%; height: 50px; border: 1px solid #ccc; border-radius: 8px;
       padding: 0 15px; font-size: 16px !important; margin-bottom: 12px; 
       background-color: #ffffff !important; 
-      color: #000000 !important; /* Texto negro forzado */
-      -webkit-text-fill-color: #000000 !important; /* Fix Safari */
+      color: #000000 !important; 
       appearance: none; font-family: var(--fontBody); font-weight: 500;
-      opacity: 1 !important;
     }
-    input::placeholder { color: #666; opacity: 1; }
+    input::placeholder { color: #888; }
     input:focus, select:focus { outline: 2px solid var(--red); border-color: transparent; }
 
-    /* BOTÓN CERRAR EXTRA EN FOOTER DEL CARRITO */
-    .closeLink {
-      display: block; text-align: center; margin-top: 15px; color: #555; 
-      font-size: 13px; font-weight: 800; text-transform: uppercase;
-      text-decoration: underline; cursor: pointer; padding: 10px;
-    }
-
-    /* Modal Catálogo */
     .modal {
       position: fixed; inset: 0; background: #fff; z-index: 250;
       transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
       display: flex; flex-direction: column;
     }
-    @media(min-width:600px) { .modal { inset: 40px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); transform: scale(0.95); opacity: 0; pointer-events: none; } .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; } }
+    @media(min-width:600px) { 
+      .modal { inset: 40px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); transform: scale(0.95); opacity: 0; pointer-events: none; } 
+      .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; } 
+    }
     @media(max-width:599px) { .modal.active { transform: translateY(0); } }
     
     .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; background: #f9f9f9; }
     .prodCard { border: 1px solid #eee; padding: 12px; border-radius: 12px; text-align: center; background: #fff; }
     .prodCard img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply; }
 
-    /* Paybar Mobile */
     .paybar {
       position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 150px);
       background: #111; color: #fff; padding: 14px 24px; border-radius: 50px;
@@ -302,112 +299,125 @@
     </div>
   </header>
 
-  <section class="hero">
-    <div class="heroBg"></div>
-    <div class="heroOverlay"></div>
-    <div class="heroContent">
-      <div class="tagline">OFICIAL MERCH</div>
-      <h1>SCORE INTERNATIONAL</h1>
-      <p class="sub">
-        Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
-        Productos auténticos listos para el desierto.
-      </p>
-      
-      <div class="ctaRow">
-        <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">EXPLORAR EQUIPO</button>
-        <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
-      </div>
-
-      <div class="heroChips">
-        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
-        <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
-      </div>
-    </div>
-  </section>
-
-  <div class="secHeader">
-    <h2>EDICIONES</h2>
-    <div class="meta">Baja Racing Series</div>
-  </div>
-
-  <div class="grid">
-    <div class="card" onclick="openCatalog('EDICION_2025', 'Baja 1000')">
-      <div class="cardBg"></div>
-      <div class="cardContent">
-        <span class="statusBadge">ACTIVO</span>
-        <img src="/assets/logo-baja1000.png" class="cardLogo" alt="Baja 1000">
-        <button class="viewBtn">Ver Productos</button>
-      </div>
-    </div>
-    <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
-      <div class="cardBg"></div>
-      <div class="cardContent">
-        <span class="statusBadge soon">PRÓXIMAMENTE</span>
-        <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
-        <button class="viewBtn">Ver Info</button>
-      </div>
-    </div>
-    <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
-      <div class="cardBg"></div>
-      <div class="cardContent">
-        <span class="statusBadge soon">PRÓXIMAMENTE</span>
-        <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
-        <button class="viewBtn">Ver Info</button>
-      </div>
-    </div>
-    <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
-      <div class="cardBg"></div>
-      <div class="cardContent">
-        <span class="statusBadge soon">PRÓXIMAMENTE</span>
-        <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
-        <button class="viewBtn">Ver Info</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="partners">
-    <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px;">OFFICIAL PARTNERS</h3>
-    <div class="pGrid">
-      <img src="/assets/logo-ford.png" class="pLogo" alt="Ford" onerror="this.style.display='none'">
-      <img src="/assets/logo-bfgodrich.png" class="pLogo" alt="BFGoodrich" onerror="this.style.display='none'">
-      <img src="/assets/logo-monster.png" class="pLogo" alt="Monster" onerror="this.style.display='none'">
-      <img src="/assets/logo-unico.png" class="pLogo" alt="Unico" onerror="this.style.display='none'">
-      <img src="/assets/logo-rzr.png" class="pLogo" alt="RZR" onerror="this.style.display='none'">
-    </div>
-  </div>
-
-  <footer>
-    <div class="footWrap">
-      <div>
-        <h4 style="font-family:var(--fontTitle); font-size: 28px; margin: 0 0 10px;">ÚNICO UNIFORMES</h4>
-        <p style="color:#aaa; font-size:13px; line-height:1.6;">
-          Fabricante y Patrocinador Oficial.<br>
-          Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana B.C.<br>
-          <b>ventas.unicotextil@gmail.com</b><br>
-          WhatsApp: 664 236 8701
+  <div class="wrap">
+    
+    <section class="hero">
+      <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
+      <div class="heroContent">
+        <div class="tagline">OFICIAL MERCH</div>
+        <h1>SCORE INTERNATIONAL</h1>
+        <p class="sub">
+          Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
+          Productos auténticos listos para el desierto.
         </p>
+        
+        <div class="ctaRow">
+          <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">EXPLORAR EQUIPO</button>
+          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
+        </div>
+
+        <div class="heroChips">
+          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
+          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
+        </div>
       </div>
-      <div>
-        <h4 style="font-family:var(--fontTitle); color:var(--red); font-size:24px;">LEGAL</h4>
-        <details class="fLegal">
-          <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-          <div class="legalContent">
-            <h4>1) Identidad</h4>
-            <p>Operado por ÚNICO UNIFORMES. Productos sujetos a disponibilidad.</p>
-          </div>
-        </details>
-        <details class="fLegal">
-          <summary>Envíos y Entregas <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-          <div class="legalContent">
-            <h4>Modalidades</h4>
-            <p><b>Nacional:</b> Cotización vía Envia.com.<br><b>Local (Tijuana):</b> $200 MXN.<br><b>Pickup:</b> Gratis en fábrica.</p>
-          </div>
-        </details>
+    </section>
+
+    <div class="secHeader">
+      <h2>EDICIONES</h2>
+      <div class="meta">Baja Racing Series</div>
+    </div>
+
+    <div class="grid">
+      <div class="card" onclick="openCatalog('EDICION_2025', 'Baja 1000')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge">ACTIVO</span>
+          <img src="/assets/logo-baja1000.png" class="cardLogo" alt="Baja 1000">
+          <button class="viewBtn">Ver Productos</button>
+        </div>
+      </div>
+      <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
+          <button class="viewBtn">Ver Info</button>
+        </div>
+      </div>
+      <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
+          <button class="viewBtn">Ver Info</button>
+        </div>
+      </div>
+      <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
+          <button class="viewBtn">Ver Info</button>
+        </div>
       </div>
     </div>
-  </footer>
 
-  <aside class="drawer" id="drawer">
+    <section class="highlight">
+      <div class="hBox">
+        <div class="hTitle"><span style="color:var(--green)">●</span> FABRICACIÓN OFICIAL</div>
+        <p class="hTxt">Hecho por <b>ÚNICO UNIFORMES</b> en Tijuana, B.C.</p>
+      </div>
+      <div class="hBox">
+        <div class="hTitle"><span style="color:var(--red)">●</span> EDICIÓN LIMITADA</div>
+        <p class="hTxt">Lanzamientos exclusivos por evento.</p>
+      </div>
+    </section>
+
+    <div class="partners">
+      <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px;">OFFICIAL PARTNERS</h3>
+      <div class="pGrid">
+        <img src="/assets/logo-ford.png" class="pLogo" alt="Ford" onerror="this.style.display='none'">
+        <img src="/assets/logo-bfgodrich.png" class="pLogo" alt="BFGoodrich" onerror="this.style.display='none'">
+        <img src="/assets/logo-monster.png" class="pLogo" alt="Monster" onerror="this.style.display='none'">
+        <img src="/assets/logo-unico.png" class="pLogo" alt="Unico" onerror="this.style.display='none'">
+        <img src="/assets/logo-rzr.png" class="pLogo" alt="RZR" onerror="this.style.display='none'">
+      </div>
+    </div>
+
+    <footer>
+      <div class="footWrap">
+        <div class="footBlock">
+          <h4>ÚNICO UNIFORMES</h4>
+          <p>
+            Fabricante y Patrocinador Oficial.<br>
+            Palermo 6106 Interior JK, Tijuana B.C.<br><br>
+            <b>ventas.unicotextil@gmail.com</b><br>
+            WhatsApp: 664 236 8701
+          </p>
+        </div>
+        <div class="footBlock">
+          <h4 style="color:var(--red);">LEGAL</h4>
+          <details class="fLegal">
+            <summary>Términos y Condiciones <span class="fLegalPill">LEER</span></summary>
+            <div class="legalContent"><p>Operado por ÚNICO UNIFORMES.</p></div>
+          </details>
+          <details class="fLegal">
+            <summary>Envíos y Entregas <span class="fLegalPill">LEER</span></summary>
+            <div class="legalContent">
+              <p><b>Nacional:</b> Cotización vía Envia.com.<br><b>Local (Tijuana):</b> $200 MXN.<br><b>Pickup:</b> Gratis en fábrica.</p>
+            </div>
+          </details>
+          <details class="fLegal">
+            <summary>Cambios y Devoluciones <span class="fLegalPill">LEER</span></summary>
+            <div class="legalContent"><p>Solo defectos de fábrica (7 días).</p></div>
+          </details>
+        </div>
+      </div>
+    </footer>
+
+  </div> <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU EQUIPO</h3>
       <button onclick="closeAll()" class="closeBtn">&times;</button>
@@ -426,7 +436,7 @@
         <button class="btn" style="background:#000; color:#fff; padding:0 15px; font-size:12px;">APLICAR</button>
       </div>
 
-      <p style="font-size:12px; font-weight:700; color:#333; margin-bottom:8px;">MÉTODO DE ENTREGA:</p>
+      <p style="font-size:12px; font-weight:700; color:#555; margin-bottom:8px;">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod" onchange="updateCart()">
         <option value="">-- SELECCIONA --</option>
         <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
@@ -445,7 +455,7 @@
         IR A PAGAR
       </button>
       
-      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
+      <div onclick="closeAll()" style="text-align:center; padding:15px; cursor:pointer; text-decoration:underline; font-weight:bold; color:#666;">Seguir Comprando</div>
     </div>
   </aside>
 
@@ -498,7 +508,7 @@
       const grid = $('catGrid');
       
       if(!items.length) {
-        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3></div>`;
+        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3><p style="font-size:14px; margin-top:10px;">Estamos preparando el equipo oficial.</p></div>`;
       } else {
         grid.innerHTML = items.map(p => `
           <div class="prodCard">
@@ -558,7 +568,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; /* $200 MXN TIJUANA */
+        if(method === 'tj') ship.cost = 200; // $200 MXN TIJUANA
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
@@ -574,7 +584,6 @@
       $('lnShip').innerText = `$${ship.cost} MXN`;
       $('lnTotal').innerText = `$${total} MXN`;
       $('lnUsd').innerText = `aprox $${usd} USD`;
-      
       $('barTotal').innerText = `$${total}`;
       
       $('cartBody').innerHTML = cart.map((i,x) => `
