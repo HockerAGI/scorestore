@@ -3,76 +3,51 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0f14" />
+  <meta name="theme-color" content="#f2f4f7" />
   <title>SCORE Store | Tienda Oficial</title>
 
   <style>
     :root{
-      --bg:#0b0f14;
-      --paper:#ffffff;
-      --ink:#111318;
-      --muted:#6b7280;
+      --accent:#d10f10;
+      --ink:#0f172a;
+      --muted:rgba(15,23,42,.65);
 
-      --accent:#d10f10;          /* rojo SCORE */
-      --accent2:#ff2d2d;
-      --line:#e5e7eb;
+      /* ✅ Para que NO se quede negro aunque no haya imágenes */
+      --pageTexture: none;     /* se setea por JS si se encuentra */
+      --heroBg: none;          /* se setea por JS si se encuentra */
 
-      --cardRadius:26px;
-      --shadow: 0 18px 40px rgba(0,0,0,.16);
-      --shadowSoft: 0 10px 22px rgba(0,0,0,.10);
-
-      --pageBgOpacity:.28;        /* ✅ fondo sin “overlay pesado” */
-      --maxw: 980px;
-
-      --fontTitle: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-      --fontBody: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      /* Ajuste del recorte del logo (quita “OFFICIAL BAJA GEAR…”) */
+      --logoCropH: 44px;       /* altura visible del logo */
+      --logoShiftY: -28px;     /* sube el PNG para esconder el texto inferior */
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family:var(--fontBody);
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
       color:var(--ink);
-      background: var(--bg);
-      overflow-x:hidden; /* ✅ evita el viewport 507px */
+      background:
+        var(--pageTexture),
+        radial-gradient(1200px 700px at 20% 0%, rgba(209,15,16,.07), transparent 55%),
+        linear-gradient(180deg, #f6f7f9 0%, #eef1f6 100%);
+      background-repeat:no-repeat;
+      background-size:cover;
+      background-position:center;
+      overflow-x:hidden; /* ✅ evita el error de viewport ancho */
     }
 
-    /* ✅ Fondo textura (ligero, visible) */
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      background-image: image-set(
-        url("assets/fondo-pagina-score.webp") type("image/webp"),
-        url("assets/fondo-pagina-score.png") type("image/png")
-      );
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      opacity: var(--pageBgOpacity);
-      z-index:-6;
-      pointer-events:none;
-    }
-
-    /* Layout */
-    .wrap{
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 14px 14px 56px;
-    }
-
-    /* Header */
     .topbar{
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      position:sticky;
+      top:0;
+      z-index:50;
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(10px);
-      border-bottom: 3px solid var(--accent);
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      border-bottom:3px solid var(--accent);
+      box-shadow: 0 8px 22px rgba(0,0,0,.08);
     }
     .topbarInner{
-      max-width: var(--maxw);
+      max-width: 980px;
       margin: 0 auto;
       padding: 10px 14px;
       display:flex;
@@ -81,20 +56,20 @@
       gap:12px;
     }
 
-    /* ✅ SOLO LOGO (sin texto extra) + recorte para ocultar lo que viene dentro del PNG */
+    /* ✅ SOLO LOGO (sin texto extra en HTML) + recorte fuerte */
     .brand{
+      height: var(--logoCropH);
+      overflow:hidden;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       text-decoration:none;
-      height:56px;
-      overflow:hidden; /* ✅ oculta el texto inferior del PNG */
     }
     .brand img{
-      height:86px; /* más alto para poder “subirlo” */
+      height: 92px;
       width:auto;
       display:block;
-      transform: translateY(-14px); /* ✅ ajuste fino si lo necesitas */
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.12));
+      transform: translateY(var(--logoShiftY));
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.12));
       user-select:none;
       -webkit-user-drag:none;
     }
@@ -108,23 +83,19 @@
       gap:10px;
       padding:12px 14px;
       border-radius:14px;
-      font-weight:900;
+      font-weight:1000;
       letter-spacing:.02em;
       text-transform:uppercase;
-      background: linear-gradient(180deg, #1b1f27, #10141b);
+      background: linear-gradient(180deg,#1b1f27,#10141b);
       color:#fff;
-      box-shadow: var(--shadowSoft);
+      box-shadow: 0 12px 18px rgba(0,0,0,.14);
       transition: transform .15s ease, box-shadow .15s ease;
     }
     .cartBtn:active{ transform: scale(.98); }
-    .cartBtn:hover{ transform: translateY(-1px); box-shadow: 0 16px 30px rgba(0,0,0,.18); }
-    .cartIcon{
-      width:20px;height:20px; display:inline-block;
-    }
     .cartBadge{
       position:absolute;
-      top: -8px;
-      right: -8px;
+      top:-8px;
+      right:-8px;
       min-width:22px;
       height:22px;
       border-radius:999px;
@@ -134,170 +105,158 @@
       align-items:center;
       justify-content:center;
       font-size:12px;
-      font-weight:900;
-      box-shadow: 0 10px 18px rgba(209,15,16,.28);
-      border:2px solid rgba(255,255,255,.85);
+      font-weight:1000;
+      border:2px solid rgba(255,255,255,.9);
+      box-shadow: 0 10px 18px rgba(209,15,16,.25);
     }
 
-    /* Hero */
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 14px 14px 56px;
+    }
+
+    /* ✅ HERO: siempre visible aunque falle la imagen */
     .hero{
-      margin-top: 14px;
-      border-radius: var(--cardRadius);
+      border-radius:26px;
       overflow:hidden;
-      background: #111;
-      box-shadow: var(--shadow);
+      min-height: 440px;
       position:relative;
-      min-height: 420px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.14);
+      background:
+        var(--heroBg),
+        radial-gradient(800px 420px at 25% 15%, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(180deg, rgba(17,24,39,.92) 0%, rgba(3,7,18,.92) 100%);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       isolation:isolate;
     }
-
-    /* ✅ LCP friendly */
-    .heroMedia{ position:absolute; inset:0; z-index:0; }
-    .heroBgImg{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-      transform: scale(1.02);
-      filter: contrast(1.04) saturate(1.02);
-    }
-
-    .heroOverlay{
+    .hero::after{
+      content:"";
       position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.28) 100%);
-      z-index:1;
+      background: linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.22) 70%, rgba(0,0,0,.32) 100%);
+      pointer-events:none;
     }
-
     .heroContent{
       position:relative;
       z-index:2;
       padding: 18px 18px 22px;
-      min-height: 420px;
       display:flex;
       flex-direction:column;
-      justify-content:flex-start;
       gap: 10px;
     }
 
-    /* ✅ “Giro” pegado arriba con margen claro */
+    /* ✅ Giro pegado arriba con margen claro */
     .tag{
+      margin-top: 2px;
       align-self:flex-start;
       display:inline-flex;
       padding: 10px 16px;
       border-radius: 14px;
-      background: linear-gradient(180deg, var(--accent2), var(--accent));
+      background: linear-gradient(180deg, #ff2d2d, var(--accent));
       color:#fff;
-      font-weight: 950;
+      font-weight: 1000;
       letter-spacing:.06em;
       text-transform:uppercase;
-      box-shadow: 0 18px 34px rgba(209,15,16,.26);
-      margin-top: 2px; /* pegado arriba pero con margen */
+      box-shadow: 0 18px 34px rgba(209,15,16,.20);
     }
 
-    /* ✅ Title una sola línea sin romper viewport */
+    /* ✅ “Merch oficial” arriba y “Score international” abajo, una sola línea */
     .heroTitle{
-      margin: 0;
-      font-family: var(--fontTitle);
-      font-size: clamp(34px, 10.2vw, 92px);
+      margin:0;
+      font-size: clamp(34px, 10.2vw, 84px);
       line-height: .92;
       font-weight: 1000;
       letter-spacing: .02em;
       text-transform: uppercase;
       color: #fff;
-      text-shadow: 0 5px 20px rgba(0,0,0,0.55);
+      text-shadow: 0 5px 18px rgba(0,0,0,0.55);
       white-space: nowrap;
-      max-width: 100%;
-      overflow: hidden;
+      overflow:hidden;
+      max-width:100%;
     }
 
     .heroSub{
-      margin: 4px 0 0;
+      margin: 2px 0 0;
       display:flex;
       gap: 12px;
       align-items:flex-start;
       color: rgba(255,255,255,.92);
-      font-weight: 700;
+      font-weight: 800;
       font-size: 15px;
       line-height: 1.35;
       max-width: 560px;
     }
     .heroSub .bar{
       width:4px;
-      min-height: 44px;
+      min-height: 42px;
       border-radius: 999px;
       background: var(--accent);
-      box-shadow: 0 10px 18px rgba(209,15,16,.25);
-      flex: 0 0 auto;
+      flex:0 0 auto;
+      box-shadow: 0 10px 18px rgba(209,15,16,.20);
     }
 
-    /* ✅ sin botones en hook */
-    .heroActions{ display:none; }
-
-    /* Section header */
+    /* ✅ Banda clara para que EDICIONES se vea en móvil */
+    .band{
+      margin-top: 16px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(255,255,255,.65);
+      box-shadow: 0 12px 26px rgba(0,0,0,.08);
+      padding: 14px 14px;
+    }
     .secHead{
-      margin-top: 18px;
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
       gap:12px;
-      padding: 2px 2px;
     }
     .secHead h2{
       margin:0;
-      font-size: 36px;
+      font-size: 34px;
       letter-spacing: .02em;
       text-transform: uppercase;
       font-weight: 1000;
       color: #0b0f14;
-      text-shadow: 0 1px 0 rgba(255,255,255,.6);
     }
     .secHead .secNote{
       margin:0;
-      font-weight: 900;
+      font-weight: 1000;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing:.05em;
       font-size: 12px;
-      color: rgba(15,23,42,.66);
+      color: rgba(15,23,42,.60);
       white-space: nowrap;
     }
 
-    /* Ediciones */
     .grid{
-      margin-top: 10px;
+      margin-top: 12px;
       display:grid;
       grid-template-columns: 1fr;
       gap: 14px;
     }
 
+    /* ✅ Ediciones: más imagen visible (overlay mínimo) + centrado */
     .edition{
       position:relative;
       border-radius: 24px;
       overflow:hidden;
-      background: #121826;
-      box-shadow: var(--shadowSoft);
-      min-height: 210px;
-      transform: translateZ(0);
-      transition: transform .18s ease, box-shadow .18s ease;
-      will-change: transform;
-    }
-    .edition:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 20px 42px rgba(0,0,0,.16);
-    }
-
-    /* ✅ más imagen visible, overlay suave */
-    .edition::before{
-      content:"";
-      position:absolute; inset:0;
-      background: var(--bgimg) center/cover no-repeat;
-      filter: contrast(1.05) saturate(1.02);
-      transform: scale(1.02);
+      min-height: 220px;
+      box-shadow: 0 14px 28px rgba(0,0,0,.10);
+      background:
+        var(--cardBg, none),
+        radial-gradient(900px 320px at 10% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, rgba(15,23,42,.92) 0%, rgba(2,6,23,.92) 100%);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
     .edition::after{
       content:"";
       position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.18) 65%, rgba(0,0,0,.24) 100%);
-      opacity: .22; /* ✅ overlay mínimo */
+      background: linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(0,0,0,.14) 70%, rgba(0,0,0,.20) 100%);
+      opacity:.35; /* ✅ overlay ligero */
       pointer-events:none;
     }
 
@@ -312,18 +271,16 @@
       text-transform:uppercase;
       font-size: 12px;
       color:#fff;
-      box-shadow: 0 16px 26px rgba(0,0,0,.18);
-      backdrop-filter: blur(8px);
       border: 1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(8px);
     }
     .badge.active{ background: rgba(209,15,16,.92); }
     .badge.soon{ background: rgba(17,24,39,.60); }
 
-    /* ✅ centro real */
     .editionInner{
       position:relative;
       z-index:2;
-      min-height: 210px;
+      min-height: 220px;
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -333,21 +290,22 @@
       text-align:center;
     }
 
-    /* ✅ logo grande + contorno blanco sólido (simulado) */
+    /* ✅ Logos grandes con contorno blanco sólido (sin texto adicional) */
     .editionLogo{
-      width: min(360px, 78%);
-      height: auto;
+      width: min(380px, 82%);
+      height:auto;
       display:block;
-      user-select:none;
-      -webkit-user-drag:none;
       filter:
         drop-shadow(0 0 0 #ffffff)
         drop-shadow(1px 0 0 #ffffff)
         drop-shadow(-1px 0 0 #ffffff)
         drop-shadow(0 1px 0 #ffffff)
         drop-shadow(0 -1px 0 #ffffff)
-        drop-shadow(0 10px 30px rgba(0,0,0,.35));
+        drop-shadow(0 12px 30px rgba(0,0,0,.38));
+      user-select:none;
+      -webkit-user-drag:none;
     }
+    .editionLogo.hide{ display:none; } /* ✅ si falla el src, escondemos el icono roto */
 
     .editionCta{
       border:0;
@@ -365,9 +323,9 @@
     .editionCta:active{ transform: scale(.98); }
     .editionCta:hover{ background:#fff; }
 
-    /* Info mini cards (verdes) */
+    /* ✅ Tarjetas verdes: SOLO lo que pediste */
     .infoRow{
-      margin-top: 16px;
+      margin-top: 14px;
       display:grid;
       grid-template-columns: 1fr;
       gap: 12px;
@@ -375,9 +333,9 @@
     .infoCard{
       border-radius: 22px;
       padding: 16px 16px;
-      background: linear-gradient(180deg, rgba(22,101,52,.18), rgba(22,101,52,.10));
+      background: linear-gradient(180deg, rgba(22,101,52,.16), rgba(22,101,52,.10));
       border: 1px solid rgba(34,197,94,.22);
-      box-shadow: 0 14px 30px rgba(0,0,0,.08);
+      box-shadow: 0 12px 24px rgba(0,0,0,.06);
       backdrop-filter: blur(10px);
     }
     .infoTitle{
@@ -390,8 +348,8 @@
     }
     .infoSub{
       margin: 6px 0 0;
-      font-weight: 850;
-      color: rgba(15,23,42,.75);
+      font-weight: 950;
+      color: rgba(15,23,42,.72);
       text-transform: uppercase;
       letter-spacing:.05em;
       font-size: 12px;
@@ -399,11 +357,11 @@
 
     /* Partners */
     .partners{
-      margin-top: 18px;
+      margin-top: 16px;
       border-radius: 22px;
       background: rgba(255,255,255,.86);
       border: 1px solid rgba(255,255,255,.65);
-      box-shadow: var(--shadowSoft);
+      box-shadow: 0 12px 26px rgba(0,0,0,.08);
       overflow:hidden;
     }
     .partnersHead{
@@ -425,27 +383,24 @@
     .partnersGrid img{
       width: min(180px, 70%);
       height:auto;
-      opacity: .92;
+      opacity: .94;
       filter: drop-shadow(0 6px 10px rgba(0,0,0,.10));
     }
 
     /* Footer */
-    footer{
-      margin-top: 18px;
-      padding: 20px 4px 0;
-      color: rgba(255,255,255,.85);
-    }
+    footer{ margin-top: 18px; padding: 8px 2px 0; }
     .footerCard{
-      background: rgba(0,0,0,.58);
+      background: rgba(0,0,0,.64);
       border: 1px solid rgba(255,255,255,.10);
       border-radius: 22px;
       padding: 16px 16px;
       backdrop-filter: blur(12px);
-      box-shadow: 0 20px 50px rgba(0,0,0,.18);
+      box-shadow: 0 20px 50px rgba(0,0,0,.16);
+      color: rgba(255,255,255,.88);
     }
     .footerTitle{
       margin:0;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 1000;
       text-transform: uppercase;
       letter-spacing:.03em;
@@ -456,11 +411,6 @@
       line-height: 1.45;
       font-weight: 650;
     }
-    .footerText a{
-      color: rgba(255,255,255,.92);
-      text-decoration:none;
-      border-bottom: 1px solid rgba(255,255,255,.25);
-    }
     .legal{
       margin-top: 14px;
       display:grid;
@@ -469,13 +419,12 @@
     .legal a{
       color: rgba(255,255,255,.90);
       text-decoration:none;
-      font-weight: 900;
-      letter-spacing:.02em;
+      font-weight: 950;
       border-bottom: 1px solid rgba(255,255,255,.25);
       width: fit-content;
     }
 
-    /* Cart modal */
+    /* Modal carrito */
     .modal{
       position: fixed;
       inset: 0;
@@ -488,7 +437,6 @@
       backdrop-filter: blur(6px);
     }
     .modal.open{ display:flex; }
-
     .panel{
       width: min(720px, 100%);
       border-radius: 22px;
@@ -498,8 +446,7 @@
       border: 1px solid rgba(255,255,255,.65);
       animation: pop .16s ease-out;
     }
-    @keyframes pop{ from{ transform: translateY(6px); opacity: .0; } to{ transform: translateY(0); opacity: 1; } }
-
+    @keyframes pop{ from{ transform: translateY(6px); opacity: 0; } to{ transform: translateY(0); opacity: 1; } }
     .panelHead{
       display:flex;
       align-items:center;
@@ -524,12 +471,17 @@
       font-size: 22px;
       font-weight: 1000;
     }
-
     .panelBody{ padding: 14px 16px 18px; }
-
+    .empty{
+      text-align:center;
+      padding: 10px 12px 6px;
+      font-weight: 1000;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      color: rgba(15,23,42,.40);
+    }
     .totals{
       display:flex;
-      align-items:flex-start;
       justify-content:space-between;
       gap: 10px;
       padding: 10px 12px;
@@ -540,16 +492,6 @@
     }
     .totals .left{ color: rgba(15,23,42,.70); font-weight: 900; line-height: 1.5; }
     .totals .right{ text-align:right; font-weight: 1000; }
-
-    .empty{
-      text-align:center;
-      padding: 16px 12px 4px;
-      font-weight: 1000;
-      letter-spacing:.06em;
-      text-transform: uppercase;
-      color: rgba(15,23,42,.40);
-    }
-
     .shipBlock{
       margin-top: 10px;
       padding: 14px 12px;
@@ -569,13 +511,14 @@
       font-weight: 750;
     }
 
+    /* ✅ SIN COSTOS, SIN “cotización automática” */
     .shipOpt{
       display:flex;
       gap:10px;
       align-items:flex-start;
       padding: 12px 12px;
       border-radius: 16px;
-      background: rgba(255,255,255,.75);
+      background: rgba(255,255,255,.78);
       border: 1px solid rgba(15,23,42,.08);
       margin-bottom: 10px;
     }
@@ -594,7 +537,7 @@
       font-weight: 750;
     }
 
-    /* ✅ Campo para código SIN mencionar “cupón” */
+    /* ✅ Campo listo para promos (sin decir “cupón”) */
     .promoRow{
       margin-top: 12px;
       display:flex;
@@ -622,7 +565,7 @@
       font-weight: 1000;
       letter-spacing:.05em;
       text-transform: uppercase;
-      background: linear-gradient(180deg, #1b1f27, #10141b);
+      background: linear-gradient(180deg,#1b1f27,#10141b);
       color:#fff;
       box-shadow: 0 12px 18px rgba(0,0,0,.14);
     }
@@ -646,7 +589,7 @@
     }
     .payBtn.enabled{
       cursor:pointer;
-      background: linear-gradient(180deg, #1b1f27, #10141b);
+      background: linear-gradient(180deg,#1b1f27,#10141b);
       box-shadow: 0 18px 28px rgba(0,0,0,.18);
     }
     .dangerLink{
@@ -656,52 +599,42 @@
       text-decoration:none;
     }
 
-    /* Animaciones (suaves, mobile friendly) */
-    .hero, .partners, .edition, .infoCard, .footerCard{
+    /* ✅ Animaciones suaves (lo que pediste) */
+    .hero, .band, .edition, .infoCard, .partners, .footerCard{
       animation: fadeUp .35s ease both;
     }
     .edition:nth-child(2){ animation-delay:.05s; }
     .edition:nth-child(3){ animation-delay:.09s; }
     .edition:nth-child(4){ animation-delay:.12s; }
-
     @keyframes fadeUp{
-      from{ transform: translateY(10px); opacity: .0; }
+      from{ transform: translateY(10px); opacity: 0; }
       to{ transform: translateY(0); opacity: 1; }
     }
-
-    .badge.active{
-      animation: pulse 1.8s ease-in-out infinite;
-    }
-    @keyframes pulse{
-      0%,100%{ transform: translateY(0); }
-      50%{ transform: translateY(-1px); }
-    }
+    .badge.active{ animation: pulse 1.8s ease-in-out infinite; }
+    @keyframes pulse{ 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-1px);} }
 
     @media (min-width: 720px){
       .grid{ grid-template-columns: 1fr 1fr; }
       .infoRow{ grid-template-columns: 1fr 1fr; }
       .partnersGrid{ grid-template-columns: repeat(4, 1fr); }
-      .hero{ min-height: 480px; }
-      .heroContent{ min-height: 480px; padding: 22px 22px 26px; }
+      .hero{ min-height: 500px; }
+      .heroContent{ padding: 22px 22px 26px; }
     }
-
     @media (prefers-reduced-motion: reduce){
-      *{ animation: none !important; transition: none !important; }
+      *{ animation:none !important; transition:none !important; }
     }
   </style>
 </head>
 
 <body>
-  <!-- HEADER -->
   <header class="topbar">
     <div class="topbarInner">
       <a class="brand" href="#" aria-label="SCORE Store">
-        <!-- ✅ Cambia el archivo si tu logo se llama distinto -->
-        <img src="assets/logo-score.png" width="420" height="130" alt="SCORE" />
+        <img id="logoImg" alt="SCORE" />
       </a>
 
       <button class="cartBtn" id="openCart" type="button" aria-label="Abrir carrito">
-        <svg class="cartIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M7 6h15l-2 9H8L6 3H2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="9" cy="20" r="1.6" fill="white"/>
           <circle cx="18" cy="20" r="1.6" fill="white"/>
@@ -713,98 +646,86 @@
   </header>
 
   <main class="wrap">
-
     <!-- HERO -->
     <section class="hero" aria-label="Merch oficial">
-      <picture class="heroMedia" aria-hidden="true">
-        <!-- ✅ Si no tienes webp, no pasa nada: deja solo el PNG -->
-        <source srcset="assets/hero.webp" type="image/webp">
-        <img class="heroBgImg" src="assets/hero.png" width="1600" height="900" fetchpriority="high" decoding="async" alt="" />
-      </picture>
-      <div class="heroOverlay" aria-hidden="true"></div>
-
       <div class="heroContent">
         <div class="tag">MERCH OFICIAL</div>
         <h1 class="heroTitle">SCORE INTERNATIONAL</h1>
 
         <div class="heroSub">
           <div class="bar" aria-hidden="true"></div>
-          <p style="margin:0;">
-            Pagos seguros con tarjeta o depósito OXXO a todo México.
-          </p>
+          <p style="margin:0;">Pagos seguros con tarjeta o depósito OXXO a todo México.</p>
         </div>
-
-        <!-- ✅ NO botones en hook (pedido) -->
-        <div class="heroActions" aria-hidden="true"></div>
+        <!-- ✅ Sin botones en hook -->
       </div>
     </section>
 
     <!-- EDICIONES -->
-    <div class="secHead" aria-label="Ediciones">
-      <h2>EDICIONES</h2>
-      <p class="secNote">MERCH OFICIAL DE SCORE INTERNATIONAL</p>
-    </div>
-
-    <section class="grid" aria-label="Ediciones oficiales">
-
-      <!-- BAJA 1000 -->
-      <article class="edition" style="--bgimg:url('assets/ediciones/baja1000-bg.webp');" aria-label="Baja 1000">
-        <div class="badge active">ACTIVO</div>
-        <div class="editionInner">
-          <img class="editionLogo" src="assets/ediciones/baja1000-logo.png" width="720" height="360" alt="Baja 1000" />
-          <button class="editionCta" type="button" data-link="#baja1000">VER PRODUCTOS</button>
-        </div>
-      </article>
-
-      <!-- SAN FELIPE 250 -->
-      <article class="edition" style="--bgimg:url('assets/ediciones/sanfelipe250-bg.webp');" aria-label="San Felipe 250">
-        <div class="badge soon">PRÓXIMO</div>
-        <div class="editionInner">
-          <img class="editionLogo" src="assets/ediciones/sanfelipe250-logo.png" width="720" height="360" alt="San Felipe 250" />
-          <button class="editionCta" type="button" data-link="#sanfelipe250">AVÍSAME</button>
-        </div>
-      </article>
-
-      <!-- BAJA 500 -->
-      <article class="edition" style="--bgimg:url('assets/ediciones/baja500-bg.webp');" aria-label="Baja 500">
-        <div class="badge soon">PRÓXIMO</div>
-        <div class="editionInner">
-          <img class="editionLogo" src="assets/ediciones/baja500-logo.png" width="720" height="360" alt="Baja 500" />
-          <button class="editionCta" type="button" data-link="#baja500">AVÍSAME</button>
-        </div>
-      </article>
-
-      <!-- BAJA 400 -->
-      <article class="edition" style="--bgimg:url('assets/ediciones/baja400-bg.webp');" aria-label="Baja 400">
-        <div class="badge soon">PRÓXIMO</div>
-        <div class="editionInner">
-          <img class="editionLogo" src="assets/ediciones/baja400-logo.png" width="720" height="360" alt="Baja 400" />
-          <button class="editionCta" type="button" data-link="#baja400">AVÍSAME</button>
-        </div>
-      </article>
-
-    </section>
-
-    <!-- ✅ Tarjetas verdes: texto mínimo EXACTO -->
-    <section class="infoRow" aria-label="Información rápida">
-      <div class="infoCard" role="note">
-        <p class="infoTitle">COMPRA SEGURA</p>
-        <p class="infoSub">PAGOS CON TARJETA O DEPÓSITOS OXXO</p>
+    <section class="band" aria-label="Ediciones">
+      <div class="secHead">
+        <h2>EDICIONES</h2>
+        <p class="secNote">MERCH OFICIAL DE SCORE INTERNATIONAL</p>
       </div>
-      <div class="infoCard" role="note">
-        <p class="infoTitle">EDICIÓN LIMITADA</p>
-      </div>
-    </section>
 
-    <!-- PARTNERS -->
-    <section class="partners" aria-label="Socios oficiales">
-      <div class="partnersHead">SOCIOS OFICIALES</div>
-      <div class="partnersGrid">
-        <img src="assets/partners/ford.png" width="360" height="180" alt="Ford" />
-        <img src="assets/partners/rzr.png" width="360" height="180" alt="RZR" />
-        <img src="assets/partners/bfgoodrich.png" width="360" height="180" alt="BFGoodrich" />
-        <img src="assets/partners/unico.png" width="360" height="180" alt="Único Uniformes" />
+      <div class="grid" aria-label="Ediciones oficiales">
+        <!-- BAJA 1000 -->
+        <article class="edition" id="ed-baja1000" aria-label="Baja 1000">
+          <div class="badge active">ACTIVO</div>
+          <div class="editionInner">
+            <img class="editionLogo" id="logo-baja1000" alt="Baja 1000" />
+            <button class="editionCta" type="button" data-link="#baja1000">VER PRODUCTOS</button>
+          </div>
+        </article>
+
+        <!-- SAN FELIPE 250 -->
+        <article class="edition" id="ed-sanfelipe250" aria-label="San Felipe 250">
+          <div class="badge soon">PRÓXIMO</div>
+          <div class="editionInner">
+            <img class="editionLogo" id="logo-sanfelipe250" alt="San Felipe 250" />
+            <button class="editionCta" type="button" data-link="#sanfelipe250">AVÍSAME</button>
+          </div>
+        </article>
+
+        <!-- BAJA 500 -->
+        <article class="edition" id="ed-baja500" aria-label="Baja 500">
+          <div class="badge soon">PRÓXIMO</div>
+          <div class="editionInner">
+            <img class="editionLogo" id="logo-baja500" alt="Baja 500" />
+            <button class="editionCta" type="button" data-link="#baja500">AVÍSAME</button>
+          </div>
+        </article>
+
+        <!-- BAJA 400 -->
+        <article class="edition" id="ed-baja400" aria-label="Baja 400">
+          <div class="badge soon">PRÓXIMO</div>
+          <div class="editionInner">
+            <img class="editionLogo" id="logo-baja400" alt="Baja 400" />
+            <button class="editionCta" type="button" data-link="#baja400">AVÍSAME</button>
+          </div>
+        </article>
       </div>
+
+      <!-- ✅ Tarjetas verdes: texto mínimo EXACTO -->
+      <section class="infoRow" aria-label="Información rápida">
+        <div class="infoCard" role="note">
+          <p class="infoTitle">COMPRA SEGURA</p>
+          <p class="infoSub">PAGOS CON TARJETA O DEPÓSITOS OXXO</p>
+        </div>
+        <div class="infoCard" role="note">
+          <p class="infoTitle">EDICIÓN LIMITADA</p>
+        </div>
+      </section>
+
+      <!-- PARTNERS -->
+      <section class="partners" aria-label="Socios oficiales">
+        <div class="partnersHead">SOCIOS OFICIALES</div>
+        <div class="partnersGrid">
+          <img id="p-ford" alt="Ford" />
+          <img id="p-rzr" alt="RZR" />
+          <img id="p-bfg" alt="BFGoodrich" />
+          <img id="p-unico" alt="Único Uniformes" />
+        </div>
+      </section>
     </section>
 
     <!-- FOOTER -->
@@ -814,7 +735,7 @@
         <p class="footerText">
           Fabricante y Patrocinador oficial.<br>
           Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br><br>
-          <a href="#" onclick="return false;">unicouniformes.com</a><br><br>
+          unicouniformes.com<br><br>
           ventas.unicotextil@gmail.com<br>
           WhatsApp: 664 236 8701
         </p>
@@ -827,7 +748,6 @@
         </div>
       </div>
     </footer>
-
   </main>
 
   <!-- CARRITO -->
@@ -842,10 +762,7 @@
         <div class="empty" id="emptyState">CARRITO VACÍO</div>
 
         <div class="totals" aria-label="Totales">
-          <div class="left">
-            Subtotal:<br>
-            Total:
-          </div>
+          <div class="left">Subtotal:<br>Total:</div>
           <div class="right">
             <div id="subtotal">$0.00</div>
             <div id="total">$0.00</div>
@@ -883,9 +800,9 @@
           </label>
         </div>
 
-        <!-- ✅ Campo listo para promos, sin mencionar “cupón” -->
-        <div class="promoRow" aria-label="Código promocional">
-          <input id="promoInput" type="text" inputmode="text" autocomplete="off" placeholder="CÓDIGO (OPCIONAL)" />
+        <!-- ✅ Campo listo para promos, sin decir “cupón” -->
+        <div class="promoRow" aria-label="Código">
+          <input id="promoInput" type="text" autocomplete="off" placeholder="CÓDIGO (OPCIONAL)" />
           <button id="promoApply" type="button">APLICAR</button>
         </div>
 
@@ -899,25 +816,127 @@
 
   <script>
     /***********************
-     * Score Store — Single Page
-     * ✅ Ajustado a tus pedidos:
-     * - Sin “Drop” / sin “Gear” en texto (lo del logo es recorte CSS)
-     * - Sin botones en el hook
-     * - Hero: MERCH OFICIAL arriba + SCORE INTERNATIONAL en una sola línea
-     * - Carrito sin costos 200/250 ni “cotización automática”
-     * - 4 ediciones, logos grandes centrados con contorno blanco
-     * - Texto mínimo (no saturado)
-     * - Campo de código sin mencionar “cupón”
+     * FIX REAL DEL PROBLEMA:
+     * Tu captura muestra “imagen rota” => rutas de assets no coinciden.
+     * Esto:
+     * 1) evita pantallas negras con fondos de respaldo
+     * 2) intenta encontrar tus imágenes en rutas comunes y usa la primera que exista
      ***********************/
 
     const $ = (q, el=document) => el.querySelector(q);
     const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
 
-    const cart = {
-      items: [],
-      promo: null
-    };
+    function tryFirstImage(candidates, onOk, onFail){
+      let i = 0;
+      const probe = new Image();
+      const next = () => {
+        if(i >= candidates.length){ onFail?.(); return; }
+        const src = candidates[i++];
+        probe.onload = () => onOk(src);
+        probe.onerror = () => next();
+        probe.src = src;
+      };
+      next();
+    }
 
+    function setImg(el, candidates){
+      if(!el) return;
+      tryFirstImage(
+        candidates,
+        (src) => { el.src = src; el.classList.remove("hide"); },
+        () => { el.classList.add("hide"); }
+      );
+    }
+
+    function setCssBgVar(varName, candidates){
+      tryFirstImage(
+        candidates,
+        (src) => document.documentElement.style.setProperty(varName, `url("${src}")`),
+        () => document.documentElement.style.setProperty(varName, `none`)
+      );
+    }
+
+    function setCardBg(cardEl, candidates){
+      if(!cardEl) return;
+      tryFirstImage(
+        candidates,
+        (src) => cardEl.style.setProperty("--cardBg", `url("${src}")`),
+        () => cardEl.style.setProperty("--cardBg", "none")
+      );
+    }
+
+    // ✅ Rutas típicas: NO adivinamos una sola, probamos varias
+    setCssBgVar("--pageTexture", [
+      "assets/bg-texture.png","assets/bg.png","assets/fondo.png",
+      "img/bg-texture.png","img/bg.png","img/fondo.png",
+      "images/bg-texture.png","images/bg.png","images/fondo.png"
+    ]);
+
+    setCssBgVar("--heroBg", [
+      "assets/hero.webp","assets/hero.jpg","assets/hero.png",
+      "img/hero.webp","img/hero.jpg","img/hero.png",
+      "images/hero.webp","images/hero.jpg","images/hero.png"
+    ]);
+
+    setImg($("#logoImg"), [
+      "assets/logo-score.png","assets/logo.png","assets/score-logo.png",
+      "img/logo-score.png","img/logo.png","img/score-logo.png",
+      "images/logo-score.png","images/logo.png","images/score-logo.png"
+    ]);
+
+    // Ediciones (BG + LOGO)
+    setCardBg($("#ed-baja1000"), [
+      "assets/ediciones/baja1000-bg.webp","assets/ediciones/baja1000-bg.jpg","assets/ediciones/baja1000-bg.png",
+      "img/ediciones/baja1000-bg.webp","img/ediciones/baja1000-bg.jpg","img/ediciones/baja1000-bg.png",
+      "images/ediciones/baja1000-bg.webp","images/ediciones/baja1000-bg.jpg","images/ediciones/baja1000-bg.png"
+    ]);
+    setImg($("#logo-baja1000"), [
+      "assets/ediciones/baja1000-logo.png","assets/ediciones/baja1000.png",
+      "img/ediciones/baja1000-logo.png","img/ediciones/baja1000.png",
+      "images/ediciones/baja1000-logo.png","images/ediciones/baja1000.png"
+    ]);
+
+    setCardBg($("#ed-sanfelipe250"), [
+      "assets/ediciones/sanfelipe250-bg.webp","assets/ediciones/sanfelipe250-bg.jpg","assets/ediciones/sanfelipe250-bg.png",
+      "img/ediciones/sanfelipe250-bg.webp","img/ediciones/sanfelipe250-bg.jpg","img/ediciones/sanfelipe250-bg.png",
+      "images/ediciones/sanfelipe250-bg.webp","images/ediciones/sanfelipe250-bg.jpg","images/ediciones/sanfelipe250-bg.png"
+    ]);
+    setImg($("#logo-sanfelipe250"), [
+      "assets/ediciones/sanfelipe250-logo.png","assets/ediciones/sanfelipe250.png",
+      "img/ediciones/sanfelipe250-logo.png","img/ediciones/sanfelipe250.png",
+      "images/ediciones/sanfelipe250-logo.png","images/ediciones/sanfelipe250.png"
+    ]);
+
+    setCardBg($("#ed-baja500"), [
+      "assets/ediciones/baja500-bg.webp","assets/ediciones/baja500-bg.jpg","assets/ediciones/baja500-bg.png",
+      "img/ediciones/baja500-bg.webp","img/ediciones/baja500-bg.jpg","img/ediciones/baja500-bg.png",
+      "images/ediciones/baja500-bg.webp","images/ediciones/baja500-bg.jpg","images/ediciones/baja500-bg.png"
+    ]);
+    setImg($("#logo-baja500"), [
+      "assets/ediciones/baja500-logo.png","assets/ediciones/baja500.png",
+      "img/ediciones/baja500-logo.png","img/ediciones/baja500.png",
+      "images/ediciones/baja500-logo.png","images/ediciones/baja500.png"
+    ]);
+
+    setCardBg($("#ed-baja400"), [
+      "assets/ediciones/baja400-bg.webp","assets/ediciones/baja400-bg.jpg","assets/ediciones/baja400-bg.png",
+      "img/ediciones/baja400-bg.webp","img/ediciones/baja400-bg.jpg","img/ediciones/baja400-bg.png",
+      "images/ediciones/baja400-bg.webp","images/ediciones/baja400-bg.jpg","images/ediciones/baja400-bg.png"
+    ]);
+    setImg($("#logo-baja400"), [
+      "assets/ediciones/baja400-logo.png","assets/ediciones/baja400.png",
+      "img/ediciones/baja400-logo.png","img/ediciones/baja400.png",
+      "images/ediciones/baja400-logo.png","images/ediciones/baja400.png"
+    ]);
+
+    // Partners (si fallan, se esconden solos)
+    setImg($("#p-ford"), ["assets/partners/ford.png","img/partners/ford.png","images/partners/ford.png"]);
+    setImg($("#p-rzr"),  ["assets/partners/rzr.png","img/partners/rzr.png","images/partners/rzr.png"]);
+    setImg($("#p-bfg"),  ["assets/partners/bfgoodrich.png","img/partners/bfgoodrich.png","images/partners/bfgoodrich.png"]);
+    setImg($("#p-unico"),["assets/partners/unico.png","img/partners/unico.png","images/partners/unico.png"]);
+
+    // Carrito (sin cambios de tus reglas)
+    const cart = { items: [], promo: null };
     const cartCount = $("#cartCount");
     const cartModal = $("#cartModal");
     const openCart = $("#openCart");
@@ -928,20 +947,13 @@
     const subtotalEl = $("#subtotal");
     const totalEl = $("#total");
 
-    function money(n){
-      const v = Number(n || 0);
-      return "$" + v.toFixed(2);
-    }
-
+    function money(n){ return "$" + (Number(n||0)).toFixed(2); }
     function updateCartUI(){
       const count = cart.items.reduce((a,i)=>a + (i.qty||1), 0);
       cartCount.textContent = String(count);
-
       const subtotal = cart.items.reduce((a,i)=>a + (i.price||0)*(i.qty||1), 0);
-      const total = subtotal; // aquí luego metes envío / promo si quieres
-
       subtotalEl.textContent = money(subtotal);
-      totalEl.textContent = money(total);
+      totalEl.textContent = money(subtotal);
 
       if(count === 0){
         emptyState.style.display = "block";
@@ -953,22 +965,12 @@
         payBtn.disabled = false;
       }
     }
-
-    function openModal(){
-      cartModal.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeModal(){
-      cartModal.classList.remove("open");
-      document.body.style.overflow = "";
-    }
+    function openModal(){ cartModal.classList.add("open"); document.body.style.overflow="hidden"; }
+    function closeModal(){ cartModal.classList.remove("open"); document.body.style.overflow=""; }
 
     openCart.addEventListener("click", openModal);
     closeCart.addEventListener("click", closeModal);
-    cartModal.addEventListener("click", (e)=>{
-      if(e.target === cartModal) closeModal();
-    });
+    cartModal.addEventListener("click", (e)=>{ if(e.target === cartModal) closeModal(); });
 
     clearCart.addEventListener("click", ()=>{
       cart.items = [];
@@ -977,33 +979,18 @@
       closeModal();
     });
 
-    // Botones de ediciones (no alteran la UI, solo placeholders)
     $$(".editionCta").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const link = btn.getAttribute("data-link") || "#";
-        // Si ya tienes páginas reales, cambia data-link a /ediciones/baja1000.html etc.
-        // Por ahora: abre carrito para UX rápida
-        openModal();
-      });
+      btn.addEventListener("click", ()=>{ openModal(); });
     });
 
-    // Campo de código (sin textos extra, listo para futuro)
     $("#promoApply").addEventListener("click", ()=>{
       const code = ($("#promoInput").value || "").trim();
       if(!code) return;
       cart.promo = code.toUpperCase();
-      // No imprimimos mensajes extra para no “mencionar” promos.
       $("#promoInput").value = "";
     });
 
-    // Pago (placeholder)
-    payBtn.addEventListener("click", ()=>{
-      // Aquí conectas Mercado Pago / Stripe cuando toque
-      // Por ahora, solo cerramos para evitar comportamiento raro
-      closeModal();
-    });
-
-    // Init
+    $("#payBtn").addEventListener("click", ()=>{ closeModal(); });
     updateCartUI();
   </script>
 </body>
