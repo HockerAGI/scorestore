@@ -24,6 +24,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 
+  <link rel="preload" as="image" href="/assets/hero.png" />
+  <link rel="preload" as="image" href="/assets/fondo-pagina-score.png" />
+  <link rel="preload" as="image" href="/assets/baja1000-texture.png" />
+
   <style>
     :root{
       --fontTitle: "Teko", sans-serif;
@@ -225,6 +229,7 @@
       color:#111; box-shadow: 0 10px 20px rgba(0,0,0,.26); text-decoration:none;
       display:inline-flex; align-items:center; justify-content:center; gap:10px;
     }
+    .btn:hover{ transform: translateY(-2px); filter: brightness(1.02); }
     .btn.primary{ background:#111; color:#fff; }
 
     .hint{
@@ -262,6 +267,8 @@
       position:absolute; top:14px; left:14px; background: var(--red); color:#fff;
       font-weight: 900; font-size: 11px; padding: 6px 10px; border-radius: 999px;
     }
+    .statusBadge.upcoming{ background: transparent; box-shadow:none; color: rgba(255,255,255,.92); }
+
     .editionLogo{
       width: clamp(190px, 58vw, 280px); height: clamp(78px, 19vw, 110px);
       object-fit: contain; filter: drop-shadow(0 0 4px rgba(255,255,255,0.2));
@@ -271,10 +278,28 @@
       border-radius: 14px; cursor:pointer; text-transform: uppercase; margin-top: 15px;
     }
 
-    /* Footer */
+    /* Partners */
+    .partnersStrip{
+      margin-top: 18px; padding: 18px 8px 8px;
+      border-top: 3px solid rgba(225,6,0,.85); border-bottom: 3px solid rgba(225,6,0,.25);
+      background: linear-gradient(180deg, var(--partnersTint), transparent 72%); border-radius: 18px;
+    }
+    .partnersStrip .title{
+      font-family: var(--fontTitle); font-size: 20px; letter-spacing: 2px; color: rgba(0,0,0,.55);
+      margin: 0 0 14px; text-transform: uppercase; text-align:center;
+    }
+    .spGrid{
+      display:grid; grid-template-columns: repeat(5, 1fr); gap: 14px; align-items:center; padding: 0 12px 12px;
+    }
+    @media (max-width: 760px){ .spGrid{ grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 420px){ .spGrid{ grid-template-columns: repeat(2, 1fr); } }
+    .spLogo{ width: 100%; height: 48px; object-fit: contain; filter: grayscale(1) contrast(1.05); opacity: .92; }
+
+    /* footer */
     footer{ margin-top: 28px; background: #080b10; color:#fff; padding: 28px 0; border-top: 3px solid var(--red); }
     .footGrid{ width:min(1200px, 94vw); margin:0 auto; display:grid; grid-template-columns: 1.3fr .7fr; gap: 18px; }
-    
+    .fLink{ display:block; padding: 10px 0; color: rgba(255,255,255,.86); font-weight: 800; cursor:pointer; text-decoration: underline; }
+
     /* Paybar */
     .paybar{
       position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px;
@@ -290,17 +315,19 @@
     /* Drawer */
     .drawer{
       position: fixed; top:0; right:0; width: min(440px, 92vw); height: 100%;
-      background: rgba(255,255,255,.96); border-left: 1px solid rgba(0,0,0,.10);
-      box-shadow: -20px 0 50px rgba(0,0,0,.22); transform: translateX(102%);
-      transition: transform .2s ease; z-index: 110; display:flex; flex-direction:column;
+      background: rgba(255,255,255,.96); box-shadow: -20px 0 50px rgba(0,0,0,.22);
+      transform: translateX(102%); transition: transform .2s ease; z-index: 110; display:flex; flex-direction:column;
     }
     .drawer.active{ transform: translateX(0); }
-    .dHead{ padding: 16px; border-bottom: 1px solid rgba(0,0,0,.08); display:flex; justify-content:space-between; }
-    .dTitle{ margin:0; font-family: var(--fontTitle); font-size: 30px; }
+    .dHead{ display:flex; justify-content:space-between; padding: 16px; border-bottom: 1px solid rgba(0,0,0,.08); }
     .dBody{ padding: 12px 16px; overflow:auto; flex: 1; }
-    .cItem{ display:flex; gap: 10px; padding: 10px; background: rgba(0,0,0,.04); border-radius: 14px; margin-bottom: 10px; }
+    .cItem{ display:flex; gap: 10px; padding: 10px; border-radius: 14px; background: rgba(0,0,0,.04); margin-bottom: 10px; }
     .cImg{ width: 66px; height: 66px; border-radius: 12px; object-fit: cover; }
+    .dFoot{ padding: 12px 16px 16px; border-top: 1px solid rgba(0,0,0,.08); }
     
+    .payBtn{ width:100%; margin-top: 12px; border:none; background: #111; color:#fff; font-weight: 900; padding: 14px 14px; border-radius: 14px; cursor:pointer; }
+    .payBtn:disabled{ opacity:.5; cursor:not-allowed; }
+
     /* Modal Catalog */
     .modal{
       position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.98);
@@ -318,10 +345,17 @@
     .img img{ width:100%; height:100%; object-fit:cover; }
     .info{ padding:12px; text-align:center; }
     .cta{ width:100%; background:#111; color:#fff; padding:10px; border:none; border-radius:12px; cursor:pointer; margin-top:10px; }
+
+    /* Legal */
+    .fLegal{ background: rgba(255,255,255,.06); border-radius: 16px; margin-bottom: 10px; overflow: hidden; }
+    .fLegal summary{ list-style: none; cursor: pointer; padding: 14px; display: flex; justify-content: space-between; color:#fff; font-weight:900; }
+    .fLegalBody{ padding: 14px; color: rgba(255,255,255,.84); font-size: 13px; line-height: 1.7; }
   </style>
 </head>
 
 <body data-theme="xmas">
+  <div class="seasonTint"></div>
+  <div class="seasonSnow"></div>
   <div class="overlay" id="overlay"></div>
   <div class="toast" id="toast">Agregado</div>
 
@@ -330,10 +364,7 @@
       <a class="brand" href="/"><img src="/assets/logo-score.png" alt="SCORE" /></a>
       <div class="navRight">
         <div class="pill"><span>MX +</span>&nbsp;<b>TIJUANA</b></div>
-        <button class="cartTrigger" id="openCart">
-          <span style="display:flex;align-items:center;gap:10px;">CARRITO</span>
-          <span class="cartCount" id="cartCount">0</span>
-        </button>
+        <button class="cartTrigger" id="openCart">CARRITO (<span id="cartCount">0</span>)</button>
       </div>
     </div>
   </header>
@@ -346,9 +377,7 @@
         <div class="tagline">Merch oficial</div>
         <h1>SCORE International</h1>
         <p class="sub">Somos <b>fabricantes</b> y <b>PATROCINADORES OFICIALES</b>. Producimos en Tijuana. Ediciones limitadas.</p>
-        <div class="ctaRow">
-          <button class="btn primary" onclick="openCatalog('EDICION_2025')">Ver productos</button>
-        </div>
+        <div class="ctaRow"><button class="btn primary" onclick="openCatalog('EDICION_2025')">Ver productos</button></div>
       </div>
     </section>
 
@@ -365,62 +394,64 @@
       </div>
       <div class="editionCard">
         <div class="editionBg"></div>
-        <div class="editionLayer">
-          <img src="/assets/logo-sf250.png" class="editionLogo" style="opacity:0.7"/>
-          <div style="color:#fff; margin-top:10px; font-weight:bold;">PRÓXIMAMENTE</div>
-        </div>
+        <div class="editionLayer"><img src="/assets/logo-sf250.png" class="editionLogo" style="opacity:0.7"/><div style="color:#fff;margin-top:10px;font-weight:900">PRÓXIMAMENTE</div></div>
       </div>
     </div>
+
+    <section class="partnersStrip">
+      <div class="title">Official Partners</div>
+      <div class="spGrid">
+        <img src="/assets/logo-ford.png" class="spLogo" alt="Ford" onerror="this.style.display='none'" />
+        <img src="/assets/logo-rzr.png" class="spLogo" alt="RZR" onerror="this.style.display='none'" />
+        <img src="/assets/logo-bfgodrich.png" class="spLogo" alt="BFGoodrich" onerror="this.style.display='none'" />
+        <img src="/assets/logo-monster.png" class="spLogo" alt="Monster" onerror="this.style.display='none'" />
+        <img src="/assets/logo-unico.png" class="spLogo" alt="ÚNICO" onerror="this.style.display='none'" />
+      </div>
+    </section>
   </main>
 
   <footer>
     <div class="footGrid">
       <div>
-        <h4 style="color:#fff;font-size:28px;margin:0 0 10px;font-family:var(--fontTitle)">ÚNICO UNIFORMES</h4>
+        <h4 style="color:#fff;font-family:var(--fontTitle);font-size:28px">ÚNICO UNIFORMES</h4>
         <p style="color:#aaa;font-size:14px">Fabricante oficial. Tijuana, B.C.</p>
+      </div>
+      <div>
+        <h4 style="color:var(--red);font-family:var(--fontTitle);font-size:28px">LEGAL</h4>
+        <div class="legalFooterWrap">
+          <details class="fLegal"><summary>Términos</summary><div class="fLegalBody">Términos oficiales Unico Textil.</div></details>
+          <details class="fLegal"><summary>Privacidad</summary><div class="fLegalBody">Datos usados solo para envío.</div></details>
+        </div>
       </div>
     </div>
   </footer>
 
   <div class="paybar" id="paybar">
-    <div class="pbLeft">
-      <div class="pbLabel">TOTAL</div>
-      <div class="pbPrice" id="pbTotal">$0</div>
-    </div>
+    <div><div style="font-size:11px;font-weight:900;color:#666">TOTAL</div><div class="pbPrice" id="pbTotal">$0</div></div>
     <button class="pbBtn" id="openCart2">Ver carrito</button>
   </div>
 
   <aside class="drawer" id="drawer">
-    <div class="dHead">
-      <h3 class="dTitle">Tu equipo</h3>
-      <button class="closeBtn" id="closeDrawer">&times;</button>
-    </div>
+    <div class="dHead"><h3 class="dTitle">Tu equipo</h3><button class="closeBtn" id="closeDrawer">&times;</button></div>
     <div class="dBody" id="cartBody"></div>
     <div class="dFoot">
       <div class="sumRow"><span>Total:</span><strong id="drawerTotal">$0</strong></div>
-      <button class="payBtn" onclick="goCheckout()">Ir a pagar</button>
-      <div class="clearLink" onclick="clearCart()">Vaciar carrito</div>
+      <button class="payBtn" id="payBtn">Ir a pagar</button>
+      <div style="text-align:center;margin-top:10px;text-decoration:underline;cursor:pointer" onclick="clearCart()">Vaciar</div>
     </div>
   </aside>
 
   <div class="modal" id="modalCatalog">
-    <div class="mHead">
-      <div class="mTitle">Catálogo</div>
-      <button class="closeBtn" id="closeCatalog">&times;</button>
-    </div>
-    <div class="mBody">
-      <div class="grid" id="catalogGrid"></div>
-    </div>
+    <div class="mHead"><div class="mTitle">Catálogo</div><button class="closeBtn" id="closeCatalog">&times;</button></div>
+    <div class="mBody"><div class="grid" id="catalogGrid"></div></div>
   </div>
 
 <script>
-  // CONFIGURACIÓN STRIPE
-  const STRIPE_PK = 'pk_live_51Se6fsGUCnsKfgrBl99sVAcl'; // Tu clave pública real
-  
+  const STRIPE_PK = 'pk_live_51Se6fsGUCnsKfgrBl99sVAcl'; // Tu clave real
   let cart = JSON.parse(localStorage.getItem('score_cart')) || [];
   let CATALOG = [];
 
-  // Cargar catálogo desde JSON
+  // Carga dinámica del catálogo
   async function loadData() {
     try {
       const res = await fetch('data/catalog.json');
@@ -429,16 +460,13 @@
     } catch(e) { console.error(e); }
   }
 
-  // Funciones UI
+  // UI
   const overlay = document.getElementById('overlay');
   const drawer = document.getElementById('drawer');
   const modal = document.getElementById('modalCatalog');
   const paybar = document.getElementById('paybar');
 
-  function toggleCart() {
-    drawer.classList.toggle('active');
-    overlay.classList.toggle('active');
-  }
+  function toggleCart() { drawer.classList.toggle('active'); overlay.classList.toggle('active'); }
   
   function openCatalog(section) {
     const grid = document.getElementById('catalogGrid');
@@ -465,7 +493,7 @@
     if(exist) exist.qty++;
     else cart.push({ id: p.id, name: p.name, price: Math.round(p.baseMXN * 1.2), img: p.img, qty: 1 });
     updateCart();
-    // Toast
+    
     const t = document.getElementById('toast');
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 2000);
@@ -484,7 +512,7 @@
     if(total > 0) paybar.classList.add('visible'); else paybar.classList.remove('visible');
 
     const body = document.getElementById('cartBody');
-    body.innerHTML = cart.map((i, idx) => `
+    body.innerHTML = cart.length ? cart.map((i, idx) => `
       <div class="cItem">
         <img src="${i.img}" class="cImg">
         <div style="flex:1">
@@ -493,17 +521,21 @@
         </div>
         <button onclick="rem(${idx})" style="border:none;background:none;color:red;font-weight:bold">X</button>
       </div>
-    `).join('');
+    `).join('') : '<div class="empty">Carrito vacío</div>';
+    
+    const btn = document.getElementById('payBtn');
+    if(btn) btn.disabled = cart.length === 0;
   }
 
   function rem(idx) { cart.splice(idx, 1); updateCart(); }
   function clearCart() { if(confirm('¿Vaciar?')) { cart = []; updateCart(); } }
 
-  // CHECKOUT CON STRIPE (NETLIFY FUNCTION)
+  // CHECKOUT STRIPE
   async function goCheckout() {
     if(cart.length === 0) return;
-    const btn = document.querySelector('.dfBtn'); // Botón del drawer
+    const btn = document.getElementById('payBtn');
     btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
     
     try {
       const stripe = Stripe(STRIPE_PK);
@@ -517,12 +549,14 @@
       if(data.url) {
         window.location.href = data.url;
       } else {
-        alert("Error al iniciar pago: " + (data.error || "Desconocido"));
+        alert("Error: " + (data.error || "Desconocido"));
         btn.innerText = "IR A PAGAR";
+        btn.disabled = false;
       }
     } catch(e) {
       alert("Error de conexión");
       btn.innerText = "IR A PAGAR";
+      btn.disabled = false;
     }
   }
 
@@ -531,6 +565,7 @@
   document.getElementById('openCart2').onclick = toggleCart;
   document.getElementById('closeDrawer').onclick = toggleCart;
   document.getElementById('closeCatalog').onclick = () => { modal.classList.remove('active'); overlay.classList.remove('active'); };
+  document.getElementById('payBtn').onclick = goCheckout;
   overlay.onclick = () => { modal.classList.remove('active'); drawer.classList.remove('active'); overlay.classList.remove('active'); };
 
   loadData();
