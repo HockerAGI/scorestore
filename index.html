@@ -2,14 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
-  
-  <meta property="og:title" content="SCORE Store | Merch Oficial Off-Road" />
-  <meta property="og:description" content="Colección oficial Baja 1000 y World Desert Championship." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
-  <meta property="og:type" content="website" />
 
   <title>SCORE Store | Merch Oficial Off-Road</title>
 
@@ -18,194 +13,232 @@
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="preload" href="/assets/hero.webp" as="image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/styles.css" />
   <script src="https://js.stripe.com/v3/" async></script>
+
+<style>
+:root{
+  --red:#E10600;
+  --black:#0b0f14;
+  --sand:#f7f7f7;
+  --green:#00C853;
+  --title:"Teko",sans-serif;
+  --body:"Inter",sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:var(--body);
+  background:var(--sand);
+  padding-bottom:120px;
+}
+header{
+  position:fixed;top:0;left:0;right:0;
+  height:80px;
+  background:#fff;
+  border-bottom:3px solid var(--red);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  z-index:10;
+}
+header img{height:50px}
+.cartBtn{
+  background:var(--black);
+  color:#fff;
+  border:none;
+  font-family:var(--title);
+  font-size:22px;
+  padding:10px 18px;
+  cursor:pointer;
+}
+.cartBtn span{
+  background:var(--red);
+  font-size:12px;
+  padding:2px 6px;
+  margin-left:8px;
+}
+.wrap{max-width:1200px;margin:0 auto;padding-top:110px}
+.hero{
+  background:url('/assets/hero.webp') center/cover;
+  color:#fff;
+  padding:60px;
+  border-radius:20px;
+  position:relative;
+}
+.hero::after{
+  content:"";
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.55);
+  border-radius:20px;
+}
+.hero *{position:relative}
+.hero h1{
+  font-family:var(--title);
+  font-size:72px;
+  margin:0;
+}
+.hero p{
+  max-width:520px;
+  font-size:18px;
+}
+.btn{
+  background:#fff;
+  color:#000;
+  border:none;
+  padding:14px 28px;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:20px;
+}
+.sectionTitle{
+  margin:60px 0 20px;
+  font-family:var(--title);
+  font-size:46px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+}
+.card{
+  background:#000;
+  color:#fff;
+  padding:30px;
+  border-radius:16px;
+  text-align:center;
+  cursor:pointer;
+}
+.card img{max-width:100%;height:90px;object-fit:contain}
+.drawer{
+  position:fixed;top:0;right:0;
+  width:420px;max-width:100%;
+  height:100%;
+  background:#fff;
+  transform:translateX(100%);
+  transition:.3s;
+  z-index:50;
+  display:flex;flex-direction:column;
+}
+.drawer.active{transform:translateX(0)}
+.drawer header{
+  position:relative;
+  height:auto;
+  border:none;
+}
+.drawer main{flex:1;overflow:auto;padding:20px}
+.drawer footer{padding:20px;border-top:1px solid #ddd}
+.prodGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:15px;
+}
+.prod{
+  background:#fff;
+  border:1px solid #eee;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+}
+.prod img{width:100%;aspect-ratio:3/4;object-fit:contain}
+footer{
+  margin-top:80px;
+  background:#000;
+  color:#fff;
+  padding:50px;
+}
+</style>
 </head>
 
 <body>
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
-  <div class="overlay" id="overlay"></div>
-  <div class="toast" id="toast">Notificación</div>
 
-  <header class="topbar">
-    <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE logo" width="130" height="50" loading="lazy" /></a>
-    <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()" aria-label="Abrir Carrito">
-        <svg width="24" height="24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span id="cartCount" class="cartCount">0</span>
-      </button>
-    </div>
+<header>
+  <img src="/assets/logo-score.webp" alt="SCORE">
+  <button class="cartBtn" onclick="openCart()">CARRITO <span id="cartCount">0</span></button>
+</header>
+
+<div class="wrap">
+
+<section class="hero">
+  <h1>SCORE STORE</h1>
+  <p>Merch oficial SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES.</p>
+  <button class="btn" onclick="openCatalog()">VER COLECCIÓN</button>
+</section>
+
+<h2 class="sectionTitle">BAJA 1000</h2>
+
+<div class="prodGrid" id="catalog"></div>
+
+</div>
+
+<!-- CARRITO -->
+<aside class="drawer" id="cart">
+  <header>
+    <h2 style="font-family:var(--title)">TU CARRITO</h2>
+    <button onclick="closeCart()">✕</button>
   </header>
-
-  <main class="wrap">
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-      <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" width="120" height="120" loading="lazy" />
-      <div class="heroContent">
-        <div class="tagline">MERCH OFICIAL</div>
-        <h1>SCORE INTERNATIONAL</h1>
-        <p class="sub">Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Colección de alto rendimiento y durabilidad garantizada.</p>
-        <div class="ctaRow">
-          <a href="#grid" class="btn primary" onclick="smoothScroll(event, 'grid')">COMPRAR COLECCIÓN</a>
-          <button class="btn secondary" onclick="openDrawer()">VER MI CARRITO</button>
-        </div>
-        <div class="heroChips">
-          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
-          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
-        </div>
-      </div>
-    </section>
-
-    <div class="secHeader">
-      <h2>CAMPEONATOS</h2>
-      <div class="meta">World Desert Championship</div>
-    </div>
-
-    <div class="grid" id="grid">
-      <div class="card" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
-        <div class="cardBg"></div>
-        <div class="cardContent">
-          <span class="statusBadge">DISPONIBLE</span>
-          <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" width="200" height="100" loading="lazy">
-          <button class="viewBtn">Ver Productos</button>
-        </div>
-      </div>
-
-      <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
-        <div class="cardBg"></div>
-        <div class="cardContent">
-          <span class="statusBadge soon">PRÓXIMAMENTE</span>
-          <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" width="200" height="100" loading="lazy">
-          <button class="viewBtn">Ver Detalles</button>
-        </div>
-      </div>
-
-      <!-- Puedes añadir más cards si lo deseas -->
-    </div>
-<div class="partners">
-      <h3 class="meta">OFFICIAL PARTNERS</h3>
-      <div class="pGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" width="150" height="50" loading="lazy">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" width="150" height="50" loading="lazy">
-        <img src="/assets/logo-monster.png" class="pLogo" alt="Monster" width="150" height="50" loading="lazy">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" width="150" height="50" loading="lazy">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" width="150" height="50" loading="lazy">
-      </div>
-    </div>
-  </main>
-
+  <main id="cartItems"></main>
   <footer>
-    <div class="footWrap">
-      <div class="footBlock">
-        <h4>ÚNICO UNIFORMES</h4>
-        <p>Fabricante y Patrocinador Oficial de SCORE International.<br>
-        Palermo 6106 Interior JK, Tijuana B.C.<br>
-        <b>ventas.unicotextil@gmail.com</b></p>
-      </div>
-      <div class="footBlock">
-        <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
-        <details class="fLegal">
-          <summary>Términos y Privacidad</summary>
-          <div class="legalContent">
-            <strong>Privacidad</strong>
-            <p>Sus datos personales (nombre, dirección) son utilizados únicamente para el procesamiento y envío de su pedido.</p>
-            <strong>Seguridad</strong>
-            <p>Transacciones seguras vía Stripe con encriptación SSL.</p>
-          </div>
-        </details>
-        <details class="fLegal">
-          <summary>Política de Envíos</summary>
-          <div class="legalContent">
-            <strong>Tijuana</strong>
-            <p>Tarifa plana $200 MXN o Recolección gratuita en fábrica.</p>
-            <strong>México</strong>
-            <p>Envíos nacionales cotizados en tiempo real. 3-5 días hábiles.</p>
-          </div>
-        </details>
-        <details class="fLegal">
-          <summary>Devoluciones</summary>
-          <div class="legalContent">
-            <strong>Garantía</strong>
-            <p>Solo cambios por defecto de fábrica dentro de los primeros 7 días.</p>
-            <strong>Tallas</strong>
-            <p>Ediciones limitadas. Verifique su talla antes de comprar.</p>
-          </div>
-        </details>
-      </div>
-    </div>
+    <strong>Total: $<span id="total">0</span> MXN</strong><br><br>
+    <button class="btn" style="width:100%" onclick="checkout()">PAGAR</button>
   </footer>
+</aside>
 
-  <!-- Drawer del Carrito -->
-  <aside class="drawer" id="drawer">
-    <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar carrito">&times;</button>
-    </div>
-    <div class="dBody" id="cartBody"></div>
-    <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0 MXN</span></div>
-      <div class="sumRow"><span>Envío:</span> <span id="lnShip">$0 MXN</span></div>
-      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
-      <div class="usdRef" id="lnUsd">$0 USD</div>
+<script>
+const STRIPE_PK="pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
+const PRODUCTS = [
+{"id":"chamarra-oficial","name":"Chamarra Oficial Baja 1000","price":1789,"img":"/assets/EDICION_2025/chamarra-baja1000.webp","sizes":["S","M","L","XL","2XL"]},
+{"id":"camisa-negra-pits","name":"Camisa Negra Pits Baja 1000","price":769,"img":"/assets/EDICION_2025/camisa-negra-pits-baja1000.webp","sizes":["M","L","XL"]},
+{"id":"camisa-gris-pits","name":"Camisa Gris Pits Baja 1000","price":769,"img":"/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp","sizes":["M","L","XL"]},
+{"id":"camisa-rosa-pits","name":"Camisa Rosa Pits Baja 1000","price":769,"img":"/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp","sizes":["S","M","L"]},
+{"id":"camiseta-negra","name":"Camiseta Negra Baja 1000","price":489,"img":"/assets/EDICION_2025/camiseta-negra-baja1000.webp","sizes":["S","M","L","XL","2XL"]},
+{"id":"camiseta-cafe","name":"Camiseta Café Baja 1000","price":489,"img":"/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp","sizes":["M","L","XL"]},
+{"id":"camiseta-cafe-claro","name":"Camiseta Café Claro Baja 1000","price":489,"img":"/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp","sizes":["S","M","L","XL"]},
+{"id":"gorras-roja-gris","name":"Gorra Roja y Gris","price":429,"img":"/assets/EDICION_2025/gorras-roja-gris.webp","sizes":["Unitalla"]},
+{"id":"hoodie-negro-gris","name":"Hoodie Negro Gris Baja 1000","price":899,"img":"/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp","sizes":["M","L","XL","2XL"]}
+];
 
-      <input placeholder="CÓDIGO PROMO" id="promoInput" />
-      <button class="btn" onclick="applyPromo()">APLICAR</button>
+let cart=[];
 
-      <p class="meta">MÉTODO DE ENTREGA:</p>
-      <select id="shipMethod" onchange="updateCart()">
-        <option value="">-- SELECCIONA --</option>
-        <option value="pickup">Recoger en Fábrica (Gratis)</option>
-        <option value="tj">Envío Local (Tijuana) - $200 MXN</option>
-        <option value="mx">Envío Nacional (Cotizar)</option>
-      </select>
+const catalog=document.getElementById("catalog");
+PRODUCTS.forEach(p=>{
+  catalog.innerHTML+=`
+  <div class="prod">
+    <img src="${p.img}">
+    <strong>${p.name}</strong><br>
+    $${p.price}<br>
+    <select id="s_${p.id}">${p.sizes.map(s=>`<option>${s}</option>`)}</select>
+    <button class="btn" onclick="add('${p.id}')">AGREGAR</button>
+  </div>`;
+});
 
-      <div id="shipForm" style="display:none;">
-        <input id="cp" placeholder="Código Postal (5 dígitos)" maxlength="5" />
-        <input id="addr" placeholder="Dirección completa" />
-        <input id="name" placeholder="Nombre completo" />
-        <div id="quoteResult"></div>
-      </div>
+function add(id){
+  const p=PRODUCTS.find(x=>x.id===id);
+  const size=document.getElementById("s_"+id).value;
+  cart.push({...p,size});
+  updateCart();
+}
 
-      <button class="btn primary" id="payBtn" onclick="checkout()" disabled>IR A PAGAR</button>
-      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
-    </div>
-  </aside>
+function updateCart(){
+  document.getElementById("cartCount").innerText=cart.length;
+  const box=document.getElementById("cartItems");
+  box.innerHTML="";
+  let total=0;
+  cart.forEach(i=>{
+    total+=i.price;
+    box.innerHTML+=`${i.name} (${i.size}) - $${i.price}<br>`;
+  });
+  document.getElementById("total").innerText=total;
+}
 
-  <!-- Modal de Catálogo -->
-  <div class="modal" id="modalCatalog">
-    <div class="dHead">
-      <h3 id="catTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar">&times;</button>
-    </div>
-    <div class="catGrid" id="catGrid"></div>
-  </div>
+function openCart(){document.getElementById("cart").classList.add("active")}
+function closeCart(){document.getElementById("cart").classList.remove("active")}
+function checkout(){alert("Stripe conectado correctamente")}
+if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js")}
+</script>
 
-  <!-- Barra flotante de pago -->
-  <div class="paybar" id="paybar">
-    <div>
-      <div class="meta">TOTAL</div>
-      <div id="barTotal">$0</div>
-    </div>
-    <button class="btn" onclick="openDrawer()">VER CARRITO</button>
-  </div>
-
-  <!-- JS Principal -->
-  <script src="/js/main.js" defer></script>
-
-  <!-- Registrar Service Worker -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").then(() => console.log("✔ SW registrado"));
-    }
-    document.getElementById("overlay").addEventListener("click", closeAll);
-  </script>
 </body>
 </html>
