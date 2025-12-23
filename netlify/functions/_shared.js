@@ -1,12 +1,15 @@
 // netlify/functions/_shared.js
-// Shared helpers for SCORE Store functions (Node 18 / Netlify)
-// No secrets in code: everything sensitive comes from environment variables.
+// Utilidades compartidas para SCORE Store en Netlify Functions (Node 18).
+// ⚠️ No se deben incluir secretos aquí; usar variables de entorno.
 
 const fs = require("fs/promises");
 const path = require("path");
 
+// Caches en memoria (para performance)
 let _catalogCache = null;
 let _promosCache = null;
+
+// === Utilidades básicas ===
 
 function jsonResponse(statusCode, body, extraHeaders = {}) {
   return {
@@ -40,12 +43,12 @@ function normalizePromo(code) {
   return upper(code).replace(/\s+/g, "");
 }
 
+// === Validación de direcciones ===
+
 function isMxPostal(postal) {
   return /^[0-9]{5}$/.test(toStr(postal));
 }
 
-// Tijuana postal codes are typically 22xxx.
-// We use this as a *practical* guard to avoid giving "Tijuana delivery" to random cities.
 function isTijuanaPostal(postal) {
   const p = toStr(postal);
   return isMxPostal(p) && p.startsWith("22");
@@ -55,6 +58,8 @@ function looksLikeTijuana(city) {
   const c = toStr(city).toLowerCase();
   return c.includes("tijuana");
 }
+
+// === Carga de datos JSON ===
 
 async function loadCatalog() {
   if (_catalogCache) return _catalogCache;
@@ -78,6 +83,8 @@ function productMapFromCatalog(catalog) {
   return map;
 }
 
+// === Validación del carrito ===
+
 function validateCartItems(items) {
   if (!Array.isArray(items) || items.length === 0) return { ok: false, error: "Carrito vacío." };
   if (items.length > 30) return { ok: false, error: "Carrito demasiado grande." };
@@ -87,19 +94,50 @@ function validateCartItems(items) {
     const qty = Number(it?.qty ?? 0);
     const size = toStr(it?.size);
 
-    if (!id) return { ok: false, error: "Item inválido (id faltante)." };
+    if (!id) return { ok: false, error: "ID de producto inválido." };
     if (!Number.isFinite(qty) || qty <= 0 || qty > 20) return { ok: false, error: "Cantidad inválida." };
-    // size can be empty for products that are "ÚNICA" (handled later), but send it anyway.
     if (size.length > 10) return { ok: false, error: "Talla inválida." };
   }
+
   return { ok: true };
 }
 
+function validateSizes(items, productMap) {
+  for (const it of items) {
+    const p = productMap.get(it.id);
+    if (!p) return { ok: false, error: `Producto no encontrado: ${it.id}` };
+
+    const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+    const sent = toStr(it.size);
+
+    if (sizes.length === 1 && upper(sizes[0]) === "ÚNICA") continue;
+
+    if (!sent) return { ok: false, error: `Falta talla para: ${p.name}` };
+
+    const allowed = new Set(sizes.map(s => upper(s)));
+    if (!allowed.has(upper(sent))) return { ok: false, error: `Talla inválida para: ${p.name}` };
+  }
+
+  return { ok: true };
+}
+
+// === Subtotal ===
+
+function computeSubtotalMXN(items, productMap) {
+  let subtotal = 0;
+  for (const it of items) {
+    const p = productMap.get(it.id);
+    if (!p) continue;
+    subtotal += Number(p.baseMXN || 0) * Number(it.qty || 0);
+  }
+  return Math.max(0, Math.round(subtotal));
+}
+
+// === Envío: paquete base ===
+
 function buildPackageFromItems(items, productMap) {
-  // Very simple packing: aggregate weight; use max dims among items.
   let totalWeightG = 0;
   let maxL = 10, maxW = 10, maxH = 5;
-
   const contentNames = [];
 
   for (const it of items) {
@@ -126,36 +164,7 @@ function buildPackageFromItems(items, productMap) {
   };
 }
 
-function computeSubtotalMXN(items, productMap) {
-  let subtotal = 0;
-  for (const it of items) {
-    const p = productMap.get(it.id);
-    if (!p) continue;
-    subtotal += Number(p.baseMXN || 0) * Number(it.qty || 0);
-  }
-  return Math.max(0, Math.round(subtotal));
-}
-
-function validateSizes(items, productMap) {
-  for (const it of items) {
-    const p = productMap.get(it.id);
-    if (!p) return { ok: false, error: `Producto no encontrado: ${it.id}` };
-
-    const sizes = Array.isArray(p.sizes) ? p.sizes : [];
-    const sent = toStr(it.size);
-
-    // If product has only one size ("ÚNICA"), accept blank or matching.
-    if (sizes.length === 1 && upper(sizes[0]) === "ÚNICA") {
-      continue;
-    }
-
-    if (!sent) return { ok: false, error: `Falta talla para: ${p.name}` };
-
-    const allowed = new Set(sizes.map(s => upper(s)));
-    if (!allowed.has(upper(sent))) return { ok: false, error: `Talla inválida para: ${p.name}` };
-  }
-  return { ok: true };
-}
+// === Promociones ===
 
 async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   const promos = await loadPromos();
@@ -178,7 +187,6 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   } else if (rule.type === "free_shipping") {
     newShipping = 0;
   } else if (rule.type === "free_total") {
-    // VERY risky. Keep only if you explicitly activate it in data/promos.json.
     newSubtotal = 0;
     newShipping = 0;
   }
@@ -189,30 +197,29 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   return { code, discountMXN: cappedDiscount, shippingMXN: newShipping, totalMXN };
 }
 
+// === URL base del sitio (Netlify env) ===
+
 function getBaseUrlFromEnv() {
-  // priority: explicit URL_SCORE, then Netlify system URLs.
   const explicit = toStr(process.env.URL_SCORE);
   if (explicit) return explicit.replace(/\/+$/, "");
   const url = toStr(process.env.URL || process.env.DEPLOY_PRIME_URL || process.env.DEPLOY_URL);
   return url ? url.replace(/\/+$/, "") : "";
 }
 
-// --- ENVIÁ.COM RATE QUOTE ---
+// === Envia.com: cotizador ===
+
 async function quoteEnviaMXN({ to, items, productMap }) {
   const apiKey = toStr(process.env.ENVIA_API_KEY);
-  if (!apiKey) {
-    return { ok: false, error: "ENVIA_API_KEY no configurada." };
-  }
+  if (!apiKey) return { ok: false, error: "ENVIA_API_KEY no configurada." };
 
   const postalCode = toStr(to?.postal_code);
   const state = upper(to?.state_code || to?.state || "");
   const city = toStr(to?.city);
   const address1 = toStr(to?.address1);
 
-  if (!isMxPostal(postalCode)) return { ok: false, error: "C.P. inválido." };
-  if (!state) return { ok: false, error: "Estado inválido." };
-  if (!city) return { ok: false, error: "Ciudad inválida." };
-  if (!address1) return { ok: false, error: "Dirección inválida." };
+  if (!isMxPostal(postalCode) || !state || !city || !address1) {
+    return { ok: false, error: "Dirección incompleta para cotización." };
+  }
 
   const pkg = buildPackageFromItems(items, productMap);
 
@@ -265,26 +272,24 @@ async function quoteEnviaMXN({ to, items, productMap }) {
 
   const data = await res.json().catch(() => null);
 
-  if (!res.ok) {
+  if (!res.ok || !Array.isArray(data?.data) || data.data.length === 0) {
     const msg = data?.message || `Error Envia (${res.status})`;
     return { ok: false, error: msg };
   }
 
-  const rates = data?.data;
-  if (!Array.isArray(rates) || rates.length === 0) return { ok: false, error: "Envia sin tarifas disponibles." };
-
-  // choose lowest total
-  const lowest = rates.reduce((a, b) => (Number(a.total) < Number(b.total) ? a : b));
-  const raw = Number(lowest.total || 0);
-  const provider = toStr(lowest.provider);
-  const service = toStr(lowest.service);
-  const days = Number(lowest.days || 0);
-
+  const lowest = data.data.reduce((a, b) => (Number(a.total) < Number(b.total) ? a : b));
   return {
     ok: true,
-    quote: { mxn: raw, provider, service, days },
+    quote: {
+      mxn: Number(lowest.total || 0),
+      provider: toStr(lowest.provider),
+      service: toStr(lowest.service),
+      days: Number(lowest.days || 0),
+    },
   };
 }
+
+// === Exportación ===
 
 module.exports = {
   jsonResponse,
