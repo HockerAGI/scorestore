@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
   
-  <title>SCORE Store | Tienda Oficial</title>
+  <title>SCORE Store | Merch Oficial Off-Road</title>
   <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
@@ -13,21 +13,20 @@
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://js.stripe.com/v3/" async></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      /* PALETA DE COLORES */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --carbon: #0b0f14;
       --sand: #f8f8f8;
       --green: #00C853; 
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.85) 0%, rgba(40, 20, 10, 0.65) 100%);
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.9) 0%, rgba(20, 10, 5, 0.7) 100%);
       --shadow: 0 15px 40px rgba(0,0,0,0.15);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -97,29 +96,29 @@
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
-      mix-blend-mode: multiply; opacity: 0.75; 
+      mix-blend-mode: multiply; opacity: 0.85; 
     }
-    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; }
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; color: #fff; }
     
-    /* SELLO WORLD DESERT */
+    /* SELLO ESTRATÉGICO */
     .seal-logo {
-      position: absolute; bottom: 30px; right: 30px; width: 110px; height: auto;
-      opacity: 0.95; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+      position: absolute; bottom: 30px; right: 30px; width: 120px; height: auto;
+      opacity: 1; filter: drop-shadow(0 5px 20px rgba(0,0,0,0.6));
       transform: rotate(-5deg); z-index: 3; pointer-events: none;
     }
-    @media (max-width: 768px) { .seal-logo { width: 80px; bottom: 20px; right: 20px; } }
+    @media (max-width: 768px) { .seal-logo { width: 90px; bottom: 20px; right: 20px; } }
 
     .tagline {
       background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
       font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 15px;
     }
     .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(50px, 10vw, 100px); line-height: 0.9;
+      font-family: var(--fontTitle); font-size: clamp(54px, 11vw, 110px); line-height: 0.9;
       margin: 0 0 20px; text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
     .sub {
-      font-size: 18px; line-height: 1.5; color: #eee; margin-bottom: 30px;
-      border-left: 4px solid var(--red); padding-left: 20px; font-weight: 500;
+      font-size: 18px; line-height: 1.5; color: #f0f0f0; margin-bottom: 30px;
+      border-left: 4px solid var(--red); padding-left: 20px; font-weight: 600;
     }
 
     .ctaRow { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }
@@ -129,12 +128,12 @@
       transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
-    .btn.primary { background: #fff; color: #111; }
-    .btn.secondary { background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+    .btn.primary { background: #fff; color: #111; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    .btn.secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(5px); }
 
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
-      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3);
       padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 800;
       text-transform: uppercase; color: #fff; display: flex; align-items: center; gap: 6px;
     }
@@ -143,7 +142,7 @@
     /* SECCIONES */
     .secHeader {
       display: flex; align-items: baseline; justify-content: space-between; 
-      margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 10px;
+      margin-bottom: 25px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;
     }
     .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 48px; color: #111; line-height: 1; }
     .meta { font-weight: 900; color: #777; font-size: 14px; letter-spacing: 2px; }
@@ -158,10 +157,10 @@
       background: #0b0f14; cursor: pointer; transition: transform 0.3s;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.1);
     }
-    .card:hover { transform: translateY(-5px); }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
     
     .cardBg {
-      position: absolute; inset: 0; opacity: 0.6;
+      position: absolute; inset: 0; opacity: 0.65;
       background: url('/assets/baja1000-texture.webp') center/cover;
     }
     .cardContent {
@@ -193,7 +192,7 @@
       margin-top: 25px; align-items: center; 
     }
     .pLogo { 
-      width: auto; height: auto; max-height: 55px; max-width: 160px; 
+      width: auto; height: auto; max-height: 50px; max-width: 150px; 
       object-fit: contain; opacity: 0.6; filter: grayscale(1); transition: 0.3s; 
     }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
@@ -203,7 +202,7 @@
     .footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
     
-    .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; }
+    .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; letter-spacing: 1px; }
     .footBlock p { color: #aaa; font-size: 13px; line-height: 1.6; margin: 0; }
     
     details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 10px; overflow: hidden; }
@@ -214,6 +213,7 @@
     summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 2.5; }
     .fLegalPill { font-size: 10px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; color: #aaa; }
     .legalContent { padding: 0 18px 18px; color: #bbb; font-size: 13px; line-height: 1.6; }
+    .legalContent strong { color: #fff; display: block; margin-top: 10px; }
 
     /* DRAWER CARRITO */
     .drawer {
@@ -267,7 +267,6 @@
     
     .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; background: #f9f9f9; }
     
-    /* TARJETA PRODUCTO VERTICAL */
     .prodCard { 
       border: 1px solid #eee; padding: 12px; border-radius: 12px; text-align: center; background: #fff;
       display: flex; flex-direction: column; justify-content: space-between;
@@ -276,7 +275,6 @@
       width: 100%; aspect-ratio: 3/4; object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply;
     }
 
-    /* Paybar */
     .paybar {
       position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 150px);
       background: #111; color: #fff; padding: 14px 24px; border-radius: 50px;
@@ -314,51 +312,51 @@
       <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" onerror="this.style.display='none'">
 
       <div class="heroContent">
-        <div class="tagline">OFICIAL MERCH</div>
+        <div class="tagline">MERCH OFICIAL</div>
         <h1>SCORE INTERNATIONAL</h1>
         <p class="sub">
           Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
-          Productos auténticos listos para el desierto.
+          Colección de alto rendimiento y durabilidad garantizada.
         </p>
         <div class="ctaRow">
-          <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">EXPLORAR EQUIPO</button>
-          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
+          <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">COMPRAR COLECCIÓN</button>
+          <button class="btn secondary" onclick="openDrawer()">VER MI CARRITO</button>
         </div>
         <div class="heroChips">
           <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
-          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
+          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> EDICIÓN LIMITADA</div>
         </div>
       </div>
     </section>
 
     <div class="secHeader">
-      <h2>EDICIONES</h2>
-      <div class="meta">Baja Racing Series</div>
+      <h2>CAMPEONATOS</h2>
+      <div class="meta">World Desert Championship</div>
     </div>
 
     <div class="grid">
-      <div class="card" onclick="openCatalog('EDICION_2025', 'Colección 2025')">
+      <div class="card" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
         <div class="cardBg"></div>
         <div class="cardContent">
-          <span class="statusBadge">ACTIVO</span>
+          <span class="statusBadge">DISPONIBLE</span>
           <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000">
           <button class="viewBtn">Ver Productos</button>
         </div>
       </div>
-      <div class="card" onclick="openCatalog('PITS_CREW', 'Equipo de Pits')">
-        <div class="cardBg" style="filter: hue-rotate(180deg);"></div>
+      <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
+        <div class="cardBg"></div>
         <div class="cardContent">
-          <span class="statusBadge">OFICIAL</span>
-          <img src="/assets/logo-score.webp" class="cardLogo" alt="Score">
-          <button class="viewBtn">Ver Equipo</button>
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500">
+          <button class="viewBtn">Ver Detalles</button>
         </div>
       </div>
-      <div class="card" onclick="openCatalog('OTRAS_EDICIONES', 'World Desert')">
-        <div class="cardBg" style="filter: sepia(1);"></div>
+      <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
+        <div class="cardBg"></div>
         <div class="cardContent">
-          <span class="statusBadge">CLÁSICOS</span>
-          <img src="/assets/logo-world-desert.webp" class="cardLogo" alt="World Desert" onerror="this.src='/assets/logo-score.webp'">
-          <button class="viewBtn">Ver Colección</button>
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400">
+          <button class="viewBtn">Ver Detalles</button>
         </div>
       </div>
       <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
@@ -366,7 +364,7 @@
         <div class="cardContent">
           <span class="statusBadge soon">PRÓXIMAMENTE</span>
           <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250">
-          <button class="viewBtn">Ver Info</button>
+          <button class="viewBtn">Ver Detalles</button>
         </div>
       </div>
     </div>
@@ -386,21 +384,36 @@
       <div class="footWrap">
         <div class="footBlock">
           <h4>ÚNICO UNIFORMES</h4>
-          <p>Fabricante y Patrocinador Oficial.<br>Palermo 6106 Interior JK, Tijuana B.C.<br><b>ventas.unicotextil@gmail.com</b></p>
+          <p>Fabricante y Patrocinador Oficial de SCORE International.<br>Palermo 6106 Interior JK, Tijuana B.C.<br><b>ventas.unicotextil@gmail.com</b></p>
         </div>
         <div class="footBlock">
-          <h4 style="color:var(--red);">LEGAL</h4>
+          <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
           <details class="fLegal">
-            <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Operado por ÚNICO UNIFORMES.</p></div>
+            <summary>Términos y Privacidad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent">
+              <strong>Privacidad</strong>
+              <p>Sus datos personales (nombre, dirección) son utilizados únicamente para el procesamiento y envío de su pedido. No compartimos información con terceros.</p>
+              <strong>Seguridad</strong>
+              <p>Todas las transacciones son procesadas de forma segura a través de Stripe con encriptación SSL.</p>
+            </div>
           </details>
           <details class="fLegal">
-            <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Nacional (Cotizar) / Local Tijuana ($200) / Pickup (Gratis).</p></div>
+            <summary>Política de Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent">
+              <strong>Tijuana</strong>
+              <p>Envío local tarifa plana $200 MXN o Recolección gratuita en fábrica.</p>
+              <strong>Nacional</strong>
+              <p>Envíos a todo México cotizados en tiempo real vía Envia.com. El tiempo de entrega estándar es de 3-5 días hábiles.</p>
+            </div>
           </details>
           <details class="fLegal">
-            <summary>Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Solo defectos de fábrica (7 días).</p></div>
+            <summary>Cambios y Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent">
+              <strong>Garantía</strong>
+              <p>Aceptamos cambios únicamente por defectos de fábrica dentro de los primeros 7 días de recibido el producto.</p>
+              <strong>Tallas</strong>
+              <p>Por ser ediciones limitadas, no garantizamos disponibilidad de tallas para cambios por error del cliente. Verifique su talla antes de comprar.</p>
+            </div>
           </details>
         </div>
       </div>
@@ -464,9 +477,9 @@
   <script>
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Productos Fallback (Sincronizado)
+    // Fallback Sincronizado
     const PRODUCTS = [
-      { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.webp", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" }
+      { id:"chamarra-oficial", name:"Chamarra Oficial Baja 1000", price:1789, img:"/assets/EDICION_2025/chamarra-baja1000.webp", sizes:["S","M","L","XL","2XL"], section:"BAJA_1000" }
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -485,12 +498,15 @@
         }
       } catch(e) { console.log('Usando local'); }
 
-      if(!items.length) items = PRODUCTS.filter(p => p.section === section);
+      // Si no hay productos (Backups)
+      if(!items.length) {
+        if(section === 'BAJA_1000') items = PRODUCTS; // Solo Baja 1000 tiene backup
+      }
 
       const grid = $('catGrid');
       
       if(!items.length) {
-        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3></div>`;
+        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3><p style="font-size:14px; margin-top:10px;">Estamos preparando la colección oficial.</p></div>`;
       } else {
         grid.innerHTML = items.map(p => `
           <div class="prodCard">
@@ -550,7 +566,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; // $200 MXN TIJUANA
+        if(method === 'tj') ship.cost = 200; 
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
