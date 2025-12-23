@@ -44,7 +44,7 @@
     {
       "id": "camiseta-cafe",
       "name": "Camiseta Café Desert",
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
+      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp", 
       "baseMXN": 399,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
