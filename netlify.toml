@@ -1,47 +1,22 @@
-[build]
-  publish = "."
-  functions = "netlify/functions"
-  command = "npm run build"
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+  e.waitUntil(
+    caches.open('scorestore-v1').then((cache) =>
+      cache.addAll([
+        '/',
+        '/index.html',
+        '/css/style.css',
+        '/main.js',
+        '/site.webmanifest',
+        '/assets/icon-192.png',
+        '/assets/icon-512.png'
+      ])
+    )
+  );
+});
 
-# ✅ Cache fuerte para assets versionados (imagenes, iconos, etc.)
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# ✅ Datos (cambian más seguido) — cache corto + SWR
-[[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "public, max-age=60, stale-while-revalidate=600"
-
-# ✅ Archivos PWA — siempre frescos (para que SW/manifest se actualicen)
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-# ✅ HTML — sin cache agresivo (evita “stale shell”)
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-# ✅ Seguridad / buenas prácticas
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-
-# ✅ INDICAR EL EMPAQUETADOR DE FUNCIONES SERVERLESS
-[functions]
-  node_bundler = "esbuild"
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => res || fetch(e.request))
+  );
+});
