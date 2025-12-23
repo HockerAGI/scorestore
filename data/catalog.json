@@ -19,46 +19,46 @@
       "baseMXN": 1789,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S","M","L","XL","2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
-      "id": "hoodie-tech-2025",
+      "id": "hoodie-tech",
       "name": "Hoodie Técnica Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S","M","L","XL"]
+      "sizes": ["S", "M", "L", "XL"]
     },
     {
-      "id": "tee-negra-2025",
+      "id": "tee-negra",
       "name": "Camiseta Negra Edición 2025",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S","M","L","XL","2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
-      "id": "tee-cafe-2025",
+      "id": "tee-cafe",
       "name": "Camiseta Desert Café",
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S","M","L","XL","2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
-      "id": "tee-arena-2025",
+      "id": "tee-arena",
       "name": "Camiseta Arena Baja",
       "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S","M","L","XL"]
+      "sizes": ["S", "M", "L", "XL"]
     },
     {
-      "id": "gorra-roja-2025",
+      "id": "gorra-oficial",
       "name": "Gorra Oficial Roja/Gris",
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
       "baseMXN": 660,
@@ -72,8 +72,8 @@
       "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL","2XL"]
+      "subSection": "EQUIPO DE PITS",
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
       "id": "pits-gris",
@@ -81,8 +81,8 @@
       "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL","2XL"]
+      "subSection": "EQUIPO DE PITS",
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
       "id": "pits-rosa",
@@ -90,17 +90,17 @@
       "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL"]
+      "subSection": "EQUIPO DE PITS",
+      "sizes": ["S", "M", "L", "XL"]
     },
     {
-      "id": "pits-rojo",
+      "id": "pits-roja",
       "name": "Camisa Pits Negro/Rojo",
       "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL","2XL"]
+      "subSection": "EQUIPO DE PITS",
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
       "id": "wd-rosa",
@@ -108,8 +108,8 @@
       "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
       "baseMXN": 899,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL"]
+      "subSection": "WORLD DESERT / CLÁSICOS",
+      "sizes": ["S", "M", "L", "XL"]
     },
     {
       "id": "wd-negra",
@@ -117,8 +117,8 @@
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
       "baseMXN": 899,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL","2XL"]
+      "subSection": "WORLD DESERT / CLÁSICOS",
+      "sizes": ["S", "M", "L", "XL", "2XL"]
     },
     {
       "id": "wd-roja",
@@ -126,8 +126,8 @@
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
       "baseMXN": 899,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL"]
+      "subSection": "WORLD DESERT / CLÁSICOS",
+      "sizes": ["S", "M", "L", "XL"]
     },
     {
       "id": "sudadera-basica",
@@ -135,8 +135,8 @@
       "img": "/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp",
       "baseMXN": 839,
       "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S","M","L","XL"]
+      "subSection": "WORLD DESERT / CLÁSICOS",
+      "sizes": ["S", "M", "L", "XL"]
     }
   ]
 }
