@@ -1,13 +1,7 @@
 /**
- * Netlify Function: envia_webhook
- * Envía notificaciones de pedidos a Telegram y WhatsApp (Meta Cloud API)
- *
- * Requiere en entorno (.env):
- *  TELEGRAM_BOT_TOKEN
- *  TELEGRAM_CHAT_ID
- *  WHATSAPP_TOKEN
- *  WHATSAPP_PHONE_NUMBER_ID
- *  WHATSAPP_TO
+ * netlify/functions/envia_webhook.js
+ * Recibe la confirmación de pago desde stripe_webhook y notifica al Admin.
+ * Canales: Telegram y WhatsApp (Meta Cloud API).
  */
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -43,7 +37,7 @@ async function sendTelegram(text) {
       }),
     });
   } catch (err) {
-    console.error("Error al enviar Telegram:", err);
+    console.error("Error al enviar Telegram:", err.message);
   }
 }
 
@@ -67,47 +61,63 @@ async function sendWhatsApp(text) {
       }),
     });
   } catch (err) {
-    console.error("Error al enviar WhatsApp:", err);
+    console.error("Error al enviar WhatsApp:", err.message);
   }
 }
 
 function formatOrder(o) {
   const lines = [];
 
-  lines.push("🧾 NUEVO PEDIDO — SCORE Store");
+  lines.push("🚨 **NUEVA VENTA CONFIRMADA**");
+  lines.push("--------------------------------");
 
-  if (o.sessionId) lines.push(`Session: ${o.sessionId}`);
-  if (o.paymentStatus) lines.push(`Pago: ${o.paymentStatus}`);
-  if (o.amountTotal != null) lines.push(`Total: $${o.amountTotal} ${String(o.currency || "mxn").toUpperCase()}`);
-  if (o.customerName) lines.push(`Cliente: ${o.customerName}`);
-  if (o.customerEmail) lines.push(`Email: ${o.customerEmail}`);
-  if (o.phone) lines.push(`Tel: ${o.phone}`);
+  if (o.customerName) lines.push(`👤 **Cliente:** ${o.customerName}`);
+  if (o.customerEmail) lines.push(`📧 **Email:** ${o.customerEmail}`);
+  if (o.phone) lines.push(`📱 **Tel:** ${o.phone}`);
+  
+  lines.push(""); // Espacio
+  
+  if (o.amountTotal != null) {
+    lines.push(`💰 **TOTAL:** $${o.amountTotal} ${String(o.currency || "MXN").toUpperCase()}`);
+  }
+  if (o.paymentStatus) lines.push(`✅ **Estado:** ${o.paymentStatus.toUpperCase()}`);
+
+  lines.push(""); // Espacio
 
   if (o.shipping?.address) {
     const a = o.shipping.address;
-    lines.push("📦 Envío:");
-    lines.push(`${o.shipping.name || "Cliente"}`);
-    if (a.line1 || a.line2) lines.push(`${a.line1 || ""} ${a.line2 || ""}`.trim());
-    if (a.city || a.state || a.postal_code) lines.push(`${a.city || ""}, ${a.state || ""} ${a.postal_code || ""}`.trim());
-    if (a.country) lines.push(`${a.country}`);
+    lines.push("🚚 **Dirección de Envío:**");
+    lines.push(`${o.shipping.name || ""}`);
+    const calle = `${a.line1 || ""} ${a.line2 || ""}`.trim();
+    if (calle) lines.push(calle);
+    const ciudad = `${a.city || ""}, ${a.state || ""} ${a.postal_code || ""}`.trim();
+    if (ciudad) lines.push(ciudad);
+    if (a.country) lines.push(a.country);
   }
 
   const items = Array.isArray(o.items) ? o.items : [];
   if (items.length) {
-    lines.push("🛒 Productos:");
+    lines.push(""); // Espacio
+    lines.push("🛒 **Carrito:**");
     for (const it of items) {
-      lines.push(`- ${it.qty} x ${it.name} (${it.amount_total || ""})`);
+      // (Total item) -> formateo simple
+      const price = it.amount_total ? `$${it.amount_total}` : ""; 
+      lines.push(`• ${it.qty}x ${it.name} ${price}`);
     }
   }
 
   const promo = o.metadata?.promoCode;
-  if (promo) lines.push(`🏷️ Promo: ${promo}`);
+  if (promo && promo !== "NA") {
+    lines.push("");
+    lines.push(`🎟️ **Cupón usado:** ${promo}`);
+  }
 
   return lines.filter(Boolean).join("\n");
 }
 
 exports.handler = async (event) => {
   try {
+    // Manejo de CORS (Preflight)
     if (event.httpMethod === "OPTIONS") {
       return {
         statusCode: 204,
@@ -126,16 +136,20 @@ exports.handler = async (event) => {
 
     const body = JSON.parse(event.body || "{}");
     if (!body || typeof body !== "object") {
-      return jsonResponse(400, { ok: false, error: "Cuerpo de solicitud inválido." });
+      return jsonResponse(400, { ok: false, error: "JSON inválido." });
     }
 
+    // Formatear mensaje
     const msg = formatOrder(body);
 
+    // Enviar notificaciones paralelas (sin esperar una a la otra)
     await Promise.all([sendTelegram(msg), sendWhatsApp(msg)]);
 
-    return jsonResponse(200, { ok: true, msg: "Notificación enviada." });
+    return jsonResponse(200, { ok: true, msg: "Notificaciones enviadas." });
+
   } catch (err) {
-    console.error("Error webhook:", err);
-    return jsonResponse(500, { ok: false, error: err.message || String(err) });
+    console.error("Error en webhook de notificaciones:", err);
+    // Retornamos 200 aunque falle la notificación para no romper el flujo de Stripe
+    return jsonResponse(200, { ok: false, error: err.message });
   }
 };
