@@ -6,16 +6,15 @@
   },
   "pricing": { "markup_pct": 0.00 },
   "sections": [
-    { "id": "EDICION_2025", "title": "COLECCIÓN 2025", "badge": "ACTIVO", "order": 1 },
-    { "id": "BAJA_500", "title": "BAJA 500", "badge": "PRÓXIMAMENTE", "order": 2 },
-    { "id": "BAJA_400", "title": "BAJA 400", "badge": "PRÓXIMAMENTE", "order": 3 },
-    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "PRÓXIMAMENTE", "order": 4 }
+    { "id": "EDICION_2025", "title": "COLECCIÓN 2025", "badge": "NUEVO", "order": 1 },
+    { "id": "PITS_CREW", "title": "EQUIPO PITS", "badge": "OFICIAL", "order": 2 },
+    { "id": "OTRAS_EDICIONES", "title": "WORLD DESERT", "badge": "CLÁSICOS", "order": 3 }
   ],
   "products": [
     {
-      "id": "chamarra-oficial",
-      "name": "Chaqueta Oficial Baja 1000",
-      "img": "/assets/EDICION_2025/chamarra-baja1000.jpg",
+      "id": "chamarra-baja1000",
+      "name": "Chamarra Oficial Baja 1000",
+      "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1490,
       "weight_g": 800,
       "dimensions_cm": [40, 30, 10],
@@ -23,29 +22,19 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "camisa-pits",
-      "name": "Camisa de Pits Baja 1000",
-      "img": "/assets/EDICION_2025/camisa-pits-baja1000.jpg",
+      "id": "hoodie-negro-gris",
+      "name": "Hoodie Técnica Negro/Gris",
+      "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 899,
-      "weight_g": 300,
-      "dimensions_cm": [35, 25, 5],
-      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "weight_g": 600,
+      "dimensions_cm": [35, 30, 8],
+      "sizes": ["S", "M", "L", "XL"],
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-negra",
-      "name": "Camiseta SCORE Baja 1000 Negra",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-negra.jpg",
-      "baseMXN": 399,
-      "weight_g": 200,
-      "dimensions_cm": [30, 20, 2],
-      "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
-    },
-    {
-      "id": "camiseta-azul",
-      "name": "Camiseta SCORE Baja 1000 Azul",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-azul.jpg",
+      "id": "camiseta-negra-25",
+      "name": "Camiseta Negra Edición 2025",
+      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 399,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
@@ -54,8 +43,8 @@
     },
     {
       "id": "camiseta-cafe",
-      "name": "Camiseta SCORE Baja 1000 Café",
-      "img": "/assets/EDICION_2025/camiseta-baja1000-cafe.jpg",
+      "name": "Camiseta Café Desert",
+      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "baseMXN": 399,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
@@ -63,43 +52,63 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "sudadera-cafe",
-      "name": "Sudadera World Desert Café",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-cafe.jpg",
-      "baseMXN": 749,
-      "weight_g": 600,
-      "dimensions_cm": [35, 30, 8],
+      "id": "camisa-pits-negra",
+      "name": "Camisa Pits Oficial Negra",
+      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
+      "baseMXN": 899,
+      "weight_g": 300,
+      "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "PITS_CREW"
     },
     {
-      "id": "sudadera-negra",
-      "name": "Sudadera World Desert Negra",
-      "img": "/assets/EDICION_2025/sudadera-world-desert-negra.jpg",
-      "baseMXN": 749,
-      "weight_g": 600,
-      "dimensions_cm": [35, 30, 8],
+      "id": "camisa-pits-gris",
+      "name": "Camisa Pits Gris Racing",
+      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+      "baseMXN": 899,
+      "weight_g": 300,
+      "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "PITS_CREW"
     },
     {
-      "id": "sudadera-roja",
-      "name": "Sudadera World Desert Roja",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg",
-      "baseMXN": 749,
-      "weight_g": 600,
-      "dimensions_cm": [35, 30, 8],
-      "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "id": "camisa-pits-rosa",
+      "name": "Camisa Pits Edición Rosa",
+      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
+      "baseMXN": 899,
+      "weight_g": 300,
+      "dimensions_cm": [35, 25, 5],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "PITS_CREW"
     },
     {
-      "id": "sudadera-rosa",
-      "name": "Sudadera World Desert Rosa",
-      "img": "/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg",
+      "id": "hoodie-rosa",
+      "name": "Hoodie World Desert Rosa",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
+      "baseMXN": 749,
+      "weight_g": 600,
+      "dimensions_cm": [35, 30, 8],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "OTRAS_EDICIONES"
+    },
+    {
+      "id": "hoodie-negra-wd",
+      "name": "Hoodie World Desert Negra",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
       "baseMXN": 749,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
       "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "OTRAS_EDICIONES"
+    },
+    {
+      "id": "gorra-roja",
+      "name": "Gorra Oficial Roja/Gris",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "baseMXN": 550,
+      "weight_g": 150,
+      "dimensions_cm": [20, 20, 10],
+      "sizes": ["Unitalla"],
       "sectionId": "EDICION_2025"
     }
   ]
