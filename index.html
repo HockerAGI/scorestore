@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#E10600">
-<title>SCORE Store | Merch Oficial Off‑Road</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#E10600" />
+  <title>SCORE Store | Merch Oficial Off-Road</title>
 
-<link rel="manifest" href="/site.webmanifest">
-<link rel="icon" href="/assets/icons-score.svg">
-<link rel="apple-touch-icon" href="/assets/logo-score.webp">
+  <meta name="description" content="Tienda oficial SCORE International. Colección Baja 1000 – Edición 2025 y ediciones anteriores." />
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
-<script src="https://js.stripe.com/v3/" async></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://js.stripe.com/v3/" async></script>
 
 <style>
 :root{
   --red:#E10600;
-  --black:#0b0f14;
-  --sand:#f6f6f6;
+  --dark:#0b0f14;
+  --gray:#f4f4f4;
   --green:#00C853;
+  --radius:16px;
+  --shadow:0 10px 30px rgba(0,0,0,.15);
   --title:"Teko",sans-serif;
   --body:"Inter",sans-serif;
 }
@@ -29,229 +34,351 @@
 body{
   margin:0;
   font-family:var(--body);
-  background:var(--sand);
-  padding-bottom:120px;
+  background:#f8f8f8;
+  color:#111;
 }
-header{
+img{max-width:100%;display:block}
+button{font-family:inherit}
+
+.topbar{
   position:fixed;top:0;left:0;right:0;
-  height:76px;
+  height:70px;
   background:#fff;
   border-bottom:3px solid var(--red);
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:0 16px;
-  z-index:10;
+  z-index:100;
 }
-header img{height:46px}
+.brand img{height:46px}
 .cartBtn{
   background:#111;
   color:#fff;
   border:none;
-  font-family:var(--title);
-  font-size:20px;
-  padding:10px 16px;
+  padding:10px 14px;
+  border-radius:12px;
   display:flex;
-  align-items:center;
   gap:8px;
+  align-items:center;
 }
-.cartBtn span{
+.cartCount{
   background:var(--red);
-  font-size:12px;
   padding:2px 6px;
-  border-radius:4px;
+  font-size:12px;
+  border-radius:6px;
 }
+
 .wrap{
   max-width:1200px;
-  margin:0 auto;
-  padding:96px 14px 0;
+  margin:auto;
+  padding:90px 16px 120px;
 }
+
+/* HERO */
 .hero{
   background:url('/assets/hero.webp') center/cover;
-  border-radius:18px;
-  padding:40px 20px;
+  border-radius:20px;
+  min-height:520px;
   color:#fff;
   position:relative;
+  box-shadow:var(--shadow);
 }
-.hero::after{
+.hero::before{
   content:"";
   position:absolute;inset:0;
-  background:rgba(0,0,0,.55);
-  border-radius:18px;
+  background:linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,.85));
+  border-radius:20px;
 }
-.hero *{position:relative}
+.heroContent{
+  position:relative;
+  padding:32px;
+  max-width:600px;
+}
 .hero h1{
   font-family:var(--title);
-  font-size:56px;
-  line-height:.95;
-  margin:0 0 12px;
+  font-size:clamp(48px,9vw,96px);
+  margin:0;
+  line-height:.9;
 }
 .hero p{
   font-size:16px;
-  max-width:520px;
+  margin:16px 0 24px;
+  border-left:4px solid var(--red);
+  padding-left:14px;
+}
+.heroActions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
 }
 .btn{
-  background:#fff;
-  color:#000;
   border:none;
-  padding:14px 26px;
+  border-radius:12px;
+  padding:14px 22px;
   font-weight:800;
-  margin-top:18px;
+  text-transform:uppercase;
 }
+.btn.primary{background:#fff;color:#111}
+.btn.secondary{background:transparent;color:#fff;border:1px solid #fff}
+
+/* GRID */
 .sectionTitle{
-  margin:50px 0 20px;
   font-family:var(--title);
   font-size:42px;
+  margin:60px 0 20px;
 }
-.cardGrid{
+.grid{
   display:grid;
-  grid-template-columns:1fr;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
   gap:20px;
 }
-@media(min-width:700px){
-  .cardGrid{grid-template-columns:repeat(2,1fr)}
-}
 .card{
-  background:#000;
+  background:#111;
+  border-radius:20px;
   color:#fff;
-  border-radius:18px;
-  padding:30px;
-  text-align:center;
+  overflow:hidden;
+  position:relative;
 }
 .card img{
-  max-width:100%;
-  height:100px;
+  width:100%;
+  height:220px;
   object-fit:contain;
-  margin-bottom:20px;
+  background:#000;
 }
+.cardContent{
+  padding:16px;
+  text-align:center;
+}
+.badge{
+  position:absolute;
+  top:12px;left:12px;
+  background:var(--green);
+  color:#000;
+  font-size:11px;
+  font-weight:800;
+  padding:6px 10px;
+  border-radius:6px;
+}
+.card button{
+  margin-top:12px;
+  width:100%;
+}
+
+/* MODAL */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  z-index:200;
+}
+.overlay.active{display:block}
+
 .modal{
   position:fixed;
   inset:0;
   background:#fff;
-  z-index:50;
+  z-index:210;
   transform:translateY(100%);
   transition:.3s;
   display:flex;
   flex-direction:column;
 }
 .modal.active{transform:translateY(0)}
-.modal header{
-  padding:14px 16px;
+.modalHeader{
+  padding:16px;
   border-bottom:1px solid #ddd;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
-.catGrid{
+.modalHeader h3{
+  margin:0;
+  font-family:var(--title);
+  font-size:28px;
+}
+.modalGrid{
   padding:16px;
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:16px;
+  overflow:auto;
+  background:var(--gray);
 }
 .prod{
   background:#fff;
   border-radius:14px;
   padding:12px;
   text-align:center;
-  box-shadow:0 5px 20px rgba(0,0,0,.08);
 }
 .prod img{
-  width:100%;
-  aspect-ratio:3/4;
+  height:180px;
   object-fit:contain;
 }
-.prod h4{
-  font-size:13px;
-  margin:8px 0 4px;
-}
-.price{
+.prod .price{
   color:var(--red);
   font-weight:900;
 }
-.badge{
-  font-size:11px;
-  font-weight:800;
-  margin-bottom:6px;
-  color:var(--green);
+
+/* CARRITO */
+.drawer{
+  position:fixed;
+  right:0;top:0;
+  width:100%;
+  max-width:420px;
+  height:100%;
+  background:#fff;
+  transform:translateX(100%);
+  transition:.3s;
+  z-index:300;
+  display:flex;
+  flex-direction:column;
 }
-select{width:100%;margin:6px 0}
-footer{
-  background:#000;
-  color:#aaa;
-  padding:40px 16px;
-  margin-top:60px;
+.drawer.active{transform:translateX(0)}
+.drawerHeader{
+  padding:16px;
+  border-bottom:1px solid #ddd;
+  display:flex;
+  justify-content:space-between;
+}
+.drawerBody{
+  padding:16px;
+  flex:1;
+  overflow:auto;
+}
+.cartItem{
+  display:flex;
+  gap:10px;
+  background:#f4f4f4;
+  padding:10px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+.cartItem img{
+  width:60px;height:60px;object-fit:contain;
+}
+.drawerFooter{
+  padding:16px;
+  border-top:1px solid #ddd;
+}
+.total{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:12px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <img src="/assets/logo-score.webp" alt="SCORE">
-  <button class="cartBtn" onclick="openCart()">🛒 <span id="cartCount">0</span></button>
+<header class="topbar">
+  <a class="brand" href="/"><img src="/assets/logo-score.webp" alt="SCORE"></a>
+  <button class="cartBtn" onclick="openDrawer()">
+    🛒 <span id="cartCount" class="cartCount">0</span>
+  </button>
 </header>
 
-<div class="wrap">
+<main class="wrap">
 
 <section class="hero">
-  <h1>SCORE STORE</h1>
-  <p>Merch oficial SCORE International. Fabricado en Tijuana por ÚNICO UNIFORMES.</p>
-  <button class="btn" onclick="openCatalog()">VER COLECCIÓN</button>
+  <div class="heroContent">
+    <h1>SCORE<br>INTERNATIONAL</h1>
+    <p>Merch oficial Baja 1000. Edición 2025 y ediciones pasadas.</p>
+    <div class="heroActions">
+      <button class="btn primary" onclick="scrollToGrid()">Comprar colección</button>
+      <button class="btn secondary" onclick="openDrawer()">Ver carrito</button>
+    </div>
+  </div>
 </section>
 
-<h2 class="sectionTitle">CAMPEONATOS</h2>
+<h2 class="sectionTitle" id="grid">Campeonatos</h2>
 
-<div class="cardGrid">
+<div class="grid">
   <div class="card" onclick="openCatalog()">
-    <img src="/assets/logo-baja1000.webp">
-    <button class="btn">VER PRODUCTOS</button>
+    <span class="badge">Disponible</span>
+    <img src="/assets/logo-baja1000.webp" alt="Baja 1000">
+    <div class="cardContent">
+      <button class="btn primary">Ver productos</button>
+    </div>
   </div>
 </div>
 
+</main>
+
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<div class="modal" id="catalog">
+  <div class="modalHeader">
+    <h3>BAJA 1000</h3>
+    <button onclick="closeAll()">✕</button>
+  </div>
+  <div class="modalGrid" id="catalogGrid"></div>
 </div>
 
-<!-- MODAL CATÁLOGO -->
-<div class="modal" id="catalog">
-<header>
-  <strong id="catTitle">BAJA 1000</strong>
-  <button onclick="closeCatalog()">✕</button>
-</header>
-<div class="catGrid" id="catGrid"></div>
+<div class="drawer" id="drawer">
+  <div class="drawerHeader">
+    <h3>Tu equipo</h3>
+    <button onclick="closeAll()">✕</button>
+  </div>
+  <div class="drawerBody" id="cartBody"></div>
+  <div class="drawerFooter">
+    <div class="total" id="cartTotal">$0 MXN</div>
+    <button class="btn primary" style="width:100%">Ir a pagar</button>
+  </div>
 </div>
 
 <script>
-const PRODUCTS = [
-  {id:"chamarra-oficial",name:"Chamarra Oficial Baja 1000",price:1789,img:"/assets/EDICION_2025/chamarra-baja1000.webp",sizes:["S","M","L","XL","2XL"],section:"2025"},
-  {id:"camisa-negra-pits",name:"Camisa Negra Pits",price:769,img:"/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",sizes:["M","L","XL"],section:"2025"},
-  {id:"camisa-gris-pits",name:"Camisa Gris Pits",price:769,img:"/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",sizes:["M","L","XL"],section:"2025"},
-  {id:"camisa-rosa-pits",name:"Camisa Rosa Pits",price:769,img:"/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",sizes:["S","M","L"],section:"2025"},
-  {id:"camiseta-negra",name:"Camiseta Negra",price:489,img:"/assets/EDICION_2025/camiseta-negra-baja1000.webp",sizes:["S","M","L","XL","2XL"],section:"2025"},
-  {id:"hoodie-negra",name:"Hoodie Negra Baja 1000",price:899,img:"/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",sizes:["M","L","XL"],section:"old"},
-  {id:"hoodie-roja",name:"Hoodie Negra con Rojo",price:899,img:"/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",sizes:["L","XL"],section:"old"},
-  {id:"sudadera-negra",name:"Sudadera Negra",price:789,img:"/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp",sizes:["M","L","XL"],section:"old"}
-];
-
 let cart=[];
+const $=id=>document.getElementById(id);
 
-function openCatalog(){
-  const grid=document.getElementById("catGrid");
-  grid.innerHTML="<h3 style='grid-column:1/-1'>COLECCIÓN 2025</h3>";
-  PRODUCTS.filter(p=>p.section==="2025").forEach(p=>render(p));
-  grid.innerHTML+="<h3 style='grid-column:1/-1'>EDICIONES ANTERIORES</h3>";
-  PRODUCTS.filter(p=>p.section==="old").forEach(p=>render(p));
-  document.getElementById("catalog").classList.add("active");
+function scrollToGrid(){
+  document.getElementById('grid').scrollIntoView({behavior:'smooth'});
 }
-function render(p){
-  const grid=document.getElementById("catGrid");
-  grid.innerHTML+=`
-  <div class="prod">
-    <img src="${p.img}">
-    <h4>${p.name}</h4>
-    <div class="price">$${p.price}</div>
-    <select>${p.sizes.map(s=>`<option>${s}</option>`)}</select>
-    <button class="btn">AGREGAR</button>
-  </div>`;
+
+async function openCatalog(){
+  const res=await fetch('/data/catalog.json');
+  const data=await res.json();
+  const grid=$('catalogGrid');
+  grid.innerHTML='';
+  data.products.forEach(p=>{
+    grid.innerHTML+=`
+      <div class="prod">
+        <img src="${p.img}">
+        <strong>${p.name}</strong>
+        <div class="price">$${p.baseMXN}</div>
+        <button class="btn primary" onclick="add('${p.id}','${p.name}',${p.baseMXN},'${p.img}')">Agregar</button>
+      </div>`;
+  });
+  $('catalog').classList.add('active');
+  $('overlay').classList.add('active');
 }
-function closeCatalog(){document.getElementById("catalog").classList.remove("active")}
+
+function add(id,name,price,img){
+  cart.push({id,name,price,img});
+  updateCart();
+  closeAll();
+  openDrawer();
+}
+
+function updateCart(){
+  $('cartCount').innerText=cart.length;
+  $('cartBody').innerHTML=cart.map(i=>`
+    <div class="cartItem">
+      <img src="${i.img}">
+      <div>
+        <strong>${i.name}</strong><br>
+        $${i.price}
+      </div>
+    </div>`).join('');
+  $('cartTotal').innerText=`$${cart.reduce((a,b)=>a+b.price,0)} MXN`;
+}
+
+function openDrawer(){ $('drawer').classList.add('active'); $('overlay').classList.add('active'); }
+function closeAll(){
+  $('drawer').classList.remove('active');
+  $('catalog').classList.remove('active');
+  $('overlay').classList.remove('active');
+}
 </script>
 
 </body>
