@@ -12,7 +12,7 @@
   ],
   "products": [
     {
-      "id": "chamarra-baja1000",
+      "id": "chamarra-oficial",
       "name": "Chamarra Oficial Baja 1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1490,
@@ -22,7 +22,7 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "hoodie-negro-gris",
+      "id": "hoodie-tecnica",
       "name": "Hoodie Técnica Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 899,
@@ -32,7 +32,7 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-negra-25",
+      "id": "camiseta-negra",
       "name": "Camiseta Negra Edición 2025",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 399,
@@ -44,11 +44,31 @@
     {
       "id": "camiseta-cafe",
       "name": "Camiseta Café Desert",
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp", 
+      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "baseMXN": 399,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
       "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "camiseta-cafe-claro",
+      "name": "Camiseta Café Claro Baja",
+      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
+      "baseMXN": 399,
+      "weight_g": 200,
+      "dimensions_cm": [30, 20, 2],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "EDICION_2025"
+    },
+    {
+      "id": "gorra-roja",
+      "name": "Gorra Oficial Roja/Gris",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "baseMXN": 550,
+      "weight_g": 150,
+      "dimensions_cm": [20, 20, 10],
+      "sizes": ["Unitalla"],
       "sectionId": "EDICION_2025"
     },
     {
@@ -92,7 +112,7 @@
       "sectionId": "OTRAS_EDICIONES"
     },
     {
-      "id": "hoodie-negra-wd",
+      "id": "hoodie-negra",
       "name": "Hoodie World Desert Negra",
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
       "baseMXN": 749,
@@ -102,14 +122,24 @@
       "sectionId": "OTRAS_EDICIONES"
     },
     {
-      "id": "gorra-roja",
-      "name": "Gorra Oficial Roja/Gris",
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "baseMXN": 550,
-      "weight_g": 150,
-      "dimensions_cm": [20, 20, 10],
-      "sizes": ["Unitalla"],
-      "sectionId": "EDICION_2025"
+      "id": "hoodie-roja",
+      "name": "Hoodie World Desert Roja",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
+      "baseMXN": 749,
+      "weight_g": 600,
+      "dimensions_cm": [35, 30, 8],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "OTRAS_EDICIONES"
+    },
+    {
+      "id": "sudadera-negra",
+      "name": "Sudadera Básica Negra",
+      "img": "/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp",
+      "baseMXN": 699,
+      "weight_g": 500,
+      "dimensions_cm": [35, 28, 6],
+      "sizes": ["S", "M", "L", "XL"],
+      "sectionId": "OTRAS_EDICIONES"
     }
   ]
 }
