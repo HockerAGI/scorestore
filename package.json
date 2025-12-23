@@ -1,35 +1,18 @@
 {
   "name": "scorestore",
   "version": "1.0.0",
-  "description": "Tienda oficial SCORE International · Ediciones limitadas y artículos de colección.",
+  "description": "Tienda oficial SCORE Store · Netlify + Stripe + Envia",
   "main": "index.html",
   "scripts": {
-    "start": "netlify dev",
-    "build": "echo 'No build needed (static site)'",
-    "format": "prettier --write .",
-    "lint": "eslint .",
-    "test": "echo \"No test configured\""
+    "build": "echo 'No build needed for static site'",
+    "start": "netlify dev"
   },
-  "keywords": [
-    "score",
-    "ecommerce",
-    "netlify",
-    "stripe",
-    "pwa",
-    "baja1000",
-    "racing"
-  ],
-  "author": "SCORE Store",
-  "license": "MIT",
   "dependencies": {
-    "stripe": "^12.19.0"
+    "stripe": "^12.0.0"
   },
-  "devDependencies": {
-    "netlify-cli": "^15.6.0",
-    "prettier": "^3.1.0",
-    "eslint": "^8.56.0"
-  },
+  "devDependencies": {},
   "engines": {
-    "node": ">=18.0.0"
-  }
+    "node": ">=18"
+  },
+  "license": "MIT"
 }
