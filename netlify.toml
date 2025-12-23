@@ -1,28 +1,43 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  command = "npm run build"
 
-[build.environment]
-  NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Cache agresivo para imágenes (1 año)
+# ✅ Cache fuerte para assets versionados (imagenes, iconos, etc.)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Sin cache para Service Worker y HTML (Actualización instantánea)
+# ✅ Datos (cambian más seguido) — cache corto + SWR
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=60, stale-while-revalidate=600"
+
+# ✅ Archivos PWA — siempre frescos (para que SW/manifest se actualicen)
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
+  for = "/site.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# ✅ HTML — sin cache agresivo (evita “stale shell”)
+[[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-cache"
+
+# ✅ Seguridad / buenas prácticas
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
