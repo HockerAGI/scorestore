@@ -102,6 +102,16 @@
       "sectionId": "PITS_CREW"
     },
     {
+      "id": "camisa-negra-rojo",
+      "name": "Camisa Pits Negro/Rojo",
+      "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
+      "baseMXN": 899,
+      "weight_g": 300,
+      "dimensions_cm": [35, 25, 5],
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "sectionId": "OTRAS_EDICIONES"
+    },
+    {
       "id": "hoodie-rosa",
       "name": "Hoodie World Desert Rosa",
       "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
