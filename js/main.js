@@ -13,8 +13,27 @@ const PRODUCTS = [
 
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let ship = { method: null, cost: 0 };
+let appliedPromo = null;
+let promoRules = [];
+
 const USD_RATE = 17.50;
 const $ = id => document.getElementById(id);
+
+// =======================
+// Promociones
+// =======================
+
+async function loadPromos() {
+  try {
+    const res = await fetch('/data/promos.json');
+    if (res.ok) {
+      const data = await res.json();
+      promoRules = data.rules || [];
+    }
+  } catch (e) {
+    console.warn('No se pudieron cargar las promociones');
+  }
+}
 
 // =======================
 // Catálogo y Productos
@@ -120,7 +139,7 @@ async function quoteShipping() {
 // =======================
 
 function updateCart(resetShip = true) {
-  const method = $('shipMethod').value;
+  const method = $('shipMethod')?.value;
   ship.method = method;
 
   if (resetShip) {
@@ -128,22 +147,41 @@ function updateCart(resetShip = true) {
     else if (method === 'pickup') ship.cost = 0;
     else if (method === 'mx') {
       ship.cost = 0;
-      if ($('cp').value.length === 5) quoteShipping();
+      if ($('cp')?.value.length === 5) quoteShipping();
     }
   }
 
-  $('shipForm').style.display = (method === 'mx') ? 'block' : 'none';
+  if ($('shipForm')) {
+    $('shipForm').style.display = (method === 'mx') ? 'block' : 'none';
+  }
 
-  const sub = cart.reduce((a, b) => a + (b.price * b.qty), 0);
-  const total = sub + ship.cost;
+  let sub = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+  let discount = 0;
+
+  if (appliedPromo) {
+    if (appliedPromo.type === 'percent') {
+      discount = sub * appliedPromo.value;
+    } else if (appliedPromo.type === 'fixed_mxn') {
+      discount = appliedPromo.value;
+    } else if (appliedPromo.type === 'free_shipping') {
+      ship.cost = 0;
+    } else if (appliedPromo.type === 'free_total') {
+      sub = 0;
+      ship.cost = 0;
+    }
+  }
+
+  let total = Math.max(0, sub - discount + ship.cost);
   const usd = (total / USD_RATE).toFixed(2);
 
   $('cartCount').innerText = cart.reduce((a, b) => a + b.qty, 0);
-  $('lnSub').innerText = `$${sub} MXN`;
-  $('lnShip').innerText = `$${ship.cost} MXN`;
-  $('lnTotal').innerText = `$${total} MXN`;
+  $('lnSub').innerText = `$${sub.toFixed(2)} MXN`;
+  $('lnShip').innerText = `$${ship.cost.toFixed(2)} MXN`;
+  $('lnTotal').innerText = `$${total.toFixed(2)} MXN`;
   $('lnUsd').innerText = `aprox $${usd} USD`;
-  $('barTotal').innerText = `$${total}`;
+
+  if ($('barTotal')) $('barTotal').innerText = `$${total.toFixed(2)}`;
+  if ($('lnPromo')) $('lnPromo').innerText = discount > 0 ? `Descuento aplicado: -$${discount.toFixed(2)} MXN` : '';
 
   $('cartBody').innerHTML = cart.map((i, x) => `
     <div style="display:flex; gap:10px; margin-bottom:12px; background:#f4f4f4; padding:10px; border-radius:8px;">
@@ -159,7 +197,7 @@ function updateCart(resetShip = true) {
     </div>`).join('') || '<div style="text-align:center; padding:40px 20px; opacity:0.5;">Tu equipo está vacío</div>';
 
   const hasItems = cart.length > 0;
-  $('paybar').classList.toggle('visible', hasItems);
+  $('paybar')?.classList.toggle('visible', hasItems);
 
   let valid = hasItems && method;
   if (method === 'mx') {
@@ -248,6 +286,17 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeAll();
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPromos();
   updateCart();
+
+  const promoInput = document.getElementById('promoInput');
+  if (promoInput) {
+    promoInput.addEventListener('input', () => {
+      const code = promoInput.value.trim().toUpperCase();
+      const rule = promoRules.find(p => p.code === code && p.active);
+      appliedPromo = rule || null;
+      updateCart();
+    });
+  }
 });
