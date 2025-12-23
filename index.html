@@ -11,7 +11,7 @@
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.png" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
   <script src="https://js.stripe.com/v3/"></script>
 
@@ -21,17 +21,14 @@
 
   <style>
     :root {
-      /* PALETA BAJA RACING */
+      /* --- COLORES & TEMA --- */
       --fontTitle: "Teko", sans-serif;
       --fontBody: "Inter", sans-serif;
       --red: #E10600;
       --carbon: #0b0f14;
       --sand: #f8f8f8;
       --green: #00C853; 
-      
-      /* Overlay Tierra (Transparencia equilibrada) */
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.85) 0%, rgba(40, 20, 10, 0.65) 100%);
-      
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.80) 0%, rgba(40, 20, 10, 0.60) 100%);
       --shadow: 0 15px 40px rgba(0,0,0,0.15);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -44,35 +41,24 @@
     }
     body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
 
-    /* --- 1. FONDO GENERAL (Visible) --- */
+    /* --- FONDO FIJO --- */
     .page-bg {
       position: fixed; inset: 0; z-index: -10; pointer-events: none;
-      background-image: url('/assets/fondo-pagina-score.png');
+      background-image: url('/assets/fondo-pagina-score.webp');
       background-size: cover; background-position: center; opacity: 0.5;
     }
 
-    /* --- 2. ANIMACIÓN POLVO (Corregida GPU) --- */
-    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -5; overflow: hidden; opacity: 0.5; }
+    /* --- ANIMACIÓN POLVO --- */
+    .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -5; overflow: hidden; opacity: 0.5; mix-blend-mode: multiply; }
     .dust {
       position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      /* Patrón de ruido SVG ligero */
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E");
-      animation: grain 8s steps(10) infinite;
-      mix-blend-mode: multiply; will-change: transform;
+      animation: grain 8s steps(10) infinite; will-change: transform;
     }
-    @keyframes grain { 
-      0% { transform: translate3d(0,0,0); } 
-      100% { transform: translate3d(-10%,-10%,0); } 
-    }
+    @keyframes grain { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-10%,-10%,0); } }
 
-    /* --- CONTENEDOR PRINCIPAL (Anti-Deformación) --- */
-    .wrap { 
-      width: min(1200px, 94vw); margin: 0 auto; 
-      padding-top: 100px; /* Espacio para header */
-      position: relative; z-index: 1;
-    }
-
-    /* --- UI UTILS --- */
+    /* --- UI GENERALE --- */
+    .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 100px; position: relative; z-index: 1; }
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); }
     .overlay.active { opacity: 1; pointer-events: auto; }
     
@@ -91,7 +77,8 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 max(20px, 4vw); box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
-    .brand img { height: 52px; width: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+    /* Logo Header Controlado */
+    .brand img { height: 50px; width: auto; display: block; object-fit: contain; }
     
     .navRight { display: flex; align-items: center; gap: 12px; }
     .pill {
@@ -113,57 +100,67 @@
     /* --- HERO --- */
     .hero {
       position: relative; border-radius: 20px; overflow: hidden;
-      min-height: 540px; display: flex; align-items: center;
-      box-shadow: var(--shadow); margin-bottom: 50px; background: #000;
+      min-height: 520px; display: flex; align-items: center;
+      background: #000; color: #fff; margin-bottom: 50px;
+      box-shadow: var(--shadow);
     }
     .heroBg { 
-      position: absolute; inset: 0; background: url('/assets/hero.png') center/cover; 
+      position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover; 
       transform: scale(1.02);
     }
     .heroOverlay { 
       position: absolute; inset: 0; background: var(--cafeOverlay); 
       mix-blend-mode: multiply; opacity: 0.75; 
     }
-    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 750px; color: #fff; }
+    .heroContent { position: relative; z-index: 2; padding: 40px; max-width: 700px; }
     
     .tagline {
       background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle);
-      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 12px;
+      font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 15px;
     }
     .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.85;
-      margin: 0 0 16px; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+      font-family: var(--fontTitle); font-size: clamp(52px, 11vw, 100px); line-height: 0.9;
+      margin: 0 0 20px; text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
     .sub {
-      font-size: 17px; line-height: 1.5; color: rgba(255,255,255,0.95); margin-bottom: 24px;
-      border-left: 4px solid var(--red); padding-left: 16px; font-weight: 500; max-width: 600px;
+      font-size: 18px; line-height: 1.5; color: #eee; margin-bottom: 30px;
+      border-left: 4px solid var(--red); padding-left: 20px; font-weight: 500;
     }
 
     .ctaRow { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
     .btn {
       border: none; cursor: pointer; font-weight: 900; text-transform: uppercase;
-      border-radius: 12px; padding: 14px 28px; font-size: 14px; letter-spacing: 0.5px;
-      transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 8px;
-      text-decoration: none;
+      border-radius: 10px; padding: 15px 30px; font-size: 14px; letter-spacing: 1px;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
     }
     .btn:active { transform: scale(0.96); }
     .btn.primary { background: #fff; color: #111; }
-    .btn.secondary { background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+    .btn.secondary { background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+
+    /* SELLO WORLD DESERT (Estratégico) */
+    .seal-logo {
+      position: absolute; bottom: 30px; right: 30px; width: 100px; height: auto;
+      opacity: 0.9; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.4));
+      transform: rotate(-5deg); z-index: 3; pointer-events: none;
+    }
+    @media (max-width: 768px) { .seal-logo { width: 70px; bottom: 20px; right: 20px; } }
 
     .heroChips { display: flex; gap: 10px; flex-wrap: wrap; }
     .heroChip {
       background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-      padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
-      text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #fff;
+      padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 800;
+      text-transform: uppercase; color: #fff; display: flex; align-items: center; gap: 6px;
     }
-    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 2.5; }
+    /* Icono Check SVG */
+    .heroChip svg { width: 14px; height: 14px; stroke: var(--green); stroke-width: 3; }
 
     /* --- SECCIONES --- */
     .secHeader {
-      display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px;
+      display: flex; align-items: baseline; justify-content: space-between; 
+      margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 10px;
     }
-    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 42px; text-transform: uppercase; color: #111; line-height: 1; }
-    .meta { font-weight: 900; color: #888; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    .secHeader h2 { margin: 0; font-family: var(--fontTitle); font-size: 48px; color: #111; line-height: 1; }
+    .meta { font-weight: 900; color: #777; font-size: 14px; letter-spacing: 2px; }
 
     /* --- GRID TARJETAS --- */
     .grid {
@@ -171,32 +168,32 @@
       gap: 20px; margin-bottom: 60px; z-index: 2; position: relative;
     }
     .card {
-      position: relative; height: 340px; border-radius: 18px; overflow: hidden;
-      background: #0b0f14; cursor: pointer; transition: transform 0.3s var(--ease);
-      border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: relative; height: 350px; border-radius: 18px; overflow: hidden;
+      background: #0b0f14; cursor: pointer; transition: transform 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.1);
     }
-    .card:hover { transform: translateY(-6px); }
+    .card:hover { transform: translateY(-5px); }
     
     .cardBg {
       position: absolute; inset: 0; opacity: 0.6;
-      background: url('/assets/baja1000-texture.png') center/cover;
+      background: url('/assets/baja1000-texture.webp') center/cover;
     }
     .cardContent {
-      position: absolute; inset: 0; padding: 20px;
+      position: absolute; inset: 0; padding: 25px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .cardLogo { width: 85%; height: auto; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
+    .cardLogo { width: 85%; height: auto; object-fit: contain; margin-bottom: 30px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
     
     .statusBadge {
       position: absolute; top: 15px; left: 15px; background: var(--green); color: #000;
-      font-weight: 900; font-size: 10px; padding: 4px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
+      font-weight: 900; font-size: 11px; padding: 5px 10px; border-radius: 4px; letter-spacing: 1px;
     }
     .statusBadge.soon { background: #333; color: #fff; border: 1px solid #555; }
 
     .viewBtn {
-      background: #fff; color: #000; border: none; padding: 10px 24px;
+      background: #fff; color: #000; border: none; padding: 12px 25px;
       font-weight: 900; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-      font-size: 12px; letter-spacing: 1px;
+      font-size: 14px; letter-spacing: 1px;
     }
     .card:hover .viewBtn { background: var(--red); color: #fff; }
 
@@ -210,10 +207,10 @@
       background: #f9f9f9; padding: 24px; border-radius: 14px;
       display: flex; flex-direction: column; justify-content: center;
     }
-    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #888; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .hTxt { font-weight: 800; font-size: 15px; margin: 0; line-height: 1.4; color: #333; }
+    .hTitle { font-weight: 900; font-size: 12px; letter-spacing: 1px; color: #888; margin-bottom: 10px; text-transform: uppercase; }
+    .hTxt { font-weight: 800; font-size: 16px; margin: 0; line-height: 1.4; color: #333; }
 
-    /* --- PARTNERS (Logos Corregidos) --- */
+    /* --- PARTNERS --- */
     .partners {
       text-align: center; padding: 40px 20px; background: #fff; 
       border-radius: 20px; border-bottom: 4px solid var(--red); margin-bottom: 60px;
@@ -222,33 +219,30 @@
       display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; 
       margin-top: 25px; align-items: center; 
     }
-    /* Control estricto de tamaño para evitar deformación */
+    /* Control de Logos para que no se deformen */
     .pLogo { 
-      width: auto; height: auto; 
-      max-height: 50px; max-width: 150px; 
-      object-fit: contain; 
-      opacity: 0.6; filter: grayscale(1); transition: 0.3s; 
+      width: auto; height: auto; max-height: 55px; max-width: 160px; 
+      object-fit: contain; opacity: 0.6; filter: grayscale(1); transition: 0.3s; 
     }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
     /* --- FOOTER --- */
-    footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 4px solid var(--red); }
+    footer { background: #080b10; color: #fff; padding: 60px 0; margin-top: 60px; border-top: 5px solid var(--red); }
     .footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; } }
     
-    .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; }
-    .footBlock p { color: #aaa; font-size: 13px; line-height: 1.6; margin: 0; }
+    .footBlock h4 { font-family: var(--fontTitle); font-size: 32px; margin: 0 0 15px; color: #fff; }
+    .footBlock p { color: #aaa; font-size: 14px; line-height: 1.6; margin: 0; }
     
-    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+    details.fLegal { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
     details.fLegal summary {
-      padding: 16px; font-weight: 700; cursor: pointer; list-style: none;
+      padding: 18px; font-weight: 700; cursor: pointer; list-style: none;
       display: flex; justify-content: space-between; align-items: center; color: #eee;
     }
-    summary svg { width: 20px; height: 20px; stroke: var(--green); stroke-width: 2.5; }
     .fLegalPill { font-size: 10px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; color: #aaa; }
-    .legalContent { padding: 0 16px 16px; color: #bbb; font-size: 13px; line-height: 1.6; }
+    .legalContent { padding: 0 18px 18px; color: #bbb; font-size: 13px; line-height: 1.6; }
 
-    /* --- DRAWER CARRITO (Inputs Visibles) --- */
+    /* --- DRAWER CARRITO --- */
     .drawer {
       position: fixed; top: 0; right: 0; width: min(450px, 100vw); height: 100%;
       background: #fff; z-index: 200; transform: translateX(105%); transition: 0.3s var(--ease);
@@ -259,24 +253,26 @@
     .dHead { 
       padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff;
     }
-    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 28px; text-transform: uppercase; color: #111; }
+    .dTitle { margin: 0; font-family: var(--fontTitle); font-size: 30px; text-transform: uppercase; color: #111; }
+    
+    /* Botón Cerrar (Generado con CSS para no depender de img) */
     .closeBtn {
-      background: #f0f0f0; border: 2px solid #ddd; font-size: 20px; cursor: pointer;
+      background: #f0f0f0; border: 2px solid #ddd; font-size: 24px; cursor: pointer;
       width: 44px; height: 44px; border-radius: 50%; color: #000;
       display: flex; align-items: center; justify-content: center; font-weight: bold;
+      line-height: 1;
     }
 
     .dBody { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
     .dFoot { padding: 20px; background: #f8f8f8; border-top: 1px solid #ddd; }
-    .sumRow { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #333; font-weight: 600; }
-    .sumRow.total { font-size: 18px; color: #000; font-weight: 900; margin-top: 12px; border-top: 1px solid #ccc; padding-top: 10px; }
+    .sumRow { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #333; font-weight: 600; }
+    .sumRow.total { font-size: 20px; color: #000; font-weight: 900; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; }
 
-    /* INPUTS FORZADOS A NEGRO */
+    /* Inputs Visibles */
     input, select {
       width: 100%; height: 50px; border: 1px solid #aaa; border-radius: 8px;
       padding: 0 15px; font-size: 16px !important; margin-bottom: 12px; 
-      background-color: #ffffff !important; 
-      color: #000000 !important; 
+      background-color: #ffffff !important; color: #000000 !important; 
       appearance: none; font-family: var(--fontBody); font-weight: 500;
     }
     input::placeholder { color: #666; opacity: 1; }
@@ -287,7 +283,7 @@
       font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; text-transform: uppercase;
     }
 
-    /* MODAL CATÁLOGO (Vertical para Móvil) */
+    /* --- MODAL CATÁLOGO --- */
     .modal {
       position: fixed; inset: 0; background: #fff; z-index: 250;
       transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -301,14 +297,13 @@
     
     .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; background: #f9f9f9; }
     
-    /* PRODUCT CARD VERTICAL (3:4 Ratio para celular) */
+    /* Formato Vertical para Ropa */
     .prodCard { 
       border: 1px solid #eee; padding: 12px; border-radius: 12px; text-align: center; background: #fff;
       display: flex; flex-direction: column; justify-content: space-between;
     }
     .prodCard img { 
-      width: 100%; aspect-ratio: 3/4; /* Formato Vertical */
-      object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply;
+      width: 100%; aspect-ratio: 3/4; object-fit: contain; margin-bottom: 12px; mix-blend-mode: multiply;
     }
 
     .paybar {
@@ -331,7 +326,7 @@
     <div class="toast" id="toast">Notificación</div>
 
     <header class="topbar">
-      <a href="#" class="brand"><img src="/assets/logo-score.png" alt="SCORE"></a>
+      <a href="#" class="brand"><img src="/assets/logo-score.webp" alt="SCORE"></a>
       <div class="navRight">
         <div class="pill">MX + <b>TIJUANA</b></div>
         <button class="cartTrigger" onclick="openDrawer()">
@@ -344,6 +339,9 @@
     <section class="hero">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
+      
+      <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship">
+
       <div class="heroContent">
         <div class="tagline">OFICIAL MERCH</div>
         <h1>SCORE INTERNATIONAL</h1>
@@ -356,8 +354,12 @@
           <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
         </div>
         <div class="heroChips">
-          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
-          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
+          <div class="heroChip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg> HECHO EN TIJUANA
+          </div>
+          <div class="heroChip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO
+          </div>
         </div>
       </div>
     </section>
@@ -368,35 +370,35 @@
     </div>
 
     <div class="grid">
-      <div class="card" onclick="openCatalog('EDICION_2025', 'Baja 1000')">
+      <div class="card" onclick="openCatalog('EDICION_2025', 'Colección 2025')">
         <div class="cardBg"></div>
         <div class="cardContent">
           <span class="statusBadge">ACTIVO</span>
-          <img src="/assets/logo-baja1000.png" class="cardLogo" alt="Baja 1000">
+          <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000">
           <button class="viewBtn">Ver Productos</button>
         </div>
       </div>
-      <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
-        <div class="cardBg"></div>
+      <div class="card" onclick="openCatalog('PITS_CREW', 'Equipo de Pits')">
+        <div class="cardBg" style="filter: hue-rotate(180deg);"></div>
         <div class="cardContent">
-          <span class="statusBadge soon">PRÓXIMAMENTE</span>
-          <img src="/assets/logo-baja500.png" class="cardLogo" alt="Baja 500">
-          <button class="viewBtn">Ver Info</button>
+          <span class="statusBadge">OFICIAL</span>
+          <img src="/assets/logo-score.webp" class="cardLogo" alt="Score">
+          <button class="viewBtn">Ver Equipo</button>
         </div>
       </div>
-      <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
-        <div class="cardBg"></div>
+      <div class="card" onclick="openCatalog('OTRAS_EDICIONES', 'World Desert')">
+        <div class="cardBg" style="filter: sepia(1);"></div>
         <div class="cardContent">
-          <span class="statusBadge soon">PRÓXIMAMENTE</span>
-          <img src="/assets/logo-baja400.png" class="cardLogo" alt="Baja 400">
-          <button class="viewBtn">Ver Info</button>
+          <span class="statusBadge">CLÁSICOS</span>
+          <img src="/assets/logo-world-desert.webp" class="cardLogo" alt="World Desert">
+          <button class="viewBtn">Ver Colección</button>
         </div>
       </div>
       <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
         <div class="cardBg"></div>
         <div class="cardContent">
           <span class="statusBadge soon">PRÓXIMAMENTE</span>
-          <img src="/assets/logo-sf250.png" class="cardLogo" alt="San Felipe 250">
+          <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250">
           <button class="viewBtn">Ver Info</button>
         </div>
       </div>
@@ -405,11 +407,11 @@
     <div class="partners">
       <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px;">OFFICIAL PARTNERS</h3>
       <div class="pGrid">
-        <img src="/assets/logo-ford.png" class="pLogo" alt="Ford" onerror="this.style.display='none'">
-        <img src="/assets/logo-bfgodrich.png" class="pLogo" alt="BFGoodrich" onerror="this.style.display='none'">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" onerror="this.style.display='none'">
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" onerror="this.style.display='none'">
         <img src="/assets/logo-monster.png" class="pLogo" alt="Monster" onerror="this.style.display='none'">
-        <img src="/assets/logo-unico.png" class="pLogo" alt="Unico" onerror="this.style.display='none'">
-        <img src="/assets/logo-rzr.png" class="pLogo" alt="RZR" onerror="this.style.display='none'">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" onerror="this.style.display='none'">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" onerror="this.style.display='none'">
       </div>
     </div>
 
@@ -421,9 +423,18 @@
         </div>
         <div class="footBlock">
           <h4 style="color:var(--red);">LEGAL</h4>
-          <details class="fLegal"><summary>Términos y Condiciones <span class="fLegalPill">LEER</span></summary><div class="legalContent"><p>Operado por ÚNICO UNIFORMES.</p></div></details>
-          <details class="fLegal"><summary>Envíos <span class="fLegalPill">LEER</span></summary><div class="legalContent"><p>Nacional (Cotizar) / Local Tijuana ($200) / Pickup (Gratis).</p></div></details>
-          <details class="fLegal"><summary>Devoluciones <span class="fLegalPill">LEER</span></summary><div class="legalContent"><p>Solo defectos de fábrica (7 días).</p></div></details>
+          <details class="fLegal">
+            <summary>Términos y Condiciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent"><p>Operado por ÚNICO UNIFORMES.</p></div>
+          </details>
+          <details class="fLegal">
+            <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent"><p>Nacional (Cotizar) / Local Tijuana ($200) / Pickup (Gratis).</p></div>
+          </details>
+          <details class="fLegal">
+            <summary>Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent"><p>Solo defectos de fábrica (7 días).</p></div>
+          </details>
         </div>
       </div>
     </footer>
@@ -486,17 +497,10 @@
   <script>
     const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
     
-    // Productos Actualizados con TODOS los items (incluyendo los faltantes)
+    // PRODUCTOS FALLBACK (Deben coincidir con catalog.json)
     const PRODUCTS = [
-      { id:"chamarra-oficial", name:"Chaqueta Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"camisa-pits", name:"Camisa de Pits Baja 1000", price:899, img:"/assets/EDICION_2025/camisa-pits-baja1000.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"camiseta-negra", name:"Camiseta SCORE Baja 1000 Negra", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"camiseta-azul", name:"Camiseta SCORE Baja 1000 Azul", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-azul.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"camiseta-cafe", name:"Camiseta SCORE Baja 1000 Café", price:399, img:"/assets/EDICION_2025/camiseta-baja1000-cafe.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"sudadera-cafe", name:"Sudadera World Desert Café", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-cafe.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"sudadera-negra", name:"Sudadera World Desert Negra", price:749, img:"/assets/EDICION_2025/sudadera-world-desert-negra.jpg", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" },
-      { id:"sudadera-roja", name:"Sudadera World Desert Roja", price:749, img:"/assets/OTRAS_EDICIONES/sudadera-world-desert-roja.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" },
-      { id:"sudadera-rosa", name:"Sudadera World Desert Rosa", price:749, img:"/assets/OTRAS_EDICIONES/sudadera-world-desert-rosa.jpg", sizes:["S","M","L","XL"], section:"EDICION_2025" }
+      // Si el JSON falla, estos se usan. Deben tener las rutas webp correctas.
+      { id:"chamarra-baja1000", name:"Chamarra Oficial Baja 1000", price:1490, img:"/assets/EDICION_2025/chamarra-baja1000.webp", sizes:["S","M","L","XL","2XL"], section:"EDICION_2025" }
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -515,23 +519,24 @@
         }
       } catch(e) { console.log('Usando local'); }
 
-      if(!items.length) items = PRODUCTS.filter(p => p.section === section);
+      // Si no carga JSON o está vacío
+      if(!items.length && section === 'EDICION_2025') items = PRODUCTS.filter(p => p.section === section);
 
       const grid = $('catGrid');
       
       if(!items.length) {
-        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3></div>`;
+        grid.innerHTML = `<div style='grid-column:1/-1; text-align:center; padding:60px 20px; color:#888;'><h3 style="margin:0; text-transform:uppercase;">Próximamente</h3><p style="font-size:14px; margin-top:10px;">Estamos preparando el equipo.</p></div>`;
       } else {
         grid.innerHTML = items.map(p => `
           <div class="prodCard">
-            <img src="${p.img || p.image}" onerror="this.src='/assets/logo-score.png'">
+            <img src="${p.img}" onerror="this.src='/assets/logo-score.webp'">
             <div style="font-weight:700; font-size:14px; margin:5px 0;">${p.name}</div>
             <div style="color:var(--red); font-weight:900;">$${p.baseMXN || p.price}</div>
             <select id="size_${p.id}" style="margin:5px 0; height:36px; font-size:14px !important;">
               ${(p.sizes || ['Unitalla']).map(s=>`<option>${s}</option>`)}
             </select>
             <button class="btn primary" style="width:100%; justify-content:center; padding:8px;" 
-              onclick="add('${p.id}','${p.name}',${p.baseMXN || p.price},'${p.img || p.image}')">AGREGAR</button>
+              onclick="add('${p.id}','${p.name}',${p.baseMXN || p.price},'${p.img}')">AGREGAR</button>
           </div>
         `).join('');
       }
@@ -580,7 +585,7 @@
       ship.method = method;
       
       if(resetShip) {
-        if(method === 'tj') ship.cost = 200; // $200 MXN TIJUANA
+        if(method === 'tj') ship.cost = 200; 
         else if(method === 'pickup') ship.cost = 0;
         else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
       }
