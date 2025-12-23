@@ -1,20 +1,35 @@
 {
   "name": "scorestore",
   "version": "1.0.0",
-  "description": "Tienda oficial SCORE Store - Baja 1000",
+  "description": "Tienda oficial SCORE International · Ediciones limitadas y artículos de colección.",
+  "main": "index.html",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "generate:sw": "workbox generateSW workbox-config.js"
+    "start": "netlify dev",
+    "build": "echo 'No build needed (static site)'",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "test": "echo \"No test configured\""
   },
+  "keywords": [
+    "score",
+    "ecommerce",
+    "netlify",
+    "stripe",
+    "pwa",
+    "baja1000",
+    "racing"
+  ],
+  "author": "SCORE Store",
+  "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.3.1",
-    "sharp": "^0.33.1",
-    "stripe": "^12.15.0"
+    "stripe": "^12.19.0"
   },
   "devDependencies": {
-    "vite": "^5.0.11",
-    "vite-plugin-pwa": "^0.15.1",
-    "workbox-cli": "^7.0.0"
+    "netlify-cli": "^15.6.0",
+    "prettier": "^3.1.0",
+    "eslint": "^8.56.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
