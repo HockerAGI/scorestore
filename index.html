@@ -2,41 +2,210 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
+  <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
+  
+  <meta property="og:title" content="SCORE Store | Merch Oficial Off-Road" />
+  <meta property="og:description" content="Colección oficial Baja 1000 y World Desert Championship." />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+  <meta property="og:type" content="website" />
+
+  <title>SCORE Store | Merch Oficial Off-Road</title>
+
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/style.css" />
-  <link rel="icon" href="/assets/icon-192.png" />
-  <title>SCORE Store · Oficial</title>
+  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="https://js.stripe.com/v3/" async></script>
 </head>
+
 <body>
-  <header>
-    <h1>SCORE Store · Edición Baja 1000</h1>
+  <div class="page-bg"></div>
+  <div class="dust-container"><div class="dust"></div></div>
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast">Notificación</div>
+
+  <header class="topbar">
+    <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE logo" width="130" height="50" loading="lazy" /></a>
+    <div class="navRight">
+      <div class="pill">MX + <b>TIJUANA</b></div>
+      <button class="cartTrigger" onclick="openDrawer()" aria-label="Abrir Carrito">
+        <svg width="24" height="24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span id="cartCount" class="cartCount">0</span>
+      </button>
+    </div>
   </header>
 
-  <main>
-    <section>
-      <h2>Colecciones</h2>
-      <div id="sectionsGrid" class="product-grid"></div>
+  <main class="wrap">
+    <section class="hero">
+      <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
+      <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" width="120" height="120" loading="lazy" />
+      <div class="heroContent">
+        <div class="tagline">MERCH OFICIAL</div>
+        <h1>SCORE INTERNATIONAL</h1>
+        <p class="sub">Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Colección de alto rendimiento y durabilidad garantizada.</p>
+        <div class="ctaRow">
+          <a href="#grid" class="btn primary" onclick="smoothScroll(event, 'grid')">COMPRAR COLECCIÓN</a>
+          <button class="btn secondary" onclick="openDrawer()">VER MI CARRITO</button>
+        </div>
+        <div class="heroChips">
+          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
+          <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
+        </div>
+      </div>
     </section>
 
-    <section>
-      <h2 id="catTitle">Productos</h2>
-      <div id="catGrid" class="product-grid"></div>
-    </section>
+    <div class="secHeader">
+      <h2>CAMPEONATOS</h2>
+      <div class="meta">World Desert Championship</div>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="card" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge">DISPONIBLE</span>
+          <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" width="200" height="100" loading="lazy">
+          <button class="viewBtn">Ver Productos</button>
+        </div>
+      </div>
+
+      <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge soon">PRÓXIMAMENTE</span>
+          <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" width="200" height="100" loading="lazy">
+          <button class="viewBtn">Ver Detalles</button>
+        </div>
+      </div>
+
+      <!-- Puedes añadir más cards si lo deseas -->
+    </div>
+<div class="partners">
+      <h3 class="meta">OFFICIAL PARTNERS</h3>
+      <div class="pGrid">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" width="150" height="50" loading="lazy">
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" width="150" height="50" loading="lazy">
+        <img src="/assets/logo-monster.png" class="pLogo" alt="Monster" width="150" height="50" loading="lazy">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" width="150" height="50" loading="lazy">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" width="150" height="50" loading="lazy">
+      </div>
+    </div>
   </main>
 
   <footer>
-    &copy; 2025 SCORE International · Todos los derechos reservados
+    <div class="footWrap">
+      <div class="footBlock">
+        <h4>ÚNICO UNIFORMES</h4>
+        <p>Fabricante y Patrocinador Oficial de SCORE International.<br>
+        Palermo 6106 Interior JK, Tijuana B.C.<br>
+        <b>ventas.unicotextil@gmail.com</b></p>
+      </div>
+      <div class="footBlock">
+        <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
+        <details class="fLegal">
+          <summary>Términos y Privacidad</summary>
+          <div class="legalContent">
+            <strong>Privacidad</strong>
+            <p>Sus datos personales (nombre, dirección) son utilizados únicamente para el procesamiento y envío de su pedido.</p>
+            <strong>Seguridad</strong>
+            <p>Transacciones seguras vía Stripe con encriptación SSL.</p>
+          </div>
+        </details>
+        <details class="fLegal">
+          <summary>Política de Envíos</summary>
+          <div class="legalContent">
+            <strong>Tijuana</strong>
+            <p>Tarifa plana $200 MXN o Recolección gratuita en fábrica.</p>
+            <strong>México</strong>
+            <p>Envíos nacionales cotizados en tiempo real. 3-5 días hábiles.</p>
+          </div>
+        </details>
+        <details class="fLegal">
+          <summary>Devoluciones</summary>
+          <div class="legalContent">
+            <strong>Garantía</strong>
+            <p>Solo cambios por defecto de fábrica dentro de los primeros 7 días.</p>
+            <strong>Tallas</strong>
+            <p>Ediciones limitadas. Verifique su talla antes de comprar.</p>
+          </div>
+        </details>
+      </div>
+    </div>
   </footer>
 
-  <!-- UI overlays -->
-  <div id="modalCatalog" class="modal"></div>
-  <div id="drawer" class="drawer"></div>
-  <div id="overlay" class="overlay" onclick="closeAll()"></div>
-  <div id="toast" class="toast"></div>
+  <!-- Drawer del Carrito -->
+  <aside class="drawer" id="drawer">
+    <div class="dHead">
+      <h3 class="dTitle">TU EQUIPO</h3>
+      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar carrito">&times;</button>
+    </div>
+    <div class="dBody" id="cartBody"></div>
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0 MXN</span></div>
+      <div class="sumRow"><span>Envío:</span> <span id="lnShip">$0 MXN</span></div>
+      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
+      <div class="usdRef" id="lnUsd">$0 USD</div>
 
-  <!-- Scripts -->
-  <script src="/main.js" defer></script>
+      <input placeholder="CÓDIGO PROMO" id="promoInput" />
+      <button class="btn" onclick="applyPromo()">APLICAR</button>
+
+      <p class="meta">MÉTODO DE ENTREGA:</p>
+      <select id="shipMethod" onchange="updateCart()">
+        <option value="">-- SELECCIONA --</option>
+        <option value="pickup">Recoger en Fábrica (Gratis)</option>
+        <option value="tj">Envío Local (Tijuana) - $200 MXN</option>
+        <option value="mx">Envío Nacional (Cotizar)</option>
+      </select>
+
+      <div id="shipForm" style="display:none;">
+        <input id="cp" placeholder="Código Postal (5 dígitos)" maxlength="5" />
+        <input id="addr" placeholder="Dirección completa" />
+        <input id="name" placeholder="Nombre completo" />
+        <div id="quoteResult"></div>
+      </div>
+
+      <button class="btn primary" id="payBtn" onclick="checkout()" disabled>IR A PAGAR</button>
+      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
+    </div>
+  </aside>
+
+  <!-- Modal de Catálogo -->
+  <div class="modal" id="modalCatalog">
+    <div class="dHead">
+      <h3 id="catTitle">CATÁLOGO</h3>
+      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="catGrid" id="catGrid"></div>
+  </div>
+
+  <!-- Barra flotante de pago -->
+  <div class="paybar" id="paybar">
+    <div>
+      <div class="meta">TOTAL</div>
+      <div id="barTotal">$0</div>
+    </div>
+    <button class="btn" onclick="openDrawer()">VER CARRITO</button>
+  </div>
+
+  <!-- JS Principal -->
+  <script src="/js/main.js" defer></script>
+
+  <!-- Registrar Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(() => console.log("✔ SW registrado"));
+    }
+    document.getElementById("overlay").addEventListener("click", closeAll);
+  </script>
 </body>
 </html>
