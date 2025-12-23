@@ -1,26 +1,21 @@
-const SW_VERSION = "score-racing-v2"; // súbelo a v3, v4... cuando deployes cambios
+const SW_VERSION = "score-racing-v3"; 
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
 
-// ⚠️ Solo assets realmente estáticos. NO metas catalog/promos aquí.
 const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/robots.txt",
   "/site.webmanifest",
-  "/assets/logo-score.png"
-  // Si tienes versiones webp, usa esas aquí:
-  // "/assets/fondo-pagina-score.webp",
-  // "/assets/hero.webp"
+  "/assets/logo-score.webp",
+  "/assets/hero.webp",
+  "/assets/icons-score.svg"
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_STATIC);
-
-    // cache: "reload" evita que agarre cosas viejas del HTTP cache
     await cache.addAll(STATIC_ASSETS.map((u) => new Request(u, { cache: "reload" })));
-
     self.skipWaiting();
   })());
 });
@@ -35,16 +30,6 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-async function cacheFirst(request) {
-  const cache = await caches.open(CACHE_RUNTIME);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  const res = await fetch(request);
-  if (res && res.ok) cache.put(request, res.clone());
-  return res;
-}
-
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_RUNTIME);
   try {
@@ -57,36 +42,39 @@ async function networkFirst(request) {
   }
 }
 
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_RUNTIME);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const res = await fetch(request);
+  if (res && res.ok) cache.put(request, res.clone());
+  return res;
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
-  // No tocar métodos que no sean GET
   if (req.method !== "GET") return;
-
   const url = new URL(req.url);
 
-  // ✅ JAMÁS interceptar backend / checkout
   if (url.pathname.startsWith("/.netlify/functions/")) return;
-  if (url.pathname.startsWith("/api/")) return;
 
-  // Navegación (HTML): network-first con fallback
+  // HTML
   if (req.mode === "navigate") {
     event.respondWith(networkFirst(req).catch(() => caches.match("/index.html")));
     return;
   }
 
-  // JSON dinámico: network-first (si falla red, usa cache)
-  if (url.pathname.startsWith("/data/") && url.pathname.endsWith(".json")) {
-    event.respondWith(networkFirst(req));
-    return;
-  }
-
-  // Assets: cache-first
-  if (url.pathname.startsWith("/assets/")) {
+  // Assets (Imágenes, Fuentes, CSS)
+  if (url.pathname.startsWith("/assets/") || url.pathname.endsWith(".webp") || url.pathname.endsWith(".svg")) {
     event.respondWith(cacheFirst(req));
     return;
   }
 
-  // Default: intenta cache, luego red (safe)
+  // Data JSON
+  if (url.pathname.startsWith("/data/")) {
+    event.respondWith(networkFirst(req));
+    return;
+  }
+
   event.respondWith(caches.match(req).then((r) => r || fetch(req)));
 });
