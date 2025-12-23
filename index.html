@@ -2,44 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="Score Store - Ediciones especiales de ropa y accesorios"/>
-  <title>Score Store</title>
-
-  <!-- Icono -->
-  <link rel="icon" href="icons-score.svg" type="image/svg+xml">
-
-  <!-- Estilos -->
-  <link rel="stylesheet" href="css/styles.css">
-
-  <!-- Fuente -->
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#E10600" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="icon" href="/assets/icon-192.png" />
+  <title>SCORE Store · Oficial</title>
 </head>
 <body>
   <header>
-    <h1>Score Store</h1>
+    <h1>SCORE Store · Edición Baja 1000</h1>
   </header>
 
   <main>
-    <section id="product-section">
-      <h2>Catálogo de Productos</h2>
-      <div class="product-grid" id="productGrid">
-        <!-- Productos se cargarán dinámicamente aquí -->
-      </div>
+    <section>
+      <h2>Colecciones</h2>
+      <div id="sectionsGrid" class="product-grid"></div>
     </section>
 
-    <section id="promo-section">
-      <h2>¿Tienes un código promocional?</h2>
-      <input type="text" id="promoCodeInput" placeholder="Ingresa tu código">
-      <p id="promoMessage" style="color: lightgreen;"></p>
+    <section>
+      <h2 id="catTitle">Productos</h2>
+      <div id="catGrid" class="product-grid"></div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2025 Score Store. Todos los derechos reservados.</p>
+    &copy; 2025 SCORE International · Todos los derechos reservados
   </footer>
 
-  <!-- Script principal -->
-  <script src="js/main.js" defer></script>
+  <!-- UI overlays -->
+  <div id="modalCatalog" class="modal"></div>
+  <div id="drawer" class="drawer"></div>
+  <div id="overlay" class="overlay" onclick="closeAll()"></div>
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts -->
+  <script src="/main.js" defer></script>
 </body>
 </html>
