@@ -1,121 +1,142 @@
 {
+  "site": {
+    "url": "https://scorestore.netlify.app",
+    "currency": "MXN",
+    "fx_mxn_per_usd": 17.50
+  },
+  "pricing": { "markup_pct": 0.00 },
+  "sections": [
+    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "order": 1 },
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "PRÓXIMAMENTE", "order": 2 },
+    { "id": "BAJA_400", "title": "BAJA 400", "badge": "PRÓXIMAMENTE", "order": 3 },
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "PRÓXIMAMENTE", "order": 4 }
+  ],
   "products": [
     {
-      "id": "chamarra-oficial",
-      "name": "Chamarra Oficial Baja 1000",
-      "price": 1789,
-      "baseMXN": 1789,
+      "id": "chamarra-2025",
+      "name": "Chamarra Oficial 2025",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
-      "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "BAJA_1000"
+      "baseMXN": 1789,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "camisa-negra-pits",
-      "name": "Camisa Negra Pits Baja 1000",
-      "price": 769,
-      "baseMXN": 769,
-      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "sizes": ["M", "L", "XL"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "camisa-gris-pits",
-      "name": "Camisa Gris Pits Baja 1000",
-      "price": 769,
-      "baseMXN": 769,
-      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-      "sizes": ["M", "L", "XL"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "camisa-rosa-pits",
-      "name": "Camisa Rosa Pits Baja 1000",
-      "price": 769,
-      "baseMXN": 769,
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-      "sizes": ["S", "M", "L"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "camiseta-negra",
-      "name": "Camiseta Negra Baja 1000",
-      "price": 489,
-      "baseMXN": 489,
-      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
-      "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "camiseta-cafe",
-      "name": "Camiseta Café Baja 1000",
-      "price": 489,
-      "baseMXN": 489,
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
-      "sizes": ["M", "L", "XL"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "camiseta-cafe-claro",
-      "name": "Camiseta Café Claro Baja 1000",
-      "price": 489,
-      "baseMXN": 489,
-      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "gorras-roja-gris",
-      "name": "Gorras Roja y Gris Edición Especial",
-      "price": 429,
-      "baseMXN": 429,
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "sizes": ["Unitalla"],
-      "sectionId": "BAJA_1000"
-    },
-    {
-      "id": "hoodie-negro-gris",
-      "name": "Hoodie Negro con Gris Baja 1000",
-      "price": 899,
-      "baseMXN": 899,
+      "id": "hoodie-tech-2025",
+      "name": "Hoodie Técnica Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
-      "sizes": ["M", "L", "XL", "2XL"],
-      "sectionId": "BAJA_1000"
+      "baseMXN": 1079,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["S","M","L","XL"]
     },
     {
-      "id": "hoodie-negra",
-      "name": "Hoodie Negra Baja 1000",
-      "price": 899,
-      "baseMXN": 899,
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
-      "sizes": ["M", "L", "XL"],
-      "sectionId": "OTRAS"
+      "id": "tee-negra-2025",
+      "name": "Camiseta Negra Edición 2025",
+      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
+      "baseMXN": 479,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "hoodie-roja",
-      "name": "Hoodie Negra con Rojo Baja 1000",
-      "price": 899,
-      "baseMXN": 899,
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-      "sizes": ["L", "XL"],
-      "sectionId": "OTRAS"
+      "id": "tee-cafe-2025",
+      "name": "Camiseta Desert Café",
+      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
+      "baseMXN": 479,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "hoodie-rosa",
-      "name": "Hoodie Rosa Baja 1000",
-      "price": 899,
-      "baseMXN": 899,
+      "id": "tee-arena-2025",
+      "name": "Camiseta Arena Baja",
+      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
+      "baseMXN": 479,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["S","M","L","XL"]
+    },
+    {
+      "id": "gorra-roja-2025",
+      "name": "Gorra Oficial Roja/Gris",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "baseMXN": 660,
+      "sectionId": "BAJA_1000",
+      "subSection": "COLECCIÓN 2025",
+      "sizes": ["Unitalla"]
+    },
+    {
+      "id": "pits-negra",
+      "name": "Camisa Pits Oficial Negra",
+      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
+      "baseMXN": 1079,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL","2XL"]
+    },
+    {
+      "id": "pits-gris",
+      "name": "Camisa Pits Gris Racing",
+      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+      "baseMXN": 1079,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL","2XL"]
+    },
+    {
+      "id": "pits-rosa",
+      "name": "Camisa Pits Edición Rosa",
+      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
+      "baseMXN": 1079,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL"]
+    },
+    {
+      "id": "pits-rojo",
+      "name": "Camisa Pits Negro/Rojo",
+      "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
+      "baseMXN": 1079,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL","2XL"]
+    },
+    {
+      "id": "wd-rosa",
+      "name": "Hoodie World Desert Rosa",
       "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
-      "sizes": ["S", "M", "L"],
-      "sectionId": "OTRAS"
+      "baseMXN": 899,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL"]
     },
     {
-      "id": "sudadera-negra",
-      "name": "Sudadera Negra Baja 1000",
-      "price": 789,
-      "baseMXN": 789,
+      "id": "wd-negra",
+      "name": "Hoodie World Desert Negra",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
+      "baseMXN": 899,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL","2XL"]
+    },
+    {
+      "id": "wd-roja",
+      "name": "Hoodie World Desert Roja",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
+      "baseMXN": 899,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL"]
+    },
+    {
+      "id": "sudadera-basica",
+      "name": "Sudadera Básica Negra",
       "img": "/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp",
-      "sizes": ["M", "L", "XL"],
-      "sectionId": "OTRAS"
+      "baseMXN": 839,
+      "sectionId": "BAJA_1000",
+      "subSection": "EDICIONES ANTERIORES",
+      "sizes": ["S","M","L","XL"]
     }
   ]
 }
