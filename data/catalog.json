@@ -12,7 +12,7 @@
   ],
   "products": [
     {
-      "id": "chamarra-oficial",
+      "id": "chamarra-baja1000",
       "name": "Chamarra Oficial Baja 1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1490,
@@ -22,7 +22,7 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "hoodie-tecnica",
+      "id": "hoodie-negro-gris",
       "name": "Hoodie Técnica Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 899,
@@ -32,7 +32,7 @@
       "sectionId": "EDICION_2025"
     },
     {
-      "id": "camiseta-negra",
+      "id": "camiseta-negra-25",
       "name": "Camiseta Negra Edición 2025",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 399,
