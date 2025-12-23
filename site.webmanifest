@@ -4,11 +4,13 @@
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b0f14",
   "theme_color": "#E10600",
   "description": "Tienda oficial SCORE International Racing. Ediciones limitadas, artículos de colección y equipo auténtico del desierto.",
   "lang": "es-MX",
   "categories": ["shopping", "sports", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/assets/icon-192.png",
