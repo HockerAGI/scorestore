@@ -6,150 +6,151 @@
   },
   "pricing": { "markup_pct": 0.00 },
   "sections": [
-    { "id": "EDICION_2025", "title": "COLECCIÓN 2025", "badge": "NUEVO", "order": 1 },
-    { "id": "PITS_CREW", "title": "EQUIPO PITS", "badge": "OFICIAL", "order": 2 },
-    { "id": "OTRAS_EDICIONES", "title": "WORLD DESERT", "badge": "CLÁSICOS", "order": 3 }
+    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "COLECCIÓN DISPONIBLE", "order": 1 },
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "PRÓXIMAMENTE", "order": 2 },
+    { "id": "BAJA_400", "title": "BAJA 400", "badge": "PRÓXIMAMENTE", "order": 3 },
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "PRÓXIMAMENTE", "order": 4 }
   ],
   "products": [
     {
-      "id": "chamarra-baja1000",
+      "id": "chamarra-oficial",
       "name": "Chamarra Oficial Baja 1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
-      "baseMXN": 1490,
+      "baseMXN": 1789,
       "weight_g": 800,
       "dimensions_cm": [40, 30, 10],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
-      "id": "hoodie-negro-gris",
+      "id": "hoodie-tecnica",
       "name": "Hoodie Técnica Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
-      "baseMXN": 899,
+      "baseMXN": 1079,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
-      "id": "camiseta-negra-25",
-      "name": "Camiseta Negra Edición 2025",
+      "id": "camiseta-negra",
+      "name": "Camiseta Edición 2025 Negra",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
-      "baseMXN": 399,
+      "baseMXN": 479,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camiseta-cafe",
-      "name": "Camiseta Café Desert",
+      "name": "Camiseta Desert Café",
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
-      "baseMXN": 399,
+      "baseMXN": 479,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camiseta-cafe-claro",
-      "name": "Camiseta Café Claro Baja",
+      "name": "Camiseta Arena Baja",
       "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
-      "baseMXN": 399,
+      "baseMXN": 479,
       "weight_g": 200,
       "dimensions_cm": [30, 20, 2],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "gorra-roja",
       "name": "Gorra Oficial Roja/Gris",
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "baseMXN": 550,
+      "baseMXN": 660,
       "weight_g": 150,
       "dimensions_cm": [20, 20, 10],
       "sizes": ["Unitalla"],
-      "sectionId": "EDICION_2025"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camisa-pits-negra",
       "name": "Camisa Pits Oficial Negra",
       "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "baseMXN": 899,
+      "baseMXN": 1079,
       "weight_g": 300,
       "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "PITS_CREW"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camisa-pits-gris",
       "name": "Camisa Pits Gris Racing",
       "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-      "baseMXN": 899,
+      "baseMXN": 1079,
       "weight_g": 300,
       "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "PITS_CREW"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camisa-pits-rosa",
       "name": "Camisa Pits Edición Rosa",
       "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-      "baseMXN": 899,
+      "baseMXN": 1079,
       "weight_g": 300,
       "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "PITS_CREW"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "camisa-negra-rojo",
       "name": "Camisa Pits Negro/Rojo",
       "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
-      "baseMXN": 899,
+      "baseMXN": 1079,
       "weight_g": 300,
       "dimensions_cm": [35, 25, 5],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "OTRAS_EDICIONES"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "hoodie-rosa",
       "name": "Hoodie World Desert Rosa",
       "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
-      "baseMXN": 749,
+      "baseMXN": 899,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "OTRAS_EDICIONES"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "hoodie-negra",
       "name": "Hoodie World Desert Negra",
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
-      "baseMXN": 749,
+      "baseMXN": 899,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "sectionId": "OTRAS_EDICIONES"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "hoodie-roja",
       "name": "Hoodie World Desert Roja",
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-      "baseMXN": 749,
+      "baseMXN": 899,
       "weight_g": 600,
       "dimensions_cm": [35, 30, 8],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "OTRAS_EDICIONES"
+      "sectionId": "BAJA_1000"
     },
     {
       "id": "sudadera-negra",
       "name": "Sudadera Básica Negra",
       "img": "/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp",
-      "baseMXN": 699,
+      "baseMXN": 839,
       "weight_g": 500,
       "dimensions_cm": [35, 28, 6],
       "sizes": ["S", "M", "L", "XL"],
-      "sectionId": "OTRAS_EDICIONES"
+      "sectionId": "BAJA_1000"
     }
   ]
 }
