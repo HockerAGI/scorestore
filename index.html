@@ -2,172 +2,44 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#E10600" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Score Store - Ediciones especiales de ropa y accesorios"/>
+  <title>Score Store</title>
 
-  <title>SCORE Store | Merch Oficial Off-Road</title>
-  <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
+  <!-- Icono -->
+  <link rel="icon" href="icons-score.svg" type="image/svg+xml">
 
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/styles.css">
 
-  <script src="https://js.stripe.com/v3/" async></script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-
-  <!-- ✅ CSS CORRECTO -->
-  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Fuente (opcional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
 </head>
-
 <body>
-<div class="wrap">
-
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
-  <div class="overlay" id="overlay"></div>
-  <div class="toast" id="toast">Notificación</div>
-
-  <!-- HEADER -->
-  <header class="topbar">
-    <a href="/" class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE" />
-    </a>
-    <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
-          <circle cx="9" cy="21" r="1"/>
-          <circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-        </svg>
-        <span id="cartCount" class="cartCount">0</span>
-      </button>
-    </div>
+  <header>
+    <h1>Score Store</h1>
   </header>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="heroBg"></div>
-    <div class="heroOverlay"></div>
-
-    <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" />
-
-    <div class="heroContent">
-      <div class="tagline">MERCH OFICIAL</div>
-      <h1>SCORE INTERNATIONAL</h1>
-      <p class="sub">
-        Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>.  
-        Colección oficial de alto rendimiento.
-      </p>
-
-      <div class="ctaRow">
-        <button class="btn primary" onclick="document.querySelector('.grid').scrollIntoView({behavior:'smooth'})">
-          COMPRAR COLECCIÓN
-        </button>
-        <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
+  <main>
+    <section id="product-section">
+      <h2>Catálogo de Productos</h2>
+      <div class="product-grid" id="productGrid">
+        <!-- Productos se cargarán dinámicamente aquí -->
       </div>
+    </section>
 
-      <div class="heroChips">
-        <div class="heroChip">✔ HECHO EN TIJUANA</div>
-        <div class="heroChip">★ EDICIÓN LIMITADA</div>
-      </div>
-    </div>
-  </section>
+    <section id="promo-section">
+      <h2>¿Tienes un código promocional?</h2>
+      <input type="text" id="promoCodeInput" placeholder="Ingresa tu código">
+      <p id="promoMessage" style="color: lightgreen;"></p>
+    </section>
+  </main>
 
-  <!-- SECCIONES -->
-  <div class="secHeader">
-    <h2>CAMPEONATOS</h2>
-    <div class="meta">World Desert Championship</div>
-  </div>
-
-  <div class="grid">
-    <div class="card" onclick="openCatalog('BAJA_1000','Baja 1000')">
-      <span class="statusBadge">DISPONIBLE</span>
-      <img src="/assets/logo-baja1000.webp" class="cardLogo" />
-      <button class="viewBtn">Ver Productos</button>
-    </div>
-
-    <div class="card">
-      <span class="statusBadge soon">PRÓXIMAMENTE</span>
-      <img src="/assets/logo-baja500.webp" class="cardLogo" />
-      <button class="viewBtn">Baja 500</button>
-    </div>
-
-    <div class="card">
-      <span class="statusBadge soon">PRÓXIMAMENTE</span>
-      <img src="/assets/logo-baja400.webp" class="cardLogo" />
-      <button class="viewBtn">Baja 400</button>
-    </div>
-
-    <div class="card">
-      <span class="statusBadge soon">PRÓXIMAMENTE</span>
-      <img src="/assets/logo-sf250.webp" class="cardLogo" />
-      <button class="viewBtn">SF 250</button>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
   <footer>
-    <div class="footWrap">
-      <div class="footBlock">
-        <h4>ÚNICO UNIFORMES</h4>
-        <p>
-          Fabricante Oficial SCORE<br>
-          Tijuana, B.C.<br>
-          <b>ventas.unicotextil@gmail.com</b>
-        </p>
-      </div>
-    </div>
+    <p>&copy; 2025 Score Store. Todos los derechos reservados.</p>
   </footer>
 
-</div>
-
-<!-- DRAWER -->
-<aside class="drawer" id="drawer">
-  <div class="dHead">
-    <h3>TU EQUIPO</h3>
-    <button class="closeBtn" onclick="closeAll()">×</button>
-  </div>
-  <div class="dBody" id="cartBody"></div>
-  <div class="dFoot">
-    <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0</span></div>
-    <div class="sumRow"><span>Envío</span><span id="lnShip">$0</span></div>
-    <div class="sumRow total"><span>Total</span><span id="lnTotal">$0</span></div>
-    <div class="usdRef" id="lnUsd"></div>
-    <button id="payBtn" class="btn primary" onclick="checkout()" disabled>IR A PAGAR</button>
-  </div>
-</aside>
-
-<!-- MODAL CATÁLOGO -->
-<div class="modal" id="modalCatalog">
-  <div class="dHead">
-    <h3 id="catTitle">CATÁLOGO</h3>
-    <button class="closeBtn" onclick="closeAll()">×</button>
-  </div>
-  <div class="catGrid" id="catGrid"></div>
-</div>
-
-<!-- PAYBAR -->
-<div class="paybar" id="paybar">
-  <div>
-    <small>TOTAL</small>
-    <div id="barTotal">$0</div>
-  </div>
-  <button class="btn" onclick="openDrawer()">VER CARRITO</button>
-</div>
-
-<!-- JS -->
-<script src="js/main.js"></script>
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-</script>
-
+  <!-- Script principal -->
+  <script src="js/main.js" defer></script>
 </body>
 </html>
