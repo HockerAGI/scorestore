@@ -1,14 +1,14 @@
 {
   "name": "scorestore",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tienda oficial SCORE Store · Netlify + Stripe + Envia",
   "main": "index.html",
   "scripts": {
-    "build": "echo 'No build needed for static site'",
-    "start": "netlify dev"
+    "start": "netlify dev",
+    "build": "echo \"static site\""
   },
   "dependencies": {
-    "stripe": "^12.0.0"
+    "stripe": "^16.6.0"
   },
   "devDependencies": {},
   "engines": {
