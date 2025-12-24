@@ -1,6 +1,6 @@
-// --- VERSIÓN MAESTRA V12 ---
-// Cambia este número SIEMPRE que hagas cambios importantes para forzar la actualización en los celulares.
-const SW_VERSION = "score-store-v12-force-update"; 
+// --- SCORE STORE SERVICE WORKER ---
+// CAMBIA ESTE VALOR EN CADA DESPLIEGUE PARA FORZAR ACTUALIZACIÓN EN CELULARES
+const SW_VERSION = "score-store-v14-LIGHT-LAUNCH"; 
 
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
@@ -8,29 +8,29 @@ const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
 const STATIC_ASSETS = [
   "/",
   "/index.html",
-  "/css/styles.css",
-  "/js/main.js",
-  "/site.webmanifest",      // AGREGADO: Vital para que la app se instale bien
+  "/css/styles.css?v=14.0",
+  "/js/main.js?v=14.0",
+  "/site.webmanifest",
+  "/icons-score.svg",
   "/assets/logo-score.webp",
   "/assets/hero.webp",
-  "/icons-score.svg",       // CORREGIDO: Estaba en /assets/ y es root
-  "/assets/fondo-pagina-score.webp"
+  "/assets/logo-baja1000.webp"
 ];
 
-// 1. INSTALACIÓN
+// 1. INSTALACIÓN (Precarga lo vital)
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Activar inmediatamente
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_STATIC)
       .then((cache) => {
-        console.log('[SW] Pre-caching archivos estáticos');
+        console.log('[SW] Cacheando assets estáticos:', SW_VERSION);
         return cache.addAll(STATIC_ASSETS);
       })
-      .catch((err) => console.error('[SW] Error en caché estática:', err))
+      .catch(err => console.error('[SW] Error install:', err))
   );
 });
 
-// 2. ACTIVACIÓN (Limpieza agresiva de versiones viejas)
+// 2. ACTIVACIÓN (Borra versiones viejas sin piedad)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
@@ -45,33 +45,31 @@ self.addEventListener("activate", (event) => {
   return self.clients.claim();
 });
 
-// 3. ESTRATEGIA DE RED (NETWORK FIRST)
-// Ideal para Ecommerce: Siempre intenta bajar la versión nueva.
+// 3. FETCH (Estrategia: Network First para contenido fresco)
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Ignorar API, Stripe y Admin
-  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
+  // Ignorar llamadas a API, Stripe y Admin
+  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe.com")) return;
 
-  // Solo interceptar peticiones GET (imágenes, scripts, html)
+  // Solo GET
   if (req.method !== "GET") return;
 
   event.respondWith(
     fetch(req)
       .then((res) => {
-        // Si la red responde bien, guardamos copia fresca en caché y la entregamos
+        // Si hay internet, guardamos copia fresca
         const resClone = res.clone();
-        caches.open(CACHE_DYNAMIC).then((cache) => {
-          cache.put(req, resClone);
-        });
+        caches.open(CACHE_DYNAMIC).then((cache) => cache.put(req, resClone));
         return res;
       })
       .catch(() => {
-        // Si falla internet, buscamos en caché
-        return caches.match(req).then((cachedRes) => {
-          if (cachedRes) return cachedRes;
-          // Si no está en caché y es una navegación, podríamos devolver una página offline.html (opcional)
+        // Si falla internet, usamos caché
+        return caches.match(req).then((cached) => {
+          if (cached) return cached;
+          // Si no hay caché ni internet, y es navegación, podríamos mostrar offline.html
+          // if (req.headers.get("accept").includes("text/html")) return caches.match("/offline.html");
         });
       })
   );
