@@ -1,3 +1,8 @@
+/**
+ * js/main.js
+ * Lógica principal: Carrito, Catálogo Inteligente, Stripe y Envíos.
+ */
+
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
 const USD_RATE = 17.50; 
 
@@ -16,6 +21,9 @@ function smoothScroll(e, id) {
   if(el) el.scrollIntoView({behavior:'smooth'});
 }
 
+/**
+ * Abre el catálogo y AGRUPA los productos por subsección (ej: 2025 vs Anteriores)
+ */
 async function openCatalog(sectionId, title) {
   $('catTitle').innerText = title.toUpperCase();
   const content = $('catContent');
@@ -31,7 +39,7 @@ async function openCatalog(sectionId, title) {
     }
 
     if(!items.length) {
-        if(sectionId === 'BAJA_1000') items = PRODUCTS_BACKUP; // Uso de backup
+        if(sectionId === 'BAJA_1000') items = PRODUCTS_BACKUP;
         else {
             content.innerHTML = `<div style='text-align:center; padding:40px; color:#666;'><h3>PRÓXIMAMENTE</h3><p>Estamos preparando esta colección.</p></div>`;
             $('modalCatalog').classList.add('active');
@@ -41,16 +49,21 @@ async function openCatalog(sectionId, title) {
         }
     }
 
-    // Agrupar por Subsección
+    // LÓGICA DE AGRUPACIÓN (UX MEJORADA)
     const groups = {};
     items.forEach(p => {
+      // Si no tiene subSection, lo ponemos en "General"
       const k = p.subSection || 'GENERAL';
       if(!groups[k]) groups[k] = [];
       groups[k].push(p);
     });
 
     let html = '';
-    for (const [groupName, prods] of Object.entries(groups)) {
+    // Ordenamos para que "COLECCIÓN 2025" salga primero si existe
+    const keys = Object.keys(groups).sort((a,b) => b.includes('2025') ? 1 : -1);
+
+    for (const groupName of keys) {
+      const prods = groups[groupName];
       html += `<div class="catSectionTitle">${groupName}</div>`;
       html += `<div class="catGrid">`;
       html += prods.map(p => `
@@ -215,13 +228,22 @@ function closeAll() {
   $('overlay').classList.remove('active');
   document.body.classList.remove('modalOpen');
 }
-function showToast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+function showToast(m) { 
+  const t=$('toast'); 
+  if(t) {
+    t.innerText=m; 
+    t.classList.add('show'); 
+    setTimeout(()=>t.classList.remove('show'),2000); 
+  }
+}
 
 // Event Listeners
-$('overlay').onclick = closeAll;
+const overlay = $('overlay');
+if(overlay) overlay.onclick = closeAll;
+
 ['cp','addr','name'].forEach(id => {
     const el = $(id);
-    if(el) el.addEventListener('input', () => updateCart(id !== 'cp')); // Solo resetear shipping si no es input de texto
+    if(el) el.addEventListener('input', () => updateCart(id !== 'cp')); 
 });
 
 // PWA Registro
