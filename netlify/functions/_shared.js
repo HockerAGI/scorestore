@@ -4,6 +4,7 @@
 
 const fs = require("fs/promises");
 const path = require("path");
+const fetch = require("node-fetch"); // Agregado para robustez
 
 // Caches en memoria (para performance)
 let _catalogCache = null;
