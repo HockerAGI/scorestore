@@ -24,7 +24,7 @@ body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; 
 .dust { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E"); animation: grain 10s steps(10) infinite; }
 .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; position: relative; z-index: 1; }
 
-/* --- NOTIFICACIÓN (TOAST) --- */
+/* --- NOTIFICACIÓN (TOAST INVISIBLE AL CARGAR) --- */
 .toast {
   position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
   background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
@@ -65,7 +65,10 @@ body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; 
   transform: rotate(-5deg); z-index: 3; pointer-events: none;
 }
 @media (max-width: 768px) { 
-  .seal-logo { top: 20px; bottom: auto; right: 20px; width: 70px; } 
+  .seal-logo { 
+    /* Lo movemos arriba a la derecha en móvil */
+    top: 20px; bottom: auto; right: 20px; width: 70px; 
+  } 
 }
 
 .tagline { background: var(--red); color: #fff; padding: 6px 14px; font-family: var(--fontTitle); font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 15px; }
@@ -103,10 +106,10 @@ body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; 
 /* === FOOTER CORREGIDO (PADDINGS) === */
 footer { 
   background: #080b10; color: #fff; 
-  padding: 60px 30px; /* Padding lateral agregado */
+  padding: 60px 30px; /* IMPORTANTE: Padding lateral agregado */
   margin-top: 60px; 
   border-top: 5px solid var(--red);
-  padding-bottom: 140px; /* Espacio extra para móvil */
+  padding-bottom: 140px; /* IMPORTANTE: Espacio para que el botón de pago no tape el contenido */
 }
 @media(min-width: 769px) { footer { padding-bottom: 60px; } }
 
