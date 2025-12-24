@@ -1,12 +1,9 @@
 // netlify/functions/_shared.js
-// Utilidades compartidas para SCORE Store en Netlify Functions (Node 18).
-// ⚠️ No se deben incluir secretos aquí; usar variables de entorno.
-
 const fs = require("fs/promises");
 const path = require("path");
-const fetch = require("node-fetch"); // Agregado para robustez
+// ELIMINADO: const fetch = require("node-fetch"); <- ESTO CAUSABA EL ERROR
 
-// Caches en memoria (para performance)
+// Caches en memoria
 let _catalogCache = null;
 let _promosCache = null;
 
@@ -44,7 +41,7 @@ function normalizePromo(code) {
   return upper(code).replace(/\s+/g, "");
 }
 
-// === Validación de direcciones ===
+// === Validación ===
 
 function isMxPostal(postal) {
   return /^[0-9]{5}$/.test(toStr(postal));
@@ -60,7 +57,7 @@ function looksLikeTijuana(city) {
   return c.includes("tijuana");
 }
 
-// === Carga de datos JSON ===
+// === Carga de datos ===
 
 async function loadCatalog() {
   if (_catalogCache) return _catalogCache;
@@ -84,7 +81,7 @@ function productMapFromCatalog(catalog) {
   return map;
 }
 
-// === Validación del carrito ===
+// === Validaciones Carrito ===
 
 function validateCartItems(items) {
   if (!Array.isArray(items) || items.length === 0) return { ok: false, error: "Carrito vacío." };
@@ -107,22 +104,17 @@ function validateSizes(items, productMap) {
   for (const it of items) {
     const p = productMap.get(it.id);
     if (!p) return { ok: false, error: `Producto no encontrado: ${it.id}` };
-
     const sizes = Array.isArray(p.sizes) ? p.sizes : [];
     const sent = toStr(it.size);
-
     if (sizes.length === 1 && upper(sizes[0]) === "ÚNICA") continue;
-
     if (!sent) return { ok: false, error: `Falta talla para: ${p.name}` };
-
     const allowed = new Set(sizes.map(s => upper(s)));
     if (!allowed.has(upper(sent))) return { ok: false, error: `Talla inválida para: ${p.name}` };
   }
-
   return { ok: true };
 }
 
-// === Subtotal ===
+// === Cálculos ===
 
 function computeSubtotalMXN(items, productMap) {
   let subtotal = 0;
@@ -134,8 +126,6 @@ function computeSubtotalMXN(items, productMap) {
   return Math.max(0, Math.round(subtotal));
 }
 
-// === Envío: paquete base ===
-
 function buildPackageFromItems(items, productMap) {
   let totalWeightG = 0;
   let maxL = 10, maxW = 10, maxH = 5;
@@ -144,28 +134,22 @@ function buildPackageFromItems(items, productMap) {
   for (const it of items) {
     const p = productMap.get(it.id);
     if (!p) continue;
-
     const qty = Number(it.qty || 0);
     totalWeightG += (Number(p.weight_g || 300) * qty);
-
     const dims = Array.isArray(p.dimensions_cm) ? p.dimensions_cm : [30, 20, 5];
     maxL = Math.max(maxL, Number(dims[0] || 30));
     maxW = Math.max(maxW, Number(dims[1] || 20));
     maxH = Math.max(maxH, Number(dims[2] || 5));
-
     contentNames.push(`${p.name} x${qty}`);
   }
 
   const totalWeightKg = Math.max(0.2, Math.round((totalWeightG / 1000) * 100) / 100);
-
   return {
     totalWeightKg,
     dimsCm: [maxL, maxW, maxH],
     content: contentNames.slice(0, 6).join(", "),
   };
 }
-
-// === Promociones ===
 
 async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   const promos = await loadPromos();
@@ -194,11 +178,8 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
 
   const cappedDiscount = Math.max(0, Math.min(discountMXN, newSubtotal));
   const totalMXN = Math.max(0, Math.round(newSubtotal - cappedDiscount + newShipping));
-
   return { code, discountMXN: cappedDiscount, shippingMXN: newShipping, totalMXN };
 }
-
-// === URL base del sitio (Netlify env) ===
 
 function getBaseUrlFromEnv() {
   const explicit = toStr(process.env.URL_SCORE);
@@ -207,7 +188,7 @@ function getBaseUrlFromEnv() {
   return url ? url.replace(/\/+$/, "") : "";
 }
 
-// === Envia.com: cotizador ===
+// === Cotizador Envia (Sin node-fetch explicito) ===
 
 async function quoteEnviaMXN({ to, items, productMap }) {
   const apiKey = toStr(process.env.ENVIA_API_KEY);
@@ -262,6 +243,7 @@ async function quoteEnviaMXN({ to, items, productMap }) {
     shipment: { carrier: "ENVIA" },
   };
 
+  // USAMOS FETCH NATIVO (Global en Node 18)
   const res = await fetch("https://api.envia.com/ship/rate", {
     method: "POST",
     headers: {
@@ -289,8 +271,6 @@ async function quoteEnviaMXN({ to, items, productMap }) {
     },
   };
 }
-
-// === Exportación ===
 
 module.exports = {
   jsonResponse,
