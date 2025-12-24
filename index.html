@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Tienda oficial SCORE International. Merch oficial Off-Road fabricado en Tijuana por ÚNICO UNIFORMES." />
+  <meta name="description" content="Tienda oficial SCORE International. Merch oficial Off-Road fabricado en Tijuana." />
   
   <title>SCORE | Tienda Oficial</title>
   
@@ -26,10 +26,9 @@
   <div class="page-bg"></div>
   <div class="dust-container"><div class="dust"></div></div>
 
-  <div class="wrap" id="mainContent">
-    
+  <div class="wrap" id="mainWrap">
     <header class="topbar">
-      <a href="/" class="brand" aria-label="Inicio"><img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48"></a>
+      <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE International"></a>
       <div class="navRight">
         <div class="pill">MX + <b>TIJUANA</b></div>
         <button class="cartTrigger" id="cartBtnTrigger" onclick="openDrawer()" aria-label="Abrir Carrito">
@@ -43,7 +42,7 @@
       <section class="hero">
         <div class="heroBg"></div>
         <div class="heroOverlay"></div>
-        <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" width="110" height="110">
+        <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" onerror="this.style.display='none'">
 
         <div class="heroContent">
           <div class="tagline">MERCH OFICIAL</div>
@@ -69,85 +68,81 @@
       </div>
 
       <div class="grid" id="grid">
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
+        <div class="card" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
           <div class="cardBg"></div>
           <div class="cardContent">
             <span class="statusBadge">TIENDA OFICIAL</span>
-            <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy" width="200" height="100">
+            <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy">
             <span class="viewBtn">Ver Colección</span>
           </div>
         </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_500', 'Baja 500')">
+        <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
           <div class="cardBg"></div>
           <div class="cardContent">
             <span class="statusBadge">NUEVA LLEGADA</span>
-            <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy" width="200" height="100">
+            <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy">
             <span class="viewBtn">Ver Productos</span>
           </div>
         </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_400', 'Baja 400')">
+        <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
           <div class="cardBg"></div>
           <div class="cardContent">
             <span class="statusBadge">DISPONIBLE</span>
-            <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy" width="200" height="100">
+            <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy">
             <span class="viewBtn">Ver Productos</span>
           </div>
         </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('SF_250', 'San Felipe 250')">
+        <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
           <div class="cardBg"></div>
           <div class="cardContent">
             <span class="statusBadge">CLÁSICOS</span>
-            <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy" width="200" height="100">
+            <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy">
             <span class="viewBtn">Ver Productos</span>
           </div>
         </div>
       </div>
 
       <div class="partners">
-        <h3>OFFICIAL PARTNERS</h3>
+        <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px;">OFFICIAL PARTNERS</h3>
         <div class="pGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" loading="lazy" width="100" height="50">
+          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
+          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy">
+          <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" loading="lazy">
         </div>
       </div>
     </main>
-  </div> 
-
-  <footer>
-    <div class="footer-inner">
-      <div class="footWrap">
-        <div class="footBlock">
-          <h4>ÚNICO UNIFORMES</h4>
-          <p>Fabricante Oficial SCORE International.<br>Palermo 6106 Interior JK, Tijuana B.C.<br><b>ventas.unicotextil@gmail.com</b></p>
-        </div>
-        <div class="footBlock">
-          <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
-          <details class="fLegal">
-            <summary>Seguridad y Privacidad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tus datos están protegidos. Pagos seguros vía Stripe (SSL).</p></div>
-          </details>
-          <details class="fLegal">
-            <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tijuana: $200 MXN o Pickup Gratis.<br>Nacional: Cotizado por Envia.com.</p></div>
-          </details>
-          <details class="fLegal">
-            <summary>Cambios <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Garantía de 7 días por defectos de fábrica.</p></div>
-          </details>
-        </div>
+  </div> <footer>
+    <div class="footWrap">
+      <div class="footBlock">
+        <h4>ÚNICO UNIFORMES</h4>
+        <p>Fabricante Oficial SCORE International.<br>Palermo 6106 Interior JK, Tijuana B.C.<br><b>ventas.unicotextil@gmail.com</b></p>
+      </div>
+      <div class="footBlock">
+        <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
+        <details class="fLegal">
+          <summary>Privacidad y Seguridad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+          <div class="legalContent"><p>Tus datos están protegidos. Pagos procesados vía Stripe (SSL).</p></div>
+        </details>
+        <details class="fLegal">
+          <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+          <div class="legalContent"><p>Tijuana: $200 MXN o Pickup Gratis.<br>Nacional: Cotizado por Envia.com.</p></div>
+        </details>
+        <details class="fLegal">
+          <summary>Garantía <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+          <div class="legalContent"><p>Cambios por defectos de fábrica dentro de los primeros 7 días.</p></div>
+        </details>
       </div>
     </div>
   </footer>
 
-  <div class="overlay" id="overlay" aria-hidden="true"></div>
-  <div class="toast" id="toast" role="alert"></div>
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast"></div>
 
-  <aside class="drawer" id="drawer" aria-hidden="true">
+  <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar">&times;</button>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
     <div class="dBody" id="cartBody"></div>
     <div class="dFoot">
@@ -185,7 +180,7 @@
     </div>
   </aside>
 
-  <div class="modal" id="modalCatalog" aria-hidden="true">
+  <div class="modal" id="modalCatalog">
     <div class="dHead">
       <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
       <button onclick="closeAll()" class="closeBtn">&times;</button>
@@ -193,7 +188,7 @@
     <div class="catContent" id="catContent"></div>
   </div>
 
-  <div class="paybar" id="paybar" aria-hidden="true">
+  <div class="paybar" id="paybar">
     <div>
       <div class="paybar-label">TOTAL A PAGAR</div>
       <div class="paybar-total" id="barTotal">$0</div>
