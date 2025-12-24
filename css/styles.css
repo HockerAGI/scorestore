@@ -16,7 +16,9 @@ body {
   font-family: var(--fontBody); background-color: var(--sand); color: #111;
   overflow-x: hidden; padding-bottom: 0; position: relative;
 }
-body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
+
+/* FIX: Evitar saltos bruscos al abrir modal */
+body.modalOpen { overflow: hidden; height: 100vh; width: 100%; }
 
 /* --- BACKGROUNDS --- */
 .page-bg { position: fixed; inset: 0; z-index: -10; pointer-events: none; background-image: url('/assets/fondo-pagina-score.webp'); background-size: cover; background-position: center; opacity: 0.5; }
@@ -24,11 +26,12 @@ body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; 
 .dust { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E"); animation: grain 10s steps(10) infinite; }
 .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; position: relative; z-index: 1; }
 
-/* --- NOTIFICACIÓN (TOAST INVISIBLE) --- */
+/* --- NOTIFICACIÓN (Invisible por defecto) --- */
 .toast {
   position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
   background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
-  font-weight: 700; opacity: 0; visibility: hidden; pointer-events: none; 
+  font-weight: 700; 
+  opacity: 0; visibility: hidden; pointer-events: none; /* CLAVE PARA QUE NO MOLESTE */
   z-index: 300; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
 }
 .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
@@ -99,22 +102,19 @@ body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; 
 .pLogo { width: auto; height: auto; max-height: 50px; max-width: 150px; object-fit: contain; opacity: 0.6; filter: grayscale(1); transition: 0.3s; }
 .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-/* === FOOTER CORREGIDO FULL WIDTH === */
+/* === FOOTER SOLIDO Y ANCHO COMPLETO === */
 footer { 
   background: #080b10; color: #fff; 
-  width: 100%;
+  padding: 60px 30px; /* Aire lateral */
   margin-top: 60px; 
   border-top: 5px solid var(--red);
-  padding-bottom: 140px; /* IMPORTANTE: Espacio para móvil */
+  padding-bottom: 140px; /* Para que el botón de pago no tape nada en móvil */
+  position: relative; /* Asegura stacking correcto */
+  z-index: 5; /* Por encima de capas raras del fondo */
 }
-.footer-inner {
-  width: min(1200px, 94vw); 
-  margin: 0 auto; /* Centramos el contenido dentro del footer full-width */
-  padding: 60px 0;
-}
-@media(min-width: 769px) { footer { padding-bottom: 0; } }
+@media(min-width: 769px) { footer { padding-bottom: 60px; } }
 
-.footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; }
 @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; gap: 30px; } }
 .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; letter-spacing: 1px; }
 .footBlock p { color: #aaa; font-size: 14px; line-height: 1.6; margin: 0; }
@@ -126,7 +126,7 @@ details[open] summary svg { transform: rotate(180deg); stroke: var(--red); }
 .legalContent { padding: 0 18px 18px; color: #bbb; font-size: 13px; line-height: 1.6; }
 .legalContent strong { color: #fff; display: block; margin-top: 10px; font-family: var(--fontTitle); letter-spacing: 1px; font-size: 16px; }
 
-/* --- MODAL & DRAWER --- */
+/* --- OVERLAY, MODAL & DRAWER (Z-INDEX ALTO) --- */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px); }
 .overlay.active { opacity: 1; pointer-events: auto; }
 
