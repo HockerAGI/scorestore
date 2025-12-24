@@ -5,23 +5,22 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b0f14",
-  "theme_color": "#E10600",
-  "description": "Tienda oficial SCORE International Racing. Ediciones limitadas, artículos de colección y equipo auténtico del desierto.",
+  "background_color": "#ffffff", 
+  "theme_color": "#d32f2f",
+  "description": "Tienda oficial SCORE International Racing. Ediciones limitadas.",
   "lang": "es-MX",
   "categories": ["shopping", "sports", "lifestyle"],
-  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/assets/icon-192.png",
+      "src": "/icons-score.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icon-512.png",
+      "src": "/icons-score.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
