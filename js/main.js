@@ -1,80 +1,62 @@
-/**
- * js/main.js - CORE LOGIC
- * Features: Memory Cache, Skeleton UI, Focus Trap, Cart Animation.
- */
-
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
 const USD_RATE = 17.50; 
 
-// Cache en memoria para velocidad instantánea
+// Cache para velocidad instantánea
 let _catalogCache = null;
 
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let ship = { method: null, cost: 0 };
 const $ = id => document.getElementById(id);
 
-// Scroll suave nativo
 function smoothScroll(e, id) {
   e.preventDefault();
   const el = document.getElementById(id);
   if(el) el.scrollIntoView({behavior:'smooth'});
 }
 
-// Notificación Flotante
 function showToast(msg) {
   const t = $('toast');
   if (t) {
     t.innerText = msg;
-    t.style.visibility = 'visible'; // Force visibility
+    t.style.visibility = 'visible'; // Asegura visibilidad
     t.classList.add('show');
     setTimeout(() => {
       t.classList.remove('show');
-      setTimeout(() => t.style.visibility = 'hidden', 300); // Hide after transition
+      setTimeout(() => t.style.visibility = 'hidden', 300); 
     }, 2500);
   }
 }
 
-/**
- * Abre el catálogo usando Cache + Skeleton Loader
- */
 async function openCatalog(sectionId, title) {
   $('catTitle').innerText = title.toUpperCase();
   const content = $('catContent');
   const modal = $('modalCatalog');
   
-  // 1. Mostrar SKELETON si no hay caché
+  // 1. Mostrar SKELETON (Animación de carga)
   if (!_catalogCache) {
     let skeletons = '';
     for(let i=0; i<4; i++) skeletons += `<div class="prodCard skeleton" style="height:320px;"></div>`;
     content.innerHTML = `<div class="catGrid">${skeletons}</div>`;
   }
 
-  // Abrir modal
   modal.classList.add('active');
   $('overlay').classList.add('active');
   document.body.classList.add('modalOpen');
   
-  // Atrupar foco (A11y)
-  trapFocus(modal);
-
   try {
-    // 2. Fetch solo si es necesario (Network First fallback handled by SW)
     if (!_catalogCache) {
       const res = await fetch('/data/catalog.json');
       if(res.ok) _catalogCache = await res.json();
     }
     
-    if (!_catalogCache) throw new Error("No data");
-
-    // Filtrar items
-    let items = _catalogCache.products.filter(p => p.sectionId === sectionId);
+    let items = (_catalogCache?.products || []).filter(p => p.sectionId === sectionId);
 
     if(!items.length) {
        content.innerHTML = `<div style='text-align:center; padding:40px; color:#666;'><h3>PRÓXIMAMENTE</h3><p>Estamos preparando esta colección.</p></div>`;
        return;
     }
 
-    // 3. Renderizar (Agrupado por subsección)
+    // Agrupar por Subsección
     const groups = {};
     items.forEach(p => {
       const k = p.subSection || 'GENERAL';
@@ -82,6 +64,7 @@ async function openCatalog(sectionId, title) {
       groups[k].push(p);
     });
 
+    // Ordenar para mostrar "2025" primero
     const keys = Object.keys(groups).sort((a,b) => {
         if(a.includes('2025')) return -1;
         if(b.includes('2025')) return 1;
@@ -97,7 +80,7 @@ async function openCatalog(sectionId, title) {
           <img src="${p.img}" alt="${p.name}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.src='/assets/logo-score.webp'">
           <div style="font-weight:700; font-size:14px; margin:5px 0;">${p.name}</div>
           <div style="color:var(--red); font-weight:900;">$${p.baseMXN || p.price}</div>
-          <select id="size_${p.id}" aria-label="Talla para ${p.name}">
+          <select id="size_${p.id}" aria-label="Talla">
             ${(p.sizes || ['Unitalla']).map(s=>`<option>${s}</option>`).join('')}
           </select>
           <button id="btn_${p.id}" class="btn primary" style="width:100%; justify-content:center; padding:8px;" 
@@ -110,16 +93,15 @@ async function openCatalog(sectionId, title) {
 
   } catch(e) { 
     console.error(e);
-    content.innerHTML = '<p style="text-align:center; padding:20px;">Error de conexión. Intenta recargar.</p>';
+    content.innerHTML = '<p style="text-align:center;">Error de conexión.</p>';
   }
 }
 
-// Agregar con Feedback Visual
 function add(id, name, price, img) {
   const btn = $(`btn_${id}`);
   const originalText = btn ? btn.innerText : 'AGREGAR';
   
-  // Feedback inmediato
+  // Feedback Visual
   if(btn) {
     btn.innerText = "¡LISTO!";
     btn.style.background = "var(--green)";
@@ -128,26 +110,23 @@ function add(id, name, price, img) {
 
   const size = $(`size_${id}`).value;
   const key = id + size;
-  
   const exist = cart.find(i => i.key === key);
   if(exist) exist.qty++; else cart.push({ key, id, name, price, img, size, qty:1 });
   
   save();
   showToast("Agregado al carrito");
 
-  // Restaurar botón
   setTimeout(() => {
     if(btn) {
       btn.innerText = originalText;
-      btn.style.background = "#fff";
-      btn.style.color = "#111";
+      btn.style.background = "";
+      btn.style.color = "";
     }
     closeAll();
     openDrawer();
   }, 600);
 }
 
-// Logic de Envío
 async function quoteShipping() {
   const cp = $('cp').value;
   if(cp.length !== 5) return;
@@ -193,14 +172,13 @@ function updateCart(resetShip = true) {
   const total = sub + ship.cost;
   const usd = (total / USD_RATE).toFixed(2);
   
-  // Animar badge
   const countEl = $('cartCount');
   if(countEl) {
     countEl.innerText = cart.reduce((a,b)=>a+b.qty,0);
-    // Trigger bounce
+    // Animación rebote
     const trigger = $('cartBtnTrigger');
     trigger.classList.remove('cart-bounce');
-    void trigger.offsetWidth; // reflow
+    void trigger.offsetWidth; 
     trigger.classList.add('cart-bounce');
   }
 
@@ -222,7 +200,7 @@ function updateCart(resetShip = true) {
             <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
           </div>
           <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
-            <button onclick="removeItem(${x})" aria-label="Eliminar ${i.name}" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;">&times;</button>
+            <button onclick="removeItem(${x})" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;">&times;</button>
             <div style="font-weight:900;">x${i.qty}</div>
           </div>
         </div>
@@ -272,13 +250,10 @@ async function checkout() {
 function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
 
 function openDrawer() { 
-  const drawer = $('drawer');
-  drawer.classList.add('active'); 
+  $('drawer').classList.add('active'); 
   $('overlay').classList.add('active'); 
   document.body.classList.add('modalOpen'); 
-  $('cartBtnTrigger').setAttribute('aria-expanded', 'true');
   updateCart(); 
-  trapFocus(drawer);
 }
 
 function closeAll() { 
@@ -286,35 +261,6 @@ function closeAll() {
   $('modalCatalog').classList.remove('active'); 
   $('overlay').classList.remove('active');
   document.body.classList.remove('modalOpen');
-  $('cartBtnTrigger').setAttribute('aria-expanded', 'false');
-  // Return focus to main content
-  $('mainContent').focus();
-}
-
-// A11y Focus Trap
-function trapFocus(element) {
-  const focusableElements = element.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
-
-  element.addEventListener('keydown', function(e) {
-    if (e.key === 'Tab') {
-      if (e.shiftKey) { /* shift + tab */
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else { /* tab */
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          e.preventDefault();
-        }
-      }
-    }
-    if (e.key === 'Escape') closeAll();
-  });
-  // Focus first element initially
-  if(firstElement) firstElement.focus();
 }
 
 const overlay = $('overlay');
