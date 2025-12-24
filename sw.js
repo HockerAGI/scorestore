@@ -1,11 +1,12 @@
-const SW_VERSION = "score-store-v4"; // Cambia este número si actualizas la web
+const SW_VERSION = "score-store-v5";
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
 
-// Solo archivos que REALMENTE existen en tu carpeta
+// Archivos vitales para la UI
 const STATIC_ASSETS = [
   "/",
   "/index.html",
+  "/js/main.js",  // Ahora sí cacheamos el JS principal
   "/robots.txt",
   "/site.webmanifest",
   "/assets/logo-score.webp",
@@ -22,7 +23,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// 2. ACTIVACIÓN (Limpieza de versiones viejas)
+// 2. ACTIVACIÓN (Limpieza)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -43,12 +44,12 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // ⛔ SEGURIDAD: NUNCA cachear el backend (Stripe/Envia)
+  // ⛔ SEGURIDAD: Nunca cachear Stripe ni Netlify Functions
   if (url.pathname.startsWith("/.netlify/") || url.pathname.includes("api")) {
-    return; // Va directo a la red
+    return; 
   }
 
-  // A) Para HTML y Datos JSON: "Network First" (Intenta red, si falla usa caché)
+  // A) HTML y JSON de Datos: Network First (Prioridad a datos frescos)
   if (req.mode === "navigate" || (url.pathname.startsWith("/data/") && url.pathname.endsWith(".json"))) {
     event.respondWith(
       fetch(req)
@@ -62,8 +63,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // B) Para Imágenes/Assets: "Cache First" (Más rápido)
-  if (url.pathname.startsWith("/assets/")) {
+  // B) Assets (JS, CSS, Imágenes): Cache First (Velocidad)
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/js/")) {
     event.respondWith(
       caches.match(req).then((cached) => {
         if (cached) return cached;
