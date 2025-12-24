@@ -10,17 +10,23 @@ const STATIC_ASSETS = [
   "/index.html",
   "/css/styles.css",
   "/js/main.js",
+  "/site.webmanifest",      // AGREGADO: Vital para que la app se instale bien
   "/assets/logo-score.webp",
   "/assets/hero.webp",
-  "/assets/icons-score.svg",
+  "/icons-score.svg",       // CORREGIDO: Estaba en /assets/ y es root
   "/assets/fondo-pagina-score.webp"
 ];
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Activar inmediatamente sin esperar
+  self.skipWaiting(); // Activar inmediatamente
   event.waitUntil(
-    caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_STATIC)
+      .then((cache) => {
+        console.log('[SW] Pre-caching archivos estáticos');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .catch((err) => console.error('[SW] Error en caché estática:', err))
   );
 });
 
@@ -36,30 +42,37 @@ self.addEventListener("activate", (event) => {
       })
     ))
   );
-  self.clients.claim();
+  return self.clients.claim();
 });
 
 // 3. ESTRATEGIA DE RED (NETWORK FIRST)
-// Esto soluciona que "no se ven los cambios". Siempre intenta ir a internet primero.
+// Ideal para Ecommerce: Siempre intenta bajar la versión nueva.
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Ignorar API y Stripe
+  // Ignorar API, Stripe y Admin
   if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
 
-  // ESTRATEGIA: Network First (Red primero, caer a caché si no hay internet)
-  // Ideal para el Catálogo JSON y el HTML, así siempre ven precios/fotos nuevas.
+  // Solo interceptar peticiones GET (imágenes, scripts, html)
+  if (req.method !== "GET") return;
+
   event.respondWith(
     fetch(req)
       .then((res) => {
-        return caches.open(CACHE_DYNAMIC).then((cache) => {
-          cache.put(req, res.clone());
-          return res;
+        // Si la red responde bien, guardamos copia fresca en caché y la entregamos
+        const resClone = res.clone();
+        caches.open(CACHE_DYNAMIC).then((cache) => {
+          cache.put(req, resClone);
         });
+        return res;
       })
       .catch(() => {
-        return caches.match(req); // Si falla internet, mostrar caché
+        // Si falla internet, buscamos en caché
+        return caches.match(req).then((cachedRes) => {
+          if (cachedRes) return cachedRes;
+          // Si no está en caché y es una navegación, podríamos devolver una página offline.html (opcional)
+        });
       })
   );
 });
