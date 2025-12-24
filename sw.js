@@ -1,12 +1,12 @@
-const SW_VERSION = "score-store-v5";
+const SW_VERSION = "score-store-v6";
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
 
-// Archivos vitales para la UI
+// Archivos críticos que existen en tu proyecto
 const STATIC_ASSETS = [
   "/",
   "/index.html",
-  "/js/main.js",  // Ahora sí cacheamos el JS principal
+  "/js/main.js", // ¡Importante!
   "/robots.txt",
   "/site.webmanifest",
   "/assets/logo-score.webp",
@@ -23,7 +23,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// 2. ACTIVACIÓN (Limpieza)
+// 2. ACTIVACIÓN
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -39,7 +39,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 3. ESTRATEGIA DE RED
+// 3. INTERCEPTOR DE RED
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
     return; 
   }
 
-  // A) HTML y JSON de Datos: Network First (Prioridad a datos frescos)
+  // A) HTML y JSON: Network First (Prioridad datos frescos)
   if (req.mode === "navigate" || (url.pathname.startsWith("/data/") && url.pathname.endsWith(".json"))) {
     event.respondWith(
       fetch(req)
@@ -63,7 +63,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // B) Assets (JS, CSS, Imágenes): Cache First (Velocidad)
+  // B) Assets (JS, Imágenes): Cache First (Velocidad)
   if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/js/")) {
     event.respondWith(
       caches.match(req).then((cached) => {
