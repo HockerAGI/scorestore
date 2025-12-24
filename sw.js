@@ -1,94 +1,65 @@
-// CAMBIAMOS A v10 PARA FORZAR LA ACTUALIZACIÓN EN TODOS LOS CELULARES
-const SW_VERSION = "score-store-v10"; 
-const CACHE_STATIC = `${SW_VERSION}-static`;
-const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
+// --- VERSIÓN MAESTRA V12 ---
+// Cambia este número SIEMPRE que hagas cambios importantes para forzar la actualización en los celulares.
+const SW_VERSION = "score-store-v12-force-update"; 
 
-// Lista exacta de archivos vitales
+const CACHE_STATIC = `${SW_VERSION}-static`;
+const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
+
 const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/css/styles.css",
   "/js/main.js",
-  "/robots.txt",
-  "/site.webmanifest",
   "/assets/logo-score.webp",
-  "/assets/icons-score.svg",
   "/assets/hero.webp",
+  "/assets/icons-score.svg",
   "/assets/fondo-pagina-score.webp"
 ];
 
-// 1. INSTALACIÓN: Guardamos lo básico
+// 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Fuerza al SW a activarse de inmediato
+  self.skipWaiting(); // Activar inmediatamente sin esperar
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// 2. ACTIVACIÓN: Borramos cachés viejos (v9, v8, etc.)
+// 2. ACTIVACIÓN (Limpieza agresiva de versiones viejas)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((k) => {
-          // Si el caché no es el v10, lo borramos
-          if (k.startsWith("score-store-") && k !== CACHE_STATIC && k !== CACHE_RUNTIME) {
-            return caches.delete(k);
-          }
-        })
-      )
-    )
+    caches.keys().then((keys) => Promise.all(
+      keys.map((k) => {
+        if (k !== CACHE_STATIC && k !== CACHE_DYNAMIC) {
+          console.log('[SW] Borrando caché vieja:', k);
+          return caches.delete(k);
+        }
+      })
+    ))
   );
-  self.clients.claim(); // Toma control de la página inmediatamente
+  self.clients.claim();
 });
 
-// 3. ESTRATEGIA DE RED (Inteligente)
+// 3. ESTRATEGIA DE RED (NETWORK FIRST)
+// Esto soluciona que "no se ven los cambios". Siempre intenta ir a internet primero.
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // A) IGNORAR: API de Netlify y Stripe (Nunca cachear)
-  if (url.pathname.startsWith("/.netlify/") || url.pathname.includes("api") || url.hostname.includes("stripe")) {
-    return; 
-  }
+  // Ignorar API y Stripe
+  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
 
-  // B) CATÁLOGO (JSON): Stale-While-Revalidate
-  // (Muestra el dato guardado RÁPIDO, pero busca actualizaciones en fondo)
-  if (url.pathname.endsWith(".json")) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        const networkFetch = fetch(req).then((res) => {
-          caches.open(CACHE_RUNTIME).then((cache) => cache.put(req, res.clone()));
-          return res;
-        });
-        return cached || networkFetch;
-      })
-    );
-    return;
-  }
-
-  // C) ASSETS (Imágenes, JS, CSS): Cache First
-  // (Si ya lo tengo, no lo pido a internet. Velocidad máxima)
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/js/") || url.pathname.startsWith("/css/")) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) return cached;
-        return fetch(req).then((res) => {
-          // Si es válido, lo guardamos
-          if (res.status === 200) {
-            const clone = res.clone();
-            caches.open(CACHE_RUNTIME).then((cache) => cache.put(req, clone));
-          }
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // D) DEFAULT (HTML y otros): Network First con caída a Caché
+  // ESTRATEGIA: Network First (Red primero, caer a caché si no hay internet)
+  // Ideal para el Catálogo JSON y el HTML, así siempre ven precios/fotos nuevas.
   event.respondWith(
     fetch(req)
-      .catch(() => caches.match(req) || caches.match("/index.html"))
+      .then((res) => {
+        return caches.open(CACHE_DYNAMIC).then((cache) => {
+          cache.put(req, res.clone());
+          return res;
+        });
+      })
+      .catch(() => {
+        return caches.match(req); // Si falla internet, mostrar caché
+      })
   );
 });
