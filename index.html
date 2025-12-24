@@ -13,10 +13,12 @@
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
-  <script src="https://js.stripe.com/v3/" async></script>
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://js.stripe.com/v3/" async></script>
 
   <style>
     :root {
@@ -26,7 +28,7 @@
       --carbon: #0b0f14;
       --sand: #f8f8f8;
       --green: #00C853; 
-      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.9) 0%, rgba(20, 10, 5, 0.7) 100%);
+      --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 0.9) 0%, rgba(20, 10, 5, 0.8) 100%);
       --shadow: 0 15px 40px rgba(0,0,0,0.15);
       --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -39,6 +41,7 @@
     }
     body.modalOpen { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
 
+    /* FONDO */
     .page-bg {
       position: fixed; inset: 0; z-index: -10; pointer-events: none;
       background-image: url('/assets/fondo-pagina-score.webp');
@@ -54,11 +57,13 @@
 
     .wrap { width: min(1200px, 94vw); margin: 0 auto; padding-top: 90px; position: relative; z-index: 1; }
 
-    /* TOAST (NOTIFICACIÓN) - Oculto por defecto */
+    /* TOAST (NOTIFICACIÓN CORREGIDA: Invisible por defecto) */
     .toast {
       position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); 
       background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
-      font-weight: 700; opacity: 0; visibility: hidden; pointer-events: none; 
+      font-weight: 700; 
+      opacity: 0; visibility: hidden; /* Esto evita que se vea al cargar */
+      pointer-events: none; 
       z-index: 300; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.3); white-space: nowrap;
     }
     .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
@@ -100,7 +105,7 @@
     .heroOverlay { position: absolute; inset: 0; background: var(--cafeOverlay); mix-blend-mode: multiply; opacity: 0.9; }
     .heroContent { position: relative; z-index: 2; padding: 30px; max-width: 700px; color: #fff; }
     
-    /* LOGO SELLO (ARRIBA EN MÓVIL) */
+    /* LOGO SELLO (ARRIBA DERECHA EN MÓVIL PARA NO TAPAR) */
     .seal-logo {
       position: absolute; bottom: 30px; right: 30px; width: 110px; height: auto;
       opacity: 1; filter: drop-shadow(0 5px 20px rgba(0,0,0,0.6));
@@ -115,7 +120,7 @@
       font-size: 20px; font-weight: 700; transform: skew(-10deg); display: inline-block; margin-bottom: 15px;
     }
     .hero h1 {
-      font-family: var(--fontTitle); font-size: clamp(46px, 13vw, 100px); line-height: 0.9;
+      font-family: var(--fontTitle); font-size: clamp(42px, 12vw, 100px); line-height: 0.9;
       margin: 0 0 15px; text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
     .sub {
@@ -181,12 +186,12 @@
     }
     .pLogo:hover { opacity: 1; filter: grayscale(0); }
 
-    /* FOOTER MEJORADO */
+    /* FOOTER (FIX MÓVIL) */
     footer { 
       background: #080b10; color: #fff; 
       padding: 60px 0; margin-top: 60px; 
       border-top: 5px solid var(--red);
-      padding-bottom: 140px; /* Espacio extra para móvil */
+      padding-bottom: 140px; /* IMPORTANTE: Espacio para que la barra de pago no tape el contenido */
     }
     @media(min-width: 769px) { footer { padding-bottom: 60px; } }
 
@@ -461,202 +466,6 @@
     <button class="btn" style="padding:8px 16px; font-size:12px; height:36px; background:#fff; color:#000;" onclick="openDrawer()" type="button">VER CARRITO</button>
   </div>
 
-  <script>
-    const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
-    
-    // Fallback Sincronizado
-    const PRODUCTS = [
-      { id:"chamarra-oficial", name:"Chamarra Oficial Baja 1000", price:1789, img:"/assets/EDICION_2025/chamarra-baja1000.webp", sizes:["S","M","L","XL","2XL"], section:"BAJA_1000" }
-    ];
-
-    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    let ship = { method: null, cost: 0 };
-    const USD_RATE = 17.50; 
-    const $ = id => document.getElementById(id);
-
-    function smoothScroll(e, id) {
-      e.preventDefault();
-      const el = document.getElementById(id);
-      if(el) el.scrollIntoView({behavior:'smooth'});
-    }
-
-    async function openCatalog(sectionId, title) {
-      $('catTitle').innerText = title.toUpperCase();
-      const content = $('catContent');
-      content.innerHTML = '<p style="text-align:center; padding:20px;">Cargando...</p>';
-      
-      try {
-        const res = await fetch('/data/catalog.json');
-        const data = await res.json();
-        let items = data.products.filter(p => p.sectionId === sectionId);
-
-        if(!items.length) {
-          content.innerHTML = `<div style='text-align:center; padding:40px;'><h3>PRÓXIMAMENTE</h3><p>Estamos preparando esta colección.</p></div>`;
-        } else {
-          // LÓGICA DE AGRUPACIÓN POR SUBSECCIÓN
-          const groups = {};
-          items.forEach(p => {
-            const k = p.subSection || 'GENERAL';
-            if(!groups[k]) groups[k] = [];
-            groups[k].push(p);
-          });
-
-          let html = '';
-          for (const [groupName, prods] of Object.entries(groups)) {
-            html += `<div class="catSectionTitle">${groupName}</div>`;
-            html += `<div class="catGrid">`;
-            html += prods.map(p => `
-              <div class="prodCard">
-                <img src="${p.img}" onerror="this.src='/assets/logo-score.webp'" width="160" height="213" loading="lazy">
-                <div style="font-weight:700; font-size:14px; margin:5px 0;">${p.name}</div>
-                <div style="color:var(--red); font-weight:900;">$${p.baseMXN || p.price}</div>
-                <select id="size_${p.id}" style="margin:5px 0; height:36px; font-size:14px !important;">
-                  ${(p.sizes || ['Unitalla']).map(s=>`<option>${s}</option>`)}
-                </select>
-                <button class="btn primary" style="width:100%; justify-content:center; padding:8px;" 
-                  onclick="add('${p.id}','${p.name}',${p.baseMXN || p.price},'${p.img}')" type="button">AGREGAR</button>
-              </div>
-            `).join('');
-            html += `</div>`;
-          }
-          content.innerHTML = html;
-        }
-        
-        $('modalCatalog').classList.add('active');
-        $('overlay').classList.add('active');
-        document.body.classList.add('modalOpen');
-      } catch(e) { console.error(e); }
-    }
-
-    function add(id, name, price, img) {
-      const size = $(`size_${id}`).value;
-      const key = id + size;
-      const exist = cart.find(i => i.key === key);
-      if(exist) exist.qty++; else cart.push({ key, id, name, price, img, size, qty:1 });
-      save();
-      closeAll();
-      openDrawer();
-      showToast("Agregado al equipo");
-    }
-
-    async function quoteShipping() {
-      const cp = $('cp').value;
-      if(cp.length !== 5) return;
-      $('quoteResult').innerText = 'Cotizando...';
-      try {
-        const res = await fetch('/.netlify/functions/quote_shipping', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ to: { postal_code: cp }, items: cart })
-        });
-        const data = await res.json();
-        if(data.ok) {
-          ship.cost = data.mxn;
-          $('quoteResult').innerText = `Envío: $${data.mxn} MXN (${data.carrier})`;
-          updateCart(false);
-        } else {
-          ship.cost = 250;
-          $('quoteResult').innerText = 'Tarifa estandar: $250';
-          updateCart(false);
-        }
-      } catch(e) { console.error(e); }
-    }
-
-    function updateCart(resetShip = true) {
-      const method = $('shipMethod').value;
-      ship.method = method;
-      
-      if(resetShip) {
-        if(method === 'tj') ship.cost = 200; 
-        else if(method === 'pickup') ship.cost = 0;
-        else if(method === 'mx') { ship.cost = 0; if($('cp').value.length === 5) quoteShipping(); }
-      }
-
-      $('shipForm').style.display = (method === 'mx') ? 'block' : 'none';
-      
-      const sub = cart.reduce((a,b) => a + (b.price*b.qty), 0);
-      const total = sub + ship.cost;
-      const usd = (total / USD_RATE).toFixed(2);
-      
-      $('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
-      $('lnSub').innerText = `$${sub} MXN`;
-      $('lnShip').innerText = `$${ship.cost} MXN`;
-      $('lnTotal').innerText = `$${total} MXN`;
-      $('lnUsd').innerText = `aprox $${usd} USD`;
-      $('barTotal').innerText = `$${total}`;
-      
-      $('cartBody').innerHTML = cart.map((i,x) => `
-        <div style="display:flex; gap:10px; margin-bottom:12px; background:#f4f4f4; padding:10px; border-radius:8px;">
-          <img src="${i.img}" style="width:60px; height:60px; object-fit:contain; mix-blend-mode:multiply;">
-          <div style="flex:1;">
-            <div style="font-weight:700; font-size:13px; line-height:1.2;">${i.name}</div>
-            <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
-          </div>
-          <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
-            <button onclick="cart.splice(${x},1);save()" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;" type="button">&times;</button>
-            <div style="font-weight:900;">x${i.qty}</div>
-          </div>
-        </div>
-      `).join('') || '<div style="text-align:center; padding:40px 20px; opacity:0.5;">Tu equipo está vacío</div>';
-
-      const hasItems = cart.length > 0;
-      $('paybar').classList.toggle('visible', hasItems);
-      
-      let valid = hasItems && method;
-      if(method === 'mx') valid = valid && $('cp').value.length === 5 && $('addr').value.length > 5 && ship.cost > 0;
-      $('payBtn').disabled = !valid;
-    }
-
-    async function checkout() {
-      const btn = $('payBtn');
-      btn.innerText = "PROCESANDO..."; btn.disabled = true;
-      try {
-        const stripe = Stripe(STRIPE_PK);
-        const payload = {
-          items: cart,
-          shipping: {
-            method: ship.method,
-            cost: ship.cost,
-            data: { cp: $('cp').value, address: $('addr').value, name: $('name').value }
-          },
-          mode: ship.method,
-          to: { postal_code: $('cp').value }
-        };
-        const res = await fetch('/.netlify/functions/create_checkout', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if(data.url) window.location.href = data.url;
-        else throw new Error("Error iniciando pago.");
-      } catch(e) {
-        alert(e.message); btn.innerText = "IR A PAGAR"; btn.disabled = false;
-      }
-    }
-
-    function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
-    function openDrawer() { $('drawer').classList.add('active'); $('overlay').classList.add('active'); document.body.classList.add('modalOpen'); updateCart(); }
-    function closeAll() { 
-      $('drawer').classList.remove('active'); 
-      $('modalCatalog').classList.remove('active'); 
-      $('overlay').classList.remove('active');
-      document.body.classList.remove('modalOpen');
-    }
-    function showToast(m) { 
-      const t=$('toast'); 
-      t.innerText=m; 
-      t.classList.add('show'); 
-      setTimeout(()=>t.classList.remove('show'),2000); 
-    }
-    
-    // PWA & Service Worker
-    if('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-    }
-
-    $('overlay').onclick = closeAll;
-    ['cp','addr','name'].forEach(id => $(id).addEventListener('input', updateCart));
-    
-    updateCart();
-  </script>
+  <script src="/js/main.js" defer></script>
 </body>
 </html>
