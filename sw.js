@@ -1,4 +1,4 @@
-const SW_VERSION = "score-store-v6";
+const SW_VERSION = "score-store-v8"; // VERSIÓN ACTUALIZADA
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
 
@@ -6,7 +6,8 @@ const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
 const STATIC_ASSETS = [
   "/",
   "/index.html",
-  "/js/main.js", // ¡Importante!
+  "/css/styles.css",
+  "/js/main.js",
   "/robots.txt",
   "/site.webmanifest",
   "/assets/logo-score.webp",
@@ -23,7 +24,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// 2. ACTIVACIÓN
+// 2. ACTIVACIÓN (Limpieza de versiones viejas)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -63,8 +64,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // B) Assets (JS, Imágenes): Cache First (Velocidad)
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/js/")) {
+  // B) Assets (JS, CSS, Imágenes): Cache First (Velocidad)
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/js/") || url.pathname.startsWith("/css/")) {
     event.respondWith(
       caches.match(req).then((cached) => {
         if (cached) return cached;
