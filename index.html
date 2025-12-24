@@ -3,90 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCORE Store | Official Merchandise</title>
-    <meta name="description" content="Tienda oficial de mercancía SCORE International. Baja 1000, Baja 500, San Felipe 250.">
-    <link rel="stylesheet" href="css/styles.css">
+    <title>SCORE Store | Tienda Oficial SCORE International</title>
+    <meta name="description" content="Tienda oficial de mercancía SCORE International. Ediciones limitadas Baja 1000, Baja 500 y San Felipe 250. Envíos a todo México.">
+    <meta name="theme-color" content="#ffffff">
+    
     <link rel="icon" href="icons-score.svg" type="image/svg+xml">
-    <link rel="manifest" href="site.webmanifest">
-    <meta name="theme-color" content="#d32f2f">
+    <link rel="apple-touch-icon" href="assets/icon-192.png"> <link rel="manifest" href="site.webmanifest">
+    
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <link rel="preload" as="image" href="assets/hero.webp">
 </head>
 <body>
 
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Menú principal">
         <div class="nav-container">
-            <a href="#" class="logo">
-                <img src="assets/logo-score.webp" alt="SCORE International" height="50">
+            <a href="#" class="logo" aria-label="Ir al inicio">
+                <img src="assets/logo-score.webp" alt="Logotipo SCORE International" width="150" height="45">
             </a>
+            
             <div class="nav-icons">
-                <div class="cart-icon-container" id="cartBtn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2zm-9-13h2.18l2.15 9.06a2 2 0 0 0 1.95 1.54h8.34a2 2 0 0 0 1.92-1.42l1.6-6.18H6.5"></path>
-                    </svg>
-                    <span id="cartCount" class="cart-badge">0</span>
-                </div>
+                <button class="cart-btn-toggle" id="cartBtn" aria-label="Abrir carrito de compras">
+                    <div class="icon-wrapper">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2zm-9-13h2.18l2.15 9.06a2 2 0 0 0 1.95 1.54h8.34a2 2 0 0 0 1.92-1.42l1.6-6.18H6.5"></path>
+                        </svg>
+                        <span id="cartCount" class="cart-badge" aria-live="polite">0</span>
+                    </div>
+                </button>
             </div>
         </div>
     </nav>
 
     <header class="hero">
+        <div class="hero-overlay"></div>
         <div class="hero-content fade-in-element">
             <h1>SCORE STORE</h1>
-            <p>La leyenda del desierto, ahora en tu colección.</p>
+            <p>La leyenda del desierto. Colección Oficial 2025.</p>
             <a href="#catalog" class="cta-button">Ver Catálogo</a>
         </div>
     </header>
 
-    <section class="filters-section fade-in-element">
-        <div class="filters-container" id="filtersContainer">
+    <section class="filters-section fade-in-element" aria-label="Filtros de productos">
+        <div class="filters-container" id="filtersContainer" role="tablist">
             </div>
     </section>
 
-    <main id="catalog" class="catalog-container">
-        <div class="loading-spinner">Cargando productos...</div>
+    <main id="catalog" class="catalog-container" role="main">
+        <div class="loading-spinner" aria-label="Cargando productos">
+            <div class="spinner"></div>
+            <p>Cargando catálogo...</p>
+        </div>
     </main>
 
     <footer class="site-footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="assets/logo-score.webp" alt="SCORE" height="40">
+                <img src="assets/logo-score.webp" alt="SCORE Logo" width="120" height="36" loading="lazy" style="filter: brightness(0) invert(1);">
             </div>
-            <div class="footer-links">
+            <nav class="footer-links" aria-label="Enlaces legales">
                 <a href="#">Términos y Condiciones</a>
-                <a href="#">Política de Privacidad</a>
-                <a href="#">Política de Envíos</a>
-            </div>
+                <a href="#">Privacidad</a>
+                <a href="#">Envíos y Devoluciones</a>
+            </nav>
             <p class="copyright">© 2025 SCORE International. Todos los derechos reservados.</p>
+            <p class="credits">Desarrollado con tecnología PWA Serverless.</p>
         </div>
     </footer>
 
-    <div id="cartModal" class="cart-modal">
+    <div id="cartModal" class="cart-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+        <div class="cart-overlay" id="closeCartOverlay"></div>
         <div class="cart-content">
-            <div class="cart-header">
-                <h2>Tu Carrito</h2>
-                <button id="closeCart" class="close-btn">&times;</button>
-            </div>
+            <header class="cart-header">
+                <h2 id="cartTitle">Tu Carrito</h2>
+                <button id="closeCart" class="close-btn" aria-label="Cerrar carrito">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </header>
+            
             <div id="cartItems" class="cart-items">
-                <p class="empty-msg">Tu carrito está vacío.</p>
-            </div>
-            <div class="cart-footer">
+                </div>
+            
+            <footer class="cart-footer">
                 <div class="subtotal">
                     <span>Subtotal:</span>
                     <span id="cartTotal">$0.00 MXN</span>
                 </div>
-                <small class="shipping-note">El envío se calcula al finalizar.</small>
-                <button id="checkoutBtn" class="checkout-btn" disabled>Proceder al Pago</button>
-            </div>
+                <p class="shipping-note"><small>Impuestos incluidos. Envío calculado al final.</small></p>
+                <button id="checkoutBtn" class="checkout-btn" disabled>
+                    PAGAR AHORA
+                </button>
+                <div class="secure-badge">
+                    <small>🔒 Pago seguro vía Stripe</small>
+                </div>
+            </footer>
         </div>
     </div>
 
-    <div id="toastContainer" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
 
-    <script src="js/main.js"></script>
+    <script src="js/main.js" defer></script>
     <script>
+        // Registro de Service Worker para PWA
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('Service Worker registrado'))
-                .catch(err => console.error('Fallo SW', err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado: ', reg.scope))
+                    .catch(err => console.error('SW error: ', err));
+            });
         }
     </script>
 </body>
