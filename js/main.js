@@ -1,7 +1,11 @@
+/**
+ * js/main.js - CORE LOGIC
+ */
+
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
 const USD_RATE = 17.50; 
 
-// Cache para velocidad instantánea
+// Cache en memoria (RAM)
 let _catalogCache = null;
 
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -18,21 +22,25 @@ function showToast(msg) {
   const t = $('toast');
   if (t) {
     t.innerText = msg;
-    t.style.visibility = 'visible'; // Asegura visibilidad
+    t.style.visibility = 'visible'; 
     t.classList.add('show');
     setTimeout(() => {
       t.classList.remove('show');
-      setTimeout(() => t.style.visibility = 'hidden', 300); 
+      setTimeout(() => t.style.visibility = 'hidden', 300);
     }, 2500);
   }
 }
 
+/**
+ * Abre el catálogo
+ * USA "Cache Busting" (?t=...) para garantizar datos nuevos si hay internet
+ */
 async function openCatalog(sectionId, title) {
   $('catTitle').innerText = title.toUpperCase();
   const content = $('catContent');
   const modal = $('modalCatalog');
   
-  // 1. Mostrar SKELETON (Animación de carga)
+  // 1. Mostrar SKELETON
   if (!_catalogCache) {
     let skeletons = '';
     for(let i=0; i<4; i++) skeletons += `<div class="prodCard skeleton" style="height:320px;"></div>`;
@@ -44,8 +52,10 @@ async function openCatalog(sectionId, title) {
   document.body.classList.add('modalOpen');
   
   try {
+    // 2. Fetch con Cache Busting para evitar datos viejos
     if (!_catalogCache) {
-      const res = await fetch('/data/catalog.json');
+      // EL TRUCO: ?t=... fuerza al navegador a pedirlo de nuevo
+      const res = await fetch(`/data/catalog.json?t=${Date.now()}`);
       if(res.ok) _catalogCache = await res.json();
     }
     
@@ -56,7 +66,6 @@ async function openCatalog(sectionId, title) {
        return;
     }
 
-    // Agrupar por Subsección
     const groups = {};
     items.forEach(p => {
       const k = p.subSection || 'GENERAL';
@@ -64,7 +73,6 @@ async function openCatalog(sectionId, title) {
       groups[k].push(p);
     });
 
-    // Ordenar para mostrar "2025" primero
     const keys = Object.keys(groups).sort((a,b) => {
         if(a.includes('2025')) return -1;
         if(b.includes('2025')) return 1;
@@ -101,7 +109,6 @@ function add(id, name, price, img) {
   const btn = $(`btn_${id}`);
   const originalText = btn ? btn.innerText : 'AGREGAR';
   
-  // Feedback Visual
   if(btn) {
     btn.innerText = "¡LISTO!";
     btn.style.background = "var(--green)";
@@ -175,7 +182,6 @@ function updateCart(resetShip = true) {
   const countEl = $('cartCount');
   if(countEl) {
     countEl.innerText = cart.reduce((a,b)=>a+b.qty,0);
-    // Animación rebote
     const trigger = $('cartBtnTrigger');
     trigger.classList.remove('cart-bounce');
     void trigger.offsetWidth; 
@@ -200,7 +206,7 @@ function updateCart(resetShip = true) {
             <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
           </div>
           <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
-            <button onclick="removeItem(${x})" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;">&times;</button>
+            <button onclick="removeItem(${x})" aria-label="Eliminar ${i.name}" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;">&times;</button>
             <div style="font-weight:900;">x${i.qty}</div>
           </div>
         </div>
@@ -250,7 +256,8 @@ async function checkout() {
 function save() { localStorage.setItem('cart', JSON.stringify(cart)); updateCart(); }
 
 function openDrawer() { 
-  $('drawer').classList.add('active'); 
+  const drawer = $('drawer');
+  drawer.classList.add('active'); 
   $('overlay').classList.add('active'); 
   document.body.classList.add('modalOpen'); 
   updateCart(); 
