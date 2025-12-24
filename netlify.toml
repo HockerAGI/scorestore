@@ -1,7 +1,12 @@
 [build]
+  # CRITICO: Dejamos esto vacio o como comentario. 
+  # Netlify detectará package.json e instalará Stripe automaticamente.
+  # No pongas "npm run build" porque no tienes ese script.
+  command = "" 
   publish = "."
   functions = "netlify/functions"
-  command = "npm run build"
+
+# --- TUS MEJORAS DE SEGURIDAD Y CACHÉ (Están perfectas, las dejamos) ---
 
 [[headers]]
   for = "/assets/*"
@@ -36,3 +41,10 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# --- REDIRECCIÓN RECOMENDADA ---
+# Esto ayuda a que si alguien entra a una url rota, lo mande al inicio en vez de error 404 feo.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
