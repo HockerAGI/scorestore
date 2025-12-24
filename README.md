@@ -1,41 +1,33 @@
-# SCORE Store (Netlify)
+# SCORE Store (Netlify Implementation)
 
-## Estructura recomendada
-- `/index.html`
-- `/assets/*`
-- `/data/catalog.json`
-- `/data/promos.json`
-- `/netlify/functions/create_checkout.js`
-- `/netlify/functions/quote_shipping.js`
-- `/netlify/functions/stripe_webhook.js`
-- `/netlify/functions/envia_webhook.js`
+Tienda oficial tipo PWA (Progressive Web App) con arquitectura Serverless.
 
-## Reglas de precio
-- `baseMXN` = precio original (base).
-- Frontend aplica **+20% fijo** (PRICE_MARKUP = 0.20).
-- No se muestra “precio original”, solo el final.
+## Estructura del Proyecto
+* `/index.html` - Single Page Application (SPA).
+* `/assets/*` - Imágenes y recursos estáticos.
+* `/data/catalog.json` - Base de datos de productos.
+* `/data/promos.json` - Configuración de cupones.
+* `/netlify/functions/*` - Backend (Serverless Functions).
 
-## Promos
-- `SCORE10` = -10% (visible).
-- `ENVIOFREE` = envío gratis (visible).
-- `BAJA200` = -$200 (visible).
-- `GRTS10` = total GRATIS (secreto, no se sugiere).
+## Reglas de Negocio
+* **Precios:** El sistema toma el `baseMXN` del catálogo y el Frontend le suma automáticamente un **20% de margen** antes de mostrarlo al cliente.
+* **Inventario:** Controlado manualmente en `catalog.json`.
 
-## Variables de entorno (Netlify)
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `ENVIA_API_KEY`
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
-- `WHATSAPP_TOKEN`
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `URL_SCORE`
-- `NETLIFY_DATABASE_URL` (opcional)
-- `NETLIFY_DATABASE_URL_UNPOOLED` (opcional)
+## Variables de Entorno (Netlify)
+Configurar en Site Settings > Environment Variables:
 
-## Stripe Webhook
-Crea el endpoint en Stripe apuntando a:
-`/.netlify/functions/stripe_webhook`
+* `STRIPE_SECRET_KEY` (Live SK)
+* `STRIPE_WEBHOOK_SECRET` (whsec_...)
+* `ENVIA_API_KEY` (Para cotizar envíos)
+* `URL_SCORE` (URL del sitio en producción)
+* `TELEGRAM_BOT_TOKEN` (Notificaciones)
+* `TELEGRAM_CHAT_ID` (Notificaciones)
+* `WHATSAPP_TOKEN` (Meta API)
+* `WHATSAPP_PHONE_NUMBER_ID` (Meta API)
 
-Eventos mínimos:
-- `checkout.session.completed`
+## Configuración de Webhook
+En el Dashboard de Stripe, crear un endpoint apuntando a:
+`https://tudominio.app/.netlify/functions/stripe_webhook`
+
+**Eventos requeridos:**
+* `checkout.session.completed`
