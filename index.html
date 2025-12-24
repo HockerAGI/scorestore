@@ -13,10 +13,11 @@
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  
   <link rel="stylesheet" href="/css/styles.css" />
 
   <script src="https://js.stripe.com/v3/" async></script>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -28,13 +29,14 @@
     <div class="page-bg"></div>
     <div class="dust-container"><div class="dust"></div></div>
     <div class="overlay" id="overlay"></div>
-    <div class="toast" id="toast">Producto agregado</div>
+    
+    <div class="toast" id="toast"></div>
 
     <header class="topbar">
       <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE"></a>
       <div class="navRight">
         <div class="pill">MX + <b>TIJUANA</b></div>
-        <button class="cartTrigger" onclick="openDrawer()" type="button">
+        <button class="cartTrigger" onclick="openDrawer()" type="button" aria-label="Abrir Carrito">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
@@ -82,9 +84,9 @@
       <div class="card" onclick="openCatalog('BAJA_500', 'Baja 500')">
         <div class="cardBg"></div>
         <div class="cardContent">
-          <span class="statusBadge">NUEVA LLEGADA</span>
+          <span class="statusBadge">DISPONIBLE</span>
           <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy">
-          <button class="viewBtn" type="button">Ver Colección</button>
+          <button class="viewBtn" type="button">Ver Productos</button>
         </div>
       </div>
       <div class="card" onclick="openCatalog('BAJA_400', 'Baja 400')">
@@ -92,15 +94,15 @@
         <div class="cardContent">
           <span class="statusBadge">DISPONIBLE</span>
           <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy">
-          <button class="viewBtn" type="button">Ver Colección</button>
+          <button class="viewBtn" type="button">Ver Productos</button>
         </div>
       </div>
       <div class="card" onclick="openCatalog('SF_250', 'San Felipe 250')">
         <div class="cardBg"></div>
         <div class="cardContent">
-          <span class="statusBadge">CLÁSICOS</span>
+          <span class="statusBadge">DISPONIBLE</span>
           <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy">
-          <button class="viewBtn" type="button">Ver Colección</button>
+          <button class="viewBtn" type="button">Ver Productos</button>
         </div>
       </div>
     </div>
@@ -115,7 +117,8 @@
       </div>
     </div>
 
-    <footer>
+  </div> <footer>
+    <div class="footer-inner">
       <div class="footWrap">
         <div class="footBlock">
           <h4>ÚNICO UNIFORMES</h4>
@@ -127,7 +130,7 @@
             <summary>Términos y Privacidad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
             <div class="legalContent">
               <strong>Privacidad</strong>
-              <p>Sus datos personales son utilizados únicamente para el procesamiento y envío. No compartimos información con terceros.</p>
+              <p>Sus datos personales son utilizados únicamente para el procesamiento y envío de su pedido.</p>
               <strong>Seguridad</strong>
               <p>Todas las transacciones son procesadas de forma segura a través de Stripe con encriptación SSL.</p>
             </div>
@@ -145,21 +148,18 @@
             <summary>Cambios y Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
             <div class="legalContent">
               <strong>Garantía</strong>
-              <p>Aceptamos cambios únicamente por defectos de fábrica (7 días).</p>
-              <strong>Tallas</strong>
-              <p>Por ser ediciones limitadas, no garantizamos disponibilidad de tallas para cambios por error del cliente.</p>
+              <p>Aceptamos cambios únicamente por defectos de fábrica dentro de los primeros 7 días.</p>
             </div>
           </details>
         </div>
       </div>
-    </footer>
-
-  </div> 
+    </div>
+  </footer>
 
   <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU CARRITO</h3>
-      <button onclick="closeAll()" class="closeBtn" type="button">&times;</button>
+      <button onclick="closeAll()" class="closeBtn" type="button" aria-label="Cerrar">&times;</button>
     </div>
     
     <div class="dBody" id="cartBody"></div>
@@ -189,7 +189,7 @@
         <input id="name" placeholder="Nombre completo">
       </div>
       
-      <div id="quoteResult" style="font-size:12px; font-weight:900; color:var(--green); margin-bottom:15px; display:none;"></div>
+      <div id="quoteResult" class="quote-res"></div>
 
       <div class="secure-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -207,7 +207,7 @@
   <div class="modal" id="modalCatalog">
     <div class="dHead">
       <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" class="closeBtn" type="button">&times;</button>
+      <button onclick="closeAll()" class="closeBtn" type="button" aria-label="Cerrar">&times;</button>
     </div>
     <div class="catContent" id="catContent"></div>
   </div>
