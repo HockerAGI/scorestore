@@ -1,117 +1,160 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCORE Store | Tienda Oficial SCORE International</title>
-    <meta name="description" content="Tienda oficial de mercancía SCORE International. Ediciones limitadas Baja 1000, Baja 500 y San Felipe 250. Envíos a todo México.">
-    <meta name="theme-color" content="#ffffff">
-    
-    <link rel="icon" href="icons-score.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="assets/icon-192.png"> <link rel="manifest" href="site.webmanifest">
-    
-    <link rel="stylesheet" href="css/styles.css">
-    
-    <link rel="preload" as="image" href="assets/hero.webp">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="Tienda Oficial SCORE International. Colección 2025 Baja 1000, Baja 500 y San Felipe 250. Ropa y accesorios oficiales off-road." />
+  
+  <title>SCORE Store | Official Off-Road Merch</title>
+  
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  <link rel="preload" href="/css/styles.css?v=14.0" as="style" />
+  
+  <link rel="stylesheet" href="/css/styles.css?v=14.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <script src="https://js.stripe.com/v3/" async></script>
 </head>
 <body>
 
-    <nav class="navbar" role="navigation" aria-label="Menú principal">
-        <div class="nav-container">
-            <a href="#" class="logo" aria-label="Ir al inicio">
-                <img src="assets/logo-score.webp" alt="Logotipo SCORE International" width="150" height="45">
-            </a>
-            
-            <div class="nav-icons">
-                <button class="cart-btn-toggle" id="cartBtn" aria-label="Abrir carrito de compras">
-                    <div class="icon-wrapper">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2zm-9-13h2.18l2.15 9.06a2 2 0 0 0 1.95 1.54h8.34a2 2 0 0 0 1.92-1.42l1.6-6.18H6.5"></path>
-                        </svg>
-                        <span id="cartCount" class="cart-badge" aria-live="polite">0</span>
-                    </div>
-                </button>
-            </div>
-        </div>
+  <nav class="navbar" role="navigation" aria-label="Navegación principal">
+    <div class="nav-content">
+      <a href="/" class="logo-link" aria-label="Inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="nav-logo" width="130" height="40" />
+      </a>
+      
+      <button class="cart-btn" onclick="openCart()" aria-label="Ver carrito de compras">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span id="cartCount" class="badge" aria-live="polite">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-text fade-in-up">
+      <h1>OFF-ROAD LEGENDS</h1>
+      <p>COLECCIÓN OFICIAL 2025</p>
+      <button onclick="document.getElementById('sectionNav').scrollIntoView({behavior: 'smooth'})" class="cta-hero">VER CATÁLOGO</button>
+    </div>
+  </header>
+
+  <div class="hScroll-container">
+    <div class="hScroll" id="sectionNav" role="tablist" aria-label="Categorías">
+      </div>
+  </div>
+
+  <main id="app" class="main-container">
+    <div id="catGrid" class="catGrid" role="region" aria-live="polite" aria-label="Lista de productos">
+      <div class="loader-container">
+        <div class="spinner"></div>
+        <p>Cargando productos...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-logos">
+      <img src="/assets/logo-score.webp" alt="SCORE Logo" loading="lazy" style="filter: brightness(0) invert(1);">
+      <img src="/assets/logo-baja1000.webp" alt="Baja 1000 Logo" loading="lazy" style="filter: brightness(0) invert(1);">
+    </div>
+    <nav class="footer-nav" aria-label="Legal">
+      <a href="#">Términos y Condiciones</a>
+      <a href="#">Política de Privacidad</a>
+      <a href="#">Envíos y Devoluciones</a>
     </nav>
+    <p class="copyright">© 2025 SCORE International. Todos los derechos reservados.</p>
+  </footer>
 
-    <header class="hero">
-        <div class="hero-overlay"></div>
-        <div class="hero-content fade-in-element">
-            <h1>SCORE STORE</h1>
-            <p>La leyenda del desierto. Colección Oficial 2025.</p>
-            <a href="#catalog" class="cta-button">Ver Catálogo</a>
-        </div>
-    </header>
-
-    <section class="filters-section fade-in-element" aria-label="Filtros de productos">
-        <div class="filters-container" id="filtersContainer" role="tablist">
-            </div>
-    </section>
-
-    <main id="catalog" class="catalog-container" role="main">
-        <div class="loading-spinner" aria-label="Cargando productos">
-            <div class="spinner"></div>
-            <p>Cargando catálogo...</p>
-        </div>
-    </main>
-
-    <footer class="site-footer">
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="assets/logo-score.webp" alt="SCORE Logo" width="120" height="36" loading="lazy" style="filter: brightness(0) invert(1);">
-            </div>
-            <nav class="footer-links" aria-label="Enlaces legales">
-                <a href="#">Términos y Condiciones</a>
-                <a href="#">Privacidad</a>
-                <a href="#">Envíos y Devoluciones</a>
-            </nav>
-            <p class="copyright">© 2025 SCORE International. Todos los derechos reservados.</p>
-            <p class="credits">Desarrollado con tecnología PWA Serverless.</p>
-        </div>
-    </footer>
-
-    <div id="cartModal" class="cart-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
-        <div class="cart-overlay" id="closeCartOverlay"></div>
-        <div class="cart-content">
-            <header class="cart-header">
-                <h2 id="cartTitle">Tu Carrito</h2>
-                <button id="closeCart" class="close-btn" aria-label="Cerrar carrito">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </header>
-            
-            <div id="cartItems" class="cart-items">
-                </div>
-            
-            <footer class="cart-footer">
-                <div class="subtotal">
-                    <span>Subtotal:</span>
-                    <span id="cartTotal">$0.00 MXN</span>
-                </div>
-                <p class="shipping-note"><small>Impuestos incluidos. Envío calculado al final.</small></p>
-                <button id="checkoutBtn" class="checkout-btn" disabled>
-                    PAGAR AHORA
-                </button>
-                <div class="secure-badge">
-                    <small>🔒 Pago seguro vía Stripe</small>
-                </div>
-            </footer>
-        </div>
+  <div class="overlay" id="cartOverlay" onclick="closeAll()" aria-hidden="true"></div>
+  
+  <aside id="cartSidebar" class="sidebar" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+    <div class="sidebar-header">
+      <h2 id="cartTitle">TU CARRITO</h2>
+      <button onclick="closeAll()" class="close-icon" aria-label="Cerrar carrito">&times;</button>
     </div>
 
-    <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
+    <div id="cartItems" class="cart-items-container">
+      </div>
 
-    <script src="js/main.js" defer></script>
-    <script>
-        // Registro de Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado: ', reg.scope))
-                    .catch(err => console.error('SW error: ', err));
-            });
-        }
-    </script>
+    <div class="sidebar-footer">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="cartSubtotal" class="amount">$0.00</span>
+      </div>
+      
+      <div class="input-group">
+        <label for="shipMethod" class="label-sm">Método de entrega</label>
+        <select id="shipMethod" onchange="calcTotal()" aria-label="Seleccionar envío">
+          <option value="pickup">Recoger en Tienda (Tijuana) - GRATIS</option>
+          <option value="flat">Envío Nacional Fijo - $200 MXN</option>
+          <option value="mx">Cotizar Envío Exacto (Envia.com)</option>
+        </select>
+      </div>
+
+      <div id="shipForm" class="ship-form" style="display:none;" aria-hidden="true">
+        <input id="cp" type="tel" placeholder="C.P. (Ej: 22000)" maxlength="5" aria-label="Código Postal">
+        <div class="flex-row">
+          <button type="button" class="btn-sm black" onclick="quoteShipping()">COTIZAR</button>
+        </div>
+      </div>
+      <div id="quoteResult" class="quote-res" aria-live="polite"></div>
+
+      <div class="promo-box">
+        <input id="promoInput" type="text" placeholder="CÓDIGO PROMO" aria-label="Cupón de descuento">
+        <button onclick="applyPromo()" class="btn-apply">APLICAR</button>
+      </div>
+
+      <div class="total-row">
+        <span>TOTAL</span>
+        <span id="cartTotalFinal">$0.00 MXN</span>
+      </div>
+
+      <div class="secure-badge">
+        <svg width="12" height="12" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"11\" rx=\"2\" ry=\"2\"></rect><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"></path></svg>
+        Procesado seguro vía Stripe
+      </div>
+
+      <button id="payBtn" class="btn primary full" disabled onclick="checkout()">
+        PAGAR AHORA
+      </button>
+    </div>
+  </aside>
+
+  <div class="modal" id="modalCatalog" aria-hidden="true">
+    <div class="modal-bg" onclick="closeAll()"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="catTitle">
+      <button onclick="closeAll()" class="modal-close-btn" aria-label="Cerrar">&times;</button>
+      <div class="catContent" id="catContent">
+        </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
+
+  <script src="/js/main.js?v=14.0" defer></script>
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          console.log('SW registrado:', reg.scope);
+        }).catch(err => console.log('SW error:', err));
+      });
+    }
+  </script>
 </body>
 </html>
