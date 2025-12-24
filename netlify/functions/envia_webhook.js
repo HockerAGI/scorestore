@@ -4,6 +4,9 @@
  * Canales: Telegram y WhatsApp (Meta Cloud API).
  */
 
+const fetch = require("node-fetch"); // Agregado para compatibilidad robusta
+
+// Variables de Entorno
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -36,6 +39,7 @@ async function sendTelegram(text) {
         disable_web_page_preview: true,
       }),
     });
+    console.log("Telegram enviado OK.");
   } catch (err) {
     console.error("Error al enviar Telegram:", err.message);
   }
@@ -60,6 +64,7 @@ async function sendWhatsApp(text) {
         text: { body: text, preview_url: false },
       }),
     });
+    console.log("WhatsApp enviado OK.");
   } catch (err) {
     console.error("Error al enviar WhatsApp:", err.message);
   }
@@ -72,44 +77,58 @@ function formatOrder(o) {
   lines.push("--------------------------------");
 
   if (o.customerName) lines.push(`👤 **Cliente:** ${o.customerName}`);
-  if (o.customerEmail) lines.push(`📧 **Email:** ${o.customerEmail}`);
+  if (o.email) lines.push(`📧 **Email:** ${o.email}`); // Corregido key a 'email' estandar
+  else if (o.customerEmail) lines.push(`📧 **Email:** ${o.customerEmail}`);
+
   if (o.phone) lines.push(`📱 **Tel:** ${o.phone}`);
-  
+
   lines.push(""); // Espacio
-  
-  if (o.amountTotal != null) {
-    lines.push(`💰 **TOTAL:** $${o.amountTotal} ${String(o.currency || "MXN").toUpperCase()}`);
+
+  if (o.total != null) { // Usualmente 'total' es más común en payload procesado
+     // Asumimos que viene ya en decimales (ej: 250.00)
+     lines.push(`💰 **TOTAL:** $${Number(o.total).toFixed(2)} MXN`);
+  } else if (o.amountTotal != null) {
+     lines.push(`💰 **TOTAL:** $${o.amountTotal} ${String(o.currency || "MXN").toUpperCase()}`);
   }
-  if (o.paymentStatus) lines.push(`✅ **Estado:** ${o.paymentStatus.toUpperCase()}`);
+
+  lines.push(`✅ **Estado:** PAGADO`); // Si llegó aquí, es porque ya pagó.
 
   lines.push(""); // Espacio
 
-  if (o.shipping?.address) {
-    const a = o.shipping.address;
+  // Manejo flexible de dirección (Stripe a veces cambia estructura)
+  const shipping = o.shipping || {};
+  const addr = shipping.address || {};
+
+  if (addr.line1 || addr.city) {
     lines.push("🚚 **Dirección de Envío:**");
-    lines.push(`${o.shipping.name || ""}`);
-    const calle = `${a.line1 || ""} ${a.line2 || ""}`.trim();
+    if (shipping.name) lines.push(shipping.name);
+    
+    const calle = `${addr.line1 || ""} ${addr.line2 || ""}`.trim();
     if (calle) lines.push(calle);
-    const ciudad = `${a.city || ""}, ${a.state || ""} ${a.postal_code || ""}`.trim();
+    
+    const ciudad = `${addr.city || ""}, ${addr.state || ""} ${addr.postal_code || ""}`.trim();
     if (ciudad) lines.push(ciudad);
-    if (a.country) lines.push(a.country);
+    
+    if (addr.country) lines.push(addr.country);
   }
 
+  // Items (si existen)
   const items = Array.isArray(o.items) ? o.items : [];
   if (items.length) {
     lines.push(""); // Espacio
     lines.push("🛒 **Carrito:**");
     for (const it of items) {
-      // (Total item) -> formateo simple
-      const price = it.amount_total ? `$${it.amount_total}` : ""; 
-      lines.push(`• ${it.qty}x ${it.name} ${price}`);
+      // Intentar sacar precio unitario si existe
+      const priceStr = it.price ? `($${it.price})` : ""; 
+      const name = it.description || it.name || "Producto";
+      const qty = it.quantity || it.qty || 1;
+      lines.push(`• ${qty}x ${name} ${priceStr}`);
     }
   }
 
-  const promo = o.metadata?.promoCode;
-  if (promo && promo !== "NA") {
-    lines.push("");
-    lines.push(`🎟️ **Cupón usado:** ${promo}`);
+  if (o.orderId) {
+      lines.push("");
+      lines.push(`🆔 ID: ${o.orderId.slice(-8)}`); // Solo últimos 8 para no saturar
   }
 
   return lines.filter(Boolean).join("\n");
@@ -139,17 +158,19 @@ exports.handler = async (event) => {
       return jsonResponse(400, { ok: false, error: "JSON inválido." });
     }
 
+    console.log("Recibido payload de webhook:", JSON.stringify(body)); // Log para debug en Netlify
+
     // Formatear mensaje
     const msg = formatOrder(body);
 
-    // Enviar notificaciones paralelas (sin esperar una a la otra)
+    // Enviar notificaciones paralelas
     await Promise.all([sendTelegram(msg), sendWhatsApp(msg)]);
 
     return jsonResponse(200, { ok: true, msg: "Notificaciones enviadas." });
 
   } catch (err) {
     console.error("Error en webhook de notificaciones:", err);
-    // Retornamos 200 aunque falle la notificación para no romper el flujo de Stripe
+    // Retornamos 200 siempre para que Stripe no reintente infinitamente si falla Telegram
     return jsonResponse(200, { ok: false, error: err.message });
   }
 };
