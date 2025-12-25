@@ -1,7 +1,4 @@
 // netlify/functions/create_checkout.js
-// Crea una sesión de Stripe Checkout (PRODUCCIÓN) incluyendo: envío + cupón.
-// Node 18+ (fetch nativo).
-
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const {
@@ -34,20 +31,12 @@ function baseUrlFromEvent(event) {
   return `${proto}://${host}`;
 }
 
-function normalizeMode(mode) {
-  const m = toStr(mode).toLowerCase();
+function normalizeMode(raw) {
+  const m = toStr(raw).toLowerCase();
   if (m === "pickup") return "pickup";
   if (m === "tj" || m === "tijuana_delivery") return "tijuana_delivery";
   if (m === "mx" || m === "envia") return "envia";
   return "auto";
-}
-
-function sanitizeCustomer(to) {
-  return {
-    name: toStr(to?.name),
-    email: toStr(to?.email),
-    phone: toStr(to?.phone),
-  };
 }
 
 function sanitizeTo(to) {
@@ -56,6 +45,9 @@ function sanitizeTo(to) {
     state_code: upper(to?.state_code || to?.state || ""),
     city: toStr(to?.city),
     address1: toStr(to?.address1),
+    name: toStr(to?.name),
+    email: toStr(to?.email),
+    phone: toStr(to?.phone),
   };
 }
 
@@ -63,8 +55,9 @@ function isLikelyTJ(to) {
   const postal = toStr(to?.postal_code);
   const state = upper(to?.state_code || "");
   const city = toStr(to?.city);
-  const postalOk = isTijuanaPostal(postal) && (state === "BC" || !state);
-  const cityOk = looksLikeTijuana(city) && (state === "BC" || !state);
+
+  const postalOk = isTijuanaPostal(postal) && (!state || state === "BC");
+  const cityOk = looksLikeTijuana(city) && (!state || state === "BC");
   return postalOk || cityOk;
 }
 
@@ -73,46 +66,43 @@ async function computeShipping({ mode, to, items, productMap }) {
     return { ok: true, mxn: 0, carrier: "TIJUANA", service: "Recolección en fábrica", note: "Gratis" };
   }
 
-  const postal = toStr(to?.postal_code);
-  const address1 = toStr(to?.address1);
-
   const likelyTJ = isLikelyTJ(to);
 
   if (mode === "tijuana_delivery" || (mode === "auto" && likelyTJ)) {
-    if (mode === "tijuana_delivery" && !likelyTJ && postal.length === 5) {
-      // forzó TJ pero no parece TJ -> cae a nacional
-    } else {
+    // si forzó TJ pero no parece TJ y hay CP, cae a nacional
+    if (!(mode === "tijuana_delivery" && !likelyTJ && toStr(to?.postal_code).length === 5)) {
       return { ok: true, mxn: TIJUANA_DELIVERY_MXN, carrier: "TIJUANA", service: "Envío Local", note: "Entrega local (24-48h)" };
     }
   }
 
-  if (!isMxPostal(postal) || !address1) {
-    return {
-      ok: true,
-      mxn: MIN_OUTSIDE_TJ_MXN,
-      carrier: "ENVÍA",
-      service: "Estimado",
-      note: "Cotización estimada (completa tu dirección para mejor precio).",
-    };
+  // Nacional
+  const postal = toStr(to?.postal_code);
+  const state = upper(to?.state_code || "");
+  const city = toStr(to?.city);
+  const address1 = toStr(to?.address1);
+
+  // Si incompleto, base
+  if (!isMxPostal(postal) || !state || !city || !address1) {
+    return { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Envío Nacional", note: "Tarifa base (dirección incompleta)." };
   }
 
-  const q = await quoteEnviaMXN({ to, items, productMap });
+  const q = await quoteEnviaMXN({
+    to: { postal_code: postal, state_code: state, city, address1 },
+    items,
+    productMap,
+  });
+
   if (!q.ok) {
-    return {
-      ok: true,
-      mxn: MIN_OUTSIDE_TJ_MXN,
-      carrier: "ENVÍA",
-      service: "Estimado",
-      note: "No se pudo cotizar en vivo, se usó mínimo estimado.",
-    };
+    return { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Envío Nacional", note: `Mínimo aplicado. (${q.error})` };
   }
 
-  const mxn = Math.max(MIN_OUTSIDE_TJ_MXN, Number(q.quote?.mxn || 0));
+  const raw = Number(q.quote?.mxn || 0);
+  const mxn = Math.max(MIN_OUTSIDE_TJ_MXN, Math.round(raw * 1.05));
   return {
     ok: true,
     mxn,
-    carrier: toStr(q.quote?.provider || "ENVÍA"),
-    service: toStr(q.quote?.service || "Nacional"),
+    carrier: toStr(q.quote?.provider || "ENVIA"),
+    service: toStr(q.quote?.service || "Standard"),
     note: q.quote?.days ? `Entrega estimada: ${Number(q.quote.days)} días` : "",
   };
 }
@@ -121,7 +111,7 @@ function buildLineItemsAdjusted({ items, productMap, targetSubtotalMXN, baseUrl 
   const targetCents = Math.round(Number(targetSubtotalMXN || 0) * 100);
 
   const baseSubtotalMXN = computeSubtotalMXN(items, productMap);
-  const baseCents = Math.round(baseSubtotalMXN * 100);
+  const baseCents = Math.round(Number(baseSubtotalMXN || 0) * 100);
 
   const ratio = baseCents > 0 ? Math.min(1, targetCents / baseCents) : 1;
 
@@ -133,19 +123,19 @@ function buildLineItemsAdjusted({ items, productMap, targetSubtotalMXN, baseUrl 
     let unit = Math.floor(baseUnitCents * ratio);
     if (unit < 1) unit = 1;
 
+    const rawImg = toStr(p.img);
+    const absImg = rawImg
+      ? rawImg.startsWith("http")
+        ? rawImg
+        : `${toStr(baseUrl).replace(/\/+$/, "")}/${rawImg.replace(/^\//, "")}`
+      : "";
+
     return {
       price_data: {
         currency: "mxn",
         product_data: {
           name: `${p.name}${toStr(it.size) ? ` — Talla ${toStr(it.size)}` : ""}`,
-          images: (() => {
-            const raw = toStr(p.img);
-            if (!raw) return [];
-            const abs = raw.startsWith("http")
-              ? raw
-              : `${toStr(baseUrl).replace(/\/+$/, "")}/${raw.replace(/^\//, "")}`;
-            return [abs];
-          })(),
+          images: absImg ? [absImg] : [],
         },
         unit_amount: unit,
       },
@@ -156,6 +146,7 @@ function buildLineItemsAdjusted({ items, productMap, targetSubtotalMXN, baseUrl 
   let sum = lineItems.reduce((acc, li) => acc + li.price_data.unit_amount * Number(li.quantity || 1), 0);
   let diff = targetCents - sum;
 
+  // Ajuste fino por redondeo
   if (diff > 0) {
     for (const li of lineItems) {
       if (diff <= 0) break;
@@ -183,31 +174,38 @@ function buildLineItemsAdjusted({ items, productMap, targetSubtotalMXN, baseUrl 
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
-    return jsonResponse(204, {}, { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type" });
+    return {
+      statusCode: 204,
+      headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type" },
+      body: "",
+    };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { ok: false, error: "Método no permitido." }, { "Access-Control-Allow-Origin": "*" });
   }
 
   try {
     const body = safeJsonParse(event.body, {});
     const items = body?.items || [];
-    const promoCode = toStr(body?.promoCode);
-    const mode = normalizeMode(body?.mode || body?.shippingMode || "auto");
-
+    const promoCode = toStr(body?.promoCode || body?.promo_code || "");
+    const mode = normalizeMode(body?.mode || "auto");
     const to = sanitizeTo(body?.to || {});
-    const customer = sanitizeCustomer(body?.to || body?.customer || {});
 
     const v = validateCartItems(items);
-    if (!v.ok) return jsonResponse(400, { ok: false, error: v.error });
+    if (!v.ok) return jsonResponse(400, { ok: false, error: v.error }, { "Access-Control-Allow-Origin": "*" });
 
     const catalog = await loadCatalog();
     const productMap = productMapFromCatalog(catalog);
 
-    const sizeOk = validateSizes(items, productMap);
-    if (!sizeOk.ok) return jsonResponse(400, { ok: false, error: sizeOk.error });
+    const v2 = validateSizes(items, productMap);
+    if (!v2.ok) return jsonResponse(400, { ok: false, error: v2.error }, { "Access-Control-Allow-Origin": "*" });
+
+    const baseUrl = baseUrlFromEvent(event) || "https://example.com";
 
     const subtotalMXN = computeSubtotalMXN(items, productMap);
-
     const ship = await computeShipping({ mode, to, items, productMap });
-    if (!ship.ok) return jsonResponse(400, { ok: false, error: ship.error || "No se pudo calcular envío." });
+    if (!ship.ok) return jsonResponse(400, { ok: false, error: ship.error || "No se pudo calcular envío." }, { "Access-Control-Allow-Origin": "*" });
 
     const promo = await applyPromoToTotals({
       promoCode,
@@ -215,13 +213,11 @@ exports.handler = async (event) => {
       shippingMXN: Number(ship.mxn || 0),
     });
 
-    if (!promo.ok) return jsonResponse(400, { ok: false, error: promo.error || "Cupón inválido." });
     if (Number(promo.totalMXN || 0) <= 0) {
-      return jsonResponse(400, { ok: false, error: "Total en $0 no permitido para pago con Stripe." });
+      return jsonResponse(400, { ok: false, error: "Total en $0 no permitido para pago con Stripe." }, { "Access-Control-Allow-Origin": "*" });
     }
 
     const adjustedSubtotalMXN = Math.max(0, Number(promo.totalMXN || 0) - Number(promo.shippingMXN || 0));
-    const baseUrl = baseUrlFromEvent(event) || "https://example.com";
 
     const line_items = buildLineItemsAdjusted({
       items,
@@ -242,28 +238,35 @@ exports.handler = async (event) => {
       });
     }
 
+    // Metadata (para stripe_webhook/envia_webhook)
     const metadata = {
-      promo_code: promoCode ? (promo.promoCode || promoCode) : "",
+      promo_code: promo.promoCode || normalizePromo(promoCode),
       discount_mxn: String(Number(promo.discountMXN || 0)),
       shipping_mxn: String(Number(promo.shippingMXN || 0)),
       shipping_mode: mode,
+
       ship_postal: to.postal_code,
       ship_state: to.state_code,
       ship_city: to.city,
       ship_address1: to.address1,
-      customer_name: customer.name,
-      customer_email: customer.email,
-      customer_phone: customer.phone,
+
+      customer_name: to.name,
+      customer_email: to.email,
+      customer_phone: to.phone,
     };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       locale: "es",
       line_items,
+
       success_url: `${baseUrl}/?status=success`,
       cancel_url: `${baseUrl}/?status=cancel`,
+
       metadata,
-      customer_email: customer.email || undefined,
+      customer_email: to.email || undefined,
+
+      // opcional: Stripe vuelve a pedir teléfono, pero asegura captura
       phone_number_collection: { enabled: true },
       billing_address_collection: "auto",
     });
