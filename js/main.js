@@ -1,236 +1,172 @@
-// Configuración
-// IMPORTANTE: Recuerda configurar tus variables de entorno en Netlify para producción
-const STRIPE_PK = "pk_live_51Q5y9JP9q5X4Xy6c6b4b4b4b4b4b4b4b4b4"; // Reemplaza con tu clave PÚBLICA real
-const MARKUP_PCT = 0.20; // 20% de ganancia sobre el precio base
+// js/main.js
 
-// Estado
-let cart = JSON.parse(localStorage.getItem('score_cart')) || [];
-let products = [];
-let promos = [];
+const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
+const USD_RATE = 17.50;
 
-// Iniciar
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    setupEventListeners();
-    updateCartUI();
-    initAnimations(); // Iniciar animaciones
-});
+const $ = id => document.getElementById(id);
 
-// Cargar Datos
-async function loadData() {
-    try {
-        const [catRes, promoRes] = await Promise.all([
-            fetch('data/catalog.json'),
-            fetch('data/promos.json')
-        ]);
-        
-        const catalogData = await catRes.json();
-        products = catalogData.products;
-        promos = await promoRes.json();
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+let ship = { method: null, cost: 0 };
 
-        renderFilters();
-        renderProducts('all');
-    } catch (error) {
-        console.error("Error cargando datos:", error);
-        showToast("Error cargando el catálogo. Intenta recargar.", "error");
+function formatMXN(value) {
+  return `$${value.toLocaleString('es-MX')} MXN`;
+}
+
+function updateCart(resetShip = true) {
+  const method = $('shipMethod').value;
+  ship.method = method;
+
+  if (resetShip) {
+    if (method === 'pickup') ship.cost = 0;
+    else if (method === 'tj') ship.cost = 200;
+    else if (method === 'mx') {
+      ship.cost = 0;
+      if ($('cp').value.length === 5) quoteShipping();
     }
+  }
+
+  $('shipForm').style.display = method === 'mx' ? 'block' : 'none';
+
+  const sub = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+  const total = sub + ship.cost;
+  const usd = (total / USD_RATE).toFixed(2);
+
+  $('cartCount').innerText = cart.reduce((a, b) => a + b.qty, 0);
+  $('lnSub').innerText = formatMXN(sub);
+  $('lnShip').innerText = formatMXN(ship.cost);
+  $('lnTotal').innerText = formatMXN(total);
+  $('lnUsd').innerText = `aprox $${usd} USD`;
+  $('barTotal').innerText = formatMXN(total);
+
+  $('cartBody').innerHTML = cart.map((i, x) => `
+    <div style="display:flex; gap:10px; margin-bottom:12px; background:#f4f4f4; padding:10px; border-radius:8px;">
+      <img src="${i.img}" style="width:60px; height:60px; object-fit:contain; mix-blend-mode:multiply;">
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:13px; line-height:1.2;">${i.name}</div>
+        <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
+      </div>
+      <div style="text-align:right; display:flex; flex-direction:column; justify-content:space-between;">
+        <button onclick="cart.splice(${x},1);save()" style="color:var(--red); border:none; background:none; font-weight:900; font-size:16px; cursor:pointer;" type="button">&times;</button>
+        <div style="font-weight:900;">x${i.qty}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="text-align:center; padding:40px 20px; opacity:0.5;">Tu equipo está vacío</div>';
+
+  const hasItems = cart.length > 0;
+  $('paybar').classList.toggle('visible', hasItems);
+
+  let valid = hasItems && method;
+  if (method === 'mx') {
+    valid = valid && $('cp').value.length === 5 && $('addr').value.length > 5 && ship.cost > 0;
+  }
+
+  $('payBtn').disabled = !valid;
 }
 
-// Renderizar Filtros
-function renderFilters() {
-    const container = document.getElementById('filtersContainer');
-    // Extraer categorías únicas
-    const categories = ['all', ...new Set(products.map(p => p.category))];
-    
-    container.innerHTML = categories.map(cat => `
-        <button class="filter-btn ${cat === 'all' ? 'active' : ''}" 
-                onclick="filterProducts('${cat}')">
-            ${cat === 'all' ? 'Todos' : cat.toUpperCase()}
-        </button>
-    `).join('');
+function save() {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCart();
 }
 
-// Filtrar
-window.filterProducts = (category) => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    renderProducts(category);
-};
-
-// Renderizar Productos (Con Animación y Precio +20%)
-function renderProducts(category) {
-    const container = document.getElementById('catalog');
-    const filtered = category === 'all' ? products : products.filter(p => p.category === category);
-
-    if (filtered.length === 0) {
-        container.innerHTML = '<p style="text-align:center; width:100%;">No hay productos en esta categoría.</p>';
-        return;
-    }
-
-    container.innerHTML = filtered.map(p => {
-        // Calcular precio de venta (Base + 20%)
-        const sellingPrice = (p.baseMXN * (1 + MARKUP_PCT)).toFixed(2);
-        
-        return `
-        <div class="product-card fade-in-element">
-            <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy">
-            <div class="product-info">
-                <h3 class="product-title">${p.name}</h3>
-                <p class="product-price">$${sellingPrice} MXN</p>
-                <div class="sizes-select">
-                    ${p.sizes.map(s => `<button class="size-btn" onclick="selectSize(this, '${s}')">${s}</button>`).join('')}
-                </div>
-                <button class="add-btn" onclick="addToCart('${p.id}', '${p.name}', ${p.baseMXN}, '${p.image}')">
-                    AGREGAR AL CARRITO
-                </button>
-            </div>
-        </div>
-    `}).join('');
-
-    // Reiniciar observador de animaciones para los nuevos elementos
-    initAnimations();
+function openDrawer() {
+  $('drawer').classList.add('active');
+  $('overlay').classList.add('active');
+  document.body.classList.add('modalOpen');
+  updateCart();
 }
 
-// Selección de Talla (Visual)
-window.selectSize = (btn, size) => {
-    btn.parentNode.querySelectorAll('.size-btn').forEach(b => b.style.background = 'transparent');
-    btn.style.background = '#d32f2f'; // Rojo Score
-    btn.parentNode.dataset.selected = size;
-};
+function closeAll() {
+  $('drawer').classList.remove('active');
+  $('modalCatalog').classList.remove('active');
+  $('overlay').classList.remove('active');
+  document.body.classList.remove('modalOpen');
+}
 
-// Carrito
-window.addToCart = (id, name, basePrice, image) => {
-    // Buscar la selección de talla en el DOM
-    // Nota: Esta lógica es simple. En una app compleja, usaríamos IDs únicos por tarjeta.
-    // Aquí asumimos que el usuario seleccionó la talla en la tarjeta correspondiente.
-    // Para simplificar, si no selecciona, tomamos la primera disponible o "Única".
-    
-    // Calcular precio final para el carrito
-    const finalPrice = basePrice * (1 + MARKUP_PCT);
+function showToast(m) {
+  const t = $('toast');
+  t.innerText = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
 
-    const existing = cart.find(item => item.id === id); // Simplificado sin talla por ahora
-    
-    if (existing) {
-        existing.qty++;
+function add(id, name, price, img) {
+  const size = $(`size_${id}`).value;
+  const key = id + size;
+  const exist = cart.find(i => i.key === key);
+  if (exist) exist.qty++;
+  else cart.push({ key, id, name, price, img, size, qty: 1 });
+  save();
+  closeAll();
+  openDrawer();
+  showToast("Agregado al equipo");
+}
+
+async function quoteShipping() {
+  const cp = $('cp').value;
+  if (cp.length !== 5) return;
+
+  $('quoteResult').style.display = 'block';
+  $('quoteResult').innerText = 'Cotizando envío...';
+
+  try {
+    const res = await fetch('/.netlify/functions/quote_shipping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: { postal_code: cp }, items: cart })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      ship.cost = data.mxn;
+      $('quoteResult').innerText = `Envío: $${data.mxn} MXN (${data.carrier})`;
     } else {
-        cart.push({ id, name, price: finalPrice, image, qty: 1 });
+      ship.cost = 250;
+      $('quoteResult').innerText = 'Tarifa estándar: $250';
     }
-
-    saveCart();
-    updateCartUI();
-    showToast(`Agregado: ${name}`);
-    
-    // Abrir carrito automáticamente
-    document.getElementById('cartModal').classList.add('open');
-};
-
-window.removeFromCart = (id) => {
-    cart = cart.filter(item => item.id !== id);
-    saveCart();
-    updateCartUI();
-};
-
-function saveCart() {
-    localStorage.setItem('score_cart', JSON.stringify(cart));
+    updateCart(false);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-function updateCartUI() {
-    const cartCount = document.getElementById('cartCount');
-    const cartItems = document.getElementById('cartItems');
-    const cartTotal = document.getElementById('cartTotal');
-    const checkoutBtn = document.getElementById('checkoutBtn');
+async function checkout() {
+  const btn = $('payBtn');
+  btn.innerText = "PROCESANDO...";
+  btn.disabled = true;
 
-    const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
-    cartCount.innerText = totalQty;
-
-    if (cart.length === 0) {
-        cartItems.innerHTML = '<p class="empty-msg">Tu carrito está vacío.</p>';
-        checkoutBtn.disabled = true;
-        cartTotal.innerText = "$0.00 MXN";
-        return;
-    }
-
-    const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    cartTotal.innerText = `$${total.toFixed(2)} MXN`;
-    checkoutBtn.disabled = false;
-
-    cartItems.innerHTML = cart.map(item => `
-        <div class="cart-item">
-            <img src="${item.image}" alt="${item.name}">
-            <div class="item-details">
-                <h4>${item.name}</h4>
-                <p>$${item.price.toFixed(2)} x ${item.qty}</p>
-                <span class="remove-item" onclick="removeFromCart('${item.id}')">Eliminar</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Checkout
-document.getElementById('checkoutBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('checkoutBtn');
-    btn.innerText = "Procesando...";
-    btn.disabled = true;
-
-    try {
-        const response = await fetch('/.netlify/functions/create_checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cart })
-        });
-
-        const data = await response.json();
-
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            throw new Error('No se recibió URL de pago');
+  try {
+    const stripe = Stripe(STRIPE_PK);
+    const payload = {
+      items: cart,
+      shipping: {
+        method: ship.method,
+        cost: ship.cost,
+        data: {
+          cp: $('cp').value,
+          address: $('addr').value,
+          name: $('name').value
         }
-    } catch (error) {
-        console.error(error);
-        showToast("Error al iniciar pago. Intenta de nuevo.", "error");
-        btn.innerText = "Proceder al Pago";
-        btn.disabled = false;
-    }
-});
+      },
+      mode: ship.method,
+      to: { postal_code: $('cp').value }
+    };
 
-// UI Helpers
-function setupEventListeners() {
-    document.getElementById('cartBtn').addEventListener('click', () => {
-        document.getElementById('cartModal').classList.add('open');
+    const res = await fetch('/.netlify/functions/create_checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    document.getElementById('closeCart').addEventListener('click', () => {
-        document.getElementById('cartModal').classList.remove('open');
-    });
+
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else throw new Error("Error iniciando pago.");
+  } catch (e) {
+    alert(e.message);
+    btn.innerText = "IR A PAGAR";
+    btn.disabled = false;
+  }
 }
 
-// Sistema de Toasts (Notificaciones)
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.borderLeftColor = type === 'error' ? '#ff5252' : '#4caf50';
-    toast.innerText = message;
-    
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// Sistema de Animaciones al hacer Scroll
-function initAnimations() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.fade-in-element').forEach(el => {
-        observer.observe(el);
-    });
-}
+// Eventos iniciales
+['cp', 'addr', 'name'].forEach(id => $(id).addEventListener('input', updateCart));
+$('overlay').onclick = closeAll;
+updateCart();
