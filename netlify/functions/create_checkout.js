@@ -1,75 +1,98 @@
+// netlify/functions/create_checkout.js
+// Stripe Checkout — PRODUCCIÓN (Node 18, Netlify)
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const {
+  jsonResponse,
+  safeJsonParse,
+  toStr,
+  loadCatalog,
+  productMapFromCatalog,
+  validateCartItems,
+  validateSizes,
+} = require("./_shared");
 
 exports.handler = async (event) => {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
-
+  // CORS
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers, body: "" };
+    return {
+      statusCode: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+      body: "",
+    };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { ok: false, error: "Método no permitido." });
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const cart = body.items;
+    const body = safeJsonParse(event.body, {});
+    const items = body.items || [];
 
-    if (!Array.isArray(cart) || cart.length === 0) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Carrito vacío" })
-      };
-    }
+    // 1. Validar carrito
+    const v = validateCartItems(items);
+    if (!v.ok) return jsonResponse(400, { ok: false, error: v.error });
 
-    const line_items = cart.map(item => {
-      const imageUrl = item.img?.startsWith("http")
-        ? item.img
-        : `${process.env.URL_SCORE}/${item.img.replace(/^\//, "")}`;
+    // 2. Validar contra catálogo real
+    const catalog = await loadCatalog();
+    const productMap = productMapFromCatalog(catalog);
+
+    const v2 = validateSizes(items, productMap);
+    if (!v2.ok) return jsonResponse(400, { ok: false, error: v2.error });
+
+    // 3. Construir line_items Stripe
+    const baseUrl =
+      toStr(process.env.URL_SCORE) ||
+      toStr(process.env.URL || process.env.DEPLOY_PRIME_URL);
+
+    const line_items = items.map((it) => {
+      const p = productMap.get(it.id);
+
+      const img =
+        p.img && p.img.startsWith("http")
+          ? p.img
+          : `${baseUrl}/${toStr(p.img).replace(/^\//, "")}`;
 
       return {
         price_data: {
           currency: "mxn",
           product_data: {
-            name: `${item.name} (Talla: ${item.size || "Única"})`,
-            images: imageUrl ? [imageUrl] : [],
+            name: `${p.name}${it.size ? ` (Talla: ${it.size})` : ""}`,
+            images: img ? [img] : [],
             metadata: {
-              product_id: item.id,
-              size: item.size || "Única"
-            }
+              product_id: p.id,
+              size: it.size || "Única",
+            },
           },
-          unit_amount: Math.round(item.price * 100)
+          unit_amount: Math.round(Number(p.baseMXN) * 100),
         },
-        quantity: item.qty
+        quantity: Number(it.qty),
       };
     });
 
+    // 4. Crear sesión Stripe
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
 
       phone_number_collection: { enabled: true },
       shipping_address_collection: {
-        allowed_countries: ["MX"]
+        allowed_countries: ["MX"],
       },
 
       line_items,
 
-      success_url: `${process.env.URL_SCORE}/?status=success`,
-      cancel_url: `${process.env.URL_SCORE}/?status=cancel`
+      success_url: `${baseUrl}/?status=success`,
+      cancel_url: `${baseUrl}/?status=cancel`,
     });
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ url: session.url })
-    };
+    return jsonResponse(200, { ok: true, url: session.url });
   } catch (err) {
     console.error("Checkout error:", err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message })
-    };
+    return jsonResponse(500, { ok: false, error: err.message });
   }
 };
