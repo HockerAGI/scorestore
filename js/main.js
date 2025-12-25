@@ -1,632 +1,562 @@
-// /js/main.js
-// SCORE Store — FrontEnd Maestro (Producción)
-// Sin dependencias externas. PWA-friendly.
+/* /js/main.js — SCORE Store (Frontend PRO) */
+const $ = (id) => document.getElementById(id);
 
-(() => {
-  "use strict";
+const API = {
+  config: "/.netlify/functions/site_config",
+  quote: "/.netlify/functions/quote_shipping",
+  checkout: "/.netlify/functions/create_checkout",
+};
 
-  const $ = (id) => document.getElementById(id);
+const MX_STATES = [
+  ["AGU", "Aguascalientes"], ["BC", "Baja California"], ["BCS", "Baja California Sur"],
+  ["CAM", "Campeche"], ["CHP", "Chiapas"], ["CHH", "Chihuahua"], ["COA", "Coahuila"],
+  ["COL", "Colima"], ["CDMX", "Ciudad de México"], ["DUR", "Durango"], ["GUA", "Guanajuato"],
+  ["GRO", "Guerrero"], ["HID", "Hidalgo"], ["JAL", "Jalisco"], ["MEX", "Estado de México"],
+  ["MIC", "Michoacán"], ["MOR", "Morelos"], ["NAY", "Nayarit"], ["NLE", "Nuevo León"],
+  ["OAX", "Oaxaca"], ["PUE", "Puebla"], ["QUE", "Querétaro"], ["ROO", "Quintana Roo"],
+  ["SLP", "San Luis Potosí"], ["SIN", "Sinaloa"], ["SON", "Sonora"], ["TAB", "Tabasco"],
+  ["TAM", "Tamaulipas"], ["TLA", "Tlaxcala"], ["VER", "Veracruz"], ["YUC", "Yucatán"],
+  ["ZAC", "Zacatecas"],
+];
 
-  const STORAGE_KEY = "cart_v1";
+let stripePK = "";
+let catalog = null;
+let promos = null;
+let activeSection = "ALL";
 
-  const state = {
-    catalog: null,
-    promos: null,
-    activeSectionId: null,
+let cart = JSON.parse(localStorage.getItem("cart") || "[]"); // [{key,id,size,qty,name,img,price}]
+let ship = {
+  method: "",
+  baseCost: 0,
+  cost: 0,
+  quoted: false,
+  carrier: "",
+  service: "",
+  days: null,
+  note: "",
+};
 
-    cart: [],
-    shipping: {
-      mode: "", // pickup | tj | mx
-      mxn: 0,
-      carrier: "",
-      service: "",
-      note: "",
-    },
-    promo: {
-      code: "",
-      discountMXN: 0,
-      shippingMXN: 0,
-      totalMXN: 0,
-      note: "",
-    },
+let promoState = {
+  code: localStorage.getItem("promoCode") || "",
+  valid: false,
+  discount: 0,
+  freeShipping: false,
+  msg: "",
+};
+
+function normalizePromo(code) {
+  return (code || "").toString().trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function formatMXN(v) {
+  const n = Number(v || 0);
+  try {
+    return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} MXN`;
+  } catch {
+    return `$${n} MXN`;
+  }
+}
+
+function toast(msg) {
+  const wrap = $("toastWrap");
+  if (!wrap) return alert(msg);
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function save() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function getProduct(id) {
+  return catalog?.products?.find((p) => p.id === id) || null;
+}
+
+function calcSubtotal() {
+  return cart.reduce((sum, i) => {
+    const p = getProduct(i.id);
+    const price = Number(p?.baseMXN ?? i.price ?? 0);
+    return sum + price * Number(i.qty || 0);
+  }, 0);
+}
+
+function promoRule(code) {
+  const c = normalizePromo(code);
+  if (!c) return null;
+  const rules = promos?.rules || [];
+  return rules.find((r) => normalizePromo(r.code) === c) || null;
+}
+
+function applyPromoLocal(subtotal, shippingBase) {
+  const code = normalizePromo(promoState.code);
+  if (!code) return { valid: false, discount: 0, freeShipping: false, msg: "" };
+
+  const rule = promoRule(code);
+  if (!rule || !rule.active) return { valid: false, discount: 0, freeShipping: false, msg: "Cupón inválido o desactivado." };
+
+  let discount = 0;
+  let freeShipping = false;
+
+  if (rule.type === "percent") discount = Math.round(subtotal * Number(rule.value || 0));
+  if (rule.type === "fixed_mxn") discount = Math.round(Number(rule.value || 0));
+  if (rule.type === "free_shipping") freeShipping = true;
+
+  discount = Math.max(0, Math.min(discount, subtotal));
+  return {
+    valid: true,
+    discount,
+    freeShipping,
+    msg: freeShipping ? "Cupón aplicado: envío gratis." : "Cupón aplicado.",
+  };
+}
+
+function isEmail(v) {
+  const s = (v || "").toString().trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function fillStates() {
+  const sel = $("state");
+  if (!sel) return;
+  sel.innerHTML = MX_STATES.map(([code, name]) => `<option value="${code}">${name}</option>`).join("");
+  // default BC
+  sel.value = "BC";
+}
+
+function setShipFormVisibility() {
+  const method = $("shipMethod").value;
+  ship.method = method;
+
+  const show = method === "tj" || method === "mx";
+  $("shipForm").style.display = show ? "block" : "none";
+
+  // Prefill para TJ
+  if (method === "tj") {
+    if (!$("city").value) $("city").value = "Tijuana";
+    if (!$("state").value) $("state").value = "BC";
+  }
+}
+
+function computeShippingBase() {
+  const method = ship.method;
+
+  ship.quoted = false;
+  ship.carrier = "";
+  ship.service = "";
+  ship.days = null;
+  ship.note = "";
+
+  if (method === "pickup") {
+    ship.baseCost = 0;
+    return;
+  }
+  if (method === "tj") {
+    ship.baseCost = 200;
+    return;
+  }
+  if (method === "mx") {
+    ship.baseCost = 0; // se cotiza
+    return;
+  }
+  ship.baseCost = 0;
+}
+
+function renderCart() {
+  $("cartBody").innerHTML =
+    cart.map((i, x) => {
+      const p = getProduct(i.id);
+      const img = p?.img || i.img || "";
+      const name = p?.name || i.name || "Producto";
+      const sizeLine = i.size ? `<div style="opacity:.8">Talla: ${i.size}</div>` : "";
+      return `
+      <div class="cart-item">
+        <img src="${img}" alt="${name}" />
+        <div class="cart-item-details">
+          <div class="cart-item-title">${name}</div>
+          ${sizeLine}
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700">x${i.qty}</div>
+          <div class="cart-remove" onclick="removeItem(${x})">Eliminar</div>
+        </div>
+      </div>`;
+    }).join("") || `<div style="text-align:center;opacity:.5">Carrito vacío</div>`;
+}
+
+function updateTotals() {
+  const subtotal = calcSubtotal();
+
+  // promo preview
+  const promo = applyPromoLocal(subtotal, ship.baseCost);
+  promoState.valid = promo.valid;
+  promoState.discount = promo.discount;
+  promoState.freeShipping = promo.freeShipping;
+  promoState.msg = promo.msg;
+
+  let shippingShown = ship.baseCost;
+  if (promo.freeShipping) shippingShown = 0;
+
+  const total = Math.max(0, subtotal - promo.discount + shippingShown);
+
+  $("cartCount").innerText = cart.reduce((a, b) => a + Number(b.qty || 0), 0);
+  $("lnSub").innerText = formatMXN(subtotal);
+  $("lnShip").innerText = formatMXN(shippingShown);
+  $("lnTotal").innerText = formatMXN(total);
+
+  if (promo.discount > 0) {
+    $("rowDiscount").style.display = "flex";
+    $("lnDiscount").innerText = `-${formatMXN(promo.discount).replace(" MXN", "")} MXN`;
+  } else {
+    $("rowDiscount").style.display = "none";
+  }
+
+  $("promoMsg").innerText = promoState.code ? promoState.msg : "";
+
+  // habilitar pago
+  const method = ship.method;
+  const nameOk = ($("name").value || "").trim().length >= 3;
+  const emailOk = isEmail($("email").value);
+  const phoneOk = ($("phone").value || "").trim().length >= 7;
+
+  let shipOk = !!method;
+
+  if (method === "tj") {
+    const addrOk = ($("addr").value || "").trim().length >= 6;
+    const cityOk = ($("city").value || "").trim().length >= 2;
+    shipOk = shipOk && addrOk && cityOk;
+  }
+
+  if (method === "mx") {
+    const cpOk = ($("cp").value || "").trim().length === 5;
+    const stateOk = ($("state").value || "").trim().length >= 2;
+    const cityOk = ($("city").value || "").trim().length >= 2;
+    const addrOk = ($("addr").value || "").trim().length >= 6;
+    // requiere cotización (o cupón free shipping)
+    const quotedOk = ship.quoted || promoState.freeShipping;
+    shipOk = shipOk && cpOk && stateOk && cityOk && addrOk && quotedOk;
+  }
+
+  const canPay = cart.length > 0 && shipOk && nameOk && emailOk && phoneOk;
+  $("payBtn").disabled = !canPay;
+}
+
+function updateCart(resetShipping = true) {
+  if (resetShipping) {
+    setShipFormVisibility();
+    computeShippingBase();
+    ship.cost = ship.baseCost;
+    $("quoteResult").innerText = "";
+  }
+
+  renderCart();
+  updateTotals();
+}
+
+function removeItem(idx) {
+  cart.splice(idx, 1);
+  save();
+  updateCart(true);
+}
+
+function openDrawer() {
+  $("drawer").classList.add("active");
+  $("overlay").classList.add("active");
+  updateCart(false);
+}
+function closeAll() {
+  $("drawer").classList.remove("active");
+  $("overlay").classList.remove("active");
+}
+window.openDrawer = openDrawer;
+window.closeAll = closeAll;
+window.removeItem = removeItem;
+
+function renderSectionsNav() {
+  const wrap = $("sectionNav");
+  if (!wrap) return;
+
+  const secs = Array.isArray(catalog?.sections) ? [...catalog.sections] : [];
+  secs.sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
+
+  const pills = [
+    { id: "ALL", title: "TODO" },
+    ...secs.map((s) => ({ id: s.id, title: s.title })),
+  ];
+
+  wrap.innerHTML = pills.map((p) =>
+    `<button class="nav-pill ${p.id === activeSection ? "active" : ""}" data-sec="${p.id}">${p.title}</button>`
+  ).join("");
+
+  wrap.querySelectorAll("button[data-sec]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeSection = btn.getAttribute("data-sec") || "ALL";
+      renderSectionsNav();
+      renderCatalog();
+    });
+  });
+}
+
+function renderCatalog() {
+  const grid = $("catGrid");
+  const products = Array.isArray(catalog?.products) ? catalog.products : [];
+
+  const list = activeSection === "ALL"
+    ? products
+    : products.filter((p) => p.sectionId === activeSection);
+
+  grid.innerHTML = list.map((p) => {
+    const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+    const isUnitalla = sizes.length === 1 && /unit/i.test(String(sizes[0] || ""));
+    const sizeSelect = isUnitalla
+      ? `<div class="label-sm" style="opacity:.8;margin-top:6px">Talla: Unitalla</div>`
+      : `<select id="size_${p.id}">${sizes.map((s) => `<option value="${s}">${s}</option>`).join("")}</select>`;
+
+    const sub = p.subSection ? `<div class="label-sm" style="opacity:.75;margin-bottom:6px">${p.subSection}</div>` : "";
+
+    return `
+      <div class="prodCard">
+        <div class="prodImgBox">
+          <img src="${p.img}" class="prodImg" alt="${p.name}" />
+        </div>
+        <div class="prodInfo">
+          ${sub}
+          <div class="prodTitle">${p.name}</div>
+          ${sizeSelect}
+          <div class="prodPrice">${formatMXN(p.baseMXN)}</div>
+          <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function addToCart(id) {
+  const p = getProduct(id);
+  if (!p) return;
+
+  const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+  const isUnitalla = sizes.length === 1 && /unit/i.test(String(sizes[0] || ""));
+  const size = isUnitalla ? "Unitalla" : ($(`size_${id}`)?.value || "");
+
+  const key = `${id}__${size}`;
+  const exist = cart.find((i) => i.key === key);
+
+  if (exist) exist.qty += 1;
+  else cart.push({
+    key,
+    id,
+    size,
+    qty: 1,
+    name: p.name,
+    img: p.img,
+    price: p.baseMXN,
+  });
+
+  save();
+  openDrawer();
+}
+window.addToCart = addToCart;
+
+let quoteTimer = null;
+async function quoteShippingDebounced() {
+  clearTimeout(quoteTimer);
+  quoteTimer = setTimeout(quoteShipping, 450);
+}
+
+async function quoteShipping() {
+  if (ship.method !== "mx") return;
+
+  const cp = ($("cp").value || "").trim();
+  const state = ($("state").value || "").trim();
+  const city = ($("city").value || "").trim();
+  const addr = ($("addr").value || "").trim();
+
+  // no pegamos a la API si está incompleto
+  if (cp.length !== 5 || !state || city.length < 2 || addr.length < 6) {
+    ship.quoted = false;
+    $("quoteResult").innerText = "Completa tu dirección para cotizar.";
+    updateTotals();
+    return;
+  }
+
+  $("quoteResult").innerText = "Cotizando envío...";
+  ship.quoted = false;
+
+  const payload = {
+    items: cart.map((i) => ({ id: i.id, qty: i.qty, size: i.size })),
+    to: { postal_code: cp, state_code: state, city, address1: addr },
+    mode: "auto",
   };
 
-  /* ================== UTIL ================== */
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const toStr = (v) => (v ?? "").toString().trim();
-  const upper = (v) => toStr(v).toUpperCase();
-
-  function formatMXN(v) {
-    const n = Number(v || 0);
-    return `$${n.toLocaleString("es-MX")} MXN`;
-  }
-
-  let toastT = null;
-  function toast(msg, type = "") {
-    const el = $("toast");
-    if (!el) return;
-
-    el.textContent = msg;
-    el.classList.remove("ok", "bad");
-    if (type) el.classList.add(type);
-    el.classList.add("show");
-
-    clearTimeout(toastT);
-    toastT = setTimeout(() => el.classList.remove("show"), 3200);
-  }
-
-  function loadCart() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      state.cart = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      state.cart = [];
-    }
-  }
-
-  function saveCart() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.cart));
-  }
-
-  function cartCount() {
-    return state.cart.reduce((a, b) => a + Number(b.qty || 0), 0);
-  }
-
-  function cartSubtotalMXN() {
-    return state.cart.reduce((a, it) => a + Number(it.price || 0) * Number(it.qty || 0), 0);
-  }
-
-  /* ================== PROMOS (CLIENT-SIDE, PARA PREVIEW) ================== */
-  function applyPromoLocal({ promoCode, subtotalMXN, shippingMXN }) {
-    const code = upper(promoCode).replace(/\s+/g, "");
-    if (!code) {
-      return { code: "", discountMXN: 0, shippingMXN, totalMXN: subtotalMXN + shippingMXN };
-    }
-
-    const rule = (state.promos?.rules || []).find((r) => upper(r.code).replace(/\s+/g, "") === code);
-
-    if (!rule || !rule.active) {
-      return {
-        code,
-        discountMXN: 0,
-        shippingMXN,
-        totalMXN: subtotalMXN + shippingMXN,
-        note: "Cupón inválido o desactivado.",
-      };
-    }
-
-    let discountMXN = 0;
-    let newShipping = shippingMXN;
-
-    if (rule.type === "percent") {
-      discountMXN = Math.round(subtotalMXN * Number(rule.value || 0));
-    } else if (rule.type === "fixed_mxn") {
-      discountMXN = Math.round(Number(rule.value || 0));
-    } else if (rule.type === "free_shipping") {
-      newShipping = 0;
-    } else if (rule.type === "free_total") {
-      // Stripe no cobra $0. Dejamos vista previa, pero checkout lo bloqueará.
-      discountMXN = subtotalMXN;
-      newShipping = 0;
-    }
-
-    discountMXN = clamp(discountMXN, 0, subtotalMXN);
-    const totalMXN = Math.max(0, Math.round(subtotalMXN - discountMXN + newShipping));
-    return { code, discountMXN, shippingMXN: newShipping, totalMXN };
-  }
-
-  /* ================== UI: DRAWER ================== */
-  function openDrawer() {
-    $("drawer")?.classList.add("active");
-    $("overlay")?.classList.add("active");
-    document.body.style.overflow = "hidden";
-    renderCart();
-    updateTotals();
-  }
-
-  function closeAll() {
-    $("drawer")?.classList.remove("active");
-    $("overlay")?.classList.remove("active");
-    document.body.style.overflow = "";
-  }
-
-  /* ================== CATALOGO ================== */
-  function sectionsSorted() {
-    const secs = Array.isArray(state.catalog?.sections) ? state.catalog.sections.slice() : [];
-    return secs.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
-  }
-
-  function renderSectionNav() {
-    const nav = $("sectionNav");
-    if (!nav) return;
-
-    const secs = sectionsSorted();
-    const allBtn = `<button class="nav-pill ${!state.activeSectionId ? "active" : ""}" data-sec="">TODO</button>`;
-    const rest = secs
-      .map(
-        (s) =>
-          `<button class="nav-pill ${state.activeSectionId === s.id ? "active" : ""}" data-sec="${s.id}">${s.title}</button>`
-      )
-      .join("");
-
-    nav.innerHTML = allBtn + rest;
-  }
-
-  function productsForActiveSection() {
-    const prods = Array.isArray(state.catalog?.products) ? state.catalog.products.slice() : [];
-    if (!state.activeSectionId) return prods;
-    return prods.filter((p) => p.sectionId === state.activeSectionId);
-  }
-
-  function renderCatalog() {
-    const grid = $("catGrid");
-    if (!grid) return;
-    if (!state.catalog) {
-      grid.innerHTML = `<div style="opacity:.6">Cargando catálogo…</div>`;
-      return;
-    }
-
-    const prods = productsForActiveSection();
-
-    grid.innerHTML = prods
-      .map((p) => {
-        const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Única"];
-        return `
-          <div class="prodCard">
-            <img class="prodImg" src="${p.img}" alt="${p.name}" loading="lazy" />
-            <div class="prodInfo">
-              <div class="prodMeta">${toStr(p.subSection || "")}</div>
-              <div class="prodTitle">${p.name}</div>
-              <select id="size_${p.id}" class="prodSelect" aria-label="Talla">
-                ${sizes.map((s) => `<option value="${s}">${s}</option>`).join("")}
-              </select>
-              <div class="prodPrice">${formatMXN(p.baseMXN)}</div>
-              <button class="btn-add" type="button" data-add="${p.id}">AGREGAR</button>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-  }
-
-  /* ================== CART ================== */
-  function addToCart(productId) {
-    const p = state.catalog?.products?.find((x) => x.id === productId);
-    if (!p) return;
-
-    const size = toStr($(`size_${productId}`)?.value) || "Única";
-    const key = `${productId}__${size}`;
-
-    const existing = state.cart.find((i) => i.key === key);
-    if (existing) existing.qty = clamp(Number(existing.qty || 1) + 1, 1, 20);
-    else
-      state.cart.push({
-        key,
-        id: p.id,
-        name: p.name,
-        img: p.img,
-        price: Number(p.baseMXN || 0),
-        size,
-        qty: 1,
-      });
-
-    saveCart();
-    updateBadge();
-    toast("Agregado al carrito ✅", "ok");
-    openDrawer();
-  }
-
-  function removeAt(idx) {
-    state.cart.splice(idx, 1);
-    saveCart();
-    updateBadge();
-    renderCart();
-    updateTotals();
-  }
-
-  function renderCart() {
-    const box = $("cartBody");
-    if (!box) return;
-
-    if (!state.cart.length) {
-      box.innerHTML = `<div style="text-align:center;opacity:.5;padding:20px 0">Carrito vacío</div>`;
-      return;
-    }
-
-    box.innerHTML = state.cart
-      .map(
-        (i, x) => `
-        <div class="cart-item">
-          <img src="${i.img}" alt="${i.name}" loading="lazy" />
-          <div class="cart-item-details">
-            <div class="cart-item-title">${i.name}</div>
-            <div>Talla: ${toStr(i.size) || "Única"}</div>
-            <div>${formatMXN(Number(i.price || 0))} × ${Number(i.qty || 1)}</div>
-          </div>
-          <div>
-            <div>x${Number(i.qty || 1)}</div>
-            <div class="cart-remove" data-rm="${x}">Eliminar</div>
-          </div>
-        </div>
-      `
-      )
-      .join("");
-  }
-
-  function updateBadge() {
-    const n = cartCount();
-    const el = $("cartCount");
-    if (el) el.textContent = String(n);
-  }
-
-  /* ================== SHIPPING + TOTALS ================== */
-  function getShipMode() {
-    return toStr($("shipMethod")?.value);
-  }
-
-  function getToPayload() {
-    return {
-      postal_code: toStr($("cp")?.value),
-      state_code: upper($("state")?.value),
-      city: toStr($("city")?.value),
-      address1: toStr($("addr")?.value),
-      name: toStr($("name")?.value),
-      email: toStr($("email")?.value),
-      phone: toStr($("phone")?.value),
-    };
-  }
-
-  function ensureTijuanaPrefill() {
-    if (getShipMode() !== "tj") return;
-    if (!$("state")?.value) $("state").value = "BC";
-    if (!$("city")?.value) $("city").value = "Tijuana";
-  }
-
-  function showShipForm(show) {
-    const el = $("shipForm");
-    if (el) el.style.display = show ? "block" : "none";
-  }
-
-  function setQuoteResult(text, type = "") {
-    const el = $("quoteResult");
-    if (!el) return;
-    el.classList.remove("ok", "bad");
-    if (type) el.classList.add(type);
-    el.textContent = text || "";
-  }
-
-  function setPromoNote(text, type = "") {
-    const el = $("promoNote");
-    if (!el) return;
-    el.classList.remove("ok", "bad");
-    if (type) el.classList.add(type);
-    el.textContent = text || "";
-  }
-
-  function validateForQuote() {
-    const mode = getShipMode();
-    const to = getToPayload();
-
-    if (mode === "pickup") return false;
-    if (to.postal_code.length !== 5) return false;
-
-    if (mode === "tj") return true;
-
-    if (to.state_code.length < 2) return false;
-    if (to.city.length < 2) return false;
-    if (to.address1.length < 6) return false;
-    return true;
-  }
-
-  function validateForPay() {
-    const mode = getShipMode();
-    const to = getToPayload();
-
-    if (!state.cart.length) return false;
-    if (!mode) return false;
-
-    if (to.name.length < 3) return false;
-    if (to.email.length < 5 || !to.email.includes("@")) return false;
-    if (to.phone.length < 7) return false;
-
-    if (mode === "pickup") return true;
-
-    if (to.postal_code.length !== 5) return false;
-    if (to.address1.length < 6) return false;
-
-    if (mode === "tj") return state.shipping.mxn > 0 || validateForQuote();
-
-    if (to.state_code.length < 2) return false;
-    if (to.city.length < 2) return false;
-    return state.shipping.mxn > 0 || validateForQuote();
-  }
-
-  function updateTotals() {
-    const sub = cartSubtotalMXN();
-    const ship = Number(state.shipping.mxn || 0);
-
-    const promoCode = toStr($("promo")?.value);
-    state.promo = applyPromoLocal({ promoCode, subtotalMXN: sub, shippingMXN: ship });
-
-    $("lnSub").textContent = formatMXN(sub);
-    $("lnShip").textContent = formatMXN(state.promo.shippingMXN ?? ship);
-    $("lnTotal").textContent = formatMXN(state.promo.totalMXN ?? sub + ship);
-
-    const discountRow = $("discountRow");
-    if (discountRow) {
-      const d = Number(state.promo.discountMXN || 0);
-      discountRow.style.display = d > 0 ? "flex" : "none";
-      const ln = $("lnDiscount");
-      if (ln) ln.textContent = `-${formatMXN(d).replace(" MXN", "")} MXN`;
-    }
-
-    if (state.promo?.code && state.promo?.note) setPromoNote(state.promo.note, "bad");
-    else if (state.promo?.code && (state.promo.discountMXN > 0 || ship !== state.promo.shippingMXN))
-      setPromoNote(`Cupón aplicado: ${state.promo.code}`, "ok");
-    else setPromoNote("");
-
-    const btn = $("payBtn");
-    if (btn) btn.disabled = !validateForPay();
-  }
-
-  function renderShipSummary() {
-    const mode = getShipMode();
-
-    if (mode === "pickup") {
-      state.shipping = { mode, mxn: 0, carrier: "TIJUANA", service: "Recolección en fábrica", note: "Gratis" };
-      setQuoteResult("Recolección en fábrica: GRATIS ✅", "ok");
-      updateTotals();
-      return;
-    }
-
-    if (!state.shipping?.mxn) {
-      setQuoteResult("Cotiza tu envío para ver el total.", "");
-      updateTotals();
-      return;
-    }
-
-    const msgParts = [];
-    if (state.shipping.carrier || state.shipping.service) {
-      msgParts.push(`${state.shipping.carrier} ${state.shipping.service}`.trim());
-    }
-    msgParts.push(`Envío: ${formatMXN(state.shipping.mxn)}`);
-    if (state.shipping.note) msgParts.push(state.shipping.note);
-
-    setQuoteResult(msgParts.join(" · "), "ok");
-    updateTotals();
-  }
-
-  let quoteTimer = null;
-  function debounceQuote() {
-    clearTimeout(quoteTimer);
-    quoteTimer = setTimeout(() => quoteShipping().catch(() => {}), 550);
-  }
-
-  async function quoteShipping() {
-    if (!state.cart.length) {
-      state.shipping.mxn = 0;
-      renderShipSummary();
-      return;
-    }
-
-    const mode = getShipMode();
-    ensureTijuanaPrefill();
-
-    if (!validateForQuote()) {
-      state.shipping.mxn = 0;
-      setQuoteResult("Completa tu dirección para cotizar.", "");
-      updateTotals();
-      return;
-    }
-
-    setQuoteResult("Cotizando envío…", "");
-
-    const to = getToPayload();
-
-    const payload = {
-      mode,
-      items: state.cart.map((it) => ({ id: it.id, size: it.size, qty: it.qty })),
-      to: {
-        postal_code: to.postal_code,
-        state_code: to.state_code,
-        city: to.city,
-        address1: to.address1,
-      },
-    };
-
-    const res = await fetch("/.netlify/functions/quote_shipping", {
+  try {
+    const res = await fetch(API.quote, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => ({}));
 
-    if (!res.ok || !data?.ok) {
-      state.shipping.mxn = 0;
-      setQuoteResult(data?.error || "No se pudo cotizar envío.", "bad");
-      updateTotals();
-      return;
+    const mxn = Number(data.mxn || 0) || 250;
+    ship.baseCost = mxn;
+    ship.quoted = true;
+    ship.carrier = data.carrier || "";
+    ship.service = data.service || "";
+    ship.days = data.days ?? null;
+    ship.note = data.note || "";
+
+    const extra = [
+      ship.carrier ? `${ship.carrier}` : "",
+      ship.service ? `${ship.service}` : "",
+      ship.days ? `${ship.days} días` : "",
+    ].filter(Boolean).join(" · ");
+
+    $("quoteResult").innerText = `Envío: ${formatMXN(mxn)}${extra ? ` (${extra})` : ""}`;
+    updateCart(false);
+  } catch (e) {
+    ship.baseCost = 250;
+    ship.quoted = true; // permitimos continuar con mínimo
+    $("quoteResult").innerText = `Envío: ${formatMXN(250)} (tarifa base)`;
+    updateCart(false);
+  }
+}
+
+function applyPromo() {
+  promoState.code = normalizePromo($("promoCode").value);
+  localStorage.setItem("promoCode", promoState.code);
+  toast(promoState.code ? "Cupón actualizado." : "Cupón eliminado.");
+  updateCart(false);
+}
+window.applyPromo = applyPromo;
+
+async function getStripePk() {
+  // 1) config endpoint (recomendado)
+  try {
+    const r = await fetch(API.config, { cache: "no-store" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j?.stripe_pk) return j.stripe_pk;
     }
+  } catch {}
 
-    state.shipping = {
-      mode,
-      mxn: Number(data.mxn || 0),
-      carrier: toStr(data.carrier || ""),
-      service: toStr(data.service || ""),
-      note: toStr(data.note || ""),
-    };
+  // 2) fallback global
+  return (window.STRIPE_PK || "").trim();
+}
 
-    renderShipSummary();
+async function checkout() {
+  stripePK = stripePK || (await getStripePk());
+  if (!stripePK) {
+    toast("Falta configurar STRIPE_PUBLISHABLE_KEY en Netlify.");
+    return;
   }
 
-  /* ================== CHECKOUT ================== */
-  async function checkout() {
-    if (!validateForPay()) {
-      toast("Falta completar envío/cliente para pagar.", "bad");
-      return;
-    }
+  const method = ship.method;
+  const name = ($("name").value || "").trim();
+  const email = ($("email").value || "").trim();
+  const phone = ($("phone").value || "").trim();
 
-    if (Number(state.promo?.totalMXN || 0) <= 0) {
-      toast("Ese cupón deja el total en $0. No se puede cobrar por Stripe.", "bad");
-      return;
-    }
+  const to = {
+    postal_code: ($("cp").value || "").trim(),
+    state_code: ($("state").value || "").trim(),
+    city: ($("city").value || "").trim(),
+    address1: ($("addr").value || "").trim(),
+    name,
+    email,
+    phone,
+  };
 
-    const btn = $("payBtn");
-    if (btn) btn.disabled = true;
+  // payload limpio para backend
+  const payload = {
+    items: cart.map((i) => ({ id: i.id, qty: i.qty, size: i.size })),
+    mode: method,
+    promoCode: promoState.code,
+    to,
+  };
 
-    const mode = getShipMode();
-    ensureTijuanaPrefill();
-    const to = getToPayload();
-
-    const payload = {
-      items: state.cart.map((it) => ({ id: it.id, size: it.size, qty: it.qty })),
-      mode,
-      promoCode: toStr($("promo")?.value),
-      to: {
-        postal_code: to.postal_code,
-        state_code: to.state_code,
-        city: to.city,
-        address1: to.address1,
-        name: to.name,
-        email: to.email,
-        phone: to.phone,
-      },
-    };
-
-    const res = await fetch("/.netlify/functions/create_checkout", {
+  try {
+    const res = await fetch(API.checkout, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok || !data?.ok || !data?.url) {
-      toast(data?.error || "Error creando checkout.", "bad");
-      updateTotals();
+    const data = await res.json().catch(() => ({}));
+    if (data?.url) {
+      window.location.href = data.url;
       return;
     }
 
-    window.location.href = data.url;
+    toast(data?.error || "No se pudo iniciar el pago.");
+  } catch {
+    toast("Error de red iniciando el pago.");
   }
+}
+window.checkout = checkout;
 
-  /* ================== EVENTS ================== */
-  function bindEvents() {
-    $("cartBtn")?.addEventListener("click", openDrawer);
-    $("closeDrawerBtn")?.addEventListener("click", closeAll);
-    $("overlay")?.addEventListener("click", closeAll);
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAll();
-    });
-
-    $("heroCtaBtn")?.addEventListener("click", () => {
-      $("catalog")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    $("sectionNav")?.addEventListener("click", (e) => {
-      const btn = e.target?.closest("[data-sec]");
-      if (!btn) return;
-      state.activeSectionId = toStr(btn.getAttribute("data-sec")) || null;
-      renderSectionNav();
-      renderCatalog();
-    });
-
-    $("catGrid")?.addEventListener("click", (e) => {
-      const btn = e.target?.closest("[data-add]");
-      if (!btn) return;
-      addToCart(toStr(btn.getAttribute("data-add")));
-    });
-
-    $("cartBody")?.addEventListener("click", (e) => {
-      const rm = e.target?.closest("[data-rm]");
-      if (!rm) return;
-      const idx = Number(rm.getAttribute("data-rm"));
-      if (Number.isFinite(idx)) removeAt(idx);
-    });
-
-    $("shipMethod")?.addEventListener("change", () => {
-      const mode = getShipMode();
-      showShipForm(!!mode);
-
-      state.shipping = { mode, mxn: 0, carrier: "", service: "", note: "" };
-
-      if (mode === "pickup") {
-        renderShipSummary();
-        updateTotals();
-        return;
-      }
-
-      if (mode === "tj") ensureTijuanaPrefill();
-      debounceQuote();
-      updateTotals();
-    });
-
-    ["cp", "state", "city", "addr", "name", "email", "phone"].forEach((id) => {
-      $(id)?.addEventListener("input", () => {
-        if (id === "cp" || id === "state" || id === "city" || id === "addr") debounceQuote();
-        updateTotals();
-      });
-    });
-
-    $("promoBtn")?.addEventListener("click", () => updateTotals());
-    $("promo")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        updateTotals();
-      }
-    });
-
-    $("payBtn")?.addEventListener("click", checkout);
-
-    window.addEventListener("offline", () => toast("Sin internet. Algunas funciones pueden fallar.", "bad"));
-    window.addEventListener("online", () => toast("De vuelta en línea ✅", "ok"));
+function applyUrlStatus() {
+  const qs = new URLSearchParams(location.search);
+  const st = qs.get("status");
+  if (st === "success") {
+    toast("Pago confirmado. Gracias 🔥");
+    cart = [];
+    save();
+    updateCart(true);
+    history.replaceState({}, "", "/");
+  } else if (st === "cancel") {
+    toast("Pago cancelado.");
+    history.replaceState({}, "", "/");
   }
+}
 
-  /* ================== INIT ================== */
-  async function init() {
-    loadCart();
-    updateBadge();
-    bindEvents();
+function bindUI() {
+  $("overlay").onclick = closeAll;
 
-    const qs = new URLSearchParams(window.location.search);
-    const status = qs.get("status");
-    if (status === "success") {
-      toast("Pago confirmado ✅ Te contactamos por WhatsApp/Email.", "ok");
-      state.cart = [];
-      saveCart();
-      updateBadge();
-      renderCart();
-      updateTotals();
-      history.replaceState({}, "", window.location.pathname);
-    } else if (status === "cancel") {
-      toast("Pago cancelado. Tu carrito sigue aquí.", "bad");
-      history.replaceState({}, "", window.location.pathname);
-    }
+  // ship method
+  $("shipMethod").addEventListener("change", () => {
+    updateCart(true);
+    if (ship.method === "mx") quoteShippingDebounced();
+  });
 
-    if ("serviceWorker" in navigator) {
-      try { await navigator.serviceWorker.register("/sw.js"); } catch {}
-    }
+  // form inputs
+  ["cp", "state", "city", "addr"].forEach((id) => {
+    $(id).addEventListener("input", () => {
+      updateCart(false);
+      if (ship.method === "mx") quoteShippingDebounced();
+    });
+  });
 
-    try {
-      const [catalogRes, promosRes] = await Promise.all([
-        fetch("/data/catalog.json", { cache: "no-store" }),
-        fetch("/data/promos.json", { cache: "no-store" }),
-      ]);
-      state.catalog = await catalogRes.json();
-      state.promos = await promosRes.json();
+  ["name", "email", "phone", "promoCode"].forEach((id) => {
+    $(id).addEventListener("input", () => updateCart(false));
+  });
+}
 
-      renderSectionNav();
-      renderCatalog();
-      renderCart();
-      updateTotals();
-    } catch (e) {
-      console.error(e);
-      toast("No se pudo cargar el catálogo.", "bad");
-    }
-  }
+async function loadData() {
+  catalog = await (await fetch("/data/catalog.json", { cache: "no-store" })).json();
+  promos = await (await fetch("/data/promos.json", { cache: "no-store" })).json();
+}
 
-  init();
+async function registerSW() {
+  try {
+    if ("serviceWorker" in navigator) await navigator.serviceWorker.register("/sw.js");
+  } catch {}
+}
+
+(async function init() {
+  fillStates();
+  $("promoCode").value = promoState.code;
+
+  stripePK = await getStripePk();
+
+  await loadData();
+  renderSectionsNav();
+  renderCatalog();
+
+  bindUI();
+  applyUrlStatus();
+
+  updateCart(true);
+  registerSW();
 })();
