@@ -1,7 +1,7 @@
 // netlify/functions/_shared.js
 const fs = require("fs/promises");
 const path = require("path");
-// ELIMINADO: const fetch = require("node-fetch"); <- ESTO CAUSABA EL ERROR
+// ELIMINADO: const fetch = require("node-fetch"); <- ¡ESTO ERA EL ERROR!
 
 // Caches en memoria
 let _catalogCache = null;
@@ -188,7 +188,7 @@ function getBaseUrlFromEnv() {
   return url ? url.replace(/\/+$/, "") : "";
 }
 
-// === Cotizador Envia (Sin node-fetch explicito) ===
+// === Cotizador Envia (USANDO FETCH NATIVO) ===
 
 async function quoteEnviaMXN({ to, items, productMap }) {
   const apiKey = toStr(process.env.ENVIA_API_KEY);
@@ -243,7 +243,7 @@ async function quoteEnviaMXN({ to, items, productMap }) {
     shipment: { carrier: "ENVIA" },
   };
 
-  // USAMOS FETCH NATIVO (Global en Node 18)
+  // USAMOS FETCH NATIVO (Global en Node 18) - SIN LIBRERÍAS
   const res = await fetch("https://api.envia.com/ship/rate", {
     method: "POST",
     headers: {
