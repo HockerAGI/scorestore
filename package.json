@@ -1,16 +1,15 @@
 {
   "name": "scorestore",
   "version": "2.0.0",
-  "description": "Tienda Oficial SCORE",
+  "description": "SCORE Store — Tienda Oficial (PWA + Netlify Functions)",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
-    "build": "echo \"static site\""
+    "build": "echo \"Static site with Netlify Functions\""
   },
   "dependencies": {
     "stripe": "^16.6.0"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18"
   },
