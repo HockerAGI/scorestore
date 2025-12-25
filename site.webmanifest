@@ -1,27 +1,21 @@
 {
-  "name": "SCORE Store · Official Racing Merch",
-  "short_name": "SCORE Store",
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "name": "SCORE Store",
+  "short_name": "SCORE",
+  "description": "Tienda oficial SCORE — Merch Off-Road",
+  "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff", 
+  "background_color": "#000000",
   "theme_color": "#d32f2f",
-  "description": "Tienda oficial SCORE International Racing. Ediciones limitadas.",
-  "lang": "es-MX",
-  "categories": ["shopping", "sports", "lifestyle"],
   "icons": [
     {
-      "src": "/icons-score.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/assets/icons-score.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     },
     {
-      "src": "/icons-score.svg",
+      "src": "/assets/logo-score.webp",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/webp"
     }
   ]
 }
