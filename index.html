@@ -15,22 +15,22 @@
   <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css" />
 
-  <!-- Stripe SDK -->
-  <script src="https://js.stripe.com/v3/"></script>
-
-  <!-- 🔐 Stripe Public Key (OBLIGATORIO) -->
-  <script>
-    window.STRIPE_PK = "pk_live_TU_CLAVE_PUBLICA_AQUI";
-  </script>
+  <!-- Extras (solo para lo nuevo de checkout) -->
+  <style>
+    .promo-row{display:flex;gap:10px;align-items:center}
+    .promo-row input{flex:1}
+    .hint{margin-top:6px;font-size:12px;line-height:1.3;opacity:.85}
+    .hint.ok{color:#2e7d32}
+    .hint.bad{color:#c62828}
+  </style>
 </head>
-
 <body>
 
   <!-- NAV -->
   <header class="navbar">
     <div class="nav-content">
       <img src="/assets/logo-score.webp" class="nav-logo" alt="SCORE" />
-      <button class="cart-btn" onclick="openDrawer()">
+      <button class="cart-btn" id="cartBtn" type="button" aria-label="Abrir carrito">
         🛒 <span id="cartCount" class="badge">0</span>
       </button>
     </div>
@@ -40,11 +40,9 @@
   <section class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-text">
-      <h1>TIENDA OFICIAL</h1>
-      <p>Merch oficial SCORE Baja</p>
-      <button class="cta-hero" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">
-        VER COLECCIÓN
-      </button>
+      <h1>MERCH OFICIAL</h1>
+      <p>Baja 1000 • Baja 500 • Baja 400 • San Felipe 250</p>
+      <button class="cta-hero" id="heroCtaBtn" type="button">VER CATÁLOGO</button>
     </div>
   </section>
 
@@ -61,11 +59,14 @@
   <!-- OVERLAY -->
   <div id="overlay" class="overlay"></div>
 
-  <!-- DRAWER CARRITO -->
-  <aside id="drawer" class="sidebar">
+  <!-- TOAST -->
+  <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- DRAWER -->
+  <aside id="drawer" class="sidebar" aria-label="Carrito">
     <div class="sidebar-header">
       <h2>Tu equipo</h2>
-      <button class="close-icon" onclick="closeAll()">×</button>
+      <button class="close-icon" id="closeDrawerBtn" type="button" aria-label="Cerrar">×</button>
     </div>
 
     <div id="cartBody" class="cart-items-container"></div>
@@ -74,6 +75,10 @@
       <div class="summary-row">
         <span>Subtotal</span>
         <span id="lnSub">$0 MXN</span>
+      </div>
+      <div class="summary-row" id="discountRow" style="display:none">
+        <span>Descuento</span>
+        <span id="lnDiscount">-$0 MXN</span>
       </div>
       <div class="summary-row">
         <span>Envío</span>
@@ -94,24 +99,43 @@
 
       <div id="shipForm" style="display:none">
         <label class="label-sm">Código Postal</label>
-        <input id="cp" />
+        <input id="cp" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="Ej. 22000" />
+
+        <label class="label-sm">Estado (2 letras)</label>
+        <input id="state" maxlength="2" autocapitalize="characters" autocomplete="address-level1" placeholder="Ej. BC" />
+
+        <label class="label-sm">Ciudad</label>
+        <input id="city" autocomplete="address-level2" placeholder="Ej. Tijuana" />
 
         <label class="label-sm">Dirección</label>
-        <input id="addr" />
+        <input id="addr" autocomplete="street-address" placeholder="Calle, número, colonia" />
 
         <label class="label-sm">Nombre completo</label>
-        <input id="name" />
+        <input id="name" autocomplete="name" placeholder="Tu nombre" />
 
-        <div id="quoteResult"></div>
+        <label class="label-sm">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com" />
+
+        <label class="label-sm">Teléfono</label>
+        <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 6641234567" />
+
+        <label class="label-sm">Cupón (opcional)</label>
+        <div class="promo-row">
+          <input id="promo" placeholder="Ej. SCORE10" />
+          <button id="promoBtn" class="btn" type="button">Aplicar</button>
+        </div>
+        <div id="promoNote" class="hint"></div>
+
+        <div id="quoteResult" class="hint"></div>
       </div>
 
-      <button id="payBtn" class="btn primary" onclick="checkout()" disabled>
+      <button id="payBtn" class="btn primary" type="button" disabled>
         IR A PAGAR
       </button>
     </div>
   </aside>
 
   <!-- MAIN JS -->
-  <script src="/js/main.js"></script>
+  <script src="/js/main.js" defer></script>
 </body>
 </html>
