@@ -1,52 +1,54 @@
-const CACHE = "scorestore-v1";
-const STATIC = [
+// SCORE STORE SERVICE WORKER
+// Versión estable – Producción
+
+const SW_VERSION = "score-store-v16";
+const CACHE_STATIC = `${SW_VERSION}-static`;
+const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
+
+const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/css/styles.css",
   "/js/main.js",
-  "/assets/hero.webp",
-  "/assets/logo-score.webp",
+  "/site.webmanifest",
   "/assets/icons-score.svg",
-  "/site.webmanifest"
+  "/assets/logo-score.webp",
+  "/assets/hero.webp"
 ];
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(STATIC)).then(() => self.skipWaiting())
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_STATIC).then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+      Promise.all(
+        keys.filter(k => !k.startsWith(SW_VERSION)).map(k => caches.delete(k))
+      )
+    )
   );
+  self.clients.claim();
 });
 
-self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // siempre fresh para datos
-  if (url.pathname === "/catalog.json" || url.pathname === "/promos.json") {
-    e.respondWith(fetch(e.request));
-    return;
-  }
+  if (req.method !== "GET") return;
+  if (url.pathname.startsWith("/.netlify/")) return;
+  if (url.hostname.includes("stripe")) return;
 
-  // cache-first para estáticos
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/css/") || url.pathname.startsWith("/js/")) {
-    e.respondWith(
-      caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+  event.respondWith(
+    fetch(req)
+      .then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_DYNAMIC).then(c => c.put(req, clone));
         return res;
-      }))
-    );
-    return;
-  }
-
-  // network-first para lo demás
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+      })
+      .catch(() => caches.match(req))
   );
 });
