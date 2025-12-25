@@ -1,16 +1,34 @@
-/**
- * netlify/functions/envia_webhook.js
- * ELIMINADA LA DEPENDENCIA EXTERNA para evitar conflictos.
- */
+// netlify/functions/envia_webhook.js
+// Node 18+ (fetch nativo) — PRODUCCIÓN
 
-// Variables de Entorno
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const WHATSAPP_TO = process.env.WHATSAPP_TO;
+/* ===============================
+   CONFIGURACIÓN
+================================ */
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
 
-function jsonResponse(statusCode, body) {
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+const WHATSAPP_TO = process.env.WHATSAPP_TO || "";
+
+const ALLOWED_ORIGINS = [
+  (process.env.URL || "").replace(/\/+$/, ""),
+  (process.env.DEPLOY_PRIME_URL || "").replace(/\/+$/, ""),
+  (process.env.DEPLOY_URL || "").replace(/\/+$/, ""),
+].filter(Boolean);
+
+// rate limit simple (memoria caliente)
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minuto
+const RATE_LIMIT_MAX = 30; // requests/min
+const rateMap = new Map();
+
+// idempotencia básica
+const seenOrders = new Set();
+
+/* ===============================
+   HELPERS
+================================ */
+function json(statusCode, body) {
   return {
     statusCode,
     headers: {
@@ -21,12 +39,60 @@ function jsonResponse(statusCode, body) {
   };
 }
 
+function toStr(v) {
+  return (v ?? "").toString().trim();
+}
+
+function now() {
+  return Date.now();
+}
+
+/* ===============================
+   SEGURIDAD
+================================ */
+function checkOrigin(event) {
+  if (!ALLOWED_ORIGINS.length) return true; // fail-safe
+
+  const origin =
+    toStr(event.headers?.origin) ||
+    toStr(event.headers?.referer).replace(/\/+$/, "");
+
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+}
+
+function checkRateLimit(ip) {
+  const t = now();
+  const slot = rateMap.get(ip) || { count: 0, ts: t };
+
+  if (t - slot.ts > RATE_LIMIT_WINDOW_MS) {
+    rateMap.set(ip, { count: 1, ts: t });
+    return true;
+  }
+
+  if (slot.count >= RATE_LIMIT_MAX) return false;
+
+  slot.count += 1;
+  rateMap.set(ip, slot);
+  return true;
+}
+
+function validatePayload(p) {
+  if (!p || typeof p !== "object") return false;
+  if (!p.orderId) return false;
+  if (!p.total) return false;
+  if (!Array.isArray(p.items)) return false;
+  return true;
+}
+
+/* ===============================
+   NOTIFICACIONES
+================================ */
 async function sendTelegram(text) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
   try {
-    // Fetch nativo
-    await fetch(url, {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -35,17 +101,16 @@ async function sendTelegram(text) {
         disable_web_page_preview: true,
       }),
     });
-  } catch (err) {
-    console.error("Error Telegram:", err.message);
+  } catch (e) {
+    console.error("Telegram error:", e.message);
   }
 }
 
 async function sendWhatsApp(text) {
   if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_TO) return;
-  const url = `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
   try {
-    // Fetch nativo
-    await fetch(url, {
+    await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${WHATSAPP_TOKEN}`,
@@ -58,52 +123,94 @@ async function sendWhatsApp(text) {
         text: { body: text, preview_url: false },
       }),
     });
-  } catch (err) {
-    console.error("Error WhatsApp:", err.message);
+  } catch (e) {
+    console.error("WhatsApp error:", e.message);
   }
 }
 
-function formatOrder(o) {
+/* ===============================
+   FORMATO MENSAJE
+================================ */
+function formatMessage(o) {
   const lines = [];
-  lines.push("🚨 **NUEVA VENTA**");
+  lines.push("🚨 NUEVA VENTA CONFIRMADA");
+  lines.push(`🧾 Orden: ${o.orderId}`);
   if (o.customerName) lines.push(`👤 ${o.customerName}`);
-  if (o.email || o.customerEmail) lines.push(`📧 ${o.email || o.customerEmail}`);
+  if (o.email) lines.push(`📧 ${o.email}`);
   if (o.phone) lines.push(`📱 ${o.phone}`);
-  
-  if (o.total != null) lines.push(`💰 **$${Number(o.total).toFixed(2)}**`);
-  else if (o.amountTotal != null) lines.push(`💰 **$${o.amountTotal}**`);
+  lines.push(`💰 Total: $${Number(o.total).toFixed(2)} ${o.currency || "MXN"}`);
 
-  const shipping = o.shipping || {};
-  const addr = shipping.address || {};
-  if (addr.line1 || addr.city) {
-    lines.push("🚚 **Envío:**");
-    lines.push(`${addr.line1 || ""} ${addr.city || ""} ${addr.state || ""}`);
+  if (o.shipping?.address?.line1) {
+    const a = o.shipping.address;
+    lines.push("🚚 Envío:");
+    lines.push(`${a.line1}, ${a.city || ""} ${a.state || ""} ${a.postal_code || ""}`);
   }
 
-  const items = Array.isArray(o.items) ? o.items : [];
-  if (items.length) {
-    lines.push("🛒 **Carrito:**");
-    items.forEach(it => {
-      const name = it.description || it.name || "Item";
-      const qty = it.quantity || it.qty || 1;
-      lines.push(`• ${qty}x ${name}`);
+  if (o.items.length) {
+    lines.push("🛒 Items:");
+    o.items.forEach(it => {
+      lines.push(`• ${it.qty}x ${it.name}`);
     });
   }
+
   return lines.join("\n");
 }
 
+/* ===============================
+   HANDLER
+================================ */
 exports.handler = async (event) => {
-  try {
-    if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: {"Access-Control-Allow-Origin": "*"} };
-    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false });
-
-    const body = JSON.parse(event.body || "{}");
-    const msg = formatOrder(body);
-
-    await Promise.all([sendTelegram(msg), sendWhatsApp(msg)]);
-    return jsonResponse(200, { ok: true });
-  } catch (err) {
-    console.error("Webhook Error:", err);
-    return jsonResponse(200, { ok: false, error: err.message });
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: "",
+    };
   }
+
+  if (event.httpMethod !== "POST") {
+    return json(405, { ok: false, error: "Method not allowed" });
+  }
+
+  // Origin lock
+  if (!checkOrigin(event)) {
+    return json(403, { ok: false, error: "Forbidden origin" });
+  }
+
+  const ip =
+    event.headers["x-nf-client-connection-ip"] ||
+    event.headers["x-forwarded-for"] ||
+    "unknown";
+
+  // Rate limit
+  if (!checkRateLimit(ip)) {
+    return json(429, { ok: false, error: "Rate limit exceeded" });
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch {
+    return json(400, { ok: false, error: "Invalid JSON" });
+  }
+
+  // Payload validation
+  if (!validatePayload(body)) {
+    return json(400, { ok: false, error: "Invalid payload" });
+  }
+
+  // Idempotencia (evita doble aviso)
+  if (seenOrders.has(body.orderId)) {
+    return json(200, { ok: true, duplicated: true });
+  }
+  seenOrders.add(body.orderId);
+
+  const msg = formatMessage(body);
+
+  await Promise.all([
+    sendTelegram(msg),
+    sendWhatsApp(msg),
+  ]);
+
+  return json(200, { ok: true });
 };
