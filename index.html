@@ -1,110 +1,50 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
-  />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>SCORE Store – Tienda Oficial</title>
 
-  <meta property="og:title" content="SCORE Store | Merch Oficial Off-Road" />
-  <meta property="og:description" content="Colección oficial Baja 1000 y World Desert Championship." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
-  <meta property="og:type" content="website" />
+  <meta name="description" content="Tienda oficial SCORE. Merch oficial Baja 1000, Baja 500 y más." />
+  <meta name="theme-color" content="#d32f2f" />
 
-  <title>SCORE Store | Merch Oficial Off-Road</title>
-
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <link rel="icon" href="/assets/icons-score.svg" />
 
-  <!-- ✅ CSS existente -->
+  <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css" />
 
-  <!-- ✅ Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Stripe SDK -->
+  <script src="https://js.stripe.com/v3/"></script>
 
-  <!-- ⚡ Performance -->
-  <link rel="preload" as="image" href="/assets/hero.webp" />
-  <link rel="dns-prefetch" href="https://js.stripe.com" />
-  <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-  <link rel="dns-prefetch" href="https://connect.facebook.net" />
-
-  <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3/" defer></script>
-
-  <!-- ✅ Public config (sin tocar main.js) -->
+  <!-- 🔐 Stripe Public Key (OBLIGATORIO) -->
   <script>
-    // Stripe PUBLIC KEY (se puede dejar vacío si aún no lo pondrás)
     window.STRIPE_PK = "pk_live_TU_CLAVE_PUBLICA_AQUI";
-
-    // GA4 (opcional)
-    window.GA_MEASUREMENT_ID = "G-XXXXXXXXXX";
-
-    // Meta Pixel (opcional)
-    window.META_PIXEL_ID = "123456789012345";
-  </script>
-
-  <!-- GA4 (cliente) - opcional -->
-  <script>
-    (function initGA(){
-      const mid = window.GA_MEASUREMENT_ID;
-      if (!mid || mid.startsWith("G-XXXXXXXX")) return;
-      const s = document.createElement("script");
-      s.async = true;
-      s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(mid);
-      document.head.appendChild(s);
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){ dataLayer.push(arguments); }
-      window.gtag = gtag;
-      gtag("js", new Date());
-      gtag("config", mid, { anonymize_ip: true });
-    })();
-  </script>
-
-  <!-- Meta Pixel (cliente) - opcional -->
-  <script>
-    (function initMeta(){
-      const pid = window.META_PIXEL_ID;
-      if (!pid || pid === "123456789012345") return;
-      !function(f,b,e,v,n,t,s){
-        if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)
-      }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', pid);
-      fbq('track', 'PageView');
-    })();
   </script>
 </head>
 
 <body>
-  <!-- NAVBAR -->
+
+  <!-- NAV -->
   <header class="navbar">
     <div class="nav-content">
-      <img src="/assets/logo-score.webp" class="nav-logo" alt="SCORE Store" />
-      <button class="cart-btn" id="openCartBtn" type="button" aria-label="Abrir carrito">
-        🛒
-        <span id="cartCount" class="badge">0</span>
+      <img src="/assets/logo-score.webp" class="nav-logo" alt="SCORE" />
+      <button class="cart-btn" onclick="openDrawer()">
+        🛒 <span id="cartCount" class="badge">0</span>
       </button>
     </div>
   </header>
 
   <!-- HERO -->
-  <section class="hero" role="banner" aria-label="Portada">
+  <section class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-text">
-      <h1>MERCH OFICIAL</h1>
-      <p>Baja 1000 • Baja 500 • Baja 400 • San Felipe 250</p>
-      <button class="cta-hero" id="ctaCatalog" type="button">VER COLECCIÓN</button>
+      <h1>TIENDA OFICIAL</h1>
+      <p>Merch oficial SCORE Baja</p>
+      <button class="cta-hero" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">
+        VER COLECCIÓN
+      </button>
     </div>
   </section>
 
@@ -113,19 +53,19 @@
     <div class="hScroll" id="sectionNav"></div>
   </div>
 
-  <!-- MAIN -->
-  <main class="main-container" id="catalog">
+  <!-- CATÁLOGO -->
+  <main id="catalog" class="main-container">
     <div id="catGrid" class="catGrid"></div>
   </main>
 
   <!-- OVERLAY -->
   <div id="overlay" class="overlay"></div>
 
-  <!-- SIDEBAR CARRITO -->
-  <aside id="drawer" class="sidebar" aria-label="Carrito">
+  <!-- DRAWER CARRITO -->
+  <aside id="drawer" class="sidebar">
     <div class="sidebar-header">
       <h2>Tu equipo</h2>
-      <button class="close-icon" id="closeCartBtn" type="button" aria-label="Cerrar">×</button>
+      <button class="close-icon" onclick="closeAll()">×</button>
     </div>
 
     <div id="cartBody" class="cart-items-container"></div>
@@ -135,34 +75,15 @@
         <span>Subtotal</span>
         <span id="lnSub">$0 MXN</span>
       </div>
-
-      <div class="summary-row">
-        <span>Descuento</span>
-        <span id="lnDisc">$0 MXN</span>
-      </div>
-
       <div class="summary-row">
         <span>Envío</span>
         <span id="lnShip">$0 MXN</span>
       </div>
-
       <div class="total-row">
         <span>Total</span>
         <span id="lnTotal">$0 MXN</span>
       </div>
 
-      <div style="font-size:12px; color:#666; margin-bottom:10px;">
-        <span id="lnUsd"></span>
-      </div>
-
-      <!-- PROMO -->
-      <div class="promo-box">
-        <input id="promoCode" placeholder="Cupón (opcional)" />
-        <button class="btn-apply" id="applyPromoBtn" type="button">Aplicar</button>
-      </div>
-      <div id="promoMsg" style="font-size:12px; margin:6px 0 12px; color:#555;"></div>
-
-      <!-- ENVÍO -->
       <label class="label-sm">Método de envío</label>
       <select id="shipMethod">
         <option value="">Selecciona</option>
@@ -173,42 +94,24 @@
 
       <div id="shipForm" style="display:none">
         <label class="label-sm">Código Postal</label>
-        <input id="cp" inputmode="numeric" maxlength="5" placeholder="Ej. 64000" />
+        <input id="cp" />
 
         <label class="label-sm">Dirección</label>
-        <input id="addr" placeholder="Calle, número, colonia" />
+        <input id="addr" />
 
         <label class="label-sm">Nombre completo</label>
-        <input id="name" placeholder="Nombre del cliente" />
+        <input id="name" />
 
-        <div id="quoteResult" style="font-size:13px; margin-top:5px;"></div>
+        <div id="quoteResult"></div>
       </div>
 
-      <!-- FACTURACIÓN (SAT) - opcional -->
-      <details style="margin-top:10px;">
-        <summary style="cursor:pointer; font-weight:700;">¿Requieres factura?</summary>
-        <div style="margin-top:10px;">
-          <label class="label-sm">RFC</label>
-          <input id="rfc" placeholder="XAXX010101000" />
-
-          <label class="label-sm">Razón social</label>
-          <input id="razon" placeholder="Nombre / Empresa" />
-
-          <label class="label-sm">Uso de CFDI</label>
-          <input id="cfdi" placeholder="G03" />
-
-          <label class="label-sm">Régimen fiscal</label>
-          <input id="regimen" placeholder="601" />
-        </div>
-      </details>
-
-      <button id="payBtn" class="btn primary" type="button" disabled>IR A PAGAR</button>
+      <button id="payBtn" class="btn primary" onclick="checkout()" disabled>
+        IR A PAGAR
+      </button>
     </div>
   </aside>
 
-  <!-- Toast -->
-  <div class="toast-container" id="toastWrap"></div>
-
-  <script src="/js/main.js" defer></script>
+  <!-- MAIN JS -->
+  <script src="/js/main.js"></script>
 </body>
 </html>
