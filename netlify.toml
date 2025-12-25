@@ -9,10 +9,8 @@
   external_node_modules = ["stripe"]
 
 # -----------------------------
-# HEADERS (caché + seguridad)
+# HEADERS (cache correcto)
 # -----------------------------
-
-# Siempre fresco: SW e HTML
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -23,13 +21,11 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# JSON (catálogo/promos) - recomendado fresco para cambios rápidos
 [[headers]]
   for = "/data/*"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# Cache agresiva para assets pesados (si existen)
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -45,7 +41,6 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Seguridad básica (sin CSP para no romper Stripe/Fonts)
 [[headers]]
   for = "/*"
   [headers.values]
@@ -57,21 +52,18 @@
 # -----------------------------
 # REDIRECTS
 # -----------------------------
-
-# ✅ Deja pasar funciones (evita que el SPA redirect se las coma)
 [[redirects]]
   from = "/.netlify/functions/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
-# ✅ Compat: si tu icono está en raíz pero tu HTML lo pide en /assets/
+# Compat icon
 [[redirects]]
   from = "/assets/icons-score.svg"
   to = "/icons-score.svg"
   status = 301
 
-# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
