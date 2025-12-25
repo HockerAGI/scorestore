@@ -8,8 +8,8 @@ const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
 const STATIC_ASSETS = [
   "/",
   "/index.html",
-  "/css/styles.css",  // Sin query string para asegurar coincidencia
-  "/js/main.js",      // Sin query string para asegurar coincidencia
+  "/css/styles.css",  
+  "/js/main.js",      
   "/site.webmanifest",
   "/icons-score.svg",
   "/assets/logo-score.webp",
@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Ignorar API
+  // Ignorar API y Stripe
   if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
   if (req.method !== "GET") return;
 
