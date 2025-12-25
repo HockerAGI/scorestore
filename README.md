@@ -1,33 +1,51 @@
-# SCORE Store (Netlify Implementation)
+# SCORE Store
 
-Tienda oficial tipo PWA (Progressive Web App) con arquitectura Serverless.
+Tienda oficial SCORE implementada como **PWA + Netlify Functions**.
+Arquitectura serverless, pagos con Stripe, envíos con Envia y notificaciones automáticas.
 
-## Estructura del Proyecto
-* `/index.html` - Single Page Application (SPA).
-* `/assets/*` - Imágenes y recursos estáticos.
-* `/data/catalog.json` - Base de datos de productos.
-* `/data/promos.json` - Configuración de cupones.
-* `/netlify/functions/*` - Backend (Serverless Functions).
+---
 
-## Reglas de Negocio
-* **Precios:** El sistema toma el `baseMXN` del catálogo y el Frontend le suma automáticamente un **20% de margen** antes de mostrarlo al cliente.
-* **Inventario:** Controlado manualmente en `catalog.json`.
 
-## Variables de Entorno (Netlify)
-Configurar en Site Settings > Environment Variables:
+---
 
-* `STRIPE_SECRET_KEY` (Live SK)
-* `STRIPE_WEBHOOK_SECRET` (whsec_...)
-* `ENVIA_API_KEY` (Para cotizar envíos)
-* `URL_SCORE` (URL del sitio en producción)
-* `TELEGRAM_BOT_TOKEN` (Notificaciones)
-* `TELEGRAM_CHAT_ID` (Notificaciones)
-* `WHATSAPP_TOKEN` (Meta API)
-* `WHATSAPP_PHONE_NUMBER_ID` (Meta API)
+## 💼 Reglas de Negocio
 
-## Configuración de Webhook
-En el Dashboard de Stripe, crear un endpoint apuntando a:
-`https://tudominio.app/.netlify/functions/stripe_webhook`
+- **Precios:**  
+  El frontend usa `baseMXN` directamente del catálogo (sin cálculos ocultos).
+- **Inventario:**  
+  Control manual desde `catalog.json`.
+- **Pagos:**  
+  Stripe Checkout (MXN).
+- **Envíos:**  
+  Envia API (Tijuana y Nacional).
+- **Notificaciones:**  
+  Telegram y WhatsApp vía webhooks.
 
-**Eventos requeridos:**
-* `checkout.session.completed`
+---
+
+## 🔐 Variables de Entorno (Netlify)
+
+Configurar en **Site settings → Environment variables**:
+
+### Stripe
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+### Envíos
+- `ENVIA_API_KEY`
+- `URL_SCORE`
+
+### Notificaciones
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `WHATSAPP_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `WHATSAPP_TO`
+
+---
+
+## 🔔 Webhook Stripe
+
+Configurar en el Dashboard de Stripe:
+
+**Endpoint:**
