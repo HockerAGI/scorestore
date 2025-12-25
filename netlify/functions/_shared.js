@@ -1,14 +1,12 @@
 // netlify/functions/_shared.js
 const fs = require("fs/promises");
 const path = require("path");
-// ELIMINADO: const fetch = require("node-fetch"); <- ¡ESTO ERA EL ERROR!
 
-// Caches en memoria
+// Caches en memoria (warm)
 let _catalogCache = null;
 let _promosCache = null;
 
-// === Utilidades básicas ===
-
+// === Utilidades ===
 function jsonResponse(statusCode, body, extraHeaders = {}) {
   return {
     statusCode,
@@ -42,7 +40,6 @@ function normalizePromo(code) {
 }
 
 // === Validación ===
-
 function isMxPostal(postal) {
   return /^[0-9]{5}$/.test(toStr(postal));
 }
@@ -54,35 +51,56 @@ function isTijuanaPostal(postal) {
 
 function looksLikeTijuana(city) {
   const c = toStr(city).toLowerCase();
-  return c.includes("tijuana");
+  return c.includes("tijuana") || c.includes("tj");
+}
+
+function isUnicaLabel(s) {
+  const u = upper(s).normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // quita acentos
+  return u === "UNICA" || u === "UNICA." || u === "UNICA " || u === "UNICA TALLA" || u === "TALLA UNICA";
+}
+
+// === Lectura de JSON robusta (Netlify + esbuild) ===
+async function readJsonSafe(relPath) {
+  const candidates = [
+    path.join(process.cwd(), relPath),
+    path.join(process.cwd(), ".", relPath),
+    path.join(__dirname, "..", "..", relPath),
+    path.join(__dirname, "..", relPath),
+    path.join(__dirname, relPath),
+  ];
+
+  let lastErr = null;
+  for (const p of candidates) {
+    try {
+      const raw = await fs.readFile(p, "utf8");
+      return JSON.parse(raw);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error(`No se pudo leer ${relPath}`);
 }
 
 // === Carga de datos ===
-
 async function loadCatalog() {
   if (_catalogCache) return _catalogCache;
-  const filePath = path.join(process.cwd(), "data", "catalog.json");
-  const raw = await fs.readFile(filePath, "utf8");
-  _catalogCache = JSON.parse(raw);
+  _catalogCache = await readJsonSafe(path.join("data", "catalog.json"));
   return _catalogCache;
 }
 
 async function loadPromos() {
   if (_promosCache) return _promosCache;
-  const filePath = path.join(process.cwd(), "data", "promos.json");
-  const raw = await fs.readFile(filePath, "utf8");
-  _promosCache = JSON.parse(raw);
+  _promosCache = await readJsonSafe(path.join("data", "promos.json"));
   return _promosCache;
 }
 
 function productMapFromCatalog(catalog) {
   const map = new Map();
-  for (const p of (catalog?.products || [])) map.set(p.id, p);
+  for (const p of catalog?.products || []) map.set(p.id, p);
   return map;
 }
 
 // === Validaciones Carrito ===
-
 function validateCartItems(items) {
   if (!Array.isArray(items) || items.length === 0) return { ok: false, error: "Carrito vacío." };
   if (items.length > 30) return { ok: false, error: "Carrito demasiado grande." };
@@ -94,7 +112,7 @@ function validateCartItems(items) {
 
     if (!id) return { ok: false, error: "ID de producto inválido." };
     if (!Number.isFinite(qty) || qty <= 0 || qty > 20) return { ok: false, error: "Cantidad inválida." };
-    if (size.length > 10) return { ok: false, error: "Talla inválida." };
+    if (size.length > 32) return { ok: false, error: "Talla inválida." };
   }
 
   return { ok: true };
@@ -102,24 +120,32 @@ function validateCartItems(items) {
 
 function validateSizes(items, productMap) {
   for (const it of items) {
-    const p = productMap.get(it.id);
-    if (!p) return { ok: false, error: `Producto no encontrado: ${it.id}` };
+    const pid = toStr(it?.id);
+    const p = productMap.get(pid);
+    if (!p) return { ok: false, error: `Producto no encontrado: ${pid}` };
+
     const sizes = Array.isArray(p.sizes) ? p.sizes : [];
-    const sent = toStr(it.size);
-    if (sizes.length === 1 && upper(sizes[0]) === "ÚNICA") continue;
+    const sent = toStr(it?.size);
+
+    // Si no hay tallas definidas, no bloqueamos
+    if (!sizes.length) continue;
+
+    // Si solo hay "Única/Unica", no exige talla
+    if (sizes.length === 1 && isUnicaLabel(sizes[0])) continue;
+
     if (!sent) return { ok: false, error: `Falta talla para: ${p.name}` };
-    const allowed = new Set(sizes.map(s => upper(s)));
+
+    const allowed = new Set(sizes.map((s) => upper(s)));
     if (!allowed.has(upper(sent))) return { ok: false, error: `Talla inválida para: ${p.name}` };
   }
   return { ok: true };
 }
 
 // === Cálculos ===
-
 function computeSubtotalMXN(items, productMap) {
   let subtotal = 0;
   for (const it of items) {
-    const p = productMap.get(it.id);
+    const p = productMap.get(toStr(it.id));
     if (!p) continue;
     subtotal += Number(p.baseMXN || 0) * Number(it.qty || 0);
   }
@@ -132,14 +158,17 @@ function buildPackageFromItems(items, productMap) {
   const contentNames = [];
 
   for (const it of items) {
-    const p = productMap.get(it.id);
+    const p = productMap.get(toStr(it.id));
     if (!p) continue;
+
     const qty = Number(it.qty || 0);
-    totalWeightG += (Number(p.weight_g || 300) * qty);
+    totalWeightG += Number(p.weight_g || 300) * qty;
+
     const dims = Array.isArray(p.dimensions_cm) ? p.dimensions_cm : [30, 20, 5];
     maxL = Math.max(maxL, Number(dims[0] || 30));
     maxW = Math.max(maxW, Number(dims[1] || 20));
     maxH = Math.max(maxH, Number(dims[2] || 5));
+
     contentNames.push(`${p.name} x${qty}`);
   }
 
@@ -151,22 +180,44 @@ function buildPackageFromItems(items, productMap) {
   };
 }
 
+// === Promos (IMPORTANTE: NO bloquea checkout si cupón inválido) ===
 async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   const promos = await loadPromos();
   const code = normalizePromo(promoCode);
-  if (!code) return { code: "", discountMXN: 0, shippingMXN, totalMXN: subtotalMXN + shippingMXN };
 
-  const rule = (promos?.rules || []).find(r => normalizePromo(r.code) === code);
+  // Sin cupón: ok
+  if (!code) {
+    return {
+      ok: true,
+      valid: false,
+      promoCode: "",
+      discountMXN: 0,
+      shippingMXN: Number(shippingMXN || 0),
+      totalMXN: Math.round(Number(subtotalMXN || 0) + Number(shippingMXN || 0)),
+    };
+  }
+
+  const rule = (promos?.rules || []).find((r) => normalizePromo(r.code) === code);
+
+  // Cupón inválido: ok (solo no aplica descuento)
   if (!rule || !rule.active) {
-    return { code, discountMXN: 0, shippingMXN, totalMXN: subtotalMXN + shippingMXN, note: "Cupón inválido o desactivado." };
+    return {
+      ok: true,
+      valid: false,
+      promoCode: code,
+      discountMXN: 0,
+      shippingMXN: Number(shippingMXN || 0),
+      totalMXN: Math.round(Number(subtotalMXN || 0) + Number(shippingMXN || 0)),
+      note: "Cupón inválido o desactivado.",
+    };
   }
 
   let discountMXN = 0;
-  let newShipping = shippingMXN;
-  let newSubtotal = subtotalMXN;
+  let newShipping = Number(shippingMXN || 0);
+  let newSubtotal = Number(subtotalMXN || 0);
 
   if (rule.type === "percent") {
-    discountMXN = Math.round(subtotalMXN * Number(rule.value || 0));
+    discountMXN = Math.round(newSubtotal * Number(rule.value || 0));
   } else if (rule.type === "fixed_mxn") {
     discountMXN = Math.round(Number(rule.value || 0));
   } else if (rule.type === "free_shipping") {
@@ -178,7 +229,15 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
 
   const cappedDiscount = Math.max(0, Math.min(discountMXN, newSubtotal));
   const totalMXN = Math.max(0, Math.round(newSubtotal - cappedDiscount + newShipping));
-  return { code, discountMXN: cappedDiscount, shippingMXN: newShipping, totalMXN };
+
+  return {
+    ok: true,
+    valid: true,
+    promoCode: code,
+    discountMXN: cappedDiscount,
+    shippingMXN: newShipping,
+    totalMXN,
+  };
 }
 
 function getBaseUrlFromEnv() {
@@ -188,8 +247,7 @@ function getBaseUrlFromEnv() {
   return url ? url.replace(/\/+$/, "") : "";
 }
 
-// === Cotizador Envia (USANDO FETCH NATIVO) ===
-
+// === Cotizador Envia (Node 18 fetch nativo) ===
 async function quoteEnviaMXN({ to, items, productMap }) {
   const apiKey = toStr(process.env.ENVIA_API_KEY);
   if (!apiKey) return { ok: false, error: "ENVIA_API_KEY no configurada." };
@@ -243,7 +301,6 @@ async function quoteEnviaMXN({ to, items, productMap }) {
     shipment: { carrier: "ENVIA" },
   };
 
-  // USAMOS FETCH NATIVO (Global en Node 18) - SIN LIBRERÍAS
   const res = await fetch("https://api.envia.com/ship/rate", {
     method: "POST",
     headers: {
