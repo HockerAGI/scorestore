@@ -1,42 +1,118 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Tienda oficial de merch SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCORE Store – Tienda Oficial</title>
 
-  <meta property="og:title" content="SCORE Store | Merch Oficial Off-Road" />
-  <meta property="og:description" content="Colección oficial Baja 1000 y World Desert Championship." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
-  <meta property="og:type" content="website" />
+  <!-- SEO -->
+  <meta name="description" content="Tienda oficial SCORE Baja. Merch oficial Baja 1000, Baja 500 y más." />
+  <meta name="theme-color" content="#d32f2f" />
 
-  <title>SCORE Store | Merch Oficial Off-Road</title>
-
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <link rel="icon" href="/favicon.ico" />
 
-  <!-- ✅ Agregado: CSS externo -->
-  <link rel="stylesheet" href="/css/styles.css" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles.css" />
 
-  <!-- ✅ Tipografías -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Stripe (SDK oficial) -->
+  <script src="https://js.stripe.com/v3/"></script>
 
-  <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3/" async></script>
+  <!-- 🔐 Stripe Public Key (inyección segura) -->
+  <script>
+    window.STRIPE_PK = "pk_live_TU_CLAVE_PUBLICA_AQUI";
+  </script>
 </head>
 
 <body>
-  <!-- 🔽 Todo tu contenido existente permanece intacto -->
-  <!-- Aquí va: Hero, Catálogo, Carrito, Footer, etc. -->
 
-  <!-- Al final del body -->
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-content">
+      <img src="/assets/logo-score.svg" class="nav-logo" alt="SCORE" />
+      <button class="cart-btn" onclick="openDrawer()">
+        🛒
+        <span id="cartCount" class="badge">0</span>
+      </button>
+    </div>
+  </header>
 
-  <!-- ✅ Agregado: JS externo principal -->
-  <script src="/js/main.js" defer></script>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-text">
+      <h1>TIENDA OFICIAL</h1>
+      <p>Merch oficial SCORE Baja</p>
+      <button class="cta-hero" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">
+        VER COLECCIÓN
+      </button>
+    </div>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <main id="catalog" class="main-container">
+    <div id="catGrid" class="catGrid"></div>
+  </main>
+
+  <!-- OVERLAY -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- DRAWER CARRITO -->
+  <aside id="drawer" class="sidebar">
+    <div class="sidebar-header">
+      <h2>Tu equipo</h2>
+      <button class="close-icon" onclick="closeAll()">×</button>
+    </div>
+
+    <div id="cartBody" class="cart-items-container"></div>
+
+    <div class="sidebar-footer">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="lnSub">$0</span>
+      </div>
+      <div class="summary-row">
+        <span>Envío</span>
+        <span id="lnShip">$0</span>
+      </div>
+      <div class="total-row">
+        <span>Total</span>
+        <span id="lnTotal">$0</span>
+      </div>
+
+      <!-- ENVÍO -->
+      <label class="label-sm">Método de envío</label>
+      <select id="shipMethod">
+        <option value="">Selecciona</option>
+        <option value="pickup">Recoger en Tijuana</option>
+        <option value="tj">Envío Tijuana</option>
+        <option value="mx">Envío Nacional</option>
+      </select>
+
+      <div id="shipForm" style="display:none">
+        <label class="label-sm">Código Postal</label>
+        <input id="cp" placeholder="Ej. 64000" />
+
+        <label class="label-sm">Dirección</label>
+        <input id="addr" placeholder="Calle, número, colonia" />
+
+        <label class="label-sm">Nombre completo</label>
+        <input id="name" placeholder="Nombre del cliente" />
+
+        <div id="quoteResult" style="font-size:13px; margin-top:5px;"></div>
+      </div>
+
+      <button id="payBtn" class="btn primary" onclick="checkout()" disabled>
+        IR A PAGAR
+      </button>
+    </div>
+  </aside>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast-container"></div>
+
+  <!-- MAIN JS -->
+  <script src="/js/main.js"></script>
 </body>
 </html>
