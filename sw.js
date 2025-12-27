@@ -1,51 +1,49 @@
-// sw.js — SCORE STORE (PWA PRO)
-// ✅ Cachea app shell
-// ✅ Network-first para /data/* (catálogo/promos siempre frescos)
-// ✅ No cachea /.netlify/functions/* ni Stripe
-// ✅ Offline fallback limpio
-// ✅ No truena si falta algún asset
+/* SCORESTORE — Service Worker (PWA)
+ * Strategy:
+ * - App shell: precache (tolerant)
+ * - Navigations: network-first with fallback to cached /index.html
+ * - /assets: cache-first
+ * - /data: stale-while-revalidate
+ * - Google Fonts: stale-while-revalidate
+ */
 
-const SW_VERSION = "score-store-v30";
-const CACHE_SHELL = `${SW_VERSION}-shell`;
-const CACHE_DATA = `${SW_VERSION}-data`;
-const CACHE_RUNTIME = `${SW_VERSION}-runtime`;
+const VERSION = "2025-12-27.1";
+const STATIC_CACHE = `scorestore-static-${VERSION}`;
+const RUNTIME_CACHE = `scorestore-runtime-${VERSION}`;
 
-const SHELL_ASSETS = [
+const APP_SHELL = [
   "/",
   "/index.html",
   "/site.webmanifest",
-  "/icons-score.svg",
-  "/css/styles.css",
-  "/js/main.js",
+  "/sitemap.xml",
+  "/robots.txt",
 
-  // assets opcionales (si existen)
+  // fondos / hero
+  "/assets/fondo-pagina-score.webp",
+  "/assets/hero.webp",
+
+  // logos reales (webp)
   "/assets/logo-score.webp",
-  "/assets/hero.webp"
+  "/assets/logo-world-desert.webp",
+
+  // icons PWA (deben existir)
+  "/assets/icon-192.png",
+  "/assets/icon-512.png",
 ];
 
-function isSameOrigin(url) {
-  try {
-    return new URL(url).origin === self.location.origin;
-  } catch {
-    return false;
-  }
-}
-
-async function cacheAddSafe(cache, url) {
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (res && res.ok) await cache.put(url, res.clone());
-  } catch {
-    // silencioso: no romper instalación por un asset faltante
-  }
-}
-
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE_SHELL);
-      await Promise.all(SHELL_ASSETS.map((u) => cacheAddSafe(cache, u)));
+      const cache = await caches.open(STATIC_CACHE);
+      // ✅ Tolerante: si algo falta NO rompe la instalación del SW
+      await Promise.all(
+        APP_SHELL.map(async (url) => {
+          try {
+            await cache.add(url);
+          } catch (_) {}
+        })
+      );
+      await self.skipWaiting();
     })()
   );
 });
@@ -55,94 +53,94 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.map((k) => {
-          if (k.startsWith("score-store-") && ![CACHE_SHELL, CACHE_DATA, CACHE_RUNTIME].includes(k)) {
-            return caches.delete(k);
-          }
-          return null;
-        })
+        keys
+          .filter((k) => k.startsWith("scorestore-") && !k.includes(VERSION))
+          .map((k) => caches.delete(k))
       );
       await self.clients.claim();
     })()
   );
 });
 
+function isHTMLRequest(req) {
+  return (
+    req.mode === "navigate" ||
+    (req.method === "GET" && (req.headers.get("accept") || "").includes("text/html"))
+  );
+}
+
+async function cacheFirst(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+
+  const fresh = await fetch(req);
+  if (fresh && fresh.ok) cache.put(req, fresh.clone());
+  return fresh;
+}
+
+async function staleWhileRevalidate(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
+
+  const network = fetch(req)
+    .then((fresh) => {
+      if (fresh && fresh.ok) cache.put(req, fresh.clone());
+      return fresh;
+    })
+    .catch(() => null);
+
+  return cached || (await network) || new Response("Offline", { status: 503 });
+}
+
+async function networkFirst(req) {
+  const cache = await caches.open(STATIC_CACHE);
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.ok) cache.put(req, fresh.clone());
+    return fresh;
+  } catch (_) {
+    return (
+      (await cache.match("/index.html")) ||
+      new Response("Offline", { status: 503, statusText: "Offline" })
+    );
+  }
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-
-  // Solo GET
   if (req.method !== "GET") return;
 
-  // No tocar Netlify functions ni Stripe
-  if (url.pathname.startsWith("/.netlify/")) return;
-  if (url.hostname.includes("stripe")) return;
+  const url = new URL(req.url);
 
-  // Solo same-origin (evita cachear Google Fonts, etc)
-  if (!isSameOrigin(req.url)) return;
+  // ✅ No tocar Stripe ni Functions
+  if (url.hostname.includes("stripe.com")) return;
+  if (url.pathname.startsWith("/.netlify/functions/")) return;
 
-  // ✅ DATA: /data/* -> network-first (si falla, usa cache)
-  if (url.pathname.startsWith("/data/")) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_DATA);
-        try {
-          const res = await fetch(req, { cache: "no-store" });
-          if (res && res.ok) cache.put(req, res.clone());
-          return res;
-        } catch {
-          const cached = await cache.match(req, { ignoreSearch: true });
-          if (cached) return cached;
-          // fallback mínimo si estás offline y no hay cache
-          return new Response(
-            JSON.stringify({ ok: false, error: "offline_no_cache" }),
-            { status: 200, headers: { "Content-Type": "application/json; charset=utf-8" } }
-          );
-        }
-      })()
-    );
+  // ✅ Navegación
+  if (isHTMLRequest(req)) {
+    event.respondWith(networkFirst(req));
     return;
   }
 
-  // ✅ Navegación: network-first con fallback a cache/index
-  if (req.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          const res = await fetch(req);
-          const cache = await caches.open(CACHE_RUNTIME);
-          cache.put(req, res.clone());
-          return res;
-        } catch {
-          // Fallbacks: index.html (SPA) o cache de navegación si existiera
-          return (await caches.match("/index.html")) || (await caches.match(req)) || Response.error();
-        }
-      })()
-    );
-    return;
+  // ✅ Mismo origen
+  if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith("/assets/")) {
+      event.respondWith(cacheFirst(req, RUNTIME_CACHE));
+      return;
+    }
+    if (url.pathname.startsWith("/data/")) {
+      event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
+      return;
+    }
   }
 
-  // ✅ Assets estáticos: cache-first (ignoreSearch para evitar querystrings)
-  event.respondWith(
-    (async () => {
-      // Primero shell
-      const shell = await caches.open(CACHE_SHELL);
-      const shellHit = await shell.match(req, { ignoreSearch: true });
-      if (shellHit) return shellHit;
-
-      // Luego runtime
-      const runtime = await caches.open(CACHE_RUNTIME);
-      const cached = await runtime.match(req, { ignoreSearch: true });
-      if (cached) return cached;
-
-      // Si no existe, fetch y guarda
-      try {
-        const res = await fetch(req);
-        if (res && res.ok) runtime.put(req, res.clone());
-        return res;
-      } catch {
-        return cached || shellHit || Response.error();
-      }
-    })()
-  );
+  // ✅ Google Fonts
+  if (
+    url.hostname.endsWith("fonts.googleapis.com") ||
+    url.hostname.endsWith("fonts.gstatic.com")
+  ) {
+    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
+    return;
+  }
 });
