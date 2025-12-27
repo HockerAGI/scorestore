@@ -1,17 +1,12 @@
 {
   "name": "scorestore",
-  "version": "2.0.0",
-  "description": "SCORE Store — Tienda Oficial (PWA + Netlify Functions)",
-  "main": "index.html",
-  "scripts": {
-    "start": "netlify dev",
-    "build": "echo \"Static site with Netlify Functions\""
-  },
+  "version": "1.0.0",
+  "private": true,
   "dependencies": {
-    "stripe": "^16.6.0"
+    "stripe": "12.18.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "license": "MIT"
+  "scripts": {
+    "build": "npm run lint && echo \"No build step\"",
+    "lint": "node --check netlify/functions/create_checkout.js && node --check netlify/functions/quote_shipping.js && node --check netlify/functions/stripe_webhook.js && node --check netlify/functions/envia_webhook.js && node --check netlify/functions/_shared.js"
+  }
 }
