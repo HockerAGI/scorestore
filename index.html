@@ -1,205 +1,553 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Tienda oficial SCORE International. Merch oficial Off-Road fabricado en Tijuana por ÚNICO UNIFORMES." />
-  
-  <title>SCORE Store | Merch Oficial Off-Road</title>
-  
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
-
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-  
-  <link rel="stylesheet" href="/css/styles.css" />
-
-  <script src="https://js.stripe.com/v3/" async></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<meta charset="utf-8"/>
+<link href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23E10600%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2300C853%22/%3E%3C/linearGradient%3E%3C/defs%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%230B0F14%22/%3E%0A%3Cpath%20d%3D%22M-8%2052%20L12%2072%20L72%2012%20L52%20-8%20Z%22%20fill%3D%22url%28%23g%29%22%20opacity%3D%220.95%22/%3E%0A%3Ccircle%20cx%3D%2250%22%20cy%3D%2214%22%20r%3D%226%22%20fill%3D%22%23E10600%22/%3E%0A%3C/svg%3E" rel="icon" type="image/svg+xml"/>
+<link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAD...REEMPLAZO_COMPLETO_EN_LA_PARTE_2..." rel="apple-touch-icon"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>SCORE STORE — Tienda Oficial</title>
+<meta content="Tienda oficial de merch SCORE. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." name="description"/>
+<link href="https://scorestore.netlify.app/" rel="canonical"/>
+<meta content="#0b0f14" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="SCORE STORE" name="apple-mobile-web-app-title"/>
+<link href="/site.webmanifest" rel="manifest"/>
+<link href="/sitemap.xml" rel="sitemap" type="application/xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link as="style" href="/css/styles.css" rel="preload"/>
+<link href="/css/styles.css" rel="stylesheet"/>
+<link as="fetch" crossorigin="" href="/data/catalog.json" rel="preload"/>
+<link as="fetch" crossorigin="" href="/data/promos.json" rel="preload"/>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script async="" defer="" src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
+<div class="bgWrap">
+<div aria-hidden="true" class="bgImg"></div>
+<div aria-hidden="true" class="bgOverlay"></div>
+</div>
+<header class="topbar">
+<div class="container topbarInner">
+<a class="brand" href="/">
+<img alt="SCORE STORE" class="brandLogo" decoding="async" height="44" loading="eager" src="/assets/logo-score.webp" width="160"/>
+</a>
+<nav class="nav">
+<button class="navBtn" onclick="scrollToId('drops')" type="button">Drops</button>
+<button class="navBtn" onclick="scrollToId('catalog')" type="button">Catálogo</button>
+<button class="navBtn" onclick="scrollToId('shipping')" type="button">Envíos</button>
+<button class="navBtn cartBtn" id="openCartBtn" onclick="openDrawer()" type="button">
+<span class="cartIcon" aria-hidden="true">🛒</span>
+<span id="cartCount">0</span>
+</button>
+</nav>
+</div>
+</header>
+<main>
+<section class="hero" id="top">
+<div class="container heroInner">
+<div class="heroText">
+<h1>SCORE STORE</h1>
+<p class="lead">Tienda oficial de merch SCORE. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES.</p>
+<div class="heroActions">
+<button class="btn primary" onclick="scrollToId('catalog')" type="button">Comprar ahora</button>
+<button class="btn ghost" onclick="scrollToId('drops')" type="button">Ver Drops</button>
+</div>
+<div class="heroBadges">
+<span class="badge">Pagos con tarjeta</span>
+<span class="badge">Envío a todo México</span>
+<span class="badge">Drops limitados</span>
+</div>
+</div>
+<div class="heroCard">
+<div class="heroCardTop">
+<div class="heroCardTitle">Drop destacado</div>
+<div class="heroCardTag">LIMITADO</div>
+</div>
+<div class="heroCardBody">
+<div class="heroCardName" id="featuredName">Cargando...</div>
+<div class="heroCardPrice" id="featuredPrice"></div>
+<div class="heroCardCta">
+<button class="btn primary full" id="featuredBtn" type="button">Ver producto</button>
+</div>
+<div class="heroCardNote">* Stock sujeto a disponibilidad.</div>
+</div>
+</div>
+</div>
+</section>
+<section class="section" id="drops">
+<div class="container">
+<div class="sectionHead">
+<h2>Drops</h2>
+<p>Ediciones limitadas, artículos de colección y equipo auténtico del desierto.</p>
+</div>
+<div class="grid" id="dropsGrid"></div>
+</div>
+</section>
+<section class="section" id="catalog">
+<div class="container">
+<div class="sectionHead">
+<h2>Catálogo</h2>
+<p>Selecciona tu talla y agrega al carrito. Checkout seguro con Stripe.</p>
+</div>
+<div class="filters">
+<input class="search" id="search" placeholder="Buscar producto..." type="search"/>
+<select class="select" id="filterCat">
+<option value="all">Todas las categorías</option>
+</select>
+<select class="select" id="filterSize">
+<option value="all">Todas las tallas</option>
+</select>
+</div>
+<div class="grid" id="catalogGrid"></div>
+</div>
+</section>
+<section class="section" id="shipping">
+<div class="container">
+<div class="sectionHead">
+<h2>Envíos</h2>
+<p>Cotiza tu envío con tu código postal (Envia.com).</p>
+</div>
+<div class="shipBox">
+<div class="shipRow">
+<label class="lbl" for="zip">Código postal</label>
+<input class="input" id="zip" inputmode="numeric" maxlength="5" placeholder="Ej. 22000" type="text"/>
+</div>
+<div class="shipRow">
+<button class="btn primary" id="quoteBtn" type="button">Cotizar envío</button>
+</div>
+<div class="shipResult" id="shipResult"></div>
+</div>
+</div>
+</section>
+<section class="section partners" id="partners">
+<div class="container">
+<div class="sectionHead">
+<h2>Partners</h2>
+<p>Marcas y aliados que impulsan el desierto.</p>
+</div>
+<div class="partnersGrid">
+<img alt="Monster Energy" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-monster.png" width="150"/>
+<img alt="ÚNICO Uniformes" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-unico.webp" width="150"/>
+<img alt="BFGoodrich" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-bfgodrich.webp" width="150"/>
+<img alt="Ford" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-ford.webp" width="150"/>
+<img alt="RZR" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-rzr.webp" width="150"/>
+</div>
+</div>
+</section>
+</main>
+<div class="overlay" id="overlay" onclick="closeAll()" aria-hidden="true"></div>
+<aside aria-hidden="true" aria-labelledby="drawerTitle" aria-modal="true" class="drawer" id="drawer" role="dialog" tabindex="-1">
+<div class="drawerHead">
+<h3 class="dTitle" id="drawerTitle">Carrito</h3>
+<button aria-label="Cerrar carrito" class="iconBtn" onclick="closeAll()" type="button">✕</button>
+</div>
+<div class="drawerBody">
+<div class="cartItems" id="cartItems"></div>
+<div class="cartEmpty" id="cartEmpty">Tu carrito está vacío.</div>
+</div>
+<div class="drawerFoot">
+<div class="totals">
+<div class="row">
+<span>Subtotal</span>
+<strong id="subTotal">$0</strong>
+</div>
+<div class="row">
+<span>Envío</span>
+<strong id="shipTotal">—</strong>
+</div>
+<div class="row big">
+<span>Total</span>
+<strong id="grandTotal">$0</strong>
+</div>
+</div>
+<button class="btn primary full" id="checkoutBtn" type="button">Pagar</button>
+<div class="smallNote">Pago seguro con Stripe. Al pagar aceptas nuestros términos.</div>
+</div>
+</aside>
+<div aria-atomic="true" aria-live="polite" class="toast" id="toast" role="status">Listo</div>
+<script>
+const DEBUG = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
 
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
+/* ===== Helpers ===== */
+const $ = (id)=>document.getElementById(id);
+const money = (n)=> new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
 
-  <div class="wrap" id="mainContent" aria-hidden="false">
-    
-    <header class="topbar">
-      <a href="/" class="brand" aria-label="Inicio"><img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48"></a>
-      <div class="navRight">
-        <div class="pill">MX + <b>TIJUANA</b></div>
-        <button class="cartTrigger" id="cartBtnTrigger" onclick="openDrawer()" aria-label="Abrir Carrito" aria-expanded="false">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
+function scrollToId(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ===== Drawer ===== */
+function openDrawer(){
+  $("drawer").classList.add("open");
+  $("overlay").classList.add("open");
+  document.body.classList.add("lock");
+}
+
+function closeAll(){
+  $("drawer").classList.remove("open");
+  $("overlay").classList.remove("open");
+  document.body.classList.remove("lock");
+}
+
+/* ===== Toast ===== */
+let toastTimer = null;
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 2200);
+}
+
+/* ===== Cart ===== */
+const CART_KEY = "score_cart_v1";
+let cart = [];
+let catalog = [];
+let shipQuote = null;
+
+function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+function loadCart(){
+  try{
+    cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+  }catch(e){
+    if (DEBUG) console.error(e);
+    cart = [];
+  }
+}
+
+function cartCount(){
+  return cart.reduce((a,i)=>a + (i.qty||0), 0);
+}
+
+function cartSubtotal(){
+  return cart.reduce((a,i)=>a + (i.price||0)*(i.qty||0), 0);
+}
+
+function updateTotals(){
+  $("cartCount").textContent = cartCount();
+  $("subTotal").textContent = money(cartSubtotal());
+  $("shipTotal").textContent = shipQuote ? money(shipQuote.price) : "—";
+  const total = cartSubtotal() + (shipQuote ? shipQuote.price : 0);
+  $("grandTotal").textContent = money(total);
+}
+
+function renderCart(){
+  const wrap = $("cartItems");
+  wrap.innerHTML = "";
+  $("cartEmpty").style.display = cart.length ? "none" : "block";
+
+  cart.forEach((item, idx)=>{
+    const row = document.createElement("div");
+    row.className = "cartRow";
+    row.innerHTML = `
+      <div class="cInfo">
+        <div class="cName">${item.name}</div>
+        <div class="cMeta">${item.variant || ""}</div>
+        <div class="cPrice">${money(item.price)}</div>
       </div>
-    </header>
-
-    <main>
-      <section class="hero">
-        <div class="heroBg"></div>
-        <div class="heroOverlay"></div>
-        <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" width="110" height="110" loading="lazy">
-
-        <div class="heroContent">
-          <div class="tagline">MERCH OFICIAL</div>
-          <h1>SCORE INTERNATIONAL</h1>
-          <p class="sub">
-            Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>. Patrocinador Oficial.
-            Colección de alto rendimiento y durabilidad garantizada.
-          </p>
-          <div class="ctaRow">
-            <a href="#grid" class="btn primary" onclick="smoothScroll(event, 'grid')">VER COLECCIÓN</a>
-            <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
-          </div>
-          <div class="heroChips">
-            <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg> HECHO EN TIJUANA</div>
-            <div class="heroChip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z"/></svg> PRODUCTO AUTÉNTICO</div>
-          </div>
-        </div>
-      </section>
-
-      <div class="secHeader">
-        <h2>CAMPEONATOS</h2>
-        <div class="meta">World Desert Championship</div>
+      <div class="cQty">
+        <button class="qtyBtn" type="button" aria-label="Menos" data-act="dec" data-idx="${idx}">−</button>
+        <span class="qtyNum">${item.qty}</span>
+        <button class="qtyBtn" type="button" aria-label="Más" data-act="inc" data-idx="${idx}">+</button>
       </div>
+      <button class="iconBtn danger" type="button" aria-label="Eliminar" data-act="del" data-idx="${idx}">🗑</button>
+    `;
+    wrap.appendChild(row);
+  });
 
-      <div class="grid" id="grid">
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">TIENDA OFICIAL</span>
-            <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy" width="200" height="100">
-            <span class="viewBtn">Ver Colección</span>
-          </div>
-        </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_500', 'Baja 500')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">NUEVA LLEGADA</span>
-            <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy" width="200" height="100">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
-        </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_400', 'Baja 400')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">DISPONIBLE</span>
-            <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy" width="200" height="100">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
-        </div>
-        <div class="card" role="button" tabindex="0" onclick="openCatalog('SF_250', 'San Felipe 250')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">CLÁSICOS</span>
-            <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy" width="200" height="100">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
-        </div>
-      </div>
+  wrap.querySelectorAll("[data-act]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = Number(btn.getAttribute("data-idx"));
+      const act = btn.getAttribute("data-act");
+      if(!cart[idx]) return;
+      if(act==="inc") cart[idx].qty++;
+      if(act==="dec") cart[idx].qty = Math.max(1, cart[idx].qty-1);
+      if(act==="del") cart.splice(idx,1);
+      saveCart();
+      renderCart();
+      updateTotals();
+    });
+  });
+}
 
-      <div class="partners">
-        <h3 style="margin:0; font-family:var(--fontTitle); color:#999; letter-spacing: 2px; text-align: center;">OFFICIAL PARTNERS</h3>
-        <div class="pGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy" width="100" height="50">
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="RZR" loading="lazy" width="100" height="50">
-        </div>
+/* ===== Catalog ===== */
+function buildFilters(){
+  const cats = new Set();
+  const sizes = new Set();
+  catalog.forEach(p=>{
+    if(p.category) cats.add(p.category);
+    (p.sizes||[]).forEach(s=> sizes.add(s));
+  });
+
+  const catSel = $("filterCat");
+  cats.forEach(c=>{
+    const o = document.createElement("option");
+    o.value = c; o.textContent = c;
+    catSel.appendChild(o);
+  });
+
+  const sizeSel = $("filterSize");
+  sizes.forEach(s=>{
+    const o = document.createElement("option");
+    o.value = s; o.textContent = s;
+    sizeSel.appendChild(o);
+  });
+}
+
+function matchesFilters(p){
+  const q = ($("search").value||"").toLowerCase().trim();
+  const cat = $("filterCat").value;
+  const size = $("filterSize").value;
+
+  if(q && !(`${p.name} ${p.category||""}`.toLowerCase().includes(q))) return false;
+  if(cat !== "all" && p.category !== cat) return false;
+  if(size !== "all" && !(p.sizes||[]).includes(size)) return false;
+  return true;
+}
+
+function renderCatalog(){
+  const grid = $("catalogGrid");
+  grid.innerHTML = "";
+
+  const filtered = catalog.filter(matchesFilters);
+  filtered.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "card prodCard";
+    const img = p.image || "/assets/logo-score.webp";
+    const price = p.price || 0;
+
+    const sizeOptions = (p.sizes||[]).map(s=>`<option value="${s}">${s}</option>`).join("");
+    card.innerHTML = `
+      <div class="prodImg">
+        <img src="${img}" alt="${p.name}" loading="lazy" decoding="async" onerror="this.src='/assets/logo-score.webp'">
       </div>
-    </main>
-  </div> <footer>
-    <div class="footer-inner">
-      <div class="footWrap">
-        <div class="footBlock">
-          <h4>ÚNICO UNIFORMES</h4>
-          <p>Fabricante Oficial SCORE International.<br>Palermo 6106 Interior JK, Tijuana B.C.<br><b>ventas.unicotextil@gmail.com</b></p>
+      <div class="prodBody">
+        <div class="prodTop">
+          <div class="prodName">${p.name}</div>
+          <div class="prodPrice">${money(price)}</div>
         </div>
-        <div class="footBlock">
-          <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
-          <details class="fLegal">
-            <summary>Seguridad y Privacidad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tus datos están protegidos. Pagos procesados vía Stripe (SSL).</p></div>
-          </details>
-          <details class="fLegal">
-            <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tijuana: $200 MXN o Pickup Gratis.<br>Nacional: Cotizado por Envia.com.</p></div>
-          </details>
-          <details class="fLegal">
-            <summary>Garantía <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Cambios por defectos de fábrica dentro de los primeros 7 días.</p></div>
-          </details>
+        <div class="prodMeta">${p.category || ""}</div>
+        <div class="prodActions">
+          <select class="select sizePick" ${sizeOptions ? "" : "disabled"}>
+            ${sizeOptions || `<option value="">Sin talla</option>`}
+          </select>
+          <button class="btn primary addBtn" type="button">Agregar</button>
         </div>
       </div>
-    </div>
-  </footer>
+    `;
+    card.querySelector(".addBtn").addEventListener("click", ()=>{
+      const size = card.querySelector(".sizePick").value || "";
+      const variant = size ? `Talla ${size}` : "";
+      cart.push({ id:p.id, name:p.name, variant, price, qty:1 });
+      saveCart();
+      updateTotals();
+      renderCart();
+      showToast("Agregado al carrito");
+    });
 
-  <div class="overlay" id="overlay" aria-hidden="true"></div>
-  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+    grid.appendChild(card);
+  });
+}
 
-  <aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
-    <div class="dHead">
-      <h3 class="dTitle" id="cartTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar Carrito">&times;</button>
-    </div>
-    <div class="dBody" id="cartBody"></div>
-    <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0</span></div>
-      <div class="sumRow"><span>Envío:</span> <span id="lnShip">--</span></div>
-      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
-      
-      <div class="promo-box">
-        <input placeholder="CÓDIGO DE CUPÓN" id="promoInput" aria-label="Código Promocional">
-        <button class="btn-sm" type="button">APLICAR</button>
-      </div>
+/* ===== Featured ===== */
+function setFeatured(){
+  const p = catalog.find(x=>x.featured) || catalog[0];
+  if(!p) return;
+  $("featuredName").textContent = p.name;
+  $("featuredPrice").textContent = money(p.price||0);
+  $("featuredBtn").onclick = ()=> scrollToId("catalog");
+}
 
-      <p class="label-sm">MÉTODO DE ENTREGA:</p>
-      <select id="shipMethod" onchange="updateCart()" aria-label="Método de envío">
-        <option value="">-- SELECCIONA --</option>
-        <option value="pickup">Recoger en Fábrica (Tijuana) - Gratis</option>
-        <option value="tj">Envío Local (Tijuana) - $200 MXN</option>
-        <option value="mx">Envío Nacional (México) - Cotizar</option>
-      </select>
-      
-      <div id="shipForm" style="display:none;">
-        <input id="cp" type="tel" placeholder="Código Postal (5 dígitos)" maxlength="5" aria-label="Código Postal">
-        <input id="addr" placeholder="Calle y número" aria-label="Dirección">
-        <input id="name" placeholder="Nombre completo" aria-label="Nombre">
-      </div>
-      <div id="quoteResult" class="quote-res"></div>
+/* ===== Shipping Quote (Envia) ===== */
+async function quoteShipping(){
+  const zip = ($("zip").value||"").trim();
+  if(!/^\d{5}$/.test(zip)){
+    showToast("Escribe un CP válido (5 dígitos)");
+    return;
+  }
+  $("shipResult").textContent = "Cotizando...";
+  shipQuote = null;
+  updateTotals();
 
-      <div class="secure-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        PAGO SEGURO SSL
-      </div>
+  try{
+    const res = await fetch("/.netlify/functions/quote_shipping",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ zip })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error || "Error al cotizar");
+    shipQuote = data;
+    $("shipResult").innerHTML = `<strong>${data.carrier}</strong> · ${money(data.price)} · ${data.eta || ""}`;
+    updateTotals();
+  }catch(e){
+    if (DEBUG) console.error(e);
+    $("shipResult").textContent = "No se pudo cotizar. Intenta de nuevo.";
+  }
+}
 
-      <button id="payBtn" class="btn primary full" disabled onclick="checkout()" type="button">PAGAR AHORA</button>
-      <span class="closeLink" onclick="closeAll()" tabindex="0" role="button">SEGUIR COMPRANDO</span>
-    </div>
-  </aside>
+$("quoteBtn").addEventListener("click", quoteShipping);
 
-  <div class="modal" id="modalCatalog" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catTitle">
-    <div class="dHead">
-      <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar Catálogo">&times;</button>
-    </div>
-    <div class="catContent" id="catContent"></div>
-  </div>
+/* ===== Checkout (Stripe) ===== */
+async function checkout(){
+  if(!cart.length){
+    showToast("Tu carrito está vacío");
+    return;
+  }
+  $("checkoutBtn").disabled = true;
+  $("checkoutBtn").textContent = "PROCESANDO...";
+  try{
+    const res = await fetch("/.netlify/functions/create_checkout",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ cart, ship: shipQuote })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error || "No se pudo iniciar checkout");
 
-  <div class="paybar" id="paybar" aria-hidden="true">
-    <div>
-      <div class="paybar-label">TOTAL A PAGAR</div>
-      <div class="paybar-total" id="barTotal">$0</div>
-    </div>
-    <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
-  </div>
+    const stripe = Stripe(data.publicKey);
+    await stripe.redirectToCheckout({ sessionId: data.sessionId });
+  }catch(e){
+    if (DEBUG) console.error(e);
+    showToast("No se pudo iniciar el pago");
+  }finally{
+    $("checkoutBtn").disabled = false;
+    $("checkoutBtn").textContent = "Pagar";
+  }
+}
 
-  <script src="/js/main.js" defer></script>
+$("checkoutBtn").addEventListener("click", checkout);
+
+/* ===== Init ===== */
+async function init(){
+  loadCart();
+  updateTotals();
+  renderCart();
+
+  try{
+    const res = await fetch("/data/catalog.json", { cache:"no-store" });
+    catalog = await res.json();
+  }catch(e){
+    if (DEBUG) console.log('Usando local');
+    catalog = [];
+  }
+
+  buildFilters();
+  renderCatalog();
+  setFeatured();
+
+  ["search","filterCat","filterSize"].forEach(id=>{
+    $(id).addEventListener("input", renderCatalog);
+    $(id).addEventListener("change", renderCatalog);
+  });
+}
+
+init();
+
+/* ===== SW Register ===== */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async ()=>{
+    try{
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      // fuerza actualización si hay nuevo SW
+      if (reg.waiting) reg.waiting.postMessage({ type:"SKIP_WAITING" });
+    }catch(e){
+      if (DEBUG) console.error(e);
+    }
+  });
+}
+
+/* === A11Y: Drawer focus + ESC === */
+let _lastFocus = null;
+function _getFocusable(container){
+  return Array.from(container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'))
+    .filter(el => el.offsetParent !== null);
+}
+function _setDrawerA11y(isOpen){
+  const d = document.getElementById('drawer');
+  const o = document.getElementById('overlay');
+  if (!d || !o) return;
+  d.setAttribute('aria-hidden', String(!isOpen));
+  o.setAttribute('aria-hidden', String(!isOpen));
+}
+document.addEventListener('keydown', (e) => {
+  const d = document.getElementById('drawer');
+  if (!d) return;
+  const isOpen = d.classList.contains('open');
+  if (!isOpen) return;
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeAll();
+    return;
+  }
+  if (e.key === 'Tab') {
+    const focusables = _getFocusable(d);
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  }
+});
+
+// Patch openDrawer/closeAll sin cambiar tu UX
+(function(){
+  const _open = window.openDrawer;
+  const _close = window.closeAll;
+  if (typeof _open === 'function') {
+    window.openDrawer = function(){
+      _lastFocus = document.activeElement;
+      _open();
+      _setDrawerA11y(true);
+      const d = document.getElementById('drawer');
+      if (d) {
+        const focusables = _getFocusable(d);
+        (focusables[0] || d).focus?.();
+      }
+    };
+  }
+  if (typeof _close === 'function') {
+    window.closeAll = function(){
+      _close();
+      _setDrawerA11y(false);
+      if (_lastFocus && _lastFocus.focus) _lastFocus.focus();
+    };
+  }
+})();
+</script>
+<footer class="footer">
+<div class="container footerInner">
+<div class="fCol">
+<div class="fTitle">SCORE STORE</div>
+<p class="fText">Merch oficial y equipamiento auténtico del desierto. Fabricado en Tijuana por ÚNICO UNIFORMES.</p>
+</div>
+<div class="fCol">
+<div class="fTitle">Links</div>
+<a class="fLink" href="#drops">Drops</a>
+<a class="fLink" href="#catalog">Catálogo</a>
+<a class="fLink" href="#shipping">Envíos</a>
+</div>
+<div class="fCol">
+<div class="fTitle">Eventos</div>
+<div class="events">
+<img alt="Baja 1000" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-baja1000.webp" width="150"/>
+<img alt="Baja 500" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-baja500.webp" width="150"/>
+<img alt="Baja 400" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-baja400.webp" width="150"/>
+<img alt="San Felipe 250" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-sf250.webp" width="150"/>
+<img alt="World Desert Championship" class="pLogo" decoding="async" height="50" loading="lazy" src="/assets/logo-world-desert.webp" width="150"/>
+</div>
+</div>
+</div>
+<div class="copy">© 2025 SCORE STORE — Fabricante y Patrocinador Oficial de SCORE International. Tijuana B.C.</div>
+</footer>
 </body>
 </html>
