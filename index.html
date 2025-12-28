@@ -123,17 +123,18 @@
         </div>
         <div class="footBlock">
           <h4 style="color:var(--red);">LEGAL & AYUDA</h4>
+          <p style="margin-bottom:15px; font-size:12px; opacity:0.7;">Precios en MXN e incluyen IVA.</p>
           <details class="fLegal">
             <summary>Seguridad y Privacidad <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tus datos están protegidos. Pagos procesados vía Stripe (SSL).</p></div>
+            <div class="legalContent"><p>Todo tu proceso de compra está encriptado bajo estándares bancarios (SSL). Tus datos personales se usan únicamente para procesar tu pedido y nunca se comparten con terceros. Pagos procesados de forma segura vía Stripe.</p></div>
           </details>
           <details class="fLegal">
-            <summary>Envíos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Tijuana: $200 MXN o Pickup Gratis.<br>Nacional: Cotizado por Envia.com.</p></div>
+            <summary>Envíos y Entregas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent"><p>Envíos locales en Tijuana ($200 MXN) o recolección gratuita en fábrica. Envíos nacionales cotizados en tiempo real por Envia.com. El tiempo de entrega varía de 3 a 7 días hábiles según tu ubicación.</p></div>
           </details>
           <details class="fLegal">
-            <summary>Garantía <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
-            <div class="legalContent"><p>Cambios por defectos de fábrica dentro de los primeros 7 días.</p></div>
+            <summary>Cambios y Devoluciones <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+            <div class="legalContent"><p>Aceptamos cambios por defecto de fábrica o error en talla dentro de los primeros 10 días naturales tras recibir tu pedido. La prenda debe estar nueva, sin uso y con etiquetas originales. No hay reembolsos en efectivo, solo crédito en tienda o cambio de producto.</p></div>
           </details>
         </div>
       </div>
@@ -155,9 +156,14 @@
       <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
       
       <div class="promo-box">
-        <input placeholder="CÓDIGO DE CUPÓN" id="promoInput" aria-label="Código Promocional">
-        <button class="btn-sm" type="button">APLICAR</button>
+        <input placeholder="CÓDIGO DE CUPÓN" id="promoCode" aria-label="Código Promocional">
+        <button class="btn-sm" type="button" onclick="applyPromo()">APLICAR</button>
       </div>
+
+      <p class="label-sm">DATOS DE CONTACTO:</p>
+      <input id="name" placeholder="Nombre completo" aria-label="Nombre">
+      <input id="email" type="email" placeholder="Correo electrónico (para confirmación)" aria-label="Correo electrónico">
+      <input id="phone" type="tel" placeholder="Teléfono móvil (10 dígitos)" maxlength="10" aria-label="Teléfono">
 
       <p class="label-sm">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod" onchange="updateCart()" aria-label="Método de envío">
@@ -169,8 +175,9 @@
       
       <div id="shipForm" style="display:none;">
         <input id="cp" type="tel" placeholder="Código Postal (5 dígitos)" maxlength="5" aria-label="Código Postal">
-        <input id="addr" placeholder="Calle y número" aria-label="Dirección">
-        <input id="name" placeholder="Nombre completo" aria-label="Nombre">
+        <select id="state" aria-label="Estado"></select>
+        <input id="city" placeholder="Ciudad / Municipio" aria-label="Ciudad">
+        <input id="addr" placeholder="Calle, número y colonia" aria-label="Dirección">
       </div>
       <div id="quoteResult" class="quote-res"></div>
 
