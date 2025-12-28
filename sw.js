@@ -1,143 +1,64 @@
-/* SCORESTORE — Service Worker (PWA)
- * Estrategia:
- * - App Shell precache (HTML/CSS/manifest + logos clave)
- * - Navegación: Network-first con fallback al shell
- * - /assets y /css: Cache-first
- * - /data: Stale-while-revalidate
- * - Google Fonts: Stale-while-revalidate
- */
-const VERSION = "2025-12-27.0000";
-const STATIC_CACHE = `scorestore-static-${VERSION}`;
-const RUNTIME_CACHE = `scorestore-runtime-${VERSION}`;
+// --- VERSIÓN MAESTRA V13 ---
+const SW_VERSION = "score-store-v13-final"; 
 
-const APP_SHELL = [
+const CACHE_STATIC = `${SW_VERSION}-static`;
+const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
+
+const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/css/styles.css",
-  "/site.webmanifest",
-  "/robots.txt",
-  "/sitemap.xml",
-  "/data/catalog.json",
-  "/data/promos.json",
+  "/js/main.js",
   "/assets/logo-score.webp",
-  "/assets/logo-monster.png",
-  "/assets/logo-unico.webp",
-  "/assets/logo-bfgodrich.webp",
-  "/assets/logo-ford.webp",
-  "/assets/logo-rzr.webp",
-  "/assets/logo-world-desert.webp",
-  "/assets/logo-baja1000.webp",
-  "/assets/logo-baja500.webp",
-  "/assets/logo-baja400.webp",
-  "/assets/logo-sf250.webp"
+  "/assets/hero.webp",
+  "/assets/icons-score.svg",
+  "/assets/fondo-pagina-score.webp"
 ];
 
+// 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(STATIC_CACHE);
-    // addAll falla si algo 404; aquí lo hacemos tolerante para no romper instalación.
-    await Promise.all(
-      APP_SHELL.map(async (url) => {
-        try { await cache.add(url); } catch (_) {}
-      })
-    );
-    await self.skipWaiting();
-  })());
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys
-        .filter((k) => k.startsWith("scorestore-") && !k.includes(VERSION))
-        .map((k) => caches.delete(k))
-    );
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-function isNavigationRequest(req) {
-  return (
-    req.mode === "navigate" ||
-    (req.method === "GET" && (req.headers.get("accept") || "").includes("text/html"))
+  self.skipWaiting(); // Activar inmediatamente sin esperar
+  event.waitUntil(
+    caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-}
+});
 
-async function cacheFirst(req, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(req);
-  if (cached) return cached;
+// 2. ACTIVACIÓN (Limpieza agresiva de versiones viejas)
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.map((k) => {
+        if (k !== CACHE_STATIC && k !== CACHE_DYNAMIC) {
+          console.log('[SW] Borrando caché vieja:', k);
+          return caches.delete(k);
+        }
+      })
+    ))
+  );
+  self.clients.claim();
+});
 
-  const fresh = await fetch(req);
-  if (fresh && fresh.ok) cache.put(req, fresh.clone());
-  return fresh;
-}
-
-async function networkFirst(req) {
-  const cache = await caches.open(STATIC_CACHE);
-  try {
-    const fresh = await fetch(req);
-    if (fresh && fresh.ok) cache.put("/index.html", fresh.clone());
-    return fresh;
-  } catch (_) {
-    const cached = await cache.match("/index.html");
-    return cached || new Response("Offline", { status: 503, statusText: "Offline" });
-  }
-}
-
-async function staleWhileRevalidate(req, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(req);
-  const fetchPromise = fetch(req)
-    .then((fresh) => {
-      if (fresh && fresh.ok) cache.put(req, fresh.clone());
-      return fresh;
-    })
-    .catch(() => null);
-
-  return cached || (await fetchPromise) || new Response("Offline", { status: 503 });
-}
-
+// 3. ESTRATEGIA DE RED (NETWORK FIRST)
+// Esto soluciona que "no se ven los cambios". Siempre intenta ir a internet primero.
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
-
   const url = new URL(req.url);
 
-  // Stripe y pagos: no interceptar
-  if (url.hostname.includes("stripe.com")) return;
+  // Ignorar API y Stripe
+  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
 
-  // Navegación: Network-first
-  if (isNavigationRequest(req)) {
-    event.respondWith(networkFirst(req));
-    return;
-  }
-
-  // Mismo origen: assets/css
-  if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/css/")) {
-      event.respondWith(cacheFirst(req, RUNTIME_CACHE));
-      return;
-    }
-    if (url.pathname.startsWith("/data/")) {
-      event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
-      return;
-    }
-  }
-
-  // Google Fonts: SWR
-  if (
-    url.hostname.endsWith("fonts.googleapis.com") ||
-    url.hostname.endsWith("fonts.gstatic.com")
-  ) {
-    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
-    return;
-  }
+  // ESTRATEGIA: Network First (Red primero, caer a caché si no hay internet)
+  // Ideal para el Catálogo JSON y el HTML, así siempre ven precios/fotos nuevas.
+  event.respondWith(
+    fetch(req)
+      .then((res) => {
+        return caches.open(CACHE_DYNAMIC).then((cache) => {
+          cache.put(req, res.clone());
+          return res;
+        });
+      })
+      .catch(() => {
+        return caches.match(req); // Si falla internet, mostrar caché
+      })
+  );
 });
