@@ -210,3 +210,10 @@ input::placeholder { color: #bbb; }
   z-index: 300; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2); white-space: nowrap; font-size: 14px;
 }
 .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+/* ===========================
+   FIX CRÍTICO – CLICK BLOQUEADO
+=========================== */
+.cardBg,
+.heroOverlay {
+  pointer-events: none;
+}
