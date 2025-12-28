@@ -15,14 +15,13 @@
 body {
   font-family: var(--fontBody); background-color: var(--sand); color: #111;
   overflow-x: hidden; padding-bottom: 0; position: relative;
-  /* Mejora táctil y evita rebote en iOS */
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: none; /* Evita rebote en iOS */
 }
 
-/* FIX: Evitar que se trabe en móvil al abrir menú */
+/* FIX CRÍTICO: Bloqueo de scroll sin trabar la UI */
 body.modalOpen { overflow: hidden; height: 100vh; width: 100%; }
 
-/* --- ANIMACIONES & PERFORMANCE --- */
+/* --- PERFORMANCE & ANIMATIONS --- */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
@@ -31,7 +30,7 @@ body.modalOpen { overflow: hidden; height: 100vh; width: 100%; }
 .skeleton { background: #e0e0e0; border-radius: 12px; animation: pulse 1.5s infinite ease-in-out; }
 .cart-bounce .cartCount { animation: bounce 0.3s ease-in-out; }
 
-/* --- FONDO --- */
+/* --- LAYOUT --- */
 .page-bg { position: fixed; inset: 0; z-index: -10; pointer-events: none; background-image: url('/assets/fondo-pagina-score.webp'); background-size: cover; background-position: center; opacity: 0.5; }
 .dust-container { position: fixed; inset: 0; pointer-events: none; z-index: -5; overflow: hidden; opacity: 0.5; mix-blend-mode: multiply; }
 .dust { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E"); animation: grain 10s steps(10) infinite; }
@@ -108,7 +107,8 @@ footer {
   z-index: 5; /* Important: Above background */
 }
 @media(min-width: 769px) { footer { padding-bottom: 60px; } }
-.footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; }
+.footer-inner { width: min(1200px, 94vw); margin: 0 auto; }
+.footWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
 @media(max-width:768px){ .footWrap { grid-template-columns: 1fr; gap: 30px; } }
 .footBlock h4 { font-family: var(--fontTitle); font-size: 28px; margin: 0 0 15px; color: #fff; letter-spacing: 1px; }
 .footBlock p { color: #aaa; font-size: 14px; line-height: 1.6; margin: 0; }
