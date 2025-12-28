@@ -1,5 +1,5 @@
-// --- VERSIÓN MAESTRA V14 (Fix Transparencia) ---
-const SW_VERSION = "score-store-v14-transparent-fix"; 
+// --- VERSIÓN MAESTRA V15 (Actualizada para Backend Netlify) ---
+const SW_VERSION = "score-store-v15-netlify-fix"; 
 
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
@@ -9,6 +9,7 @@ const STATIC_ASSETS = [
   "/index.html",
   "/css/styles.css",
   "/js/main.js",
+  "/site.webmanifest",
   "/assets/logo-score.webp",
   "/assets/hero.webp",
   "/assets/icons-score.svg",
@@ -17,19 +18,18 @@ const STATIC_ASSETS = [
 
 // 1. INSTALACIÓN
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // Activar inmediatamente sin esperar
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// 2. ACTIVACIÓN (Limpieza agresiva de versiones viejas)
+// 2. ACTIVACIÓN (Limpieza)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys.map((k) => {
         if (k !== CACHE_STATIC && k !== CACHE_DYNAMIC) {
-          console.log('[SW] Borrando caché vieja:', k);
           return caches.delete(k);
         }
       })
@@ -38,17 +38,17 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 3. ESTRATEGIA DE RED (NETWORK FIRST)
-// Esto soluciona que "no se ven los cambios". Siempre intenta ir a internet primero.
+// 3. ESTRATEGIA: NETWORK FIRST (Prioridad Internet)
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Ignorar API y Stripe
-  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) return;
+  // NO cachear API del backend (cotizaciones, pagos) ni Stripe
+  if (url.pathname.startsWith("/.netlify/") || url.hostname.includes("stripe")) {
+    return; 
+  }
 
-  // ESTRATEGIA: Network First (Red primero, caer a caché si no hay internet)
-  // Ideal para el Catálogo JSON y el HTML, así siempre ven precios/fotos nuevas.
+  // Para todo lo demás: Intenta internet, si falla, usa caché
   event.respondWith(
     fetch(req)
       .then((res) => {
@@ -58,7 +58,7 @@ self.addEventListener("fetch", (event) => {
         });
       })
       .catch(() => {
-        return caches.match(req); // Si falla internet, mostrar caché
+        return caches.match(req);
       })
   );
 });
