@@ -1,12 +1,15 @@
 {
   "name": "scorestore",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "dependencies": {
-    "stripe": "12.18.0"
+  "description": "Score Store Official - Serverless Ecommerce",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "npm run lint && echo \"No build step\"",
-    "lint": "node --check netlify/functions/create_checkout.js && node --check netlify/functions/quote_shipping.js && node --check netlify/functions/stripe_webhook.js && node --check netlify/functions/envia_webhook.js && node --check netlify/functions/_shared.js"
+    "build": "echo 'No build step required for static files'"
+  },
+  "dependencies": {
+    "stripe": "^16.12.0"
   }
 }
