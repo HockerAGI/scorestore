@@ -1,10 +1,9 @@
 /* ======================================================
-   SCORE STORE — MAIN JS (DEFINITIVO PRODUCCIÓN)
+   SCORE STORE — MAIN JS (PRODUCCIÓN + BLINDADO)
    ====================================================== */
 
 let CATALOG = null;
 let CART = [];
-let CURRENT_SECTION = null;
 
 /* ===========================
    HELPERS
@@ -13,10 +12,6 @@ const $ = (id) => document.getElementById(id);
 
 function money(n) {
   return `$${Number(n).toLocaleString("es-MX")} MXN`;
-}
-
-function safe(el) {
-  return el !== null && el !== undefined;
 }
 
 function showToast(msg) {
@@ -28,23 +23,31 @@ function showToast(msg) {
 }
 
 /* ===========================
-   LOAD CATALOG (LAZY + SAFE)
+   LOAD CATALOG (ROBUSTO)
 =========================== */
 async function loadCatalog() {
   if (CATALOG) return CATALOG;
 
   try {
     const res = await fetch("/data/catalog.json", { cache: "no-store" });
+
+    if (!res.ok) {
+      showToast("No se pudo cargar el catálogo");
+      console.error("Catalog fetch failed:", res.status, res.statusText);
+      return null;
+    }
+
     CATALOG = await res.json();
     return CATALOG;
   } catch (e) {
-    console.error("Catalog load error", e);
+    showToast("Error cargando catálogo");
+    console.error("Catalog load error:", e);
     return null;
   }
 }
 
 /* ===========================
-   OVERLAY / DRAWER
+   OVERLAY / DRAWER / MODAL
 =========================== */
 function openOverlay() {
   $("overlay")?.classList.add("active");
@@ -79,7 +82,8 @@ function closeAll() {
 function smoothScroll(e, id) {
   e?.preventDefault();
   const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: "smooth" });
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ===========================
@@ -94,18 +98,18 @@ async function openCatalog(sectionId, title) {
   const catTitle = $("catTitle");
 
   if (!modal || !wrap || !catTitle) {
-    console.warn("Modal catalog DOM missing");
+    console.error("FALTAN NODOS DEL MODAL EN index.html (modalCatalog/catContent/catTitle)");
+    showToast("Error: modal no disponible");
     return;
   }
 
-  CURRENT_SECTION = sectionId;
-  catTitle.textContent = title;
+  catTitle.textContent = title || "CATÁLOGO";
   wrap.innerHTML = "";
 
-  const products = data.products.filter(p => p.sectionId === sectionId);
+  const products = (data.products || []).filter(p => p.sectionId === sectionId);
 
-  if (products.length === 0) {
-    wrap.innerHTML = `<p style="opacity:.6">Catálogo en preparación.</p>`;
+  if (!products.length) {
+    wrap.innerHTML = `<p style="opacity:.65; padding:10px 0;">Catálogo en preparación o sin productos.</p>`;
     modal.classList.add("active");
     openOverlay();
     return;
@@ -134,14 +138,18 @@ async function openCatalog(sectionId, title) {
         <img src="${p.img}" alt="${p.name}" loading="lazy">
         <strong>${p.name}</strong>
         <div class="ux-note">${money(p.baseMXN)}</div>
-        <select>
-          ${p.sizes.map(s => `<option>${s}</option>`).join("")}
+
+        <select aria-label="Selecciona talla">
+          ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
         </select>
-        <button type="button" class="btn-sm">AGREGAR</button>
+
+        <button class="btn-sm" type="button">AGREGAR</button>
       `;
 
-      card.querySelector("button").onclick = () =>
-        addToCart(p, card.querySelector("select").value);
+      card.querySelector("button").addEventListener("click", () => {
+        const size = card.querySelector("select").value;
+        addToCart(p, size);
+      });
 
       grid.appendChild(card);
     });
@@ -175,7 +183,7 @@ function updateCart() {
   body.innerHTML = "";
   let subtotal = 0;
 
-  CART.forEach(p => {
+  CART.forEach((p) => {
     subtotal += p.price;
     body.innerHTML += `
       <div class="sumRow">
@@ -191,6 +199,11 @@ function updateCart() {
   $("cartCount") && ($("cartCount").textContent = CART.length);
 
   $("payBtn") && ($("payBtn").disabled = CART.length === 0);
+
+  if ($("paybar")) {
+    if (CART.length > 0) $("paybar").classList.add("visible");
+    else $("paybar").classList.remove("visible");
+  }
 }
 
 /* ===========================
@@ -199,29 +212,41 @@ function updateCart() {
 async function checkout() {
   if (CART.length === 0) return;
 
-  const res = await fetch("/.netlify/functions/create_checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items: CART })
-  });
+  try {
+    const res = await fetch("/.netlify/functions/create_checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: CART })
+    });
 
-  const data = await res.json();
-  if (data.url) window.location.href = data.url;
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else showToast("No se pudo iniciar el pago");
+  } catch (err) {
+    console.error(err);
+    showToast("Error al iniciar pago");
+  }
 }
 
 /* ===========================
-   EVENTS (FIX CARRITO)
+   EVENTS
 =========================== */
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeAll();
 });
 
 $("overlay")?.addEventListener("click", closeAll);
-$("cartBtn")?.addEventListener("click", openDrawer);
 
-/* ===========================
-   PERF
-=========================== */
 window.addEventListener("load", () => {
   document.body.classList.add("loaded");
 });
+
+/* ===========================
+   EXPONER A WINDOW (CLAVE)
+   Para que onclick="" SIEMPRE funcione
+=========================== */
+window.openCatalog = openCatalog;
+window.openDrawer = openDrawer;
+window.closeAll = closeAll;
+window.checkout = checkout;
+window.smoothScroll = smoothScroll;
