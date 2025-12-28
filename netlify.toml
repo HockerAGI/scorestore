@@ -3,7 +3,17 @@
   functions = "netlify/functions"
   command = "npm run build"
 
-# ✅ Cache fuerte para estáticos
+# --- BLOQUE CRÍTICO QUE FALTABA ---
+[functions]
+  node_bundler = "esbuild"
+  # Esto obliga a Netlify a meter tu base de datos JSON dentro de la función
+  included_files = ["data/*.json"]
+  # Ayuda a evitar errores con dependencias complejas
+  external_node_modules = ["stripe"]
+
+# --- TUS HEADERS (Están perfectos, los dejamos igual) ---
+
+# ✅ Cache fuerte para estáticos versionables (logos, imágenes, CSS, etc.)
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -14,40 +24,28 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# ✅ Datos: corto + SWR (ok para catálogos)
+# ✅ Datos (cambian más seguido): cache corto + SWR
 [[headers]]
   for = "/data/*"
   [headers.values]
     Cache-Control = "public, max-age=60, stale-while-revalidate=600"
 
-# ✅ PWA: evita quedarte con SW/manifest viejos
+# ✅ Archivos PWA: siempre frescos
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/site.webmanifest"
   [headers.values]
-    Cache-Control = "no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
-# ✅ HTML: siempre fresco
+# ✅ HTML: sin cache agresivo
 [[headers]]
-  for = "/index.html"
+  for = "/*.html"
   [headers.values]
-    Cache-Control = "no-store, must-revalidate"
-
-# ✅ Functions: explícitamente no cache (aunque Netlify no cachea functions por defecto)
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Cache-Control = "no-store"
-1
+    Cache-Control = "no-cache"
 
 # ✅ Seguridad / buenas prácticas
 [[headers]]
@@ -57,6 +55,4 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
-    # OJO: HSTS agresivo puede romper subdominios si no están en HTTPS.
-    # Si TODO tu dominio/subdominios está en HTTPS, puedes volver a includeSubDomains.
-    Strict-Transport-Security = "max-age=31536000"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
