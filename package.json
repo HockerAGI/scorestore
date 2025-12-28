@@ -1,15 +1,17 @@
 {
-  "name": "scorestore",
-  "version": "2.0.0",
-  "private": true,
-  "description": "Score Store Official - Serverless Ecommerce",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "scripts": {
-    "build": "echo 'No build step required for static files'"
-  },
-  "dependencies": {
-    "stripe": "^16.12.0"
-  }
+  "name": "SCORE Store",
+  "short_name": "SCORE",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E10600",
+  "description": "Tienda oficial SCORE Store — drops, merch y colecciones especiales.",
+  "icons": [
+    {
+      "src": "/icons-score.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
