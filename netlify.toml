@@ -3,26 +3,25 @@
   functions = "netlify/functions"
   command = "npm run build"
 
-# --- BLOQUE CRÍTICO QUE FALTABA ---
-[functions]
-  node_bundler = "esbuild"
-  # Esto obliga a Netlify a meter tu base de datos JSON dentro de la función
-  included_files = ["data/*.json"]
-  # Ayuda a evitar errores con dependencias complejas
-  external_node_modules = ["stripe"]
+[build.environment]
+  NODE_VERSION = "18"
 
-# --- TUS HEADERS (Están perfectos, los dejamos igual) ---
-
-# ✅ Cache fuerte para estáticos versionables (logos, imágenes, CSS, etc.)
+# ✅ Assets: cache moderado (evita “no se ven cambios” si reemplazas archivos con el mismo nombre)
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
+# ✅ CSS/JS sin hash: SIEMPRE revalidar
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # ✅ Datos (cambian más seguido): cache corto + SWR
 [[headers]]
@@ -30,7 +29,7 @@
   [headers.values]
     Cache-Control = "public, max-age=60, stale-while-revalidate=600"
 
-# ✅ Archivos PWA: siempre frescos
+# ✅ Archivos PWA: siempre frescos (evita SW/manifest “stale”)
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -42,6 +41,16 @@
     Cache-Control = "no-cache"
 
 # ✅ HTML: sin cache agresivo
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/*.html"
   [headers.values]
