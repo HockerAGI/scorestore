@@ -4,41 +4,43 @@
   --red: #E10600;
   --carbon: #0b0f14;
   --sand: #f8f8f8;
-  --green: #00C853; 
-  --cafeOverlay: linear-gradient(180deg, rgba(62, 39, 35, 1) 0%, rgba(20, 10, 5, 1) 100%);
+  --green: #00C853;
+  --cafeOverlay: linear-gradient(180deg, rgba(62,39,35,1) 0%, rgba(20,10,5,1) 100%);
   --shadow: 0 15px 40px rgba(0,0,0,0.15);
   --ease: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* --- RESET & BASE --- */
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* --- RESET --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--red); }
 
 body {
   font-family: var(--fontBody);
-  background-color: var(--sand);
+  background: var(--sand);
   color: #111;
   overflow-x: hidden;
-  position: relative;
-  overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
 }
 
-/* 🔴 UI FIX: evita que el footer desaparezca */
+/* ✅ FIX REAL: NO bloquear layout */
 body.modalOpen {
   overflow: hidden;
-  position: fixed;
-  width: 100%;
 }
 
 /* --- ANIMACIONES --- */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-@keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(10px) }
+  to { opacity:1; transform:none }
+}
+
 @keyframes grain {
   0%,100%{transform:translate(0,0)}
   25%{transform:translate(-5%,5%)}
@@ -46,34 +48,22 @@ body.modalOpen {
   75%{transform:translate(-3%,3%)}
 }
 
-.loaded { animation: fadeIn 0.5s var(--ease) forwards; }
-.cart-bounce .cartCount { animation: bounce 0.3s ease-in-out; }
-
-/* --- LAYOUT --- */
+/* --- BACKGROUND --- */
 .page-bg {
   position: fixed;
   inset: 0;
   z-index: -10;
   pointer-events: none;
-  background-image: url('/assets/fondo-pagina-score.webp');
-  background-size: cover;
-  background-position: center;
-  opacity: 0.5;
+  background: url('/assets/fondo-pagina-score.webp') center/cover;
+  opacity: .5;
 }
 
-/* PERF FIX: polvo diferido */
 .dust-container {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: -5;
-  overflow: hidden;
-  opacity: 0.5;
-  mix-blend-mode: multiply;
-}
-
-body:not(.loaded) .dust {
-  animation: none !important;
+  opacity: .4;
 }
 
 .dust {
@@ -83,11 +73,12 @@ body:not(.loaded) .dust {
   animation: grain 8s steps(10) infinite;
 }
 
+/* --- LAYOUT --- */
 .wrap {
   width: min(1200px, 94vw);
   margin: 0 auto;
   padding-top: 90px;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
   position: relative;
   z-index: 1;
 }
@@ -95,16 +86,35 @@ body:not(.loaded) .dust {
 /* --- HEADER --- */
 .topbar {
   position: fixed;
-  inset: 0 0 auto 0;
+  top: 0; left: 0; right: 0;
   height: 76px;
   z-index: 100;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,.95);
   border-bottom: 3px solid var(--red);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 max(20px, 4vw);
+  padding: 0 max(20px,4vw);
   backdrop-filter: blur(12px);
+}
+
+.cartTrigger {
+  background: var(--carbon);
+  color: #fff;
+  border: none;
+  height: 44px;
+  padding: 0 16px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cartCount {
+  background: var(--red);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
 }
 
 /* --- HERO --- */
@@ -129,7 +139,7 @@ body:not(.loaded) .dust {
   position: absolute;
   inset: 0;
   background: var(--cafeOverlay);
-  opacity: 0.35;
+  opacity: .35;
   z-index: 1;
   pointer-events: none;
 }
@@ -141,23 +151,42 @@ body:not(.loaded) .dust {
   max-width: 700px;
 }
 
-/* --- GRID --- */
-/* PERF FIX: evita que Lighthouse cargue todo */
-.grid,
-.partners,
-footer {
-  content-visibility: auto;
-  contain-intrinsic-size: 1000px;
+.ctaRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
+.btn {
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  text-transform: uppercase;
+  border-radius: 8px;
+  padding: 14px 26px;
+}
+
+.btn.primary {
+  background: #fff;
+  color: #111;
+}
+
+.btn.secondary {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.4);
+}
+
+/* --- GRID --- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
   gap: 20px;
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
 }
 
 /* --- FOOTER --- */
-/* 🔴 UI FIX: footer siempre visible */
 footer {
   background: #080b10;
   color: #fff;
@@ -172,7 +201,7 @@ footer {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,.85);
   opacity: 0;
   pointer-events: none;
   transition: .3s;
@@ -188,12 +217,12 @@ footer {
   position: fixed;
   top: 0;
   right: 0;
-  width: min(450px, 100vw);
+  width: min(450px,100vw);
   height: 100%;
   background: #fff;
   z-index: 200;
   transform: translateX(105%);
-  transition: 0.3s;
+  transition: .3s;
   display: flex;
   flex-direction: column;
 }
@@ -202,7 +231,7 @@ footer {
   transform: translateX(0);
 }
 
-/* --- FIX CRÍTICO: clicks --- */
+/* --- FIX CRÍTICO DE CLICKS --- */
 .cardBg,
 .heroOverlay {
   pointer-events: none;
