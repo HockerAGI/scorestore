@@ -217,3 +217,31 @@ input::placeholder { color: #bbb; }
 .heroOverlay {
   pointer-events: none;
 }
+/* ===== Lighthouse + UX helpers ===== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ux-note {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  opacity: 0.65;
+  letter-spacing: .5px;
+}
+
+.cat-intro {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
