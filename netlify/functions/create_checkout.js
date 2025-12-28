@@ -17,6 +17,7 @@ const {
   applyPromoToTotals,
   getBaseUrlFromEnv,
   quoteEnviaMXN,
+  normalizePromo,
 } = require("./_shared");
 
 const MIN_OUTSIDE_TJ_MXN = 250;

@@ -20,7 +20,6 @@ const APP_SHELL = [
   "/data/catalog.json",
   "/data/promos.json",
   "/assets/logo-score.webp",
-  "/assets/logo-monster.png",
   "/assets/logo-unico.webp",
   "/assets/logo-bfgodrich.webp",
   "/assets/logo-ford.webp",

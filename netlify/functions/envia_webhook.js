@@ -158,7 +158,7 @@ function formatMessage(payload) {
   const promoCode = toStr(payload.promoCode || payload.metadata?.promo_code || "");
   const discountMXN = safeNum(payload.discountMXN ?? payload.metadata?.discount_mxn, 0);
   const shippingMXN = safeNum(payload.shippingMXN ?? payload.metadata?.shipping_mxn, 0);
-  const shippingMode = toStr(payload.shippingMode ?? payload.metadata?.shipping_mode || "");
+  const shippingMode = toStr(payload.shippingMode ?? ((payload.metadata && payload.metadata.shipping_mode) || ""));
 
   const customerName = toStr(payload.customerName || "Cliente");
   const email = toStr(payload.email || "");
