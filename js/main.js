@@ -1,5 +1,5 @@
 /**
- * js/main.js - CORE LOGIC
+ * js/main.js - CORE LOGIC V14
  */
 
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
