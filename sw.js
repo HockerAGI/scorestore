@@ -1,5 +1,5 @@
-// --- VERSIÓN MAESTRA V13 ---
-const SW_VERSION = "score-store-v13-final"; 
+// --- VERSIÓN MAESTRA V14 (Fix Transparencia) ---
+const SW_VERSION = "score-store-v14-transparent-fix"; 
 
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_DYNAMIC = `${SW_VERSION}-dynamic`;
