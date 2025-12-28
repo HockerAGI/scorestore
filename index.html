@@ -2,161 +2,86 @@
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#E10600" />
 
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda Oficial SCORE International. Equipamiento Off-Road auténtico fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México." />
-  <meta name="keywords" content="Baja 1000, Baja 500, Score International, Off Road, Tijuana, Camisetas, Ropa Racing" />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="SCORE Store | Merch Oficial" />
-  <meta property="og:description" content="Colección Oficial 2025. Fabricado en Tijuana. Envíos Nacionales y USA." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
+  <meta name="description" content="Tienda Oficial SCORE International. Merch Off-Road auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
 
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <link rel="icon" href="/assets/icons-score.svg" />
 
-  <link rel="preload" href="/assets/hero.webp" as="image" />
+  <!-- PERFORMANCE -->
+  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="/css/styles.css" />
 
-  <script src="https://js.stripe.com/v3/" async></script>
+  <script src="https://js.stripe.com/v3/" defer></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 
 <body>
-
   <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
+  <div class="dust-container" data-late><div class="dust"></div></div>
 
-  <div class="wrap" id="mainContent">
+  <header class="topbar">
+    <a href="/" class="brand">
+      <img src="/assets/logo-score.webp" alt="SCORE" width="120" height="48">
+    </a>
 
-    <!-- HEADER -->
-    <header class="topbar">
-      <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48">
-      </a>
-      <div class="navRight">
-        <div class="pill">MX · <b>TIJUANA</b></div>
-        <button class="cartTrigger" onclick="openDrawer()" aria-label="Abrir carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
-            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
-      </div>
-    </header>
+    <div class="navRight">
+      <div class="pill">MX <b>TIJUANA</b></div>
+      <button class="cartTrigger" onclick="openDrawer()" aria-label="Carrito">
+        🛒 <span id="cartCount" class="cartCount">0</span>
+      </button>
+    </div>
+  </header>
 
-    <main>
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
 
-      <!-- HERO -->
-      <section class="hero">
-        <div class="heroBg"></div>
-        <div class="heroOverlay"></div>
-
-        <img src="/assets/logo-world-desert.webp" class="seal-logo" alt="World Desert Championship" loading="lazy">
-
-        <div class="heroContent">
-          <div class="tagline">MERCH OFICIAL · TEMPORADA 2025</div>
-
-          <h1>SCORE INTERNATIONAL</h1>
-
-          <p class="sub">
-            Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>, patrocinador oficial de SCORE.<br>
-            Ropa de alto rendimiento probada en condiciones reales de desierto.
-          </p>
-
-          <div class="ctaRow">
-            <a href="#grid" class="btn primary" onclick="smoothScroll(event, 'grid')" aria-label="Ver colección oficial SCORE">
-              VER COLECCIÓN
-            </a>
-            <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
-          </div>
-
-          <div class="heroChips">
-            <div class="heroChip">✔ HECHO EN TIJUANA</div>
-            <div class="heroChip">★ CALIDAD PREMIUM</div>
-          </div>
-
-          <!-- SEO / Lighthouse invisible -->
-          <p class="sr-only">
-            Tienda oficial autorizada de SCORE International Off-Road Racing.
-          </p>
-
-          <!-- UX confianza -->
-          <span class="ux-note">
-            Tienda oficial operada por fabricante autorizado
-          </span>
-        </div>
-      </section>
-
-      <!-- SECCIÓN CAMPEONATOS -->
-      <div class="secHeader">
-        <h2>CAMPEONATOS</h2>
-        <div class="meta">WORLD DESERT CHAMPIONSHIP</div>
-      </div>
-
-      <div class="grid" id="grid">
-        <div class="card" onclick="openCatalog('BAJA_1000','Baja 1000')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">TIENDA OFICIAL</span>
-            <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000">
-            <span class="viewBtn">Ver Colección</span>
-          </div>
-        </div>
-
-        <div class="card" onclick="openCatalog('BAJA_500','Baja 500')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">NUEVA LLEGADA</span>
-            <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
-        </div>
-
-        <div class="card" onclick="openCatalog('BAJA_400','Baja 400')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">DISPONIBLE</span>
-            <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
-        </div>
-
-        <div class="card" onclick="openCatalog('SF_250','San Felipe 250')">
-          <div class="cardBg"></div>
-          <div class="cardContent">
-            <span class="statusBadge">CLÁSICOS</span>
-            <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250">
-            <span class="viewBtn">Ver Productos</span>
-          </div>
+      <div class="heroContent">
+        <div class="tagline">MERCH OFICIAL 2025</div>
+        <h1>SCORE INTERNATIONAL</h1>
+        <p class="sub">
+          Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b><br>
+          Colección de alto rendimiento probada en el desierto.
+        </p>
+        <div class="ctaRow">
+          <a href="#grid" class="btn primary">VER COLECCIÓN</a>
+          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
         </div>
       </div>
+    </section>
 
-    </main>
-  </div>
+    <!-- GRID -->
+    <section id="grid" class="grid"></section>
+  </main>
 
-  <!-- MODAL CATÁLOGO -->
-  <div class="modal" id="modalCatalog">
+  <!-- FOOTER (VISIBLE SIEMPRE) -->
+  <footer>
+    <div class="footer-inner">
+      <p>© <script>document.write(new Date().getFullYear())</script> SCORE Store · Operado por Bajatex</p>
+    </div>
+  </footer>
+
+  <!-- OVERLAY -->
+  <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+  <!-- DRAWER -->
+  <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="dHead">
-      <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" class="closeBtn">&times;</button>
+      <h3>TU CARRITO</h3>
+      <button class="closeBtn" onclick="closeAll()">×</button>
     </div>
-    <div class="catContent">
-      <p class="cat-intro">
-        Selecciona tu equipo oficial por evento. Todas las prendas son edición auténtica SCORE.
-      </p>
-      <div id="catContent"></div>
-    </div>
-  </div>
+    <div id="cartBody" class="dBody"></div>
+  </aside>
 
   <script src="/js/main.js" defer></script>
 </body>
