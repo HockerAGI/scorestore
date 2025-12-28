@@ -1,164 +1,175 @@
-/* =========================================================
-   SCORE STORE — MAIN.JS (FINAL / ESTABLE)
-   - Catálogos funcionales
-   - UX + Lighthouse
-   - Netlify Functions ready
-   ========================================================= */
-
-"use strict";
-
-/* =========================
-   CONFIG
-========================= */
-const CATALOG_URL = "/data/catalog.json";
-const FN_CREATE_CHECKOUT = "/.netlify/functions/create_checkout";
-const FN_QUOTE_SHIPPING = "/.netlify/functions/quote_shipping";
+/* ======================================================
+   SCORE STORE — MAIN JS (FINAL ESTABLE)
+   ====================================================== */
 
 let CATALOG = null;
 let CART = [];
+let CURRENT_SECTION = null;
 
-/* =========================
+/* ===========================
    HELPERS
-========================= */
+=========================== */
 const $ = (id) => document.getElementById(id);
 
-function money(v) {
-  try {
-    return `$${Number(v).toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN`;
-  } catch {
-    return `$${v} MXN`;
-  }
+function money(n) {
+  return `$${Number(n).toLocaleString("es-MX")} MXN`;
 }
 
-function smoothScroll(e, id) {
-  e?.preventDefault();
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+function showToast(msg) {
+  const t = $("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
 }
 
-/* =========================
+/* ===========================
    LOAD CATALOG
-========================= */
+=========================== */
 async function loadCatalog() {
   if (CATALOG) return CATALOG;
-  const res = await fetch(CATALOG_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error("No se pudo cargar el catálogo");
+  const res = await fetch("/data/catalog.json", { cache: "no-store" });
   CATALOG = await res.json();
   return CATALOG;
 }
 
-/* =========================
-   MODALS / DRAWERS
-========================= */
+/* ===========================
+   MODALS / DRAWER CORE
+=========================== */
+function openOverlay() {
+  $("overlay")?.classList.add("active");
+  document.body.classList.add("modalOpen");
+}
+
+function closeOverlay() {
+  $("overlay")?.classList.remove("active");
+  document.body.classList.remove("modalOpen");
+}
+
 function openDrawer() {
   $("drawer")?.classList.add("active");
-  $("overlay")?.classList.add("active");
+  openOverlay();
+}
+
+function closeDrawer() {
+  $("drawer")?.classList.remove("active");
+}
+
+function openModal(modalId) {
+  $(modalId)?.classList.add("active");
+  openOverlay();
+}
+
+function closeModal(modalId) {
+  $(modalId)?.classList.remove("active");
 }
 
 function closeAll() {
-  document.querySelectorAll(".drawer, .modal, .overlay")
-    .forEach(el => el.classList.remove("active"));
+  closeDrawer();
+  closeModal("modalCatalog");
+  closeOverlay();
 }
 
-/* =========================
-   OPEN CATALOG
-========================= */
+/* ===========================
+   HERO SCROLL
+=========================== */
+function smoothScroll(e, id) {
+  e?.preventDefault();
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ===========================
+   CATALOG VIEW
+=========================== */
 async function openCatalog(sectionId, title) {
-  const modal = $("modalCatalog");
-  const content = $("catContent");
-  const titleEl = $("catTitle");
-
-  titleEl.textContent = title;
-  content.innerHTML = "Cargando productos…";
-
-  modal.classList.add("active");
-  $("overlay")?.classList.add("active");
-
   const data = await loadCatalog();
+  CURRENT_SECTION = sectionId;
+
+  $("catTitle").textContent = title;
+  const wrap = $("catContent");
+  wrap.innerHTML = "";
+
   const products = data.products.filter(p => p.sectionId === sectionId);
+  const grouped = {};
 
-  if (!products.length) {
-    content.innerHTML = "<p>No hay productos disponibles.</p>";
-    return;
-  }
-
-  // Agrupar por subSection
-  const groups = {};
   products.forEach(p => {
-    if (!groups[p.subSection]) groups[p.subSection] = [];
-    groups[p.subSection].push(p);
+    grouped[p.subSection] ||= [];
+    grouped[p.subSection].push(p);
   });
 
-  content.innerHTML = "";
-
-  Object.keys(groups).forEach(groupName => {
+  Object.keys(grouped).forEach(sub => {
     const h = document.createElement("h4");
     h.className = "catSectionTitle";
-    h.textContent = groupName;
-    content.appendChild(h);
+    h.textContent = sub;
+    wrap.appendChild(h);
 
     const grid = document.createElement("div");
     grid.className = "catGrid";
 
-    groups[groupName].forEach(p => {
+    grouped[sub].forEach(p => {
       const card = document.createElement("div");
       card.className = "prodCard";
-      card.innerHTML = `
-        <img src="${p.img}" alt="${p.name}" loading="lazy" />
-        <strong>${p.name}</strong>
-        <div style="margin:6px 0">${money(p.baseMXN)}</div>
 
-        <select aria-label="Talla">
+      card.innerHTML = `
+        <img src="${p.img}" alt="${p.name}">
+        <strong>${p.name}</strong>
+        <div class="ux-note">${money(p.baseMXN)}</div>
+
+        <select>
           ${p.sizes.map(s => `<option value="${s}">${s}</option>`).join("")}
         </select>
 
-        <button class="btn-sm full" type="button">
-          AGREGAR
-        </button>
+        <button class="btn-sm" type="button">AGREGAR</button>
       `;
 
+      card.querySelector("img").addEventListener("load", e => {
+        e.target.classList.add("loaded");
+      });
+
       card.querySelector("button").onclick = () => {
-        const size = card.querySelector("select").value;
-        addToCart(p, size);
+        addToCart(p, card.querySelector("select").value);
       };
 
       grid.appendChild(card);
     });
 
-    content.appendChild(grid);
+    wrap.appendChild(grid);
   });
+
+  openModal("modalCatalog");
 }
 
-/* =========================
-   CART
-========================= */
-function addToCart(product, size) {
+/* ===========================
+   CART LOGIC
+=========================== */
+function addToCart(prod, size) {
   CART.push({
-    id: product.id,
-    name: product.name,
-    price: product.baseMXN,
-    size,
-    qty: 1
+    id: prod.id,
+    name: prod.name,
+    price: prod.baseMXN,
+    size
   });
 
   updateCart();
-  openDrawer();
+  showToast("Producto agregado");
 }
 
 function updateCart() {
   const body = $("cartBody");
-  if (!body) return;
-
   body.innerHTML = "";
+
   let subtotal = 0;
 
-  CART.forEach((item, idx) => {
-    subtotal += item.price * item.qty;
+  CART.forEach((p, i) => {
+    subtotal += p.price;
 
     const row = document.createElement("div");
     row.className = "sumRow";
     row.innerHTML = `
-      <span>${item.qty}× ${item.name} (${item.size})</span>
-      <span>${money(item.price)}</span>
+      <span>${p.name} (${p.size})</span>
+      <span>${money(p.price)}</span>
     `;
     body.appendChild(row);
   });
@@ -166,60 +177,49 @@ function updateCart() {
   $("lnSub").textContent = money(subtotal);
   $("lnTotal").textContent = money(subtotal);
   $("barTotal").textContent = money(subtotal);
+
   $("cartCount").textContent = CART.length;
-
   $("payBtn").disabled = CART.length === 0;
-}
 
-/* =========================
-   SHIPPING QUOTE
-========================= */
-async function quoteShipping() {
-  const cp = $("cp")?.value;
-  if (!cp || cp.length !== 5) return;
-
-  const res = await fetch(FN_QUOTE_SHIPPING, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cp, items: CART })
-  });
-
-  const data = await res.json();
-  if (data?.price) {
-    $("lnShip").textContent = money(data.price);
-    $("lnTotal").textContent = money(data.total);
-    $("barTotal").textContent = money(data.total);
-  }
-}
-
-/* =========================
-   CHECKOUT
-========================= */
-async function checkout() {
-  const res = await fetch(FN_CREATE_CHECKOUT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items: CART })
-  });
-
-  const data = await res.json();
-  if (data?.url) {
-    window.location.href = data.url;
+  if (CART.length > 0) {
+    $("paybar")?.classList.add("visible");
   } else {
-    alert("No se pudo iniciar el pago");
+    $("paybar")?.classList.remove("visible");
   }
 }
 
-/* =========================
+/* ===========================
+   CHECKOUT (STRIPE)
+=========================== */
+async function checkout() {
+  if (CART.length === 0) return;
+
+  try {
+    const res = await fetch("/.netlify/functions/create_checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: CART })
+    });
+
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  } catch (err) {
+    alert("Error al iniciar pago");
+  }
+}
+
+/* ===========================
    EVENTS
-========================= */
-document.addEventListener("click", (e) => {
-  if (e.target.id === "overlay") closeAll();
+=========================== */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeAll();
 });
 
-window.openCatalog = openCatalog;
-window.openDrawer = openDrawer;
-window.closeAll = closeAll;
-window.checkout = checkout;
-window.smoothScroll = smoothScroll;
-window.quoteShipping = quoteShipping;
+$("overlay")?.addEventListener("click", closeAll);
+
+/* ===========================
+   PERF / LCP FIX
+=========================== */
+window.addEventListener("load", () => {
+  document.body.classList.add("loaded");
+});
