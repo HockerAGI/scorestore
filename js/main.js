@@ -1,5 +1,5 @@
 /* ======================================================
-   SCORE STORE — MAIN JS (FINAL ESTABLE)
+   SCORE STORE — MAIN JS (FINAL DEFINITIVO)
    ====================================================== */
 
 let CATALOG = null;
@@ -34,7 +34,7 @@ async function loadCatalog() {
 }
 
 /* ===========================
-   MODALS / DRAWER CORE
+   OVERLAY / DRAWER
 =========================== */
 function openOverlay() {
   $("overlay")?.classList.add("active");
@@ -47,21 +47,29 @@ function closeOverlay() {
 }
 
 function openDrawer() {
-  $("drawer")?.classList.add("active");
+  const d = $("drawer");
+  if (!d) return;
+
+  d.classList.add("active");
+  $("cartBtnTrigger")?.setAttribute("aria-expanded", "true");
   openOverlay();
 }
 
 function closeDrawer() {
-  $("drawer")?.classList.remove("active");
+  const d = $("drawer");
+  if (!d) return;
+
+  d.classList.remove("active");
+  $("cartBtnTrigger")?.setAttribute("aria-expanded", "false");
 }
 
-function openModal(modalId) {
-  $(modalId)?.classList.add("active");
+function openModal(id) {
+  $(id)?.classList.add("active");
   openOverlay();
 }
 
-function closeModal(modalId) {
-  $(modalId)?.classList.remove("active");
+function closeModal(id) {
+  $(id)?.classList.remove("active");
 }
 
 function closeAll() {
@@ -156,6 +164,11 @@ function addToCart(prod, size) {
   showToast("Producto agregado");
 }
 
+function removeFromCart(index) {
+  CART.splice(index, 1);
+  updateCart();
+}
+
 function updateCart() {
   const body = $("cartBody");
   body.innerHTML = "";
@@ -169,7 +182,10 @@ function updateCart() {
     row.className = "sumRow";
     row.innerHTML = `
       <span>${p.name} (${p.size})</span>
-      <span>${money(p.price)}</span>
+      <span>
+        ${money(p.price)}
+        <button onclick="removeFromCart(${i})" style="margin-left:8px;font-size:11px;">✕</button>
+      </span>
     `;
     body.appendChild(row);
   });
@@ -203,7 +219,7 @@ async function checkout() {
 
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-  } catch (err) {
+  } catch {
     alert("Error al iniciar pago");
   }
 }
@@ -218,7 +234,7 @@ document.addEventListener("keydown", e => {
 $("overlay")?.addEventListener("click", closeAll);
 
 /* ===========================
-   PERF / LCP FIX
+   PERF / LCP
 =========================== */
 window.addEventListener("load", () => {
   document.body.classList.add("loaded");
