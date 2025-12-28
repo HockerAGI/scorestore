@@ -1,17 +1,15 @@
 {
-  "name": "SCORE Store",
-  "short_name": "SCORE",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#E10600",
-  "description": "Tienda oficial SCORE Store — drops, merch y colecciones especiales.",
-  "icons": [
-    {
-      "src": "/icons-score.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ]
+  "name": "score-store-static",
+  "version": "1.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=18 <21"
+  },
+  "dependencies": {
+    "stripe": "^16.6.0"
+  },
+  "scripts": {
+    "lint": "node --check netlify/functions/_shared.js netlify/functions/quote_shipping.js netlify/functions/create_checkout.js netlify/functions/stripe_webhook.js netlify/functions/envia_webhook.js",
+    "build": "npm run lint && echo \"Static site (no build step)\""
+  }
 }
