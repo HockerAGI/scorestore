@@ -1,33 +1,30 @@
 /* =========================================================
-   SCORE STORE — MAIN JS (PRODUCCIÓN)
-   Compatible con index final + styles.css
+   SCORE STORE — MAIN JS (PRO CATALOG)
+   - SubSections
+   - Badge dinámico
+   - Performance optimizado
 ========================================================= */
-
 (() => {
   "use strict";
 
-  /* ------------------ HELPERS ------------------ */
+  /* ---------- HELPERS ---------- */
   const $ = (q, ctx = document) => ctx.querySelector(q);
   const $$ = (q, ctx = document) => Array.from(ctx.querySelectorAll(q));
 
-  const moneyMXN = (n) =>
-    `$${Number(n || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN`;
+  const money = (n) =>
+    `$${Number(n || 0).toLocaleString("es-MX", {
+      minimumFractionDigits: 2,
+    })} MXN`;
 
-  const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
-
-  /* ------------------ STATE ------------------ */
+  /* ---------- STATE ---------- */
   const state = {
+    sections: [],
+    products: [],
     cart: [],
-    catalog: {},
-    currentCategory: null,
-    shipping: {
-      method: "",
-      price: 0,
-    },
   };
 
-  /* ------------------ ELEMENTS ------------------ */
-  const overlay = $(".overlay");
+  /* ---------- ELEMENTS ---------- */
+  const overlay = $("#overlay");
   const modal = $("#modalCatalog");
   const catTitle = $("#catTitle");
   const catContent = $("#catContent");
@@ -37,143 +34,176 @@
   const lnTotal = $("#lnTotal");
   const cartCount = $(".cartCount");
   const payBtn = $("#payBtn");
+  const toastEl = $("#toast");
 
-  /* ------------------ INIT ------------------ */
+  /* ---------- INIT ---------- */
   document.addEventListener("DOMContentLoaded", init);
 
-  function init() {
+  async function init() {
     bindGlobal();
     bindCards();
-    bindCartTriggers();
-    loadCatalog();
+    await loadCatalog();
     updateCartUI();
   }
 
-  /* ------------------ BINDINGS ------------------ */
-
+  /* ---------- GLOBAL ---------- */
   function bindGlobal() {
+    overlay?.addEventListener("click", closeAll);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
 
-    overlay?.addEventListener("click", closeAll);
+    $$(".closeBtn").forEach((b) =>
+      b.addEventListener("click", closeAll)
+    );
   }
 
-  function bindCards() {
-    $$(".card").forEach((card) => {
-      const cat = card.dataset.category;
-      if (!cat) return;
-
-      card.addEventListener("click", () => openCatalog(cat));
-      card.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") openCatalog(cat);
-      });
-    });
-  }
-
-  function bindCartTriggers() {
-    $$(".cartTrigger").forEach((btn) => {
-      btn.addEventListener("click", openDrawer);
-    });
-  }
-
-  /* ------------------ CATALOG ------------------ */
-
+  /* ---------- LOAD CATALOG ---------- */
   async function loadCatalog() {
     try {
       const res = await fetch("/data/catalog.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("No se pudo cargar catálogo");
-      state.catalog = await res.json();
+      const data = await res.json();
+      state.sections = data.sections || [];
+      state.products = data.products || [];
     } catch (e) {
-      console.error("Catalog error:", e.message);
-      state.catalog = {};
+      console.error("Error cargando catálogo:", e);
     }
   }
 
-  function openCatalog(category) {
-    state.currentCategory = category;
-    const items = state.catalog?.[category] || [];
+  /* ---------- HOME CARDS ---------- */
+  function bindCards() {
+    $$(".card").forEach((card) => {
+      const m = card.getAttribute("onclick")?.match(/'(.*?)'/);
+      if (!m) return;
+      const sectionId = m[1];
+      card.onclick = () => openCatalog(sectionId);
+      card.onkeydown = (e) => {
+        if (e.key === "Enter") openCatalog(sectionId);
+      };
+    });
+  }
 
-    catTitle.textContent = category.replace(/_/g, " ");
+  /* ---------- OPEN CATALOG ---------- */
+  function openCatalog(sectionId) {
+    const section = state.sections.find((s) => s.id === sectionId);
+    const items = state.products.filter(
+      (p) => p.sectionId === sectionId
+    );
+
+    catTitle.innerHTML = `
+      ${section?.title || "CATÁLOGO"}
+      ${section?.badge ? `<span class="statusBadge" style="margin-left:10px;">${section.badge}</span>` : ""}
+    `;
+
     catContent.innerHTML = "";
 
     if (!items.length) {
       catContent.innerHTML =
-        "<p style='padding:20px; text-align:center;'>Catálogo no disponible.</p>";
-    } else {
+        "<p style='text-align:center;padding:30px;'>Sin productos disponibles</p>";
+      openModal();
+      return;
+    }
+
+    /* ---- AGRUPAR POR SUBSECTION ---- */
+    const groups = {};
+    items.forEach((p) => {
+      const key = p.subSection || "OTROS";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    /* ---- RENDER INCREMENTAL (PERFORMANCE) ---- */
+    const frag = document.createDocumentFragment();
+
+    Object.keys(groups).forEach((sub) => {
+      const title = document.createElement("h4");
+      title.className = "catSectionTitle";
+      title.textContent = sub;
+      frag.appendChild(title);
+
       const grid = document.createElement("div");
       grid.className = "catGrid";
 
-      items.forEach((p) => {
+      groups[sub].forEach((p) => {
         const card = document.createElement("div");
         card.className = "prodCard";
 
         card.innerHTML = `
-          <img src="${p.image}" alt="${p.name}" loading="lazy">
+          <img src="${p.img}" alt="${p.name}" loading="lazy">
           <strong>${p.name}</strong>
-          <span>${moneyMXN(p.price)}</span>
-          <button class="btn-sm" type="button">Agregar</button>
+          <span>${money(p.baseMXN)}</span>
+
+          ${
+            p.sizes?.length
+              ? `<select class="sizeSel">
+                  ${p.sizes
+                    .map((s) => `<option value="${s}">${s}</option>`)
+                    .join("")}
+                </select>`
+              : ""
+          }
+
+          <button class="btn-sm">Agregar</button>
         `;
 
-        $("button", card).addEventListener("click", () => {
-          addToCart(p);
-        });
+        const sizeSel = card.querySelector(".sizeSel");
+        card.querySelector("button").onclick = () =>
+          addToCart(p, sizeSel?.value || null);
 
         grid.appendChild(card);
       });
 
-      catContent.appendChild(grid);
-    }
+      frag.appendChild(grid);
+    });
 
+    catContent.appendChild(frag);
     openModal();
   }
 
-  /* ------------------ CART ------------------ */
+  /* ---------- CART ---------- */
+  function addToCart(product, size) {
+    const key = `${product.id}_${size || "NA"}`;
+    const found = state.cart.find((i) => i.key === key);
 
-  function addToCart(product) {
-    const found = state.cart.find((i) => i.id === product.id);
-    if (found) {
-      found.qty = clamp(found.qty + 1, 1, 99);
-    } else {
+    if (found) found.qty += 1;
+    else
       state.cart.push({
+        key,
         id: product.id,
         name: product.name,
-        price: product.price,
+        size,
+        price: product.baseMXN,
         qty: 1,
       });
-    }
+
     toast("Producto agregado");
     updateCartUI();
   }
 
   function updateCartUI() {
     cartBody.innerHTML = "";
-
     let total = 0;
     let count = 0;
 
-    state.cart.forEach((i, idx) => {
+    state.cart.forEach((i) => {
       total += i.price * i.qty;
       count += i.qty;
 
       const row = document.createElement("div");
       row.className = "sumRow";
-
       row.innerHTML = `
-        <span>${i.qty}× ${i.name}</span>
-        <span>${moneyMXN(i.price * i.qty)}</span>
+        <span>${i.qty}× ${i.name}${i.size ? ` (${i.size})` : ""}</span>
+        <span>${money(i.price * i.qty)}</span>
       `;
-
       cartBody.appendChild(row);
     });
 
-    lnTotal.textContent = moneyMXN(total);
+    lnTotal.textContent = money(total);
     cartCount.textContent = count;
     payBtn.disabled = total <= 0;
   }
 
-  /* ------------------ CHECKOUT ------------------ */
-
+  /* ---------- CHECKOUT ---------- */
   async function checkout() {
     if (!state.cart.length) return;
 
@@ -188,10 +218,8 @@
 
       const data = await res.json();
       if (!data?.url) throw new Error("Checkout inválido");
-
       window.location.href = data.url;
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast("Error al iniciar pago");
       payBtn.disabled = false;
     }
@@ -199,40 +227,34 @@
 
   payBtn?.addEventListener("click", checkout);
 
-  /* ------------------ UI OPEN/CLOSE ------------------ */
-
+  /* ---------- UI ---------- */
   function openModal() {
-    modal?.classList.add("active");
-    overlay?.classList.add("active");
-    modal?.setAttribute("aria-hidden", "false");
+    modal.classList.add("active");
+    overlay.classList.add("active");
   }
 
   function openDrawer() {
-    drawer?.classList.add("active");
-    overlay?.classList.add("active");
-    drawer?.setAttribute("aria-hidden", "false");
+    drawer.classList.add("active");
+    overlay.classList.add("active");
   }
 
   function closeAll() {
-    modal?.classList.remove("active");
-    drawer?.classList.remove("active");
-    overlay?.classList.remove("active");
-    modal?.setAttribute("aria-hidden", "true");
-    drawer?.setAttribute("aria-hidden", "true");
+    modal.classList.remove("active");
+    drawer.classList.remove("active");
+    overlay.classList.remove("active");
   }
 
-  $$(".closeBtn").forEach((b) => b.addEventListener("click", closeAll));
-
-  /* ------------------ TOAST ------------------ */
-
-  const toastEl = $("#toast");
-  let toastT = null;
-
+  /* ---------- TOAST ---------- */
+  let toastTimer = null;
   function toast(msg) {
     if (!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.add("show");
-    clearTimeout(toastT);
-    toastT = setTimeout(() => toastEl.classList.remove("show"), 2000);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1800);
   }
+
+  /* ---------- EXPORTS (HTML INLINE) ---------- */
+  window.openDrawer = openDrawer;
+  window.closeAll = closeAll;
 })();
