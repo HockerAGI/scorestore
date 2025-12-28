@@ -648,3 +648,28 @@ input::placeholder{color:#bbb}
   opacity:1; visibility:visible;
   transform:translateX(-50%) translateY(0);
 }
+/* FIX HERO MOBILE */
+.heroBg {
+  background-position: center top;
+}
+
+/* FIX HEADER OFFSET MOBILE */
+@media (max-width: 768px) {
+  .wrap {
+    padding-top: 100px;
+  }
+}
+
+/* FIX FOOTER VISIBILIDAD */
+footer {
+  min-height: 200px;
+  visibility: visible;
+  display: block;
+}
+
+/* PERF: desactiva polvo en móviles */
+@media (max-width: 768px) {
+  .dust-container {
+    display: none;
+  }
+}
