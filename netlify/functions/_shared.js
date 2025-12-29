@@ -1,293 +1,146 @@
-// netlify/functions/_shared.js
 const fs = require("fs/promises");
 const path = require("path");
 
-// --- CONFIGURACIÓN ---
-const FEATURE_ENVIADOTCOM = process.env.FEATURE_ENVIADOTCOM !== "false"; // Activo por defecto
-const DEFAULT_NATIONAL_SHIPPING = 280; // Costo blindado si falla API
-const TIJUANA_DELIVERY_PRICE = 200;    // Costo local fijo
+const FEATURE_ENVIADOTCOM = true; 
+const DEFAULT_NATIONAL_SHIPPING = 280; 
+const TIJUANA_DELIVERY_PRICE = 200;    
 
-// --- UTILIDADES ---
-function jsonResponse(statusCode, body, extraHeaders = {}) {
+function jsonResponse(statusCode, body) {
   return {
     statusCode,
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": "*", // CORS vital para tu frontend
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Cache-Control": "no-store",
-      ...extraHeaders,
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type"
     },
     body: JSON.stringify(body),
   };
 }
 
-function safeJsonParse(raw, fallback = null) {
-  try { return JSON.parse(raw); } catch { return fallback; }
+function safeJsonParse(str, fallback) {
+  try { return JSON.parse(str); } catch { return fallback; }
 }
 
 function toStr(v) { return (v ?? "").toString().trim(); }
 function upper(v) { return toStr(v).toUpperCase(); }
 function digitsOnly(v) { return toStr(v).replace(/\D+/g, ""); }
 function normalizePromo(code) { return upper(code).replace(/\s+/g, ""); }
+function roundMXN(v) { return Math.round(Number(v) || 0); }
 
-function roundMXN(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.round(n) : 0;
-}
-
-// --- GEO ---
 function isMxPostal(cp) { return /^\d{5}$/.test(toStr(cp)); }
 function isTijuanaPostal(cp) { const p = toStr(cp); return isMxPostal(p) && p.startsWith("22"); }
 function looksLikeTijuana(city) { const c = toStr(city).toLowerCase(); return c.includes("tijuana") || c.includes("tj"); }
 
-// --- CARGA DE DATOS (Con Caché en Memoria) ---
-let _catalogCache = null;
-let _promosCache = null;
-
 async function loadCatalog() {
-  if (_catalogCache) return _catalogCache;
   try {
     const file = path.join(process.cwd(), "data", "catalog.json");
     const raw = await fs.readFile(file, "utf8");
-    _catalogCache = JSON.parse(raw);
-    return _catalogCache;
-  } catch (e) {
-    console.error("Error loading catalog:", e);
-    return { products: [] };
-  }
+    return JSON.parse(raw);
+  } catch (e) { return { products: [] }; }
 }
 
 async function loadPromos() {
-  if (_promosCache) return _promosCache;
   try {
     const file = path.join(process.cwd(), "data", "promos.json");
     const raw = await fs.readFile(file, "utf8");
-    _promosCache = JSON.parse(raw);
-    return _promosCache;
-  } catch (e) {
-    console.error("Error loading promos:", e);
-    return { rules: [] };
-  }
+    return JSON.parse(raw);
+  } catch (e) { return { rules: [] }; }
 }
 
 function productMapFromCatalog(catalog) {
   const map = {};
-  const products = Array.isArray(catalog?.products) ? catalog.products : [];
-  for (const p of products) map[p.id] = p;
+  (catalog.products || []).forEach(p => map[p.id] = p);
   return map;
 }
 
-// --- VALIDACIÓN ---
 function validateCartItems(items) {
-  if (!Array.isArray(items) || items.length === 0) {
-    return { ok: false, error: "Carrito vacío." };
-  }
-  const validItems = [];
+  if (!Array.isArray(items) || !items.length) return { ok: false, error: "Carrito vacío" };
+  const valid = [];
   for (const it of items) {
     const qty = parseInt(it.qty);
-    if (!it.id || isNaN(qty) || qty < 1) continue;
-    validItems.push({ id: toStr(it.id), qty, size: toStr(it.size) });
+    if (it.id && qty > 0) valid.push({ id: toStr(it.id), qty, size: toStr(it.size) });
   }
-  if (validItems.length === 0) return { ok: false, error: "Items inválidos." };
-  return { ok: true, items: validItems };
+  return valid.length ? { ok: true, items: valid } : { ok: false, error: "Items inválidos" };
 }
 
-function validateSizes(items, productMap) {
-  for (const it of items) {
-    const p = productMap[it.id];
-    if (!p) continue; // Si no existe, se ignora
-    
-    // Si el producto tiene tallas definidas, validar que la talla enviada exista
-    if (Array.isArray(p.sizes) && p.sizes.length > 0) {
-      if (!p.sizes.includes(it.size)) {
-         return { ok: false, error: `Talla ${it.size} no válida para ${p.name}` };
-      }
-    }
-  }
-  return { ok: true };
-}
-
-function computeSubtotalMXN(items, productMap) {
+function computeSubtotalMXN(items, map) {
   let sub = 0;
-  for (const it of items) {
-    const p = productMap[it.id];
+  items.forEach(it => {
+    const p = map[it.id];
     if (p) sub += (Number(p.baseMXN || 0) * it.qty);
-  }
+  });
   return roundMXN(sub);
 }
 
-// --- ENVIA.COM (COTIZADOR) ---
-function getEnviaOrigin() {
-  // Configuración de Origen REAL (Tijuana)
-  return {
-    name: "SCORE Store",
-    company: "Unico Uniformes",
-    email: "ventas@scorestore.com",
-    phone: "6641234567",
-    street: "Palermo",
-    number: "6106",
-    district: "Anexa Roma",
-    city: "Tijuana",
-    state: "BC",
-    country: "MX",
-    postalCode: "22614"
-  };
-}
-
-async function quoteEnviaMXN({ to, items, productMap }) {
-  if (!FEATURE_ENVIADOTCOM || !process.env.ENVIA_API_KEY) {
-    return { ok: false, error: "API Disabled or Missing Key" };
-  }
-
-  // Peso estimado: 1kg base + 0.4kg por prenda adicional
-  const totalQty = items.reduce((s, i) => s + i.qty, 0);
-  const weight = Math.round((1 + (totalQty * 0.4)) * 100) / 100;
+async function quoteEnviaMXN({ to, items, subtotal }) {
+  if (!FEATURE_ENVIADOTCOM || !process.env.ENVIA_API_KEY) return { ok: false };
+  const weight = Math.round((1 + items.reduce((s,i)=>s+i.qty,0)*0.4)*100)/100;
   
-  // Valor declarado (tope 5000 para seguro básico incluido)
-  const subtotal = computeSubtotalMXN(items, productMap);
-  const declaredValue = Math.min(5000, subtotal);
-
   try {
-    const payload = {
-      origin: getEnviaOrigin(),
-      destination: {
-        name: toStr(to.name || "Cliente"),
-        street: toStr(to.address1),
-        number: "S/N",
-        district: "",
-        city: toStr(to.city),
-        state: upper(to.state_code),
-        country: "MX",
-        postalCode: digitsOnly(to.postal_code)
-      },
-      packages: [{
-        content: "Ropa Deportiva",
-        amount: 1,
-        type: "box",
-        weight: weight,
-        insurance: 0,
-        declaredValue: declaredValue,
-        length: 30, width: 20, height: 10
-      }],
-      shipment: { carrier: "fedex,estafeta,redpack,dhl", type: 1 },
-      settings: { currency: "MXN" }
-    };
-
     const res = await fetch("https://api.envia.com/ship/rate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.ENVIA_API_KEY}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        origin: {
+          name: "SCORE Store", company: "Unico Uniformes",
+          email: "ventas@scorestore.com", phone: "6646374355",
+          street: "Palermo", number: "6106", district: "Anexa Roma",
+          city: "Tijuana", state: "BC", country: "MX", postalCode: "22614"
+        },
+        destination: {
+          name: to.name, street: to.address1, number: "S/N", district: "",
+          city: to.city, state: to.state_code, country: "MX", postalCode: to.postal_code
+        },
+        packages: [{ content: "Ropa", amount: 1, type: "box", weight, insurance: 0, declaredValue: Math.min(5000, subtotal), length: 30, width: 20, height: 10 }],
+        shipment: { carrier: "fedex,estafeta,redpack,dhl", type: 1 }
+      })
     });
     
     const data = await res.json();
+    if (!data.meta || data.meta !== "generate") throw new Error("API Error");
     
-    if (!res.ok || !data.meta || data.meta !== "generate") {
-      // Intentar leer error
-      const errMsg = data?.error?.message || `Error API (${res.status})`;
-      return { ok: false, error: errMsg };
-    }
-
-    // Filtrar y ordenar opciones
-    let rates = (data.data || []).filter(r => r.totalPrice > 0);
-    if (rates.length === 0) return { ok: false, error: "Sin cobertura" };
+    const rates = (data.data || []).filter(r => r.totalPrice > 0).sort((a,b) => a.totalPrice - b.totalPrice);
+    if (!rates.length) throw new Error("Sin cobertura");
     
-    // Ordenar por precio ascendente
-    rates.sort((a, b) => a.totalPrice - b.totalPrice);
-    const best = rates[0];
-
-    return { 
-      ok: true, 
-      quote: {
-        mxn: best.totalPrice,
-        provider: best.carrierDescription,
-        service: best.serviceDescription,
-        days: Number(best.deliveryDays || 5) 
-      }
-    };
-
+    return { ok: true, quote: { mxn: rates[0].totalPrice, carrier: rates[0].carrierDescription } };
   } catch (e) {
     return { ok: false, error: e.message };
   }
 }
 
-// --- CÁLCULO FINAL DE ENVÍO ---
-async function computeShipping({ mode, to, items, productMap }) {
+async function computeShipping({ mode, to, items, map }) {
   const m = toStr(mode).toLowerCase();
-
-  // 1. Pickup
-  if (m === "pickup") {
-    return { ok: true, mxn: 0, label: "Pickup (Tijuana)", carrier: "TIJUANA" };
+  if (m === "pickup") return { ok: true, mxn: 0, label: "Pickup (TJ)" };
+  if (m === "tj" || (to.postal_code.startsWith("22") && to.state_code === "BC")) {
+    return { ok: true, mxn: TIJUANA_DELIVERY_MXN, label: "Entrega Local TJ" };
   }
-
-  // 2. Local Tijuana (Detectado o Forzado)
-  const isTJ = m === "tj" || isTijuanaPostal(to?.postal_code) || (looksLikeTijuana(to?.city) && to?.state_code === "BC");
-  
-  if (isTJ) {
-    // CORREGIDO: Usar TIJUANA_DELIVERY_PRICE en lugar de TIJUANA_DELIVERY_MXN
-    return { ok: true, mxn: TIJUANA_DELIVERY_PRICE, label: "Entrega Local Tijuana", carrier: "LOCAL" };
-  }
-
-  // 3. Nacional (Envia.com)
-  const q = await quoteEnviaMXN({ to, items, productMap });
-  
-  if (q.ok) {
-    // Agregamos 5% buffer de seguridad y redondeamos
-    const finalPrice = Math.ceil(q.quote.mxn * 1.05);
-    return { 
-      ok: true, 
-      mxn: finalPrice, 
-      label: `${q.quote.provider} ${q.quote.service}`.trim(),
-      carrier: q.quote.provider 
-    };
-  }
-
-  // 4. Fallback Nacional (Si falla API)
-  console.warn("Usando tarifa fallback nacional:", q.error);
-  return { 
-    ok: true, 
-    mxn: DEFAULT_NATIONAL_SHIPPING, 
-    label: "Envío Nacional Estándar", 
-    carrier: "ESTIMADO" 
-  };
+  const subtotal = computeSubtotalMXN(items, map);
+  const q = await quoteEnviaMXN({ to, items, subtotal });
+  if (q.ok) return { ok: true, mxn: Math.ceil(q.quote.mxn * 1.05), label: q.quote.carrier };
+  return { ok: true, mxn: DEFAULT_NATIONAL_SHIPPING, label: "Envío Nacional" };
 }
 
-// --- PROMOS ---
-async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
+async function applyPromoToTotals({ promoCode, subtotal, shipping }) {
   const code = normalizePromo(promoCode);
-  const promoData = await loadPromos(); // Carga desde promos.json
-  const rules = promoData.rules || [];
-  
-  const rule = rules.find(r => normalizePromo(r.code) === code && r.active);
+  const data = await loadPromos();
+  const rule = data.rules.find(r => normalizePromo(r.code) === code && r.active);
   let discount = 0;
-
   if (rule) {
-    if (rule.type === "percent") discount = Math.round(subtotalMXN * (rule.value || 0));
-    else if (rule.type === "fixed_mxn") discount = Math.round(rule.value || 0);
-    else if (rule.type === "free_shipping") discount = Math.round(shippingMXN);
-    else if (rule.type === "free_total") discount = subtotalMXN + shippingMXN; // 100% off
+    if (rule.type === "percent") discount = Math.round(subtotal * rule.value);
+    else if (rule.type === "fixed_mxn") discount = rule.value;
+    else if (rule.type === "free_shipping") discount = shipping;
   }
-
-  // Seguridad: Descuento no puede ser mayor al total
-  const totalRaw = subtotalMXN + shippingMXN;
-  discount = Math.min(discount, totalRaw);
-  
-  return {
-    promoCode: discount > 0 ? code : null,
-    discountMXN: discount,
-    shippingMXN,
-    totalMXN: Math.max(0, totalRaw - discount)
-  };
+  discount = Math.min(discount, subtotal + shipping);
+  return { promoCode: discount > 0 ? code : null, discount, total: (subtotal + shipping) - discount };
 }
 
 function getBaseUrlFromEnv() { return process.env.URL || "https://scorestore.netlify.app"; }
 
 module.exports = {
-  jsonResponse, safeJsonParse, toStr, upper, isMxPostal, isTijuanaPostal, looksLikeTijuana,
-  loadCatalog, loadPromos, productMapFromCatalog, validateCartItems, validateSizes, computeSubtotalMXN,
-  applyPromoToTotals, getBaseUrlFromEnv, quoteEnviaMXN, computeShipping
+  jsonResponse, safeJsonParse, toStr, upper, digitsOnly, normalizePromo,
+  loadCatalog, productMapFromCatalog, validateCartItems, computeSubtotalMXN,
+  computeShipping, applyPromoToTotals, getBaseUrlFromEnv
 };
