@@ -6,13 +6,10 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# ✅ Assets: cache moderado (evita “no se ven cambios” si reemplazas archivos con el mismo nombre)
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[functions]
+  node_bundler = "esbuild"
 
-# ✅ CSS/JS sin hash: SIEMPRE revalidar
+# CSS / JS siempre revalidar
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -23,13 +20,13 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# ✅ Datos (cambian más seguido): cache corto + SWR
+# Assets visuales
 [[headers]]
-  for = "/data/*"
+  for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=60, stale-while-revalidate=600"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
-# ✅ Archivos PWA: siempre frescos (evita SW/manifest “stale”)
+# PWA
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -40,28 +37,10 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# ✅ HTML: sin cache agresivo
-[[headers]]
-  for = "/"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-# ✅ Seguridad / buenas prácticas
+# Seguridad
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
