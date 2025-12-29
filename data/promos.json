@@ -16,10 +16,10 @@
       "code": "ENVIOFREE",
       "type": "free_shipping",
       "value": 0,
-      "active": false
+      "active": true
     },
     {
-      "code": "GRTS10",
+      "code": "VIP100",
       "type": "free_total",
       "value": 0,
       "active": false
