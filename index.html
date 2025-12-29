@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#E10600" />
   
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda Oficial SCORE International. Equipamiento Off-Road auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
+  <meta name="description" content="Tienda Oficial SCORE International." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
   <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
   <link rel="stylesheet" href="/css/styles.css" />
@@ -63,7 +63,7 @@
 
     <div class="grid" id="grid">
       <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
-        <div class="cardBg"></div>
+        <div class="cardBg" style="background-image: url('/assets/baja1000-texture.webp');"></div>
         <div class="cardContent">
           <span class="statusBadge">TIENDA OFICIAL</span>
           <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy">
@@ -103,19 +103,16 @@
         <strong>ÚNICO UNIFORMES</strong> - Distribuidor Oficial.<br>
         Calle Palermo 6106 Int JK, Col. Anexa Roma, Tijuana, B.C., CP 22614.
       </p>
-      <p>
-        &copy; <script>document.write(new Date().getFullYear())</script> SCORE International. 
-        Precios en MXN incluyen IVA.
-      </p>
+      <p>&copy; 2025 SCORE International.</p>
     </div>
   </footer>
 
   <div class="overlay" id="overlay" aria-hidden="true"></div>
 
-  <aside class="drawer" id="drawer" aria-label="Carrito de compras">
+  <aside class="drawer" id="drawer">
     <div class="dHead">
       <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar">&times;</button>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
     <div class="dBody" id="cartBody"></div>
     <div class="dFoot">
@@ -136,23 +133,18 @@
       </select>
       
       <div id="shipForm" style="display:none; margin-top:10px;">
-        <input id="cp" type="tel" inputmode="numeric" placeholder="Código Postal (5 dígitos)" maxlength="5" autocomplete="postal-code">
+        <input id="cp" type="tel" inputmode="numeric" placeholder="Código Postal" maxlength="5">
         <div style="display:flex; gap:10px;">
-          <input id="state" placeholder="Estado (ej. BC)" maxlength="3" autocomplete="address-level1" style="width:30%;">
-          <input id="city" placeholder="Ciudad" autocomplete="address-level2" style="flex:1;">
+          <input id="state" placeholder="Estado (BC)" maxlength="3" style="width:30%;">
+          <input id="city" placeholder="Ciudad" style="flex:1;">
         </div>
-        <input id="addr" placeholder="Calle, Número y Colonia" autocomplete="street-address">
-        <input id="name" placeholder="Nombre completo quien recibe" autocomplete="name">
+        <input id="addr" placeholder="Calle, Número y Colonia">
+        <input id="name" placeholder="Nombre completo">
       </div>
       <div id="quoteResult" class="quote-res"></div>
 
-      <div class="secure-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        PAGO 100% SEGURO
-      </div>
-
       <button id="payBtn" class="btn primary full" disabled onclick="checkout()">PAGAR AHORA</button>
-      <span class="closeLink" onclick="closeAll()" role="button" tabindex="0">SEGUIR COMPRANDO</span>
+      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
     </div>
   </aside>
 
@@ -172,8 +164,7 @@
     <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
   </div>
 
-  <div class="toast" id="toast" role="alert"></div>
-
+  <div class="toast" id="toast"></div>
   <script src="/js/main.js" defer></script>
 </body>
 </html>
