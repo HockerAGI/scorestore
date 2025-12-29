@@ -1,7 +1,4 @@
 // netlify/functions/envia_webhook.js
-// BLINDADO: Anti-spam + verificación Stripe + dedupe persistente (sin DB)
-// Recomendado: usar INTERNAL_WEBHOOK_SECRET (lo manda stripe_webhook.js)
-// Si no hay secret, valida contra Stripe: sesión pagada + eventId coincide con notify_event_id
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
@@ -10,297 +7,169 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "";
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
 const WHATSAPP_TO = process.env.WHATSAPP_TO || "";
 
-// Seguridad interna (opcional pero recomendado)
 const INTERNAL_WEBHOOK_SECRET = process.env.INTERNAL_WEBHOOK_SECRET || "";
-
-// Para verificación Stripe (súper recomendado para blindaje sin secret)
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 
 let stripe = null;
 if (STRIPE_SECRET_KEY) {
-  try {
-    stripe = require("stripe")(STRIPE_SECRET_KEY);
-  } catch {
-    stripe = null;
-  }
+  stripe = require("stripe")(STRIPE_SECRET_KEY);
 }
 
-// Rate limit (warm)
-const WINDOW_MS = 60 * 1000;
-const MAX_REQ = 25;
-const rate = new Map();
-
-// Dedupe warm extra (por si llegan duplicados en segundos)
-const recent = new Map(); // key -> ts
-const RECENT_TTL_MS = 15 * 60 * 1000;
-
+/* ---------- RESP ---------- */
 function json(statusCode, body) {
   return {
     statusCode,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type, x-internal-secret",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Cache-Control": "no-store",
     },
     body: JSON.stringify(body),
   };
 }
 
-function toStr(v) {
-  return (v ?? "").toString().trim();
-}
+/* ---------- HELPERS ---------- */
+const toStr = v => (v ?? "").toString().trim();
+const upper = v => toStr(v).toUpperCase();
+const safeNum = (v, f = 0) => Number.isFinite(+v) ? +v : f;
 
-function upper(v) {
-  return toStr(v).toUpperCase();
-}
+/* ---------- RATE LIMIT ---------- */
+const rate = new Map();
+const WINDOW_MS = 60_000;
+const MAX_REQ = 25;
 
 function hit(ip) {
-  const t = Date.now();
-  const cur = rate.get(ip) || { ts: t, n: 0 };
-  if (t - cur.ts > WINDOW_MS) {
-    rate.set(ip, { ts: t, n: 1 });
+  const now = Date.now();
+  const r = rate.get(ip) || { ts: now, n: 0 };
+  if (now - r.ts > WINDOW_MS) {
+    rate.set(ip, { ts: now, n: 1 });
     return true;
   }
-  if (cur.n >= MAX_REQ) return false;
-  cur.n += 1;
-  rate.set(ip, cur);
+  if (r.n >= MAX_REQ) return false;
+  r.n++;
+  rate.set(ip, r);
   return true;
 }
 
-function remember(key) {
-  const now = Date.now();
-  recent.set(key, now);
-  // limpieza simple
-  for (const [k, ts] of recent.entries()) {
-    if (now - ts > RECENT_TTL_MS) recent.delete(k);
-  }
-}
+/* ---------- DEDUPE ---------- */
+const recent = new Map();
+const RECENT_TTL = 15 * 60_000;
 
-function seen(key) {
-  const ts = recent.get(key);
-  if (!ts) return false;
-  if (Date.now() - ts > RECENT_TTL_MS) {
-    recent.delete(key);
+function seen(k) {
+  const t = recent.get(k);
+  if (!t) return false;
+  if (Date.now() - t > RECENT_TTL) {
+    recent.delete(k);
     return false;
   }
   return true;
 }
 
-function safeNum(v, fallback = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function formatMoneyMXN(v) {
-  const n = safeNum(v, 0);
-  try {
-    return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
-  } catch {
-    return `$${n.toFixed(2)} MXN`;
+function remember(k) {
+  const now = Date.now();
+  recent.set(k, now);
+  for (const [x, t] of recent) {
+    if (now - t > RECENT_TTL) recent.delete(x);
   }
 }
 
+/* ---------- FORMAT ---------- */
+function formatMoney(v) {
+  return `$${safeNum(v).toLocaleString("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} MXN`;
+}
+
+/* ---------- NOTIFY ---------- */
 async function sendTelegram(text) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text,
-        disable_web_page_preview: true,
-      }),
-    });
-  } catch (e) {
-    console.error("Telegram error:", e.message);
-  }
+  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
+  });
 }
 
 async function sendWhatsApp(text) {
   if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_TO) return;
-
-  try {
-    await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: WHATSAPP_TO,
-        type: "text",
-        text: { body: text, preview_url: false },
-      }),
-    });
-  } catch (e) {
-    console.error("WhatsApp error:", e.message);
-  }
+  await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: WHATSAPP_TO,
+      type: "text",
+      text: { body: text },
+    }),
+  });
 }
 
-function buildAddress(shipping) {
-  const a = shipping?.address || shipping?.shipping_address || shipping?.shipping?.address || {};
-  const line1 = toStr(a.line1);
-  const city = toStr(a.city);
-  const state = toStr(a.state);
-  const postal = toStr(a.postal_code);
-  const parts = [line1, city, state, postal].filter(Boolean);
-  return parts.length ? parts.join(", ") : "";
+/* ---------- VERIFY STRIPE ---------- */
+async function verifyStripe(orderId) {
+  if (!stripe) return { ok: false };
+  const s = await stripe.checkout.sessions.retrieve(orderId);
+  const paid = s.payment_status === "paid" || s.status === "complete";
+  if (!paid) return { ok: false };
+  return { ok: true, session: s };
 }
 
-function formatMessage(payload) {
-  const lines = [];
-
-  const orderId = toStr(payload.orderId);
-  const total = safeNum(payload.total, 0);
-  const currency = upper(payload.currency || "MXN");
-
-  const promoCode = toStr(payload.promoCode || payload.metadata?.promo_code || "");
-  const discountMXN = safeNum(payload.discountMXN ?? payload.metadata?.discount_mxn, 0);
-  const shippingMXN = safeNum(payload.shippingMXN ?? payload.metadata?.shipping_mxn, 0);
-  const shippingMode = toStr(payload.shippingMode ?? (payload.metadata?.shipping_mode ?? ""));
-
-  const customerName = toStr(payload.customerName || "Cliente");
-  const email = toStr(payload.email || "");
-  const phone = toStr(payload.phone || "");
-
-  const addr = buildAddress(payload.shipping || {});
-  const items = Array.isArray(payload.items) ? payload.items : [];
-
-  lines.push("✅ PAGO CONFIRMADO — SCORE STORE");
-  lines.push(`🧾 Orden: ${orderId || "N/A"}`);
-
-  if (customerName) lines.push(`👤 ${customerName}`);
-  if (phone) lines.push(`📱 ${phone}`);
-  if (email) lines.push(`📧 ${email}`);
-
-  lines.push(`💰 Total: ${formatMoneyMXN(total)} (${currency})`);
-
-  if (shippingMode || shippingMXN) {
-    const modeLabel =
-      shippingMode === "pickup" ? "RECOGER" :
-      shippingMode === "tijuana_delivery" || shippingMode === "tj" ? "TIJUANA" :
-      shippingMode === "envia" || shippingMode === "mx" ? "NACIONAL" :
-      shippingMode ? shippingMode.toUpperCase() : "ENVÍO";
-
-    lines.push(`🚚 Envío (${modeLabel}): ${formatMoneyMXN(shippingMXN)}`);
-  }
-
-  if (promoCode) lines.push(`🏷️ Cupón: ${promoCode}`);
-  if (discountMXN > 0) lines.push(`🔻 Descuento: ${formatMoneyMXN(discountMXN)}`);
-
-  if (addr) lines.push(`📍 Dirección: ${addr}`);
-
-  if (items.length) {
-    lines.push("🛒 Items:");
-    for (const it of items.slice(0, 25)) {
-      const name = toStr(it.name || it.title || "Item");
-      const qty = safeNum(it.qty || it.quantity || 1, 1);
-      lines.push(`• ${qty}x ${name}`);
-    }
-  }
-
-  return lines.join("\n");
-}
-
-// Verificación Stripe (si no hay secret)
-async function verifyWithStripe({ orderId, eventId }) {
-  if (!stripe) return { ok: false, reason: "stripe_not_configured" };
-  if (!orderId) return { ok: false, reason: "missing_orderId" };
-
-  try {
-    const session = await stripe.checkout.sessions.retrieve(orderId);
-
-    // Asegura que esté pagado
-    const paid =
-      toStr(session.payment_status) === "paid" ||
-      toStr(session.status) === "complete";
-
-    if (!paid) return { ok: false, reason: "session_not_paid" };
-
-    const meta = session.metadata || {};
-    const status = toStr(meta.notify_status);
-    const notifyEventId = toStr(meta.notify_event_id);
-
-    // Dedupe persistente: si ya está sent, no reenviar.
-    if (status === "sent") return { ok: true, dedupe: true, reason: "already_sent", meta };
-
-    // Para aceptar sin secret: exigimos match de eventId con el que guardó stripe_webhook.js
-    if (!eventId || !notifyEventId || eventId !== notifyEventId) {
-      return { ok: false, reason: "eventId_mismatch", meta };
-    }
-
-    // Aceptamos si está en processing (flujo correcto) o error (reintento)
-    if (status !== "processing" && status !== "error" && status !== "") {
-      return { ok: false, reason: `invalid_notify_status:${status}`, meta };
-    }
-
-    return { ok: true, dedupe: false, reason: "verified", meta };
-  } catch (e) {
-    return { ok: false, reason: `stripe_error:${toStr(e.message)}` };
-  }
-}
-
+/* ---------- HANDLER ---------- */
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return { statusCode: 204 };
-
-  if (event.httpMethod !== "POST") return json(405, { ok: false, error: "Método no permitido" });
+  if (event.httpMethod === "OPTIONS") return json(204, {});
+  if (event.httpMethod !== "POST") return json(405, { error: "Método no permitido" });
 
   const ip =
     event.headers["x-nf-client-connection-ip"] ||
-    (toStr(event.headers["x-forwarded-for"]).split(",")[0] || "unknown");
+    toStr(event.headers["x-forwarded-for"]).split(",")[0] ||
+    "unknown";
 
-  if (!hit(ip)) return json(429, { ok: false, error: "Rate limit" });
+  if (!hit(ip)) return json(429, { error: "Rate limit" });
 
-  // Parse body
-  let payload = null;
+  let payload;
   try {
     payload = JSON.parse(event.body || "{}");
   } catch {
-    return json(400, { ok: false, error: "JSON inválido" });
+    return json(400, { error: "JSON inválido" });
   }
 
-  const orderId = toStr(payload?.orderId);
-  const eventId = toStr(payload?.eventId);
+  const orderId = toStr(payload.orderId);
+  if (!orderId) return json(400, { error: "Falta orderId" });
 
-  if (!orderId) return json(400, { ok: false, error: "Falta orderId" });
+  const key = orderId;
+  if (seen(key)) return json(200, { ok: true, deduped: true });
+  remember(key);
 
-  // Dedupe warm (extra)
-  const warmKey = `${orderId}:${eventId || "noevent"}`;
-  if (seen(warmKey)) return json(200, { ok: true, deduped: "warm" });
-  remember(warmKey);
-
-  // 1) Si hay secret y viene correcto, aceptamos directo
-  const gotSecret = toStr(event.headers["x-internal-secret"] || "");
-  const hasSecret = !!INTERNAL_WEBHOOK_SECRET;
-
-  if (hasSecret) {
-    if (gotSecret !== INTERNAL_WEBHOOK_SECRET) {
-      // Si falla el secret, todavía podemos validar con Stripe (si está configurado)
-      const v = await verifyWithStripe({ orderId, eventId });
-      if (!v.ok) return json(401, { ok: false, error: "Unauthorized", reason: v.reason });
-
-      if (v.dedupe) return json(200, { ok: true, deduped: "stripe_sent" });
-      // ok verified
-    }
-  } else {
-    // 2) Sin secret: debe pasar verificación Stripe sí o sí (para blindaje real)
-    const v = await verifyWithStripe({ orderId, eventId });
-    if (!v.ok) return json(401, { ok: false, error: "Unauthorized", reason: v.reason });
-
-    if (v.dedupe) return json(200, { ok: true, deduped: "stripe_sent" });
+  const secret = toStr(event.headers["x-internal-secret"]);
+  if (INTERNAL_WEBHOOK_SECRET && secret !== INTERNAL_WEBHOOK_SECRET) {
+    const v = await verifyStripe(orderId);
+    if (!v.ok) return json(401, { error: "Unauthorized" });
   }
 
-  // Validación mínima del payload para evitar basura
-  const total = safeNum(payload?.total, 0);
-  if (total <= 0) {
-    // Si Stripe validó y el total llegó 0 por algún bug, no mandamos basura
-    return json(200, { ok: true, skipped: "invalid_total" });
-  }
+  const total = safeNum(payload.total);
+  if (total <= 0) return json(200, { skipped: "invalid_total" });
 
-  const msg = formatMessage(payload);
+  const msg = [
+    "✅ PAGO CONFIRMADO — SCORE STORE",
+    `🧾 Orden: ${orderId}`,
+    `💰 Total: ${formatMoney(total)}`,
+  ].join("\n");
 
   await Promise.all([sendTelegram(msg), sendWhatsApp(msg)]);
+
+  // 🔐 Marca como enviado (dedupe persistente)
+  if (stripe) {
+    try {
+      await stripe.checkout.sessions.update(orderId, {
+        metadata: { notify_status: "sent" },
+      });
+    } catch {}
+  }
 
   return json(200, { ok: true, sent: true });
 };
