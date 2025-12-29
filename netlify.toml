@@ -9,10 +9,14 @@
 [functions]
   node_bundler = "esbuild"
 
+# ========== CACHE CONTROL ==========
+# HTML siempre revalidar
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
-# =========================
-# CSS / JS (sin hash)
-# =========================
+# CSS / JS siempre revalidar
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -23,28 +27,19 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# JSON data (catálogo/promos) revalidar
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
-# =========================
-# Assets visuales (IMÁGENES)
-# =========================
+# Assets visuales (1 semana)
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
-
-# =========================
-# HTML (PWA + Lighthouse)
-# =========================
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-
-# =========================
-# PWA CRÍTICO
-# =========================
+# PWA: SW + manifest NO cache duro (para updates)
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -55,14 +50,10 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-
-# =========================
-# SEGURIDAD / BEST PRACTICES
-# =========================
+# ========== SEGURIDAD ==========
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
