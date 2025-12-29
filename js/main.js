@@ -1,452 +1,348 @@
-/* ======================================================
-   SCORE STORE — main.js (Netlify + Stripe)
-   ====================================================== */
+// SCORE STORE — MAIN JS (v15 - Production Ready)
+// Configuración unificada con cotizador y Stripe
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
-  });
+const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
+
+const $ = id => document.getElementById(id);
+
+function toStr(v) { return (v ?? '').toString().trim(); }
+function upper(v) { return toStr(v).toUpperCase(); }
+function digits(v) { return toStr(v).replace(/\D+/g,''); }
+
+let catalog = [];
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+let ship = { method: null, cost: 0 };
+
+function money(n){ return `$${(Number(n)||0).toLocaleString('es-MX', {minimumFractionDigits: 0})} MXN`; }
+
+function save(){
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCart(true);
 }
 
-const $ = (id) => document.getElementById(id);
-const money = (n) => `$${Number(n || 0).toLocaleString("es-MX")} MXN`;
-const digitsOnly = (v) => (v ?? "").toString().replace(/\D+/g, "");
-
-const LS_KEY = "score_cart";
-let CART = safeParse(localStorage.getItem(LS_KEY), []);
-let CATALOG = null;
-let PROMOS = null;
-
-let promoState = { code: "", discountMXN: 0, ok: false, msg: "" };
-let shipState = { mode: "pickup", mxn: 0, label: "Pickup (Tijuana)", ok: true, quoted: true };
-
-function safeParse(raw, fallback) {
-  try { return JSON.parse(raw); } catch { return fallback; }
+function openDrawer(){
+  $('drawer').classList.add('active');
+  $('overlay').classList.add('active');
+  document.body.classList.add('modalOpen');
 }
 
-function saveCart() {
-  localStorage.setItem(LS_KEY, JSON.stringify(CART));
+function closeAll(){
+  $('drawer').classList.remove('active');
+  $('modalCatalog').classList.remove('active');
+  $('overlay').classList.remove('active');
+  document.body.classList.remove('modalOpen');
 }
 
-function toast(msg) {
-  const el = $("toast");
-  if (!el) return;
-  el.textContent = msg;
-  el.hidden = false;
-  el.classList.add("show");
-  setTimeout(() => {
-    el.classList.remove("show");
-    el.hidden = true;
-  }, 2200);
-}
-
-function setCartCount() {
-  const n = CART.reduce((s, i) => s + (i.qty || 0), 0);
-  $("cartCount").textContent = String(n);
-}
-
-function subtotalMXN() {
-  return CART.reduce((s, i) => s + (Number(i.price || 0) * Number(i.qty || 0)), 0);
-}
-
-function computePromoPreview(sub, ship) {
-  const code = (promoState.code || "").trim().toUpperCase().replace(/\s+/g, "");
-  if (!code) return { ok: false, discountMXN: 0, msg: "" };
-
-  const rules = Array.isArray(PROMOS?.rules) ? PROMOS.rules : [];
-  const rule = rules.find((r) => (r.code || "").toUpperCase() === code && r.active);
-  if (!rule) return { ok: false, discountMXN: 0, msg: "Cupón no válido." };
-
-  let discount = 0;
-  if (rule.type === "percent") discount = Math.round(sub * Number(rule.value || 0));
-  else if (rule.type === "fixed_mxn") discount = Math.round(Number(rule.value || 0));
-  else if (rule.type === "free_shipping") discount = Math.round(ship);
-
-  const total = Math.max(0, sub + ship - discount);
-  discount = Math.min(discount, sub + ship);
-
-  return { ok: true, discountMXN: discount, msg: `Cupón aplicado (preview). Total aprox: ${money(total)}` };
-}
-
-function setTotalsUI() {
-  const sub = subtotalMXN();
-  const ship = shipState.mxn || 0;
-
-  // promo preview (solo UI)
-  const p = computePromoPreview(sub, ship);
-  promoState.discountMXN = p.discountMXN;
-  promoState.ok = p.ok;
-  $("promoMsg").textContent = p.msg || "";
-
-  const disc = promoState.discountMXN || 0;
-  const total = Math.max(0, sub + ship - disc);
-
-  $("lnSub").textContent = money(sub);
-  $("lnShip").textContent = money(ship);
-  $("lnDisc").textContent = money(disc);
-  $("lnTotal").textContent = money(total);
-
-  $("barTotal").textContent = money(total);
-
-  // Pay enable rules
-  const canPay = canProceedToPay();
-  $("payBtn").disabled = !canPay;
-  $("payBtn2").disabled = !canPay;
-
-  // paybar
-  const paybar = $("paybar");
-  if (!paybar) return;
-  if (CART.length > 0) paybar.hidden = false;
-  else paybar.hidden = true;
-}
-
-function normalizeShipMode(v) {
-  const m = (v || "").toString().toLowerCase();
-  if (m === "pickup") return "pickup";
-  if (m === "tj") return "tj";
-  if (m === "mx") return "mx";
-  return "pickup";
-}
-
-function readAddress() {
-  return {
-    postal_code: digitsOnly($("cp").value),
-    state_code: ($("state").value || "").trim().toUpperCase(),
-    city: ($("city").value || "").trim(),
-    address1: ($("addr").value || "").trim(),
-    name: ($("shipName").value || "").trim()
-  };
-}
-
-function requireAddressForMode(mode) {
-  const to = readAddress();
-  if (mode === "pickup") return { ok: true, to };
-
-  if (!to.name) return { ok: false, error: "Falta nombre para entrega.", to };
-  if (!to.address1) return { ok: false, error: "Falta dirección.", to };
-
-  // Para envío nacional pedimos completo
-  if (mode === "mx") {
-    if (!to.postal_code || to.postal_code.length !== 5) return { ok: false, error: "CP inválido (5 dígitos).", to };
-    if (!to.state_code) return { ok: false, error: "Falta estado (ej. BC).", to };
-    if (!to.city) return { ok: false, error: "Falta ciudad.", to };
+async function loadCatalog(){
+  try{
+    // Cache busting para asegurar precios frescos
+    const res = await fetch('/data/catalog.json?t=' + Date.now());
+    const data = await res.json();
+    catalog = data.products || [];
+  }catch(e){
+    console.error("Error catálogo:", e);
+    catalog = [];
   }
-
-  return { ok: true, to };
 }
 
-function canProceedToPay() {
-  if (CART.length === 0) return false;
-
-  const mode = shipState.mode;
-  const v = requireAddressForMode(mode);
-  if (!v.ok) return false;
-
-  // En nacional, exige cotización OK
-  if (mode === "mx" && !shipState.quoted) return false;
-
-  return true;
-}
-
-function sanitizeItemsForAPI() {
-  return CART.map((i) => ({
-    id: i.id,
-    qty: Number(i.qty || 0),
-    size: i.size || ""
-  })).filter((x) => x.id && x.qty > 0);
-}
-
-async function fetchJSON(url, opts) {
-  const r = await fetch(url, opts);
-  const t = await r.text();
-  let j = null;
-  try { j = JSON.parse(t); } catch {}
-  if (!r.ok) throw new Error(j?.error || j?.message || `HTTP ${r.status}`);
-  return j;
-}
-
-async function quoteShipping() {
-  const mode = shipState.mode;
-  if (mode === "pickup") {
-    shipState = { mode, mxn: 0, label: "Pickup (Tijuana)", ok: true, quoted: true };
-    $("quoteResult").textContent = "Pickup gratis.";
-    setTotalsUI();
-    return;
-  }
-
-  const v = requireAddressForMode(mode);
-  if (!v.ok) {
-    $("quoteResult").textContent = v.error;
-    shipState.quoted = false;
-    setTotalsUI();
-    return;
-  }
-
-  $("quoteResult").textContent = "Cotizando…";
-
-  const payload = {
-    mode, // pickup | tj | mx
-    to: v.to,
-    items: sanitizeItemsForAPI()
-  };
-
-  try {
-    const data = await fetchJSON("/.netlify/functions/quote_shipping", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+// Abre el modal de catálogo filtrado
+async function openCatalog(sectionId, title) {
+  await loadCatalog();
+  $('catTitle').innerText = title.toUpperCase();
+  const wrap = $('catContent');
+  wrap.innerHTML = '';
+  
+  const items = catalog.filter(p => p.sectionId === sectionId);
+  
+  if(items.length === 0) {
+    wrap.innerHTML = '<p style="text-align:center; padding:20px;">Próximamente disponible.</p>';
+  } else {
+    // Agrupar por subsección
+    const groups = {};
+    items.forEach(p => {
+      const sub = p.subSection || 'General';
+      if(!groups[sub]) groups[sub] = [];
+      groups[sub].push(p);
     });
 
-    if (!data?.ok) throw new Error(data?.error || "No se pudo cotizar.");
+    Object.keys(groups).forEach(sub => {
+      const h4 = document.createElement('h4');
+      h4.className = 'catSectionTitle';
+      h4.innerText = sub;
+      wrap.appendChild(h4);
 
-    shipState = {
-      mode,
-      mxn: Number(data.mxn || 0),
-      label: `${data.carrier || "ENVÍO"} ${data.service || ""}`.trim(),
-      ok: true,
-      quoted: true
-    };
-
-    $("quoteResult").textContent = `Envío: ${money(shipState.mxn)} — ${shipState.label}`;
-    setTotalsUI();
-  } catch (e) {
-    shipState = { mode, mxn: 0, label: "No cotizado", ok: false, quoted: false };
-    $("quoteResult").textContent = `No se pudo cotizar: ${(e?.message || "").slice(0, 120)}`;
-    setTotalsUI();
+      const grid = document.createElement('div');
+      grid.className = 'catGrid';
+      
+      groups[sub].forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'prodCard';
+        const sizesOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('');
+        
+        card.innerHTML = `
+          <img src="${p.img}" alt="${p.name}" loading="lazy">
+          <strong>${p.name}</strong>
+          <div style="color:var(--red); font-weight:700; margin:5px 0;">${money(p.baseMXN)}</div>
+          ${p.sizes && p.sizes.length ? `<select id="size_${p.id}">${sizesOpts}</select>` : ''}
+          <button class="btn-sm" onclick="addToCart('${p.id}')">AGREGAR</button>
+        `;
+        grid.appendChild(card);
+      });
+      wrap.appendChild(grid);
+    });
   }
+  
+  $('modalCatalog').classList.add('active');
+  $('overlay').classList.add('active');
+  document.body.classList.add('modalOpen');
+}
+
+function addToCart(id){
+  const p = catalog.find(x => x.id === id);
+  if(!p) return;
+  
+  const sizeEl = document.getElementById('size_' + id);
+  const size = sizeEl ? sizeEl.value : null;
+  
+  const key = size ? `${id}__${size}` : id;
+  const existing = cart.find(x => x.key === key);
+  
+  if(existing) existing.qty += 1;
+  else cart.push({ key, id, name:p.name, price:p.baseMXN, size, qty:1 });
+
+  save();
+  showToast("Agregado al carrito");
+  openDrawer();
+}
+
+function removeItem(key){
+  cart = cart.filter(x => x.key !== key);
+  save();
+}
+
+function changeQty(key, delta){
+  const item = cart.find(x => x.key === key);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) cart = cart.filter(x => x.key !== key);
+  save();
+}
+
+function showToast(msg){
+  const t = $('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// --- LÓGICA DE ENVÍOS ---
+
+async function quoteShipping() {
+  const method = $('shipMethod')?.value || ship.method || 'pickup';
+  ship.method = method;
+
+  const resEl = $('quoteResult');
+  if (!resEl) return;
+
+  const postal = digits($('cp')?.value);
+  const addr = toStr($('addr')?.value);
+  let state_code = upper($('state')?.value);
+  let city = toStr($('city')?.value);
+
+  // 1. Recolección
+  if (method === 'pickup') {
+    ship.cost = 0;
+    resEl.style.display = 'none';
+    updateCart(false);
+    return;
+  }
+
+  // 2. Entrega Tijuana (Autocompletar BC/Tijuana)
+  if (method === 'tj') {
+    if (!state_code) state_code = 'BC';
+    if (!city) city = 'Tijuana';
+    const stEl = $('state'); if (stEl && !toStr(stEl.value)) stEl.value = state_code;
+    const ctEl = $('city'); if (ctEl && !toStr(ctEl.value)) ctEl.value = city;
+  }
+
+  const needsFull = (method === 'mx');
+
+  // Validación básica
+  if (postal.length !== 5 || addr.length < 5 || (needsFull && (state_code.length < 2 || city.length < 3))) {
+    ship.cost = 0;
+    resEl.style.display = 'block';
+    resEl.style.color = '#c0392b';
+    resEl.innerText = needsFull
+      ? 'Completa CP, Estado, Ciudad y Dirección.'
+      : 'Completa CP y Dirección.';
+    updateCart(false);
+    return;
+  }
+
+  resEl.style.display = 'block';
+  resEl.style.color = '#333';
+  resEl.innerText = 'Cotizando...';
+
+  try {
+    const res = await fetch('/.netlify/functions/quote_shipping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: method,
+        to: { postal_code: postal, state_code, city, address1: addr },
+        items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size }))
+      })
+    });
+
+    const data = await res.json();
+    if (data.ok) {
+      ship.cost = Number(data.mxn || 0);
+      resEl.style.color = '#00C853';
+      resEl.innerText = `${data.carrier ? data.carrier + ': ' : ''}$${ship.cost} MXN`;
+    } else {
+      ship.cost = 0;
+      resEl.style.color = '#c0392b';
+      resEl.innerText = data.error || 'No se pudo cotizar.';
+    }
+  } catch (e) {
+    console.error(e);
+    ship.cost = 0;
+    resEl.style.color = '#c0392b';
+    resEl.innerText = 'Error de conexión.';
+  }
+
+  updateCart(false);
+}
+
+let _quoteTimer = null;
+function scheduleQuote() {
+  clearTimeout(_quoteTimer);
+  _quoteTimer = setTimeout(() => quoteShipping(), 500); 
+}
+
+function updateCart(resetShip = true) {
+  const methodEl = $('shipMethod');
+  const method = methodEl ? methodEl.value : 'pickup';
+  ship.method = method;
+
+  const shipForm = $('shipForm');
+  const needsAddress = (method !== 'pickup');
+  if (shipForm) shipForm.style.display = needsAddress ? 'block' : 'none';
+  
+  const qr = $('quoteResult');
+  if (qr) qr.style.display = (needsAddress && ship.cost > 0) ? 'block' : 'none';
+
+  if (resetShip) {
+    ship.cost = 0; 
+    if(qr) qr.style.display = 'none';
+  }
+
+  const sub = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+  const total = sub + (ship.cost || 0);
+
+  $('cartCount').innerText = cart.reduce((a,i)=>a+i.qty, 0);
+  $('lnSub').innerText = money(sub);
+  $('shipCost').innerText = (ship.cost > 0) ? money(ship.cost) : (method === 'pickup' ? 'Gratis' : '--');
+  $('lnTotal').innerText = money(total);
+  $('barTotal').innerText = money(total);
+
+  const list = $('cartBody');
+  if(list){
+    list.innerHTML = '';
+    if(cart.length === 0) list.innerHTML = '<p style="text-align:center; opacity:0.6; margin-top:20px;">Tu carrito está vacío.</p>';
+    
+    cart.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'sumRow'; 
+      row.innerHTML = `
+        <div style="flex:1">
+          <div>${item.name} ${item.size ? `<span style="font-size:11px; background:#eee; padding:2px 5px; border-radius:4px;">${item.size}</span>` : ''}</div>
+          <div style="font-size:12px; opacity:0.7;">${money(item.price)} x ${item.qty}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button style="width:24px; height:24px; border-radius:50%; border:1px solid #ccc; background:#fff;" onclick="changeQty('${item.key}', -1)">-</button>
+          <button style="width:24px; height:24px; border-radius:50%; border:1px solid #ccc; background:#fff;" onclick="changeQty('${item.key}', 1)">+</button>
+          <button style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;" onclick="removeItem('${item.key}')">&times;</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  let valid = cart.length > 0 && method;
+  if (method !== 'pickup') {
+    const postal = digits($('cp')?.value);
+    const addr = toStr($('addr')?.value);
+    const name = toStr($('name')?.value);
+    valid = valid && postal.length === 5 && addr.length > 5 && name.length > 2 && ship.cost > 0;
+  }
+
+  const btn = $('payBtn');
+  if (btn) btn.disabled = !valid;
+  
+  $('paybar').classList.toggle('visible', cart.length > 0);
 }
 
 async function checkout() {
-  const mode = shipState.mode;
-  const v = requireAddressForMode(mode);
-  if (!v.ok) {
-    toast(v.error);
-    return;
-  }
-
-  const payload = {
-    items: sanitizeItemsForAPI(),
-    mode,
-    promoCode: ($("promoInput").value || "").trim(),
-    to: v.to
-  };
+  const btn = $('payBtn');
+  if (btn) { btn.innerText = "PROCESANDO..."; btn.disabled = true; }
 
   try {
-    const data = await fetchJSON("/.netlify/functions/create_checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const stripe = Stripe(STRIPE_PK);
+    const method = $('shipMethod')?.value || 'pickup';
+    const promoCode = $('promoCode')?.value || ""; // ✅ Captura el cupón
+    
+    const postal = digits($('cp')?.value);
+    const addr = toStr($('addr')?.value);
+    const name = toStr($('name')?.value);
+    let state = upper($('state')?.value);
+    let city = toStr($('city')?.value);
+    
+    if(method === 'tj') {
+       if(!state) state = 'BC';
+       if(!city) city = 'Tijuana';
+    }
+
+    const payload = {
+      items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size })),
+      mode: method,
+      promoCode: promoCode, // ✅ Envía el cupón
+      to: { postal_code: postal, state_code: state, city, address1: addr, name }
+    };
+
+    const res = await fetch('/.netlify/functions/create_checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
 
-    if (data?.url) window.location.href = data.url;
-    else toast(data?.error || "Error iniciando pago.");
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else throw new Error(data.error || "Error iniciando pago.");
+    
   } catch (e) {
-    toast(e?.message || "Error iniciando pago.");
+    alert(e.message || "Error desconocido");
+    if (btn) { btn.innerText = "PAGAR AHORA"; btn.disabled = false; }
   }
 }
 
-function openCart() {
-  $("overlay").hidden = false;
-  $("cartDrawer").hidden = false;
-  document.body.classList.add("modalOpen");
-}
+const shipMethodEl = $('shipMethod');
+if (shipMethodEl) shipMethodEl.addEventListener('change', () => { updateCart(true); scheduleQuote(); });
 
-function closeCart() {
-  $("overlay").hidden = true;
-  $("cartDrawer").hidden = true;
-  document.body.classList.remove("modalOpen");
-}
+const overlay = $('overlay');
+if(overlay) overlay.onclick = closeAll;
 
-function renderCart() {
-  const wrap = $("cartBody");
-  wrap.innerHTML = "";
-
-  if (CART.length === 0) {
-    wrap.innerHTML = `<p class="empty">Tu carrito está vacío.</p>`;
-    setCartCount();
-    setTotalsUI();
-    return;
-  }
-
-  for (const it of CART) {
-    const row = document.createElement("div");
-    row.className = "cartItem";
-
-    row.innerHTML = `
-      <img src="${it.img}" alt="${escapeHTML(it.name)}" width="64" height="64" decoding="async" />
-      <div class="cartMeta">
-        <div class="cartName">${escapeHTML(it.name)}</div>
-        <div class="cartSub">${escapeHTML(it.size || "")}</div>
-        <div class="cartPrice">${money(it.price)}</div>
-        <div class="qtyRow">
-          <button class="qtyBtn" data-act="dec" data-id="${it.id}">−</button>
-          <span class="qtyNum">${it.qty}</span>
-          <button class="qtyBtn" data-act="inc" data-id="${it.id}">+</button>
-          <button class="rmBtn" data-act="rm" data-id="${it.id}">Quitar</button>
-        </div>
-      </div>
-    `;
-
-    wrap.appendChild(row);
-  }
-
-  wrap.addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const act = btn.getAttribute("data-act");
-    const id = btn.getAttribute("data-id");
-    if (!act || !id) return;
-
-    const i = CART.find((x) => x.id === id);
-    if (!i) return;
-
-    if (act === "inc") i.qty += 1;
-    if (act === "dec") i.qty = Math.max(1, i.qty - 1);
-    if (act === "rm") CART = CART.filter((x) => x.id !== id);
-
-    saveCart();
-    setCartCount();
-    renderCart();
-    setTotalsUI();
-  }, { once: true });
-
-  setCartCount();
-  setTotalsUI();
-}
-
-function escapeHTML(s) {
-  return (s ?? "").toString()
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;");
-}
-
-function renderCatalog() {
-  const grid = $("catalogGrid");
-  grid.innerHTML = "";
-
-  const sections = Array.isArray(CATALOG?.sections) ? [...CATALOG.sections] : [];
-  sections.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-  const products = Array.isArray(CATALOG?.products) ? CATALOG.products : [];
-
-  for (const sec of sections) {
-    const block = document.createElement("section");
-    block.className = "catSection";
-
-    block.innerHTML = `
-      <div class="secHead">
-        <h3>${escapeHTML(sec.title || sec.id)}</h3>
-        ${sec.badge ? `<span class="badge">${escapeHTML(sec.badge)}</span>` : ""}
-      </div>
-      <div class="secGrid"></div>
-    `;
-
-    const secGrid = block.querySelector(".secGrid");
-    const items = products.filter((p) => p.sectionId === sec.id);
-
-    for (const p of items) {
-      const card = document.createElement("article");
-      card.className = "prodCard";
-
-      const sizes = Array.isArray(p.sizes) ? p.sizes : [];
-      const defaultSize = sizes[0] || "";
-
-      card.innerHTML = `
-        <img src="${p.img}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" />
-        <div class="prodName">${escapeHTML(p.name)}</div>
-        <div class="prodPrice">${money(p.baseMXN)}</div>
-        ${sizes.length ? `
-          <select class="select sizeSel">
-            ${sizes.map((s) => `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`).join("")}
-          </select>
-        ` : `<div class="hint">Unitalla</div>`}
-        <button class="btnPrimary addBtn" type="button">Agregar</button>
-      `;
-
-      card.querySelector(".addBtn").addEventListener("click", () => {
-        const sel = card.querySelector(".sizeSel");
-        const size = sel ? sel.value : defaultSize;
-
-        const found = CART.find((x) => x.id === p.id && (x.size || "") === (size || ""));
-        if (found) found.qty += 1;
-        else CART.push({
-          id: p.id,
-          name: p.name,
-          img: p.img,
-          size: size || "",
-          price: Number(p.baseMXN || 0),
-          qty: 1
-        });
-
-        saveCart();
-        setCartCount();
-        setTotalsUI();
-        toast("Agregado al carrito.");
-      });
-
-      secGrid.appendChild(card);
-    }
-
-    grid.appendChild(block);
-  }
-}
-
-async function init() {
-  // UI events
-  $("openCartHero").addEventListener("click", openCart);
-  $("closeCart").addEventListener("click", closeCart);
-  $("overlay").addEventListener("click", closeCart);
-
-  $("payBtn").addEventListener("click", checkout);
-  $("payBtn2").addEventListener("click", checkout);
-
-  $("applyPromoBtn").addEventListener("click", () => {
-    promoState.code = ($("promoInput").value || "").trim();
-    setTotalsUI();
-  });
-
-  $("shipMethod").addEventListener("change", async (e) => {
-    const mode = normalizeShipMode(e.target.value);
-    shipState.mode = mode;
-
-    // UI show/hide form
-    const showForm = mode !== "pickup";
-    $("shipForm").hidden = !showForm;
-
-    if (mode === "pickup") {
-      shipState = { mode, mxn: 0, label: "Pickup (Tijuana)", ok: true, quoted: true };
-      $("quoteResult").textContent = "Pickup gratis.";
-      setTotalsUI();
-      return;
-    }
-
-    if (mode === "tj") {
-      shipState = { mode, mxn: 200, label: "Entrega local Tijuana", ok: true, quoted: true };
-      $("quoteResult").textContent = `Entrega local: ${money(200)} (24–48h aprox)`;
-      setTotalsUI();
-      return;
-    }
-
-    // mx: requiere cotizar
-    shipState = { mode, mxn: 0, label: "No cotizado", ok: false, quoted: false };
-    $("quoteResult").textContent = "Completa tu dirección y cotiza envío.";
-    setTotalsUI();
-  });
-
-  $("quoteBtn").addEventListener("click", quoteShipping);
-
-  // Load data
-  CATALOG = await fetchJSON("/data/catalog.json", { cache: "no-store" });
-  PROMOS = await fetchJSON("/data/promos.json", { cache: "no-store" });
-
-  renderCatalog();
-  renderCart();
-  setTotalsUI();
-  setCartCount();
-}
-
-init().catch(() => {
-  toast("Error cargando catálogo.");
+['cp','state','city','addr'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('input', () => { updateCart(false); scheduleQuote(); }); 
 });
+
+const nameEl = $('name');
+if (nameEl) nameEl.addEventListener('input', () => updateCart(false));
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
+
+loadCatalog();
+updateCart(true);
