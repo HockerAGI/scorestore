@@ -1,17 +1,42 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [functions]
   node_bundler = "esbuild"
+  included_files = ["data/*.json"]
 
-# Seguridad + caché fina (PWA + evitar bugs por assets cacheados)
+# --- CACHE: IMÁGENES (Larga duración) ---
 [[headers]]
-  for = "/*"
+  for = "/assets/*"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# --- CACHE: CÓDIGO (Revalidar siempre) ---
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=60, stale-while-revalidate=600"
+
+# --- CACHE: NAVEGACIÓN (Nunca cachear para evitar errores) ---
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/sw.js"
@@ -23,22 +48,12 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# --- SEGURIDAD ---
 [[headers]]
-  for = "/data/*"
+  for = "/*"
   [headers.values]
-    Cache-Control = "no-store"
-
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), camera=(), microphone=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
