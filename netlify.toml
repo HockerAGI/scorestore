@@ -8,54 +8,38 @@
 
 [functions]
   node_bundler = "esbuild"
-  # CRUCIAL: Esto mete tu base de datos JSON dentro de las funciones en la nube
-  included_files = ["data/*.json"]
-  external_node_modules = ["stripe"]
 
-# ========== CACHE CONTROL (TU ESTRATEGIA) ==========
-# HTML siempre revalidar (Para que vean cambios al instante)
+# CSS / JS always revalidate
 [[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-# CSS / JS siempre revalidar
-[[headers]]
-  for = "/css/*"
+for = "/css/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
-  for = "/js/*"
+for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# JSON data (catálogo/promos) revalidar
+# Assets strong cache
 [[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-# Assets visuales (1 semana - son pesados, mejor cachearlos un poco)
-[[headers]]
-  for = "/assets/*"
+for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
-# PWA: SW + manifest NO cache duro (para updates de la App)
+# PWA
 [[headers]]
-  for = "/sw.js"
+for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/site.webmanifest"
+for = "/site.webmanifest"
   [headers.values]
     Cache-Control = "no-cache"
 
-# ========== SEGURIDAD (BLINDAJE) ==========
+# Security
 [[headers]]
-  for = "/*"
+for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
