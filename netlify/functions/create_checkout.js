@@ -1,6 +1,5 @@
 // netlify/functions/create_checkout.js
-
-const Stripe = require("stripe");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const {
   jsonResponse,
   safeJsonParse,
@@ -8,77 +7,79 @@ const {
   upper,
   digitsOnly,
   normalizePromo,
+  loadCatalog,
+  productMapFromCatalog,
   validateCartItems,
   validateSizes,
-  loadCatalog,
-  computeSubtotalMXN,
   computeShipping,
   applyPromoToTotals,
+  getBaseUrlFromEnv
 } = require("./_shared");
 
-// ENV VARS REQUIRED (Netlify):
-// STRIPE_SECRET_KEY
-// STRIPE_SUCCESS_URL
-// STRIPE_CANCEL_URL
-
 exports.handler = async (event) => {
-  try {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-      return jsonResponse(500, { error: "Missing STRIPE_SECRET_KEY" });
-    }
+  // 1. CORS Preflight
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, {});
+  }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
+  // 2. Método Permitido
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { error: "Method Not Allowed" });
+  }
+
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("Falta STRIPE_SECRET_KEY en Netlify");
+      return jsonResponse(500, { error: "Error de configuración de pagos." });
+    }
 
     /* ---------- INPUT ---------- */
     const body = safeJsonParse(event.body, {});
+    const items = body.items || [];
+    const rawTo = body.to || {};
     const mode = toStr(body.mode) || "pickup";
     const promoCode = toStr(body.promoCode);
 
-    /* ---------- CART ---------- */
-    const cartCheck = validateCartItems(body.items);
-    if (!cartCheck.ok) {
-      return jsonResponse(400, { error: cartCheck.error });
-    }
-
-    const items = cartCheck.items;
-
-    /* ---------- CATALOG ---------- */
+    /* ---------- VALIDACIONES ---------- */
+    // 1. Validar carrito básico
+    const cartCheck = validateCartItems(items);
+    if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
+    
+    // 2. Cargar datos reales
     const catalog = await loadCatalog();
-    const productMap = catalog.map;
+    const productMap = productMapFromCatalog(catalog);
 
-    /* ---------- SIZE VALIDATION ---------- */
-    const sizeCheck = validateSizes(items, productMap);
-    if (!sizeCheck.ok) {
-      return jsonResponse(400, { error: sizeCheck.error });
-    }
+    // 3. Validar Tallas (evitar que pidan tallas agotadas o inexistentes)
+    const sizeCheck = validateSizes(cartCheck.items, productMap);
+    if (!sizeCheck.ok) return jsonResponse(400, { error: sizeCheck.error });
 
-    /* ---------- LINE ITEMS ---------- */
+    /* ---------- CONSTRUIR LINE ITEMS (STRIPE) ---------- */
     const line_items = [];
+    let subtotal_mxn = 0;
 
-    for (const it of items) {
+    for (const it of cartCheck.items) {
       const p = productMap[it.id];
-      if (!p) {
-        return jsonResponse(400, { error: `Producto inválido: ${it.id}` });
-      }
+      // Seguridad: Si el producto no existe en JSON, error.
+      if (!p) return jsonResponse(400, { error: `Producto no disponible: ${it.id}` });
+
+      // Precio: Usamos baseMXN que viene de tu JSON
+      const unitAmount = Math.round(Number(p.baseMXN || 0) * 100);
+      subtotal_mxn += (Number(p.baseMXN || 0) * it.qty);
 
       line_items.push({
         price_data: {
           currency: "mxn",
           product_data: {
-            name: `${p.name}${it.size ? ` — Talla ${it.size}` : ""}`,
+            name: `${p.name} (${it.size})`, // Nombre + Talla en el recibo
+            images: p.img ? [new URL(p.img, getBaseUrlFromEnv()).toString()] : [],
           },
-          unit_amount: Math.round(Number(p.price) * 100),
+          unit_amount: unitAmount,
         },
         quantity: it.qty,
       });
     }
 
-    /* ---------- SUBTOTAL ---------- */
-    const subtotal_mxn = computeSubtotalMXN(items, productMap);
-
-    /* ---------- ADDRESS ---------- */
-    const rawTo = body.to || {};
+    /* ---------- DIRECCIÓN & ENVÍO ---------- */
     const to = {
       postal_code: digitsOnly(rawTo.postal_code),
       state_code: upper(rawTo.state_code),
@@ -87,75 +88,61 @@ exports.handler = async (event) => {
       name: toStr(rawTo.name),
     };
 
-    if (mode !== "pickup") {
-      if (!to.postal_code || to.postal_code.length !== 5) {
-        return jsonResponse(400, { error: "Código postal inválido." });
-      }
-    }
-
-    /* ---------- SHIPPING ---------- */
-    const ship = await computeShipping({
-      mode,
-      to,
-      items,
+    // Calcular Envío (Llama a la lógica centralizada de _shared)
+    // Esto maneja Pickup, TJ Local y Nacional automáticamente
+    const ship = await computeShipping({ mode, to, items: cartCheck.items, productMap });
+    
+    // Si es envío nacional y falló el cálculo crítico, detenemos (o usamos fallback interno)
+    const shipping_mxn = ship.ok ? (ship.mxn || 0) : 0;
+    
+    /* ---------- CUPONES (Metadata) ---------- */
+    // Nota: Aplicamos la lógica de descuento para calcular totales informativos.
+    // Stripe no aplicará el descuento al cobro a menos que crees el cupón en su dashboard.
+    // Aquí lo guardamos en metadata para que tú sepas qué cupón usaron.
+    const promo = await applyPromoToTotals({ 
+      promoCode, 
+      subtotalMXN: subtotal_mxn, 
+      shippingMXN: shipping_mxn 
     });
 
-    if (!ship.ok) {
-      return jsonResponse(400, { error: ship.error });
-    }
-
-    const shipping_mxn = ship.mxn || 0;
-
-    /* ---------- PROMO / TOTALS ---------- */
-    const promo = applyPromoToTotals({
-      promoCode,
-      subtotal_mxn,
-      shipping_mxn,
-    });
-
-    const totals = promo.totals;
-
-    /* ---------- STRIPE SESSION ---------- */
-    const session = await stripe.checkout.sessions.create({
+    /* ---------- SESIÓN STRIPE ---------- */
+    const sessionConfig = {
       mode: "payment",
       line_items,
-      success_url:
-        process.env.STRIPE_SUCCESS_URL || "https://example.com/success",
-      cancel_url:
-        process.env.STRIPE_CANCEL_URL || "https://example.com/cancel",
-      shipping_options:
-        shipping_mxn > 0
-          ? [
-              {
-                shipping_rate_data: {
-                  type: "fixed_amount",
-                  fixed_amount: {
-                    amount: Math.round(shipping_mxn * 100),
-                    currency: "mxn",
-                  },
-                  display_name: ship.label || "Envío",
-                },
-              },
-            ]
-          : [],
+      success_url: `${getBaseUrlFromEnv()}/?status=success`,
+      cancel_url: `${getBaseUrlFromEnv()}/?status=cancel`,
       metadata: {
-        mode,
-        postal_code: to.postal_code || "",
-        state_code: to.state_code || "",
-        city: to.city || "",
-        address1: to.address1 || "",
-        name: to.name || "",
-        shipping_mxn: String(shipping_mxn),
-        promo_code: promo.promoCode || normalizePromo(promoCode),
-        discount_mxn: String(promo.discount_mxn || 0),
-        total_mxn: String(totals.total_mxn || 0),
-      },
-    });
+        customer_name: to.name,
+        shipping_mode: mode,
+        promo_used: promo.promoCode || "NONE",
+        discount_calc: promo.discountMXN || 0, // Informativo para el admin
+        final_total_calc: promo.totalMXN
+      }
+    };
+
+    // Agregar cobro de envío si aplica
+    if (shipping_mxn > 0) {
+      sessionConfig.shipping_options = [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: Math.round(shipping_mxn * 100), currency: "mxn" },
+            display_name: ship.label || "Envío",
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 3 },
+              maximum: { unit: "business_day", value: ship.days || 7 },
+            },
+          },
+        },
+      ];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return jsonResponse(200, { url: session.url });
 
-  } catch (err) {
-    console.error(err);
-    return jsonResponse(500, { error: err.message || "Server error" });
+  } catch (e) {
+    console.error("Checkout Error:", e);
+    return jsonResponse(500, { error: "No se pudo iniciar el pago. Intenta de nuevo." });
   }
 };
