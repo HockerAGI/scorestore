@@ -1,65 +1,67 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="es-MX">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <title>SCORE Store – Ediciones Off-Road</title>
-  <meta name="description" content="Tienda oficial SCORE Store. Merch y ediciones especiales Baja 400, Baja 500 y Baja 1000.">
+  <title>SCORE Store · Official Racing Merch</title>
+  <meta name="description" content="Tienda oficial SCORE International Racing. Merch oficial y ediciones limitadas." />
 
   <!-- PWA -->
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#E10600">
-
-  <!-- Icons -->
-  <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-
-  <!-- Preload HERO (LCP) -->
-  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high">
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#E10600" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Preload hero (LCP) -->
+  <link
+    rel="preload"
+    as="image"
+    href="/assets/hero.webp"
+    imagesrcset="/assets/hero.webp"
+    fetchpriority="high"
+  />
 </head>
 
 <body>
 
-  <!-- HERO -->
-  <header class="hero">
+  <!-- HEADER -->
+  <header class="topbar">
     <img
-      src="/assets/hero.webp"
-      alt="SCORE Store Off-Road Editions"
-      width="1200"
-      height="600"
-      fetchpriority="high"
-    >
+      src="/assets/logo-score.webp"
+      alt="SCORE Store"
+      width="140"
+      height="48"
+      decoding="async"
+    />
   </header>
 
-  <!-- MAIN -->
-  <main id="mainContent" tabindex="-1">
-    <section id="catalog"></section>
+  <!-- HERO -->
+  <section class="hero">
+    <img
+      src="/assets/hero.webp"
+      alt="SCORE International Off-Road Racing"
+      width="360"
+      height="640"
+      fetchpriority="high"
+      decoding="async"
+    />
+  </section>
+
+  <!-- CATALOGO -->
+  <main id="catalog" class="catalog">
+    <!-- Productos renderizados por main.js -->
   </main>
 
-  <!-- UI -->
-  <div id="overlay" class="overlay"></div>
-  <aside id="drawer" class="drawer"></aside>
-  <div id="paybar" class="paybar">
-    <span id="barTotal">$0 MXN</span>
-    <button id="payBtn" onclick="checkout()" disabled>PAGAR</button>
-  </div>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>© SCORE International · Official Merch</p>
+  </footer>
 
-  <!-- Scripts -->
-  <script src="https://js.stripe.com/v3/"></script>
-  <script src="/js/main.js" defer></script>
-
-  <!-- Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
-    }
-  </script>
+  <!-- JS -->
+  <script src="/main.js" defer></script>
 
 </body>
 </html>
