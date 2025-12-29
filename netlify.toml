@@ -9,7 +9,10 @@
 [functions]
   node_bundler = "esbuild"
 
-# CSS / JS siempre revalidar
+
+# =========================
+# CSS / JS (sin hash)
+# =========================
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -20,13 +23,28 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Assets visuales
+
+# =========================
+# Assets visuales (IMÁGENES)
+# =========================
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
 
-# PWA
+
+# =========================
+# HTML (PWA + Lighthouse)
+# =========================
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+
+# =========================
+# PWA CRÍTICO
+# =========================
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -37,10 +55,14 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# Seguridad
+
+# =========================
+# SEGURIDAD / BEST PRACTICES
+# =========================
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
