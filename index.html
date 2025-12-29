@@ -1,40 +1,214 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es-MX">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-  <title>SCORE Store · Official Racing Merch</title>
-  <meta name="description" content="Tienda oficial SCORE International Racing. Merch oficial y ediciones limitadas." />
+  <title>SCORE Store · Tienda Oficial</title>
+  <meta name="description" content="Compra merch oficial de SCORE. Ediciones limitadas. Pago seguro con tarjeta." />
 
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#E10600" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/css/styles.css" />
-
-  <!-- Preload LCP -->
+  <!-- Preloads -->
   <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/fondo-pagina-score.webp" />
+
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
 <body>
-  <header class="topbar">
-    <img src="/assets/logo-score.webp" alt="SCORE Store" class="logo" width="140" height="48" />
+  <a class="skip" href="#main">Saltar al contenido</a>
+
+  <!-- HEADER (siempre visible) -->
+  <header class="topbar" role="banner">
+    <div class="topbar__left">
+      <img class="brand" src="/assets/logo-score.webp" alt="SCORE Store" width="160" height="48" decoding="async" />
+    </div>
+
+    <div class="topbar__right">
+      <div class="pill" aria-label="Moneda">
+        MXN <span class="muted">· USD informativo</span>
+      </div>
+
+      <button class="cartBtn" id="cartBtn" type="button" aria-haspopup="dialog" aria-controls="cartDrawer">
+        <span aria-hidden="true">🛒</span>
+        <span>Carrito</span>
+        <span class="cartCount" id="cartCount">0</span>
+      </button>
+    </div>
   </header>
 
-  <section class="hero">
-    <img src="/assets/hero.webp" alt="SCORE International Off-Road Racing" fetchpriority="high" decoding="async" />
+  <!-- HERO (100% comercial / ventas) -->
+  <section class="hero" aria-label="Portada">
+    <img src="/assets/hero.webp" alt="Merch oficial SCORE" width="1200" height="650" fetchpriority="high" decoding="async" />
+    <div class="hero__overlay" aria-hidden="true"></div>
+
+    <div class="hero__content">
+      <p class="hero__tag">TIENDA OFICIAL · EDICIONES LIMITADAS</p>
+      <h1 class="hero__h1">Compra merch oficial</h1>
+      <p class="hero__p">
+        Pago seguro con tarjeta. Envíos a todo México o entrega local. Stock limitado por temporada.
+      </p>
+
+      <div class="hero__cta">
+        <a class="btn btnPrimary" href="#catalogGrid">Ver colecciones</a>
+        <a class="btn btnGhost" href="#products">Ver productos</a>
+      </div>
+    </div>
   </section>
 
-  <main id="catalog" class="catalog"></main>
+  <!-- PARTNERS (logos reales) -->
+  <section class="partners" aria-label="Partners oficiales">
+    <div class="sectionHead">
+      <h2 class="h2">Partners</h2>
+      <p class="p muted">Marcas asociadas a la temporada.</p>
+    </div>
 
-  <footer class="footer">
-    <p>© 2025 SCORE International · Todos los derechos reservados.</p>
+    <div class="partners__row">
+      <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" width="140" height="56" loading="lazy" decoding="async" />
+      <img src="/assets/logo-ford.webp" alt="Ford" width="110" height="56" loading="lazy" decoding="async" />
+      <img src="/assets/logo-rzr.webp" alt="Polaris RZR" width="120" height="56" loading="lazy" decoding="async" />
+      <img src="/assets/logo-world-desert.webp" alt="World Desert" width="150" height="56" loading="lazy" decoding="async" />
+      <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="120" height="56" loading="lazy" decoding="async" />
+    </div>
+  </section>
+
+  <!-- GRID CATÁLOGOS (todas iguales, overlay café 20%, texto fijo) -->
+  <main id="main" class="main" role="main">
+    <section class="catalogGrid" id="catalogGrid" aria-label="Colecciones">
+      <div class="sectionHead">
+        <h2 class="h2">Colecciones</h2>
+        <p class="p muted">Elige una colección para filtrar productos.</p>
+      </div>
+
+      <div class="grid4" id="collectionCards">
+        <!-- JS inserta tarjetas, pero el layout vive aquí -->
+      </div>
+    </section>
+
+    <!-- PRODUCTOS -->
+    <section class="products" id="products" aria-label="Productos">
+      <div class="sectionHead">
+        <h2 class="h2">Productos</h2>
+        <p class="p muted">Precios en MXN (USD informativo a 17.00 MXN).</p>
+      </div>
+
+      <div class="state" id="stateBox" hidden></div>
+      <div class="productGrid" id="productGrid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <!-- FOOTER (siempre visible) -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="96" height="48" loading="lazy" decoding="async" />
+        <p class="footer__p">
+          Operado por <strong>Único Uniformes</strong>.
+          <br />
+          <span class="muted">Precios en MXN incluyen impuestos aplicables.</span>
+        </p>
+      </div>
+
+      <div class="footer__links">
+        <p class="footer__h">Legales</p>
+        <a href="/legal.html#terminos">Términos</a>
+        <a href="/legal.html#privacidad">Privacidad</a>
+        <a href="/legal.html#envios">Envíos y devoluciones</a>
+      </div>
+
+      <div class="footer__links">
+        <p class="footer__h">Soporte</p>
+        <a href="/legal.html#contacto">Contacto</a>
+        <a href="/legal.html#pagos">Pagos</a>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <small>© <span id="y"></span> SCORE Store. Todos los derechos reservados.</small>
+    </div>
   </footer>
 
-  <script src="https://js.stripe.com/v3/"></script>
+  <!-- CART DRAWER -->
+  <dialog class="drawer" id="cartDrawer" aria-label="Carrito">
+    <div class="drawer__head">
+      <div>
+        <p class="drawer__title">Carrito</p>
+        <p class="drawer__sub muted" id="cartSub">—</p>
+      </div>
+      <button class="iconBtn" id="closeCart" type="button" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="drawer__body">
+      <div id="cartItems" class="cartItems"></div>
+
+      <div class="shipBox">
+        <p class="shipBox__h">Entrega</p>
+
+        <div class="shipModes" role="radiogroup" aria-label="Método de entrega">
+          <label class="radio">
+            <input type="radio" name="shipMode" value="pickup" checked />
+            <span>Recoger en fábrica</span>
+            <span class="muted">· $0</span>
+          </label>
+
+          <label class="radio">
+            <input type="radio" name="shipMode" value="tijuana_delivery" />
+            <span>Entrega local Tijuana</span>
+            <span class="muted">· $200</span>
+          </label>
+
+          <label class="radio">
+            <input type="radio" name="shipMode" value="envia" />
+            <span>Envío nacional</span>
+            <span class="muted">· cotización</span>
+          </label>
+        </div>
+
+        <div class="shipForm" id="shipForm" hidden>
+          <div class="row2">
+            <label class="field">
+              <span>Estado (código)</span>
+              <input id="shipState" placeholder="BC" maxlength="3" autocomplete="address-level1" />
+            </label>
+
+            <label class="field">
+              <span>Código Postal</span>
+              <input id="shipPostal" placeholder="22000" inputmode="numeric" autocomplete="postal-code" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Ciudad</span>
+            <input id="shipCity" placeholder="Tijuana" autocomplete="address-level2" />
+          </label>
+
+          <label class="field">
+            <span>Calle y número</span>
+            <input id="shipAddress1" placeholder="Calle #123, Colonia" autocomplete="street-address" />
+          </label>
+
+          <button class="btn btnGhost w100" id="quoteBtn" type="button">Cotizar envío</button>
+          <p class="muted small" id="quoteNote"></p>
+        </div>
+      </div>
+
+      <div class="totals">
+        <div class="line"><span>Subtotal</span><span id="subTotal">$0 MXN</span></div>
+        <div class="line"><span>Envío</span><span id="shipTotal">$0 MXN</span></div>
+        <div class="line lineStrong"><span>Total</span><span id="grandTotal">$0 MXN</span></div>
+        <p class="muted small">USD informativo a 17.00 MXN por 1 USD.</p>
+      </div>
+    </div>
+
+    <div class="drawer__foot">
+      <button class="btn btnGhost" id="clearCart" type="button">Vaciar</button>
+      <button class="btn btnPrimary" id="checkoutBtn" type="button">Pagar con tarjeta</button>
+    </div>
+  </dialog>
+
   <script src="/js/main.js" defer></script>
 </body>
 </html>
