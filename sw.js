@@ -1,62 +1,63 @@
-// sw.js — SCORE STORE (CACHE CONTROL DEFINITIVO)
-// Motivo:
-// - Evita JS viejo cacheado
-// - Network-first para HTML / JS / JSON
-// - Cache versionado fuerte
+const CACHE_NAME = "score-pwa-v4";
 
-const CACHE = 'score-v4';
+const CORE_ASSETS = [
+  "/",
+  "/index.html",
+  "/css/styles.css",
+  "/js/main.js",
+  "/site.webmanifest",
 
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/main.js',
-  '/site.webmanifest',
-  '/icons-score.svg',
-  '/assets/logo-score.webp'
+  // Visual core
+  "/assets/hero.webp",
+  "/assets/fondo-pagina-score.webp",
+
+  // PWA icons
+  "/assets/icons/icon-192.png",
+  "/assets/icons/icon-512.png",
+
+  // Data
+  "/data/catalog.json",
+  "/data/promos.json"
 ];
 
-self.addEventListener('install', (e) => {
+self.addEventListener("install", event => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS))
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
-      )
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+self.addEventListener("fetch", event => {
+  const url = new URL(event.request.url);
 
-  // HTML / JS / JSON → NETWORK FIRST
-  if (
-    url.pathname.endsWith('.html') ||
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.json')
-  ) {
-    e.respondWith(
-      fetch(e.request)
-        .then((res) => {
+  // ❌ NO cachear Netlify Functions
+  if (url.pathname.startsWith("/.netlify/functions/")) return;
+
+  // HTML + JSON → network first
+  if (event.request.mode === "navigate" || url.pathname.endsWith(".json")) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
           return res;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Resto → CACHE FIRST
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+  // Assets → cache first
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
