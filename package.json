@@ -1,18 +1,16 @@
 {
-  "name": "score-store-static",
-  "version": "2.0.0",
+  "name": "score-store-official",
+  "version": "3.0.0",
   "private": true,
-  "description": "Tienda Oficial SCORE International",
-  "packageManager": "npm@10.8.2",
+  "description": "Tienda Oficial SCORE International - Powered by Único Uniformes",
   "engines": {
     "node": ">=18.0.0"
   },
-  "scripts": {
-    "lint": "node --check netlify/functions/_shared.js netlify/functions/quote_shipping.js netlify/functions/create_checkout.js netlify/functions/stripe_webhook.js netlify/functions/envia_webhook.js",
-    "build": "npm run lint && echo 'Static site (no build step)'",
-    "test": "echo 'No tests specified'"
-  },
   "dependencies": {
     "stripe": "^16.12.0"
+  },
+  "scripts": {
+    "lint": "node --check netlify/functions/_shared.js netlify/functions/quote_shipping.js netlify/functions/create_checkout.js netlify/functions/stripe_webhook.js netlify/functions/envia_webhook.js",
+    "build": "npm run lint && echo 'Build Successful'"
   }
 }
