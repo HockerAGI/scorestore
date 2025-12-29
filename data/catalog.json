@@ -2,9 +2,11 @@
   "site": {
     "url": "https://scorestore.netlify.app",
     "currency": "MXN",
-    "fx_mxn_per_usd": 17.50
+    "fx_mxn_per_usd": 17.5
   },
-  "pricing": { "markup_pct": 0.00 },
+  "pricing": {
+    "markup_pct": 0.0
+  },
   "sections": [
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "order": 1 },
     { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVA LLEGADA", "order": 2 },
@@ -14,138 +16,91 @@
   "products": [
     {
       "id": "b1k-cham-25",
+      "slug": "chamarra-oficial-baja-1000-2025",
       "name": "Chamarra Oficial Baja 1000 - 2025",
-      "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
-      "baseMXN": 1789,
+      "image": "/assets/EDICION_2025/chamarra-baja1000.webp",
+      "price": 1789,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "order": 1
     },
     {
       "id": "b1k-hood-tech",
+      "slug": "hoodie-tecnica-baja-1000-negro-gris",
       "name": "Hoodie Técnica B1K Negro/Gris",
-      "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
-      "baseMXN": 1079,
+      "image": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
+      "price": 1079,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL"]
+      "sizes": ["S", "M", "L", "XL"],
+      "order": 2
     },
     {
       "id": "b1k-tee-blk",
+      "slug": "camiseta-negra-oficial-baja-1000-2025",
       "name": "Camiseta Negra Oficial 2025",
-      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
-      "baseMXN": 479,
+      "image": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
+      "price": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "order": 3
     },
     {
       "id": "b1k-tee-brn",
+      "slug": "camiseta-desert-cafe-baja-1000-2025",
       "name": "Camiseta Desert Café 2025",
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
-      "baseMXN": 479,
+      "image": "/assets/EDICION_2025/camiseta-cafe-baja1000.webp",
+      "price": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-tee-snd",
-      "name": "Camiseta Arena Baja 2025",
-      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
-      "baseMXN": 479,
-      "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "order": 4
     },
     {
       "id": "b1k-cap-red",
+      "slug": "gorra-oficial-baja-1000-roja-gris",
       "name": "Gorra Oficial Roja/Gris",
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "baseMXN": 660,
+      "image": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "price": 660,
       "sectionId": "BAJA_1000",
       "subSection": "ACCESORIOS",
-      "sizes": ["Unitalla"]
-    },
-    {
-      "id": "b1k-pits-blk",
-      "name": "Camisa Pits Oficial Negra",
-      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-pits-gry",
-      "name": "Camisa Pits Gris Racing",
-      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-pits-pnk",
-      "name": "Camisa Pits Edición Rosa",
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL"]
-    },
-    {
-      "id": "retro-hood-blk",
-      "name": "Hoodie World Desert Negra",
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
-      "baseMXN": 899,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "retro-hood-red",
-      "name": "Hoodie World Desert Roja",
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-      "baseMXN": 899,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL"]
-    },
-    {
-      "id": "retro-pits-red",
-      "name": "Camisa Pits Retro Negra/Roja",
-      "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL"]
+      "sizes": ["ONE"],
+      "order": 10
     },
     {
       "id": "b500-tee-gry",
+      "slug": "camiseta-oficial-baja-500-gris",
       "name": "Camiseta Oficial Baja 500 Gris",
-      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
-      "baseMXN": 479,
+      "image": "/assets/BAJA500/camiseta-gris-baja500.webp",
+      "price": 479,
       "sectionId": "BAJA_500",
       "subSection": "COLECCIÓN BAJA 500",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "order": 1
     },
     {
       "id": "b400-tee-brn",
+      "slug": "camiseta-oficial-baja-400-cafe",
       "name": "Camiseta Oficial Baja 400 Café",
-      "img": "/assets/BAJA400/camiseta-cafe-%20oscuro-baja400.webp",
-      "baseMXN": 479,
+      "image": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
+      "price": 479,
       "sectionId": "BAJA_400",
       "subSection": "COLECCIÓN BAJA 400",
-      "sizes": ["S", "M", "L", "XL"]
+      "sizes": ["S", "M", "L", "XL"],
+      "order": 1
     },
     {
       "id": "sf250-tank",
+      "slug": "tank-top-san-felipe-250-negra",
       "name": "Sleeveless SF250 Negra",
-      "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
-      "baseMXN": 439,
+      "image": "/assets/SF250/camiseta-negra-sinmangas-sf250.webp",
+      "price": 439,
       "sectionId": "SF_250",
       "subSection": "COLECCIÓN SAN FELIPE",
-      "sizes": ["S", "M", "L", "XL"]
+      "sizes": ["S", "M", "L", "XL"],
+      "order": 1
     }
   ]
 }
