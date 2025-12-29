@@ -1,87 +1,107 @@
-/* SCORE STORE — Service Worker (estable) */
-const CACHE_NAME = "score-store-v3";
+// sw.js — SCORE STORE (v15 PRO)
+// Estrategia Híbrida: Datos frescos (Network First) + Carga rápida (Cache First)
 
+const CACHE_NAME = 'score-store-v15-pro';
+
+// Archivos CRÍTICOS (Si fallan, la app no funciona offline)
 const CORE_ASSETS = [
-  "/",
-  "/index.html",
-  "/css/styles.css",
-  "/js/main.js",
-  "/site.webmanifest",
-  "/data/catalog.json",
-  "/data/promos.json",
-  "/assets/hero.webp",
-  "/assets/logo-score.webp",
-  "/assets/icons-score.svg"
+  '/',
+  '/index.html',
+  '/css/styles.css',
+  '/js/main.js',
+  '/site.webmanifest',
+  '/assets/logo-score.webp',
+  '/assets/hero.webp',
+  '/assets/icons-score.svg',
+  '/data/catalog.json' // Importante para que cargue el catálogo offline
 ];
 
-// Opcionales (si existen, los cachea; si no, NO rompe la instalación)
+// Archivos OPCIONALES (Se intentan cachear, pero no rompen la instalación si faltan)
 const OPTIONAL_ASSETS = [
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-192-maskable.png",
-  "/assets/icons/icon-512.png",
-  "/assets/icons/icon-512-maskable.png"
+  '/data/promos.json',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-192-maskable.png',
+  '/assets/icons/icon-512.png',
+  '/assets/icons/icon-512-maskable.png'
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Activar inmediatamente
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
+    
+    // 1. Cachear núcleo
     await cache.addAll(CORE_ASSETS);
 
-    // opcionales sin romper
+    // 2. Cachear opcionales sin romper si alguno falla
     await Promise.allSettled(
-      OPTIONAL_ASSETS.map(async (u) => {
-        try { await cache.add(u); } catch {}
-      })
+      OPTIONAL_ASSETS.map(url => cache.add(url).catch(console.warn))
     );
-
-    self.skipWaiting();
   })());
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
-    self.clients.claim();
-  })());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.map((k) => k !== CACHE_NAME ? caches.delete(k) : null)
+    ))
+  );
+  self.clients.claim();
 });
 
-function isHTML(req) {
-  return req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html");
-}
-function isJSON(req) {
-  return (req.headers.get("accept") || "").includes("application/json") || req.url.endsWith(".json");
-}
+// Helpers
+const isAPI = (url) => url.pathname.startsWith('/.netlify/') || url.hostname.includes('stripe.com');
+const isDataOrPage = (req) => {
+  const accept = req.headers.get('accept') || '';
+  return req.mode === 'navigate' || 
+         accept.includes('text/html') || 
+         accept.includes('application/json') || 
+         req.url.endsWith('.json');
+};
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Network-first para HTML/JSON (para que se actualice)
-  if (isHTML(event.request) || isJSON(event.request) || event.request.url.endsWith("/sw.js") || event.request.url.endsWith("/site.webmanifest")) {
+  // 1. IGNORAR API y Stripe (Siempre red, nunca cachear pagos)
+  if (req.method !== 'GET' || isAPI(url)) {
+    return;
+  }
+
+  // 2. ESTRATEGIA: NETWORK FIRST (Para HTML, JSON de precios y Catálogo)
+  // Intentamos bajar lo más nuevo. Si falla (offline), usamos caché.
+  if (isDataOrPage(req)) {
     event.respondWith((async () => {
       try {
-        const fresh = await fetch(event.request);
+        const networkRes = await fetch(req);
         const cache = await caches.open(CACHE_NAME);
-        cache.put(event.request, fresh.clone());
-        return fresh;
-      } catch {
-        const cached = await caches.match(event.request);
+        cache.put(req, networkRes.clone());
+        return networkRes;
+      } catch (err) {
+        const cached = await caches.match(req);
         if (cached) return cached;
-        // fallback navegación
-        if (isHTML(event.request)) return (await caches.match("/index.html")) || Response.error();
+        // Si falla todo y es navegación, devolver index (SPA fallback)
+        if (req.mode === 'navigate') return caches.match('/index.html');
         return Response.error();
       }
     })());
     return;
   }
 
-  // Cache-first para assets
+  // 3. ESTRATEGIA: CACHE FIRST (Para Imágenes, CSS, JS, Fuentes)
+  // Buscamos en caché. Si no está, vamos a la red y guardamos.
   event.respondWith((async () => {
-    const cached = await caches.match(event.request);
+    const cached = await caches.match(req);
     if (cached) return cached;
-    const fresh = await fetch(event.request);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(event.request, fresh.clone());
-    return fresh;
+
+    try {
+      const networkRes = await fetch(req);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(req, networkRes.clone());
+      return networkRes;
+    } catch {
+      // Si falla imagen, podríamos devolver un placeholder (opcional)
+      return Response.error();
+    }
   })());
 });
