@@ -6,6 +6,14 @@
 
   <title>SCORE Store · Official Racing Merch</title>
   <meta name="description" content="Tienda oficial SCORE International Racing. Merch oficial y ediciones limitadas." />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="SCORE Store · Official Racing Merch" />
+  <meta property="og:description" content="Merch oficial y ediciones limitadas de SCORE International Racing." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+  <meta property="og:image" content="/assets/hero.webp" />
 
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
@@ -15,12 +23,11 @@
   <!-- Styles -->
   <link rel="stylesheet" href="/styles.css" />
 
-  <!-- Preload hero (LCP) -->
+  <!-- Preload HERO (LCP) -->
   <link
     rel="preload"
     as="image"
     href="/assets/hero.webp"
-    imagesrcset="/assets/hero.webp"
     fetchpriority="high"
   />
 </head>
@@ -45,6 +52,7 @@
       alt="SCORE International Off-Road Racing"
       width="360"
       height="640"
+      loading="eager"
       fetchpriority="high"
       decoding="async"
     />
@@ -62,6 +70,15 @@
 
   <!-- JS -->
   <script src="/main.js" defer></script>
+
+  <!-- Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js");
+      });
+    }
+  </script>
 
 </body>
 </html>
