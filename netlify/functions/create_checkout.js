@@ -1,22 +1,22 @@
 // netlify/functions/create_checkout.js
+
 const Stripe = require("stripe");
 const {
   jsonResponse,
+  safeJsonParse,
   toStr,
   upper,
+  digitsOnly,
   normalizePromo,
-  isMxPostal,
-  scoreAddressFromPostal,
-  safeJsonParse,
   validateCartItems,
+  validateSizes,
   loadCatalog,
+  computeSubtotalMXN,
   computeShipping,
   applyPromoToTotals,
-  roundMXN,
-  FEATURE_ENVIADOTCOM,
 } = require("./_shared");
 
-// env vars required on Netlify:
+// ENV VARS REQUIRED (Netlify):
 // STRIPE_SECRET_KEY
 // STRIPE_SUCCESS_URL
 // STRIPE_CANCEL_URL
@@ -24,30 +24,43 @@ const {
 exports.handler = async (event) => {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) return jsonResponse(500, { error: "Missing STRIPE_SECRET_KEY" });
+    if (!stripeKey) {
+      return jsonResponse(500, { error: "Missing STRIPE_SECRET_KEY" });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
 
+    /* ---------- INPUT ---------- */
     const body = safeJsonParse(event.body, {});
     const mode = toStr(body.mode) || "pickup";
     const promoCode = toStr(body.promoCode);
 
-    const items = validateCartItems(body.items);
-    if (!items.ok) return jsonResponse(400, { error: items.error });
+    /* ---------- CART ---------- */
+    const cartCheck = validateCartItems(body.items);
+    if (!cartCheck.ok) {
+      return jsonResponse(400, { error: cartCheck.error });
+    }
 
+    const items = cartCheck.items;
+
+    /* ---------- CATALOG ---------- */
     const catalog = await loadCatalog();
-    if (!catalog.ok) return jsonResponse(500, { error: catalog.error });
+    const productMap = catalog.map;
 
-    // build line items from catalog
+    /* ---------- SIZE VALIDATION ---------- */
+    const sizeCheck = validateSizes(items, productMap);
+    if (!sizeCheck.ok) {
+      return jsonResponse(400, { error: sizeCheck.error });
+    }
+
+    /* ---------- LINE ITEMS ---------- */
     const line_items = [];
-    let subtotal = 0;
 
-    for (const it of items.items) {
-      const p = catalog.map[it.id];
-      if (!p) return jsonResponse(400, { error: `Producto inválido: ${it.id}` });
-
-      const unit_amount = Math.round(Number(p.price) * 100);
-      subtotal += Number(p.price) * it.qty;
+    for (const it of items) {
+      const p = productMap[it.id];
+      if (!p) {
+        return jsonResponse(400, { error: `Producto inválido: ${it.id}` });
+      }
 
       line_items.push({
         price_data: {
@@ -55,13 +68,16 @@ exports.handler = async (event) => {
           product_data: {
             name: `${p.name}${it.size ? ` — Talla ${it.size}` : ""}`,
           },
-          unit_amount,
+          unit_amount: Math.round(Number(p.price) * 100),
         },
         quantity: it.qty,
       });
     }
 
-    // shipping address info
+    /* ---------- SUBTOTAL ---------- */
+    const subtotal_mxn = computeSubtotalMXN(items, productMap);
+
+    /* ---------- ADDRESS ---------- */
     const rawTo = body.to || {};
     const to = {
       postal_code: digitsOnly(rawTo.postal_code),
@@ -71,50 +87,57 @@ exports.handler = async (event) => {
       name: toStr(rawTo.name),
     };
 
-    // For pickup, we don't need address
     if (mode !== "pickup") {
       if (!to.postal_code || to.postal_code.length !== 5) {
         return jsonResponse(400, { error: "Código postal inválido." });
       }
     }
 
-    // Compute shipping
+    /* ---------- SHIPPING ---------- */
     const ship = await computeShipping({
       mode,
       to,
-      items: items.items,
-      subtotal_mxn: subtotal,
-      featureEnvia: FEATURE_ENVIADOTCOM,
+      items,
     });
 
-    if (!ship.ok) return jsonResponse(400, { error: ship.error });
+    if (!ship.ok) {
+      return jsonResponse(400, { error: ship.error });
+    }
 
-    const shippingCost = ship.mxn || 0;
+    const shipping_mxn = ship.mxn || 0;
 
-    // Apply promo to totals
+    /* ---------- PROMO / TOTALS ---------- */
     const promo = applyPromoToTotals({
-      subtotal_mxn: subtotal,
-      shipping_mxn: shippingCost,
       promoCode,
+      subtotal_mxn,
+      shipping_mxn,
     });
 
     const totals = promo.totals;
 
-    // Create checkout session
+    /* ---------- STRIPE SESSION ---------- */
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
-      success_url: process.env.STRIPE_SUCCESS_URL || "https://example.com/success",
-      cancel_url: process.env.STRIPE_CANCEL_URL || "https://example.com/cancel",
-      shipping_options: shippingCost > 0 ? [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: Math.round(shippingCost * 100), currency: "mxn" },
-            display_name: ship.label || "Envío",
-          },
-        },
-      ] : [],
+      success_url:
+        process.env.STRIPE_SUCCESS_URL || "https://example.com/success",
+      cancel_url:
+        process.env.STRIPE_CANCEL_URL || "https://example.com/cancel",
+      shipping_options:
+        shipping_mxn > 0
+          ? [
+              {
+                shipping_rate_data: {
+                  type: "fixed_amount",
+                  fixed_amount: {
+                    amount: Math.round(shipping_mxn * 100),
+                    currency: "mxn",
+                  },
+                  display_name: ship.label || "Envío",
+                },
+              },
+            ]
+          : [],
       metadata: {
         mode,
         postal_code: to.postal_code || "",
@@ -122,21 +145,17 @@ exports.handler = async (event) => {
         city: to.city || "",
         address1: to.address1 || "",
         name: to.name || "",
-        shipping_mxn: String(shippingCost),
+        shipping_mxn: String(shipping_mxn),
         promo_code: promo.promoCode || normalizePromo(promoCode),
-        promo_discount_mxn: String(promo.discount_mxn || 0),
+        discount_mxn: String(promo.discount_mxn || 0),
         total_mxn: String(totals.total_mxn || 0),
       },
     });
 
     return jsonResponse(200, { url: session.url });
 
-  } catch (e) {
-    console.error(e);
-    return jsonResponse(500, { error: e.message || "Server error" });
+  } catch (err) {
+    console.error(err);
+    return jsonResponse(500, { error: err.message || "Server error" });
   }
 };
-
-function digitsOnly(v) {
-  return toStr(v).replace(/\D+/g, "");
-}
