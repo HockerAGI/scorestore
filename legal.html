@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legales · SCORE Store</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="btn btnGhost" href="/">← Volver</a>
+    <img class="brand" src="/assets/logo-score.webp" alt="SCORE Store" width="160" height="48" />
+  </header>
+
+  <main class="legal">
+    <h1 class="h1">Legales</h1>
+    <p class="p muted">Esta información aplica a compras realizadas en este sitio.</p>
+
+    <section id="terminos" class="legalCard">
+      <h2 class="h2">Términos y condiciones</h2>
+      <ul class="ul">
+        <li>Al comprar aceptas estos términos y las políticas enlazadas en esta página.</li>
+        <li>Los precios se muestran en MXN. USD es informativo (17.00 MXN).</li>
+        <li>Las imágenes son ilustrativas del producto real. Stock y tallas sujetos a disponibilidad.</li>
+        <li>Nos reservamos el derecho de cancelar pedidos por sospecha de fraude y reembolsar el pago.</li>
+      </ul>
+    </section>
+
+    <section id="privacidad" class="legalCard">
+      <h2 class="h2">Aviso de privacidad</h2>
+      <p class="p">
+        Los datos proporcionados se usan únicamente para procesar tu compra, generar envío y dar soporte.
+        No vendemos tu información. Puedes solicitar acceso/rectificación/cancelación/oposición escribiendo al contacto.
+      </p>
+    </section>
+
+    <section id="envios" class="legalCard">
+      <h2 class="h2">Envíos y devoluciones</h2>
+      <ul class="ul">
+        <li><strong>Recoger en fábrica:</strong> sin costo (confirmación por pedido).</li>
+        <li><strong>Entrega local Tijuana:</strong> tarifa fija.</li>
+        <li><strong>Envío nacional:</strong> se cotiza en checkout (o se aplica tarifa base si falta dirección completa).</li>
+        <li><strong>Devoluciones:</strong> solo por defecto de fabricación o error de entrega. Reporte dentro de 48h.</li>
+      </ul>
+    </section>
+
+    <section id="pagos" class="legalCard">
+      <h2 class="h2">Pagos</h2>
+      <p class="p">
+        El cobro se procesa mediante Stripe Checkout (tarjeta). La confirmación se refleja al completar el pago.
+      </p>
+    </section>
+
+    <section id="contacto" class="legalCard">
+      <h2 class="h2">Contacto</h2>
+      <p class="p">
+        Para soporte de pedidos, escribe con tu número de orden y correo usado en la compra.
+      </p>
+      <p class="p muted small">El correo/WhatsApp final de soporte debe configurarse con tus datos reales.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__bottom">
+      <small>© <span id="y"></span> SCORE Store</small>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
