@@ -6,17 +6,18 @@
   <meta name="theme-color" content="#E10600" />
   
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda Oficial SCORE International. Equipamiento Off-Road auténtico fabricado en Tijuana por ÚNICO UNIFORMES. Envíos a todo México." />
+  <meta name="description" content="Tienda Oficial SCORE International. Equipamiento Off-Road auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
   
   <link rel="canonical" href="https://scorestore.netlify.app/" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
   <link rel="stylesheet" href="/css/styles.css" />
   
   <script src="https://js.stripe.com/v3/" async></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,7 +29,7 @@
 
   <header class="topbar">
     <div class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48" decoding="async">
+      <img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48">
     </div>
     <div class="navRight">
       <div class="pill">MX + <b>TIJUANA</b></div>
@@ -39,7 +40,6 @@
   </header>
 
   <main class="wrap" id="mainContent">
-    
     <section class="hero">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
@@ -95,7 +95,6 @@
         </div>
       </div>
     </div>
-
   </main>
 
   <footer>
@@ -106,7 +105,7 @@
       </p>
       <p>
         &copy; <script>document.write(new Date().getFullYear())</script> SCORE International. 
-        Precios en MXN incluyen IVA. Envíos calculados al finalizar.
+        Precios en MXN incluyen IVA.
       </p>
     </div>
   </footer>
@@ -118,14 +117,16 @@
       <h3 class="dTitle">TU EQUIPO</h3>
       <button onclick="closeAll()" class="closeBtn" aria-label="Cerrar">&times;</button>
     </div>
-    
     <div class="dBody" id="cartBody"></div>
-    
     <div class="dFoot">
       <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0</span></div>
       <div class="sumRow"><span>Envío:</span> <span id="shipCost">--</span></div>
       <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
       
+      <div class="promo-box" style="margin-top:15px; display:flex; gap:5px;">
+        <input id="promoCode" placeholder="CÓDIGO DE CUPÓN" style="margin-bottom:0; text-transform:uppercase;">
+      </div>
+
       <p class="label-sm" style="margin-top:15px; font-weight:800; font-size:11px; color:#888;">MÉTODO DE ENTREGA:</p>
       <select id="shipMethod">
         <option value="">-- SELECCIONA --</option>
@@ -143,12 +144,11 @@
         <input id="addr" placeholder="Calle, Número y Colonia" autocomplete="street-address">
         <input id="name" placeholder="Nombre completo quien recibe" autocomplete="name">
       </div>
-      
       <div id="quoteResult" class="quote-res"></div>
 
       <div class="secure-badge">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        TRANSACCIÓN SEGURA SSL
+        PAGO 100% SEGURO
       </div>
 
       <button id="payBtn" class="btn primary full" disabled onclick="checkout()">PAGAR AHORA</button>
@@ -166,7 +166,7 @@
 
   <div class="paybar" id="paybar">
     <div>
-      <div class="paybar-label">TOTAL A PAGAR</div>
+      <div class="paybar-label">TOTAL</div>
       <div class="paybar-total" id="barTotal">$0</div>
     </div>
     <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
