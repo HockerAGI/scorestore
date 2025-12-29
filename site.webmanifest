@@ -1,12 +1,12 @@
 {
-  "id": "/",
   "name": "SCORE Store · Official Racing Merch",
-  "short_name": "SCORE",
-  "start_url": "/?pwa=1",
+  "short_name": "SCORE Store",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#E10600",
   "description": "Tienda oficial SCORE International Racing. Ediciones limitadas.",
   "lang": "es-MX",
@@ -15,16 +15,34 @@
   "prefer_related_applications": false,
   "icons": [
     {
+      "src": "/assets/icons-score.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
