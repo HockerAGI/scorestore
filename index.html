@@ -1,127 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SCORE Store | Tienda Oficial Off-Road</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="preload" href="/assets/hero.webp" as="image">
+  <title>SCORE Store – Ediciones Off-Road</title>
+  <meta name="description" content="Tienda oficial SCORE Store. Merch y ediciones especiales Baja 400, Baja 500 y Baja 1000.">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#E10600">
+
+  <!-- Icons -->
+  <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+
+  <!-- Preload HERO (LCP) -->
+  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
 
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="brand">
-      <img src="/assets/score-logo.webp" alt="SCORE International">
-    </div>
-
-    <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()">
-        🛒 <span id="cartCount" class="cartCount">0</span>
-      </button>
-    </div>
+  <!-- HERO -->
+  <header class="hero">
+    <img
+      src="/assets/hero.webp"
+      alt="SCORE Store Off-Road Editions"
+      width="1200"
+      height="600"
+      fetchpriority="high"
+    >
   </header>
 
-  <main class="wrap">
-
-    <!-- HERO -->
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-
-      <div class="heroContent">
-        <span class="tagline">MERCH OFICIAL 2025</span>
-        <h1>SCORE<br>INTERNATIONAL</h1>
-        <p class="sub">
-          Fabricado en Tijuana por <strong>ÚNICO UNIFORMES</strong>.<br>
-          Colección de alto rendimiento probada en el desierto.
-        </p>
-
-        <div class="ctaRow">
-          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-            VER COLECCIÓN
-          </button>
-          <button class="btn secondary" onclick="openDrawer()">
-            MI CARRITO
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- CAMPEONATOS -->
-    <section class="championships">
-      <h2>CAMPEONATOS</h2>
-
-      <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-        <img src="/assets/logos/baja1000.webp" alt="">
-        <div><strong>TIENDA OFICIAL</strong><span>Ver colección</span></div>
-      </div>
-
-      <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
-        <img src="/assets/logos/baja500.webp" alt="">
-        <div><strong>NUEVA LLEGADA</strong><span>Ver productos</span></div>
-      </div>
-
-      <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-        <img src="/assets/logos/baja400.webp" alt="">
-        <div><strong>DISPONIBLE</strong><span>Ver productos</span></div>
-      </div>
-
-      <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
-        <img src="/assets/logos/sf250.webp" alt="">
-        <div><strong>CLÁSICOS</strong><span>Ver productos</span></div>
-      </div>
-    </section>
-
+  <!-- MAIN -->
+  <main id="mainContent" tabindex="-1">
+    <section id="catalog"></section>
   </main>
 
-  <!-- OVERLAY -->
+  <!-- UI -->
   <div id="overlay" class="overlay"></div>
-
-  <!-- MODAL CATÁLOGO -->
-  <section id="modalCatalog" class="modal">
-    <div class="dHead">
-      <h3 id="catTitle" class="dTitle"></h3>
-      <button class="closeBtn" onclick="closeAll()">×</button>
-    </div>
-    <div id="catContent" class="catContent"></div>
-  </section>
-
-  <!-- DRAWER CARRITO -->
-  <aside id="drawer" class="drawer">
-    <div class="dHead">
-      <h3 class="dTitle">MI CARRITO</h3>
-      <button class="closeBtn" onclick="closeAll()">×</button>
-    </div>
-
-    <div id="cartBody" class="dBody"></div>
-
-    <div class="dFoot">
-      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
-      <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
-
-      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>
-        PAGAR
-      </button>
-    </div>
-  </aside>
-
-  <!-- PAYBAR -->
+  <aside id="drawer" class="drawer"></aside>
   <div id="paybar" class="paybar">
-    <div>
-      <div class="paybar-label">TOTAL A PAGAR</div>
-      <div id="barTotal" class="paybar-total">$0 MXN</div>
-    </div>
-    <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
+    <span id="barTotal">$0 MXN</span>
+    <button id="payBtn" onclick="checkout()" disabled>PAGAR</button>
   </div>
 
-  <div id="toast" class="toast"></div>
-
+  <!-- Scripts -->
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="/js/main.js" defer></script>
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
+
 </body>
 </html>
