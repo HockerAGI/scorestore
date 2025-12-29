@@ -1,47 +1,44 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  command = "npm run build"
-
-[build.environment]
-  NODE_VERSION = "18"
 
 [functions]
   node_bundler = "esbuild"
 
-# CSS / JS siempre revalidar
+# Seguridad + caché fina (PWA + evitar bugs por assets cacheados)
 [[headers]]
-for = "/css/*"
+  for = "/*"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
 
 [[headers]]
-for = "/js/*"
+  for = "/sw.js"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-cache"
 
-# Assets estáticos (caché largo)
 [[headers]]
-for = "/assets/*"
+  for = "/site.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
-# PWA 
 [[headers]]
-for = "/sw.js"
+  for = "/css/*"
   [headers.values]
-    Cache-Control = "no-cache"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
-for = "/site.webmanifest"
+  for = "/js/*"
   [headers.values]
-    Cache-Control = "no-cache"
-
-# Seguridad 
-[[headers]]
-for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Cache-Control = "public, max-age=0, must-revalidate"
