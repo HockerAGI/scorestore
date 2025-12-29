@@ -8,9 +8,12 @@
 
 [functions]
   node_bundler = "esbuild"
+  # CRUCIAL: Esto mete tu base de datos JSON dentro de las funciones en la nube
+  included_files = ["data/*.json"]
+  external_node_modules = ["stripe"]
 
-# ========== CACHE CONTROL ==========
-# HTML siempre revalidar
+# ========== CACHE CONTROL (TU ESTRATEGIA) ==========
+# HTML siempre revalidar (Para que vean cambios al instante)
 [[headers]]
   for = "/*.html"
   [headers.values]
@@ -33,13 +36,13 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Assets visuales (1 semana)
+# Assets visuales (1 semana - son pesados, mejor cachearlos un poco)
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
-# PWA: SW + manifest NO cache duro (para updates)
+# PWA: SW + manifest NO cache duro (para updates de la App)
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -50,10 +53,12 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# ========== SEGURIDAD ==========
+# ========== SEGURIDAD (BLINDAJE) ==========
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
