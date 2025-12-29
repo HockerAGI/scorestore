@@ -1,6 +1,9 @@
 /* ======================================================
-   SCORE STORE — CSS FINAL ESTABLE
+   SCORE STORE — CSS FINAL PRODUCCIÓN
    ====================================================== */
+
+/* ---------- FONTS ---------- */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;600;700&display=swap");
 
 /* ---------- VARIABLES ---------- */
 :root {
@@ -10,21 +13,20 @@
   --carbon: #0b0f14;
   --sand: #f8f8f8;
   --green: #00C853;
-  --cafeOverlay: linear-gradient(
-    180deg,
-    rgba(62, 39, 35, 1) 0%,
-    rgba(20, 10, 5, 1) 100%
-  );
   --shadow: 0 15px 40px rgba(0,0,0,0.15);
   --ease: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* ---------- RESET ---------- */
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent;
 }
 
 img {
@@ -32,19 +34,13 @@ img {
   display: block;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #eee; }
-::-webkit-scrollbar-thumb { background: #bbb; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--red); }
-
 /* ---------- BODY ---------- */
 body {
   font-family: var(--fontBody);
-  background-color: var(--sand);
+  background: var(--sand);
   color: #111;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -54,62 +50,10 @@ body.modalOpen {
   width: 100%;
 }
 
-/* ---------- ANIMACIONES ---------- */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes bounce {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-}
-
-@keyframes grain {
-  0%,100% { transform: translate(0,0); }
-  25% { transform: translate(-5%,5%); }
-  50% { transform: translate(5%,-5%); }
-  75% { transform: translate(-3%,3%); }
-}
-
-.loaded {
-  animation: fadeIn .5s var(--ease) forwards;
-}
-
-/* ---------- BACKGROUNDS ---------- */
-.page-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  pointer-events: none;
-  background: url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
-  opacity: .5;
-}
-
-.dust-container {
-  position: fixed;
-  inset: 0;
-  z-index: -5;
-  pointer-events: none;
-  overflow: hidden;
-  mix-blend-mode: multiply;
-}
-
-.dust {
-  position: absolute;
-  inset: -50%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E");
-  animation: grain 8s steps(10) infinite;
-}
-
-/* ---------- LAYOUT ---------- */
-.wrap {
-  width: min(1200px, 94vw);
-  margin: 0 auto;
-  padding-top: 90px;
-  padding-bottom: 80px;
-  position: relative;
-  z-index: 1;
+/* ---------- ACCESSIBILITY ---------- */
+:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 3px;
 }
 
 /* ---------- HEADER ---------- */
@@ -122,120 +66,64 @@ body.modalOpen {
   border-bottom: 3px solid var(--red);
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 max(20px, 4vw);
   backdrop-filter: blur(12px);
 }
 
-.brand img {
-  height: 48px;
-}
-
-.navRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pill {
-  background: #111;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-  padding: 6px 14px;
-  border-radius: 99px;
-}
-
-.pill b { color: var(--red); }
-
-.cartTrigger {
-  background: var(--carbon);
-  color: #fff;
-  border: none;
-  height: 44px;
-  padding: 0 16px;
-  font-family: var(--fontTitle);
-  font-size: 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.cartCount {
-  background: var(--red);
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-
 /* ---------- HERO ---------- */
 .hero {
-  position: relative;
-  min-height: 520px;
+  margin-top: 96px;
   border-radius: 20px;
   overflow: hidden;
-  background: #000;
-  color: #fff;
   box-shadow: var(--shadow);
-  margin-bottom: 60px;
 }
 
-.heroBg {
-  position: absolute;
-  inset: 0;
-  background: url("/assets/hero.webp") center/cover no-repeat;
+.hero img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
 }
 
-.heroOverlay {
-  position: absolute;
-  inset: 0;
-  background: var(--cafeOverlay);
-  opacity: .35;
-  z-index: 1;
-  pointer-events: none;
+/* ---------- CATALOG ---------- */
+.catalog {
+  width: min(1200px, 94vw);
+  margin: 60px auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+  gap: 24px;
 }
 
-.heroContent {
-  position: relative;
-  z-index: 2;
-  max-width: 700px;
-  padding: 30px;
+/* ---------- PRODUCT CARD ---------- */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  overflow: hidden;
+  animation: fadeIn .4s var(--ease);
 }
 
-.tagline {
-  background: var(--red);
-  padding: 6px 14px;
+.card img {
+  aspect-ratio: 1/1;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 16px;
+  text-align: center;
+}
+
+.card h3 {
   font-family: var(--fontTitle);
-  font-size: 20px;
-  display: inline-block;
-  transform: skew(-10deg);
-  margin-bottom: 16px;
+  font-size: 28px;
+  margin: 10px 0;
 }
 
-.hero h1 {
-  font-family: var(--fontTitle);
-  font-size: clamp(42px, 12vw, 100px);
-  line-height: .9;
-  text-transform: uppercase;
+.price {
+  font-weight: 800;
+  margin-bottom: 12px;
 }
 
-.sub {
-  margin: 20px 0;
-  border-left: 4px solid var(--red);
-  padding-left: 15px;
-  color: #f0f0f0;
-}
-
-/* ---------- BUTTONS ---------- */
-.ctaRow {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
+/* ---------- BUTTON ---------- */
 .btn {
   border: none;
   cursor: pointer;
@@ -245,56 +133,16 @@ body.modalOpen {
   padding: 14px 26px;
   font-size: 13px;
   letter-spacing: 1px;
-  transition: .2s;
-  text-decoration: none;
-}
-
-.btn.primary {
-  background: #fff;
-  color: #111;
-}
-
-.btn.secondary {
-  background: rgba(255,255,255,.15);
+  background: var(--red);
   color: #fff;
-  border: 1px solid rgba(255,255,255,.4);
+  transition: transform .15s;
 }
 
-.btn:active { transform: scale(.96); }
-
-/* ---------- CAMPEONATOS ---------- */
-.championships h2 {
-  font-family: var(--fontTitle);
-  font-size: 42px;
-  margin-bottom: 20px;
+.btn:active {
+  transform: scale(.96);
 }
 
-.champItem {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #fff;
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 16px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0,0,0,.08);
-  transition: .2s;
-}
-
-.champItem:hover {
-  transform: translateY(-2px);
-}
-
-.champItem img {
-  width: 90px;
-}
-
-.champItem strong {
-  display: block;
-}
-
-/* ---------- MODAL / DRAWER ---------- */
+/* ---------- OVERLAY ---------- */
 .overlay {
   position: fixed;
   inset: 0;
@@ -305,26 +153,12 @@ body.modalOpen {
   z-index: 150;
 }
 
-.overlay.active {
+.overlay.show {
   opacity: 1;
   pointer-events: auto;
 }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  background: #fff;
-  z-index: 250;
-  transform: translateY(100%);
-  transition: .3s;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal.active {
-  transform: translateY(0);
-}
-
+/* ---------- DRAWER (CART) ---------- */
 .drawer {
   position: fixed;
   top: 0;
@@ -339,86 +173,8 @@ body.modalOpen {
   flex-direction: column;
 }
 
-.drawer.active {
+.drawer.open {
   transform: translateX(0);
-}
-
-/* ---------- MODAL CONTENT ---------- */
-.dHead {
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-}
-
-.dTitle {
-  font-family: var(--fontTitle);
-  font-size: 28px;
-}
-
-.closeBtn {
-  border: none;
-  background: #f0f0f0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.catContent {
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.catSectionTitle {
-  font-family: var(--fontTitle);
-  font-size: 26px;
-  margin: 25px 0 15px;
-  border-bottom: 2px solid var(--red);
-}
-
-.catGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
-  gap: 15px;
-}
-
-.prodCard {
-  background: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  border: 1px solid #eee;
-}
-
-.prodCard select {
-  width: 100%;
-  margin: 10px 0;
-  height: 36px;
-}
-
-/* ---------- CART ---------- */
-.dBody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.dFoot {
-  padding: 20px;
-  border-top: 1px solid #ddd;
-}
-
-.sumRow {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.sumRow.total {
-  font-size: 22px;
-  font-weight: 800;
 }
 
 /* ---------- PAYBAR ---------- */
@@ -442,33 +198,13 @@ body.modalOpen {
   transform: translate(-50%,0);
 }
 
-.paybar-total {
+.paybarTotal {
   font-size: 18px;
   font-weight: 900;
 }
 
-/* ---------- TOAST ---------- */
-.toast {
-  position: fixed;
-  bottom: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,.9);
-  color: #fff;
-  padding: 12px 24px;
-  border-radius: 50px;
-  opacity: 0;
-  pointer-events: none;
-  transition: .3s;
-  z-index: 300;
-}
-
-.toast.show {
-  opacity: 1;
-}
-
-/* ---------- FIX CRÍTICO ---------- */
-.heroOverlay,
-.cardBg {
-  pointer-events: none;
+/* ---------- ANIMATION ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
