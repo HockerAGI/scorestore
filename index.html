@@ -6,34 +6,21 @@
 
   <title>SCORE Store · Official Racing Merch</title>
   <meta name="description" content="Tienda oficial SCORE International Racing. Merch oficial y ediciones limitadas." />
-  <meta name="robots" content="index, follow" />
-
-  <!-- Open Graph / Social -->
-  <meta property="og:title" content="SCORE Store · Official Racing Merch" />
-  <meta property="og:description" content="Merch oficial y ediciones limitadas de SCORE International Racing." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
-  <meta property="og:image" content="/assets/hero.webp" />
 
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#E10600" />
+  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
 
-  <!-- Preload HERO (LCP) -->
-  <link
-    rel="preload"
-    as="image"
-    href="/assets/hero.webp"
-    fetchpriority="high"
-  />
+  <!-- Preload hero (LCP) -->
+  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
 </head>
 
 <body>
-
   <!-- HEADER -->
   <header class="topbar">
     <img
@@ -43,6 +30,9 @@
       height="48"
       decoding="async"
     />
+    <button id="openCartHero" class="cartBtn" aria-label="Abrir carrito">
+      🛒 <span id="cartCount">0</span>
+    </button>
   </header>
 
   <!-- HERO -->
@@ -52,15 +42,20 @@
       alt="SCORE International Off-Road Racing"
       width="360"
       height="640"
-      loading="eager"
       fetchpriority="high"
       decoding="async"
     />
+    <div class="heroOverlay">
+      <h1>Official Racing Merch</h1>
+      <p>Ediciones limitadas · Envío MX · Pickup en Tijuana</p>
+      <a href="#catalog" class="btnPrimary">Ver catálogo</a>
+    </div>
   </section>
 
   <!-- CATALOGO -->
-  <main id="catalog" class="catalog">
-    <!-- Productos renderizados por main.js -->
+  <main id="catalog" class="catalog" tabindex="-1">
+    <h2>Catálogo</h2>
+    <div id="catalogGrid" class="grid"></div>
   </main>
 
   <!-- FOOTER -->
@@ -68,17 +63,72 @@
     <p>© SCORE International · Official Merch</p>
   </footer>
 
+  <!-- OVERLAY -->
+  <div id="overlay" class="overlay" hidden></div>
+
+  <!-- CART DRAWER -->
+  <aside id="cartDrawer" class="drawer" aria-label="Carrito" hidden>
+    <div class="drawerHead">
+      <h3>Tu carrito</h3>
+      <button id="closeCart" class="iconBtn" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div id="cartBody" class="drawerBody"></div>
+
+    <div class="drawerFoot">
+      <!-- PROMO -->
+      <div class="promoRow">
+        <input id="promoInput" class="input" type="text" placeholder="Cupón (opcional)" autocomplete="off" />
+        <button id="applyPromoBtn" class="btnGhost" type="button">Aplicar</button>
+      </div>
+      <div id="promoMsg" class="hint"></div>
+
+      <!-- SHIPPING -->
+      <div class="shipRow">
+        <label class="label">Método</label>
+        <select id="shipMethod" class="select">
+          <option value="pickup">Pickup (Tijuana)</option>
+          <option value="tj">Entrega local Tijuana</option>
+          <option value="mx">Envío nacional (Envia)</option>
+        </select>
+      </div>
+
+      <div id="shipForm" class="shipForm" hidden>
+        <input id="cp" class="input" type="text" inputmode="numeric" placeholder="Código Postal (5 dígitos)" />
+        <input id="state" class="input" type="text" placeholder="Estado (ej. BC)" />
+        <input id="city" class="input" type="text" placeholder="Ciudad (ej. Tijuana)" />
+        <input id="addr" class="input" type="text" placeholder="Dirección (calle, número, colonia)" />
+        <input id="shipName" class="input" type="text" placeholder="Nombre para entrega" />
+        <button id="quoteBtn" class="btnGhost" type="button">Cotizar envío</button>
+        <div id="quoteResult" class="hint"></div>
+      </div>
+
+      <!-- TOTALS -->
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><b id="lnSub">$0 MXN</b></div>
+        <div class="row"><span>Envío</span><b id="lnShip">$0 MXN</b></div>
+        <div class="row"><span>Descuento</span><b id="lnDisc">$0 MXN</b></div>
+        <div class="row total"><span>Total</span><b id="lnTotal">$0 MXN</b></div>
+      </div>
+
+      <button id="payBtn2" class="btnPrimary wide" type="button" disabled>Pagar</button>
+      <p class="tiny">Pago seguro con Stripe</p>
+    </div>
+  </aside>
+
+  <!-- PAYBAR MOBILE -->
+  <div id="paybar" class="paybar" hidden>
+    <div>
+      <div class="paybarLabel">Total</div>
+      <div id="barTotal" class="paybarTotal">$0 MXN</div>
+    </div>
+    <button id="payBtn" class="btnPrimary" type="button" disabled>Pagar</button>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast" hidden></div>
+
   <!-- JS -->
-  <script src="/main.js" defer></script>
-
-  <!-- Service Worker -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js");
-      });
-    }
-  </script>
-
+  <script src="/js/main.js" defer></script>
 </body>
 </html>
