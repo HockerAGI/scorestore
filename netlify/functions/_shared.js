@@ -3,7 +3,9 @@
 const fs = require("fs/promises");
 const path = require("path");
 
-// ===== Utilidades base =====
+/* ======================================================
+   RESPUESTAS
+   ====================================================== */
 function jsonResponse(statusCode, body, extraHeaders = {}) {
   return {
     statusCode,
@@ -24,6 +26,9 @@ function safeJsonParse(raw, fallback = {}) {
   }
 }
 
+/* ======================================================
+   STRINGS / NUMBERS
+   ====================================================== */
 function toStr(v) {
   return (v ?? "").toString().trim();
 }
@@ -36,46 +41,61 @@ function digitsOnly(v) {
   return toStr(v).replace(/\D+/g, "");
 }
 
+function roundMXN(n) {
+  return Math.round(Number(n || 0));
+}
+
 function normalizePromo(code) {
   return upper(code).replace(/\s+/g, "");
 }
 
-// ===== Carga de datos =====
+/* ======================================================
+   DATA LOAD (CACHE)
+   ====================================================== */
 let _catalogCache = null;
-let _promosCache = null;
+let _promoCache = null;
 
 async function loadCatalog() {
   if (_catalogCache) return _catalogCache;
+
   const file = path.join(process.cwd(), "data", "catalog.json");
   const raw = await fs.readFile(file, "utf8");
-  _catalogCache = JSON.parse(raw);
+  const json = JSON.parse(raw);
+
+  const map = {};
+  (json.products || []).forEach(p => (map[p.id] = p));
+
+  _catalogCache = {
+    raw: json,
+    map,
+  };
+
   return _catalogCache;
 }
 
 async function loadPromos() {
-  if (_promosCache) return _promosCache;
+  if (_promoCache) return _promoCache;
+
   const file = path.join(process.cwd(), "data", "promos.json");
   const raw = await fs.readFile(file, "utf8");
-  _promosCache = JSON.parse(raw);
-  return _promosCache;
+  _promoCache = JSON.parse(raw);
+  return _promoCache;
 }
 
-function productMapFromCatalog(catalog) {
-  const map = {};
-  catalog.forEach((p) => (map[p.id] = p));
-  return map;
-}
-
-// ===== Validaciones =====
+/* ======================================================
+   VALIDACIONES
+   ====================================================== */
 function validateCartItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
     return { ok: false, error: "Carrito vacío o inválido." };
   }
+
   for (const it of items) {
-    if (!it.id || !it.qty || it.qty <= 0) {
+    if (!it.id || !Number.isInteger(it.qty) || it.qty <= 0) {
       return { ok: false, error: "Item inválido en carrito." };
     }
   }
+
   return { ok: true, items };
 }
 
@@ -83,14 +103,19 @@ function validateSizes(items, productMap) {
   for (const it of items) {
     const p = productMap[it.id];
     if (!p) return { ok: false, error: `Producto no existe: ${it.id}` };
-    if (p.sizes && p.sizes.length && !p.sizes.includes(it.size)) {
-      return { ok: false, error: `Talla inválida para ${p.name}` };
+
+    if (p.sizes && p.sizes.length > 0) {
+      if (it.size && !p.sizes.includes(it.size)) {
+        return { ok: false, error: `Talla inválida para ${p.name}` };
+      }
     }
   }
   return { ok: true };
 }
 
-// ===== Cálculos =====
+/* ======================================================
+   PRICING
+   ====================================================== */
 function computeSubtotalMXN(items, productMap) {
   return items.reduce(
     (acc, it) => acc + Number(productMap[it.id].price) * it.qty,
@@ -98,27 +123,37 @@ function computeSubtotalMXN(items, productMap) {
   );
 }
 
-function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
-  let discountMXN = 0;
+function applyPromoToTotals({ promoCode, subtotal_mxn, shipping_mxn }) {
+  let discount_mxn = 0;
   let applied = null;
 
   if (promoCode) {
     applied = normalizePromo(promoCode);
     if (applied === "SCORE10") {
-      discountMXN = Math.round(subtotalMXN * 0.1);
+      discount_mxn = roundMXN(subtotal_mxn * 0.1);
     }
   }
 
-  const totalMXN = Math.max(0, subtotalMXN + shippingMXN - discountMXN);
+  const total_mxn = Math.max(
+    0,
+    subtotal_mxn + shipping_mxn - discount_mxn
+  );
 
   return {
     promoCode: applied,
-    discountMXN,
-    totalMXN,
+    discount_mxn,
+    totals: {
+      subtotal_mxn,
+      shipping_mxn,
+      discount_mxn,
+      total_mxn,
+    },
   };
 }
 
-// ===== Helpers geográficos =====
+/* ======================================================
+   GEO
+   ====================================================== */
 function isTijuanaPostal(cp) {
   return /^22\d{3}$/.test(cp);
 }
@@ -127,67 +162,66 @@ function looksLikeTijuana(city = "") {
   return /tijuana/i.test(city);
 }
 
-// ===== ENVIA (quote) =====
-async function quoteEnviaMXN({ to, items, productMap }) {
-  const token = process.env.ENVIA_API_KEY;
-  if (!token) return { ok: false };
+/* ======================================================
+   ENVIA (SAFE FALLBACK)
+   ====================================================== */
+const FEATURE_ENVIADOTCOM = true;
 
-  // Fallback simple (no rompe)
+async function quoteEnviaMXN() {
   return {
     ok: true,
-    quote: {
-      mxn: 290,
-      provider: "ENVIA",
-      service: "Standard",
-    },
+    mxn: 290,
+    carrier: "ENVIA",
+    service: "Standard",
   };
 }
 
-// ===== SHIPPING WRAPPER (FIX CRÍTICO) =====
-async function computeShipping({ mode, to, items, subtotal_mxn, featureEnvia = true }) {
+/* ======================================================
+   SHIPPING
+   ====================================================== */
+async function computeShipping({ mode, to, items }) {
   if (mode === "pickup") {
     return { ok: true, mxn: 0, label: "Recolectar en tienda" };
   }
 
   const isTJ =
     isTijuanaPostal(to.postal_code) ||
-    (looksLikeTijuana(to.city) && (!to.state_code || to.state_code === "BC"));
+    (looksLikeTijuana(to.city) &&
+      (!to.state_code || to.state_code === "BC"));
 
   if (mode === "tj" || isTJ) {
     return { ok: true, mxn: 200, label: "Entrega local Tijuana" };
   }
 
-  if (!featureEnvia) {
-    return { ok: true, mxn: 250, label: "Envío nacional (estimado)" };
+  if (!FEATURE_ENVIADOTCOM) {
+    return { ok: true, mxn: 250, label: "Envío nacional" };
   }
 
   try {
-    const catalog = await loadCatalog();
-    const productMap = productMapFromCatalog(catalog);
-
-    const q = await quoteEnviaMXN({ to, items, productMap });
-    if (!q.ok) throw new Error("No quote");
-
+    const q = await quoteEnviaMXN();
     return {
       ok: true,
-      mxn: Math.max(250, Math.round(q.quote.mxn * 1.05)),
-      label: `${q.quote.provider} ${q.quote.service}`,
+      mxn: Math.max(250, roundMXN(q.mxn)),
+      label: `${q.carrier} ${q.service}`,
     };
   } catch {
     return { ok: true, mxn: 250, label: "Envío nacional (fallback)" };
   }
 }
 
+/* ======================================================
+   EXPORTS
+   ====================================================== */
 module.exports = {
   jsonResponse,
   safeJsonParse,
   toStr,
   upper,
   digitsOnly,
+  roundMXN,
   normalizePromo,
   loadCatalog,
   loadPromos,
-  productMapFromCatalog,
   validateCartItems,
   validateSizes,
   computeSubtotalMXN,
@@ -196,4 +230,5 @@ module.exports = {
   looksLikeTijuana,
   quoteEnviaMXN,
   computeShipping,
+  FEATURE_ENVIADOTCOM,
 };
