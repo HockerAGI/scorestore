@@ -6,130 +6,80 @@ const {
   upper,
   digitsOnly,
   isMxPostal,
-  isTijuanaPostal,
-  looksLikeTijuana,
-  loadCatalog,
-  productMapFromCatalog,
   validateCartItems,
-  quoteEnviaMXN,
-  FEATURE_ENVIADOTCOM,
+  computeShipping
 } = require("./_shared");
 
-const MIN_OUTSIDE_TJ_MXN = 250;
-const TIJUANA_DELIVERY_MXN = 200;
-
-function normalizeMode(raw) {
-  const m = toStr(raw).toLowerCase();
-  if (m === "pickup") return "pickup";
-  if (m === "tj") return "tj";
-  if (m === "mx") return "mx";
-  return "pickup";
-}
-
 exports.handler = async (event) => {
+  // 1. Manejo de CORS (Preflight para navegadores)
   if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST,OPTIONS",
-      },
-      body: "",
-    };
+    return jsonResponse(200, {});
   }
 
+  // 2. Validar Método HTTP
   if (event.httpMethod !== "POST") {
-    return jsonResponse(405, { ok: false, error: "Método no permitido." }, { Allow: "POST" });
-  }
-
-  const body = safeJsonParse(event.body, {});
-  const items = body?.items || [];
-  const to = body?.to || {};
-  const mode = normalizeMode(body?.mode);
-
-  const v = validateCartItems(items);
-  if (!v.ok) return jsonResponse(400, { ok: false, error: v.error }, { "Access-Control-Allow-Origin": "*" });
-
-  const postal = digitsOnly(to?.postal_code);
-  const state = upper(to?.state_code || to?.state || "");
-  const city = toStr(to?.city);
-  const address1 = toStr(to?.address1);
-
-  // PICKUP
-  if (mode === "pickup") {
-    return jsonResponse(
-      200,
-      { ok: true, mxn: 0, carrier: "TIJUANA", service: "Pickup" },
-      { "Access-Control-Allow-Origin": "*" }
-    );
-  }
-
-  // TJ
-  const isLikelyTijuana =
-    isTijuanaPostal(postal) ||
-    (looksLikeTijuana(city) && (!state || state === "BC"));
-
-  if (mode === "tj" || isLikelyTijuana) {
-    return jsonResponse(
-      200,
-      { ok: true, mxn: TIJUANA_DELIVERY_MXN, carrier: "TIJUANA", service: "Entrega local (24–48h)" },
-      { "Access-Control-Allow-Origin": "*" }
-    );
-  }
-
-  // MX (Envia)
-  if (!FEATURE_ENVIADOTCOM) {
-    return jsonResponse(
-      200,
-      { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Envío nacional (estimado)" },
-      { "Access-Control-Allow-Origin": "*" }
-    );
+    return jsonResponse(405, { error: "Method Not Allowed" });
   }
 
   try {
-    const catalog = await loadCatalog();
-    const productMap = productMapFromCatalog(catalog);
-    const markupPct = Number(catalog?.pricing?.markup_pct ?? 0) || 0;
+    const body = safeJsonParse(event.body, {});
+    const mode = toStr(body.mode); // pickup, tj, mx
+    const rawTo = body.to || {};
 
-    // Si falta dirección completa, devolvemos base
-    if (!isMxPostal(postal) || !address1 || !state || !city) {
-      return jsonResponse(
-        200,
-        { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Completa dirección para cotizar en vivo" },
-        { "Access-Control-Allow-Origin": "*" }
-      );
+    // 3. Validar Carrito
+    const vItems = validateCartItems(body.items);
+    if (!vItems.ok) {
+      return jsonResponse(400, { error: vItems.error });
     }
 
-    const q = await quoteEnviaMXN({
-      to: { postal_code: postal, state_code: state, city, address1, name: toStr(to?.name) },
-      items,
-      productMap,
-      markupPct
+    // 4. Sanitizar Dirección de Destino
+    const to = {
+      postal_code: digitsOnly(rawTo.postal_code),
+      state_code: upper(rawTo.state_code),
+      city: toStr(rawTo.city),
+      address1: toStr(rawTo.address1),
+      name: toStr(rawTo.name)
+    };
+
+    // 5. Validación Temprana para UX (Solo si es nacional)
+    // Si el usuario seleccionó envío nacional pero no ha llenado la dirección completa,
+    // devolvemos un precio estimado visual para no gastar llamadas a la API de Envia.
+    if (mode === 'mx' || mode === 'envia') {
+       if (!isMxPostal(to.postal_code) || !to.state_code || !to.city || !to.address1) {
+         return jsonResponse(200, {
+           ok: true,
+           mxn: 250, // Precio "visual" estimado
+           carrier: "ESTIMADO",
+           service: "Completa dirección para cotizar en vivo"
+         });
+       }
+    }
+
+    // 6. Cálculo Real (Llama a la lógica blindada de _shared.js)
+    // Esto maneja automáticamente: Pickup, TJ Local, API Envia y Fallbacks.
+    const result = await computeShipping({
+      mode,
+      to,
+      items: vItems.items
     });
 
-    if (!q.ok) {
-      return jsonResponse(
-        200,
-        { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Envío nacional (mínimo aplicado)" },
-        { "Access-Control-Allow-Origin": "*" }
-      );
-    }
+    // 7. Respuesta al Frontend
+    return jsonResponse(200, {
+      ok: true,
+      mxn: result.mxn,
+      carrier: result.carrier || "SCORE",
+      service: result.label || result.service || "Estándar",
+      days: result.days || 3
+    });
 
-    const raw = Number(q.quote.mxn || 0);
-    const mxn = Math.max(MIN_OUTSIDE_TJ_MXN, Math.round(raw * 1.05));
-
-    return jsonResponse(
-      200,
-      { ok: true, mxn, carrier: q.quote.provider || "ENVIA", service: q.quote.service || "Standard" },
-      { "Access-Control-Allow-Origin": "*" }
-    );
   } catch (e) {
-    console.error("quote_shipping error:", e);
-    return jsonResponse(
-      200,
-      { ok: true, mxn: MIN_OUTSIDE_TJ_MXN, carrier: "ESTIMADO", service: "Envío nacional (fallback)" },
-      { "Access-Control-Allow-Origin": "*" }
-    );
+    console.error("Quote Error:", e);
+    // Fallback de emergencia para no romper el carrito
+    return jsonResponse(200, {
+      ok: true,
+      mxn: 280,
+      carrier: "ESTIMADO",
+      service: "Tarifa estándar (Error conexión)"
+    });
   }
 };
