@@ -290,7 +290,7 @@ async function checkout() {
   try {
     const stripe = Stripe(STRIPE_PK);
     const method = $('shipMethod')?.value || 'pickup';
-    const promoCode = $('promoCode')?.value || ""; // ✅ Captura el cupón
+    const promoCode = $('promoCode')?.value || ""; 
     
     const postal = digits($('cp')?.value);
     const addr = toStr($('addr')?.value);
@@ -306,7 +306,7 @@ async function checkout() {
     const payload = {
       items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size })),
       mode: method,
-      promoCode: promoCode, // ✅ Envía el cupón
+      promoCode: promoCode, 
       to: { postal_code: postal, state_code: state, city, address1: addr, name }
     };
 
@@ -326,6 +326,25 @@ async function checkout() {
   }
 }
 
+// --- MANEJO DE RETORNO DE STRIPE ---
+function checkPaymentStatus() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('status');
+  
+  if (status === 'success') {
+    cart = [];
+    localStorage.removeItem('cart');
+    updateCart(true);
+    showToast("¡Pago exitoso! Gracias por tu compra.");
+    // Limpiar URL para que no vuelva a salir al refrescar
+    window.history.replaceState(null, '', window.location.pathname);
+  } else if (status === 'cancel') {
+    showToast("El pago fue cancelado.");
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+// Listeners
 const shipMethodEl = $('shipMethod');
 if (shipMethodEl) shipMethodEl.addEventListener('change', () => { updateCart(true); scheduleQuote(); });
 
@@ -344,5 +363,7 @@ if('serviceWorker' in navigator){
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
 
+// Inicialización
 loadCatalog();
+checkPaymentStatus(); // Revisar si viene de Stripe
 updateCart(true);
