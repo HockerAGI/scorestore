@@ -1,9 +1,6 @@
 // netlify/functions/stripe_webhook.js
-// BLINDADO + RETROCOMPATIBLE con create_checkout.js actual
+// BLINDADO: Idempotencia persistente con metadata Stripe (sin DB)
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-/* ================= UTIL ================= */
 function json(statusCode, body) {
   return {
     statusCode,
@@ -27,9 +24,7 @@ function getSiteUrl() {
 
 function getRawBody(event) {
   if (!event?.body) return Buffer.from("");
-  return event.isBase64Encoded
-    ? Buffer.from(event.body, "base64")
-    : Buffer.from(event.body, "utf8");
+  return event.isBase64Encoded ? Buffer.from(event.body, "base64") : Buffer.from(event.body, "utf8");
 }
 
 function nowISO() {
@@ -42,207 +37,201 @@ function minutesAgo(iso) {
   return (Date.now() - t) / 60000;
 }
 
-/* ================= METADATA NORMALIZER ================= */
-
-function normalizeShippingFromMetadata(meta = {}) {
-  const line1 = toStr(meta.address1 || meta.ship_address1);
-  const city = toStr(meta.city || meta.ship_city);
-  const state = toStr(meta.state_code || meta.ship_state);
-  const postal = toStr(meta.postal_code || meta.ship_postal);
-
-  if (!line1 && !city && !state && !postal) return null;
-
-  return {
-    address: {
-      line1,
-      city,
-      state,
-      postal_code: postal,
-      country: "MX",
-    },
-  };
-}
-
-function normalizeShippingMode(meta = {}) {
-  return (
-    toStr(meta.shipping_mode) ||
-    toStr(meta.mode) || // <- de create_checkout.js
-    ""
-  );
-}
-
-function normalizeDiscount(meta = {}) {
-  return Number(
-    meta.discount_mxn ??
-    meta.promo_discount_mxn ??
-    0
-  );
-}
-
-/* ================= STRIPE HELPERS ================= */
-
-async function listLineItems(sessionId) {
+async function fetchWithTimeout(url, options = {}, ms = 7000) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ms);
   try {
-    const itemsRes = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
-    return (itemsRes?.data || []).map((li) => ({
-      name: toStr(li.description),
-      qty: Number(li.quantity || 1),
-      amount: Number(li.amount_total || 0) / 100,
-    }));
-  } catch {
-    return [];
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(t);
   }
 }
-
-async function getNotifyState({ session }) {
-  const meta = session?.metadata || {};
-  const piId = toStr(session?.payment_intent);
-
-  if (piId) {
-    try {
-      const pi = await stripe.paymentIntents.retrieve(piId);
-      return { kind: "payment_intent", id: piId, meta: pi.metadata || {} };
-    } catch {}
-  }
-  return { kind: "session", id: session.id, meta };
-}
-
-async function updateNotifyMeta({ state, patch, idempotencyKey }) {
-  const metadata = {};
-  for (const [k, v] of Object.entries(patch || {})) metadata[k] = toStr(v);
-
-  try {
-    if (state.kind === "payment_intent") {
-      await stripe.paymentIntents.update(state.id, { metadata }, { idempotencyKey });
-      return true;
-    }
-    if (state.kind === "session") {
-      await stripe.checkout.sessions.update(state.id, { metadata }, { idempotencyKey });
-      return true;
-    }
-  } catch {}
-  return false;
-}
-
-function shouldSkip(meta) {
-  const status = toStr(meta.notify_status);
-  if (status === "sent") return { skip: true };
-  if (status === "processing") {
-    const mins = minutesAgo(meta.notify_ts);
-    if (mins < 12) return { skip: true };
-  }
-  return { skip: false };
-}
-
-/* ================= HANDLER ================= */
 
 exports.handler = async (event) => {
-  const sig = event.headers["stripe-signature"];
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripeKey = toStr(process.env.STRIPE_SECRET_KEY);
+  const webhookSecret = toStr(process.env.STRIPE_WEBHOOK_SECRET);
 
-  if (!sig || !secret) {
-    return json(500, { ok: false, error: "Missing Stripe webhook secret" });
-  }
+  if (!stripeKey) return json(500, { ok: false, error: "Falta STRIPE_SECRET_KEY" });
+  if (!webhookSecret) return json(500, { ok: false, error: "Falta STRIPE_WEBHOOK_SECRET" });
+
+  const stripe = require("stripe")(stripeKey);
+
+  const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
+  if (!sig) return json(400, { ok: false, error: "Falta stripe-signature" });
 
   let stripeEvent;
   try {
-    stripeEvent = stripe.webhooks.constructEvent(getRawBody(event), sig, secret);
-  } catch (e) {
-    return { statusCode: 400, body: `Webhook Error: ${e.message}` };
+    const raw = getRawBody(event);
+    stripeEvent = stripe.webhooks.constructEvent(raw, sig, webhookSecret);
+  } catch (err) {
+    console.error("Webhook Signature Error:", err.message);
+    return { statusCode: 400, body: `Webhook Error: ${err.message}` };
   }
 
   if (stripeEvent.type !== "checkout.session.completed") {
-    return json(200, { ignored: stripeEvent.type });
+    return json(200, { received: true, ignored: stripeEvent.type });
   }
 
+  const sessionLite = stripeEvent.data.object;
+
+  // sesión completa
   let session;
   try {
-    session = await stripe.checkout.sessions.retrieve(stripeEvent.data.object.id, {
-      expand: ["customer_details"],
-    });
+    session = await stripe.checkout.sessions.retrieve(sessionLite.id, { expand: ["customer_details"] });
   } catch {
-    session = stripeEvent.data.object;
+    session = sessionLite;
   }
 
-  const notifyState = await getNotifyState({ session });
-  const meta = notifyState.meta || {};
-
-  if (shouldSkip(meta).skip) {
-    return json(200, { ok: true, skipped: true });
+  // ---- Idempotencia persistente (PI si existe) ----
+  async function getNotifyState() {
+    const piId = toStr(session?.payment_intent);
+    if (piId) {
+      try {
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        return { kind: "payment_intent", id: piId, meta: pi.metadata || {}, obj: pi };
+      } catch {}
+    }
+    return { kind: "session", id: session.id, meta: session.metadata || {}, obj: session };
   }
 
-  const locked = await updateNotifyMeta({
-    state: notifyState,
-    patch: {
+  async function updateNotifyMeta(state, patch, idempotencyKey) {
+    const metadata = {};
+    for (const [k, v] of Object.entries(patch || {})) metadata[k] = toStr(v);
+
+    try {
+      if (state.kind === "payment_intent") {
+        await stripe.paymentIntents.update(state.id, { metadata }, { idempotencyKey });
+        return true;
+      }
+      await stripe.checkout.sessions.update(state.id, { metadata }, { idempotencyKey });
+      return true;
+    } catch (e) {
+      console.error("updateNotifyMeta error:", e.message);
+      return false;
+    }
+  }
+
+  function shouldSkip(meta) {
+    const status = toStr(meta.notify_status);
+    if (status === "sent") return { skip: true, reason: "already_sent" };
+
+    if (status === "processing") {
+      const ts = toStr(meta.notify_ts);
+      const mins = minutesAgo(ts);
+      if (mins < 12) return { skip: true, reason: "processing_recent" };
+    }
+    return { skip: false, reason: "" };
+  }
+
+  const notifyState = await getNotifyState();
+  const skip = shouldSkip(notifyState.meta || {});
+  if (skip.skip) return json(200, { ok: true, skipped: skip.reason });
+
+  // lock processing
+  const lockOk = await updateNotifyMeta(
+    notifyState,
+    {
       notify_status: "processing",
       notify_event_id: stripeEvent.id,
       notify_ts: nowISO(),
       notify_err: "",
     },
-    idempotencyKey: `lock:${stripeEvent.id}`,
-  });
+    `notify-lock:${stripeEvent.id}`
+  );
 
-  if (!locked) return json(200, { warned: "lock_failed" });
+  if (!lockOk) return json(200, { ok: true, warned: "lock_failed" });
 
-  const items = await listLineItems(session.id);
+  // line items reales
+  async function listLineItems(sessionId) {
+    try {
+      const itemsRes = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
+      return (itemsRes?.data || []).map((li) => ({
+        name: toStr(li.description),
+        qty: Number(li.quantity || 1),
+        amount: Number(li.amount_total || 0) / 100,
+      }));
+    } catch {
+      return [];
+    }
+  }
 
+  // shipping desde metadata (fallback)
+  function buildShippingFromMetadata(meta = {}) {
+    const line1 = toStr(meta.ship_address1);
+    const city = toStr(meta.ship_city);
+    const state = toStr(meta.ship_state);
+    const postal = toStr(meta.ship_postal);
+    if (!line1 && !city && !state && !postal) return null;
+
+    return {
+      address: {
+        line1: line1 || "",
+        city: city || "",
+        state: state || "",
+        postal_code: postal || "",
+        country: "MX",
+      },
+    };
+  }
+
+  const m = session?.metadata || {};
   const payload = {
     eventId: stripeEvent.id,
     orderId: session.id,
-    customerName: toStr(session.customer_details?.name || meta.name || "Cliente"),
-    email: toStr(session.customer_details?.email || ""),
-    phone: toStr(session.customer_details?.phone || ""),
-    total: Number(session.amount_total || 0) / 100,
-    currency: upper(session.currency || "mxn"),
-    promoCode: toStr(meta.promo_code),
-    discountMXN: normalizeDiscount(meta),
-    shippingMXN: Number(meta.shipping_mxn || 0),
-    shippingMode: normalizeShippingMode(meta),
-    shipping:
-      session.shipping_details ||
-      normalizeShippingFromMetadata(meta) ||
-      {},
-    items,
-    metadata: meta,
+
+    customerName: toStr(m.customer_name) || toStr(session?.customer_details?.name) || "Cliente",
+    email: toStr(m.customer_email) || toStr(session?.customer_details?.email) || "",
+    phone: toStr(m.customer_phone) || toStr(session?.customer_details?.phone) || "",
+
+    total: Number(session?.amount_total || 0) / 100,
+    currency: upper(session?.currency || "mxn"),
+
+    promoCode: toStr(m.promo_code),
+    discountMXN: Number(m.discount_mxn || 0),
+    shippingMXN: Number(m.shipping_mxn || 0),
+    shippingMode: toStr(m.shipping_mode),
+
+    items: await listLineItems(session.id),
+    shipping: session.shipping_details || buildShippingFromMetadata(m) || {},
+    metadata: m,
   };
 
   const siteUrl = getSiteUrl();
-  if (!siteUrl) return json(200, { warned: "missing_site_url" });
+  if (!siteUrl) {
+    await updateNotifyMeta(notifyState, { notify_status: "error", notify_err: "missing_site_url", notify_ts: nowISO() }, `notify-err:${stripeEvent.id}`);
+    return json(200, { ok: true, warned: "missing_site_url" });
+  }
+
+  const internalSecret = toStr(process.env.INTERNAL_WEBHOOK_SECRET);
 
   try {
-    await fetch(`${siteUrl}/.netlify/functions/envia_webhook`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.INTERNAL_WEBHOOK_SECRET
-          ? { "x-internal-secret": process.env.INTERNAL_WEBHOOK_SECRET }
-          : {}),
+    const r = await fetchWithTimeout(
+      `${siteUrl}/.netlify/functions/envia_webhook`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(internalSecret ? { "x-internal-secret": internalSecret } : {}),
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
+      9000
+    );
 
-    await updateNotifyMeta({
-      state: notifyState,
-      patch: {
-        notify_status: "sent",
-        notify_err: "",
-        notify_ts: nowISO(),
-      },
-      idempotencyKey: `sent:${stripeEvent.id}`,
-    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      const errMsg = `envia_webhook_non_ok:${r.status}:${t.slice(0, 180)}`;
 
+      await updateNotifyMeta(notifyState, { notify_status: "error", notify_err: errMsg, notify_ts: nowISO() }, `notify-err:${stripeEvent.id}`);
+      return json(200, { ok: true, delivered: false, error: errMsg });
+    }
+
+    await updateNotifyMeta(notifyState, { notify_status: "sent", notify_err: "", notify_ts: nowISO() }, `notify-sent:${stripeEvent.id}`);
     return json(200, { ok: true, delivered: true });
   } catch (e) {
-    await updateNotifyMeta({
-      state: notifyState,
-      patch: {
-        notify_status: "error",
-        notify_err: toStr(e.message),
-        notify_ts: nowISO(),
-      },
-      idempotencyKey: `err:${stripeEvent.id}`,
-    });
-
-    return json(200, { ok: true, delivered: false });
+    const errMsg = `fetch_fail:${toStr(e.message).slice(0, 180)}`;
+    await updateNotifyMeta(notifyState, { notify_status: "error", notify_err: errMsg, notify_ts: nowISO() }, `notify-err:${stripeEvent.id}`);
+    return json(200, { ok: true, delivered: false, error: errMsg });
   }
 };
