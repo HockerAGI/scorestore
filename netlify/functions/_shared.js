@@ -97,13 +97,12 @@ function validateCartItems(items) {
 function validateSizes(items, productMap) {
   for (const it of items) {
     const p = productMap[it.id];
-    if (!p) continue; // Si no existe, se ignora o marca error según lógica negocio
+    if (!p) continue; // Si no existe, se ignora
     
     // Si el producto tiene tallas definidas, validar que la talla enviada exista
     if (Array.isArray(p.sizes) && p.sizes.length > 0) {
       if (!p.sizes.includes(it.size)) {
-        // Opcional: permitir si es unitalla implícito, pero estricto es mejor
-        // return { ok: false, error: `Talla ${it.size} no válida para ${p.name}` };
+         return { ok: false, error: `Talla ${it.size} no válida para ${p.name}` };
       }
     }
   }
@@ -229,7 +228,8 @@ async function computeShipping({ mode, to, items, productMap }) {
   const isTJ = m === "tj" || isTijuanaPostal(to?.postal_code) || (looksLikeTijuana(to?.city) && to?.state_code === "BC");
   
   if (isTJ) {
-    return { ok: true, mxn: TIJUANA_DELIVERY_MXN, label: "Entrega Local Tijuana", carrier: "LOCAL" };
+    // CORREGIDO: Usar TIJUANA_DELIVERY_PRICE en lugar de TIJUANA_DELIVERY_MXN
+    return { ok: true, mxn: TIJUANA_DELIVERY_PRICE, label: "Entrega Local Tijuana", carrier: "LOCAL" };
   }
 
   // 3. Nacional (Envia.com)
