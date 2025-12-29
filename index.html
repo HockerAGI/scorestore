@@ -1,214 +1,210 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es-MX">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE Store · Tienda Oficial</title>
-  <meta name="description" content="Compra merch oficial de SCORE. Ediciones limitadas. Pago seguro con tarjeta." />
-
-  <!-- PWA -->
-  <link rel="manifest" href="/site.webmanifest" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#E10600" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  
+  <title>SCORE Store | Tienda Oficial Off-Road</title>
+  <meta name="description" content="Tienda Oficial SCORE International. Adquiere la colección 2025, ropa técnica y accesorios oficiales. Operado por Único Uniformes." />
+  
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
 
-  <!-- Preloads -->
-  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
-  <link rel="preload" as="image" href="/assets/fondo-pagina-score.webp" />
-
+  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
   <link rel="stylesheet" href="/css/styles.css" />
+  
+  <script src="https://js.stripe.com/v3/" async></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
-
 <body>
-  <a class="skip" href="#main">Saltar al contenido</a>
 
-  <!-- HEADER (siempre visible) -->
-  <header class="topbar" role="banner">
-    <div class="topbar__left">
-      <img class="brand" src="/assets/logo-score.webp" alt="SCORE Store" width="160" height="48" decoding="async" />
+  <div class="page-bg"></div>
+  <div class="dust-container"><div class="dust"></div></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="/assets/logo-score.webp" alt="SCORE International Oficial" width="120" height="48">
     </div>
-
-    <div class="topbar__right">
-      <div class="pill" aria-label="Moneda">
-        MXN <span class="muted">· USD informativo</span>
-      </div>
-
-      <button class="cartBtn" id="cartBtn" type="button" aria-haspopup="dialog" aria-controls="cartDrawer">
-        <span aria-hidden="true">🛒</span>
-        <span>Carrito</span>
-        <span class="cartCount" id="cartCount">0</span>
+    <div class="navRight">
+      <div class="pill">MX + <b>TIJUANA</b></div>
+      <button class="cartTrigger" onclick="openDrawer()" aria-label="Abrir carrito">
+        🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
   </header>
 
-  <!-- HERO (100% comercial / ventas) -->
-  <section class="hero" aria-label="Portada">
-    <img src="/assets/hero.webp" alt="Merch oficial SCORE" width="1200" height="650" fetchpriority="high" decoding="async" />
-    <div class="hero__overlay" aria-hidden="true"></div>
-
-    <div class="hero__content">
-      <p class="hero__tag">TIENDA OFICIAL · EDICIONES LIMITADAS</p>
-      <h1 class="hero__h1">Compra merch oficial</h1>
-      <p class="hero__p">
-        Pago seguro con tarjeta. Envíos a todo México o entrega local. Stock limitado por temporada.
-      </p>
-
-      <div class="hero__cta">
-        <a class="btn btnPrimary" href="#catalogGrid">Ver colecciones</a>
-        <a class="btn btnGhost" href="#products">Ver productos</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- PARTNERS (logos reales) -->
-  <section class="partners" aria-label="Partners oficiales">
-    <div class="sectionHead">
-      <h2 class="h2">Partners</h2>
-      <p class="p muted">Marcas asociadas a la temporada.</p>
-    </div>
-
-    <div class="partners__row">
-      <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" width="140" height="56" loading="lazy" decoding="async" />
-      <img src="/assets/logo-ford.webp" alt="Ford" width="110" height="56" loading="lazy" decoding="async" />
-      <img src="/assets/logo-rzr.webp" alt="Polaris RZR" width="120" height="56" loading="lazy" decoding="async" />
-      <img src="/assets/logo-world-desert.webp" alt="World Desert" width="150" height="56" loading="lazy" decoding="async" />
-      <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="120" height="56" loading="lazy" decoding="async" />
-    </div>
-  </section>
-
-  <!-- GRID CATÁLOGOS (todas iguales, overlay café 20%, texto fijo) -->
-  <main id="main" class="main" role="main">
-    <section class="catalogGrid" id="catalogGrid" aria-label="Colecciones">
-      <div class="sectionHead">
-        <h2 class="h2">Colecciones</h2>
-        <p class="p muted">Elige una colección para filtrar productos.</p>
-      </div>
-
-      <div class="grid4" id="collectionCards">
-        <!-- JS inserta tarjetas, pero el layout vive aquí -->
+  <main class="wrap" id="mainContent">
+    
+    <section class="hero">
+      <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
+      <div class="heroContent">
+        <div class="tagline">COLECCIÓN OFICIAL 2025</div>
+        <h1>SCORE<br>INTERNATIONAL</h1>
+        <p class="sub">
+          <strong>EQUIPAMIENTO PROFESIONAL.</strong><br>
+          Fabricado bajo licencia oficial por <strong>ÚNICO UNIFORMES</strong>. Ropa de alto rendimiento y calidad garantizada.
+        </p>
+        <div class="ctaRow">
+          <button class="btn primary" onclick="document.getElementById('grid').scrollIntoView({behavior:'smooth'})">COMPRAR AHORA</button>
+          <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
+        </div>
       </div>
     </section>
 
-    <!-- PRODUCTOS -->
-    <section class="products" id="products" aria-label="Productos">
-      <div class="sectionHead">
-        <h2 class="h2">Productos</h2>
-        <p class="p muted">Precios en MXN (USD informativo a 17.00 MXN).</p>
+    <section class="partners-section">
+      <h3 class="partners-title">OFFICIAL PARTNERS</h3>
+      <div class="partners-grid">
+        <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" class="partner-logo" loading="lazy">
+        <img src="/assets/logo-ford.webp" alt="Ford" class="partner-logo" loading="lazy">
+        <img src="/assets/logo-rzr.webp" alt="Polaris" class="partner-logo" loading="lazy">
+        <img src="/assets/logo-world-desert.webp" alt="WDC" class="partner-logo" loading="lazy">
+      </div>
+    </section>
+
+    <div class="secHeader">
+      <h2>COLECCIONES</h2>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
+        <div class="cardBg" style="background-image: url('/assets/baja1000-texture.webp');"></div>
+        <div class="cardContent">
+          <span class="statusBadge">TIENDA OFICIAL</span>
+          <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy">
+          <span class="viewBtn">VER PRODUCTOS</span>
+        </div>
+      </div>
+      
+      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_500', 'Baja 500')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge">NUEVO STOCK</span>
+          <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy">
+          <span class="viewBtn">VER PRODUCTOS</span>
+        </div>
       </div>
 
-      <div class="state" id="stateBox" hidden></div>
-      <div class="productGrid" id="productGrid" aria-live="polite"></div>
-    </section>
+      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_400', 'Baja 400')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge">DISPONIBLE</span>
+          <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy">
+          <span class="viewBtn">VER PRODUCTOS</span>
+        </div>
+      </div>
+
+      <div class="card" role="button" tabindex="0" onclick="openCatalog('SF_250', 'San Felipe 250')">
+        <div class="cardBg"></div>
+        <div class="cardContent">
+          <span class="statusBadge">CLÁSICOS</span>
+          <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy">
+          <span class="viewBtn">VER PRODUCTOS</span>
+        </div>
+      </div>
+    </div>
+
   </main>
 
-  <!-- FOOTER (siempre visible) -->
-  <footer class="footer" role="contentinfo">
-    <div class="footer__grid">
-      <div class="footer__brand">
-        <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="96" height="48" loading="lazy" decoding="async" />
-        <p class="footer__p">
-          Operado por <strong>Único Uniformes</strong>.
-          <br />
-          <span class="muted">Precios en MXN incluyen impuestos aplicables.</span>
-        </p>
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-col">
+        <img src="/assets/logo-score.webp" alt="SCORE" style="height:30px; filter:grayscale(1); opacity:0.8;">
+        <p class="small">Official Licensed Merchandise.</p>
+        <div class="social-links">
+          <a href="https://www.facebook.com/OfficialScoreInternational" target="_blank" rel="noopener">FB</a>
+          <a href="https://www.instagram.com/scoreinternational" target="_blank" rel="noopener">IG</a>
+          <a href="https://www.youtube.com/user/scoreinternational" target="_blank" rel="noopener">YT</a>
+        </div>
+      </div>
+      
+      <div class="footer-col center">
+        <h4>OPERADO POR</h4>
+        <img src="/assets/logo-unico.webp" alt="Unico Uniformes" style="height:40px; margin:10px 0;">
+        <p>Distribuidor Autorizado y Fabricante Oficial.</p>
       </div>
 
-      <div class="footer__links">
-        <p class="footer__h">Legales</p>
-        <a href="/legal.html#terminos">Términos</a>
-        <a href="/legal.html#privacidad">Privacidad</a>
-        <a href="/legal.html#envios">Envíos y devoluciones</a>
-      </div>
-
-      <div class="footer__links">
-        <p class="footer__h">Soporte</p>
-        <a href="/legal.html#contacto">Contacto</a>
-        <a href="/legal.html#pagos">Pagos</a>
+      <div class="footer-col right">
+        <h4>CONTACTO Y LEGAL</h4>
+        <p>Calle Palermo 6106 Interior JK,<br>Col. Anexa Roma, Tijuana, B.C., C.P. 22614</p>
+        <p><a href="mailto:ventas@scorestore.com">ventas@scorestore.com</a></p>
+        <p class="legal-note">Precios en MXN (Pesos Mexicanos). Incluyen IVA.</p>
+        <div class="legal-links">
+          <span>Términos y Condiciones</span> | <span>Aviso de Privacidad</span>
+        </div>
       </div>
     </div>
-
-    <div class="footer__bottom">
-      <small>© <span id="y"></span> SCORE Store. Todos los derechos reservados.</small>
+    <div class="footer-copy">
+      &copy; <script>document.write(new Date().getFullYear())</script> SCORE International. Todos los derechos reservados.
     </div>
   </footer>
 
-  <!-- CART DRAWER -->
-  <dialog class="drawer" id="cartDrawer" aria-label="Carrito">
-    <div class="drawer__head">
-      <div>
-        <p class="drawer__title">Carrito</p>
-        <p class="drawer__sub muted" id="cartSub">—</p>
-      </div>
-      <button class="iconBtn" id="closeCart" type="button" aria-label="Cerrar">✕</button>
+  <div class="overlay" id="overlay" aria-hidden="true"></div>
+
+  <aside class="drawer" id="drawer" aria-label="Carrito">
+    <div class="dHead">
+      <h3 class="dTitle">TU PEDIDO</h3>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
+    <div class="dBody" id="cartBody"></div>
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0</span></div>
+      <div class="sumRow"><span>Envío:</span> <span id="shipCost">--</span></div>
+      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
+      
+      <div class="promo-box">
+        <input id="promoCode" placeholder="CÓDIGO DE CUPÓN" autocomplete="off">
+      </div>
 
-    <div class="drawer__body">
-      <div id="cartItems" class="cartItems"></div>
-
-      <div class="shipBox">
-        <p class="shipBox__h">Entrega</p>
-
-        <div class="shipModes" role="radiogroup" aria-label="Método de entrega">
-          <label class="radio">
-            <input type="radio" name="shipMode" value="pickup" checked />
-            <span>Recoger en fábrica</span>
-            <span class="muted">· $0</span>
-          </label>
-
-          <label class="radio">
-            <input type="radio" name="shipMode" value="tijuana_delivery" />
-            <span>Entrega local Tijuana</span>
-            <span class="muted">· $200</span>
-          </label>
-
-          <label class="radio">
-            <input type="radio" name="shipMode" value="envia" />
-            <span>Envío nacional</span>
-            <span class="muted">· cotización</span>
-          </label>
+      <p class="label-sm">MÉTODO DE ENTREGA:</p>
+      <select id="shipMethod">
+        <option value="">-- SELECCIONA --</option>
+        <option value="pickup">📍 Recoger en Fábrica (Tijuana) - Gratis</option>
+        <option value="tj">🚚 Entrega Local (Tijuana) - $200 MXN</option>
+        <option value="mx">📦 Envío Nacional (México) - Cotizar</option>
+      </select>
+      
+      <div id="shipForm" style="display:none;">
+        <input id="cp" type="tel" inputmode="numeric" placeholder="Código Postal (5 dígitos)" maxlength="5">
+        <div class="form-row">
+          <input id="state" placeholder="Estado (ej. BC)" maxlength="3" style="width:30%">
+          <input id="city" placeholder="Ciudad" style="flex:1">
         </div>
+        <input id="addr" placeholder="Calle, Número y Colonia">
+        <input id="name" placeholder="Nombre completo quien recibe">
+      </div>
+      <div id="quoteResult" class="quote-res"></div>
 
-        <div class="shipForm" id="shipForm" hidden>
-          <div class="row2">
-            <label class="field">
-              <span>Estado (código)</span>
-              <input id="shipState" placeholder="BC" maxlength="3" autocomplete="address-level1" />
-            </label>
-
-            <label class="field">
-              <span>Código Postal</span>
-              <input id="shipPostal" placeholder="22000" inputmode="numeric" autocomplete="postal-code" />
-            </label>
-          </div>
-
-          <label class="field">
-            <span>Ciudad</span>
-            <input id="shipCity" placeholder="Tijuana" autocomplete="address-level2" />
-          </label>
-
-          <label class="field">
-            <span>Calle y número</span>
-            <input id="shipAddress1" placeholder="Calle #123, Colonia" autocomplete="street-address" />
-          </label>
-
-          <button class="btn btnGhost w100" id="quoteBtn" type="button">Cotizar envío</button>
-          <p class="muted small" id="quoteNote"></p>
-        </div>
+      <div class="secure-badge">
+        <span>🔒 PAGO SEGURO CON STRIPE</span>
       </div>
 
-      <div class="totals">
-        <div class="line"><span>Subtotal</span><span id="subTotal">$0 MXN</span></div>
-        <div class="line"><span>Envío</span><span id="shipTotal">$0 MXN</span></div>
-        <div class="line lineStrong"><span>Total</span><span id="grandTotal">$0 MXN</span></div>
-        <p class="muted small">USD informativo a 17.00 MXN por 1 USD.</p>
-      </div>
+      <button id="payBtn" class="btn primary full" disabled onclick="checkout()">PROCEDER AL PAGO</button>
+      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
     </div>
+  </aside>
 
-    <div class="drawer__foot">
-      <button class="btn btnGhost" id="clearCart" type="button">Vaciar</button>
-      <button class="btn btnPrimary" id="checkoutBtn" type="button">Pagar con tarjeta</button>
+  <div class="modal" id="modalCatalog" aria-hidden="true">
+    <div class="dHead">
+      <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
+      <button onclick="closeAll()" class="closeBtn">&times;</button>
     </div>
-  </dialog>
+    <div class="catContent" id="catContent"></div>
+  </div>
 
+  <div class="paybar" id="paybar">
+    <div>
+      <div class="paybar-label">TOTAL</div>
+      <div class="paybar-total" id="barTotal">$0</div>
+    </div>
+    <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
+  </div>
+
+  <div class="toast" id="toast" role="alert"></div>
   <script src="/js/main.js" defer></script>
 </body>
 </html>
