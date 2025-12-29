@@ -2,169 +2,39 @@
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#E10600" />
-  
-  <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda Oficial SCORE International." />
-  
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>SCORE Store · Official Racing Merch</title>
+  <meta name="description" content="Tienda oficial SCORE International Racing. Merch oficial y ediciones limitadas." />
+
+  <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+  <meta name="theme-color" content="#E10600" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
+  <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css" />
-  
-  <script src="https://js.stripe.com/v3/" async></script>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Preload LCP -->
+  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
 </head>
+
 <body>
-
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
-
   <header class="topbar">
-    <div class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="48">
-    </div>
-    <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()" aria-label="Abrir carrito">
-        🛒 <span id="cartCount" class="cartCount">0</span>
-      </button>
-    </div>
+    <img src="/assets/logo-score.webp" alt="SCORE Store" class="logo" width="140" height="48" />
   </header>
 
-  <main class="wrap" id="mainContent">
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-      <div class="heroContent">
-        <div class="tagline">MERCH OFICIAL 2025</div>
-        <h1>SCORE<br>INTERNATIONAL</h1>
-        <p class="sub">
-          Fabricado en Tijuana por <b>ÚNICO UNIFORMES</b>.<br>
-          Colección de alto rendimiento probada en el desierto.
-        </p>
-        <div class="ctaRow">
-          <button class="btn primary" onclick="document.getElementById('grid').scrollIntoView({behavior:'smooth'})">VER COLECCIÓN</button>
-          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
-        </div>
-      </div>
-    </section>
+  <section class="hero">
+    <img src="/assets/hero.webp" alt="SCORE International Off-Road Racing" fetchpriority="high" decoding="async" />
+  </section>
 
-    <div class="secHeader">
-      <h2>CAMPEONATOS</h2>
-    </div>
+  <main id="catalog" class="catalog"></main>
 
-    <div class="grid" id="grid">
-      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_1000', 'Baja 1000')">
-        <div class="cardBg" style="background-image: url('/assets/baja1000-texture.webp');"></div>
-        <div class="cardContent">
-          <span class="statusBadge">TIENDA OFICIAL</span>
-          <img src="/assets/logo-baja1000.webp" class="cardLogo" alt="Baja 1000" loading="lazy">
-          <span class="viewBtn">Ver Colección</span>
-        </div>
-      </div>
-      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_500', 'Baja 500')">
-        <div class="cardBg"></div>
-        <div class="cardContent">
-          <span class="statusBadge">NUEVA LLEGADA</span>
-          <img src="/assets/logo-baja500.webp" class="cardLogo" alt="Baja 500" loading="lazy">
-          <span class="viewBtn">Ver Productos</span>
-        </div>
-      </div>
-      <div class="card" role="button" tabindex="0" onclick="openCatalog('BAJA_400', 'Baja 400')">
-        <div class="cardBg"></div>
-        <div class="cardContent">
-          <span class="statusBadge">DISPONIBLE</span>
-          <img src="/assets/logo-baja400.webp" class="cardLogo" alt="Baja 400" loading="lazy">
-          <span class="viewBtn">Ver Productos</span>
-        </div>
-      </div>
-      <div class="card" role="button" tabindex="0" onclick="openCatalog('SF_250', 'San Felipe 250')">
-        <div class="cardBg"></div>
-        <div class="cardContent">
-          <span class="statusBadge">CLÁSICOS</span>
-          <img src="/assets/logo-sf250.webp" class="cardLogo" alt="San Felipe 250" loading="lazy">
-          <span class="viewBtn">Ver Productos</span>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <footer>
-    <div class="footer-inner" style="max-width:1200px; margin:0 auto; padding:40px 20px; color:#666; font-size:12px; text-align:center;">
-      <p style="margin-bottom:10px;">
-        <strong>ÚNICO UNIFORMES</strong> - Distribuidor Oficial.<br>
-        Calle Palermo 6106 Int JK, Col. Anexa Roma, Tijuana, B.C., CP 22614.
-      </p>
-      <p>&copy; 2025 SCORE International.</p>
-    </div>
+  <footer class="footer">
+    <p>© 2025 SCORE International · Todos los derechos reservados.</p>
   </footer>
 
-  <div class="overlay" id="overlay" aria-hidden="true"></div>
-
-  <aside class="drawer" id="drawer">
-    <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button onclick="closeAll()" class="closeBtn">&times;</button>
-    </div>
-    <div class="dBody" id="cartBody"></div>
-    <div class="dFoot">
-      <div class="sumRow"><span>Subtotal:</span> <span id="lnSub">$0</span></div>
-      <div class="sumRow"><span>Envío:</span> <span id="shipCost">--</span></div>
-      <div class="sumRow total"><span>Total:</span> <span id="lnTotal">$0 MXN</span></div>
-      
-      <div class="promo-box" style="margin-top:15px; display:flex; gap:5px;">
-        <input id="promoCode" placeholder="CÓDIGO DE CUPÓN" style="margin-bottom:0; text-transform:uppercase;">
-      </div>
-
-      <p class="label-sm" style="margin-top:15px; font-weight:800; font-size:11px; color:#888;">MÉTODO DE ENTREGA:</p>
-      <select id="shipMethod">
-        <option value="">-- SELECCIONA --</option>
-        <option value="pickup">📍 Recoger en Fábrica (Tijuana) - Gratis</option>
-        <option value="tj">🚚 Envío Local (Tijuana) - $200 MXN</option>
-        <option value="mx">📦 Envío Nacional (México) - Cotizar</option>
-      </select>
-      
-      <div id="shipForm" style="display:none; margin-top:10px;">
-        <input id="cp" type="tel" inputmode="numeric" placeholder="Código Postal" maxlength="5">
-        <div style="display:flex; gap:10px;">
-          <input id="state" placeholder="Estado (BC)" maxlength="3" style="width:30%;">
-          <input id="city" placeholder="Ciudad" style="flex:1;">
-        </div>
-        <input id="addr" placeholder="Calle, Número y Colonia">
-        <input id="name" placeholder="Nombre completo">
-      </div>
-      <div id="quoteResult" class="quote-res"></div>
-
-      <button id="payBtn" class="btn primary full" disabled onclick="checkout()">PAGAR AHORA</button>
-      <span class="closeLink" onclick="closeAll()">SEGUIR COMPRANDO</span>
-    </div>
-  </aside>
-
-  <div class="modal" id="modalCatalog" aria-hidden="true">
-    <div class="dHead">
-      <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button onclick="closeAll()" class="closeBtn">&times;</button>
-    </div>
-    <div class="catContent" id="catContent"></div>
-  </div>
-
-  <div class="paybar" id="paybar">
-    <div>
-      <div class="paybar-label">TOTAL</div>
-      <div class="paybar-total" id="barTotal">$0</div>
-    </div>
-    <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
-  </div>
-
-  <div class="toast" id="toast"></div>
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="/js/main.js" defer></script>
 </body>
 </html>
