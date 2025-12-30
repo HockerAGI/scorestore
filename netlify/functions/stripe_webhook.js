@@ -1,9 +1,9 @@
 // netlify/functions/stripe_webhook.js
-// ORQUESTADOR — Stripe manda, el sistema ejecuta
+// ORQUESTADOR — fuente única de verdad
 
 const Stripe = require("stripe");
 
-/* ---------- helpers ---------- */
+/* ================= HELPERS ================= */
 function json(statusCode, body) {
   return {
     statusCode,
@@ -31,7 +31,7 @@ function getSiteUrl(event) {
   ).replace(/\/+$/, "");
 }
 
-/* ---------- handler ---------- */
+/* ================= HANDLER ================= */
 exports.handler = async (event) => {
   const STRIPE_SECRET_KEY = toStr(process.env.STRIPE_SECRET_KEY);
   const STRIPE_WEBHOOK_SECRET = toStr(process.env.STRIPE_WEBHOOK_SECRET);
@@ -63,45 +63,67 @@ exports.handler = async (event) => {
     return json(400, { error: "Firma inválida" });
   }
 
-  // Solo pagos completos
+  // Solo pagos finalizados
   if (stripeEvent.type !== "checkout.session.completed") {
     return json(200, { ignored: stripeEvent.type });
   }
 
   const session = stripeEvent.data.object;
-  const meta = session.metadata || {};
 
-  // ---- Idempotencia simple pero real ----
-  if (toStr(meta.processed) === "yes") {
+  // Cargar sesión completa
+  let fullSession = session;
+  try {
+    fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+      expand: ["customer_details"],
+    });
+  } catch {}
+
+  // --------- IDEMPOTENCIA ---------
+  const meta = fullSession.metadata || {};
+  if (toStr(meta.order_processed) === "yes") {
     return json(200, { skipped: "already_processed" });
   }
 
+  const orderRef = meta.order_ref || `SCORE-${Date.now()}`;
+
   try {
     await stripe.checkout.sessions.update(
-      session.id,
+      fullSession.id,
       {
         metadata: {
           ...meta,
-          processed: "yes",
+          order_processed: "yes",
+          order_ref: orderRef,
+          order_status: "paid",
           processed_at: new Date().toISOString(),
         },
       },
-      { idempotencyKey: `process:${stripeEvent.id}` }
+      { idempotencyKey: `order-lock:${stripeEvent.id}` }
     );
   } catch (e) {
-    console.error("No se pudo lockear metadata:", e.message);
-    return json(200, { warned: "metadata_lock_failed" });
+    console.error("Error lock metadata:", e.message);
+    return json(200, { warned: "lock_failed" });
   }
 
-  // ---- ORQUESTACIÓN: llamar worker ----
-  const siteUrl = getSiteUrl(event);
-
+  // --------- PAYLOAD CANÓNICO ---------
   const payload = {
-    orderId: session.id,
-    total: Number(session.amount_total || 0) / 100,
-    currency: session.currency,
-    email: session.customer_details?.email || "",
+    eventId: stripeEvent.id,
+    orderId: fullSession.id,
+    orderRef,
+
+    total: Number(fullSession.amount_total || 0) / 100,
+    currency: fullSession.currency || "mxn",
+
+    customerName: fullSession.customer_details?.name || "",
+    email: fullSession.customer_details?.email || "",
+    phone: fullSession.customer_details?.phone || "",
+
+    shipping: fullSession.shipping_details || {},
+    metadata: fullSession.metadata || {},
   };
+
+  // --------- ORQUESTACIÓN ---------
+  const siteUrl = getSiteUrl(event);
 
   try {
     await fetch(`${siteUrl}/.netlify/functions/envia_webhook`, {
@@ -115,10 +137,10 @@ exports.handler = async (event) => {
       body: JSON.stringify(payload),
     });
   } catch (e) {
-    console.error("Fallo al llamar envia_webhook:", e.message);
+    console.error("Error llamando envia_webhook:", e.message);
   }
 
-  console.log("Orden procesada por Stripe:", payload);
+  console.log("ORDEN CONFIRMADA:", orderRef);
 
-  return json(200, { ok: true, processed: true });
+  return json(200, { ok: true, orderRef });
 };
