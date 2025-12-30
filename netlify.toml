@@ -20,7 +20,7 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# Netlify Functions (NO CACHE + CORS)
+# Netlify Functions (NO CACHE)
 # -------------------------
 [[headers]]
   for = "/.netlify/functions/*"
@@ -44,7 +44,7 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 # -------------------------
-# JS controlado por Service Worker
+# JS controlado por SW
 # -------------------------
 [[headers]]
   for = "/js/*"
@@ -52,23 +52,20 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 # -------------------------
-# Service Worker
+# Service Worker / Manifest
 # -------------------------
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
 
-# -------------------------
-# Manifest PWA
-# -------------------------
 [[headers]]
   for = "/site.webmanifest"
   [headers.values]
     Cache-Control = "no-cache"
 
 # -------------------------
-# Datos dinámicos (catálogo / promos)
+# Datos dinámicos
 # -------------------------
 [[headers]]
   for = "/data/*"
@@ -76,7 +73,7 @@
     Cache-Control = "public, max-age=300, stale-while-revalidate=900"
 
 # -------------------------
-# SPA fallback (opcional)
+# SPA fallback
 # -------------------------
 [[redirects]]
   from = "/*"
