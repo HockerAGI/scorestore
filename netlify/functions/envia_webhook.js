@@ -1,5 +1,5 @@
 // netlify/functions/envia_webhook.js
-// WORKER — ejecuta, NO decide
+// WORKER — ejecuta procesos post-pago
 
 const {
   TELEGRAM_BOT_TOKEN = "",
@@ -10,7 +10,7 @@ const {
   INTERNAL_WEBHOOK_SECRET = "",
 } = process.env;
 
-/* ---------- helpers ---------- */
+/* ================= HELPERS ================= */
 function json(statusCode, body) {
   return {
     statusCode,
@@ -25,10 +25,13 @@ function toStr(v) {
 
 function moneyMXN(v) {
   const n = Number(v || 0);
-  return `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN`;
+  return `$${n.toLocaleString("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} MXN`;
 }
 
-/* ---------- notificaciones ---------- */
+/* ================= NOTIFY ================= */
 async function sendTelegram(text) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
   try {
@@ -67,7 +70,7 @@ async function sendWhatsApp(text) {
   }
 }
 
-/* ---------- handler ---------- */
+/* ================= HANDLER ================= */
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -88,22 +91,37 @@ exports.handler = async (event) => {
     return json(400, { error: "JSON inválido" });
   }
 
-  const { orderId, total, currency = "MXN", email = "" } = payload;
+  const {
+    orderRef,
+    orderId,
+    total,
+    currency = "MXN",
+    customerName = "Cliente",
+    email = "",
+  } = payload;
+
   if (!orderId || !total) {
     return json(400, { error: "Payload incompleto" });
   }
 
   const msg = [
-    "✅ PAGO CONFIRMADO — SCORE STORE",
-    `🧾 Orden: ${orderId}`,
-    `💰 Total: ${moneyMXN(total)} (${currency})`,
+    "✅ NUEVA ORDEN — SCORE STORE",
+    `🧾 Orden: ${orderRef || orderId}`,
+    `👤 ${customerName}`,
     email ? `📧 ${email}` : "",
-  ].filter(Boolean).join("\n");
+    `💰 Total: ${moneyMXN(total)} (${currency.toUpperCase()})`,
+    "",
+    "Estado: PAGADO",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   await Promise.all([
     sendTelegram(msg),
     sendWhatsApp(msg),
   ]);
+
+  console.log("Notificaciones enviadas:", orderRef || orderId);
 
   return json(200, { ok: true, notified: true });
 };
