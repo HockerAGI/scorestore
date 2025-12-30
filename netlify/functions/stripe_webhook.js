@@ -1,9 +1,9 @@
 // netlify/functions/stripe_webhook.js
-// Stripe Webhook — versión estable y alineada al flujo actual
+// ORQUESTADOR — Stripe manda, el sistema ejecuta
 
 const Stripe = require("stripe");
 
-/* ---------- helpers mínimos ---------- */
+/* ---------- helpers ---------- */
 function json(statusCode, body) {
   return {
     statusCode,
@@ -23,16 +23,25 @@ function getRawBody(event) {
     : Buffer.from(event.body, "utf8");
 }
 
+function getSiteUrl(event) {
+  return (
+    toStr(process.env.URL_SCORE) ||
+    toStr(process.env.URL) ||
+    `${event.headers["x-forwarded-proto"] || "https"}://${event.headers.host}`
+  ).replace(/\/+$/, "");
+}
+
 /* ---------- handler ---------- */
 exports.handler = async (event) => {
-  const stripeKey = toStr(process.env.STRIPE_SECRET_KEY);
-  const webhookSecret = toStr(process.env.STRIPE_WEBHOOK_SECRET);
+  const STRIPE_SECRET_KEY = toStr(process.env.STRIPE_SECRET_KEY);
+  const STRIPE_WEBHOOK_SECRET = toStr(process.env.STRIPE_WEBHOOK_SECRET);
+  const INTERNAL_WEBHOOK_SECRET = toStr(process.env.INTERNAL_WEBHOOK_SECRET);
 
-  if (!stripeKey || !webhookSecret) {
-    return json(500, { ok: false, error: "Stripe no configurado" });
+  if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
+    return json(500, { error: "Stripe no configurado" });
   }
 
-  const stripe = new Stripe(stripeKey, {
+  const stripe = new Stripe(STRIPE_SECRET_KEY, {
     apiVersion: "2024-11-20",
   });
 
@@ -40,39 +49,34 @@ exports.handler = async (event) => {
     event.headers["stripe-signature"] ||
     event.headers["Stripe-Signature"];
 
-  if (!sig) {
-    return json(400, { ok: false, error: "Falta stripe-signature" });
-  }
+  if (!sig) return json(400, { error: "Falta stripe-signature" });
 
   let stripeEvent;
   try {
-    const rawBody = getRawBody(event);
     stripeEvent = stripe.webhooks.constructEvent(
-      rawBody,
+      getRawBody(event),
       sig,
-      webhookSecret
+      STRIPE_WEBHOOK_SECRET
     );
-  } catch (err) {
-    console.error("Webhook signature error:", err.message);
-    return json(400, { ok: false, error: "Firma inválida" });
+  } catch (e) {
+    console.error("Firma Stripe inválida:", e.message);
+    return json(400, { error: "Firma inválida" });
   }
 
-  /* ---------- solo procesamos pagos completos ---------- */
+  // Solo pagos completos
   if (stripeEvent.type !== "checkout.session.completed") {
-    return json(200, { received: true, ignored: stripeEvent.type });
+    return json(200, { ignored: stripeEvent.type });
   }
 
   const session = stripeEvent.data.object;
-
-  /* ---------- idempotencia básica ---------- */
-  // Stripe puede reenviar el evento. Usamos metadata como lock simple.
   const meta = session.metadata || {};
+
+  // ---- Idempotencia simple pero real ----
   if (toStr(meta.processed) === "yes") {
-    return json(200, { ok: true, skipped: "already_processed" });
+    return json(200, { skipped: "already_processed" });
   }
 
   try {
-    // marcamos como procesado (sin DB, sin fetch extra)
     await stripe.checkout.sessions.update(
       session.id,
       {
@@ -82,23 +86,39 @@ exports.handler = async (event) => {
           processed_at: new Date().toISOString(),
         },
       },
-      {
-        idempotencyKey: `process:${stripeEvent.id}`,
-      }
+      { idempotencyKey: `process:${stripeEvent.id}` }
     );
   } catch (e) {
-    console.error("Metadata update failed:", e.message);
-    // no detenemos: Stripe volverá a intentar
-    return json(200, { ok: true, warned: "metadata_lock_failed" });
+    console.error("No se pudo lockear metadata:", e.message);
+    return json(200, { warned: "metadata_lock_failed" });
   }
 
-  /* ---------- log operativo (puedes reemplazar por email / slack después) ---------- */
-  console.log("Pago confirmado", {
-    sessionId: session.id,
+  // ---- ORQUESTACIÓN: llamar worker ----
+  const siteUrl = getSiteUrl(event);
+
+  const payload = {
+    orderId: session.id,
     total: Number(session.amount_total || 0) / 100,
     currency: session.currency,
     email: session.customer_details?.email || "",
-  });
+  };
+
+  try {
+    await fetch(`${siteUrl}/.netlify/functions/envia_webhook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(INTERNAL_WEBHOOK_SECRET
+          ? { "x-internal-secret": INTERNAL_WEBHOOK_SECRET }
+          : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    console.error("Fallo al llamar envia_webhook:", e.message);
+  }
+
+  console.log("Orden procesada por Stripe:", payload);
 
   return json(200, { ok: true, processed: true });
 };
