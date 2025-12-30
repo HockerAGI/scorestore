@@ -1,169 +1,239 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+/* ======================================================
+   SCORE STORE — CSS FINAL ESTABLE (AJUSTADO)
+   ====================================================== */
 
-  <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda oficial SCORE International Off-Road. Ropa y accesorios de alto rendimiento, ediciones limitadas.">
+/* ---------- VARIABLES ---------- */
+:root {
+  --fontTitle: "Teko", sans-serif;
+  --fontBody: "Inter", sans-serif;
+  --red: #E10600;
+  --carbon: #0b0f14;
+  --sand: #f8f8f8;
+  --green: #00C853;
+  --cafeOverlay: linear-gradient(
+    180deg,
+    rgba(62, 39, 35, 1) 0%,
+    rgba(20, 10, 5, 1) 100%
+  );
+  --shadow: 0 15px 40px rgba(0,0,0,0.15);
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
 
-  <meta name="theme-color" content="#E10600">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+/* ---------- RESET ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+img {
+  max-width: 100%;
+  display: block;
+}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Teko:wght@700&display=swap" rel="stylesheet">
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #eee; }
+::-webkit-scrollbar-thumb { background: #bbb; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--red); }
 
-  <link rel="preload" href="/assets/hero.webp" as="image">
-  <link rel="stylesheet" href="/css/styles.css">
-</head>
+/* ---------- BODY ---------- */
+body {
+  font-family: var(--fontBody);
+  background-color: var(--sand);
+  color: #111;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+}
 
-<body>
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
+body.modalOpen {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
 
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE International">
-    </div>
-    <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button type="button" id="cartTrigger" class="cartTrigger"
-        aria-label="Abrir carrito (0 artículos)" onclick="openDrawer()">
-        🛒 <span id="cartCount" class="cartCount" aria-live="polite">0</span>
-      </button>
-    </div>
-  </header>
+/* ---------- ACCESIBILIDAD ---------- */
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 2px;
+}
 
-  <main class="wrap">
+/* ---------- ANIMACIONES ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-      <div class="heroContent">
-        <span class="tagline">MERCH OFICIAL 2025</span>
-        <h1>SCORE<br>INTERNATIONAL</h1>
-        <p class="sub">
-          Fabricado en Tijuana por <strong>ÚNICO UNIFORMES</strong>.<br>
-          Colección de alto rendimiento probada en el desierto.
-        </p>
-        <div class="ctaRow">
-          <button type="button" class="btn primary"
-            onclick="openCatalog('BAJA_1000','BAJA 1000')">
-            VER COLECCIÓN
-          </button>
-          <button type="button" class="btn secondary" onclick="openDrawer()">
-            MI CARRITO
-          </button>
-        </div>
-      </div>
-    </section>
+@keyframes bounce {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
 
-    <!-- CAMPEONATOS -->
-    <section class="championships">
-      <h2>CAMPEONATOS</h2>
+@keyframes grain {
+  0%,100% { transform: translate(0,0); }
+  25% { transform: translate(-5%,5%); }
+  50% { transform: translate(5%,-5%); }
+  75% { transform: translate(-3%,3%); }
+}
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_1000','BAJA 1000')">
-        <img src="/assets/logos/baja1000.webp" alt="BAJA 1000">
-        <div><strong>TIENDA OFICIAL</strong><span>Ver colección</span></div>
-      </button>
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_500','BAJA 500')">
-        <img src="/assets/logos/baja500.webp" alt="BAJA 500">
-        <div><strong>NUEVA LLEGADA</strong><span>Ver productos</span></div>
-      </button>
+/* ---------- BACKGROUNDS ---------- */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background: url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
+  opacity: .5;
+}
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_400','BAJA 400')">
-        <img src="/assets/logos/baja400.webp" alt="BAJA 400">
-        <div><strong>DISPONIBLE</strong><span>Ver productos</span></div>
-      </button>
+.dust-container {
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  overflow: hidden;
+  mix-blend-mode: multiply;
+}
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('SF_250','SAN FELIPE 250')">
-        <img src="/assets/logos/sf250.webp" alt="SAN FELIPE 250">
-        <div><strong>CLÁSICOS</strong><span>Ver productos</span></div>
-      </button>
-    </section>
+.dust {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E");
+  animation: grain 8s steps(10) infinite;
+}
 
-  </main>
+/* ---------- LAYOUT ---------- */
+.wrap {
+  width: min(1200px, 94vw);
+  margin: 0 auto;
+  padding-top: 90px;
+  padding-bottom: 80px;
+  position: relative;
+  z-index: 1;
+}
 
-  <!-- OVERLAY -->
-  <div id="overlay" class="overlay"></div>
+/* ---------- HEADER ---------- */
+.topbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 76px;
+  z-index: 100;
+  background: rgba(255,255,255,.95);
+  border-bottom: 3px solid var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 max(20px, 4vw);
+  backdrop-filter: blur(12px);
+}
 
-  <!-- MODAL CATÁLOGO -->
-  <section id="modalCatalog" class="modal" role="dialog" aria-modal="true">
-    <div class="dHead">
-      <h3 id="catTitle" class="dTitle"></h3>
-      <button type="button" class="closeBtn" aria-label="Cerrar" onclick="closeAll()">×</button>
-    </div>
-    <div id="catContent" class="catContent"></div>
-  </section>
+.brand img { height: 48px; }
 
-  <!-- DRAWER CARRITO -->
-  <aside id="drawer" class="drawer" role="dialog" aria-modal="true">
-    <div class="dHead">
-      <h3 class="dTitle">MI CARRITO</h3>
-      <button type="button" class="closeBtn" aria-label="Cerrar" onclick="closeAll()">×</button>
-    </div>
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-    <div id="cartBody" class="dBody"></div>
+.pill {
+  background: #111;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 99px;
+}
+.pill b { color: var(--red); }
 
-    <div class="dFoot">
-      <div class="shipSelector">
-        <p>Método de entrega:</p>
-        <label>
-          <input type="radio" name="shipMode" value="pickup" checked>
-          Recoger en tienda (Tijuana, BC)
-        </label>
-        <label>
-          <input type="radio" name="shipMode" value="mx">
-          Envío a domicilio
-        </label>
-        <input type="text" id="postalCode" placeholder="C.P." disabled>
-      </div>
+.cartTrigger {
+  background: var(--carbon);
+  color: #fff;
+  border: none;
+  height: 44px;
+  padding: 0 16px;
+  font-family: var(--fontTitle);
+  font-size: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
-      <div id="lnShipRow" class="sumRow" style="display:none;">
-        <span>Envío</span><span id="lnShip">$0 MXN</span>
-      </div>
-      <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
+.cartCount {
+  background: var(--red);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
 
-      <button type="button" id="payBtn" class="btn primary full" onclick="checkout()" disabled>
-        PAGAR
-      </button>
-    </div>
-  </aside>
+/* ---------- BUTTONS ---------- */
+.btn {
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  text-transform: uppercase;
+  border-radius: 8px;
+  padding: 14px 26px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  transition: .2s;
+}
 
-  <!-- PAYBAR -->
-  <div id="paybar" class="paybar">
-    <div>
-      <div class="paybar-label">TOTAL A PAGAR</div>
-      <div id="barTotal" class="paybar-total">$0 MXN</div>
-    </div>
-    <button type="button" class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
-  </div>
+.btn.primary { background: #fff; color: #111; }
+.btn.secondary {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.4);
+}
 
-  <div id="toast" class="toast"></div>
+.btn.full { width: 100%; }
 
-  <script src="/js/main.js" defer></script>
+.btn-sm {
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-weight: 900;
+}
 
-  <!-- REGISTRO SERVICE WORKER -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
-    }
-  </script>
-</body>
-</html>
+.white {
+  background: #fff;
+  color: #111;
+}
+
+/* ---------- PAYBAR ---------- */
+.paybar-label {
+  font-size: 11px;
+  opacity: .8;
+  letter-spacing: 1px;
+}
+
+/* ---------- FIX ---------- */
+.heroOverlay { pointer-events: none; }
+
+/* ---------- ENVÍO ---------- */
+.shipSelector {
+  margin: 10px 0;
+  font-size: 14px;
+}
+.shipSelector p { margin-bottom: 6px; font-weight: 600; }
+.shipSelector label { display: block; margin: 4px 0; }
+.shipSelector input[type="radio"] { margin-right: 6px; }
+.shipSelector input[type="text"] {
+  width: 80px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-left: 4px;
+}
