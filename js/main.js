@@ -1,43 +1,20 @@
 /**
- * SCORE STORE - main.js (v23 PROD)
- * - Alineado a catalog.json corregido
- * - Soporte: sku, status, tags
- * - sectionId consistente (SF250)
- * - UI badges + subsecciones legibles
- * - Checkout y Stripe SIN TOCAR
+ * SCORE STORE — main.js (FINAL PROD)
+ * Unificado y alineado con:
+ * - index.html final
+ * - CSS PRO unificado
+ * - catalog.json real
+ * - Netlify Functions (create_checkout)
+ * - Stripe (NO se modifica lógica de backend)
  */
 
 /* =========================
    CONFIG
 ========================= */
 
-const STRIPE_PK =
-  "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh";
-
 const USD_RATE_FALLBACK = 17.5;
-
 const LS_CART = "score_cart_v1";
 const LS_PROMO = "score_promo_v1";
-
-/* =========================
-   LABEL MAPS
-========================= */
-
-const SUBSECTION_LABELS = {
-  COLECCION_2025: "Colección 2025",
-  COLECCION_BAJA_500: "Colección Baja 500",
-  COLECCION_BAJA_400: "Colección Baja 400",
-  COLECCION_SF250: "Colección San Felipe",
-  ACCESORIOS: "Accesorios",
-  PITS: "Equipo de Pits",
-};
-
-const STATUS_LABEL = {
-  available: "Disponible",
-  low_stock: "Últimas piezas",
-  sold_out: "Agotado",
-  pre_order: "Preventa",
-};
 
 /* =========================
    STATE
@@ -48,25 +25,19 @@ let promos = null;
 
 let cart = safeJson(localStorage.getItem(LS_CART), []);
 let promoState = safeJson(localStorage.getItem(LS_PROMO), null);
-let ship = { mode: "pickup", mxn: 0, label: "Pickup" };
+
+let ship = {
+  mode: "pickup",
+  mxn: 0,
+  label: "Pickup",
+};
 
 /* =========================
    HELPERS
 ========================= */
 
-const $ = (id) => document.getElementById(id);
-
-const moneyMXN = (n) =>
-  new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  }).format(Number(n || 0));
-
-const moneyUSD = (n) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Number(n || 0));
+const $ = (q, r = document) => r.querySelector(q);
+const $$ = (q, r = document) => Array.from(r.querySelectorAll(q));
 
 function safeJson(raw, fallback) {
   try {
@@ -76,43 +47,39 @@ function safeJson(raw, fallback) {
   }
 }
 
-function escapeHtml(str) {
-  return String(str || "").replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  }[m]));
+function moneyMXN(n) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  }).format(Number(n || 0));
+}
+
+function moneyUSD(n) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(n || 0));
+}
+
+function getFx() {
+  return Number(catalog?.site?.fx_mxn_per_usd || USD_RATE_FALLBACK);
 }
 
 function toast(msg) {
-  const t = $("toast");
+  const t = $("#toast");
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
-function debounce(fn, ms = 400) {
-  let t = null;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
-  };
-}
+/* =========================
+   STORAGE
+========================= */
 
-async function fetchJSON(url, { timeout = 8000 } = {}) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeout);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
-    if (!res.ok) throw new Error("Bad response");
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
+function saveCart() {
+  localStorage.setItem(LS_CART, JSON.stringify(cart));
 }
 
 /* =========================
@@ -130,21 +97,15 @@ function subtotal() {
   );
 }
 
-function getFx() {
-  return Number(catalog?.site?.fx_mxn_per_usd || USD_RATE_FALLBACK);
-}
-
-function promoDiscountAmount(sub) {
+function promoDiscount(sub) {
   if (!promoState) return 0;
-  if (promoState.type === "pct")
-    return Math.round(sub * (Number(promoState.value) / 100));
-  if (promoState.type === "mxn")
-    return Math.min(sub, Number(promoState.value));
+  if (promoState.type === "pct") {
+    return Math.round(sub * (promoState.value / 100));
+  }
+  if (promoState.type === "mxn") {
+    return Math.min(sub, promoState.value);
+  }
   return 0;
-}
-
-function normalizeCode(v) {
-  return String(v || "").trim().toUpperCase().replace(/\s+/g, "");
 }
 
 /* =========================
@@ -152,112 +113,42 @@ function normalizeCode(v) {
 ========================= */
 
 async function boot() {
-  $("overlay")?.addEventListener("click", () => {
-    closeAll();
-    closeLegal();
-  });
-
-  document
-    .querySelectorAll('input[name="shipMode"]')
-    .forEach((r) =>
-      r.addEventListener("change", () =>
-        updateCart({ recalcShip: true })
-      )
-    );
-
-  $("promoApplyBtn")?.addEventListener("click", applyPromo);
-
-  const onAddrChange = debounce(
-    () => updateCart({ recalcShip: true }),
-    350
-  );
-  $("cp")?.addEventListener("input", onAddrChange);
-  $("addr")?.addEventListener("input", onAddrChange);
-
+  // Load catalog
   try {
     catalog = await fetchJSON(`/data/catalog.json?t=${Date.now()}`);
   } catch {
-    toast("No se pudo cargar el catálogo.");
+    toast("No se pudo cargar el catálogo");
+    return;
   }
 
+  // Load promos (optional)
   try {
     promos = await fetchJSON(`/data/promos.json?t=${Date.now()}`);
   } catch {
     promos = { active_promos: [] };
   }
 
-  updateCart({ recalcShip: true });
-}
+  // Events
+  document.addEventListener("score:openCatalog", (e) => {
+    const { sectionId, title } = e.detail || {};
+    openCatalog(sectionId, title);
+  });
 
-/* =========================
-   CART RENDER
-========================= */
-
-function saveCart() {
-  localStorage.setItem(LS_CART, JSON.stringify(cart));
-}
-
-function renderCartBody() {
-  const body = $("cartBody");
-  if (!body) return;
-
-  if (!cart.length) {
-    body.innerHTML = `<div style="text-align:center;padding:40px;opacity:.6">Tu carrito está vacío</div>`;
-    return;
-  }
-
-  body.innerHTML = cart
-    .map(
-      (i, idx) => `
-    <div class="cartItem">
-      <img src="${escapeHtml(i.img)}" alt="">
-      <div class="cartItemInfo">
-        <div class="cartItemName">${escapeHtml(i.name)}</div>
-        <div class="cartItemMeta">Talla: ${escapeHtml(
-          i.size || "Unitalla"
-        )}</div>
-        <div class="cartItemPrice">${moneyMXN(i.price)}</div>
-      </div>
-      <div class="cartItemActions">
-        <button data-remove="${idx}">&times;</button>
-        <div>x${i.qty}</div>
-      </div>
-    </div>
-  `
-    )
-    .join("");
-
-  body.querySelectorAll("button[data-remove]").forEach((b) =>
-    b.addEventListener("click", () => {
-      cart.splice(Number(b.dataset.remove), 1);
-      saveCart();
-      updateCart({ recalcShip: true });
+  // Shipping mode
+  $$('input[name="shipMode"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      ship.mode = r.value;
+      updateCart();
     })
   );
-}
 
-/* =========================
-   CART UPDATE
-========================= */
+  // Promo
+  $("#promoApplyBtn")?.addEventListener("click", applyPromo);
 
-async function updateCart({ recalcShip } = { recalcShip: true }) {
-  const sub = subtotal();
-  const disc = promoDiscountAmount(sub);
-  const total = Math.max(0, sub - disc) + Number(ship.mxn || 0);
+  // Pay
+  $("#payBtn")?.addEventListener("click", startCheckout);
 
-  $("cartCount").innerText = cartCount();
-  $("lnSub").innerText = moneyMXN(sub);
-  $("lnShip").innerText = moneyMXN(ship.mxn || 0);
-  $("lnTotal").innerText = moneyMXN(total);
-  $("barTotal").innerText = moneyMXN(total);
-
-  const usd = total / getFx();
-  $("lnUsd").textContent = `Aprox ${moneyUSD(usd)} USD`;
-
-  renderCartBody();
-
-  $("paybar")?.classList.toggle("visible", cart.length > 0);
-  $("payBtn").disabled = cart.length === 0;
+  updateCart();
 }
 
 /* =========================
@@ -265,70 +156,82 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
 ========================= */
 
 window.openCatalog = function (sectionId, title) {
-  $("catTitle").innerText = title;
-  const modal = $("modalCatalog");
-  const content = $("catContent");
+  const wrap = $("#catContent");
+  const modal = $("#modalCatalog");
+  const overlay = $("#overlay");
 
-  const items = (catalog?.products || []).filter(
+  $("#catTitle").textContent = title || "CATÁLOGO";
+
+  wrap.innerHTML = "";
+
+  const items = catalog.products.filter(
     (p) => p.sectionId === sectionId
   );
 
   if (!items.length) {
-    content.innerHTML = `<div style="padding:40px;text-align:center">Próximamente</div>`;
+    wrap.innerHTML = `<div class="emptyState"><h4>Próximamente</h4></div>`;
   } else {
-    const groups = {};
+    const grid = document.createElement("div");
+    grid.className = "productGrid";
+
     items.forEach((p) => {
-      const k = p.subSection || "GENERAL";
-      if (!groups[k]) groups[k] = [];
-      groups[k].push(p);
+      let selectedSize = p.sizes?.[0] || "Unitalla";
+
+      const card = document.createElement("div");
+      card.className = "productCard";
+
+      card.innerHTML = `
+        <div class="productImg">
+          <img src="${p.img}" alt="${p.name}">
+          <span class="badge ${
+            p.status === "low_stock" ? "limited" : "available"
+          }">
+            ${p.status === "low_stock" ? "EDICIÓN LIMITADA" : "DISPONIBLE"}
+          </span>
+        </div>
+        <div class="productInfo">
+          <h4>${p.name}</h4>
+          <div class="sku">${p.sku || ""}</div>
+          <div class="price">${moneyMXN(p.baseMXN)}</div>
+          <div class="sizeRow">
+            ${p.sizes
+              .map(
+                (s) =>
+                  `<button class="sizeBtn ${
+                    s === selectedSize ? "active" : ""
+                  }">${s}</button>`
+              )
+              .join("")}
+          </div>
+          <button class="addBtn">AGREGAR AL CARRITO</button>
+        </div>
+      `;
+
+      // Size selection
+      card.querySelectorAll(".sizeBtn").forEach((b) => {
+        b.addEventListener("click", () => {
+          card
+            .querySelectorAll(".sizeBtn")
+            .forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          selectedSize = b.textContent;
+        });
+      });
+
+      // Add to cart
+      card.querySelector(".addBtn").addEventListener("click", () => {
+        addToCart(p, selectedSize);
+      });
+
+      grid.appendChild(card);
     });
 
-    content.innerHTML = Object.keys(groups)
-      .map(
-        (k) => `
-      <h4 class="catSectionTitle">${
-        SUBSECTION_LABELS[k] || k
-      }</h4>
-      <div class="catGrid">
-        ${groups[k]
-          .map(
-            (p) => `
-          <div class="prodCard">
-            <span class="badge">${
-              STATUS_LABEL[p.status] || "Disponible"
-            }</span>
-            <img src="${p.img}" alt="${escapeHtml(p.name)}">
-            <div class="prodName">${escapeHtml(p.name)}</div>
-            <div class="prodPrice">${moneyMXN(p.baseMXN)}</div>
-            <select id="size_${p.id}" class="sizeSelect">
-              ${p.sizes
-                .map((s) => `<option value="${s}">${s}</option>`)
-                .join("")}
-            </select>
-            <button class="btn primary full" data-add="${p.id}">
-              Agregar al carrito
-            </button>
-          </div>
-        `
-          )
-          .join("")}
-      </div>
-    `
-      )
-      .join("");
-
-    content.querySelectorAll("button[data-add]").forEach((b) =>
-      b.addEventListener("click", () => {
-        const id = b.dataset.add;
-        const p = catalog.products.find((x) => x.id === id);
-        const size = $(`size_${id}`)?.value || "Unitalla";
-        addToCart(p, size);
-      })
-    );
+    wrap.appendChild(grid);
+    wrap.dataset.filled = "1";
   }
 
   modal.classList.add("active");
-  $("overlay").classList.add("active");
+  overlay.classList.add("active");
   document.body.classList.add("modalOpen");
 };
 
@@ -341,21 +244,166 @@ function addToCart(prod, size) {
   const found = cart.find((i) => i.key === key);
 
   if (found) found.qty += 1;
-  else
+  else {
     cart.push({
       key,
       id: prod.id,
       sku: prod.sku,
       name: prod.name,
-      price: prod.baseMXN,
       img: prod.img,
       size,
+      price: prod.baseMXN,
       qty: 1,
     });
+  }
 
   saveCart();
-  toast("Agregado al carrito");
+  updateCart();
+  toast("Producto agregado al carrito");
   openDrawer();
+}
+
+/* =========================
+   CART RENDER
+========================= */
+
+window.renderCart = function () {
+  const body = $("#cartBody");
+  body.innerHTML = "";
+
+  if (!cart.length) {
+    body.innerHTML = `<div class="emptyState"><p>Tu carrito está vacío</p></div>`;
+    return;
+  }
+
+  cart.forEach((item) => {
+    const el = document.createElement("div");
+    el.className = "cartItem";
+
+    el.innerHTML = `
+      <img src="${item.img}" alt="">
+      <div class="cartMeta">
+        <strong>${item.name}</strong>
+        <span>Talla: ${item.size}</span>
+        <div class="qtyRow">
+          <button class="qtyBtn">−</button>
+          <span>${item.qty}</span>
+          <button class="qtyBtn">+</button>
+        </div>
+      </div>
+      <div class="cartRight">
+        <span class="itemPrice">${moneyMXN(
+          item.price * item.qty
+        )}</span>
+        <button class="removeBtn">✕</button>
+      </div>
+    `;
+
+    const [decBtn, incBtn] = el.querySelectorAll(".qtyBtn");
+
+    decBtn.onclick = () => {
+      item.qty--;
+      if (item.qty <= 0) cart = cart.filter((c) => c !== item);
+      saveCart();
+      updateCart();
+    };
+
+    incBtn.onclick = () => {
+      item.qty++;
+      saveCart();
+      updateCart();
+    };
+
+    el.querySelector(".removeBtn").onclick = () => {
+      cart = cart.filter((c) => c !== item);
+      saveCart();
+      updateCart();
+    };
+
+    body.appendChild(el);
+  });
+};
+
+/* =========================
+   CART UPDATE
+========================= */
+
+function updateCart() {
+  const sub = subtotal();
+  const disc = promoDiscount(sub);
+  const total = Math.max(0, sub - disc) + Number(ship.mxn || 0);
+
+  $("#cartCount").textContent = cartCount();
+  $("#lnSub").textContent = moneyMXN(sub);
+  $("#lnShip").textContent = moneyMXN(ship.mxn || 0);
+  $("#lnTotal").textContent = moneyMXN(total);
+  $("#barTotal").textContent = moneyMXN(total);
+
+  const usd = total / getFx();
+  $("#lnUsd").textContent = `Aprox ${moneyUSD(usd)} USD`;
+
+  renderCart();
+
+  $("#paybar")?.classList.toggle("visible", cart.length > 0);
+  $("#payBtn").disabled = cart.length === 0;
+}
+
+/* =========================
+   PROMO
+========================= */
+
+function applyPromo() {
+  const code = $("#promoInput").value.trim().toUpperCase();
+  const p = promos?.active_promos?.find((x) => x.code === code);
+
+  if (!p) {
+    toast("Cupón no válido");
+    return;
+  }
+
+  promoState = p;
+  localStorage.setItem(LS_PROMO, JSON.stringify(p));
+  toast("Cupón aplicado");
+  updateCart();
+}
+
+/* =========================
+   CHECKOUT (NO BACKEND CHANGES)
+========================= */
+
+async function startCheckout() {
+  if (!cart.length) return;
+
+  const payload = {
+    items: cart.map((i) => ({
+      id: i.id,
+      qty: i.qty,
+      size: i.size,
+    })),
+    mode: ship.mode,
+    promoCode: promoState?.code || "",
+    to: {
+      name: $("#name")?.value,
+      postal_code: $("#cp")?.value,
+      address1: $("#addr")?.value,
+      city: $("#city")?.value,
+      state_code: $("#state")?.value,
+    },
+  };
+
+  try {
+    const res = await fetch("/api/create_checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (data?.url) window.location.href = data.url;
+    else toast("No se pudo iniciar el pago");
+  } catch {
+    toast("Error al conectar con pagos");
+  }
 }
 
 /* =========================
@@ -363,18 +411,34 @@ function addToCart(prod, size) {
 ========================= */
 
 window.openDrawer = function () {
-  $("drawer").classList.add("active");
-  $("overlay").classList.add("active");
+  $("#drawer").classList.add("active");
+  $("#overlay").classList.add("active");
   document.body.classList.add("modalOpen");
-  updateCart({ recalcShip: true });
+  updateCart();
 };
 
 window.closeAll = function () {
-  $("drawer")?.classList.remove("active");
-  $("modalCatalog")?.classList.remove("active");
-  $("overlay")?.classList.remove("active");
+  $("#drawer")?.classList.remove("active");
+  $("#modalCatalog")?.classList.remove("active");
+  $("#overlay")?.classList.remove("active");
   document.body.classList.remove("modalOpen");
 };
+
+/* =========================
+   FETCH
+========================= */
+
+async function fetchJSON(url, { timeout = 8000 } = {}) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+    if (!res.ok) throw new Error("Bad response");
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 /* =========================
    START
