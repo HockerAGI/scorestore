@@ -1,34 +1,44 @@
-const { json, safeParse, needEnv } = require("./_shared");
+// netlify/functions/shipping.js
+const { jsonResponse, safeJsonParse, digitsOnly } = require("./_shared");
 
 exports.handler = async (event) => {
+  // CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, {});
+  }
+
   if (event.httpMethod !== "POST") {
-    return json(405, { ok: false, error: "Method not allowed" });
+    return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
   }
 
-  const body = safeParse(event.body);
-  const postalCode = body?.to?.postal_code;
+  const body = safeJsonParse(event.body, {});
+  const postalCode = digitsOnly(body?.to?.postal_code);
 
-  if (!postalCode || !/^\d{5}$/.test(postalCode)) {
-    return json(400, { ok: false, error: "Invalid postal code" });
+  if (!/^\d{5}$/.test(postalCode)) {
+    return jsonResponse(200, { ok: false });
   }
 
-  const ENVIA_API_KEY = needEnv("ENVIA_API_KEY");
+  const ENVIA_API_KEY = process.env.ENVIA_API_KEY;
+  if (!ENVIA_API_KEY) {
+    // fallback silencioso
+    return jsonResponse(200, { ok: false });
+  }
 
   try {
     const res = await fetch("https://api.envia.com/ship/rate/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${ENVIA_API_KEY}`
+        "Authorization": `Bearer ${ENVIA_API_KEY}`,
       },
       body: JSON.stringify({
         origin: {
           postal_code: "22000",
-          country_code: "MX"
+          country_code: "MX",
         },
         destination: {
           postal_code: postalCode,
-          country_code: "MX"
+          country_code: "MX",
         },
         packages: [
           {
@@ -36,35 +46,37 @@ exports.handler = async (event) => {
             dimensions: {
               length: 20,
               width: 20,
-              height: 10
-            }
-          }
-        ]
-      })
+              height: 10,
+            },
+          },
+        ],
+      }),
     });
 
     if (!res.ok) {
-      return json(200, { ok: false, mxn: 0 });
+      return jsonResponse(200, { ok: false });
     }
 
     const data = await res.json();
+
     if (!Array.isArray(data) || !data.length) {
-      return json(200, { ok: false, mxn: 0 });
+      return jsonResponse(200, { ok: false });
     }
 
     const cheapest = data.reduce((a, b) =>
       Number(a.total_price) < Number(b.total_price) ? a : b
     );
 
-    return json(200, {
+    return jsonResponse(200, {
       ok: true,
       mxn: Number(cheapest.total_price),
-      carrier: cheapest.carrier,
-      service: cheapest.service,
-      days: cheapest.delivery_time || null
+      label: "Envío Nacional",
+      carrier: String(cheapest.carrier || ""),
+      service_code: String(cheapest.service || ""),
+      days: Number(cheapest.delivery_time || 7),
     });
-
-  } catch {
-    return json(200, { ok: false, mxn: 0 });
+  } catch (e) {
+    // fallback silencioso (NO rompe checkout)
+    return jsonResponse(200, { ok: false });
   }
 };
