@@ -1,5 +1,6 @@
 {
-  "name": "SCORE Store · Official Racing Merch",
+  "id": "/?source=pwa",
+  "name": "SCORE Store · Racing Merch",
   "short_name": "SCORE Store",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -13,7 +14,7 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#E10600",
-  "description": "Tienda oficial SCORE International Racing. Ediciones limitadas.",
+  "description": "Merch de carreras off-road. Ediciones limitadas fabricadas en México.",
   "lang": "es-MX",
   "dir": "ltr",
   "categories": ["shopping", "sports", "lifestyle"],
