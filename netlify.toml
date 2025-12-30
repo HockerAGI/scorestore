@@ -5,6 +5,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[build.environment]
+  NODE_VERSION = "18"
+
 # -------------------------
 # Seguridad global
 # -------------------------
@@ -15,6 +18,17 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# -------------------------
+# Netlify Functions (NO CACHE + CORS)
+# -------------------------
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
 
 # -------------------------
 # Assets estáticos (cache largo)
@@ -60,3 +74,11 @@
   for = "/data/*"
   [headers.values]
     Cache-Control = "public, max-age=300, stale-while-revalidate=900"
+
+# -------------------------
+# SPA fallback (opcional)
+# -------------------------
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
