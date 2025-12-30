@@ -20,7 +20,7 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# Netlify Functions (NO CACHE)
+# Netlify Functions (NO CACHE + CORS)
 # -------------------------
 [[headers]]
   for = "/.netlify/functions/*"
