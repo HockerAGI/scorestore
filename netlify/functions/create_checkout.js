@@ -36,7 +36,9 @@ function absUrl(siteUrl, maybePathOrUrl) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, {});
-  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { error: "Method Not Allowed" });
+  }
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -44,7 +46,11 @@ exports.handler = async (event) => {
     }
 
     const siteUrl = getSiteUrlFromEnv(event);
-    if (!siteUrl) return jsonResponse(500, { error: "No se pudo resolver URL del sitio (URL/URL_SCORE)." });
+    if (!siteUrl) {
+      return jsonResponse(500, {
+        error: "No se pudo resolver URL del sitio (URL/URL_SCORE).",
+      });
+    }
 
     const body = safeJsonParse(event.body, {});
     const items = body.items || [];
@@ -52,7 +58,7 @@ exports.handler = async (event) => {
     const mode = toStr(body.mode) || "pickup";
     const promoCode = toStr(body.promoCode);
 
-    // 1) Validar carrito
+    // 1) Validar carrito (estructura básica)
     const cartCheck = validateCartItems(items);
     if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
 
@@ -60,20 +66,33 @@ exports.handler = async (event) => {
     const catalog = await loadCatalog();
     const productMap = productMapFromCatalog(catalog);
 
-    // 3) Validar tallas
+    // 3) Validar tallas contra catálogo
     const sizeCheck = validateSizes(cartCheck.items, productMap);
     if (!sizeCheck.ok) return jsonResponse(400, { error: sizeCheck.error });
 
-    // 4) Line items
+    // 4) Line items (Stripe)
     const line_items = [];
     let subtotal_mxn = 0;
 
     for (const it of cartCheck.items) {
       const p = productMap[it.id];
-      if (!p) return jsonResponse(400, { error: `Producto no disponible: ${it.id}` });
+      if (!p) {
+        return jsonResponse(400, { error: `Producto no disponible: ${it.id}` });
+      }
+
+      // 🔒 BLOQUEO HARD: producto agotado
+      if (p.status === "sold_out") {
+        return jsonResponse(400, {
+          error: `Producto agotado: ${p.name}`,
+        });
+      }
 
       const unit = Number(p.baseMXN || 0);
-      if (!Number.isFinite(unit) || unit <= 0) return jsonResponse(400, { error: `Precio inválido en catálogo: ${p.id}` });
+      if (!Number.isFinite(unit) || unit <= 0) {
+        return jsonResponse(400, {
+          error: `Precio inválido en catálogo: ${p.id}`,
+        });
+      }
 
       subtotal_mxn += unit * it.qty;
 
@@ -85,6 +104,8 @@ exports.handler = async (event) => {
           currency: "mxn",
           product_data: {
             name: `${p.name} (${it.size})`,
+            // 🧾 SKU visible en Stripe
+            ...(p.sku ? { description: `SKU: ${p.sku}` } : {}),
             ...(imgAbs ? { images: [imgAbs] } : {}),
           },
           unit_amount,
@@ -102,10 +123,14 @@ exports.handler = async (event) => {
       name: toStr(rawTo.name),
     };
 
-    const ship = await computeShipping({ mode, to, items: cartCheck.items });
+    const ship = await computeShipping({
+      mode,
+      to,
+      items: cartCheck.items,
+    });
     const shipping_mxn = ship?.ok ? Number(ship.mxn || 0) : 0;
 
-    // 6) Promo (informativo)
+    // 6) Promo (informativo / total calculado)
     const promo = await applyPromoToTotals({
       promoCode,
       subtotalMXN: subtotal_mxn,
@@ -121,18 +146,23 @@ exports.handler = async (event) => {
       success_url: `${siteUrl}/?status=success`,
       cancel_url: `${siteUrl}/?status=cancel`,
 
-      // UX pro
+      // UX
       locale: "es-419",
       phone_number_collection: { enabled: true },
       billing_address_collection: "auto",
 
-      // Facturación (manual): capturamos y avisamos
+      // Facturación (manual)
       custom_fields: [
         {
           key: "factura",
           label: { type: "custom", custom: "¿Requieres factura?" },
           type: "dropdown",
-          dropdown: { options: [{ label: "No", value: "no" }, { label: "Sí", value: "si" }] },
+          dropdown: {
+            options: [
+              { label: "No", value: "no" },
+              { label: "Sí", value: "si" },
+            ],
+          },
         },
         {
           key: "rfc",
@@ -158,28 +188,43 @@ exports.handler = async (event) => {
       ],
 
       metadata: {
-        // control
+        // Control general
         shipping_mode: mode,
         promo_code: normalizePromo(promoCode),
         subtotal_mxn: String(Math.round(subtotal_mxn)),
         shipping_mxn: String(Math.round(shipping_mxn)),
         discount_mxn: String(Math.round(promo.discountMXN || 0)),
-        final_total_calc: String(Math.round(promo.totalMXN || (subtotal_mxn + shipping_mxn))),
+        final_total_calc: String(
+          Math.round(
+            promo.totalMXN || subtotal_mxn + shipping_mxn
+          )
+        ),
 
-        // Envia hint (si vino de rate)
+        // 📦 Envío (si hubo cotización)
         ship_label: toStr(ship?.label),
         ship_days: String(Number(ship?.days || 7)),
         ship_carrier: toStr(ship?.carrier || ""),
         ship_service_code: toStr(ship?.service_code || ""),
 
+        // 🧾 NUEVO: SKUs y secciones (analytics / soporte)
+        items_sku: cartCheck.items
+          .map((i) => productMap[i.id]?.sku || i.id)
+          .join(","),
+        sections: cartCheck.items
+          .map((i) => productMap[i.id]?.sectionId)
+          .join(","),
+
         // Facturación manual
-        invoice_instructions: "Enviar datos fiscales a ventas.unicotextil@gmail.com",
+        invoice_instructions:
+          "Enviar datos fiscales a ventas.unicotextil@gmail.com",
       },
     };
 
     // Shipping address solo si el usuario eligió envío
     if (mode !== "pickup") {
-      sessionConfig.shipping_address_collection = { allowed_countries: ["MX"] };
+      sessionConfig.shipping_address_collection = {
+        allowed_countries: ["MX"],
+      };
     }
 
     // Cobro de envío (fixed)
@@ -188,11 +233,17 @@ exports.handler = async (event) => {
         {
           shipping_rate_data: {
             type: "fixed_amount",
-            fixed_amount: { amount: Math.round(shipping_mxn * 100), currency: "mxn" },
+            fixed_amount: {
+              amount: Math.round(shipping_mxn * 100),
+              currency: "mxn",
+            },
             display_name: ship?.label || "Envío",
             delivery_estimate: {
               minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: Number(ship?.days || 7) },
+              maximum: {
+                unit: "business_day",
+                value: Number(ship?.days || 7),
+              },
             },
           },
         },
@@ -203,6 +254,8 @@ exports.handler = async (event) => {
     return jsonResponse(200, { url: session.url });
   } catch (e) {
     console.error("Checkout Error:", e);
-    return jsonResponse(500, { error: "No se pudo iniciar el pago. Intenta de nuevo." });
+    return jsonResponse(500, {
+      error: "No se pudo iniciar el pago. Intenta de nuevo.",
+    });
   }
 };
