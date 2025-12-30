@@ -13,29 +13,47 @@ function json(statusCode, body, extraHeaders = {}) {
   };
 }
 
-function ok(body) { return json(200, body); }
-function bad(status, msg) { return json(status, { ok: false, error: msg }); }
-
-function parseBody(event) {
-  if (!event || !event.body) return null;
-  if (event.isBase64Encoded) {
-    const raw = Buffer.from(event.body, "base64").toString("utf8");
-    return JSON.parse(raw);
-  }
-  return JSON.parse(event.body);
+function ok(body) {
+  return json(200, body);
 }
 
-function getSiteURL(event) {
-  // Netlify in prod
-  const netlifyURL = process.env.URL;
-  if (netlifyURL) return netlifyURL;
+function bad(status, msg) {
+  return json(status, { ok: false, error: msg });
+}
 
-  // fallback local
-  const proto = event.headers["x-forwarded-proto"] || "https";
-  const host = event.headers.host;
+/**
+ * JSON SAFE PARSE (NO rompe function)
+ */
+function parseBody(event) {
+  if (!event || !event.body) return null;
+
+  try {
+    const raw = event.isBase64Encoded
+      ? Buffer.from(event.body, "base64").toString("utf8")
+      : event.body;
+
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * URL REAL DEL SITIO
+ * Usa URL_SCORE (frontend)
+ */
+function getSiteURL(event) {
+  if (process.env.URL_SCORE) return process.env.URL_SCORE;
+  if (process.env.URL) return process.env.URL;
+
+  const proto = event?.headers?.["x-forwarded-proto"] || "https";
+  const host = event?.headers?.host;
   return `${proto}://${host}`;
 }
 
+/**
+ * LECTURA DE CATÁLOGO DESDE /data
+ */
 async function readCatalog() {
   const file = path.join(__dirname, "..", "..", "data", "catalog.json");
   const raw = await fs.readFile(file, "utf8");
@@ -49,6 +67,11 @@ async function readPromos() {
 }
 
 module.exports = {
-  json, ok, bad, parseBody, getSiteURL,
-  readCatalog, readPromos
+  json,
+  ok,
+  bad,
+  parseBody,
+  getSiteURL,
+  readCatalog,
+  readPromos
 };
