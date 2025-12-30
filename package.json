@@ -2,11 +2,11 @@
   "name": "score-store",
   "version": "1.0.0",
   "private": true,
-  "description": "SCORE Store - Ecommerce Oficial",
+  "description": "SCORE Store - Ecommerce Oficial (PWA + Netlify Functions + Stripe + Envia)",
   "scripts": {
     "dev": "netlify dev",
     "build": "echo \"Static site ready\"",
-    "lint": "node --check netlify/functions/*.js"
+    "lint": "node --check netlify/functions/**/*.js"
   },
   "engines": {
     "node": ">=18"
