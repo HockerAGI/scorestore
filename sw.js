@@ -1,10 +1,7 @@
 // sw.js — SCORE STORE (CACHE CONTROL DEFINITIVO)
-// Motivo:
-// - Evita JS viejo cacheado
-// - Network-first para HTML / JS / JSON
-// - Cache versionado fuerte
+// Ajustado para ecommerce real con Stripe + Envia
 
-const CACHE = 'score-v4';
+const CACHE = 'score-v5';
 
 const ASSETS = [
   '/',
@@ -37,6 +34,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
+  // 🔒 NO interceptar funciones backend (Stripe / Envia)
+  if (url.pathname.startsWith('/.netlify/functions/')) {
+    return;
+  }
+
   // HTML / JS / JSON → NETWORK FIRST
   if (
     url.pathname.endsWith('.html') ||
@@ -55,7 +57,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Resto → CACHE FIRST
+  // Assets estáticos → CACHE FIRST
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );
