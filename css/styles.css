@@ -1,5 +1,6 @@
 /* ======================================================
-   SCORE STORE — CSS FINAL (RESPETA DISEÑO ORIGINAL + PRO)
+   SCORE STORE — CSS FINAL
+   Respeta diseño ORIGINAL + mejoras PRO (UX / Legal)
    ====================================================== */
 
 :root{
@@ -36,6 +37,10 @@ body{
 }
 body.modalOpen{overflow:hidden;position:fixed;width:100%}
 
+/* ======================================================
+   ACCESIBILIDAD
+   ====================================================== */
+
 .skipLink{
   position:absolute;left:-999px;top:8px;
   background:#000;color:#fff;
@@ -43,7 +48,10 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
 }
 .skipLink:focus{left:10px}
 
-/* BACKGROUND */
+/* ======================================================
+   BACKGROUND
+   ====================================================== */
+
 .page-bg{
   position:fixed;inset:0;
   background:
@@ -59,16 +67,25 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   background:url("/assets/baja1000-texture.webp") center/700px repeat;
   animation:dustMove 18s linear infinite;
 }
-@keyframes dustMove{from{transform:translate3d(0,0,0)}to{transform:translate3d(-160px,80px,0)}}
+@keyframes dustMove{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(-160px,80px,0)}
+}
 
-/* LAYOUT */
+/* ======================================================
+   LAYOUT
+   ====================================================== */
+
 .wrap{
   width:min(1100px, 92vw);
   margin:0 auto;
   padding:18px 0 44px;
 }
 
-/* TOPBAR */
+/* ======================================================
+   TOPBAR
+   ====================================================== */
+
 .topbar{
   position:sticky;top:0;z-index:50;
   backdrop-filter: blur(10px);
@@ -107,7 +124,10 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   font-weight:900;
 }
 
-/* HERO */
+/* ======================================================
+   HERO (DISEÑO ORIGINAL)
+   ====================================================== */
+
 .hero{
   position:relative;
   margin-top:18px;
@@ -182,16 +202,8 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   cursor:pointer;
   transition:.18s var(--ease);
 }
-.btn.primary{
-  background:var(--red);
-  color:#fff;
-  flex:1 1 220px;
-}
-.btn.secondary{
-  background:#fff;
-  color:#111;
-  flex:1 1 220px;
-}
+.btn.primary{background:var(--red);color:#fff}
+.btn.secondary{background:#fff;color:#111}
 .btn.full{width:100%}
 .btn:hover{transform:translateY(-1px)}
 .btn:active{transform:scale(.98)}
@@ -211,7 +223,10 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   font-size:12px;
 }
 
-/* SECTIONS */
+/* ======================================================
+   CATÁLOGO (CARDS ORIGINALES)
+   ====================================================== */
+
 .championships{margin-top:22px}
 .championships h2{
   font-family:var(--fontTitle);
@@ -219,13 +234,11 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   letter-spacing:1px;
   text-transform:uppercase;
   margin:8px 0 10px;
-  color:#111;
 }
 
-/* CATALOGO CARDS (TU DISEÑO ORIGINAL) */
 .catalogGrid{
   display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:14px;
 }
 .champCard{
@@ -246,11 +259,11 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
 .champLogo{
   width:92px;height:64px;
   object-fit:contain;
-  filter: drop-shadow(0 10px 22px rgba(0,0,0,.12));
 }
-.champMeta strong{display:block;font-weight:900;font-size:16px;color:#111}
-.champMeta span{display:block;font-size:13px;color:rgba(0,0,0,.55);margin-top:2px}
-.champArrow{font-size:20px;color:rgba(0,0,0,.55)}
+.champMeta strong{display:block;font-weight:900;font-size:16px}
+.champMeta span{display:block;font-size:13px;opacity:.6}
+.champArrow{font-size:20px;opacity:.6}
+
 .badge{
   position:absolute;
   top:12px;left:12px;
@@ -258,36 +271,37 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   border-radius:999px;
   font-size:11px;
   font-weight:900;
-  letter-spacing:.4px;
-  box-shadow:0 8px 20px rgba(0,0,0,.20);
 }
 .badge.available{background:var(--green);color:#061b0f}
 .badge.limited{background:#111;color:#fff}
 
-/* PARTNERS */
+/* ======================================================
+   PARTNERS
+   ====================================================== */
+
 .partners{margin-top:18px}
 .partners h3{
   text-align:center;
   font-family:var(--fontTitle);
   font-size:34px;
   letter-spacing:1px;
-  text-transform:uppercase;
   margin:10px 0 12px;
 }
 .partnerGrid{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
+  grid-template-columns:repeat(4,1fr);
   gap:14px;
   align-items:center;
 }
 .partnerGrid img{
-  width:100%;
   height:54px;
   object-fit:contain;
-  filter: drop-shadow(0 12px 20px rgba(0,0,0,.10));
 }
 
-/* FOOTER */
+/* ======================================================
+   FOOTER
+   ====================================================== */
+
 .footer{margin-top:18px}
 .footerCard{
   border-radius:26px;
@@ -300,33 +314,31 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   display:grid;
   grid-template-columns:1.2fr 1fr 1fr;
   gap:16px;
-  align-items:start;
 }
-.footerBrand img{height:48px;width:auto;object-fit:contain}
 .footerH{font-weight:900;margin-bottom:6px}
-.footerSmall{font-size:13px;opacity:.88;line-height:1.35}
-.footerLink{text-decoration:underline}
-.footerLegalRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.footerSmall{font-size:13px;opacity:.85}
+.footerLegalRow{display:flex;gap:8px;flex-wrap:wrap}
 .miniPill{
   border:1px solid rgba(255,255,255,.18);
   background:rgba(255,255,255,.10);
-  color:#fff;
   padding:8px 10px;
   border-radius:12px;
-  cursor:pointer;
   font-weight:800;
   font-size:12px;
+  cursor:pointer;
 }
-.miniPill.link{display:inline-flex;align-items:center}
 .footerBottom{
   margin-top:14px;
   border-top:1px solid rgba(255,255,255,.12);
   padding-top:12px;
-  opacity:.80;
   font-size:12px;
+  opacity:.8;
 }
 
-/* OVERLAY + MODALS */
+/* ======================================================
+   OVERLAY + MODALS
+   ====================================================== */
+
 .overlay{
   position:fixed;inset:0;
   background:rgba(0,0,0,.55);
@@ -340,7 +352,7 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   position:fixed;
   left:50%;top:50%;
   transform:translate(-50%,-46%) scale(.98);
-  width:min(980px, 94vw);
+  width:min(980px,94vw);
   max-height:86vh;
   border-radius:22px;
   background:#fff;
@@ -349,34 +361,25 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   pointer-events:none;
   transition:.18s var(--ease);
   z-index:90;
-  overflow:hidden;
 }
 .modal.active{
   opacity:1;
   pointer-events:auto;
   transform:translate(-50%,-50%) scale(1);
 }
+
 .dHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:14px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px;
   border-bottom:1px solid rgba(0,0,0,.08);
-  background:rgba(255,255,255,.92);
-  backdrop-filter: blur(10px);
-}
-.dTitle{
-  font-weight:900;
-  letter-spacing:.4px;
 }
 .closeBtn{
   width:38px;height:38px;
   border-radius:12px;
   border:1px solid rgba(0,0,0,.10);
   background:#fff;
-  cursor:pointer;
   font-size:22px;
-  line-height:1;
+  cursor:pointer;
 }
 .catContent{
   padding:14px;
@@ -384,164 +387,10 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   max-height:calc(86vh - 64px);
 }
 
-/* DRAWER */
-.drawer{
-  position:fixed;
-  top:0;right:0;
-  width:min(420px, 92vw);
-  height:100vh;
-  background:#fff;
-  box-shadow: -18px 0 60px rgba(0,0,0,.20);
-  transform:translateX(102%);
-  transition:.20s var(--ease);
-  z-index:95;
-  display:flex;
-  flex-direction:column;
-}
-.drawer.active{transform:translateX(0)}
-.dBody{
-  padding:14px;
-  overflow:auto;
-  flex:1;
-}
-.dFoot{
-  padding:14px;
-  border-top:1px solid rgba(0,0,0,.08);
-  background:#fff;
-  box-shadow:0 -10px 30px rgba(0,0,0,.08);
-}
+/* ======================================================
+   LEGAL MODAL (TERMS / PRIVACY)
+   ====================================================== */
 
-.shipSelector p{font-weight:900;margin-bottom:8px}
-.shipSelector label{
-  display:flex;gap:8px;align-items:center;
-  font-size:13px;
-  padding:8px 10px;
-  border-radius:14px;
-  background:#fafafa;
-  border:1px solid #eee;
-  margin-bottom:8px;
-}
-
-.shipForm{
-  margin:10px 0 10px;
-  padding:10px;
-  border-radius:16px;
-  background:#fafafa;
-  border:1px solid #eee;
-}
-.shipForm input{
-  width:100%;
-  padding:11px 12px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,.10);
-  outline:none;
-}
-.fieldRow{display:grid;grid-template-columns:1fr 140px;gap:10px;margin-bottom:10px}
-.miniHelp{font-size:12px;opacity:.7;margin-top:8px}
-
-.promoRow{display:flex;gap:8px;margin:8px 0 10px}
-.promoRow input{
-  flex:1;
-  padding:11px 12px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,.10);
-}
-.btnSm{
-  padding:11px 12px;
-  border-radius:12px;
-  border:none;
-  background:#111;
-  color:#fff;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.sumRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:8px 0;
-  font-size:13px;
-}
-.sumRow.total{
-  border-top:1px dashed rgba(0,0,0,.22);
-  margin-top:6px;
-  padding-top:12px;
-  font-weight:900;
-  font-size:15px;
-}
-.usdHint{font-size:12px;opacity:.65;margin-top:4px}
-
-.ghostBtn{
-  width:100%;
-  margin-top:10px;
-  padding:12px 14px;
-  border-radius:14px;
-  background:#fff;
-  border:1px solid rgba(0,0,0,.14);
-  font-weight:900;
-  cursor:pointer;
-}
-
-.tinyLegal{
-  margin-top:10px;
-  font-size:12px;
-  opacity:.75;
-}
-.inlineLink{
-  border:none;background:none;
-  text-decoration:underline;
-  cursor:pointer;
-  font-weight:800;
-}
-
-/* PAYBAR */
-.paybar{
-  position:fixed;
-  left:12px;right:12px;bottom:12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 14px;
-  border-radius:18px;
-  background:#111;
-  color:#fff;
-  box-shadow:0 20px 60px rgba(0,0,0,.30);
-  transform:translateY(140%);
-  transition:.22s var(--ease);
-  z-index:70;
-}
-.paybar.visible{transform:translateY(0)}
-.paybar-label{font-size:11px;opacity:.75;font-weight:800;letter-spacing:.4px}
-.paybar-total{font-size:16px;font-weight:900}
-.btn-sm{
-  border:none;
-  border-radius:14px;
-  padding:10px 12px;
-  font-weight:900;
-  cursor:pointer;
-}
-.btn-sm.white{background:#fff;color:#111}
-
-/* TOAST */
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:88px;
-  transform:translateX(-50%) translateY(10px);
-  background:#111;color:#fff;
-  padding:10px 14px;
-  border-radius:14px;
-  font-weight:800;
-  opacity:0;
-  pointer-events:none;
-  transition:.2s var(--ease);
-  z-index:120;
-}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* LEGAL MODAL */
 .modalLegal .legalTabs{
   display:flex;
   gap:8px;
@@ -553,207 +402,33 @@ body.modalOpen{overflow:hidden;position:fixed;width:100%}
   border-radius:14px;
   border:1px solid rgba(0,0,0,.12);
   background:#fff;
-  cursor:pointer;
   font-weight:900;
   font-size:12px;
+  cursor:pointer;
 }
-.tabBtn.active{
-  background:#111;color:#fff;
-  border-color:#111;
-}
+.tabBtn.active{background:#111;color:#fff}
+
 .legalBlock{display:none}
 .legalBlock.active{display:block}
-.legalContent h4{font-weight:900;margin:8px 0 6px}
-.legalContent p,.legalContent li{font-size:13px;line-height:1.5;color:rgba(0,0,0,.82)}
-.legalContent ul{padding-left:18px;margin:8px 0}
-.small{font-size:12px;opacity:.7}
+.legalContent h4{font-weight:900;margin:8px 0}
+.legalContent p,.legalContent li{
+  font-size:13px;
+  line-height:1.5;
+  color:rgba(0,0,0,.82);
+}
 
 /* ======================================================
-   CATÁLOGO DE PRODUCTOS (MODAL) — PRO
+   RESPONSIVE (SIN ROMPER DISEÑO)
    ====================================================== */
 
-.productGrid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-  gap:18px;
-}
-
-.productCard{
-  background:#fff;
-  border-radius:22px;
-  overflow:hidden;
-  box-shadow:var(--shadowSoft);
-  display:flex;
-  flex-direction:column;
-  transition:.25s var(--ease);
-}
-.productCard:hover{transform:translateY(-4px)}
-
-.productImg{position:relative}
-.productImg img{
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-}
-
-.productImg .badge{
-  position:absolute;
-  top:12px;left:12px;
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.4px;
-  box-shadow:0 8px 20px rgba(0,0,0,.25);
-}
-.productInfo{
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.productInfo h4{
-  font-size:15px;
-  font-weight:900;
-  line-height:1.2;
-}
-
-.productInfo .sku{
-  font-size:12px;
-  opacity:.65;
-}
-
-.productInfo .price{
-  font-size:18px;
-  font-weight:900;
-  margin-top:2px;
-}
-
-.sizeRow{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.sizeBtn{
-  border:1px solid #ddd;
-  background:#fff;
-  border-radius:10px;
-  padding:6px 10px;
-  font-size:12px;
-  font-weight:900;
-  cursor:pointer;
-  transition:.15s var(--ease);
-}
-.sizeBtn:hover{border-color:#111}
-.sizeBtn.active{
-  background:#111;
-  color:#fff;
-  border-color:#111;
-}
-
-.addBtn{
-  margin-top:6px;
-  border:none;
-  border-radius:14px;
-  padding:12px;
-  font-weight:900;
-  background:#111;
-  color:#fff;
-  cursor:pointer;
-  transition:.18s var(--ease);
-}
-.addBtn:hover{transform:translateY(-1px)}
-.addBtn:active{transform:scale(.98)}
-
-/* ======================================================
-   CARRITO (DRAWER) — PRO
-   ====================================================== */
-
-.cartItem{
-  display:grid;
-  grid-template-columns:64px 1fr auto;
-  gap:12px;
-  padding:12px;
-  border-radius:16px;
-  background:#fafafa;
-  border:1px solid #eee;
-  margin-bottom:12px;
-  animation:fadeIn .2s var(--ease) both;
-}
-@keyframes fadeIn{from{opacity:.0;transform:translateY(4px)}to{opacity:1;transform:none}}
-
-.cartItem img{
-  width:64px;
-  height:64px;
-  object-fit:cover;
-  border-radius:12px;
-}
-
-.cartMeta strong{
-  font-size:14px;
-  display:block;
-}
-.cartMeta span{
-  font-size:12px;
-  opacity:.7;
-}
-
-.qtyRow{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-top:6px;
-}
-
-.qtyBtn{
-  width:28px;
-  height:28px;
-  border-radius:8px;
-  border:none;
-  background:#111;
-  color:#fff;
-  font-weight:900;
-  cursor:pointer;
-}
-.qtyBtn:active{transform:scale(.95)}
-
-.cartRight{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  align-items:flex-end;
-}
-
-.itemPrice{
-  font-weight:900;
-  font-size:14px;
-}
-
-.removeBtn{
-  border:none;
-  background:none;
-  font-size:16px;
-  opacity:.45;
-  cursor:pointer;
-}
-.removeBtn:hover{opacity:1;color:var(--red)}
-
-/* RESPONSIVE */
 @media (max-width:860px){
   .catalogGrid{grid-template-columns:1fr}
   .footerTop{grid-template-columns:1fr}
-  .partnerGrid{grid-template-columns:repeat(2, minmax(0,1fr))}
+  .partnerGrid{grid-template-columns:repeat(2,1fr)}
   .hero h1{font-size:48px}
 }
-@media (max-width:600px){
-  .productGrid{grid-template-columns:repeat(2,1fr)}
-  .champCard{grid-template-columns:84px 1fr auto}
-  .champLogo{width:84px;height:60px}
-}
+
 @media (max-width:420px){
-  .productGrid{grid-template-columns:1fr}
   .hero h1{font-size:42px}
   .pill{display:none}
 }
