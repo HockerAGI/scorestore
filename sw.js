@@ -1,7 +1,7 @@
-// sw.js — SCORE STORE (PROD ALIGN FINAL)
+// sw.js — SCORE STORE (PROD FINAL v5)
 
 const CACHE_VERSION = "v5";
-const CACHE_STATIC = `score-static-${CACHE_VERSION}`;
+const CACHE_NAME = `score-static-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
   "/",
@@ -9,30 +9,39 @@ const STATIC_ASSETS = [
   "/css/styles.css",
   "/js/main.js",
   "/site.webmanifest",
+
+  // Core visuals
   "/assets/logo-score.webp",
   "/assets/hero.webp",
   "/assets/fondo-pagina-score.webp",
+
+  // Logos / branding
+  "/assets/logo-baja1000.webp",
+  "/assets/logo-baja500.webp",
+  "/assets/logo-baja400.webp",
+  "/assets/logo-sf250.webp",
+  "/assets/logo-unico.webp"
 ];
 
-// ================================
+// -----------------------------
 // INSTALL
-// ================================
+// -----------------------------
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// ================================
+// -----------------------------
 // ACTIVATE
-// ================================
+// -----------------------------
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => !k.includes(CACHE_VERSION))
+          .filter((k) => k !== CACHE_NAME)
           .map((k) => caches.delete(k))
       )
     )
@@ -40,37 +49,39 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// ================================
+// -----------------------------
 // FETCH
-// ================================
+// -----------------------------
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // ❌ Ignorar requests no-GET
+  // Solo GET
   if (req.method !== "GET") return;
 
-  // ❌ Ignorar requests externos (Stripe, Envia, Telegram, etc.)
+  // Ignorar externos (Stripe, etc.)
   if (url.origin !== self.location.origin) return;
 
-  // ❌ Ignorar Netlify Functions (CRÍTICO)
+  // Ignorar Netlify Functions
   if (url.pathname.startsWith("/.netlify/functions")) return;
 
-  // ❌ Ignorar datos dinámicos (catálogo / promos)
+  // Ignorar data dinámica
   if (url.pathname.startsWith("/data/")) {
     event.respondWith(fetch(req));
     return;
   }
 
-  // ============================
-  // HTML → NETWORK FIRST
-  // ============================
-  if (req.headers.get("accept")?.includes("text/html")) {
+  // HTML / JS / JSON → NETWORK FIRST
+  if (
+    req.headers.get("accept")?.includes("text/html") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".json")
+  ) {
     event.respondWith(
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE_STATIC).then((cache) => cache.put(req, copy));
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
           return res;
         })
         .catch(() => caches.match(req))
@@ -78,13 +89,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ============================
-  // STATIC ASSETS → CACHE FIRST
-  // ============================
+  // Assets → CACHE FIRST
   if (
     url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/css/") ||
-    url.pathname.startsWith("/js/")
+    url.pathname.startsWith("/css/")
   ) {
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req))
@@ -92,8 +100,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ============================
-  // DEFAULT → NETWORK
-  // ============================
+  // Default
   event.respondWith(fetch(req));
 });
