@@ -4,9 +4,7 @@
   "private": true,
   "description": "SCORE Store - Ecommerce Oficial (PWA + Netlify Functions + Stripe + Envia)",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo \"Static site ready\"",
-    "lint": "node --check netlify/functions/**/*.js"
+    "build": "echo \"Static site ready\""
   },
   "engines": {
     "node": ">=18"
