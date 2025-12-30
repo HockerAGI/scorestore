@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Tienda oficial SCORE International Off-Road. Ropa y accesorios de alto rendimiento, ediciones limitadas.">
 
+  <meta name="description" content="Tienda oficial SCORE International Off-Road. Merchandising auténtico fabricado en Tijuana por Único Uniformes.">
   <meta name="theme-color" content="#E10600">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- SEO CANONICAL -->
+  <link rel="canonical" href="https://scorestore.netlify.app/">
 
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,19 +23,19 @@
 </head>
 
 <body>
+
   <div class="page-bg"></div>
   <div class="dust-container"><div class="dust"></div></div>
 
   <!-- HEADER -->
   <header class="topbar">
     <div class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE International">
+      <img src="/assets/score-logo.webp" alt="SCORE International">
     </div>
     <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button type="button" id="cartTrigger" class="cartTrigger"
-        aria-label="Abrir carrito (0 artículos)" onclick="openDrawer()">
-        🛒 <span id="cartCount" class="cartCount" aria-live="polite">0</span>
+      <div class="pill">MX · <b>TIJUANA</b></div>
+      <button id="cartTrigger" class="cartTrigger" onclick="openDrawer()">
+        🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
   </header>
@@ -55,11 +54,10 @@
           Colección de alto rendimiento probada en el desierto.
         </p>
         <div class="ctaRow">
-          <button type="button" class="btn primary"
-            onclick="openCatalog('BAJA_1000','BAJA 1000')">
+          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">
             VER COLECCIÓN
           </button>
-          <button type="button" class="btn secondary" onclick="openDrawer()">
+          <button class="btn secondary" onclick="openDrawer()">
             MI CARRITO
           </button>
         </div>
@@ -70,100 +68,94 @@
     <section class="championships">
       <h2>CAMPEONATOS</h2>
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_1000','BAJA 1000')">
+      <button class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
         <img src="/assets/logos/baja1000.webp" alt="BAJA 1000">
         <div><strong>TIENDA OFICIAL</strong><span>Ver colección</span></div>
       </button>
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_500','BAJA 500')">
+      <button class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
         <img src="/assets/logos/baja500.webp" alt="BAJA 500">
         <div><strong>NUEVA LLEGADA</strong><span>Ver productos</span></div>
       </button>
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('BAJA_400','BAJA 400')">
+      <button class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
         <img src="/assets/logos/baja400.webp" alt="BAJA 400">
         <div><strong>DISPONIBLE</strong><span>Ver productos</span></div>
       </button>
 
-      <button type="button" class="champItem"
-        onclick="openCatalog('SF_250','SAN FELIPE 250')">
+      <button class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
         <img src="/assets/logos/sf250.webp" alt="SAN FELIPE 250">
         <div><strong>CLÁSICOS</strong><span>Ver productos</span></div>
       </button>
     </section>
-
   </main>
+
+  <!-- FOOTER LEGAL -->
+  <footer class="footerLegal">
+    <p>
+      © 2025 SCORE Store · Operado por <strong>Único Uniformes</strong><br>
+      <a href="#" onclick="openLegal('terms')">Términos y Condiciones</a> ·
+      <a href="#" onclick="openLegal('privacy')">Aviso de Privacidad</a> ·
+      <a href="#" onclick="openLegal('billing')">Facturación</a>
+    </p>
+  </footer>
 
   <!-- OVERLAY -->
   <div id="overlay" class="overlay"></div>
 
-  <!-- MODAL CATÁLOGO -->
-  <section id="modalCatalog" class="modal" role="dialog" aria-modal="true">
-    <div class="dHead">
-      <h3 id="catTitle" class="dTitle"></h3>
-      <button type="button" class="closeBtn" aria-label="Cerrar" onclick="closeAll()">×</button>
+  <!-- LEGAL MODAL -->
+  <section id="legalModal" class="legalModal">
+    <div class="legalBox">
+      <button class="closeBtn" onclick="closeLegal()">×</button>
+      <div id="legalContent"></div>
     </div>
-    <div id="catContent" class="catContent"></div>
   </section>
-
-  <!-- DRAWER CARRITO -->
-  <aside id="drawer" class="drawer" role="dialog" aria-modal="true">
-    <div class="dHead">
-      <h3 class="dTitle">MI CARRITO</h3>
-      <button type="button" class="closeBtn" aria-label="Cerrar" onclick="closeAll()">×</button>
-    </div>
-
-    <div id="cartBody" class="dBody"></div>
-
-    <div class="dFoot">
-      <div class="shipSelector">
-        <p>Método de entrega:</p>
-        <label>
-          <input type="radio" name="shipMode" value="pickup" checked>
-          Recoger en tienda (Tijuana, BC)
-        </label>
-        <label>
-          <input type="radio" name="shipMode" value="mx">
-          Envío a domicilio
-        </label>
-        <input type="text" id="postalCode" placeholder="C.P." disabled>
-      </div>
-
-      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
-      <div id="lnShipRow" class="sumRow" style="display:none;">
-        <span>Envío</span><span id="lnShip">$0 MXN</span>
-      </div>
-      <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
-
-      <button type="button" id="payBtn" class="btn primary full" onclick="checkout()" disabled>
-        PAGAR
-      </button>
-    </div>
-  </aside>
-
-  <!-- PAYBAR -->
-  <div id="paybar" class="paybar">
-    <div>
-      <div class="paybar-label">TOTAL A PAGAR</div>
-      <div id="barTotal" class="paybar-total">$0 MXN</div>
-    </div>
-    <button type="button" class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
-  </div>
-
-  <div id="toast" class="toast"></div>
 
   <script src="/js/main.js" defer></script>
 
-  <!-- REGISTRO SERVICE WORKER -->
+  <!-- SERVICE WORKER -->
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
+      navigator.serviceWorker.register('/sw.js');
     }
   </script>
+
+  <!-- LEGAL CONTENT -->
+  <script>
+    const legalTexts = {
+      terms: `
+        <h2>Términos y Condiciones</h2>
+        <p>SCORE Store es la tienda oficial de mercancía autorizada de SCORE International, operada en México por <strong>Único Uniformes</strong>, con sede en Tijuana, Baja California.</p>
+        <p>Los precios están expresados en MXN. Los pagos se procesan de forma segura mediante Stripe.</p>
+        <p>Los cambios aplican únicamente por defectos de fabricación.</p>
+      `,
+      privacy: `
+        <h2>Aviso de Privacidad</h2>
+        <p>Recabamos únicamente la información necesaria para procesar pedidos, envíos y facturación.</p>
+        <p>Los datos no son vendidos ni compartidos con terceros fuera de los proveedores de pago y logística.</p>
+        <p>Contacto: <strong>ventas.unicotextil@gmail.com</strong></p>
+      `,
+      billing: `
+        <h2>Facturación</h2>
+        <p>Si requieres factura, deberás enviar tus datos fiscales (RFC, razón social y uso CFDI) al correo:</p>
+        <p><strong>ventas.unicotextil@gmail.com</strong></p>
+        <p>La solicitud debe realizarse dentro del mismo mes de compra.</p>
+      `
+    };
+
+    function openLegal(type) {
+      document.getElementById('legalContent').innerHTML = legalTexts[type];
+      document.getElementById('overlay').classList.add('active');
+      document.getElementById('legalModal').classList.add('active');
+      document.body.classList.add('modalOpen');
+    }
+
+    function closeLegal() {
+      document.getElementById('overlay').classList.remove('active');
+      document.getElementById('legalModal').classList.remove('active');
+      document.body.classList.remove('modalOpen');
+    }
+  </script>
+
 </body>
 </html>
