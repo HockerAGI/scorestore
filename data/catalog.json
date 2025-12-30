@@ -1,10 +1,8 @@
 {
   "site": {
-    "url": "https://scorestore.netlify.app",
     "currency": "MXN",
-    "fx_mxn_per_usd": 17.50
+    "fx_mxn_per_usd": 17.5
   },
-  "pricing": { "markup_pct": 0.00 },
   "sections": [
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "order": 1 },
     { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVA LLEGADA", "order": 2 },
@@ -42,7 +40,7 @@
     {
       "id": "b1k-tee-brn",
       "name": "Camiseta Desert Café 2025",
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
+      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
       "subSection": "COLECCIÓN 2025",
@@ -78,7 +76,7 @@
     {
       "id": "b1k-pits-gry",
       "name": "Camisa Pits Gris Racing",
-      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
       "subSection": "EQUIPO DE PITS",
@@ -87,7 +85,7 @@
     {
       "id": "b1k-pits-pnk",
       "name": "Camisa Pits Edición Rosa",
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
+      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
       "subSection": "EQUIPO DE PITS",
