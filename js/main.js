@@ -6,7 +6,7 @@
  * - Backend recalcula precios desde catalog.json (anti-tampering)
  */
 
-const STRIPE_PK = "pk_live_XXXXXXXXXXXXXXXXXXXXXXXX"; // <-- pega tu pk_live real
+const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; // <-- pega tu pk_live real
 const USD_RATE_FALLBACK = 17.50;
 
 const LS_CART = "score_cart_v1";
