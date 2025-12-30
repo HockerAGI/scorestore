@@ -7,143 +7,92 @@
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "order": 1 },
     { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVA LLEGADA", "order": 2 },
     { "id": "BAJA_400", "title": "BAJA 400", "badge": "DISPONIBLE", "order": 3 },
-    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS", "order": 4 }
+    { "id": "SF250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS", "order": 4 }
   ],
   "products": [
     {
       "id": "b1k-cham-25",
-      "name": "Chamarra Oficial Baja 1000 - 2025",
+      "sku": "B1K-CHAM-25",
+      "name": "Chamarra Oficial Baja 1000 · 2025",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1789,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
+      "subSection": "COLECCION_2025",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "tags": ["baja1000", "2025", "chamarra", "oficial"]
     },
     {
       "id": "b1k-hood-tech",
+      "sku": "B1K-HOOD-TECH",
       "name": "Hoodie Técnica B1K Negro/Gris",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL"]
+      "subSection": "COLECCION_2025",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["baja1000", "2025", "hoodie"]
     },
     {
       "id": "b1k-tee-blk",
+      "sku": "B1K-TEE-BLK",
       "name": "Camiseta Negra Oficial 2025",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-tee-brn",
-      "name": "Camiseta Desert Café 2025",
-      "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.webp",
-      "baseMXN": 479,
-      "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-tee-snd",
-      "name": "Camiseta Arena Baja 2025",
-      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
-      "baseMXN": 479,
-      "sectionId": "BAJA_1000",
-      "subSection": "COLECCIÓN 2025",
-      "sizes": ["S", "M", "L", "XL"]
+      "subSection": "COLECCION_2025",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "tags": ["baja1000", "2025", "camiseta"]
     },
     {
       "id": "b1k-cap-red",
+      "sku": "B1K-CAP-RED",
       "name": "Gorra Oficial Roja/Gris",
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
       "baseMXN": 660,
       "sectionId": "BAJA_1000",
       "subSection": "ACCESORIOS",
-      "sizes": ["Unitalla"]
-    },
-    {
-      "id": "b1k-pits-blk",
-      "name": "Camisa Pits Oficial Negra",
-      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-pits-gry",
-      "name": "Camisa Pits Gris Racing",
-      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "b1k-pits-pnk",
-      "name": "Camisa Pits Edición Rosa",
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EQUIPO DE PITS",
-      "sizes": ["S", "M", "L", "XL"]
-    },
-    {
-      "id": "retro-hood-blk",
-      "name": "Hoodie World Desert Negra",
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
-      "baseMXN": 899,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
-    },
-    {
-      "id": "retro-hood-red",
-      "name": "Hoodie World Desert Roja",
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-      "baseMXN": 899,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL"]
-    },
-    {
-      "id": "retro-pits-red",
-      "name": "Camisa Pits Retro Negra/Roja",
-      "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
-      "baseMXN": 1079,
-      "sectionId": "BAJA_1000",
-      "subSection": "EDICIONES ANTERIORES",
-      "sizes": ["S", "M", "L", "XL"]
+      "status": "low_stock",
+      "sizes": ["Unitalla"],
+      "tags": ["baja1000", "gorra", "accesorios"]
     },
     {
       "id": "b500-tee-gry",
+      "sku": "B500-TEE-GRY",
       "name": "Camiseta Oficial Baja 500 Gris",
       "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_500",
-      "subSection": "COLECCIÓN BAJA 500",
-      "sizes": ["S", "M", "L", "XL", "2XL"]
+      "subSection": "COLECCION_BAJA_500",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "tags": ["baja500", "camiseta"]
     },
     {
       "id": "b400-tee-brn",
+      "sku": "B400-TEE-BRN",
       "name": "Camiseta Oficial Baja 400 Café",
       "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_400",
-      "subSection": "COLECCIÓN BAJA 400",
-      "sizes": ["S", "M", "L", "XL"]
+      "subSection": "COLECCION_BAJA_400",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["baja400", "camiseta"]
     },
     {
       "id": "sf250-tank",
+      "sku": "SF250-TANK",
       "name": "Sleeveless SF250 Negra",
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "baseMXN": 439,
-      "sectionId": "SF_250",
-      "subSection": "COLECCIÓN SAN FELIPE",
-      "sizes": ["S", "M", "L", "XL"]
+      "sectionId": "SF250",
+      "subSection": "COLECCION_SF250",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["sf250", "tank", "san felipe"]
     }
   ]
 }
