@@ -46,204 +46,325 @@
 </head>
 
 <body>
-<a class="skipLink" href="#mainContent">Saltar al contenido</a>
+  <a class="skipLink" href="#mainContent">Saltar al contenido</a>
 
-<!-- BACKGROUND -->
-<div class="page-bg" aria-hidden="true"></div>
-<div class="dust-container" aria-hidden="true">
-  <div class="dust"></div>
-</div>
+  <!-- BACKGROUND -->
+  <div class="page-bg" aria-hidden="true"></div>
+  <div class="dust-container" aria-hidden="true"><div class="dust"></div></div>
 
-<!-- HEADER -->
-<header class="topbar">
-  <a class="brand" href="/" aria-label="Ir al inicio">
-    <img src="/assets/logo-score.webp" alt="SCORE Store" />
-  </a>
+  <!-- HEADER -->
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Ir al inicio">
+      <img src="/assets/logo-score.webp" alt="SCORE Store" />
+    </a>
 
-  <div class="navRight">
-    <div class="pill" title="Operación principal en Tijuana, BC">MX · <b>TIJUANA</b></div>
+    <div class="navRight">
+      <div class="pill" title="Operación principal en Tijuana, BC">MX · <b>TIJUANA</b></div>
 
-    <button id="cartBtnTrigger"
-            class="cartTrigger"
-            type="button"
-            aria-label="Abrir carrito"
-            aria-expanded="false">
-      🛒 <span id="cartCount" class="cartCount" aria-live="polite">0</span>
-    </button>
-  </div>
-</header>
-
-<main id="mainContent" class="wrap" tabindex="-1">
-
-  <!-- HERO -->
-  <section class="hero" aria-label="Portada">
-    <div class="heroBg" aria-hidden="true"></div>
-    <div class="heroOverlay" aria-hidden="true"></div>
-
-    <img class="heroSeal"
-         src="/assets/logo-world-desert.webp"
-         alt="World Desert Championship"
-         loading="lazy" />
-
-    <div class="heroContent">
-      <span class="tagline">COLECCIÓN OFICIAL 2025</span>
-
-      <h1>SCORE<br />INTERNATIONAL</h1>
-
-      <p class="sub">
-        Equipamiento profesional Off-Road.<br />
-        <strong>Único Uniformes, patrocinador y fabricante oficial.</strong>
-      </p>
-
-      <ul class="heroBullets">
-        <li>📦 <strong>Envíos a todo México</strong> y pickup en Tijuana</li>
-        <li>🔒 <strong>Pago seguro</strong> con Stripe</li>
-        <li>🧵 <strong>Calidad profesional</strong> (bordado premium)</li>
-      </ul>
-
-      <div class="ctaRow">
-        <button id="buyNowBtn"
-                class="btn primary"
-                type="button"
-                data-open="BAJA_1000"
-                data-title="BAJA 1000">
-          COMPRAR AHORA
-        </button>
-
-        <button id="viewCartBtn"
-                class="btn secondary"
-                type="button">
-          VER CARRITO
-        </button>
-      </div>
-
-      <div class="trustRow">
-        <div class="trustPill">✅ Ediciones limitadas</div>
-        <div class="trustPill">🚚 Tracking</div>
-        <div class="trustPill">⚡ Compra rápida</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CATÁLOGO -->
-  <section class="championships">
-    <h2>CATÁLOGO OFICIAL</h2>
-
-    <div class="catalogGrid">
-      <button class="champCard" data-open="BAJA_1000" data-title="BAJA 1000">
-        <span class="badge available">DISPONIBLE</span>
-        <img class="champLogo" src="/assets/logo-baja1000.webp" alt="BAJA 1000" />
-        <div class="champMeta"><strong>BAJA 1000</strong><span>Ver productos</span></div>
-        <span class="champArrow">→</span>
-      </button>
-
-      <button class="champCard" data-open="BAJA_500" data-title="BAJA 500">
-        <span class="badge available">DISPONIBLE</span>
-        <img class="champLogo" src="/assets/logo-baja500.webp" alt="BAJA 500" />
-        <div class="champMeta"><strong>BAJA 500</strong><span>Ver productos</span></div>
-        <span class="champArrow">→</span>
-      </button>
-
-      <button class="champCard" data-open="BAJA_400" data-title="BAJA 400">
-        <span class="badge available">DISPONIBLE</span>
-        <img class="champLogo" src="/assets/logo-baja400.webp" alt="BAJA 400" />
-        <div class="champMeta"><strong>BAJA 400</strong><span>Ver productos</span></div>
-        <span class="champArrow">→</span>
-      </button>
-
-      <button class="champCard" data-open="SF_250" data-title="SAN FELIPE 250">
-        <span class="badge limited">EDICIÓN LIMITADA</span>
-        <img class="champLogo" src="/assets/logo-sf250.webp" alt="SAN FELIPE 250" />
-        <div class="champMeta"><strong>SAN FELIPE 250</strong><span>Ver productos</span></div>
-        <span class="champArrow">→</span>
+      <button id="cartBtnTrigger" class="cartTrigger" type="button"
+        aria-label="Abrir carrito (0 artículos)" aria-expanded="false">
+        <span class="cartIcon" aria-hidden="true">🛒</span>
+        <span id="cartCount" class="cartCount" aria-live="polite">0</span>
       </button>
     </div>
-  </section>
+  </header>
 
-  <!-- PARTNERS -->
-  <section class="partners">
-    <h3>OFFICIAL PARTNERS</h3>
-    <div class="partnerGrid">
-      <img src="/assets/logo-ford.webp" alt="Ford" />
-      <img src="/assets/logo-rzr.webp" alt="RZR" />
-      <img src="/assets/logo-bfgoodrich.webp" alt="BFGoodrich" />
-      <img src="/assets/logo-unico.webp" alt="Único Uniformes" />
-    </div>
-  </section>
+  <main id="mainContent" class="wrap" tabindex="-1">
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footerCard">
-      <div class="footerTop">
+    <!-- HERO -->
+    <section class="hero" aria-label="Portada">
+      <div class="heroBg" aria-hidden="true"></div>
+      <div class="heroOverlay" aria-hidden="true"></div>
 
-        <div class="footerBrand">
-          <img class="footerUnicoWhite"
-               src="/assets/logo-unico.webp"
-               alt="Único Uniformes" />
-          <p class="footerSmall">Official Licensed Merchandise.</p>
+      <!-- SELLO -->
+      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="World Desert Championship" loading="lazy" />
+
+      <div class="heroContent">
+        <span class="tagline">COLECCIÓN OFICIAL 2025</span>
+
+        <h1>SCORE<br />INTERNATIONAL</h1>
+
+        <p class="sub">
+          Equipamiento profesional Off-Road.<br />
+          <strong>Único Uniformes, patrocinador y fabricante oficial.</strong>
+        </p>
+
+        <ul class="heroBullets" aria-label="Beneficios">
+          <li>📦 <strong>Envíos a todo México</strong> y pickup en Tijuana</li>
+          <li>🔒 <strong>Pago seguro</strong> con Stripe</li>
+          <li>🧵 <strong>Calidad profesional</strong> (bordado y confección premium)</li>
+        </ul>
+
+        <div class="ctaRow">
+          <button id="buyNowBtn" class="btn primary" type="button" data-open="BAJA_1000" data-title="BAJA 1000">
+            COMPRAR AHORA
+          </button>
+          <button id="viewCartBtn" class="btn secondary" type="button">
+            VER CARRITO
+          </button>
         </div>
 
-        <div>
-          <div class="footerH">Contacto</div>
-          <p class="footerSmall">
-            Tijuana, Baja California<br />
-            <a class="footerLink" href="mailto:ventas@scorestore.com">
-              ventas@scorestore.com
-            </a>
-          </p>
+        <div class="trustRow" aria-label="Confianza y seguridad">
+          <div class="trustPill">✅ Ediciones limitadas</div>
+          <div class="trustPill">🚚 Tracking</div>
+          <div class="trustPill">⚡ Compra rápida</div>
         </div>
+      </div>
+    </section>
 
-        <div>
-          <div class="footerH">Legal</div>
-          <div class="footerLegalRow">
-            <button class="miniPill" data-legal="terms">Términos</button>
-            <button class="miniPill" data-legal="privacy">Privacidad</button>
-            <a class="miniPill link" href="/sitemap.xml">Sitemap</a>
+    <!-- CATÁLOGO -->
+    <section class="championships" aria-label="Catálogo oficial">
+      <h2>CATÁLOGO OFICIAL</h2>
+
+      <div class="catalogGrid">
+        <button class="champCard" type="button" data-open="BAJA_1000" data-title="BAJA 1000">
+          <span class="badge available">DISPONIBLE</span>
+          <img class="champLogo" src="/assets/logo-baja1000.webp" alt="BAJA 1000" loading="lazy" />
+          <div class="champMeta">
+            <strong>BAJA 1000</strong>
+            <span>Ver productos</span>
+          </div>
+          <span class="champArrow" aria-hidden="true">→</span>
+        </button>
+
+        <button class="champCard" type="button" data-open="BAJA_500" data-title="BAJA 500">
+          <span class="badge available">DISPONIBLE</span>
+          <img class="champLogo" src="/assets/logo-baja500.webp" alt="BAJA 500" loading="lazy" />
+          <div class="champMeta">
+            <strong>BAJA 500</strong>
+            <span>Ver productos</span>
+          </div>
+          <span class="champArrow" aria-hidden="true">→</span>
+        </button>
+
+        <button class="champCard" type="button" data-open="BAJA_400" data-title="BAJA 400">
+          <span class="badge available">DISPONIBLE</span>
+          <img class="champLogo" src="/assets/logo-baja400.webp" alt="BAJA 400" loading="lazy" />
+          <div class="champMeta">
+            <strong>BAJA 400</strong>
+            <span>Ver productos</span>
+          </div>
+          <span class="champArrow" aria-hidden="true">→</span>
+        </button>
+
+        <!-- IMPORTANTE: usamos SF250 (SIN GUION BAJO) para alinear con tu carpeta assets/SF250 -->
+        <button class="champCard" type="button" data-open="SF250" data-title="SAN FELIPE 250">
+          <span class="badge limited">EDICIÓN LIMITADA</span>
+          <img class="champLogo" src="/assets/logo-sf250.webp" alt="SAN FELIPE 250" loading="lazy" />
+          <div class="champMeta">
+            <strong>SAN FELIPE 250</strong>
+            <span>Ver productos</span>
+          </div>
+          <span class="champArrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section class="partners" aria-label="Official partners">
+      <h3>OFFICIAL PARTNERS</h3>
+      <div class="partnerGrid">
+        <img src="/assets/logo-ford.webp" alt="Ford" loading="lazy" />
+        <img src="/assets/logo-rzr.webp" alt="RZR" loading="lazy" />
+        <img src="/assets/logo-bfgoodrich.webp" alt="BFGoodrich" loading="lazy" />
+        <img src="/assets/logo-unico.webp" alt="Único Uniformes" loading="lazy" />
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" aria-label="Información legal y contacto">
+      <div class="footerCard">
+        <div class="footerTop">
+          <div class="footerBrand">
+            <img class="footerUnicoWhite" src="/assets/logo-unico.webp" alt="Único Uniformes" loading="lazy" />
+            <p class="footerSmall">
+              Official Licensed Merchandise.<br />
+              Distribuidor autorizado.
+            </p>
+          </div>
+
+          <div class="footerCol">
+            <div class="footerH">Contacto</div>
+            <p class="footerSmall">
+              Tijuana, Baja California<br />
+              <a class="footerLink" href="mailto:ventas@scorestore.com">ventas@scorestore.com</a>
+            </p>
+            <p class="footerSmall">Precios en MXN (Pesos Mexicanos). Incluyen IVA.</p>
+          </div>
+
+          <div class="footerCol">
+            <div class="footerH">Legal</div>
+            <div class="footerLegalRow">
+              <button class="miniPill" type="button" data-legal="terms">Términos</button>
+              <button class="miniPill" type="button" data-legal="privacy">Privacidad</button>
+              <a class="miniPill link" href="/sitemap.xml" rel="sitemap">Sitemap</a>
+            </div>
           </div>
         </div>
 
+        <div class="footerBottom">
+          <span>© <span id="year"></span> SCORE International. Todos los derechos reservados.</span>
+        </div>
       </div>
+    </footer>
+  </main>
 
-      <div class="footerBottom">
-        © <span id="year"></span> SCORE International
-      </div>
+  <!-- OVERLAY -->
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+
+  <!-- MODAL CATÁLOGO -->
+  <section id="modalCatalog" class="modal" role="dialog" aria-modal="true" aria-labelledby="catTitle" aria-hidden="true">
+    <div class="dHead">
+      <h3 id="catTitle" class="dTitle"></h3>
+      <button class="closeBtn" type="button" aria-label="Cerrar" data-close="all">×</button>
     </div>
-  </footer>
+    <div id="catContent" class="catContent"></div>
+  </section>
 
-</main>
+  <!-- DRAWER CARRITO -->
+  <aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle" aria-hidden="true">
+    <div class="dHead">
+      <h3 id="cartTitle" class="dTitle">MI CARRITO</h3>
+      <button class="closeBtn" type="button" aria-label="Cerrar" data-close="all">×</button>
+    </div>
 
-<!-- OVERLAY + MODALS -->
-<div id="overlay" class="overlay"></div>
+    <div id="cartBody" class="dBody"></div>
 
-<section id="modalCatalog" class="modal">
-  <div class="dHead">
-    <h3 id="catTitle" class="dTitle"></h3>
-    <button class="closeBtn" data-close="all">×</button>
+    <div class="dFoot">
+      <!-- Entrega -->
+      <div class="shipSelector">
+        <p>Método de entrega:</p>
+        <label><input type="radio" name="shipMode" value="pickup" checked> Recoger en Tijuana</label>
+        <label><input type="radio" name="shipMode" value="tj"> Envío local Tijuana</label>
+        <label><input type="radio" name="shipMode" value="mx"> Envío nacional (México)</label>
+      </div>
+
+      <!-- Dirección (solo si envío) -->
+      <div id="shipForm" class="shipForm" style="display:none;">
+        <div class="fieldRow">
+          <input id="name" type="text" placeholder="Nombre completo" autocomplete="name" />
+          <input id="cp" type="text" inputmode="numeric" placeholder="C.P." autocomplete="postal-code" maxlength="5" />
+        </div>
+        <input id="addr" type="text" placeholder="Calle y número / Colonia" autocomplete="street-address" />
+        <div class="fieldRow">
+          <input id="city" type="text" placeholder="Ciudad" autocomplete="address-level2" />
+          <input id="state" type="text" placeholder="Estado (ej. BC)" autocomplete="address-level1" maxlength="4" />
+        </div>
+        <p class="miniHelp">Tu dirección se usa solo para envío y soporte. Pago seguro en Stripe.</p>
+      </div>
+
+      <!-- Cupón -->
+      <div class="promoRow">
+        <input id="promoInput" type="text" placeholder="Cupón (opcional)" maxlength="24" />
+        <button id="promoApplyBtn" class="btnSm" type="button">APLICAR</button>
+      </div>
+
+      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
+
+      <div id="rowDiscount" class="sumRow" style="display:none;">
+        <span>Descuento</span><span id="lnDiscount">-$0 MXN</span>
+      </div>
+
+      <div id="lnShipRow" class="sumRow">
+        <span>Envío</span><span id="lnShip">$0 MXN</span>
+      </div>
+
+      <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
+      <div class="usdHint" id="lnUsd"></div>
+
+      <button id="payBtn" class="btn primary full" type="button" disabled>PAGAR SEGURO</button>
+      <button class="ghostBtn" type="button" data-close="all">SEGUIR COMPRANDO</button>
+
+      <p class="tinyLegal">
+        Al pagar aceptas
+        <button class="inlineLink" type="button" data-legal="terms">Términos</button> y
+        <button class="inlineLink" type="button" data-legal="privacy">Privacidad</button>.
+      </p>
+    </div>
+  </aside>
+
+  <!-- PAYBAR -->
+  <div id="paybar" class="paybar" aria-hidden="true">
+    <div>
+      <div class="paybar-label">TOTAL A PAGAR</div>
+      <div id="barTotal" class="paybar-total">$0 MXN</div>
+    </div>
+    <button class="btn-sm white" type="button" id="paybarCartBtn">VER CARRITO</button>
   </div>
-  <div id="catContent" class="catContent"></div>
-</section>
 
-<aside id="drawer" class="drawer">
-  <div class="dHead">
-    <h3 class="dTitle">MI CARRITO</h3>
-    <button class="closeBtn" data-close="all">×</button>
-  </div>
-  <div id="cartBody" class="dBody"></div>
-</aside>
+  <!-- MODAL LEGAL -->
+  <section id="legalModal" class="modal modalLegal" role="dialog" aria-modal="true" aria-labelledby="legalTitle" aria-hidden="true">
+    <div class="dHead">
+      <h3 id="legalTitle" class="dTitle">INFORMACIÓN</h3>
+      <button class="closeBtn" type="button" aria-label="Cerrar" data-close="legal">×</button>
+    </div>
 
-<div id="toast" class="toast"></div>
+    <div class="catContent legalContent">
+      <div class="legalTabs" role="tablist" aria-label="Secciones legales">
+        <button class="tabBtn active" type="button" data-legal-tab="shipping">Envíos</button>
+        <button class="tabBtn" type="button" data-legal-tab="returns">Devoluciones</button>
+        <button class="tabBtn" type="button" data-legal-tab="billing">Facturación</button>
+        <button class="tabBtn" type="button" data-legal-tab="terms">Términos</button>
+        <button class="tabBtn" type="button" data-legal-tab="privacy">Privacidad</button>
+        <button class="tabBtn" type="button" data-legal-tab="contact">Contacto</button>
+      </div>
 
-<!-- SERVICE WORKER + YEAR -->
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js");
-    });
-  }
-  document.getElementById("year").textContent = new Date().getFullYear();
-</script>
+      <article class="legalBlock active" data-legal-block="shipping">
+        <h4>Envíos</h4>
+        <p>
+          Ofrecemos <strong>pickup en Tijuana</strong>, <strong>envío local Tijuana</strong> y <strong>envío nacional</strong>.
+          El costo se confirma al momento de pagar.
+        </p>
+        <ul>
+          <li><strong>Pickup:</strong> sin costo.</li>
+          <li><strong>Local TJ:</strong> tarifa fija o según zona.</li>
+          <li><strong>Nacional MX:</strong> cotización por C.P. / paquetería o tarifa estándar.</li>
+        </ul>
+      </article>
 
-<!-- APP -->
-<script src="/js/main.js" defer></script>
+      <article class="legalBlock" data-legal-block="returns">
+        <h4>Cambios y devoluciones</h4>
+        <p>
+          Aceptamos cambios por talla o defecto de fabricación dentro de <strong>7 días naturales</strong>.
+          La prenda debe estar <strong>sin uso</strong>, con etiquetas y empaque original.
+        </p>
+      </article>
+
+      <article class="legalBlock" data-legal-block="billing">
+        <h4>Facturación (manual)</h4>
+        <p>Si requieres factura, envía tus datos fiscales a: <a href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a></p>
+      </article>
+
+      <article class="legalBlock" data-legal-block="terms">
+        <h4>Términos y condiciones</h4>
+        <p class="small">Última actualización: 30 de diciembre de 2025.</p>
+        <p>Los pagos se procesan a través de <strong>Stripe</strong>. No almacenamos información de tarjeta.</p>
+      </article>
+
+      <article class="legalBlock" data-legal-block="privacy">
+        <h4>Aviso de privacidad</h4>
+        <p class="small">Última actualización: 30 de diciembre de 2025.</p>
+        <p>Usamos tus datos para procesar pedidos, entregas, soporte y facturación.</p>
+      </article>
+
+      <article class="legalBlock" data-legal-block="contact">
+        <h4>Contacto</h4>
+        <p>Soporte: <a href="mailto:ventas@scorestore.com">ventas@scorestore.com</a></p>
+      </article>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- PWA -->
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+    }
+  </script>
+
+  <!-- APP -->
+  <script src="/js/main.js" defer></script>
 </body>
 </html>
