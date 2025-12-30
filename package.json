@@ -6,6 +6,9 @@
   "scripts": {
     "build": "echo \"Static site ready\""
   },
+  "dependencies": {
+    "stripe": "^14.25.0"
+  },
   "engines": {
     "node": ">=18"
   }
