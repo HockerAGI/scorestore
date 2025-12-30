@@ -20,7 +20,7 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# Netlify Functions (NO CACHE + CORS)
+# Functions (NO CACHE + CORS)
 # -------------------------
 [[headers]]
   for = "/.netlify/functions/*"
@@ -31,28 +31,7 @@
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
 # -------------------------
-# Assets estáticos (cache largo)
-# -------------------------
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# -------------------------
-# JS controlado por SW
-# -------------------------
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-# -------------------------
-# Service Worker / Manifest
+# Service Worker / Manifest (no-cache)
 # -------------------------
 [[headers]]
   for = "/sw.js"
@@ -65,7 +44,28 @@
     Cache-Control = "no-cache"
 
 # -------------------------
-# Datos dinámicos
+# JS/CSS: evita “stale” por CDN (SW manda)
+# -------------------------
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# -------------------------
+# Assets pesados: cache largo
+# -------------------------
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# -------------------------
+# Datos dinámicos (catálogo/promos)
 # -------------------------
 [[headers]]
   for = "/data/*"
