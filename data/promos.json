@@ -2,25 +2,28 @@
   "rules": [
     {
       "code": "SCORE10",
-      "type": "percent",
-      "value": 0.10,
+      "type": "pct",
+      "value": 10,
+      "minSubtotal": 1000,
       "active": true
     },
     {
       "code": "BAJA200",
-      "type": "fixed_mxn",
+      "type": "mxn",
       "value": 200,
+      "minSubtotal": 1500,
       "active": true
     },
     {
       "code": "ENVIOFREE",
       "type": "free_shipping",
       "value": 0,
+      "minSubtotal": 2000,
       "active": true
     },
     {
       "code": "VIP100",
-      "type": "free_total",
+      "type": "disabled",
       "value": 0,
       "active": false
     }
