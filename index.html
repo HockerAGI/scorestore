@@ -1,155 +1,136 @@
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SCORE Store | Tienda Oficial</title>
 
-  <meta name="description" content="SCORE International. Único Uniformes, patrocinador y fabricante oficial. Envíos a todo México. Pago seguro." />
-  <meta name="theme-color" content="#E10600" />
-
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:description" content="Ediciones limitadas. Pago seguro. Envíos a todo México." />
-  <meta property="og:image" content="/assets/hero.webp" />
+  <meta name="description" content="Tienda oficial SCORE Off-Road. Edición limitada 2025. Único Uniformes, patrocinador y fabricante oficial. Envíos a todo México. Pago seguro.">
+  <meta name="theme-color" content="#E10600">
+  <link rel="canonical" href="https://scorestore.netlify.app/">
 
   <!-- PWA -->
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Teko:wght@700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/styles.css" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
 
-  <!-- FONDO -->
-  <div class="page-bg"></div>
-  <div class="dust-container"><div class="dust"></div></div>
+<div class="page-bg"></div>
 
-  <!-- HEADER -->
-  <header class="topbar">
-    <a class="brand" href="/">
-      <img src="/assets/logo-score.webp" alt="SCORE International">
-    </a>
+<header class="topbar">
+  <img src="/assets/logo-score.webp" alt="SCORE Store">
+  <div class="navRight">
+    <div class="pill">MX · <b>TIJUANA</b></div>
+    <button class="cartTrigger" onclick="openDrawer()">🛒 <span id="cartCount">0</span></button>
+  </div>
+</header>
 
-    <div class="navRight">
-      <div class="pill">MX · <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()">
-        🛒 <span id="cartCount" class="cartCount">0</span>
-      </button>
+<main class="wrap">
+
+<!-- HERO -->
+<section class="hero">
+  <img src="/assets/logo-world-desert.webp" class="heroBadge" alt="World Desert Championship">
+
+  <div class="heroContent">
+    <span class="tagline">COLECCIÓN OFICIAL 2025</span>
+
+    <h1>SCORE<br>INTERNATIONAL</h1>
+
+    <p class="sub">
+      Equipamiento profesional Off-Road.<br>
+      <strong>Único Uniformes, patrocinador y fabricante oficial.</strong>
+    </p>
+
+    <ul class="heroList">
+      <li>🚚 Envíos a todo México</li>
+      <li>🔒 Pago seguro</li>
+      <li>🧵 Calidad profesional</li>
+    </ul>
+
+    <div class="ctaRow">
+      <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">COMPRAR AHORA</button>
+      <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
     </div>
-  </header>
+  </div>
+</section>
 
-  <main class="wrap">
+<!-- CATÁLOGO -->
+<section class="championships">
+  <h2>CATÁLOGO OFICIAL</h2>
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
+  <button class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
+    <span class="badge green">DISPONIBLE</span>
+    <img src="/assets/logo-baja1000.webp" alt="Baja 1000">
+    <div>
+      <strong>BAJA 1000</strong>
+      <span>Ver productos</span>
+    </div>
+  </button>
 
-      <img src="/assets/logo-world-desert.webp" class="heroSeal" alt="World Desert">
+  <button class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
+    <span class="badge green">DISPONIBLE</span>
+    <img src="/assets/logo-baja500.webp" alt="Baja 500">
+    <div>
+      <strong>BAJA 500</strong>
+      <span>Ver productos</span>
+    </div>
+  </button>
 
-      <div class="heroContent">
-        <span class="tagline">COLECCIÓN OFICIAL 2025</span>
+  <button class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
+    <span class="badge green">DISPONIBLE</span>
+    <img src="/assets/logo-baja400.webp" alt="Baja 400">
+    <div>
+      <strong>BAJA 400</strong>
+      <span>Ver productos</span>
+    </div>
+  </button>
 
-        <h1>SCORE<br>INTERNATIONAL</h1>
+  <button class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
+    <span class="badge gray">EDICIÓN LIMITADA</span>
+    <img src="/assets/logo-sf250.webp" alt="San Felipe 250">
+    <div>
+      <strong>SAN FELIPE 250</strong>
+      <span>Ver productos</span>
+    </div>
+  </button>
+</section>
 
-        <p class="sub">
-          Equipamiento profesional Off-Road.<br>
-          <strong>Único Uniformes, patrocinador y fabricante oficial.</strong>
-        </p>
+<!-- PARTNERS -->
+<section class="partners">
+  <h2>OFFICIAL PARTNERS</h2>
+  <div class="partnerGrid">
+    <img src="/assets/logo-ford.webp" alt="Ford">
+    <img src="/assets/logo-rzr.webp" alt="RZR">
+    <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich">
+    <img src="/assets/logo-unico.webp" alt="Único Uniformes">
+  </div>
+</section>
 
-        <div class="trustRow">
-          <div class="trustPill">🚚 Envíos a todo México</div>
-          <div class="trustPill">🔒 Pago seguro</div>
-          <div class="trustPill">🧵 Calidad profesional</div>
-        </div>
+<!-- FOOTER -->
+<footer class="footer">
+  <img src="/assets/logo-unico.webp" class="footerLogo" alt="Único Uniformes">
 
-        <div class="ctaRow">
-          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">COMPRAR AHORA</button>
-          <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
-        </div>
-      </div>
-    </section>
+  <p>Official Licensed Merchandise.<br>Distribuidor autorizado.</p>
 
-    <!-- CATALOGO -->
-    <section class="championships">
-      <h2>CATÁLOGO OFICIAL</h2>
+  <p class="legal">
+    Precios en MXN. Incluyen IVA.<br>
+    Términos y Condiciones · Aviso de Privacidad
+  </p>
 
-      <button class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-        <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logo-baja1000.webp">
-        <div><strong>BAJA 1000</strong><span>Ver productos</span></div>
-      </button>
+  <p class="copy">© 2025 SCORE International. Todos los derechos reservados.</p>
+</footer>
 
-      <button class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
-        <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logo-baja500.webp">
-        <div><strong>BAJA 500</strong><span>Ver productos</span></div>
-      </button>
+</main>
 
-      <button class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-        <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logo-baja400.webp">
-        <div><strong>BAJA 400</strong><span>Ver productos</span></div>
-      </button>
-
-      <button class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
-        <span class="badge gray">EDICIÓN LIMITADA</span>
-        <img src="/assets/logo-sf250.webp">
-        <div><strong>SAN FELIPE 250</strong><span>Ver productos</span></div>
-      </button>
-    </section>
-
-    <!-- PARTNERS -->
-    <section class="partners">
-      <h2>OFFICIAL PARTNERS</h2>
-      <div class="partnerGrid">
-        <img src="/assets/logo-ford.webp">
-        <img src="/assets/logo-rzr.webp">
-        <img src="/assets/logo-unico.webp">
-        <img src="/assets/logo-bfgoodrich.webp">
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-      <div class="footerGrid">
-        <div>
-          <img src="/assets/logo-unico-white.webp" class="footerLogo">
-          <p class="footerText">Official Licensed Merchandise.<br>Distribuidor autorizado.</p>
-        </div>
-
-        <div>
-          <div class="footerTitle">Redes</div>
-          <div class="socials">
-            <img src="/assets/icons/facebook.svg">
-            <img src="/assets/icons/instagram.svg">
-            <img src="/assets/icons/youtube.svg">
-          </div>
-        </div>
-
-        <div>
-          <div class="footerTitle">Legal</div>
-          <p class="small">Precios en MXN. Incluyen IVA.</p>
-          <button class="linkBtn" onclick="openLegal('terms')">Términos</button> ·
-          <button class="linkBtn" onclick="openLegal('privacy')">Privacidad</button>
-        </div>
-      </div>
-
-      <div class="footerBottom">
-        © <span id="year"></span> SCORE International. Todos los derechos reservados.
-      </div>
-    </footer>
-
-  </main>
-
-  <script src="/js/main.js" defer></script>
-  <script>document.getElementById("year").textContent = new Date().getFullYear()</script>
+<script src="/js/main.js"></script>
 </body>
 </html>
