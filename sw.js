@@ -1,59 +1,99 @@
-// sw.js — SCORE STORE (CACHE CONTROL DEFINITIVO)
+// sw.js — SCORE STORE (PROD ALIGN FINAL)
 
-const CACHE = 'score-v4';
+const CACHE_VERSION = "v5";
+const CACHE_STATIC = `score-static-${CACHE_VERSION}`;
 
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/main.js',
-  '/site.webmanifest',
-  '/assets/logo-score.webp',
-  '/assets/hero.webp',
-  '/assets/fondo-pagina-score.webp'
+const STATIC_ASSETS = [
+  "/",
+  "/index.html",
+  "/css/styles.css",
+  "/js/main.js",
+  "/site.webmanifest",
+  "/assets/logo-score.webp",
+  "/assets/hero.webp",
+  "/assets/fondo-pagina-score.webp",
 ];
 
-self.addEventListener('install', (e) => {
+// ================================
+// INSTALL
+// ================================
+self.addEventListener("install", (event) => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+  event.waitUntil(
+    caches.open(CACHE_STATIC).then((cache) => cache.addAll(STATIC_ASSETS))
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
+// ================================
+// ACTIVATE
+// ================================
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+        keys
+          .filter((k) => !k.includes(CACHE_VERSION))
+          .map((k) => caches.delete(k))
       )
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+// ================================
+// FETCH
+// ================================
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // HTML / JS / JSON → NETWORK FIRST
-  if (
-    url.pathname.endsWith('.html') ||
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.json')
-  ) {
-    e.respondWith(
-      fetch(e.request)
+  // ❌ Ignorar requests no-GET
+  if (req.method !== "GET") return;
+
+  // ❌ Ignorar requests externos (Stripe, Envia, Telegram, etc.)
+  if (url.origin !== self.location.origin) return;
+
+  // ❌ Ignorar Netlify Functions (CRÍTICO)
+  if (url.pathname.startsWith("/.netlify/functions")) return;
+
+  // ❌ Ignorar datos dinámicos (catálogo / promos)
+  if (url.pathname.startsWith("/data/")) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // ============================
+  // HTML → NETWORK FIRST
+  // ============================
+  if (req.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          caches.open(CACHE_STATIC).then((cache) => cache.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() => caches.match(req))
     );
     return;
   }
 
-  // Resto → CACHE FIRST
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
-  );
+  // ============================
+  // STATIC ASSETS → CACHE FIRST
+  // ============================
+  if (
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/css/") ||
+    url.pathname.startsWith("/js/")
+  ) {
+    event.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req))
+    );
+    return;
+  }
+
+  // ============================
+  // DEFAULT → NETWORK
+  // ============================
+  event.respondWith(fetch(req));
 });
