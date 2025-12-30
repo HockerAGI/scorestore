@@ -1,7 +1,6 @@
 // sw.js — SCORE STORE (CACHE CONTROL DEFINITIVO)
-// Ajustado para ecommerce real con Stripe + Envia
 
-const CACHE = 'score-v5';
+const CACHE = 'score-v4';
 
 const ASSETS = [
   '/',
@@ -9,8 +8,9 @@ const ASSETS = [
   '/css/styles.css',
   '/js/main.js',
   '/site.webmanifest',
-  '/icons-score.svg',
-  '/assets/logo-score.webp'
+  '/assets/logo-score.webp',
+  '/assets/hero.webp',
+  '/assets/fondo-pagina-score.webp'
 ];
 
 self.addEventListener('install', (e) => {
@@ -34,11 +34,6 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // 🔒 NO interceptar funciones backend (Stripe / Envia)
-  if (url.pathname.startsWith('/.netlify/functions/')) {
-    return;
-  }
-
   // HTML / JS / JSON → NETWORK FIRST
   if (
     url.pathname.endsWith('.html') ||
@@ -57,7 +52,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Assets estáticos → CACHE FIRST
+  // Resto → CACHE FIRST
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );
