@@ -1,34 +1,62 @@
-const CACHE_NAME = 'score-store-official-v4';
+// sw.js — SCORE STORE (CACHE CONTROL DEFINITIVO)
+// Motivo:
+// - Evita JS viejo cacheado
+// - Network-first para HTML / JS / JSON
+// - Cache versionado fuerte
+
+const CACHE = 'score-v4';
+
 const ASSETS = [
   '/',
   '/index.html',
   '/css/styles.css',
   '/js/main.js',
   '/site.webmanifest',
-  '/assets/logo-score.webp',
-  '/assets/hero.webp',
-  '/assets/icons-score.svg',
-  '/data/catalog.json'
+  '/icons-score.svg',
+  '/assets/logo-score.webp'
 ];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+  );
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => k !== CACHE_NAME ? caches.delete(k) : null))));
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+      )
+    )
+  );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (url.pathname.startsWith('/.netlify/') || url.hostname.includes('stripe')) return;
+
+  // HTML / JS / JSON → NETWORK FIRST
+  if (
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.json')
+  ) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Resto → CACHE FIRST
   e.respondWith(
-    fetch(e.request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
-      return res;
-    }).catch(() => caches.match(e.request))
+    caches.match(e.request).then((cached) => cached || fetch(e.request))
   );
 });
