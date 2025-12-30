@@ -3,67 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SCORE | Tienda Oficial</title>
+  <title>SCORE Store | Tienda Oficial</title>
 
-  <meta name="description" content="Tienda oficial SCORE Off-Road. Único Uniformes, patrocinador y fabricante oficial. Envíos a todo México. Pago seguro." />
+  <meta name="description" content="SCORE International. Único Uniformes, patrocinador y fabricante oficial. Envíos a todo México. Pago seguro." />
   <meta name="theme-color" content="#E10600" />
 
-  <!-- SEO -->
   <link rel="canonical" href="https://scorestore.netlify.app/" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial Off-Road" />
-  <meta property="og:description" content="Ediciones limitadas. Pago seguro. Envíos a todo México. Fabricado por Único Uniformes." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
+  <meta property="og:description" content="Ediciones limitadas. Pago seguro. Envíos a todo México." />
+  <meta property="og:image" content="/assets/hero.webp" />
 
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <!-- Icons -->
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-
   <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=Teko:wght@700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@700&display=swap" rel="stylesheet">
 
-  <!-- Styles -->
-  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
 <body>
-  <!-- FONDO GENERAL -->
-  <div class="page-bg" aria-hidden="true"></div>
-  <div class="dust-container" aria-hidden="true"><div class="dust"></div></div>
+
+  <!-- FONDO -->
+  <div class="page-bg"></div>
+  <div class="dust-container"><div class="dust"></div></div>
 
   <!-- HEADER -->
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Ir al inicio">
-      <img src="/assets/logo-score.webp" alt="SCORE International Off-Road Racing" />
+    <a class="brand" href="/">
+      <img src="/assets/logo-score.webp" alt="SCORE International">
     </a>
 
     <div class="navRight">
       <div class="pill">MX · <b>TIJUANA</b></div>
-
-      <button id="cartBtnTrigger" class="cartTrigger" type="button"
-        aria-label="Abrir carrito" onclick="openDrawer()">
+      <button class="cartTrigger" onclick="openDrawer()">
         🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
   </header>
 
-  <main class="wrap" tabindex="-1">
+  <main class="wrap">
+
     <!-- HERO -->
     <section class="hero">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
 
-      <!-- SELLO DESERT -->
-      <img src="/assets/logo-world-desert.webp" class="heroSeal" alt="World Desert Official Seal" />
+      <img src="/assets/logo-world-desert.webp" class="heroSeal" alt="World Desert">
 
       <div class="heroContent">
         <span class="tagline">COLECCIÓN OFICIAL 2025</span>
@@ -77,7 +66,7 @@
 
         <div class="trustRow">
           <div class="trustPill">🚚 Envíos a todo México</div>
-          <div class="trustPill">🔒 Pago 100% seguro</div>
+          <div class="trustPill">🔒 Pago seguro</div>
           <div class="trustPill">🧵 Calidad profesional</div>
         </div>
 
@@ -88,31 +77,31 @@
       </div>
     </section>
 
-    <!-- CATÁLOGO -->
+    <!-- CATALOGO -->
     <section class="championships">
       <h2>CATÁLOGO OFICIAL</h2>
 
       <button class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
         <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logos/baja1000.webp" alt="Baja 1000" />
+        <img src="/assets/logo-baja1000.webp">
         <div><strong>BAJA 1000</strong><span>Ver productos</span></div>
       </button>
 
       <button class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
         <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logos/baja500.webp" alt="Baja 500" />
+        <img src="/assets/logo-baja500.webp">
         <div><strong>BAJA 500</strong><span>Ver productos</span></div>
       </button>
 
       <button class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
         <span class="badge green">DISPONIBLE</span>
-        <img src="/assets/logos/baja400.webp" alt="Baja 400" />
+        <img src="/assets/logo-baja400.webp">
         <div><strong>BAJA 400</strong><span>Ver productos</span></div>
       </button>
 
       <button class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
         <span class="badge gray">EDICIÓN LIMITADA</span>
-        <img src="/assets/logos/sf250.webp" alt="San Felipe 250" />
+        <img src="/assets/logo-sf250.webp">
         <div><strong>SAN FELIPE 250</strong><span>Ver productos</span></div>
       </button>
     </section>
@@ -121,10 +110,10 @@
     <section class="partners">
       <h2>OFFICIAL PARTNERS</h2>
       <div class="partnerGrid">
-        <img src="/assets/logo-ford.webp" alt="Ford" />
-        <img src="/assets/logo-rzr.webp" alt="Polaris RZR" />
-        <img src="/assets/logo-unico.webp" alt="Único Uniformes" />
-        <img src="/assets/logo-bfgoodrich.webp" alt="BFGoodrich" />
+        <img src="/assets/logo-ford.webp">
+        <img src="/assets/logo-rzr.webp">
+        <img src="/assets/logo-unico.webp">
+        <img src="/assets/logo-bfgoodrich.webp">
       </div>
     </section>
 
@@ -132,27 +121,22 @@
     <footer class="footer">
       <div class="footerGrid">
         <div>
-          <img src="/assets/logo-unico-white.webp" class="footerLogo" alt="Único Uniformes" />
-          <p class="footerText">
-            Official Licensed Merchandise.<br>
-            Distribuidor autorizado y fabricante oficial.
-          </p>
+          <img src="/assets/logo-unico-white.webp" class="footerLogo">
+          <p class="footerText">Official Licensed Merchandise.<br>Distribuidor autorizado.</p>
         </div>
 
         <div>
-          <div class="footerTitle">Redes Sociales</div>
+          <div class="footerTitle">Redes</div>
           <div class="socials">
-            <a href="#"><img src="/assets/icons/facebook.svg" alt="Facebook"></a>
-            <a href="#"><img src="/assets/icons/instagram.svg" alt="Instagram"></a>
-            <a href="#"><img src="/assets/icons/youtube.svg" alt="YouTube"></a>
+            <img src="/assets/icons/facebook.svg">
+            <img src="/assets/icons/instagram.svg">
+            <img src="/assets/icons/youtube.svg">
           </div>
         </div>
 
         <div>
           <div class="footerTitle">Legal</div>
-          <p class="footerText small">
-            Precios en MXN (Pesos Mexicanos). Incluyen IVA.
-          </p>
+          <p class="small">Precios en MXN. Incluyen IVA.</p>
           <button class="linkBtn" onclick="openLegal('terms')">Términos</button> ·
           <button class="linkBtn" onclick="openLegal('privacy')">Privacidad</button>
         </div>
@@ -162,13 +146,10 @@
         © <span id="year"></span> SCORE International. Todos los derechos reservados.
       </div>
     </footer>
+
   </main>
 
-  <!-- OVERLAY / MODALES / DRAWER -->
-  <!-- (Todo lo demás se mantiene igual que tu versión actual, sin romper JS) -->
-
-  <script src="https://js.stripe.com/v3"></script>
   <script src="/js/main.js" defer></script>
-  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+  <script>document.getElementById("year").textContent = new Date().getFullYear()</script>
 </body>
 </html>
