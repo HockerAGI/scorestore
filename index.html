@@ -5,75 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SCORE Store | Tienda Oficial Off-Road</title>
 
-  <!-- SEO -->
-  <meta name="description" content="Merch Off-Road de alto rendimiento. Ediciones limitadas. Envíos a todo México y pickup en Tijuana. Operado por Único Uniformes." />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://scorestore.netlify.app/" />
+  <meta name="description" content="Tienda oficial SCORE International Off-Road. Ediciones limitadas. Envíos a todo México.">
+  <meta name="theme-color" content="#E10600">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="SCORE Store | Tienda Oficial Off-Road" />
-  <meta property="og:description" content="Ediciones limitadas. Envíos a todo México. Pago seguro. Operado por Único Uniformes." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://scorestore.netlify.app/" />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@700&display=swap" rel="stylesheet">
 
-  <!-- PWA -->
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-
-  <!-- Icons -->
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@700&display=swap" rel="stylesheet" />
-
-  <!-- Performance -->
-  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
-  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
-  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="preload" href="/assets/hero.webp" as="image">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
-
 <body>
-  <a class="skipLink" href="#mainContent">Saltar al contenido</a>
 
-  <!-- BACKGROUND -->
-  <div class="page-bg" aria-hidden="true"></div>
-  <div class="dust-container" aria-hidden="true"><div class="dust"></div></div>
+  <div class="page-bg"></div>
+  <div class="dust-container"><div class="dust"></div></div>
 
   <!-- HEADER -->
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Ir al inicio">
-      <img src="/assets/logo-score.webp" alt="SCORE Store" />
-    </a>
-
+    <div class="brand">
+      <img src="/assets/score-logo.webp" alt="SCORE International">
+    </div>
     <div class="navRight">
       <div class="pill">MX · <b>TIJUANA</b></div>
-
-      <button id="cartBtnTrigger" class="cartTrigger" type="button" aria-label="Abrir carrito">
+      <button id="cartBtnTrigger" class="cartTrigger" aria-label="Abrir carrito">
         🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
   </header>
 
-  <main id="mainContent" class="wrap">
+  <main class="wrap">
 
     <!-- HERO -->
     <section class="hero">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
 
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="World Desert Championship" />
-
-      <div class="heroContent">
-        <span class="tagline">COLECCIÓN OFICIAL 2025</span>
+      <div class="heroCard">
+        <div class="heroTop">
+          <span class="tagline">COLECCIÓN OFICIAL 2025</span>
+          <img class="heroBadge" src="/assets/logos/baja1000.webp" alt="Baja 1000">
+        </div>
 
         <h1>SCORE<br>INTERNATIONAL</h1>
 
@@ -85,7 +58,7 @@
         <ul class="heroBullets">
           <li>📦 Envíos a todo México</li>
           <li>🔒 Pago seguro con Stripe</li>
-          <li>🧵 Bordado y confección premium</li>
+          <li>🧵 Confección y bordado premium</li>
         </ul>
 
         <div class="ctaRow">
@@ -96,54 +69,51 @@
     </section>
 
     <!-- CATÁLOGO -->
-    <section class="championships">
-      <h2>CATÁLOGO OFICIAL</h2>
+    <section class="section">
+      <h2 class="sectionTitle">CATÁLOGO OFICIAL</h2>
 
-      <div class="catalogGrid">
-        <button class="champCard" data-open="BAJA_1000" data-title="BAJA 1000">
-          <span class="badge available">DISPONIBLE</span>
-          <img class="champLogo" src="/assets/logo-baja1000.webp" alt="BAJA 1000">
-          <div class="champMeta"><strong>BAJA 1000</strong><span>Ver productos</span></div>
-          <span class="champArrow">→</span>
-        </button>
+      <button class="champItem" data-open="BAJA_1000" data-title="BAJA 1000">
+        <img src="/assets/logos/baja1000.webp">
+        <div class="champText"><strong>BAJA 1000</strong><span>Ver productos</span></div>
+        <span class="arrow">→</span>
+      </button>
 
-        <button class="champCard" data-open="BAJA_500" data-title="BAJA 500">
-          <span class="badge available">DISPONIBLE</span>
-          <img class="champLogo" src="/assets/logo-baja500.webp" alt="BAJA 500">
-          <div class="champMeta"><strong>BAJA 500</strong><span>Ver productos</span></div>
-          <span class="champArrow">→</span>
-        </button>
+      <button class="champItem" data-open="BAJA_500" data-title="BAJA 500">
+        <img src="/assets/logos/baja500.webp">
+        <div class="champText"><strong>BAJA 500</strong><span>Ver productos</span></div>
+        <span class="arrow">→</span>
+      </button>
 
-        <button class="champCard" data-open="BAJA_400" data-title="BAJA 400">
-          <span class="badge available">DISPONIBLE</span>
-          <img class="champLogo" src="/assets/logo-baja400.webp" alt="BAJA 400">
-          <div class="champMeta"><strong>BAJA 400</strong><span>Ver productos</span></div>
-          <span class="champArrow">→</span>
-        </button>
+      <button class="champItem" data-open="BAJA_400" data-title="BAJA 400">
+        <img src="/assets/logos/baja400.webp">
+        <div class="champText"><strong>BAJA 400</strong><span>Ver productos</span></div>
+        <span class="arrow">→</span>
+      </button>
 
-        <!-- SF250 UNIFICADO -->
-        <button class="champCard" data-open="SF250" data-title="SAN FELIPE 250">
-          <span class="badge limited">EDICIÓN LIMITADA</span>
-          <img class="champLogo" src="/assets/logo-sf250.webp" alt="SAN FELIPE 250">
-          <div class="champMeta"><strong>SAN FELIPE 250</strong><span>Ver productos</span></div>
-          <span class="champArrow">→</span>
-        </button>
+      <!-- SF250 UNIFICADO -->
+      <button class="champItem" data-open="SF250" data-title="SAN FELIPE 250">
+        <img src="/assets/logos/sf250.webp">
+        <div class="champText"><strong>SAN FELIPE 250</strong><span>Edición limitada</span></div>
+        <span class="arrow">→</span>
+      </button>
+    </section>
+
+    <!-- PARTNERS -->
+    <section class="section">
+      <h2 class="sectionTitle">OFFICIAL PARTNERS</h2>
+      <div class="partners">
+        <img src="/assets/partners/ford.webp">
+        <img src="/assets/partners/rzr.webp">
+        <img src="/assets/partners/bfgoodrich.webp">
+        <img src="/assets/partners/unico.webp">
       </div>
     </section>
 
     <!-- FOOTER -->
-    <footer class="footer">
-      <div class="footerCard">
-        <p class="footerSmall">
-          © <span id="year"></span> SCORE Store · Operado por <strong>Único Uniformes</strong>
-        </p>
-        <div class="footerLegalRow">
-          <button class="miniPill" data-legal="terms">Términos</button>
-          <button class="miniPill" data-legal="privacy">Privacidad</button>
-          <button class="miniPill" data-legal="billing">Facturación</button>
-        </div>
-      </div>
+    <footer class="footerCard">
+      <p>© 2025 SCORE Store · Operado por <strong>Único Uniformes</strong></p>
     </footer>
+
   </main>
 
   <!-- OVERLAY -->
@@ -164,28 +134,28 @@
       <h3 class="dTitle">MI CARRITO</h3>
       <button class="closeBtn" data-close="all">×</button>
     </div>
+
     <div id="cartBody" class="dBody"></div>
+
+    <div class="dFoot">
+      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
+      <div class="sumRow"><span>Envío</span><span id="lnShip">$0 MXN</span></div>
+      <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
+      <button id="payBtn" class="btn primary full" disabled>PAGAR SEGURO</button>
+    </div>
   </aside>
 
-  <!-- LEGAL MODAL -->
-  <section id="legalModal" class="legalModal">
-    <div class="legalBox">
-      <button class="closeBtn" data-close="legal">×</button>
-      <div id="legalContent"></div>
+  <!-- PAYBAR -->
+  <div id="paybar" class="paybar">
+    <div>
+      <div class="paybar-label">TOTAL</div>
+      <div id="barTotal" class="paybar-total">$0 MXN</div>
     </div>
-  </section>
+    <button class="btn-sm white" id="paybarCartBtn">VER CARRITO</button>
+  </div>
 
   <div id="toast" class="toast"></div>
 
-  <!-- APP -->
   <script src="/js/main.js" defer></script>
-
-  <!-- PWA -->
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
-    }
-  </script>
 </body>
 </html>
