@@ -1,4 +1,3 @@
-// netlify/functions/quote_shipping.js
 const { json, safeParse, needEnv } = require("./_shared");
 
 exports.handler = async (event) => {
@@ -6,14 +5,9 @@ exports.handler = async (event) => {
     return json(405, { ok: false, error: "Method not allowed" });
   }
 
-  let body;
-  try {
-    body = safeParse(event.body);
-  } catch {
-    return json(400, { ok: false, error: "Invalid JSON" });
-  }
-
+  const body = safeParse(event.body);
   const postalCode = body?.to?.postal_code;
+
   if (!postalCode || !/^\d{5}$/.test(postalCode)) {
     return json(400, { ok: false, error: "Invalid postal code" });
   }
@@ -25,18 +19,28 @@ exports.handler = async (event) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${ENVIA_API_KEY}`,
+        "Authorization": `Bearer ${ENVIA_API_KEY}`
       },
       body: JSON.stringify({
-        origin: { postal_code: "22000", country_code: "MX" },
-        destination: { postal_code: postalCode, country_code: "MX" },
+        origin: {
+          postal_code: "22000",
+          country_code: "MX"
+        },
+        destination: {
+          postal_code: postalCode,
+          country_code: "MX"
+        },
         packages: [
           {
             weight: 1,
-            dimensions: { length: 20, width: 20, height: 10 },
-          },
-        ],
-      }),
+            dimensions: {
+              length: 20,
+              width: 20,
+              height: 10
+            }
+          }
+        ]
+      })
     });
 
     if (!res.ok) {
@@ -57,9 +61,10 @@ exports.handler = async (event) => {
       mxn: Number(cheapest.total_price),
       carrier: cheapest.carrier,
       service: cheapest.service,
-      days: cheapest.delivery_time || null,
+      days: cheapest.delivery_time || null
     });
-  } catch (e) {
+
+  } catch {
     return json(200, { ok: false, mxn: 0 });
   }
 };
