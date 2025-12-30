@@ -1,53 +1,26 @@
-{
-  "name": "SCORE Store · Official Racing Merch",
-  "short_name": "SCORE Store",
-  "start_url": "/?source=pwa",
-  "scope": "/",
-  "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "standalone",
-    "minimal-ui",
-    "browser"
-  ],
-  "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#E10600",
-  "description": "Tienda oficial SCORE International Racing. Ediciones limitadas.",
-  "lang": "es-MX",
-  "dir": "ltr",
-  "categories": ["shopping", "sports", "lifestyle"],
-  "prefer_related_applications": false,
-  "icons": [
-    {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTk1IiBoZWlnaHQ9IjYxIiB2aWV3Qm94PSIwIDAgMTk1IDYxIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGZpbGw9IiMwQjBDMUQiIGQ9Ik0xOC4wNTE5IDE2LjM0NDFMMjAuNDI5MSAxMi40MkwxNC4yNTM2IDguMzE4OTlWMC4yNTQ4NDdIMC44ODgxMzhWNjAuNzQ1SDE0Ljg0MlYyMi45MTE1TDIwLjc5NzYgMTguMDM1MUgyMC44NDE3TDQ1Ljg0MTkgMzQuNDUyNVY2MC43NDVINDUuODQxOVYzMy4yODgyTDIwLjU1OTggMTYuMzQ0MUgxOC4wNTE5WiIvPgogIDxnIGZpbGw9IiNFMTBGMDAiPgogICAgPHBhdGggZD0iTTEyNS4yMDkgMEwxMjQuMzY4IDIuODg3NDlMMTM3LjMzIDI5LjcwMjVIMTI0Ljc0MkwxMjUuMjA5IDBaIi8+CiAgICA8cGF0aCBkPSJNMTI0LjcxMSAwSDEwMS4yMjFWMS43NzYwM0wxMTcuODk4IDI4LjA3MzhMMTAxLjIyMSA1Ni40MjQ5VjU4LjIwNDNIOTQuMDg0MVYwSDEyNC43MTFaIi8+CiAgICA8cGF0aCBkPSJNMTk1IDU4LjIwNDNMMTcxLjUxMyA1OC4yMDQzVjU2LjQyNDlMMTg4LjE5MSAyOC4wNzM4TDE3MS41MTMgMS43NzYwM1YwSDE5NVY1OC4yMDQzWiIvPgogIDwvZz4KPC9zdmc+",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "data:image/png;base64,${new_manifest_str[new_manifest_str.index('"src": "data:image/png;base64'):].split('"')[3]}",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/png;base64,${new_manifest_str[new_manifest_str.index('"src": "data:image/png;base64', new_manifest_str.index('"src": "data:image/png;base64')+10):].split('"')[3]}",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "data:image/png;base64,${new_manifest_str[new_manifest_str.index('"src": "data:image/png;base64', new_manifest_str.index('"src": "data:image/png;base64', new_manifest_str.index('"src": "data:image/png;base64')+10)+10):].split('"')[3]}",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/png;base64,${new_manifest_str[new_manifest_str.lastIndexOf('"src": "data:image/png;base64'):].split('"')[3]}",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
-}
+"icons": [
+  {
+    "src": "/assets/icons/icon-192.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "any"
+  },
+  {
+    "src": "/assets/icons/icon-192-maskable.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "maskable"
+  },
+  {
+    "src": "/assets/icons/icon-512.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "any"
+  },
+  {
+    "src": "/assets/icons/icon-512-maskable.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "maskable"
+  }
+]
