@@ -1,6 +1,6 @@
 {
   "id": "/?source=pwa",
-  "name": "SCORE Store · Racing Merch",
+  "name": "SCORE Store · Merch Off-Road",
   "short_name": "SCORE Store",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -14,7 +14,7 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#E10600",
-  "description": "Merch de carreras off-road. Ediciones limitadas fabricadas en México.",
+  "description": "Merch Off-Road de edición limitada. Fabricado en Tijuana por Único Uniformes.",
   "lang": "es-MX",
   "dir": "ltr",
   "categories": ["shopping", "sports", "lifestyle"],
