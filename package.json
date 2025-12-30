@@ -2,8 +2,9 @@
   "name": "score-store",
   "version": "1.0.0",
   "private": true,
-  "description": "SCORE Store - Ecommerce Oficial (PWA + Netlify Functions + Stripe)",
+  "description": "SCORE Store - Ecommerce Oficial (PWA + Netlify Functions + Stripe + Shipping)",
   "scripts": {
+    "dev": "node -e \"console.log('Static site ready')\"",
     "build": "node -e \"console.log('Static site ready')\""
   },
   "dependencies": {
