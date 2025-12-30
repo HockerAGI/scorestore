@@ -1,59 +1,52 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
   command = "npm run build"
-
-[build.environment]
-  NODE_VERSION = "18"
+  publish = "."
 
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["data/*.json"]
+  included_files = ["data/**", "assets/**", "css/**", "js/**", "*.html", "*.webmanifest", "sw.js"]
 
-# --- CACHE: IMÁGENES (Larga duración) ---
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# --- CACHE: CÓDIGO (Revalidar siempre) ---
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "public, max-age=60, stale-while-revalidate=600"
-
-# --- CACHE: NAVEGACIÓN (Nunca cachear para evitar errores) ---
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-# --- SEGURIDAD ---
+# =========================
+# SECURITY + NO CACHE HTML
+# =========================
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), camera=(), microphone=()"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    # HTML no se cachea (evita “no carga bien” por versiones viejas)
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# =========================
+# AGGRESSIVE CACHE ASSETS
+# =========================
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=60, must-revalidate"
+
+# =========================
+# Service Worker: siempre fresco
+# =========================
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store"
