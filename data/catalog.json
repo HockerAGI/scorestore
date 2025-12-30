@@ -3,12 +3,14 @@
     "currency": "MXN",
     "fx_mxn_per_usd": 17.5
   },
+
   "sections": [
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "order": 1 },
     { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVA LLEGADA", "order": 2 },
     { "id": "BAJA_400", "title": "BAJA 400", "badge": "DISPONIBLE", "order": 3 },
-    { "id": "SF250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS", "order": 4 }
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS", "order": 4 }
   ],
+
   "products": [
     {
       "id": "b1k-cham-25",
@@ -88,11 +90,11 @@
       "name": "Sleeveless SF250 Negra",
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "baseMXN": 439,
-      "sectionId": "SF250",
+      "sectionId": "SF_250",
       "subSection": "COLECCION_SF250",
       "status": "available",
       "sizes": ["S", "M", "L", "XL"],
-      "tags": ["sf250", "tank", "san felipe"]
+      "tags": ["sf250", "tank", "san-felipe"]
     }
   ]
 }
