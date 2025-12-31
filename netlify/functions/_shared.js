@@ -1,6 +1,10 @@
 // netlify/functions/_shared.js
-const fs = require("fs/promises");
 const path = require("path");
+
+// CARGA SEGURA DE DATOS (Vital para Netlify Functions)
+// Usamos require para que esbuild empaquete el JSON dentro del JS.
+const catalogData = require("../../data/catalog.json");
+const promoData = require("../../data/promos.json");
 
 /* =========================
    RESPUESTAS
@@ -49,7 +53,7 @@ function normalizePromo(code) {
 ========================= */
 function getSiteUrlFromEnv(event) {
   if (process.env.URL_SCORE) return process.env.URL_SCORE;
-  if (process.env.URL) return process.env.URL;
+  if (process.env.URL) return process.env.URL; // Variable default de Netlify
   const proto = event?.headers?.["x-forwarded-proto"] || "https";
   const host = event?.headers?.host;
   return host ? `${proto}://${host}` : "";
@@ -58,10 +62,9 @@ function getSiteUrlFromEnv(event) {
 /* =========================
    CATÁLOGO
 ========================= */
+// Ajustado para retornar los datos ya cargados
 async function loadCatalog() {
-  const file = path.join(__dirname, "..", "..", "data", "catalog.json");
-  const raw = await fs.readFile(file, "utf8");
-  return JSON.parse(raw);
+  return catalogData;
 }
 
 function productMapFromCatalog(catalog) {
@@ -114,7 +117,7 @@ function validateSizes(items, productMap) {
    SHIPPING
 ========================= */
 async function computeShipping({ mode, to }) {
-  // Fallbacks definidos (no rompe si Envia falla)
+  // Fallbacks definidos
   if (mode === "pickup") {
     return { ok: true, mxn: 0, label: "Pickup Tijuana", days: 0 };
   }
@@ -126,8 +129,9 @@ async function computeShipping({ mode, to }) {
     if (!to?.postal_code || to.postal_code.length !== 5) {
       return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
     }
-    // El endpoint real de Envia se llama desde shipping.js
-    return { ok: false };
+    // Nota: El cálculo real con API de Envia se hace en el frontend 
+    // o en quote_shipping.js. Aquí solo aseguramos un fallback seguro.
+    return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 }; 
   }
   return { ok: true, mxn: 0, label: "Envío", days: 7 };
 }
@@ -144,10 +148,8 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
   }
 
   try {
-    const file = path.join(__dirname, "..", "..", "data", "promos.json");
-    const raw = await fs.readFile(file, "utf8");
-    const data = JSON.parse(raw);
-    const rules = data.rules || [];
+    // Usamos los datos cargados con require
+    const rules = promoData.rules || [];
 
     const rule = rules.find(
       (r) => normalizePromo(r.code) === normalizePromo(promoCode) && r.active
