@@ -8,9 +8,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# -------------------------
 # SEGURIDAD
-# -------------------------
 [[headers]]
   for = "/*"
   [headers.values]
@@ -19,10 +17,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# -------------------------
-# CACHE BUSTING (ESTO ARREGLA TU PROBLEMA)
-# Quitamos "immutable" y ponemos "must-revalidate"
-# -------------------------
+# --- CACHE BUSTING (ESTO ES LA SOLUCIÓN) ---
+# Le decimos al navegador que SIEMPRE verifique si hay cambios
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -30,11 +31,6 @@
 
 [[headers]]
   for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
