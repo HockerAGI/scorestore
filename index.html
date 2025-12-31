@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Venta Oficial de Merchandise SCORE International. Envíos inmediatos a todo México." />
+  <meta name="description" content="Merch Oficial SCORE International. Baja 1000, Baja 500. Envíos Nacionales Rápidos. Operado por Único Uniformes." />
   <meta name="theme-color" content="#D50000" />
   
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -18,15 +21,17 @@
 </head>
 
 <body>
+  <a class="skipLink" href="#mainContent">Saltar al contenido</a>
   <div class="page-bg" aria-hidden="true"></div>
 
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Score Store Inicio">
-      <img src="/assets/logo-score.webp" alt="SCORE Store" />
+    <a class="brand" href="/" aria-label="Inicio SCORE Store">
+      <img src="/assets/logo-score.webp" alt="SCORE Store Official" />
     </a>
+
     <div class="navRight">
-      <div class="pill"><b>TIJUANA</b> · HQ</div>
-      <button id="cartBtnTrigger" class="cartTrigger" onclick="openDrawer()">
+      <div class="pill"><b>TIJUANA</b> · MX</div>
+      <button id="cartBtnTrigger" class="cartTrigger" type="button" aria-label="Abrir carrito" onclick="openDrawer()">
         🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
@@ -34,68 +39,65 @@
 
   <main id="mainContent" class="wrap">
     
-    <section class="hero">
+    <section class="hero" aria-label="Oferta Principal">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Sello Oficial" />
+      <div class="heroOverlay"></div> <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial" loading="lazy" />
 
       <div class="heroContent">
-        <span class="tagline">TIENDA OFICIAL SCORE</span>
-        <h1>EQUIPAMIENTO<br />ORIGINAL</h1>
+        <span class="tagline">🔥 VENTA OFICIAL 2025</span>
+        <h1>EQUIPAMIENTO<br />PREMIUM</h1>
         
         <div class="sub">
-          <p><strong>VENTA DIRECTA DE FÁBRICA</strong></p>
-          <p>Adquiere la colección oficial 2025. Envíos nacionales seguros y garantía de satisfacción.</p>
+          <p>La colección más esperada del Off-Road. <strong>Stock limitado.</strong></p>
+          <p class="small-sub">Envíos inmediatos a todo México. Compra segura.</p>
         </div>
 
         <div class="ctaRow">
-          <button id="buyNowBtn" class="btn primary full" onclick="openCatalog('BAJA_1000','BAJA 1000')">
+          <button id="buyNowBtn" class="btn primary full" type="button" onclick="openCatalog('BAJA_1000','BAJA 1000')">
             COMPRAR AHORA
           </button>
-          <button id="viewCartBtn" class="btn secondary full" onclick="openDrawer()">
-            VER PEDIDO
+          <button id="viewCartBtn" class="btn secondary full" type="button" onclick="openDrawer()">
+            VER MI PEDIDO
           </button>
         </div>
       </div>
     </section>
 
     <section class="championships">
-      <div class="section-header">
-        <h2>COLECCIONES DISPONIBLES</h2>
-      </div>
+      <h2>COLECCIONES DISPONIBLES</h2>
 
       <div class="catalogGrid">
-        <button class="champCard" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-          <span class="badge limited">STOCK LIMITADO</span>
-          <img class="champLogo" src="/assets/logo-baja1000.webp" alt="Colección Baja 1000" />
-          <div class="champMeta">
-            <span>VER COLECCIÓN</span>
-          </div>
+        <button class="champCard" type="button" onclick="openCatalog('BAJA_1000','BAJA 1000')">
+          <div class="card-bg-texture"></div>
+          <div class="card-overlay"></div> <span class="badge available">MÁS VENDIDO</span>
+          
+          <img class="champLogo" src="/assets/logo-baja1000.webp" alt="Baja 1000" loading="lazy" />
+          
+          <span class="champArrow">→</span>
         </button>
 
-        <button class="champCard" onclick="openCatalog('BAJA_500','BAJA 500')">
-          <span class="badge available">ENVÍO INMEDIATO</span>
-          <img class="champLogo" src="/assets/logo-baja500.webp" alt="Colección Baja 500" />
-          <div class="champMeta">
-            <span>VER COLECCIÓN</span>
-          </div>
+        <button class="champCard" type="button" onclick="openCatalog('BAJA_500','BAJA 500')">
+          <div class="card-bg-texture"></div>
+          <div class="card-overlay"></div>
+          <span class="badge available">NUEVO STOCK</span>
+          <img class="champLogo" src="/assets/logo-baja500.webp" alt="Baja 500" loading="lazy" />
+          <span class="champArrow">→</span>
         </button>
 
-        <button class="champCard" onclick="openCatalog('BAJA_400','BAJA 400')">
+        <button class="champCard" type="button" onclick="openCatalog('BAJA_400','BAJA 400')">
+          <div class="card-bg-texture"></div>
+          <div class="card-overlay"></div>
           <span class="badge available">DISPONIBLE</span>
-          <img class="champLogo" src="/assets/logo-baja400.webp" alt="Colección Baja 400" />
-          <div class="champMeta">
-            <span>VER COLECCIÓN</span>
-          </div>
+          <img class="champLogo" src="/assets/logo-baja400.webp" alt="Baja 400" loading="lazy" />
+          <span class="champArrow">→</span>
         </button>
 
-        <button class="champCard" onclick="openCatalog('SF_250','SAN FELIPE 250')">
+        <button class="champCard" type="button" onclick="openCatalog('SF_250','SAN FELIPE 250')">
+          <div class="card-bg-texture"></div>
+          <div class="card-overlay"></div>
           <span class="badge limited">ÚLTIMAS PIEZAS</span>
-          <img class="champLogo" src="/assets/logo-sf250.webp" alt="Colección San Felipe" />
-          <div class="champMeta">
-            <span>VER COLECCIÓN</span>
-          </div>
+          <img class="champLogo" src="/assets/logo-sf250.webp" alt="San Felipe 250" loading="lazy" />
+          <span class="champArrow">→</span>
         </button>
       </div>
     </section>
@@ -114,18 +116,18 @@
       <div class="footerCard">
         <div class="footerTop">
           <div class="footerBrand">
-            <img src="/assets/logo-unico.webp" alt="Único Uniformes" />
+            <img class="footerUnico" src="/assets/logo-unico.webp" alt="Único Uniformes" />
             <p class="footerSmall">
-              <strong>Operador Logístico Oficial.</strong><br>
-              Venta y distribución autorizada de productos SCORE International®.
+              <strong>Operador Oficial.</strong><br>
+              Venta directa de fábrica. Envíos seguros a todo México desde Tijuana, B.C.
             </p>
           </div>
 
           <div class="footerCol">
-            <h4>CLIENTES</h4>
+            <h4>ATENCIÓN</h4>
             <div class="footerLinks">
-              <button class="textLink" onclick="openLegal('shipping')">Rastreo de Pedido</button>
-              <button class="textLink" onclick="openLegal('returns')">Política de Devolución</button>
+              <button class="textLink" onclick="openLegal('shipping')">Rastreo de Orden</button>
+              <button class="textLink" onclick="openLegal('returns')">Garantías</button>
               <button class="textLink" onclick="openLegal('billing')">Facturación</button>
             </div>
           </div>
@@ -133,8 +135,8 @@
           <div class="footerCol">
             <h4>LEGAL</h4>
             <div class="footerLinks">
-               <button class="textLink" onclick="openLegal('terms')">Términos y Condiciones</button>
-               <button class="textLink" onclick="openLegal('privacy')">Aviso de Privacidad</button>
+               <button class="textLink" onclick="openLegal('terms')">Términos</button>
+               <button class="textLink" onclick="openLegal('privacy')">Privacidad</button>
                <a class="textLink" href="mailto:ventas.unicotextil@gmail.com">Contacto</a>
             </div>
           </div>
@@ -148,7 +150,7 @@
 
   <div id="overlay" class="overlay" onclick="closeAll()"></div>
 
-  <section id="modalCatalog" class="modal">
+  <section id="modalCatalog" class="modal" role="dialog" aria-modal="true">
     <div class="dHead">
       <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
       <button id="closeCatalogBtn" class="closeBtn" onclick="closeAll()">×</button>
@@ -156,7 +158,7 @@
     <div id="catContent" class="catContent"></div>
   </section>
 
-  <aside id="drawer" class="drawer">
+  <aside id="drawer" class="drawer" role="dialog" aria-modal="true">
     <div class="dHead">
       <h3 id="cartTitle" class="dTitle">TU PEDIDO</h3>
       <button id="closeDrawerBtn" class="closeBtn" onclick="closeAll()">×</button>
@@ -164,25 +166,27 @@
     <div id="cartBody" class="dBody"></div>
     <div class="dFoot">
       <div class="shipSelector">
-        <p style="font-weight:800; margin-bottom:10px; font-size:12px; color:#999;">MÉTODO DE ENTREGA</p>
-        <label class="radioParams"><input type="radio" name="shipMode" value="pickup" checked> Pickup (Tijuana HQ - Gratis)</label>
-        <label class="radioParams"><input type="radio" name="shipMode" value="tj"> Envío Local (Tijuana)</label>
-        <label class="radioParams"><input type="radio" name="shipMode" value="mx"> Envío Nacional (México)</label>
+        <p style="font-weight:800; margin-bottom:10px; font-size:12px; letter-spacing:1px; color:#999;">ENTREGA</p>
+        <label class="radioParams"><input type="radio" name="shipMode" value="pickup" checked> Pickup Tienda (TJ)</label>
+        <label class="radioParams"><input type="radio" name="shipMode" value="tj"> Envío Local (TJ)</label>
+        <label class="radioParams"><input type="radio" name="shipMode" value="mx"> Envío Nacional (MX)</label>
       </div>
 
       <div id="shipForm" class="shipForm" style="display:none;">
-        <input id="name" type="text" placeholder="Nombre completo" />
         <div style="display:flex; gap:10px;">
-           <input id="cp" type="text" placeholder="C.P." maxlength="5" />
-           <input id="state" type="text" placeholder="Estado" />
+           <input id="name" type="text" placeholder="Nombre completo" />
+           <input id="cp" type="text" placeholder="C.P." maxlength="5" style="width:80px;" />
         </div>
-        <input id="addr" type="text" placeholder="Dirección de entrega" />
-        <input id="city" type="text" placeholder="Ciudad" />
+        <input id="addr" type="text" placeholder="Calle y número / Colonia" />
+        <div style="display:flex; gap:10px;">
+          <input id="city" type="text" placeholder="Ciudad" />
+          <input id="state" type="text" placeholder="Estado" />
+        </div>
       </div>
 
       <div class="promoRow" style="display:flex; gap:10px; margin-bottom:15px;">
         <input id="promoInput" type="text" placeholder="CÓDIGO PROMO" style="margin:0;" />
-        <button id="promoApplyBtn" class="btn-sm" style="background:#000; color:#fff;">OK</button>
+        <button id="promoApplyBtn" class="btn-sm" style="background:#000; color:#fff;">APLICAR</button>
       </div>
 
       <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0</span></div>
@@ -190,7 +194,7 @@
       <div id="lnShipRow" class="sumRow"><span>Envío</span><span id="lnShip">$0</span></div>
       <div class="sumRow total"><span>TOTAL</span><span id="lnTotal">$0</span></div>
 
-      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>PAGAR AHORA</button>
+      <button id="payBtn" class="btn primary full" type="button" onclick="checkout()" disabled>PAGAR</button>
     </div>
   </aside>
 
@@ -200,30 +204,29 @@
       <button class="closeBtn" onclick="closeLegal()">×</button>
     </div>
     <div class="catContent legalContent">
-      <div class="legalTabs" style="display:flex; gap:10px; margin-bottom:20px;">
+      <div class="legalTabs" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
         <button class="btn-sm" style="border:1px solid #ddd;" onclick="openLegal('shipping')">Envíos</button>
-        <button class="btn-sm" style="border:1px solid #ddd;" onclick="openLegal('returns')">Garantía</button>
-        <button class="btn-sm" style="border:1px solid #ddd;" onclick="openLegal('billing')">Factura</button>
+        <button class="btn-sm" style="border:1px solid #ddd;" onclick="openLegal('billing')">Facturación</button>
       </div>
       <article class="legalBlock" data-legal-block="shipping">
-        <h4 style="color:#D50000; margin-bottom:5px;">Envíos</h4>
-        <p style="font-size:14px; color:#555;">Envíos nacionales 3-5 días hábiles. Procesamiento mismo día antes de 12PM.</p>
+        <h4 style="margin-bottom:10px; color:#D50000;">Envíos</h4>
+        <p style="font-size:14px;">Envíos nacionales 3-7 días hábiles. Pickup gratis en TJ.</p>
       </article>
       <article class="legalBlock" data-legal-block="returns">
-        <h4 style="color:#D50000; margin-bottom:5px;">Devoluciones</h4>
-        <p style="font-size:14px; color:#555;">Solo por defecto de fábrica (7 días). Venta final en liquidación.</p>
+        <h4 style="margin-bottom:10px; color:#D50000;">Garantía</h4>
+        <p style="font-size:14px;">7 días por defecto de fábrica.</p>
       </article>
       <article class="legalBlock" data-legal-block="billing">
-        <h4 style="color:#D50000; margin-bottom:5px;">Facturación</h4>
-        <p style="font-size:14px; color:#555;">Envía tu constancia fiscal a ventas.unicotextil@gmail.com</p>
+        <h4 style="margin-bottom:10px; color:#D50000;">Facturación</h4>
+        <p style="font-size:14px;">Envía Constancia Fiscal a ventas.unicotextil@gmail.com</p>
       </article>
       <article class="legalBlock" data-legal-block="terms">
-        <h4 style="color:#D50000; margin-bottom:5px;">Términos</h4>
-        <p style="font-size:14px; color:#555;">Sitio operado por Único Uniformes bajo licencia comercial.</p>
+        <h4 style="margin-bottom:10px; color:#D50000;">Términos</h4>
+        <p style="font-size:14px;">Operado por Único Uniformes bajo licencia.</p>
       </article>
-       <article class="legalBlock" data-legal-block="privacy">
-        <h4 style="color:#D50000; margin-bottom:5px;">Privacidad</h4>
-        <p style="font-size:14px; color:#555;">Pagos encriptados vía Stripe. No almacenamos tarjetas.</p>
+      <article class="legalBlock" data-legal-block="privacy">
+        <h4 style="margin-bottom:10px; color:#D50000;">Privacidad</h4>
+        <p style="font-size:14px;">Pagos seguros vía Stripe.</p>
       </article>
     </div>
   </section>
