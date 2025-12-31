@@ -1,29 +1,18 @@
 // netlify/functions/_shared.js
-const path = require("path");
-
-// CARGA SEGURA DE DATOS
-// Nota: Ahora carga el .json, no el .js
 const catalogData = require("../../data/catalog.json");
 const promoData = require("../../data/promos.json");
 
 /* =========================
-   RESPUESTAS
+   HELPERS & RESPONSES
 ========================= */
-function jsonResponse(statusCode, body, extraHeaders = {}) {
+function jsonResponse(statusCode, body) {
   return {
     statusCode,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      ...extraHeaders,
-    },
+    headers: { "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify(body),
   };
 }
 
-/* =========================
-   HELPERS BÁSICOS
-========================= */
 function safeJsonParse(raw, fallback = null) {
   try { return JSON.parse(raw); } catch { return fallback; }
 }
@@ -32,19 +21,12 @@ function upper(v) { return toStr(v).toUpperCase(); }
 function digitsOnly(v) { return toStr(v).replace(/\D+/g, ""); }
 function normalizePromo(code) { return upper(code).replace(/\s+/g, ""); }
 
-/* =========================
-   ENV / URL
-========================= */
 function getSiteUrlFromEnv(event) {
-  if (process.env.URL_SCORE) return process.env.URL_SCORE;
-  if (process.env.URL) return process.env.URL;
-  const proto = event?.headers?.["x-forwarded-proto"] || "https";
-  const host = event?.headers?.host;
-  return host ? `${proto}://${host}` : "";
+  return process.env.URL_SCORE || process.env.URL || "https://scorestore.netlify.app";
 }
 
 /* =========================
-   CATÁLOGO
+   CATALOG & VALIDATION
 ========================= */
 async function loadCatalog() { return catalogData; }
 
@@ -54,14 +36,11 @@ function productMapFromCatalog(catalog) {
   return map;
 }
 
-/* =========================
-   VALIDACIONES
-========================= */
 function validateCartItems(items) {
-  if (!Array.isArray(items) || !items.length) return { ok: false, error: "Carrito vacío." };
+  if (!Array.isArray(items) || !items.length) return { ok: false, error: "El carrito está vacío." };
   const clean = [];
   for (const it of items) {
-    if (!it.id || !Number.isInteger(it.qty) || it.qty <= 0) return { ok: false, error: "Ítem inválido." };
+    if (!it.id || !Number.isInteger(it.qty) || it.qty <= 0) return { ok: false, error: "Ítem inválido detectado." };
     clean.push({ id: toStr(it.id), qty: it.qty, size: toStr(it.size) || "Unitalla" });
   }
   return { ok: true, items: clean };
@@ -70,24 +49,24 @@ function validateCartItems(items) {
 function validateSizes(items, productMap) {
   for (const it of items) {
     const p = productMap[it.id];
-    if (!p) return { ok: false, error: `Producto inexistente: ${it.id}` };
-    if (Array.isArray(p.sizes) && !p.sizes.includes(it.size)) return { ok: false, error: `Talla inválida para ${p.name}` };
+    if (!p) return { ok: false, error: `Producto no disponible: ${it.id}` };
+    if (Array.isArray(p.sizes) && !p.sizes.includes(it.size)) return { ok: false, error: `Talla ${it.size} no válida para ${p.name}` };
   }
   return { ok: true };
 }
 
 /* =========================
-   SHIPPING & PROMOS
+   LOGIC: SHIPPING & PROMOS
 ========================= */
 async function computeShipping({ mode, to }) {
-  if (mode === "pickup") return { ok: true, mxn: 0, label: "Pickup Tijuana", days: 0 };
-  if (mode === "tj") return { ok: true, mxn: 200, label: "Envío Local TJ", days: 2 };
+  // Lógica simple para UI, la real de guía se hace en createEnviaLabel
+  if (mode === "pickup") return { ok: true, mxn: 0, label: "Pickup en Tienda (TJ)", days: 0 };
+  if (mode === "tj") return { ok: true, mxn: 200, label: "Envío Local (Tijuana)", days: 2 };
   if (mode === "mx") {
-    // Validación básica de CP
     if (!to?.postal_code || to.postal_code.length !== 5) return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
-    return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
+    return { ok: true, mxn: 250, label: "Envío Nacional Standard", days: 5 };
   }
-  return { ok: true, mxn: 0, label: "Envío", days: 7 };
+  return { ok: true, mxn: 0, label: "Por definir", days: 7 };
 }
 
 async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
@@ -107,7 +86,7 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
 }
 
 /* =========================
-   ENVIA.COM AUTOMATION
+   ENVIA.COM (PRODUCCIÓN)
 ========================= */
 async function createEnviaLabel(orderData) {
   const apiKey = process.env.ENVIA_API_KEY;
@@ -119,23 +98,23 @@ async function createEnviaLabel(orderData) {
   const carrier = toStr(orderData.metadata?.ship_carrier || "fedex").toLowerCase(); 
   const service = toStr(orderData.metadata?.ship_service_code || "standard");
   const address = orderData.shipping?.address || {};
-  const name = orderData.shipping?.name || "Cliente";
-
-  // DATOS DE ORIGEN REALES
-  const origin = {
-    name: "SCORE Store - Envíos",
-    company: "Unico Uniformes",
-    email: "ventas.unicotextil@gmail.com",
-    phone: "6646223344", // <--- Ajusta con tu teléfono real
-    street: "Blvd. Gustavo Díaz Ordaz",
-    number: "1234",      // <--- Ajusta número real
-    district: "La Mesa",
-    city: "Tijuana",
-    state: "BC",
-    country: "MX",
-    postal_code: "22000"
-  };
+  const name = orderData.shipping?.name || "Cliente SCORE Store";
   
+  // DATOS REALES DE ORIGEN (TIJUANA)
+  const origin = {
+      name: "Logística SCORE Store",
+      company: "Unico Uniformes",
+      email: "ventas.unicotextil@gmail.com", 
+      phone: "6640000000", // <--- PON TU TELÉFONO REAL AQUÍ
+      street: "Blvd. Gustavo Díaz Ordaz", 
+      number: "12345",     // <--- PON TU NÚMERO EXTERIOR REAL
+      district: "La Mesa", 
+      city: "Tijuana",
+      state: "BC",
+      country: "MX",
+      postal_code: "22000"
+  };
+
   const payload = {
     origin: origin,
     destination: {
@@ -150,25 +129,17 @@ async function createEnviaLabel(orderData) {
       email: orderData.customer_details?.email || "",
       phone: orderData.customer_details?.phone || ""
     },
-    packages: [
-      {
-        content: "Ropa Deportiva SCORE",
-        amount: 1,
-        type: "box",
-        dimensions: { length: 30, width: 25, height: 10 },
-        weight: 1,
-        insurance: 0,
-        declared_value: orderData.amount_total ? (orderData.amount_total / 100) : 500
-      }
-    ],
-    shipment: {
-      carrier: carrier, 
-      service: service
-    },
-    settings: {
-      currency: "MXN",
-      label_format: "pdf"
-    }
+    packages: [{
+      content: "Ropa Deportiva SCORE",
+      amount: 1,
+      type: "box",
+      dimensions: { length: 30, width: 25, height: 10 }, 
+      weight: 1, 
+      insurance: 0,
+      declared_value: orderData.amount_total ? (orderData.amount_total / 100) : 500
+    }],
+    shipment: { carrier, service },
+    settings: { currency: "MXN", label_format: "pdf" }
   };
 
   try {
@@ -178,22 +149,12 @@ async function createEnviaLabel(orderData) {
       body: JSON.stringify(payload)
     });
     
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("❌ Envia API Error:", errText);
-      return null;
-    }
-
+    if (!res.ok) return null;
     const data = await res.json();
     const shipData = Array.isArray(data) ? data[0] : (data.data ? data.data[0] : data);
     
     if (shipData && shipData.track) {
-      console.log(`✅ GUÍA CREADA: ${shipData.track} (${shipData.carrier})`);
-      return {
-        tracking_number: shipData.track,
-        label_url: shipData.label,
-        carrier: shipData.carrier
-      };
+      return { tracking_number: shipData.track, label_url: shipData.label, carrier: shipData.carrier };
     }
     return null;
   } catch (e) {
@@ -203,18 +164,7 @@ async function createEnviaLabel(orderData) {
 }
 
 module.exports = {
-  jsonResponse,
-  safeJsonParse,
-  toStr,
-  upper,
-  digitsOnly,
-  normalizePromo,
-  getSiteUrlFromEnv,
-  loadCatalog,
-  productMapFromCatalog,
-  validateCartItems,
-  validateSizes,
-  computeShipping,
-  applyPromoToTotals,
-  createEnviaLabel
+  jsonResponse, safeJsonParse, toStr, upper, digitsOnly, normalizePromo, getSiteUrlFromEnv,
+  loadCatalog, productMapFromCatalog, validateCartItems, validateSizes,
+  computeShipping, applyPromoToTotals, createEnviaLabel
 };
