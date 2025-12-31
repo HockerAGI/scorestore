@@ -7,7 +7,9 @@
     "build": "node -e \"console.log('Static site ready')\""
   },
   "dependencies": {
-    "stripe": "^16.9.0"
+    "stripe": "^16.9.0",
+    "get-intrinsic": "^1.2.4",
+    "call-bound": "^1.0.0"
   },
   "engines": {
     "node": ">=18"
