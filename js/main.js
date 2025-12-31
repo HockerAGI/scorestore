@@ -1,10 +1,11 @@
 /**
  * SCORE STORE - main.js (v23.0 PROD FIXED)
- * Corrección: Textos del carrito legibles en Dark Mode.
+ * Actualizado: Compatibilidad total con diseño Light/Dark
  */
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
 const LS_CART = "score_cart_v1";
 const LS_PROMO = "score_promo_v1";
+// Detecta automáticamente si está en local o en servidor
 const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
 
 let catalog = null;
@@ -43,13 +44,12 @@ function renderCartBody() {
   if (!body) return;
   
   if (!cart.length) {
-    // Texto sutil para dark mode
     body.innerHTML = `<div style="text-align:center; padding:40px 20px; opacity:.6; color:#888;">Tu carrito está vacío</div>`;
     return;
   }
 
   body.innerHTML = cart.map((i, idx) => `
-    <div style="display:flex; gap:10px; margin-bottom:12px; background:#fff; color:#111; padding:10px; border-radius:8px; align-items:center;">
+    <div style="display:flex; gap:10px; margin-bottom:12px; background:#fff; color:#111; padding:10px; border-radius:8px; align-items:center; border:1px solid #eee;">
       <img src="${i.img}" alt="" style="width:50px; height:50px; object-fit:contain; mix-blend-mode:multiply;">
       <div style="flex:1;">
         <div style="font-weight:700; font-size:13px; line-height:1.2;">${i.name}</div>
@@ -71,7 +71,6 @@ window.removeFromCart = function(idx) {
 };
 
 async function updateCart({ recalcShip } = { recalcShip: true }) {
-  // Manejo seguro si no existe el input (por si acaso)
   const radio = document.querySelector('input[name="shipMode"]:checked');
   const selected = radio ? radio.value : "pickup";
   
@@ -102,12 +101,10 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
   renderCartBody();
   $("paybar")?.classList.toggle("visible", cart.length > 0);
 
-  // Validación de formulario
   let valid = cart.length > 0;
   if (selected !== "pickup") {
     const cpVal = $("cp")?.value || "";
     const addrVal = $("addr")?.value || "";
-    // Validación básica: que haya CP de 5 dígitos y calle
     valid = valid && (cpVal.trim().length === 5) && (addrVal.trim().length > 3);
   }
   
@@ -136,13 +133,12 @@ window.openCatalog = async function(sectionId, title) {
   if(tEl) tEl.innerText = title;
   
   const content = $("catContent");
-  content.innerHTML = '<div style="text-align:center; padding:20px; color:#fff;">Cargando...</div>';
+  content.innerHTML = '<div style="text-align:center; padding:20px;">Cargando...</div>';
   
   $("modalCatalog").classList.add("active");
   $("overlay").classList.add("active");
   document.body.classList.add("modalOpen");
 
-  // Carga de catálogo
   if (!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
 
   if (!catalog) { content.innerHTML = "Error cargando catálogo."; return; }
@@ -150,11 +146,11 @@ window.openCatalog = async function(sectionId, title) {
   const items = (catalog.products || []).filter(p => p.sectionId === sectionId);
   
   if (!items.length) { 
-      content.innerHTML = '<div style="text-align:center; padding:40px; color:#fff;">Próximamente disponible.</div>'; 
+      content.innerHTML = '<div style="text-align:center; padding:40px;">Próximamente disponible.</div>'; 
       return; 
   }
 
-  // Renderizado Grid
+  // Renderizado Grid con ajuste para tarjetas blancas
   content.innerHTML = `<div class="catGrid">` + items.map(p => `
     <div class="prodCard">
       <img src="${p.img}" loading="lazy" alt="${p.name}">
@@ -166,7 +162,7 @@ window.openCatalog = async function(sectionId, title) {
       </select>
       
       <button class="btn primary full" style="padding:10px; font-size:13px;" onclick="addToCart('${p.id}')">
-        AGREGAR +
+        AGREGAR
       </button>
     </div>
   `).join("") + `</div>`;
@@ -176,26 +172,13 @@ window.addToCart = function(pid) {
   if (!catalog) return;
   const p = catalog.products.find(x => x.id === pid);
   if (!p) return;
-  
   const sizeSelect = $(`size_${pid}`);
   const size = sizeSelect ? sizeSelect.value : "Unitalla";
-  
   const key = `${pid}_${size}`;
   const exist = cart.find(i => i.key === key);
   
-  if (exist) {
-      exist.qty++;
-  } else {
-      cart.push({ 
-          key, 
-          id: pid, 
-          name: p.name, 
-          price: p.baseMXN, 
-          img: p.img, 
-          size, 
-          qty: 1 
-      });
-  }
+  if (exist) { exist.qty++; } 
+  else { cart.push({ key, id: pid, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 }); }
 
   saveCart();
   toast("Agregado al carrito");
@@ -212,8 +195,6 @@ window.checkout = async function() {
   try {
     const stripe = Stripe(STRIPE_PK);
     const mode = ship.mode;
-    
-    // Recolección segura de datos
     const payload = {
       items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size })),
       mode,
@@ -234,11 +215,8 @@ window.checkout = async function() {
     });
     
     const data = await res.json();
-    if (data.url) {
-        location.href = data.url;
-    } else {
-        throw new Error(data.error || "Error al iniciar pago");
-    }
+    if (data.url) location.href = data.url;
+    else throw new Error(data.error || "Error al iniciar pago");
   } catch (e) {
     console.error(e);
     toast("Error: " + (e.message || "Intenta de nuevo"));
@@ -247,7 +225,6 @@ window.checkout = async function() {
   }
 };
 
-/* LEGAL MODALS */
 window.openLegal = function(type) {
   const modal = $("legalModal");
   if(modal) {
@@ -261,40 +238,18 @@ window.openLegal = function(type) {
 
 window.closeLegal = function() {
   $("legalModal")?.classList.remove("active");
-  // Solo quitar overlay si no hay otros modales abiertos (drawer)
   if (!$("drawer").classList.contains("active")) {
     $("overlay").classList.remove("active");
   }
 };
 
-/* INITIALIZATION */
-// Event listeners seguros
+// Event Listeners
 document.querySelectorAll('input[name="shipMode"]').forEach(r => {
     r.addEventListener("change", () => updateCart());
 });
-
-// Listener para validación en tiempo real de inputs de envío
 ["cp", "addr"].forEach(id => {
     const el = $(id);
     if(el) el.addEventListener("input", () => updateCart({ recalcShip: false }));
 });
 
-// Promo Code (Si existe el input en el HTML)
-const promoBtn = $("promoApplyBtn");
-if(promoBtn) {
-    promoBtn.addEventListener("click", () => {
-       const input = $("promoInput");
-       if(!input) return;
-       const code = input.value.trim().toUpperCase();
-       
-       if(code === "SCORE10") { promoState = { code, type:"pct", value:10 }; toast("Cupón aplicado: 10%"); }
-       else if(code === "ENVIOFREE") { promoState = { code, type:"free_shipping", value:0 }; toast("Envío gratis aplicado"); }
-       else { promoState = null; toast("Cupón no válido"); }
-       
-       localStorage.setItem(LS_PROMO, JSON.stringify(promoState));
-       updateCart();
-    });
-}
-
-// Arranque inicial
 updateCart();
