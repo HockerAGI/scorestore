@@ -1,7 +1,8 @@
 // netlify/functions/_shared.js
 const path = require("path");
 
-// CARGA SEGURA DE DATOS (Vital para Netlify Functions)
+// CARGA SEGURA DE DATOS
+// Nota: Ahora carga el .json, no el .js
 const catalogData = require("../../data/catalog.json");
 const promoData = require("../../data/promos.json");
 
@@ -82,6 +83,7 @@ async function computeShipping({ mode, to }) {
   if (mode === "pickup") return { ok: true, mxn: 0, label: "Pickup Tijuana", days: 0 };
   if (mode === "tj") return { ok: true, mxn: 200, label: "Envío Local TJ", days: 2 };
   if (mode === "mx") {
+    // Validación básica de CP
     if (!to?.postal_code || to.postal_code.length !== 5) return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
     return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
   }
@@ -114,27 +116,28 @@ async function createEnviaLabel(orderData) {
     return null;
   }
 
-  // Mapear datos desde Stripe Session
   const carrier = toStr(orderData.metadata?.ship_carrier || "fedex").toLowerCase(); 
   const service = toStr(orderData.metadata?.ship_service_code || "standard");
   const address = orderData.shipping?.address || {};
   const name = orderData.shipping?.name || "Cliente";
+
+  // DATOS DE ORIGEN REALES
+  const origin = {
+    name: "SCORE Store - Envíos",
+    company: "Unico Uniformes",
+    email: "ventas.unicotextil@gmail.com",
+    phone: "6646223344", // <--- Ajusta con tu teléfono real
+    street: "Blvd. Gustavo Díaz Ordaz",
+    number: "1234",      // <--- Ajusta número real
+    district: "La Mesa",
+    city: "Tijuana",
+    state: "BC",
+    country: "MX",
+    postal_code: "22000"
+  };
   
-  // Payload para Envia (Generate)
   const payload = {
-    origin: {
-      name: "SCORE Store",
-      company: "Unico Uniformes",
-      email: "ventas.unicotextil@gmail.com",
-      phone: "6641234567", // Ajustar teléfono real
-      street: "Blvd. Gustavo Díaz Ordaz",
-      number: "1234", // Ajustar dirección real
-      district: "La Mesa",
-      city: "Tijuana",
-      state: "BC",
-      country: "MX",
-      postal_code: "22000"
-    },
+    origin: origin,
     destination: {
       name: name,
       street: toStr(address.line1),
@@ -149,10 +152,10 @@ async function createEnviaLabel(orderData) {
     },
     packages: [
       {
-        content: "Merch Oficial SCORE",
+        content: "Ropa Deportiva SCORE",
         amount: 1,
         type: "box",
-        dimensions: { length: 25, width: 25, height: 12 },
+        dimensions: { length: 30, width: 25, height: 10 },
         weight: 1,
         insurance: 0,
         declared_value: orderData.amount_total ? (orderData.amount_total / 100) : 500
@@ -182,7 +185,6 @@ async function createEnviaLabel(orderData) {
     }
 
     const data = await res.json();
-    // Envia a veces devuelve array o objeto con data
     const shipData = Array.isArray(data) ? data[0] : (data.data ? data.data[0] : data);
     
     if (shipData && shipData.track) {
@@ -200,9 +202,6 @@ async function createEnviaLabel(orderData) {
   }
 }
 
-/* =========================
-   EXPORTS
-========================= */
 module.exports = {
   jsonResponse,
   safeJsonParse,
@@ -217,5 +216,5 @@ module.exports = {
   validateSizes,
   computeShipping,
   applyPromoToTotals,
-  createEnviaLabel // EXPORTADO
+  createEnviaLabel
 };
