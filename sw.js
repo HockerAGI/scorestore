@@ -1,64 +1,85 @@
-// sw.js — SCORE STORE (PROD FINAL v5.1)
-const CACHE_VERSION = "v5.1";
+// sw.js — SCORE STORE (PROD FINAL)
+// Network-first: HTML/JS/JSON/manifest/xml/txt
+// Cache-first: assets/css/icons
+// Never cache: /.netlify/functions/*  and /data/*
+
+const CACHE_VERSION = "v6";
 const CACHE_NAME = `score-static-${CACHE_VERSION}`;
 
-const STATIC_PRECACHE = [
+const PRECACHE = [
   "/",
   "/index.html",
   "/css/styles.css",
   "/js/main.js",
   "/site.webmanifest",
+
+  // Core visuals (solo si existen)
   "/assets/logo-score.webp",
   "/assets/hero.webp",
-  "/assets/fondo-pagina-score.webp"
+  "/assets/fondo-pagina-score.webp",
 ];
 
-// ---------- INSTALL ----------
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_PRECACHE))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      // Precarga segura (no revienta si un asset no existe)
+      await Promise.all(
+        PRECACHE.map(async (u) => {
+          try {
+            await cache.add(new Request(u, { cache: "reload" }));
+          } catch (_) {}
+        })
+      );
+    })()
   );
 });
 
-// ---------- ACTIVATE ----------
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((k) => k.startsWith("score-static-") && k !== CACHE_NAME)
+          .map((k) => caches.delete(k))
+      );
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-// ---------- FETCH ----------
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
-
   const url = new URL(req.url);
 
-  // externos (Stripe/Fonts/etc.)
+  // solo GET
+  if (req.method !== "GET") return;
+
+  // solo same-origin
   if (url.origin !== self.location.origin) return;
 
-  // APIs (Netlify/Vercel) — JAMÁS cachear
-  if (url.pathname.startsWith("/.netlify/functions/")) return;
-  if (url.pathname.startsWith("/api/")) return;
+  // NEVER cache Netlify Functions
+  if (url.pathname.startsWith("/.netlify/functions")) return;
 
-  // data dinámica — siempre red
+  // NEVER cache data dinámica
   if (url.pathname.startsWith("/data/")) {
     event.respondWith(fetch(req));
     return;
   }
 
-  const accept = req.headers.get("accept") || "";
-  const isHTML = accept.includes("text/html");
-  const isJS = url.pathname.endsWith(".js");
-  const isCSS = url.pathname.endsWith(".css");
-  const isJSON = url.pathname.endsWith(".json");
+  const isHTML = req.headers.get("accept")?.includes("text/html");
+  const isNetFirst =
+    isHTML ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".json") ||
+    url.pathname.endsWith(".webmanifest") ||
+    url.pathname.endsWith(".xml") ||
+    url.pathname.endsWith(".txt");
 
-  // HTML/CSS/JS/JSON => NETWORK FIRST (evita “fantasmas”)
-  if (isHTML || isJS || isCSS || isJSON) {
+  // Network-first para evitar JS/HTML viejo
+  if (isNetFirst) {
     event.respondWith(
       fetch(req)
         .then((res) => {
@@ -71,16 +92,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // assets => CACHE FIRST
-  if (
+  // Cache-first para estáticos reales
+  const isStatic =
     url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/css/")
-  ) {
-    event.respondWith(caches.match(req).then((c) => c || fetch(req)));
+    url.pathname.startsWith("/css/") ||
+    url.pathname.startsWith("/icons") ||
+    url.pathname.startsWith("/assets/icons/");
+
+  if (isStatic) {
+    event.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req))
+    );
     return;
   }
 
-  // default
+  // Default
   event.respondWith(fetch(req));
 });
