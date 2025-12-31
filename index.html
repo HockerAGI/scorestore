@@ -4,99 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Merch Oficial SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
-  
+  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por ÚNICO UNIFORMES." />
+
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="preload" href="/assets/hero.webp" as="image">
   <script src="https://js.stripe.com/v3" async defer></script>
 </head>
 
 <body>
-  <div class="page-overlay"></div> <header class="topbar">
+  <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio">
+      <a href="/" class="brand">
         <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
       </a>
-
+      
       <nav class="nav">
-        <div class="navLinks desktop-only" style="display:flex; gap:20px;">
-          <button class="navBtn" onclick="scrollToId('drops')">DROPS</button>
-          <button class="navBtn" onclick="scrollToId('catalog')">CATÁLOGO</button>
-          <button class="navBtn" onclick="scrollToId('shipping')">ENVÍOS</button>
-        </div>
+        <a href="#drops" class="navLink" style="font-size:18px;">Drops</a>
+        <a href="#catalog" class="navLink" style="font-size:18px;">Catálogo</a>
         
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <button class="cartBtn" onclick="openDrawer()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
           <span id="cartCount">0</span>
         </button>
       </nav>
     </div>
   </header>
 
-  <main>
+  <main class="wrap">
+    
     <section class="hero" id="top">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
       
-      <div class="container heroInner">
-        <div class="heroText">
-          <div class="tag-line">
-            <span class="tag-badge">OFICIAL</span>
-            <span>MERCHANDISE</span>
-          </div>
-          
-          <h1>SCORE<br><span>INTERNATIONAL</span></h1>
-          
-          <p class="lead">
-            Equipamiento oficial de las carreras más duras del mundo.<br>
-            <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
-          </p>
-          
-          <div class="heroActions">
-            <button class="btn primary" onclick="scrollToId('catalog')">COMPRAR AHORA</button>
-            <button class="btn ghost" onclick="scrollToId('drops')">VER DROPS</button>
-          </div>
-          
-          <div class="heroBadges">
-            <span class="badge">💳 Pagos Seguros</span>
-            <span class="badge">📦 Envíos Nacionales</span>
-            <span class="badge">🏁 Baja 1000</span>
-          </div>
-        </div>
+      <div class="heroContent">
+        <div class="heroTag">OFFICIAL MERCHANDISE</div>
+        <h1>SCORE<br><span style="color:var(--red)">INTERNATIONAL</span></h1>
         
-        <div class="heroCard">
-          <div class="heroCardTop">
-            <div class="heroCardTitle">DESTACADO</div>
-            <div class="heroCardTag">LIMITADO</div>
-          </div>
-          <div class="heroCardBody">
-            <div class="heroCardName" id="featuredName">Cargando...</div>
-            <div class="heroCardPrice" id="featuredPrice"></div>
-            <img id="featuredImg" src="" style="width:100%; height:200px; object-fit:contain; margin:15px 0; mix-blend-mode:multiply; display:none;">
-            <div style="margin-top:20px;">
-                <button class="btn primary full" id="featuredBtn">VER PRODUCTO</button>
-            </div>
-            <div class="heroCardNote">* Stock sujeto a disponibilidad.</div>
-          </div>
+        <p class="heroSub">
+          Colección oficial 2025. Diseñada para resistir la Baja.<br>
+          <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
+        </p>
+
+        <div class="ctaGroup">
+          <button class="btn primary" onclick="scrollToId('catalog')">COMPRAR AHORA</button>
+          <button class="btn glass" onclick="scrollToId('drops')">VER DROPS</button>
         </div>
       </div>
     </section>
 
     <section class="section" id="drops">
       <div class="container">
-        <div class="section-head">
-          <div>
-            <h2>DROPS <span>LIMITADOS</span></h2>
-            <div style="height:4px; width:60px; background:var(--red); margin-top:10px;"></div>
-          </div>
-          <p>Ediciones especiales y lanzamientos exclusivos de temporada.</p>
+        <div class="sectionHead">
+          <h2>DROPS <span>LIMITADOS</span></h2>
+          <div class="subHead">Ediciones especiales y lanzamientos exclusivos.</div>
         </div>
         <div class="grid" id="dropsGrid"></div>
       </div>
@@ -104,45 +70,38 @@
 
     <section class="section" id="catalog">
       <div class="container">
-        <div class="section-head">
-          <div>
-            <h2>CATÁLOGO <span>OFICIAL</span></h2>
-            <div style="height:4px; width:60px; background:var(--red); margin-top:10px;"></div>
-          </div>
-          
-          <div class="filters">
-            <input class="inputField" id="search" placeholder="Buscar producto..." type="search" style="min-width:250px;"/>
-            <select class="inputField" id="filterCat">
-              <option value="all">Todas las Categorías</option>
-            </select>
-          </div>
+        <div class="sectionHead">
+          <h2>CATÁLOGO <span>2025</span></h2>
+          <div class="subHead">Ropa y accesorios oficiales de la temporada.</div>
         </div>
-        
+
+        <div class="filters">
+          <input class="search" id="search" placeholder="Buscar producto..." type="search"/>
+          <select class="select" id="filterCat">
+            <option value="all">Todas las Categorías</option>
+          </select>
+        </div>
+
         <div class="grid" id="catalogGrid"></div>
       </div>
     </section>
 
-    <section class="section" id="shipping">
-      <div class="container" style="display:flex; justify-content:center;">
-        <div class="shipBox">
-          <div style="text-align:center; margin-bottom:30px;">
-            <h2 style="font-size:36px; margin-bottom:10px;">COTIZAR <span>ENVÍO</span></h2>
-            <p style="color:#666;">Calcula el costo real de envío a tu domicilio.</p>
-          </div>
-          
-          <div class="shipRow">
-            <label class="lbl" for="zip">CÓDIGO POSTAL (5 DÍGITOS)</label>
-            <div style="display:flex; gap:10px;">
-               <input class="inputField" id="zipQuote" inputmode="numeric" maxlength="5" placeholder="Ej. 22000" type="text" style="flex:1;">
-               <button class="btn primary" id="quoteBtn" style="padding:10px 20px; font-size:16px;">CALCULAR</button>
-            </div>
-          </div>
-          <div class="shipResult" id="shipResult"></div>
+    <section class="section" style="background:#fff; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+      <div class="container" style="text-align:center;">
+        <div class="sectionHead" style="border:none; margin-bottom:20px;">
+          <h2>COTIZA TU <span>ENVÍO</span></h2>
+          <p style="margin:0 auto;">Calcula el costo exacto a tu código postal con nuestra integración en tiempo real.</p>
         </div>
+        
+        <div style="max-width:500px; margin:0 auto; display:flex; gap:10px;">
+          <input id="zipQuote" class="search" placeholder="Código Postal (5 dígitos)" maxlength="5" style="width:100%;">
+          <button class="btn primary" id="quoteBtn" style="font-size:18px; padding:10px 20px;">CALCULAR</button>
+        </div>
+        <div id="shipResult" style="margin-top:20px; font-weight:700; color:var(--red);"></div>
       </div>
     </section>
 
-    <section class="section partners">
+    <section class="section">
       <div class="container">
         <div class="partnersGrid">
           <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
@@ -152,88 +111,91 @@
         </div>
       </div>
     </section>
+
   </main>
 
   <footer class="footer">
     <div class="container footerInner">
+      
       <div class="fCol">
-        <img src="/assets/logo-unico.webp" alt="Unico" class="footerUnico">
-        <p class="fText">
-          Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
+        <img src="/assets/logo-unico.webp" alt="Único" class="footerLogo">
+        <p class="footerText">
+          Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.<br>
+          Calidad probada en el desierto.
         </p>
       </div>
+
       <div class="fCol">
-        <div class="fTitle">SOPORTE</div>
-        <a class="fLink" href="#" onclick="openLegal('shipping');return false;">Rastreo de Envíos</a>
-        <a class="fLink" href="#" onclick="openLegal('returns');return false;">Devoluciones</a>
-        <a class="fLink" href="#" onclick="openLegal('billing');return false;">Facturación</a>
+        <div class="colTitle">SOPORTE</div>
+        <a href="#" onclick="openLegal('shipping');return false;" class="footerLink">Rastreo de Envíos</a>
+        <a href="#" onclick="openLegal('returns');return false;" class="footerLink">Devoluciones</a>
+        <a href="#" onclick="openLegal('billing');return false;" class="footerLink">Facturación</a>
       </div>
+
       <div class="fCol">
-        <div class="fTitle">LEGAL</div>
-        <a class="fLink" href="#" onclick="openLegal('terms');return false;">Términos</a>
-        <a class="fLink" href="#" onclick="openLegal('privacy');return false;">Privacidad</a>
+        <div class="colTitle">LEGAL</div>
+        <a href="#" onclick="openLegal('terms');return false;" class="footerLink">Términos y Condiciones</a>
+        <a href="#" onclick="openLegal('privacy');return false;" class="footerLink">Aviso de Privacidad</a>
       </div>
+
       <div class="fCol">
-        <div class="fTitle">CONTACTO</div>
-        <p class="fText" style="color:#fff;">Palermo 6106 Interior JK, Anexa Roma, 22614, Tijuana B.C.</p>
-        <a href="https://wa.me/526642368701" style="color:#00C853; text-decoration:none; display:block; margin-top:10px; font-weight:700;">
-          WhatsApp: 664 236 8701
-        </a>
-        <a href="mailto:ventas.unicotextil@gmail.com" class="fLink" style="margin-top:5px;">ventas.unicotextil@gmail.com</a>
+        <div class="colTitle">CONTACTO</div>
+        <div class="contactBox">
+          <strong>ÚNICO UNIFORMES</strong>
+          <p>Palermo 6106 Interior JK,<br>Anexa Roma, 22614<br>Tijuana, B.C.</p>
+          <a href="https://wa.me/526642368701" target="_blank" style="color:#00E676; text-decoration:none; font-weight:700; display:flex; align-items:center; gap:5px; font-size:14px;">
+            📱 WhatsApp: 664 236 8701
+          </a>
+        </div>
       </div>
+
     </div>
     <div class="copy">SCORE Store © 2025 · Powered by Único Uniformes</div>
   </footer>
 
   <div class="overlay" id="overlay" onclick="closeAll()"></div>
+
   <aside class="drawer" id="drawer">
-    <div class="drawerHead">
+    <div class="dHead">
       <h3 class="dTitle">TU CARRITO</h3>
-      <button class="iconBtn" onclick="closeAll()">✕</button>
+      <button class="dClose" onclick="closeAll()">✕</button>
     </div>
-    <div class="drawerBody">
-      <div class="cartItems" id="cartItems"></div>
-      <div class="cartEmpty" id="cartEmpty" style="display:none; text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</div>
+    <div class="dBody">
+      <div id="cartItems"></div>
+      <div id="cartEmpty" style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</div>
     </div>
-    <div class="drawerFoot">
-      <div class="totals">
-        <div class="row"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
-        <div class="row"><span>Envío</span><strong id="shipTotal">—</strong></div>
-        <div class="row big"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
-      </div>
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
-      <div class="smallNote">🔒 Pagos procesados por Stripe.</div>
+    <div class="dFoot">
+      <div class="totalsRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
+      <div class="totalsRow"><span>Envío</span><strong id="shipTotal">—</strong></div>
+      <div class="totalsRow big"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
+      
+      <button class="btn primary" style="width:100%; margin-top:20px;" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
     </div>
   </aside>
 
-  <section id="legalModal" class="drawer" style="width:min(600px, 100vw);">
-    <div class="drawerHead"><h3 class="dTitle">INFO</h3><button class="iconBtn" onclick="closeAll()">✕</button></div>
-    <div class="drawerBody" style="padding:40px;">
-        <div class="legalBlock" data-legal-block="shipping" style="display:none">
-            <h4 style="color:var(--red);margin-bottom:10px;">Envíos</h4>
-            <p style="color:#555;">Envíos nacionales vía FedEx/Estafeta (3-7 días). Pickup gratis en Tijuana.</p>
-        </div>
-        </div>
-  </section>
+  <aside class="drawer" id="legalModal" style="width:min(600px,100vw);">
+    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="dClose" onclick="closeAll()">✕</button></div>
+    <div class="dBody" style="padding:40px;">
+       <div class="legalBlock" data-legal-block="shipping" style="display:none">
+         <h4 style="color:var(--red);margin-bottom:10px;font-size:24px;font-family:var(--font-display);">Envíos</h4>
+         <p style="color:#555;line-height:1.6;">Envíos a todo México (3-7 días hábiles). Pickup gratuito en nuestras oficinas de Tijuana.</p>
+       </div>
+       </div>
+  </aside>
 
-  <div class="toast" id="toast">Notificación</div>
+  <div id="toast" class="toast">Mensaje</div>
 
   <script>
-    const DEBUG = (location.hostname === 'localhost');
     const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-    const CART_KEY = "score_cart_v3";
-
-    let cart = [];
-    let catalog = [];
-    let shipQuote = null;
-
-    /* --- HELPERS --- */
+    const CART_KEY = "score_cart_platinum";
+    
+    let cart = [], catalog = [], shipQuote = null;
     const $ = (id) => document.getElementById(id);
     const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
     function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
     function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
 
-    /* --- CATALOGO --- */
+    /* CORE LOGIC */
     async function init(){
         loadCart(); updateTotals(); renderCart();
         try {
@@ -241,158 +203,142 @@
             const data = await res.json();
             catalog = data.products || [];
             
-            // Filtros
+            // Populate Filters
             const cats = new Set();
             catalog.forEach(p => { if(p.category) cats.add(p.category); });
             const sel = $("filterCat");
             cats.forEach(c => { const o=document.createElement("option"); o.value=c; o.text=c; sel.appendChild(o); });
 
-            renderCatalog();
-            renderDrops();
-            setFeatured();
-        } catch(e) { console.error("Error loading catalog"); }
+            renderCatalog(); renderDrops();
+        } catch(e){ console.error(e); }
         
         $("search").addEventListener("input", renderCatalog);
         $("filterCat").addEventListener("change", renderCatalog);
     }
 
-    function renderCatalog() {
-        const grid = $("catalogGrid");
-        grid.innerHTML = "";
+    function renderCatalog(){
+        const grid = $("catalogGrid"); grid.innerHTML = "";
         const q = $("search").value.toLowerCase();
         const cat = $("filterCat").value;
-
         const filtered = catalog.filter(p => {
             if(q && !p.name.toLowerCase().includes(q)) return false;
-            if(cat !== "all" && p.category !== cat) return false;
+            if(cat!=="all" && p.category!==cat) return false;
             return true;
         });
-
-        if(!filtered.length) { grid.innerHTML = "<div style='text-align:center; grid-column:1/-1; padding:40px; color:#999;'>No hay productos.</div>"; return; }
-
+        if(!filtered.length) { grid.innerHTML="<div style='text-align:center;width:100%;color:#999;grid-column:1/-1;padding:40px;'>Sin resultados.</div>"; return; }
         filtered.forEach(p => grid.appendChild(createCard(p)));
     }
 
-    function renderDrops() {
+    function renderDrops(){
         const grid = $("dropsGrid");
         const drops = catalog.filter(p => p.tags && (p.tags.includes('limited') || p.tags.includes('drop')));
         if(!drops.length) return;
-        drops.forEach(p => grid.appendChild(createCard(p)));
+        drops.forEach(p => {
+            const card = createCard(p);
+            // Agregar badge
+            const badge = document.createElement("div");
+            badge.className = "dropBadge"; badge.innerText = "LIMITED DROP";
+            card.querySelector(".cardImg").appendChild(badge);
+            grid.appendChild(card);
+        });
     }
 
-    function createCard(p) {
-        const div = document.createElement("div");
-        div.className = "card prodCard";
-        
-        // Tallas Pill
+    function createCard(p){
+        const el = document.createElement("div"); el.className = "card";
         const sizes = p.sizes || ["Unitalla"];
-        const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this, '${s}')">${s}</div>`).join("");
-
-        div.innerHTML = `
-            <div class="prodImg"><img src="${p.img}" alt="${p.name}" loading="lazy"></div>
-            <div class="prodBody">
-                <div class="prodName">${p.name}</div>
-                <div class="prodPrice">${money(p.baseMXN)}</div>
-                
-                <div class="size-selector-row" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
-                <div class="prodActions">
-                    <button class="btn primary full" style="font-size:14px; padding:10px;" onclick="add('${p.id}')">AGREGAR</button>
-                </div>
+        const sizeBtns = sizes.map(s => `<div class="sizePill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
+        
+        el.innerHTML = `
+            <div class="cardImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
+            <div class="cardBody">
+                <div class="cardTitle">${p.name}</div>
+                <div class="cardPrice">${money(p.baseMXN)}</div>
+                <div class="sizeRow" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
+                <button class="cardBtn" onclick="add('${p.id}')">AGREGAR</button>
             </div>
         `;
-        return div;
+        return el;
     }
 
-    function setFeatured() {
-        const p = catalog.find(x => x.tags && x.tags.includes('featured')) || catalog[0];
-        if(!p) return;
-        $("featuredName").innerText = p.name;
-        $("featuredPrice").innerText = money(p.baseMXN);
-        const img = $("featuredImg"); img.src = p.img; img.style.display="block";
-        $("featuredBtn").onclick = () => scrollToId("catalog");
-    }
-
-    /* --- UI LOGIC --- */
-    window.selectSize = (el, size) => {
-        const parent = el.parentElement;
-        parent.setAttribute("data-selected", size);
-        parent.querySelectorAll(".size-pill").forEach(b => b.classList.remove("active"));
+    /* ACTIONS */
+    window.selectSize = (el, s) => {
+        const p = el.parentElement;
+        p.setAttribute("data-selected", s);
+        p.querySelectorAll(".sizePill").forEach(b => b.classList.remove("active"));
         el.classList.add("active");
     };
 
     window.add = (id) => {
-        const sizeContainer = document.getElementById(`sizes_${id}`);
-        let s = sizeContainer.getAttribute("data-selected");
-        if(!s && sizeContainer.children.length === 1) s = sizeContainer.children[0].innerText;
+        const sizeCont = document.getElementById(`sizes_${id}`);
+        let s = sizeCont.getAttribute("data-selected");
+        if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText; // Auto-select single size
         
-        if(!s) { toast("⚠️ Selecciona una talla"); return; }
+        if(!s) { toast("⚠️ Selecciona talla"); return; }
         
         const p = catalog.find(x=>x.id===id);
         const key = `${id}_${s}`;
         const exist = cart.find(i=>i.key===key);
-        if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1});
+        if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1, img:p.img});
         
-        saveCart(); renderCart(); openDrawer(); toast("Producto agregado");
+        saveCart(); renderCart(); openDrawer(); toast("Agregado");
     };
 
-    /* --- CART & CHECKOUT --- */
-    function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch(e){cart=[]} }
-    function saveCart(){ localStorage.setItem(CART_KEY,JSON.stringify(cart)); }
-    function cartCount(){ return cart.reduce((a,b)=>a+b.qty,0); }
-    function subtotal(){ return cart.reduce((a,b)=>a+(b.price*b.qty),0); }
-
+    function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
+    function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+    
     function renderCart(){
         const wrap = $("cartItems");
-        const count = cartCount();
+        const count = cart.reduce((a,b)=>a+b.qty,0);
         $("cartCount").innerText = count;
-        $("cartCount").style.display = count>0?"flex":"none";
         
-        if(!cart.length) { 
-            wrap.innerHTML=""; $("cartEmpty").style.display="block"; 
-            updateTotals(); return; 
-        }
+        if(!cart.length){ wrap.innerHTML=""; $("cartEmpty").style.display="block"; updateTotals(); return; }
         $("cartEmpty").style.display="none";
         
         wrap.innerHTML = cart.map((i,x) => `
-            <div class="cartRow">
-                <div class="cInfo"><div class="cName">${i.name}</div><div class="cMeta">${i.variant}</div><div class="cPrice">${money(i.price)}</div></div>
-                <div class="cQty"><button class="qtyBtn" onclick="modCart(${x},-1)">-</button><span class="qtyNum">${i.qty}</span><button class="qtyBtn" onclick="modCart(${x},1)">+</button></div>
-                <button class="iconBtn" onclick="delCart(${x})" style="margin-left:10px; color:#E10600;">&times;</button>
+            <div class="cartItem">
+                <img src="${i.img}" class="cartThumb">
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:14px;margin-bottom:5px;">${i.name}</div>
+                    <div style="font-size:12px;color:#888;">${i.variant}</div>
+                    <div style="color:var(--red);font-weight:700;margin-top:5px;">${money(i.price)}</div>
+                </div>
+                <div style="text-align:right;">
+                    <button onclick="delCart(${x})" style="border:none;background:none;color:#999;cursor:pointer;font-size:18px;">&times;</button>
+                    <div style="margin-top:10px;font-weight:700;font-size:13px;">x${i.qty}</div>
+                </div>
             </div>
         `).join("");
         updateTotals();
     }
-
-    window.modCart = (x,d) => { cart[x].qty += d; if(cart[x].qty<1) cart[x].qty=1; saveCart(); renderCart(); };
-    window.delCart = (x) => { cart.splice(x,1); saveCart(); renderCart(); };
+    window.delCart = (x)=>{ cart.splice(x,1); saveCart(); renderCart(); };
 
     function updateTotals(){
-        $("subTotal").innerText = money(subtotal());
+        const sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
+        $("subTotal").innerText = money(sub);
         const ship = shipQuote ? shipQuote.mxn : 0;
-        $("shipTotal").innerText = shipQuote ? money(ship) : "Cotizar al pagar";
-        $("grandTotal").innerText = money(subtotal() + ship);
+        $("shipTotal").innerText = shipQuote ? money(ship) : "Por calcular";
+        $("grandTotal").innerText = money(sub + ship);
     }
 
-    /* --- QUOTE & CHECKOUT --- */
-    $("quoteBtn")?.addEventListener("click", async () => {
+    /* QUOTE & CHECKOUT */
+    $("quoteBtn").addEventListener("click", async ()=>{
         const zip = $("zipQuote").value;
-        const res = $("shipResult");
-        res.innerHTML = "Calculando...";
-        if(zip.length!==5) { res.innerHTML="CP Inválido"; return; }
+        if(zip.length!==5) { toast("CP Inválido"); return; }
+        $("shipResult").innerText = "Calculando...";
         
         try {
-            const r = await fetch(`${API_BASE}/quote_shipping`, { method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
+            const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
             const d = await r.json();
-            if(d.ok) { shipQuote=d; res.innerHTML = `<span style="color:green; font-weight:700">${d.label}: ${money(d.mxn)}</span>`; updateTotals(); }
-            else { shipQuote={mxn:250}; res.innerHTML = "Estándar: $250.00"; updateTotals(); }
-        } catch(e) { res.innerHTML="Error conexión"; }
+            if(d.ok) { shipQuote=d; $("shipResult").innerHTML=`${d.label}: ${money(d.mxn)}`; updateTotals(); }
+            else { $("shipResult").innerText="Tarifa estándar: $250"; shipQuote={mxn:250}; updateTotals(); }
+        } catch(e) { $("shipResult").innerText="Error conexión"; }
     });
 
     window.checkout = async () => {
         if(!cart.length) return;
         const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
         try {
-            const r = await fetch(`${API_BASE}/create_checkout`, { method:"POST", body:JSON.stringify({items:cart, mode:"mx"})});
+            const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode:"mx"})});
             const d = await r.json();
             if(d.url) location.href=d.url; else throw new Error();
         } catch(e) { toast("Error checkout"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
