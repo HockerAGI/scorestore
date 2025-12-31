@@ -1,18 +1,24 @@
 /**
- * SCORE STORE - main.js (v23.0 PROD FIXED)
- * Actualizado: Compatibilidad total con diseño Light/Dark
+ * SCORE STORE - main.js (PROD READY)
+ * Optimizado para PWA y Stripe Checkout
  */
+
+// TODO: Para máxima seguridad, esta llave podría venir de env vars inyectada en build time,
+// pero es estándar tener la PK pública en frontend de sitios estáticos.
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
+
 const LS_CART = "score_cart_v1";
 const LS_PROMO = "score_promo_v1";
-// Detecta automáticamente si está en local o en servidor
-const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
+
+// Usamos ruta relativa segura gracias a netlify.toml
+const API_BASE = "/api";
 
 let catalog = null;
 let promoState = safeJson(localStorage.getItem(LS_PROMO), null);
 let cart = safeJson(localStorage.getItem(LS_CART), []);
 let ship = { mode: "pickup", mxn: 0, label: "Pickup" };
 
+// ... (Resto de helpers igual: $, moneyMXN, safeJson, toast, saveCart, cartCount, subtotal, promoDiscountAmount, renderCartBody)
 const $ = (id) => document.getElementById(id);
 const moneyMXN = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
@@ -38,7 +44,6 @@ function promoDiscountAmount(sub) {
   return 0;
 }
 
-/* UI UPDATES */
 function renderCartBody() {
   const body = $("cartBody");
   if (!body) return;
@@ -57,7 +62,7 @@ function renderCartBody() {
         <div style="font-size:12px; font-weight:800; color:#D50000;">${moneyMXN(i.price)}</div>
       </div>
       <div style="text-align:right;">
-        <button type="button" onclick="removeFromCart(${idx})" style="color:#D50000; border:none; background:none; font-weight:bold; font-size:18px; cursor:pointer; padding:0 5px;">&times;</button>
+        <button type="button" onclick="removeFromCart(${idx})" aria-label="Eliminar" style="color:#D50000; border:none; background:none; font-weight:bold; font-size:18px; cursor:pointer; padding:0 5px;">&times;</button>
         <div style="font-weight:800; font-size:13px;">x${i.qty}</div>
       </div>
     </div>
@@ -70,6 +75,7 @@ window.removeFromCart = function(idx) {
   updateCart({ recalcShip: true });
 };
 
+// ... (updateCart lógica principal)
 async function updateCart({ recalcShip } = { recalcShip: true }) {
   const radio = document.querySelector('input[name="shipMode"]:checked');
   const selected = radio ? radio.value : "pickup";
@@ -78,6 +84,7 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
   const form = $("shipForm");
   if (form) form.style.display = (selected === "mx" || selected === "tj") ? "block" : "none";
 
+  // LOGICA DE PRECIOS FRONTEND (Debe coincidir con _shared.js para evitar sorpresas)
   if (selected === "pickup") { ship.mxn = 0; ship.label = "Pickup"; }
   else if (selected === "tj") { ship.mxn = 200; ship.label = "Local TJ"; }
   else if (selected === "mx") { ship.mxn = 250; ship.label = "Nacional"; }
@@ -105,6 +112,7 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
   if (selected !== "pickup") {
     const cpVal = $("cp")?.value || "";
     const addrVal = $("addr")?.value || "";
+    // Validación simple para habilitar botón
     valid = valid && (cpVal.trim().length === 5) && (addrVal.trim().length > 3);
   }
   
@@ -112,7 +120,7 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
   if(btn) btn.disabled = !valid;
 }
 
-/* ACTIONS */
+// ... (Navegación y Catálogo)
 window.openDrawer = function() {
   $("drawer").classList.add("active");
   $("overlay").classList.add("active");
@@ -150,14 +158,13 @@ window.openCatalog = async function(sectionId, title) {
       return; 
   }
 
-  // Renderizado Grid con ajuste para tarjetas blancas
   content.innerHTML = `<div class="catGrid">` + items.map(p => `
     <div class="prodCard">
       <img src="${p.img}" loading="lazy" alt="${p.name}">
       <div style="font-weight:700; font-size:14px; line-height:1.2; margin-bottom:5px; color:#111;">${p.name}</div>
       <div style="color:#D50000; font-weight:800; font-size:15px;">${moneyMXN(p.baseMXN)}</div>
       
-      <select id="size_${p.id}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; background:#fff; color:#000;">
+      <select id="size_${p.id}" aria-label="Talla ${p.name}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; background:#fff; color:#000;">
         ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
       </select>
       
@@ -215,8 +222,11 @@ window.checkout = async function() {
     });
     
     const data = await res.json();
-    if (data.url) location.href = data.url;
-    else throw new Error(data.error || "Error al iniciar pago");
+    if (data.url) {
+      location.href = data.url;
+    } else {
+      throw new Error(data.error || "Error al iniciar pago");
+    }
   } catch (e) {
     console.error(e);
     toast("Error: " + (e.message || "Intenta de nuevo"));
@@ -243,7 +253,6 @@ window.closeLegal = function() {
   }
 };
 
-// Event Listeners
 document.querySelectorAll('input[name="shipMode"]').forEach(r => {
     r.addEventListener("change", () => updateCart());
 });
@@ -252,4 +261,5 @@ document.querySelectorAll('input[name="shipMode"]').forEach(r => {
     if(el) el.addEventListener("input", () => updateCart({ recalcShip: false }));
 });
 
+// Iniciamos
 updateCart();
