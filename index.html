@@ -1,159 +1,181 @@
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
+  <!-- ================= META ================= -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE Store | Official Merchandise</title>
-  
+  <title>SCORE STORE | Official Merchandise</title>
+  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por ÚNICO UNIFORMES." />
+  <meta name="author" content="Único Uniformes" />
+  <meta name="theme-color" content="#E10600" />
+  <link rel="canonical" href="/" />
+
+  <!-- ================= ICONS & PWA ================= -->
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  
-  <link rel="stylesheet" href="/css/styles.css">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="preload" href="/assets/hero.webp" as="image">
-  <script src="https://js.stripe.com/v3" async defer></script>
+
+  <!-- ================= FONTS ================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- ================= STYLES ================= -->
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+
+  <!-- ================= STRIPE ================= -->
+  <script src="https://js.stripe.com/v3" async></script>
 </head>
 
 <body>
-  <div class="bgOverlay"></div>
+  <!-- Fondo global -->
+  <div class="page-overlay" aria-hidden="true"></div>
 
+  <!-- ================= HEADER ================= -->
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand">
-        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
+      <a href="/" class="brand" aria-label="Inicio SCORE Store">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" />
       </a>
-      
-      <div class="nav">
-        <button class="navBtn" onclick="scrollToId('collections')" style="display:none; @media(min-width:600px){display:block;}">Colecciones</button>
-        <button class="navBtn" onclick="scrollToId('shipping')" style="display:none; @media(min-width:600px){display:block;}">Envíos</button>
-        
-        <div class="cartBtn" onclick="openDrawer()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-          <span id="cartCount">0</span>
-        </div>
-      </div>
+
+      <nav class="nav" aria-label="Acciones principales">
+        <button
+          class="cartBtn"
+          type="button"
+          aria-label="Abrir carrito"
+          onclick="openDrawer()"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span id="cartCount" class="cartCount">0</span>
+        </button>
+      </nav>
     </div>
   </header>
 
+  <!-- ================= MAIN ================= -->
   <main class="wrap">
-    
+
+    <!-- ===== HERO ===== -->
     <section class="hero" id="top">
       <div class="heroBg"></div>
-      
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Desert">
+      <div class="heroOverlay"></div>
 
-      <div class="heroInner">
-        <div class="heroText">
-          <div class="tag-line"><span class="tag-pill">OFICIAL</span> 2025 MERCH</div>
-          <h1>SCORE<br><span>INTERNATIONAL</span></h1>
-          <p class="lead">
-            La colección oficial de las carreras más duras del planeta.<br>
-            <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante.
-          </p>
-          <div class="heroActions">
-            <button class="btn primary" onclick="scrollToId('collections')">COMPRAR</button>
-            <button class="btn secondary" onclick="scrollToId('drops')">VER DROPS</button>
-          </div>
+      <img
+        class="heroSeal"
+        src="/assets/logo-world-desert.webp"
+        alt="World Desert Championship"
+        loading="lazy"
+      />
+
+      <div class="heroContent">
+        <div class="tag-line">
+          <span class="tag-pill">OFICIAL</span> 2025 COLLECTION
         </div>
-        
-        <div class="heroCard">
-          <div class="heroCardTop">
-            <div class="heroCardTitle">DROP DESTACADO</div>
-            <div class="heroCardTag">LIMITADO</div>
-          </div>
-          <div class="heroCardBody">
-            <div class="heroCardName" id="featuredName">Cargando...</div>
-            <div class="heroCardPrice" id="featuredPrice"></div>
-            <img id="featuredImg" src="" style="width:100%; height:180px; object-fit:contain; margin:15px 0; mix-blend-mode:lighten; display:none;">
-            <div style="margin-top:20px;">
-                <button class="btn primary full" id="featuredBtn" style="font-size:16px;">VER PRODUCTO</button>
-            </div>
-            <div class="heroCardNote">* Sujeto a disponibilidad.</div>
-          </div>
+
+        <h1>SCORE<br /><span>INTERNATIONAL</span></h1>
+
+        <p class="marketing-copy">
+          Viste la leyenda. Equipamiento oficial de alto rendimiento.<br />
+          <strong>ÚNICO UNIFORMES:</strong> Fabricante Autorizado.
+        </p>
+
+        <div class="ctaRow">
+          <button class="btn primary" type="button" onclick="scrollToId('collections')">
+            COMPRAR
+          </button>
+          <button class="btn secondary" type="button" onclick="openDrawer()">
+            MI EQUIPO
+          </button>
         </div>
       </div>
     </section>
 
-    <section class="section" id="drops">
-      <div class="container">
-        <div class="sectionHead">
-          <h2>DROPS <span>LIMITADOS</span></h2>
-          <p>Ediciones especiales y lanzamientos.</p>
-        </div>
-        <div class="grid" id="dropsGrid"></div>
-      </div>
-    </section>
-
+    <!-- ===== COLECCIONES ===== -->
     <section class="section" id="collections">
-      <div class="container">
-        <div class="sectionHead">
-          <h2>COLECCIONES <span>DISPONIBLES</span></h2>
-          <p>Selecciona tu carrera.</p>
+      <div class="sectionHead">
+        <h2>COLECCIONES <span>DISPONIBLES</span></h2>
+        <p>Selecciona tu carrera favorita.</p>
+      </div>
+
+      <div class="grid">
+        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_1000','BAJA 1000')">
+          <div class="card-texture"></div>
+          <span class="badge">TOP SELLER</span>
+          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" />
         </div>
 
-        <div class="grid">
-          <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-            <div class="card-texture"></div>
-            <span class="badge">MÁS VENDIDO</span>
-            <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000">
-          </div>
+        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_500','BAJA 500')">
+          <div class="card-texture"></div>
+          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" />
+        </div>
 
-          <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
-            <div class="card-texture"></div>
-            <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500">
-          </div>
+        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_400','BAJA 400')">
+          <div class="card-texture"></div>
+          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" />
+        </div>
 
-          <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-            <div class="card-texture"></div>
-            <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400">
-          </div>
-
-          <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
-            <div class="card-texture"></div>
-            <span class="badge" style="background:#333;">ÚLTIMAS PIEZAS</span>
-            <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250">
-          </div>
+        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('SF_250','SAN FELIPE 250')">
+          <div class="card-texture"></div>
+          <span class="badge" style="background:#333;">LAST CALL</span>
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" />
         </div>
       </div>
     </section>
 
-    <section class="section" id="shipping">
+    <!-- ===== SHIPPING ===== -->
+    <section class="section shipping-section">
       <div class="container" style="text-align:center;">
-        <div class="sectionHead" style="justify-content:center; border:none; margin-bottom:10px;">
-          <h2>COTIZAR <span>ENVÍO</span></h2>
+        <div class="sectionHead" style="justify-content:center; border:none;">
+          <h2 style="font-size:42px;">COTIZAR <span>ENVÍO</span></h2>
         </div>
-        <p style="color:#aaa; margin-bottom:30px;">Calcula costo real con Envia.com</p>
-        
+
+        <p style="color:#aaa; margin-bottom:30px;">
+          Calcula el costo real vía Envia.com
+        </p>
+
         <div class="shipBox">
-          <input class="inputField" id="zipQuote" inputmode="numeric" maxlength="5" placeholder="CÓDIGO POSTAL (5 DÍGITOS)">
-          <button class="btn primary" id="quoteBtn" style="font-size:16px; padding:12px 25px; border-radius:6px;">CALCULAR</button>
+          <div class="shipRow">
+            <input
+              class="inputField"
+              id="zipQuote"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="Código Postal (5 dígitos)"
+              aria-label="Código Postal"
+            />
+            <button class="btn primary" type="button" id="quoteBtn">
+              CALCULAR
+            </button>
+          </div>
+          <div id="shipResult" class="shipResult"></div>
         </div>
-        <div id="shipResult" class="shipResult"></div>
       </div>
     </section>
 
+    <!-- ===== PARTNERS ===== -->
     <section class="section partners">
       <div class="container">
         <div class="partnersGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris">
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" style="opacity:1;">
+          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" />
+          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" />
+          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" />
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" />
         </div>
       </div>
     </section>
 
   </main>
 
+  <!-- ================= FOOTER ================= -->
   <footer class="footer">
     <div class="container footerInner">
-      
+
       <div class="fCol">
-        <img src="/assets/logo-unico.webp" alt="Único" class="footerUnico">
+        <img src="/assets/logo-unico.webp" alt="Único Uniformes" class="footerUnico" />
         <p class="fText">
           Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
         </p>
@@ -176,220 +198,73 @@
         <h4>CONTACTO</h4>
         <div class="contactBox">
           <strong>ÚNICO UNIFORMES</strong>
-          <p style="color:#aaa; font-size:14px; margin-bottom:15px;">Palermo 6106 Interior JK,<br>Anexa Roma, 22614<br>Tijuana, B.C.</p>
-          <a href="https://wa.me/526642368701" target="_blank" class="whatsapp-btn">
+          <p style="color:#aaa; font-size:14px;">
+            Palermo 6106 Interior JK,<br />
+            Anexa Roma, 22614<br />
+            Tijuana, B.C.
+          </p>
+          <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">
             📱 WhatsApp: 664 236 8701
           </a>
-          <a href="mailto:ventas.unicotextil@gmail.com" class="fLink" style="margin-top:10px;">ventas.unicotextil@gmail.com</a>
+          <a href="mailto:ventas.unicotextil@gmail.com" class="fLink">
+            ventas.unicotextil@gmail.com
+          </a>
         </div>
       </div>
 
     </div>
-    <div class="copy">SCORE Store © 2025 · Powered by Único Uniformes</div>
+
+    <div class="copy">
+      SCORE Store © 2025 · Powered by Único Uniformes
+    </div>
   </footer>
 
-  <div class="overlay" id="overlay" onclick="closeAll()"></div>
-  
-  <div class="modal" id="modalCatalog">
-    <div class="dHead"><h3 id="catTitle" class="dTitle">CATÁLOGO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+  <!-- ================= OVERLAYS & MODALS ================= -->
+  <div class="overlay" id="overlay" onclick="closeAll()" aria-hidden="true"></div>
+
+  <div class="modal" id="modalCatalog" role="dialog" aria-modal="true">
+    <div class="dHead">
+      <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
+      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
+    </div>
     <div id="catContent" class="dBody"></div>
   </div>
 
-  <aside class="drawer" id="drawer">
-    <div class="dHead"><h3 class="dTitle">TU CARRITO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true">
+    <div class="dHead">
+      <h3 class="dTitle">TU EQUIPO</h3>
+      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
+    </div>
     <div class="dBody">
       <div id="cartItems"></div>
-      <div id="cartEmpty" style="text-align:center; padding:40px; color:#666;">Tu carrito está vacío.</div>
+      <div id="cartEmpty" style="text-align:center; padding:40px; color:#666;">
+        Tu carrito está vacío.
+      </div>
     </div>
     <div class="dFoot">
-      <button onclick="emptyCart()" style="background:none; border:none; color:#E10600; font-size:12px; cursor:pointer; margin-bottom:10px;">VACIAR CARRITO</button>
+      <div style="display:flex; justify-content:space-between;">
+        <button
+          type="button"
+          onclick="emptyCart()"
+          style="background:none;border:none;color:#E10600;font-size:12px;text-decoration:underline;cursor:pointer;"
+        >
+          VACIAR CARRITO
+        </button>
+      </div>
+
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">—</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px; border-radius:8px;">PAGAR AHORA</button>
+
+      <button class="btn primary full" id="checkoutBtn" type="button" onclick="checkout()">
+        PAGAR AHORA
+      </button>
     </div>
   </aside>
 
-  <aside class="drawer" id="legalModal" style="width:min(600px, 100vw);">
-    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:40px; color:#333;">
-       <div class="legalBlock" data-legal-block="shipping" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Envíos</h4>
-         <p>Envíos nacionales 3-7 días. Pickup gratis en Tijuana.</p>
-       </div>
-       <div class="legalBlock" data-legal-block="returns" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Garantías</h4>
-         <p>7 días por defectos de fabricación.</p>
-       </div>
-       </div>
-  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <div class="toast" id="toast">Mensaje</div>
-
-  <script>
-    const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-    const CART_KEY = "score_cart_final_hybrid";
-    
-    let cart = [], catalog = [], shipQuote = null;
-    const $ = (id) => document.getElementById(id);
-    const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
-    function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
-    function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
-
-    /* INIT */
-    async function init(){
-        loadCart(); updateTotals(); renderCart();
-        try {
-            const res = await fetch("/data/catalog.json");
-            const data = await res.json();
-            catalog = data.products || [];
-            renderDrops();
-            setFeatured();
-        } catch(e){ console.error(e); }
-    }
-
-    /* RENDER DROPS & HERO CARD */
-    function renderDrops() {
-        const grid = $("dropsGrid");
-        const drops = catalog.filter(p => p.tags && (p.tags.includes('limited') || p.tags.includes('drop')));
-        if(!drops.length) return;
-        drops.forEach(p => {
-            const card = createProductCard(p);
-            grid.appendChild(card);
-        });
-    }
-
-    function setFeatured() {
-        // Buscar producto destacado para el Hero
-        const p = catalog.find(x => x.tags && x.tags.includes('featured')) || catalog[0];
-        if(!p) return;
-        $("featuredName").innerText = p.name;
-        $("featuredPrice").innerText = money(p.baseMXN);
-        const img = $("featuredImg"); img.src = p.img; img.style.display="block";
-        $("featuredBtn").onclick = () => { openCatalog(p.sectionId, "DESTACADO"); };
-    }
-
-    /* OPEN MODAL CATALOG */
-    window.openCatalog = (secId, title) => {
-        $("modalCatalog").classList.add("active");
-        $("overlay").classList.add("active");
-        $("catTitle").innerText = title;
-        $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando...</div>";
-
-        const items = catalog.filter(p => p.sectionId === secId || secId === "DESTACADO");
-        if(!items.length) { $("catContent").innerHTML = "<div style='padding:40px; text-align:center;'>Agotado.</div>"; return; }
-
-        $("catContent").innerHTML = "";
-        const grid = document.createElement("div");
-        grid.className = "catGrid";
-        items.forEach(p => grid.appendChild(createProductCard(p)));
-        $("catContent").appendChild(grid);
-    };
-
-    function createProductCard(p) {
-        const div = document.createElement("div");
-        div.className = "prodCard";
-        const sizes = p.sizes || ["Unitalla"];
-        const sizeBtns = sizes.map(s => `<div class="sizePill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
-        
-        div.innerHTML = `
-            <div class="prodImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
-            <div class="prodName">${p.name}</div>
-            <div class="prodPrice">${money(p.baseMXN)}</div>
-            <div class="sizeRow" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
-            <button class="btn-add" onclick="add('${p.id}')">AGREGAR +</button>
-        `;
-        return div;
-    }
-
-    /* ACTIONS */
-    window.selectSize = (el, s) => {
-        const p = el.parentElement;
-        p.setAttribute("data-selected", s);
-        p.querySelectorAll(".sizePill").forEach(b => b.classList.remove("active"));
-        el.classList.add("active");
-    };
-
-    window.add = (id) => {
-        const sizeCont = document.getElementById(`sizes_${id}`);
-        let s = sizeCont.getAttribute("data-selected");
-        if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText;
-        if(!s) { toast("⚠️ Selecciona talla"); return; }
-        
-        const p = catalog.find(x=>x.id===id);
-        const key = `${id}_${s}`;
-        const exist = cart.find(i=>i.key===key);
-        if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1, img:p.img});
-        
-        saveCart(); renderCart(); openDrawer(); toast("Agregado");
-    };
-
-    /* CART & CHECKOUT */
-    function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
-    function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-    function emptyCart(){ cart=[]; saveCart(); renderCart(); }
-
-    function renderCart(){
-        const wrap = $("cartItems");
-        const count = cart.reduce((a,b)=>a+b.qty,0);
-        $("cartCount").innerText = count;
-        $("cartCount").style.display = count>0?"flex":"none";
-        
-        if(!cart.length){ wrap.innerHTML=""; $("cartEmpty").style.display="block"; updateTotals(); return; }
-        $("cartEmpty").style.display="none";
-        
-        wrap.innerHTML = cart.map((i,x) => `
-            <div class="cartItem">
-                <img src="${i.img}" class="cartThumb">
-                <div class="cInfo">
-                    <div class="cName">${i.name}</div>
-                    <div class="cMeta">${i.variant}</div>
-                    <div class="cPrice">${money(i.price)}</div>
-                </div>
-                <button onclick="delCart(${x})" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;">&times;</button>
-            </div>
-        `).join("");
-        updateTotals();
-    }
-    window.delCart = (x)=>{ cart.splice(x,1); saveCart(); renderCart(); };
-
-    function updateTotals(){
-        const sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-        $("subTotal").innerText = money(sub);
-        const ship = shipQuote ? shipQuote.mxn : 0;
-        $("shipTotal").innerText = shipQuote ? money(ship) : "Por calcular";
-        $("grandTotal").innerText = money(sub + ship);
-    }
-
-    /* QUOTE & CHECKOUT */
-    $("quoteBtn")?.addEventListener("click", async ()=>{
-        const zip = $("zipQuote").value;
-        if(zip.length!==5) { toast("CP Inválido"); return; }
-        $("shipResult").innerText = "Calculando...";
-        try {
-            const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
-            const d = await r.json();
-            if(d.ok) { shipQuote=d; $("shipResult").innerHTML=`${d.label}: ${money(d.mxn)}`; updateTotals(); }
-            else { $("shipResult").innerText="Estándar: $250"; shipQuote={mxn:250}; updateTotals(); }
-        } catch(e) { $("shipResult").innerText="Error conexión"; }
-    });
-
-    window.checkout = async () => {
-        if(!cart.length) return;
-        const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
-        try {
-            const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode:"mx"})});
-            const d = await r.json();
-            if(d.url) location.href=d.url; else throw new Error();
-        } catch(e) { toast("Error checkout"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
-    };
-
-    window.openDrawer=()=>{ $("drawer").classList.add("active"); $("overlay").classList.add("active"); document.body.classList.add("modalOpen"); };
-    window.closeAll=()=>{ document.querySelectorAll(".active").forEach(e=>e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
-    window.openLegal=(t)=>{ $("legalModal").classList.add("active"); $("overlay").classList.add("active"); document.querySelectorAll(".legalBlock").forEach(b=>b.style.display=(b.dataset.legalBlock===t)?"block":"none"); };
-
-    init();
-    if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
-  </script>
+  <!-- ================= JS ================= -->
+  <script defer src="/js/main.js"></script>
 </body>
 </html>
