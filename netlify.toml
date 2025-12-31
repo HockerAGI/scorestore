@@ -20,31 +20,32 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# Netlify Functions (NO CACHE + CORS)
+# Netlify Functions (NO CACHE)
 # -------------------------
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Cache-Control = "no-store"
+    Cache-Control = "no-store, no-cache, must-revalidate"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
 # -------------------------
-# Assets estáticos (cache largo)
+# Assets estáticos (Cache Inteligente)
+# CAMBIO CRÍTICO: Quitamos 'immutable' y bajamos el tiempo para desarrollo
 # -------------------------
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # -------------------------
-# JS controlado por SW (evita JS viejo)
+# JS controlado (Siempre validar)
 # -------------------------
 [[headers]]
   for = "/js/*"
@@ -52,17 +53,22 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 # -------------------------
-# Service Worker / Manifest
+# Service Worker / Manifest / HTML (NUNCA CACHEAR)
 # -------------------------
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-cache"
+    Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
   for = "/site.webmanifest"
   [headers.values]
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # -------------------------
 # Datos dinámicos
@@ -70,12 +76,4 @@
 [[headers]]
   for = "/data/*"
   [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=900"
-
-# -------------------------
-# SPA fallback
-# -------------------------
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+    Cache-Control = "public, max-age=0, must-revalidate"
