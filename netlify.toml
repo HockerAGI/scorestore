@@ -9,7 +9,7 @@
   NODE_VERSION = "18"
 
 # -------------------------
-# REGLAS DE SEGURIDAD
+# SEGURIDAD
 # -------------------------
 [[headers]]
   for = "/*"
@@ -20,9 +20,9 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# CACHE BUSTING (ESTO ARREGLA QUE NO SE ACTUALICE)
+# CACHE BUSTING (ESTO ARREGLA TU PROBLEMA)
+# Quitamos "immutable" y ponemos "must-revalidate"
 # -------------------------
-# CSS y JS: Forzamos validación siempre
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -38,7 +38,6 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Service Worker y HTML NUNCA se guardan
 [[headers]]
   for = "/sw.js"
   [headers.values]
