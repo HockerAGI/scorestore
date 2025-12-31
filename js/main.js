@@ -1,24 +1,18 @@
 /**
- * SCORE STORE - main.js (PROD READY)
- * Optimizado para PWA y Stripe Checkout
+ * SCORE STORE - main.js (PROD + REAL TIME SHIPPING)
  */
-
-// TODO: Para máxima seguridad, esta llave podría venir de env vars inyectada en build time,
-// pero es estándar tener la PK pública en frontend de sitios estáticos.
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
-
 const LS_CART = "score_cart_v1";
 const LS_PROMO = "score_promo_v1";
-
-// Usamos ruta relativa segura gracias a netlify.toml
-const API_BASE = "/api";
+const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
 
 let catalog = null;
 let promoState = safeJson(localStorage.getItem(LS_PROMO), null);
 let cart = safeJson(localStorage.getItem(LS_CART), []);
-let ship = { mode: "pickup", mxn: 0, label: "Pickup" };
 
-// ... (Resto de helpers igual: $, moneyMXN, safeJson, toast, saveCart, cartCount, subtotal, promoDiscountAmount, renderCartBody)
+// Estado del envío
+let ship = { mode: "pickup", mxn: 0, label: "Pickup", loading: false };
+
 const $ = (id) => document.getElementById(id);
 const moneyMXN = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
@@ -29,41 +23,66 @@ function toast(msg) {
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove("show"), 2500);
+  setTimeout(() => t.classList.remove("show"), 2500);
 }
 
 function saveCart() { localStorage.setItem(LS_CART, JSON.stringify(cart)); }
 function cartCount() { return cart.reduce((a, b) => a + Number(b.qty || 0), 0); }
 function subtotal() { return cart.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0); }
 
-function promoDiscountAmount(sub) {
-  if (!promoState) return 0;
-  if (promoState.type === "pct") return Math.round(sub * (Number(promoState.value) / 100));
-  if (promoState.type === "mxn") return Math.min(sub, Number(promoState.value));
-  return 0;
+/* --- SHIPPING CALCULATOR --- */
+// Variable para evitar múltiples llamadas seguidas (Debounce)
+let _shipTimeout;
+async function fetchShippingRate(cp) {
+  ship.loading = true;
+  updateTotalsUI(); // Muestra "Calculando..."
+  
+  try {
+    const res = await fetch(`${API_BASE}/quote_shipping`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postal_code: cp, items: cartCount() })
+    });
+    const data = await res.json();
+    
+    if (data.ok) {
+      ship.mxn = data.mxn;
+      ship.label = data.label;
+    } else {
+      ship.mxn = 250; // Fallback
+      ship.label = "Envío Nacional";
+    }
+  } catch (e) {
+    console.error("Error cotizando:", e);
+    ship.mxn = 250; // Fallback seguro
+    ship.label = "Envío Nacional";
+  } finally {
+    ship.loading = false;
+    updateTotalsUI();
+  }
 }
 
+/* --- UI UPDATES --- */
 function renderCartBody() {
   const body = $("cartBody");
   if (!body) return;
   
   if (!cart.length) {
-    body.innerHTML = `<div style="text-align:center; padding:40px 20px; opacity:.6; color:#888;">Tu carrito está vacío</div>`;
+    body.innerHTML = `<div style="text-align:center; padding:40px 20px; opacity:.6; color:#aaa;">Tu carrito está vacío</div>`;
     return;
   }
 
   body.innerHTML = cart.map((i, idx) => `
-    <div style="display:flex; gap:10px; margin-bottom:12px; background:#fff; color:#111; padding:10px; border-radius:8px; align-items:center; border:1px solid #eee;">
-      <img src="${i.img}" alt="" style="width:50px; height:50px; object-fit:contain; mix-blend-mode:multiply;">
+    <div class="cart-item-card">
+      <img src="${i.img}" alt="" class="cart-thumb-img">
       <div style="flex:1;">
-        <div style="font-weight:700; font-size:13px; line-height:1.2;">${i.name}</div>
-        <div style="font-size:11px; color:#555;">Talla: ${i.size}</div>
-        <div style="font-size:12px; font-weight:800; color:#D50000;">${moneyMXN(i.price)}</div>
+        <div class="cart-prod-name">${i.name}</div>
+        <div class="cart-prod-meta">Talla: ${i.size}</div>
+        <div class="cart-prod-price">${moneyMXN(i.price)}</div>
       </div>
       <div style="text-align:right;">
-        <button type="button" onclick="removeFromCart(${idx})" aria-label="Eliminar" style="color:#D50000; border:none; background:none; font-weight:bold; font-size:18px; cursor:pointer; padding:0 5px;">&times;</button>
-        <div style="font-weight:800; font-size:13px;">x${i.qty}</div>
+        <button type="button" onclick="removeFromCart(${idx})" class="btn-remove">&times;</button>
+        <div style="font-weight:800; font-size:13px; color:#111;">x${i.qty}</div>
       </div>
     </div>
   `).join("");
@@ -75,52 +94,116 @@ window.removeFromCart = function(idx) {
   updateCart({ recalcShip: true });
 };
 
-// ... (updateCart lógica principal)
 async function updateCart({ recalcShip } = { recalcShip: true }) {
   const radio = document.querySelector('input[name="shipMode"]:checked');
   const selected = radio ? radio.value : "pickup";
-  
-  ship.mode = selected;
+  const cpVal = $("cp")?.value || "";
+
+  // Lógica de cambio de modo
+  if (selected !== ship.mode) {
+    ship.mode = selected;
+    if (selected === "mx" && cpVal.length === 5) {
+      // Si cambia a MX y ya hay CP, recotizar
+      clearTimeout(_shipTimeout);
+      fetchShippingRate(cpVal);
+    } else if (selected === "mx") {
+      ship.mxn = 250; // Precio base visual hasta cotizar
+      ship.label = "Envío Nacional";
+    }
+  }
+
+  // UI Formulario
   const form = $("shipForm");
   if (form) form.style.display = (selected === "mx" || selected === "tj") ? "block" : "none";
 
-  // LOGICA DE PRECIOS FRONTEND (Debe coincidir con _shared.js para evitar sorpresas)
+  // Precios estáticos
   if (selected === "pickup") { ship.mxn = 0; ship.label = "Pickup"; }
   else if (selected === "tj") { ship.mxn = 200; ship.label = "Local TJ"; }
-  else if (selected === "mx") { ship.mxn = 250; ship.label = "Nacional"; }
+  
+  // Renderizado
+  renderCartBody();
+  updateTotalsUI();
+  
+  // Validación Botón
+  const addrVal = $("addr")?.value || "";
+  let valid = cart.length > 0;
+  if (selected !== "pickup") {
+    valid = valid && (cpVal.trim().length === 5) && (addrVal.trim().length > 3);
+  }
+  const btn = $("payBtn");
+  if(btn) btn.disabled = !valid || ship.loading;
+}
 
+function updateTotalsUI() {
   const sub = subtotal();
-  const disc = promoDiscountAmount(sub);
-  const total = Math.max(0, sub - disc) + Number(ship.mxn || 0);
+  let disc = 0;
 
-  if ($("cartCount")) $("cartCount").innerText = String(cartCount());
+  // Lógica Promos
+  if (promoState) {
+    if (promoState.type === "pct") disc = Math.round(sub * (promoState.value / 100));
+    else if (promoState.type === "free_shipping") disc = 0; // Se maneja restando el envío después
+  }
+
+  // Total
+  let finalShip = ship.mxn;
+  if (promoState?.type === "free_shipping") finalShip = 0;
+  
+  const total = Math.max(0, sub - disc) + finalShip;
+
+  // Textos
+  if ($("cartCount")) {
+      const cnt = cartCount();
+      $("cartCount").innerText = cnt;
+      $("cartCount").style.display = cnt > 0 ? "flex" : "none";
+  }
+  
   if ($("lnSub")) $("lnSub").innerText = moneyMXN(sub);
-  if ($("lnShip")) $("lnShip").innerText = moneyMXN(ship.mxn || 0);
+  
+  // Estado de Envío
+  const lnShip = $("lnShip");
+  if (lnShip) {
+    if (ship.loading) lnShip.innerText = "Calculando...";
+    else if (promoState?.type === "free_shipping") lnShip.innerText = "GRATIS";
+    else lnShip.innerText = (finalShip === 0 && ship.mode === "pickup") ? "Gratis" : moneyMXN(finalShip);
+  }
+
   if ($("lnTotal")) $("lnTotal").innerText = moneyMXN(total);
   if ($("barTotal")) $("barTotal").innerText = moneyMXN(total);
 
+  // Fila Descuento
   const rDisc = $("rowDiscount");
   if (rDisc) {
-      rDisc.style.display = disc > 0 ? "flex" : "none";
-      if ($("lnDiscount")) $("lnDiscount").innerText = `- ${moneyMXN(disc)}`;
-  }
-
-  renderCartBody();
-  $("paybar")?.classList.toggle("visible", cart.length > 0);
-
-  let valid = cart.length > 0;
-  if (selected !== "pickup") {
-    const cpVal = $("cp")?.value || "";
-    const addrVal = $("addr")?.value || "";
-    // Validación simple para habilitar botón
-    valid = valid && (cpVal.trim().length === 5) && (addrVal.trim().length > 3);
+      if (disc > 0 || promoState?.type === "free_shipping") {
+          rDisc.style.display = "flex";
+          $("promoTag").innerText = promoState.code;
+          $("lnDiscount").innerText = disc > 0 ? `- ${moneyMXN(disc)}` : "Envío Gratis";
+      } else {
+          rDisc.style.display = "none";
+      }
   }
   
-  const btn = $("payBtn");
-  if(btn) btn.disabled = !valid;
+  $("paybar")?.classList.toggle("visible", cart.length > 0);
 }
 
-// ... (Navegación y Catálogo)
+/* ACTIONS */
+// Escucha el input de CP para cotizar en tiempo real
+const cpInput = $("cp");
+if (cpInput) {
+  cpInput.addEventListener("input", (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    e.target.value = val; // Solo números
+    
+    if (ship.mode === "mx") {
+      if (val.length === 5) {
+        clearTimeout(_shipTimeout);
+        _shipTimeout = setTimeout(() => fetchShippingRate(val), 800); // Espera 800ms tras escribir
+      }
+    }
+    updateCart({ recalcShip: false });
+  });
+}
+
+// ... (Resto de funciones: openDrawer, addToCart, checkout igual que antes)
 window.openDrawer = function() {
   $("drawer").classList.add("active");
   $("overlay").classList.add("active");
@@ -141,36 +224,27 @@ window.openCatalog = async function(sectionId, title) {
   if(tEl) tEl.innerText = title;
   
   const content = $("catContent");
-  content.innerHTML = '<div style="text-align:center; padding:20px;">Cargando...</div>';
+  content.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc;">Cargando...</div>';
   
   $("modalCatalog").classList.add("active");
   $("overlay").classList.add("active");
   document.body.classList.add("modalOpen");
 
   if (!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
-
-  if (!catalog) { content.innerHTML = "Error cargando catálogo."; return; }
-
-  const items = (catalog.products || []).filter(p => p.sectionId === sectionId);
   
-  if (!items.length) { 
-      content.innerHTML = '<div style="text-align:center; padding:40px;">Próximamente disponible.</div>'; 
-      return; 
-  }
+  // Render igual que antes...
+  const items = (catalog?.products || []).filter(p => p.sectionId === sectionId);
+  if (!items.length) { content.innerHTML = '<div style="text-align:center; padding:40px;">Próximamente.</div>'; return; }
 
   content.innerHTML = `<div class="catGrid">` + items.map(p => `
     <div class="prodCard">
       <img src="${p.img}" loading="lazy" alt="${p.name}">
-      <div style="font-weight:700; font-size:14px; line-height:1.2; margin-bottom:5px; color:#111;">${p.name}</div>
+      <div style="font-weight:700; font-size:14px; margin-bottom:5px; color:#111;">${p.name}</div>
       <div style="color:#D50000; font-weight:800; font-size:15px;">${moneyMXN(p.baseMXN)}</div>
-      
-      <select id="size_${p.id}" aria-label="Talla ${p.name}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; background:#fff; color:#000;">
+      <select id="size_${p.id}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; background:#fff; color:#000;">
         ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
       </select>
-      
-      <button class="btn primary full" style="padding:10px; font-size:13px;" onclick="addToCart('${p.id}')">
-        AGREGAR
-      </button>
+      <button class="btn primary full" style="padding:10px; font-size:13px;" onclick="addToCart('${p.id}')">AGREGAR +</button>
     </div>
   `).join("") + `</div>`;
 };
@@ -179,34 +253,30 @@ window.addToCart = function(pid) {
   if (!catalog) return;
   const p = catalog.products.find(x => x.id === pid);
   if (!p) return;
-  const sizeSelect = $(`size_${pid}`);
-  const size = sizeSelect ? sizeSelect.value : "Unitalla";
+  const size = $(`size_${pid}`)?.value || "Unitalla";
   const key = `${pid}_${size}`;
   const exist = cart.find(i => i.key === key);
   
-  if (exist) { exist.qty++; } 
-  else { cart.push({ key, id: pid, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 }); }
+  if (exist) exist.qty++; 
+  else cart.push({ key, id: pid, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
 
   saveCart();
-  toast("Agregado al carrito");
+  toast("Agregado");
   closeAll();
   openDrawer();
 };
 
 window.checkout = async function() {
   const btn = $("payBtn");
-  const originalText = btn.innerText;
   btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
   try {
-    const stripe = Stripe(STRIPE_PK);
-    const mode = ship.mode;
     const payload = {
       items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size })),
-      mode,
+      mode: ship.mode,
       promoCode: promoState?.code || "",
-      to: (mode === "pickup") ? {} : {
+      to: (ship.mode === "pickup") ? {} : {
         postal_code: $("cp")?.value || "",
         address1: $("addr")?.value || "",
         city: $("city")?.value || "",
@@ -216,50 +286,41 @@ window.checkout = async function() {
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST", 
-      headers: { "Content-Type":"application/json" },
+      method: "POST", headers: { "Content-Type":"application/json" },
       body: JSON.stringify(payload)
     });
     
     const data = await res.json();
-    if (data.url) {
-      location.href = data.url;
-    } else {
-      throw new Error(data.error || "Error al iniciar pago");
-    }
+    if (data.url) location.href = data.url;
+    else throw new Error(data.error || "Error al iniciar pago");
+    
   } catch (e) {
-    console.error(e);
-    toast("Error: " + (e.message || "Intenta de nuevo"));
-    btn.innerText = originalText;
+    alert("Error: " + (e.message || "Intenta de nuevo"));
+    btn.innerText = "IR A PAGAR";
     btn.disabled = false;
   }
 };
 
-window.openLegal = function(type) {
-  const modal = $("legalModal");
-  if(modal) {
-      modal.classList.add("active");
-      $("overlay").classList.add("active");
-      document.querySelectorAll(".legalBlock").forEach(b => {
-          b.style.display = (b.dataset.legalBlock === type) ? "block" : "none";
-      });
-  }
-};
+// Event Listeners Inputs
+document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", () => updateCart()));
+["addr", "name"].forEach(id => $(id)?.addEventListener("input", () => updateCart({ recalcShip: false })));
 
-window.closeLegal = function() {
-  $("legalModal")?.classList.remove("active");
-  if (!$("drawer").classList.contains("active")) {
-    $("overlay").classList.remove("active");
-  }
-};
+// Promo Code
+const promoBtn = $("promoApplyBtn");
+if(promoBtn) {
+    promoBtn.addEventListener("click", () => {
+       const code = $("promoInput")?.value.trim().toUpperCase();
+       if(code === "SCORE10") { promoState = { code, type:"pct", value:10 }; toast("Cupón aplicado"); }
+       else if(code === "ENVIOFREE") { promoState = { code, type:"free_shipping", value:0 }; toast("Envío gratis"); }
+       else { promoState = null; toast("Cupón no válido"); }
+       localStorage.setItem(LS_PROMO, JSON.stringify(promoState));
+       updateCart();
+    });
+}
 
-document.querySelectorAll('input[name="shipMode"]').forEach(r => {
-    r.addEventListener("change", () => updateCart());
-});
-["cp", "addr"].forEach(id => {
-    const el = $(id);
-    if(el) el.addEventListener("input", () => updateCart({ recalcShip: false }));
-});
+// SW
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+}
 
-// Iniciamos
 updateCart();
