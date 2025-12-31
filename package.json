@@ -1,15 +1,13 @@
 {
   "name": "score-store",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "SCORE Store - Ecommerce Oficial",
   "scripts": {
-    "build": "node -e \"console.log('Static site ready')\""
+    "build": "echo 'Static site ready'"
   },
   "dependencies": {
-    "stripe": "^16.9.0",
-    "get-intrinsic": "^1.2.4",
-    "call-bound": "^1.0.0"
+    "stripe": "^16.0.0"
   },
   "engines": {
     "node": ">=18"
