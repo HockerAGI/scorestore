@@ -1,16 +1,15 @@
 /**
  * SCORE STORE - MAIN LOGIC
- * Theme: Desert Premium (Final Fusion)
+ * Theme: Desert Premium
  */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_v4_final";
+const CART_KEY = "score_cart_v5";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
 function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
 
-/* --- INIT --- */
 async function init(){
     loadCart(); updateTotals(); renderCart();
     try {
@@ -20,7 +19,7 @@ async function init(){
     } catch(e){ console.error("Error loading catalog"); }
 }
 
-/* --- MODAL CATALOG --- */
+/* CATALOG MODAL */
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
@@ -30,7 +29,6 @@ window.openCatalog = (secId, title) => {
     const items = catalog.filter(p => p.sectionId === secId);
     if(!items.length) { $("catContent").innerHTML = "<div style='padding:40px; text-align:center;'>Agotado.</div>"; return; }
 
-    // Render Grid con Cards PRO
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
@@ -40,16 +38,13 @@ window.openCatalog = (secId, title) => {
             <div class="prodImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
             <div class="prodName">${p.name}</div>
             <div class="prodPrice">${money(p.baseMXN)}</div>
-            
             <div class="size-row" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
-            
             <button class="btn-add" onclick="add('${p.id}')">AGREGAR +</button>
           </div>
         `;
     }).join("") + `</div>`;
 };
 
-/* --- ACTIONS --- */
 window.selectSize = (el, s) => {
     const p = el.parentElement;
     p.setAttribute("data-selected", s);
@@ -69,10 +64,10 @@ window.add = (id) => {
     const exist = cart.find(i=>i.key===key);
     if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1, img:p.img});
     
-    saveCart(); renderCart(); openDrawer(); toast("Agregado al carrito");
+    saveCart(); renderCart(); openDrawer(); toast("Agregado");
 };
 
-/* --- CART & SHIPPING --- */
+/* CART & CHECKOUT */
 function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
 function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 function emptyCart(){ cart=[]; saveCart(); renderCart(); }
@@ -84,10 +79,9 @@ function renderCart(){
     $("cartCount").style.display = count>0?"flex":"none";
     
     if(!cart.length){ wrap.innerHTML=""; $("cartEmpty").style.display="block"; updateTotals(); return; }
-    $("cartEmpty").style.display="none"; // Si usas este ID en HTML, si no, ignorar
+    $("cartEmpty").style.display="none";
     
-    // Renderizado limpio
-    $("cartBody").innerHTML = cart.map((i,x) => `
+    wrap.innerHTML = cart.map((i,x) => `
         <div class="cartItem">
             <img src="${i.img}" class="cartThumb">
             <div class="cInfo">
@@ -95,10 +89,7 @@ function renderCart(){
                 <div class="cMeta">${i.variant}</div>
                 <div class="cPrice">${money(i.price)}</div>
             </div>
-            <div style="text-align:right;">
-                <button onclick="delCart(${x})" style="background:none;border:none;color:#999;font-size:18px;cursor:pointer;">&times;</button>
-                <div style="font-weight:700; font-size:13px; margin-top:5px; color:#333;">x${i.qty}</div>
-            </div>
+            <button onclick="delCart(${x})" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;">&times;</button>
         </div>
     `).join("");
     updateTotals();
@@ -120,19 +111,19 @@ function updateTotals(){
     if($("barTotal")) $("barTotal").innerText = money(total);
     
     $("paybar")?.classList.toggle("visible", cart.length > 0);
+    $("shipForm").style.display = (mode==="mx"||mode==="tj") ? "block" : "none";
 }
 
-/* --- QUOTE & CHECKOUT --- */
+/* QUOTE & CHECKOUT */
 $("quoteBtn")?.addEventListener("click", async ()=>{
     const zip = $("zipQuote").value;
     if(zip.length!==5) { toast("CP Inválido"); return; }
     $("shipResult").innerText = "Calculando...";
-    
     try {
         const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
         const d = await r.json();
         if(d.ok) { shipQuote=d; $("shipResult").innerText = `${d.label}: ${money(d.mxn)}`; }
-        else { $("shipResult").innerText="Tarifa Estándar: $250"; shipQuote={mxn:250}; }
+        else { $("shipResult").innerText="Estándar: $250"; shipQuote={mxn:250}; }
         updateTotals();
     } catch(e) { $("shipResult").innerText="Error conexión"; }
 });
