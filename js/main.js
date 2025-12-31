@@ -1,5 +1,6 @@
 /**
  * SCORE STORE - MAIN LOGIC
+ * Theme: Desert Ops Ultimate
  */
 const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
@@ -16,19 +17,19 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 function renderCart() {
   const body = $("cartBody");
   if(!body) return;
-  if(!cart.length) { body.innerHTML = '<div style="text-align:center; padding:30px; opacity:0.5">Carrito vacío</div>'; return; }
+  if(!cart.length) { body.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.5">Tu carrito está vacío</div>'; return; }
   
   body.innerHTML = cart.map((i,x) => `
     <div class="cartItem">
       <img src="${i.img}" class="cartThumb">
       <div style="flex:1">
-        <div style="font-weight:700; font-size:14px">${i.name}</div>
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px">${i.name}</div>
         <div style="font-size:12px; color:#666">Talla: ${i.size}</div>
-        <div style="color:#D50000; font-weight:700; margin-top:2px">${money(i.price)}</div>
+        <div style="color:#E10600; font-weight:700; font-size:14px; margin-top:4px">${money(i.price)}</div>
       </div>
       <div style="text-align:right">
-        <button onclick="remCart(${x})" style="color:#999; border:none; background:none; cursor:pointer">&times;</button>
-        <div style="font-weight:700; font-size:13px">x${i.qty}</div>
+        <button onclick="remCart(${x})" style="color:#999; border:none; background:none; cursor:pointer; font-size:20px">&times;</button>
+        <div style="font-weight:700; font-size:13px; color:#333">x${i.qty}</div>
       </div>
     </div>
   `).join("");
@@ -63,7 +64,6 @@ async function update() {
   let finalShip = (promoState?.type==="free_shipping") ? 0 : ship.mxn;
   let total = Math.max(0, sub - disc) + finalShip;
 
-  // UI Texts
   if($("cartCount")) { $("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0); $("cartCount").style.display = cart.length?"flex":"none"; }
   $("lnSub").innerText = money(sub);
   $("lnShip").innerText = ship.loading ? "..." : (finalShip===0 ? "Gratis" : money(finalShip));
@@ -74,7 +74,6 @@ async function update() {
      if(disc>0) $("lnDiscount").innerText = `-${money(disc)}`;
   }
 
-  // Validar
   const addr = $("addr")?.value || "";
   const btn = $("payBtn");
   let valid = cart.length > 0;
@@ -87,14 +86,13 @@ async function update() {
 async function fetchShip(cp) {
   ship.loading = true; update();
   try {
-    const res = await fetch(`${API_BASE}/quote_shipping`, { method:"POST", body: JSON.stringify({postal_code:cp, items:1})});
+    const res = await fetch(`${API_BASE}/quote_shipping`, { method:"POST", body: JSON.stringify({postal_code:cp, items:cartCount()})});
     const d = await res.json();
     if(d.ok) { ship.mxn = d.mxn; ship.label = d.label; }
   } catch(e){ console.error(e); }
   ship.loading = false; update();
 }
 
-// LISTENERS
 document.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
 document.querySelectorAll('input[type=radio]').forEach(i => i.addEventListener('change', update));
 $("promoApplyBtn")?.addEventListener("click", ()=>{
@@ -106,14 +104,13 @@ $("promoApplyBtn")?.addEventListener("click", ()=>{
    update();
 });
 
-// ACTIONS
 window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); update(); };
-window.closeAll = () => { $("drawer").classList.remove("active"); $("overlay").classList.remove("active"); $("modalCatalog").classList.remove("active"); };
+window.closeAll = () => { $("drawer").classList.remove("active"); $("overlay").classList.remove("active"); $("modalCatalog").classList.remove("active"); $("legalModal").classList.remove("active"); };
 
 window.openCatalog = async (secId, title) => {
     $("modalCatalog").classList.add("active"); $("overlay").classList.add("active");
     $("catTitle").innerText = title;
-    $("catContent").innerHTML = "Cargando...";
+    $("catContent").innerHTML = "<div style='padding:40px; text-align:center'>Cargando...</div>";
     
     if(!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
     const items = (catalog?.products||[]).filter(p=>p.sectionId===secId);
@@ -121,19 +118,30 @@ window.openCatalog = async (secId, title) => {
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => `
       <div class="prodCard">
         <img src="${p.img}">
-        <div style="font-weight:700; margin-bottom:5px">${p.name}</div>
-        <div style="color:#E10600; font-weight:700">${money(p.baseMXN)}</div>
-        <button class="btn primary full" style="margin-top:10px; font-size:14px; padding:10px" onclick="add('${p.id}')">AGREGAR</button>
+        <div style="font-weight:700; margin-bottom:5px; font-size:14px">${p.name}</div>
+        <div style="color:#E10600; font-weight:800; font-size:15px">${money(p.baseMXN)}</div>
+        <select id="size_${p.id}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ddd; background:#f9f9f9; border-radius:4px">
+           ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
+        </select>
+        <button class="btn primary full" style="font-size:13px; padding:10px; width:100%" onclick="add('${p.id}')"><span>AGREGAR</span></button>
       </div>
     `).join("") + `</div>`;
 };
 
 window.add = (id) => {
     const p = catalog.products.find(x=>x.id===id);
-    const exist = cart.find(i=>i.id===id);
-    if(exist) exist.qty++; else cart.push({id, name:p.name, price:p.baseMXN, img:p.img, size:"Unitalla", qty:1});
+    const s = $(`size_${id}`).value;
+    const key = `${id}_${s}`;
+    const exist = cart.find(i=>i.key===key);
+    if(exist) exist.qty++; else cart.push({key, id, name:p.name, price:p.baseMXN, img:p.img, size:s, qty:1});
     save(); closeAll(); openDrawer();
 };
+
+window.openLegal = (type) => {
+    $("legalModal").classList.add("active"); $("overlay").classList.add("active");
+    document.querySelectorAll(".legalBlock").forEach(b => b.style.display = (b.dataset.legalBlock === type) ? "block" : "none");
+};
+window.closeLegal = closeAll;
 
 window.checkout = async () => {
     $("payBtn").innerText = "...";
@@ -146,4 +154,5 @@ window.checkout = async () => {
     $("payBtn").innerText = "IR A PAGAR";
 };
 
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 update();
