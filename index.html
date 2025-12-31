@@ -1,270 +1,220 @@
 <!DOCTYPE html>
 <html lang="es-MX">
 <head>
-  <!-- ================= META ================= -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por ÚNICO UNIFORMES." />
-  <meta name="author" content="Único Uniformes" />
-  <meta name="theme-color" content="#E10600" />
-  <link rel="canonical" href="/" />
+  <title>SCORE Store | Tienda Oficial</title>
+  <meta name="description" content="Merchandise Oficial SCORE International. Baja 1000, Baja 500. Fabricado por ÚNICO UNIFORMES." />
 
-  <!-- ================= ICONS & PWA ================= -->
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- ================= FONTS ================= -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- ================= STYLES ================= -->
-  <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-
-  <!-- ================= STRIPE ================= -->
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preload" href="/assets/hero.webp" as="image">
+  
   <script src="https://js.stripe.com/v3" async></script>
 </head>
 
 <body>
-  <!-- Fondo global -->
-  <div class="page-overlay" aria-hidden="true"></div>
+  <div class="page-overlay"></div>
 
-  <!-- ================= HEADER ================= -->
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio SCORE Store">
-        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" />
+      <a href="/" class="brand" aria-label="Inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
       </a>
 
-      <nav class="nav" aria-label="Acciones principales">
-        <button
-          class="cartBtn"
-          type="button"
-          aria-label="Abrir carrito"
-          onclick="openDrawer()"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-          <span id="cartCount" class="cartCount">0</span>
+      <div class="navRight">
+        <div class="location-pill">MX · <b>TIJUANA</b></div>
+        <button class="cartBtn" onclick="openDrawer()">
+          🛒 <span id="cartCount" class="cartCount" style="display:none">0</span>
         </button>
-      </nav>
+      </div>
     </div>
   </header>
 
-  <!-- ================= MAIN ================= -->
   <main class="wrap">
-
-    <!-- ===== HERO ===== -->
-    <section class="hero" id="top">
+    
+    <section class="hero">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
-
-      <img
-        class="heroSeal"
-        src="/assets/logo-world-desert.webp"
-        alt="World Desert Championship"
-        loading="lazy"
-      />
+      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial">
 
       <div class="heroContent">
-        <div class="tag-line">
-          <span class="tag-pill">OFICIAL</span> 2025 COLLECTION
+        <div class="tagline">EQUIPAMIENTO OFICIAL 2025</div>
+        <h1>SCORE<br>INTERNATIONAL</h1>
+        
+        <div class="sub">
+          La colección oficial de las carreras más duras del mundo.<br>
+          <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
         </div>
-
-        <h1>SCORE<br /><span>INTERNATIONAL</span></h1>
-
-        <p class="marketing-copy">
-          Viste la leyenda. Equipamiento oficial de alto rendimiento.<br />
-          <strong>ÚNICO UNIFORMES:</strong> Fabricante Autorizado.
-        </p>
 
         <div class="ctaRow">
-          <button class="btn primary" type="button" onclick="scrollToId('collections')">
-            COMPRAR
-          </button>
-          <button class="btn secondary" type="button" onclick="openDrawer()">
-            MI EQUIPO
-          </button>
+          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">COMPRAR AHORA</button>
+          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
     </section>
 
-    <!-- ===== COLECCIONES ===== -->
-    <section class="section" id="collections">
-      <div class="sectionHead">
-        <h2>COLECCIONES <span>DISPONIBLES</span></h2>
-        <p>Selecciona tu carrera favorita.</p>
-      </div>
+    <section class="section">
+      <div class="section-title">COLECCIONES DISPONIBLES</div>
 
-      <div class="grid">
-        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_1000','BAJA 1000')">
+      <div class="catalogGrid">
+        
+        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-texture"></div>
-          <span class="badge">TOP SELLER</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" />
+          <span class="badge">MÁS VENDIDO</span>
+          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000">
         </div>
 
-        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_500','BAJA 500')">
+        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" />
+          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500">
         </div>
 
-        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('BAJA_400','BAJA 400')">
+        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" />
+          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400">
         </div>
 
-        <div class="champItem" role="button" tabindex="0" onclick="openCatalog('SF_250','SAN FELIPE 250')">
+        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-texture"></div>
-          <span class="badge" style="background:#333;">LAST CALL</span>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" />
+          <span class="badge" style="background:#333;">ÚLTIMAS PIEZAS</span>
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250">
         </div>
+
       </div>
     </section>
 
-    <!-- ===== SHIPPING ===== -->
-    <section class="section shipping-section">
-      <div class="container" style="text-align:center;">
-        <div class="sectionHead" style="justify-content:center; border:none;">
-          <h2 style="font-size:42px;">COTIZAR <span>ENVÍO</span></h2>
-        </div>
-
-        <p style="color:#aaa; margin-bottom:30px;">
-          Calcula el costo real vía Envia.com
-        </p>
-
-        <div class="shipBox">
-          <div class="shipRow">
-            <input
-              class="inputField"
-              id="zipQuote"
-              inputmode="numeric"
-              maxlength="5"
-              placeholder="Código Postal (5 dígitos)"
-              aria-label="Código Postal"
-            />
-            <button class="btn primary" type="button" id="quoteBtn">
-              CALCULAR
-            </button>
-          </div>
-          <div id="shipResult" class="shipResult"></div>
-        </div>
+    <section class="shipping-section">
+      <h3 style="font-family:'Teko'; font-size:32px; margin-bottom:10px; color:#fff;">COTIZAR ENVÍO</h3>
+      <p style="color:#aaa; margin-bottom:20px;">Calcula el costo real de envío a tu domicilio.</p>
+      
+      <div class="shipBox">
+        <input class="inputField" id="zipQuote" inputmode="numeric" maxlength="5" placeholder="CÓDIGO POSTAL (5 DÍGITOS)">
+        <button class="btn primary" style="font-size:16px; padding:12px 20px;" id="quoteBtn">CALCULAR</button>
       </div>
+      <div id="shipResult" class="shipResult"></div>
     </section>
 
-    <!-- ===== PARTNERS ===== -->
-    <section class="section partners">
-      <div class="container">
-        <div class="partnersGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" />
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" />
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" />
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" />
-        </div>
+    <section class="partners">
+      <h3>OFFICIAL PARTNERS</h3>
+      <div class="partnerGrid">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris">
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" style="opacity:1;">
       </div>
     </section>
 
   </main>
 
-  <!-- ================= FOOTER ================= -->
   <footer class="footer">
-    <div class="container footerInner">
-
-      <div class="fCol">
-        <img src="/assets/logo-unico.webp" alt="Único Uniformes" class="footerUnico" />
-        <p class="fText">
-          Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
-        </p>
-      </div>
-
-      <div class="fCol">
-        <h4>SOPORTE</h4>
-        <a href="#" onclick="openLegal('shipping');return false;" class="fLink">Rastreo de Envíos</a>
-        <a href="#" onclick="openLegal('returns');return false;" class="fLink">Política de Devolución</a>
-        <a href="#" onclick="openLegal('billing');return false;" class="fLink">Facturación 4.0</a>
-      </div>
-
-      <div class="fCol">
-        <h4>LEGAL</h4>
-        <a href="#" onclick="openLegal('terms');return false;" class="fLink">Términos y Condiciones</a>
-        <a href="#" onclick="openLegal('privacy');return false;" class="fLink">Aviso de Privacidad</a>
-      </div>
-
-      <div class="fCol">
-        <h4>CONTACTO</h4>
-        <div class="contactBox">
-          <strong>ÚNICO UNIFORMES</strong>
-          <p style="color:#aaa; font-size:14px;">
-            Palermo 6106 Interior JK,<br />
-            Anexa Roma, 22614<br />
-            Tijuana, B.C.
+    <div class="footerCard">
+      <div class="footerTop">
+        
+        <div class="footerCol">
+          <img src="/assets/logo-unico.webp" alt="Único" class="footerUnico">
+          <p class="footerSmall">
+            Fabricante y Operador Oficial de Merchandise SCORE International.
           </p>
-          <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">
-            📱 WhatsApp: 664 236 8701
-          </a>
-          <a href="mailto:ventas.unicotextil@gmail.com" class="fLink">
-            ventas.unicotextil@gmail.com
+        </div>
+
+        <div class="footerCol">
+          <h4>SOPORTE</h4>
+          <div class="footerLinks">
+            <button onclick="openLegal('shipping')">Rastreo de Envíos</button>
+            <button onclick="openLegal('returns')">Política de Devolución</button>
+            <button onclick="openLegal('billing')">Facturación 4.0</button>
+          </div>
+        </div>
+
+        <div class="footerCol">
+          <h4>LEGAL</h4>
+          <div class="footerLinks">
+            <button onclick="openLegal('terms')">Términos del Servicio</button>
+            <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
+          </div>
+        </div>
+
+        <div class="footerCol">
+          <h4>CONTACTO</h4>
+          <div class="footerSmall">
+            <strong>ÚNICO UNIFORMES</strong><br>
+            Palermo 6106 Interior JK,<br>Anexa Roma, 22614<br>Tijuana, B.C.
+          </div>
+          <a href="https://wa.me/526642368701" target="_blank" style="color:#00E676; text-decoration:none; display:block; margin-top:10px; font-weight:700;">
+            WhatsApp: 664 236 8701
           </a>
         </div>
+
       </div>
-
     </div>
-
-    <div class="copy">
-      SCORE Store © 2025 · Powered by Único Uniformes
-    </div>
+    <div class="footerBottom">SCORE Store © 2025 · Powered by Único Uniformes</div>
   </footer>
 
-  <!-- ================= OVERLAYS & MODALS ================= -->
-  <div class="overlay" id="overlay" onclick="closeAll()" aria-hidden="true"></div>
-
-  <div class="modal" id="modalCatalog" role="dialog" aria-modal="true">
+  <div id="overlay" class="overlay" onclick="closeAll()"></div>
+  <section id="modalCatalog" class="modal">
     <div class="dHead">
       <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
+      <button class="closeBtn" onclick="closeAll()">×</button>
     </div>
     <div id="catContent" class="dBody"></div>
-  </div>
+  </section>
 
-  <aside class="drawer" id="drawer" role="dialog" aria-modal="true">
+  <aside id="drawer" class="drawer">
     <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
+      <h3 class="dTitle">TU PEDIDO</h3>
+      <button class="closeBtn" onclick="closeAll()">×</button>
     </div>
-    <div class="dBody">
-      <div id="cartItems"></div>
-      <div id="cartEmpty" style="text-align:center; padding:40px; color:#666;">
-        Tu carrito está vacío.
-      </div>
-    </div>
+    
+    <div id="cartBody" class="dBody"></div>
+    
     <div class="dFoot">
-      <div style="display:flex; justify-content:space-between;">
-        <button
-          type="button"
-          onclick="emptyCart()"
-          style="background:none;border:none;color:#E10600;font-size:12px;text-decoration:underline;cursor:pointer;"
-        >
-          VACIAR CARRITO
-        </button>
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <button onclick="emptyCart()" style="background:none; border:none; color:#E10600; font-size:12px; cursor:pointer; text-decoration:underline;">VACIAR CARRITO</button>
+      </div>
+
+      <div class="shipSelector">
+         <label><input type="radio" name="shipMode" value="pickup" checked> <div style="font-size:13px; color:#333;"><b>Pickup Tienda</b> <span style="color:green; font-size:11px;">GRATIS</span></div></label>
+         <label><input type="radio" name="shipMode" value="mx"> <div style="font-size:13px; color:#333;"><b>Envío a Domicilio</b> <span style="color:#666; font-size:11px;">(Cotizar)</span></div></label>
+      </div>
+      
+      <div id="shipForm" style="display:none; margin-bottom:15px;">
+        <input id="cp" type="text" placeholder="Código Postal" class="inputField">
+        <input id="addr" type="text" placeholder="Dirección" class="inputField">
+        <input id="name" type="text" placeholder="Nombre Completo" class="inputField">
       </div>
 
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">—</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
-
-      <button class="btn primary full" id="checkoutBtn" type="button" onclick="checkout()">
-        PAGAR AHORA
-      </button>
+      
+      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
     </div>
   </aside>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <section id="legalModal" class="modal" style="height:auto; min-height:400px;">
+    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeAll()">×</button></div>
+    <div class="dBody" style="color:#333;">
+      <div class="legalBlock" data-legal-block="shipping" style="display:none">
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Envíos</h4>
+        <p>Envíos nacionales vía FedEx/Estafeta (3-7 días). Pickup gratuito en Tijuana.</p>
+      </div>
+      </div>
+  </section>
 
-  <!-- ================= JS ================= -->
-  <script defer src="/js/main.js"></script>
+  <div id="paybar" class="paybar">
+    <div><div class="paybar-label">TOTAL</div><div id="barTotal" class="paybar-total">$0</div></div>
+    <button class="btn-sm white" onclick="openDrawer()">CARRITO</button>
+  </div>
+
+  <div id="toast" class="toast">Mensaje</div>
+
+  <script src="/js/main.js"></script>
 </body>
 </html>
