@@ -8,7 +8,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# SEGURIDAD
+# --- REDIRECTS (API STANDARD) ---
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# --- HEADERS & SEGURIDAD ---
 [[headers]]
   for = "/*"
   [headers.values]
@@ -17,12 +23,11 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# --- CACHE BUSTING (ESTO ES LA SOLUCIÓN) ---
-# Le decimos al navegador que SIEMPRE verifique si hay cambios
+# Cache-Control: Assets estáticos (Images, CSS, JS)
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/css/*"
