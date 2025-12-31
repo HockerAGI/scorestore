@@ -9,7 +9,7 @@
   NODE_VERSION = "18"
 
 # -------------------------
-# Seguridad global
+# REGLAS DE SEGURIDAD
 # -------------------------
 [[headers]]
   for = "/*"
@@ -20,60 +20,31 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # -------------------------
-# Netlify Functions (NO CACHE)
+# CACHE BUSTING (ESTO ARREGLA QUE NO SE ACTUALICE)
 # -------------------------
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
-
-# -------------------------
-# Assets estáticos (Cache Inteligente)
-# CAMBIO CRÍTICO: Quitamos 'immutable' y bajamos el tiempo para desarrollo
-# -------------------------
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
+# CSS y JS: Forzamos validación siempre
 [[headers]]
   for = "/css/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# -------------------------
-# JS controlado (Siempre validar)
-# -------------------------
 [[headers]]
   for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# -------------------------
-# Service Worker / Manifest / HTML (NUNCA CACHEAR)
-# -------------------------
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Service Worker y HTML NUNCA se guardan
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-[[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-# -------------------------
-# Datos dinámicos
-# -------------------------
-[[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate"
