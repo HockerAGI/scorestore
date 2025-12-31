@@ -1,9 +1,11 @@
+/* SCORE STORE LOGIC */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_v5_pro";
+const CART_KEY = "score_cart_final_v6";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
+function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
 function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
 
 async function init(){
@@ -14,7 +16,7 @@ async function init(){
         catalog = data.products || [];
     } catch(e){ console.error(e); }
     
-    // Listeners
+    // Listeners Envio
     document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
     $("cp")?.addEventListener("input", (e)=>{
        if(e.target.value.length === 5) quoteShipping(e.target.value);
@@ -34,6 +36,7 @@ window.openCatalog = (secId, title) => {
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
+        
         return `
           <div class="prodCard" id="card_${p.id}">
             <div class="prodImg"><img src="${p.img}" loading="lazy"></div>
@@ -57,7 +60,7 @@ window.add = (id) => {
     const sizeCont = document.getElementById(`sizes_${id}`);
     let s = sizeCont.getAttribute("data-selected");
     if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText;
-    if(!s) { toast("⚠️ Selecciona una talla"); return; }
+    if(!s) { toast("⚠️ Selecciona talla"); return; }
     
     const p = catalog.find(x=>x.id===id);
     const key = `${id}_${s}`;
@@ -67,9 +70,10 @@ window.add = (id) => {
     saveCart(); renderCart(); openDrawer(); toast("Agregado");
 };
 
-/* CART & SHIP */
+/* CART */
 function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
 function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+function emptyCart(){ cart=[]; saveCart(); renderCart(); }
 
 function renderCart(){
     const wrap = $("cartItems");
@@ -88,7 +92,7 @@ function renderCart(){
                 <div class="cMeta">${i.variant}</div>
                 <div class="cPrice">${money(i.price)}</div>
             </div>
-            <button onclick="delCart(${x})" style="background:none;border:none;color:#999;font-size:18px;">&times;</button>
+            <button onclick="delCart(${x})" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;">&times;</button>
         </div>
     `).join("");
     updateTotals();
@@ -123,20 +127,13 @@ function updateTotals(){
     
     $("shipTotal").innerText = shipLabel;
     $("grandTotal").innerText = money(sub + shipCost);
-    
-    $("paybar")?.classList.toggle("visible", cart.length>0);
 }
 
 window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    const to = {
-        postal_code: $("cp")?.value,
-        address1: $("addr")?.value,
-        city: $("city")?.value,
-        name: $("name")?.value
-    };
+    const to = { postal_code: $("cp")?.value, address1: $("addr")?.value, name: $("name")?.value };
     
     try {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
@@ -150,3 +147,4 @@ window.closeAll=()=>{ document.querySelectorAll(".active").forEach(e=>e.classLis
 window.openLegal=(t)=>{ $("legalModal").classList.add("active"); $("overlay").classList.add("active"); document.querySelectorAll(".legalBlock").forEach(b=>b.style.display=(b.dataset.legalBlock===t)?"block":"none"); };
 
 init();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
