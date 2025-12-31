@@ -1,6 +1,6 @@
 /**
- * SCORE STORE - main.js (FINAL FIX)
- * Compatible con: CSS Desert Pro + Real Time Shipping + Coupons
+ * SCORE STORE - MAIN LOGIC
+ * Design: Pro Racing Edition
  */
 const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
 const LS_CART = "score_cart_v1";
@@ -11,7 +11,6 @@ let catalog = null;
 let promoState = safeJson(localStorage.getItem(LS_PROMO), null);
 let cart = safeJson(localStorage.getItem(LS_CART), []);
 
-// Estado de Envío
 let ship = { mode: "pickup", mxn: 0, label: "Pickup", loading: false };
 
 const $ = (id) => document.getElementById(id);
@@ -24,66 +23,61 @@ function toast(msg) {
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2500);
+  setTimeout(() => t.classList.remove("show"), 3000);
 }
 
 function saveCart() { localStorage.setItem(LS_CART, JSON.stringify(cart)); }
 function cartCount() { return cart.reduce((a, b) => a + Number(b.qty || 0), 0); }
 function subtotal() { return cart.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0); }
 
-/* --- SHIPPING CALCULATOR --- */
+/* SHIPPING LOGIC */
 let _shipTimeout;
 async function fetchShippingRate(cp) {
   ship.loading = true;
-  updateTotalsUI(); // UI: "Calculando..."
+  updateTotalsUI(); 
   
   try {
     const res = await fetch(`${API_BASE}/quote_shipping`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postal_code: cp, items: cartCount() })
     });
     const data = await res.json();
-    
     if (data.ok) {
       ship.mxn = data.mxn;
       ship.label = data.label;
     } else {
-      ship.mxn = 250; // Fallback
+      ship.mxn = 250; 
       ship.label = "Envío Nacional";
     }
   } catch (e) {
-    console.error("Error cotizando:", e);
-    ship.mxn = 250; 
-    ship.label = "Envío Nacional";
+    ship.mxn = 250; ship.label = "Envío Nacional";
   } finally {
     ship.loading = false;
     updateTotalsUI();
   }
 }
 
-/* --- UI UPDATES --- */
+/* UI UPDATES */
 function renderCartBody() {
   const body = $("cartBody");
   if (!body) return;
   
   if (!cart.length) {
-    body.innerHTML = `<div style="text-align:center; padding:40px 20px; opacity:.6; color:#aaa;">Tu carrito está vacío</div>`;
+    body.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#999;">Tu carrito está vacío.</div>`;
     return;
   }
 
-  // Estructura .cartItem coincide con styles.css
   body.innerHTML = cart.map((i, idx) => `
     <div class="cartItem">
       <img src="${i.img}" alt="" class="cartThumb">
       <div style="flex:1;">
-        <div style="font-weight:700; font-size:13px; line-height:1.2; margin-bottom:2px;">${i.name}</div>
-        <div style="font-size:11px; color:#666;">Talla: ${i.size}</div>
-        <div style="color:#D50000; font-weight:800; font-size:14px; margin-top:4px;">${moneyMXN(i.price)}</div>
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${i.name}</div>
+        <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
+        <div style="color:#D50000; font-weight:800; font-size:15px; margin-top:4px;">${moneyMXN(i.price)}</div>
       </div>
       <div style="text-align:right;">
-        <button type="button" onclick="removeFromCart(${idx})" style="color:#D50000; background:none; border:none; font-size:20px; font-weight:700; cursor:pointer;">&times;</button>
-        <div style="font-weight:800; font-size:13px; color:#111;">x${i.qty}</div>
+        <button onclick="removeFromCart(${idx})" style="color:#D50000; background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+        <div style="font-weight:700; font-size:14px; color:#333;">x${i.qty}</div>
       </div>
     </div>
   `).join("");
@@ -100,30 +94,26 @@ async function updateCart({ recalcShip } = { recalcShip: true }) {
   const selected = radio ? radio.value : "pickup";
   const cpVal = $("cp")?.value || "";
 
-  // Cambio de modo
   if (selected !== ship.mode) {
     ship.mode = selected;
     if (selected === "mx" && cpVal.length === 5) {
       clearTimeout(_shipTimeout);
       fetchShippingRate(cpVal);
     } else if (selected === "mx") {
-      ship.mxn = 250; // Precio visual temporal
+      ship.mxn = 250;
       ship.label = "Envío Nacional";
     }
   }
 
-  // UI Form
   const form = $("shipForm");
   if (form) form.style.display = (selected === "mx" || selected === "tj") ? "block" : "none";
 
-  // Precios Fijos
   if (selected === "pickup") { ship.mxn = 0; ship.label = "Pickup"; }
   else if (selected === "tj") { ship.mxn = 200; ship.label = "Local TJ"; }
   
   renderCartBody();
   updateTotalsUI();
   
-  // Validación Checkout
   const addrVal = $("addr")?.value || "";
   let valid = cart.length > 0;
   if (selected !== "pickup") {
@@ -147,19 +137,17 @@ function updateTotalsUI() {
   
   const total = Math.max(0, sub - disc) + finalShip;
 
-  // Actualizar Textos
   if ($("cartCount")) {
       const cnt = cartCount();
       $("cartCount").innerText = cnt;
-      $("cartCount").style.display = cnt > 0 ? "flex" : "block"; // block para que no se deforme
-      if(cnt===0) $("cartCount").style.display = "none";
+      $("cartCount").style.display = cnt > 0 ? "flex" : "none";
   }
   
   if ($("lnSub")) $("lnSub").innerText = moneyMXN(sub);
   
   const lnShip = $("lnShip");
   if (lnShip) {
-    if (ship.loading) lnShip.innerText = "Calculando...";
+    if (ship.loading) lnShip.innerText = "...";
     else if (promoState?.type === "free_shipping") lnShip.innerText = "GRATIS";
     else lnShip.innerText = (finalShip === 0 && ship.mode === "pickup") ? "Gratis" : moneyMXN(finalShip);
   }
@@ -181,7 +169,7 @@ function updateTotalsUI() {
   $("paybar")?.classList.toggle("visible", cart.length > 0);
 }
 
-/* INPUT LISTENERS */
+/* LISTENERS */
 const cpInput = $("cp");
 if (cpInput) {
   cpInput.addEventListener("input", (e) => {
@@ -198,20 +186,18 @@ if (cpInput) {
 document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", () => updateCart()));
 ["addr", "name"].forEach(id => $(id)?.addEventListener("input", () => updateCart({ recalcShip: false })));
 
-/* PROMO CODE */
 const promoBtn = $("promoApplyBtn");
 if(promoBtn) {
     promoBtn.addEventListener("click", () => {
        const code = $("promoInput")?.value.trim().toUpperCase();
-       if(code === "SCORE10") { promoState = { code, type:"pct", value:10 }; toast("Cupón aplicado"); }
-       else if(code === "ENVIOFREE") { promoState = { code, type:"free_shipping", value:0 }; toast("Envío gratis"); }
-       else { promoState = null; toast("Cupón no válido"); }
+       if(code === "SCORE10") { promoState = { code, type:"pct", value:10 }; toast("CUPÓN APLICADO"); }
+       else if(code === "ENVIOFREE") { promoState = { code, type:"free_shipping", value:0 }; toast("ENVÍO GRATIS APLICADO"); }
+       else { promoState = null; toast("CUPÓN INVÁLIDO"); }
        localStorage.setItem(LS_PROMO, JSON.stringify(promoState));
        updateCart();
     });
 }
 
-/* ACTIONS */
 window.openDrawer = function() {
   $("drawer").classList.add("active");
   $("overlay").classList.add("active");
@@ -232,7 +218,7 @@ window.openCatalog = async function(sectionId, title) {
   if(tEl) tEl.innerText = title;
   
   const content = $("catContent");
-  content.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc;">Cargando...</div>';
+  content.innerHTML = '<div style="text-align:center; padding:50px;">Cargando...</div>';
   
   $("modalCatalog").classList.add("active");
   $("overlay").classList.add("active");
@@ -241,18 +227,21 @@ window.openCatalog = async function(sectionId, title) {
   if (!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
   
   const items = (catalog?.products || []).filter(p => p.sectionId === sectionId);
-  if (!items.length) { content.innerHTML = '<div style="text-align:center; padding:40px;">Próximamente.</div>'; return; }
+  if (!items.length) { content.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">Próximamente.</div>'; return; }
 
-  // Estructura .prodCard coincide con CSS
   content.innerHTML = `<div class="catGrid">` + items.map(p => `
     <div class="prodCard">
       <img src="${p.img}" loading="lazy" alt="${p.name}">
-      <div style="font-weight:700; font-size:14px; margin-bottom:5px; color:#111;">${p.name}</div>
-      <div style="color:#D50000; font-weight:800; font-size:15px;">${moneyMXN(p.baseMXN)}</div>
-      <select id="size_${p.id}" style="margin:10px 0; padding:8px; width:100%; border:1px solid #ccc; border-radius:6px; background:#fff; color:#000;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:5px; color:#333;">${p.name}</div>
+      <div style="color:#D50000; font-weight:800; font-size:16px;">${moneyMXN(p.baseMXN)}</div>
+      
+      <select id="size_${p.id}" style="margin:10px 0; padding:10px; width:100%; border:1px solid #ddd; border-radius:4px; background:#f9f9f9;">
         ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
       </select>
-      <button class="btn primary full" style="padding:10px; font-size:13px;" onclick="addToCart('${p.id}')">AGREGAR +</button>
+      
+      <button class="btn primary full" style="padding:12px; font-size:14px; width:100%;" onclick="addToCart('${p.id}')">
+        AGREGAR
+      </button>
     </div>
   `).join("") + `</div>`;
 };
@@ -269,7 +258,7 @@ window.addToCart = function(pid) {
   else cart.push({ key, id: pid, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
 
   saveCart();
-  toast("Agregado");
+  toast("PRODUCTO AGREGADO");
   closeAll();
   openDrawer();
 };
