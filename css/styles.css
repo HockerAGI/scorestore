@@ -1,18 +1,19 @@
 /* ======================================================
-   SCORE STORE — LIGHT PRO EDITION (UPLOADED BASE)
+   SCORE STORE — LIGHT OFFICIAL EDITION (FINAL FIXED)
    ====================================================== */
 
 :root {
   --fontTitle: "Teko", sans-serif;
   --fontBody: "Inter", sans-serif;
-  /* Colores Originales */
-  --red: #E10600;
+  /* Colores Light Mode */
+  --red: #D50000;
   --carbon: #111111;
   --sand: #f8f8f8;
   --white: #ffffff;
-  --desert: #C19A6B; /* CAFÉ DESIERTO (Para detalles sutiles) */
+  --text-main: #111;
+  --desert: #C19A6B;
   
-  --shadow: 0 15px 40px rgba(0,0,0,0.15);
+  --shadow: 0 10px 30px rgba(0,0,0,0.12);
   --ease: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -28,7 +29,7 @@ a { text-decoration: none; color: inherit; }
 body {
   font-family: var(--fontBody);
   background-color: var(--sand);
-  color: #111; /* TEXTO OSCURO (LIGHT THEME) */
+  color: var(--text-main); /* Texto oscuro */
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -48,10 +49,10 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
   background-position: top center; /* Alineado arriba */
   background-size: cover; 
   background-attachment: fixed;
-  opacity: 0.3; /* Sutil para que no moleste al texto */
+  opacity: 0.4; /* Visible pero sutil */
 }
-/* Efecto Dust Original */
-.dust-container { position: fixed; inset: 0; z-index: -5; pointer-events: none; mix-blend-mode: multiply; opacity: 0.4; }
+/* Efecto Dust (Mantenido) */
+.dust-container { position: fixed; inset: 0; z-index: -5; pointer-events: none; mix-blend-mode: multiply; opacity: 0.3; }
 
 /* LAYOUT */
 .wrap {
@@ -59,12 +60,12 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
   padding-top: 90px; padding-bottom: 80px; position: relative; z-index: 1;
 }
 
-/* HEADER */
+/* HEADER (Light) */
 .topbar {
   position: fixed; inset: 0 0 auto 0; height: 76px; z-index: 100;
   background: rgba(255,255,255,.98); border-bottom: 3px solid var(--red);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 max(20px, 4vw); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  padding: 0 max(20px, 4vw); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 .brand img { height: 50px; }
 
@@ -88,14 +89,14 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
 }
 .heroBg { position: absolute; inset: 0; background: url("/assets/hero.webp") center/cover no-repeat; }
 
-/* Overlay muy suave para ver la foto */
+/* Overlay sutil para ver la foto */
 .heroOverlay {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 100%);
 }
 
 .heroSeal {
-  position: absolute; top: 20px; right: 20px; width: 100px; z-index: 5;
+  position: absolute; top: 25px; right: 25px; width: 100px; z-index: 5;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
 }
 
@@ -115,14 +116,13 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
 }
 .btn.primary { background: var(--red); color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 .btn.primary:hover { background: #b30000; transform: translateY(-2px); }
-.btn.secondary { background: rgba(255,255,255,.9); color: #000; border: 1px solid #fff; }
+.btn.secondary { background: rgba(255,255,255,.9); color: #000; }
 .btn.secondary:hover { background: #fff; transform: translateY(-2px); }
 .btn.full { width: 100%; }
 .btn-sm { padding: 8px 16px; border-radius: 20px; border:none; font-weight: 800; cursor: pointer; }
 .white { background: #fff; color: #000; }
 
-/* COLECCIONES (Tarjetas Blancas Estilo Uploaded) */
-.championships h2 { font-family: var(--fontTitle); font-size: 48px; text-transform: uppercase; margin-bottom: 25px; color: #111; }
+/* CATALOGO GRID (Tarjetas Blancas) */
 .catalogGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
 
 .champItem {
@@ -162,13 +162,13 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
 .badge.limited { background: #111; color: #fff; }
 
 /* PARTNERS (Light Theme) */
-.partners { margin-top: 60px; padding: 30px; background: #fff; border-radius: 16px; text-align: center; border: 1px solid #eee; }
-.partners h3 { font-family: var(--fontTitle); font-size: 24px; color: #888; margin-bottom: 20px; }
+.partners { margin-top: 60px; padding: 30px; background: #fff; border-radius: 16px; text-align: center; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.partners h3 { font-family: var(--fontTitle); font-size: 24px; color: #aaa; margin-bottom: 20px; }
 .partnerGrid { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
 .partnerGrid img { height: 40px; object-fit: contain; filter: grayscale(100%); opacity: 0.6; transition: .3s; }
 .partnerGrid img:hover { filter: grayscale(0%); opacity: 1; }
 
-/* FOOTER (Estilo Card Uploaded) */
+/* FOOTER (Light/Dark Mix) */
 .footer { margin-top: 60px; }
 .footerCard { background: #111; color: #fff; padding: 50px 30px; border-radius: 16px 16px 0 0; border-top: 4px solid var(--red); }
 .footerTop { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
@@ -182,11 +182,11 @@ body.modalOpen { overflow: hidden; position: fixed; width: 100%; }
 .footerLinks button:hover, .footerLinks a:hover { color: #fff; text-decoration: underline; }
 .footerBottom { border-top: 1px solid #333; padding-top: 20px; text-align: center; font-size: 12px; opacity: 0.5; }
 
-/* MODAL / DRAWER (Light Theme) */
+/* MODAL / DRAWER (Light) */
 .modal, .drawer { background: #fff; color: #111; z-index: 200; position: fixed; display: flex; flex-direction: column; }
 .drawer { top: 0; right: 0; width: min(450px,100vw); height: 100%; transform: translateX(105%); transition: .3s; box-shadow: -10px 0 40px rgba(0,0,0,0.1); }
 .drawer.active { transform: translateX(0); }
-.modal { inset: 5% auto auto 50%; width: min(800px, 92vw); transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .3s; border-radius: 16px; max-height: 85vh; border: 1px solid #eee; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal { inset: 5% auto auto 50%; width: min(800px, 92vw); transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .3s; border-radius: 16px; max-height: 85vh; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal.active { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
 
 /* UI CATÁLOGO PRO */
