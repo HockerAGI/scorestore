@@ -1,7 +1,4 @@
-// Archivo neutralizado para evitar errores de compilación
+// Archivo neutralizado. La lógica real se ha movido a _shared.js.
 exports.handler = async (event, context) => {
-  return {
-    statusCode: 200,
-    body: "Este archivo no está en uso."
-  };
+  return { statusCode: 200, body: "OK" };
 };
