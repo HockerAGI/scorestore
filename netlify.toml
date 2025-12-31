@@ -8,13 +8,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# --- REDIRECTS (API STANDARD) ---
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# --- HEADERS & SEGURIDAD ---
+# --- SEGURIDAD GLOBAL ---
 [[headers]]
   for = "/*"
   [headers.values]
@@ -23,7 +17,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# Cache-Control: Assets estáticos (Images, CSS, JS)
+# --- ASSETS ESTÁTICOS (Cache Largo) ---
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -32,19 +26,30 @@
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
+# --- NO CACHEAR SW NI MANIFEST (PWA) ---
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/*.html"
+  for = "/site.webmanifest"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache"
+
+# --- API FUNCTIONS (CORS & NO-CACHE) ---
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+
+# --- REDIRECTS (Standard API) ---
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
