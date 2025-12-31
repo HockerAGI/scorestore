@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE Store | Tienda Oficial Off-Road</title>
+  <title>SCORE | Tienda Oficial</title>
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="preload" href="/assets/hero.webp" as="image">
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image">
+  <link rel="preload" href="/assets/baja1000-texture.webp" as="image">
+  
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://js.stripe.com/v3"></script>
 </head>
 
 <body>
   <div class="page-bg"></div>
+  
   <div class="dust-container"><div class="dust"></div></div>
 
   <header class="topbar">
@@ -33,30 +36,32 @@
 
     <section class="hero">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div> <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial">
+      <div class="heroOverlay"></div>
+
+      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial">
 
       <div class="heroContent">
-        <span class="tagline">🏁 VENTA OFICIAL</span>
+        <span class="tagline">🏁 TIENDA OFICIAL</span>
         
         <h1>LA CARRERA EMPIEZA AQUÍ.<br>VÍSTETE PARA GANAR.</h1>
         
         <div class="sub">
-          <p><strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial del merchandising de SCORE International.</p>
+          <p><strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial de SCORE International.</p>
         </div>
 
         <div class="ctaRow">
           <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-            COMPRAR COLECCIÓN
+            VER COLECCIÓN
           </button>
           <button class="btn secondary" onclick="openDrawer()">
-            VER MI PEDIDO
+            MI PEDIDO
           </button>
         </div>
       </div>
     </section>
 
     <section class="championships">
-      <h2 style="text-transform: uppercase; letter-spacing: 1px;">Colecciones Disponibles</h2>
+      <h2>COLECCIONES DISPONIBLES</h2>
 
       <div class="catalogGrid">
         
