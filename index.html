@@ -4,35 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por ÚNICO UNIFORMES." />
+  <meta name="description" content="Merchandise Oficial SCORE International. Equipamiento auténtico fabricado por ÚNICO UNIFORMES." />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="preload" href="/assets/hero.webp" as="image">
+  
   <script src="https://js.stripe.com/v3" async defer></script>
 </head>
 
 <body>
+  <div class="page-overlay"></div>
+
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand">
+      <a href="/" class="brand" aria-label="Inicio">
         <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
       </a>
       
       <nav class="nav">
-        <a href="#drops" class="navLink" style="font-size:18px;">Drops</a>
-        <a href="#catalog" class="navLink" style="font-size:18px;">Catálogo</a>
+        <a href="#catalog" class="navLink">CATÁLOGO</a>
+        <a href="#shipping" class="navLink">ENVÍOS</a>
         
-        <button class="cartBtn" onclick="openDrawer()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+        <div class="cartBtn" onclick="openDrawer()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           <span id="cartCount">0</span>
-        </button>
+        </div>
       </nav>
     </div>
   </header>
@@ -41,73 +44,68 @@
     
     <section class="hero" id="top">
       <div class="heroBg"></div>
+      <div class="heroOverlay"></div>
       
       <div class="heroContent">
-        <div class="heroTag">OFFICIAL MERCHANDISE</div>
-        <h1>SCORE<br><span style="color:var(--red)">INTERNATIONAL</span></h1>
+        <div class="tag-line">MERCHANDISE OFICIAL 2025</div>
+        <h1>SCORE<br><span style="color:var(--score-red)">INTERNATIONAL</span></h1>
         
-        <p class="heroSub">
-          Colección oficial 2025. Diseñada para resistir la Baja.<br>
+        <div class="marketing-text">
+          La colección oficial de las carreras más duras del planeta.<br>
           <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
-        </p>
+        </div>
 
         <div class="ctaGroup">
           <button class="btn primary" onclick="scrollToId('catalog')">COMPRAR AHORA</button>
-          <button class="btn glass" onclick="scrollToId('drops')">VER DROPS</button>
+          <button class="btn secondary" onclick="openDrawer()">VER PEDIDO</button>
         </div>
-      </div>
-    </section>
-
-    <section class="section" id="drops">
-      <div class="container">
-        <div class="sectionHead">
-          <h2>DROPS <span>LIMITADOS</span></h2>
-          <div class="subHead">Ediciones especiales y lanzamientos exclusivos.</div>
-        </div>
-        <div class="grid" id="dropsGrid"></div>
       </div>
     </section>
 
     <section class="section" id="catalog">
       <div class="container">
         <div class="sectionHead">
-          <h2>CATÁLOGO <span>2025</span></h2>
-          <div class="subHead">Ropa y accesorios oficiales de la temporada.</div>
-        </div>
-
-        <div class="filters">
-          <input class="search" id="search" placeholder="Buscar producto..." type="search"/>
-          <select class="select" id="filterCat">
-            <option value="all">Todas las Categorías</option>
-          </select>
+          <div>
+            <h2>CATÁLOGO <span>OFICIAL</span></h2>
+            <div style="height:3px; width:50px; background:var(--score-red); margin-top:10px;"></div>
+          </div>
+          
+          <div class="filters">
+            <input class="inputField" id="search" placeholder="Buscar producto..." type="search" style="min-width:220px;">
+            <select class="inputField" id="filterCat">
+              <option value="all">Todas las Categorías</option>
+            </select>
+          </div>
         </div>
 
         <div class="grid" id="catalogGrid"></div>
       </div>
     </section>
 
-    <section class="section" style="background:#fff; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+    <section class="section" id="shipping">
       <div class="container" style="text-align:center;">
-        <div class="sectionHead" style="border:none; margin-bottom:20px;">
-          <h2>COTIZA TU <span>ENVÍO</span></h2>
-          <p style="margin:0 auto;">Calcula el costo exacto a tu código postal con nuestra integración en tiempo real.</p>
+        <div class="sectionHead" style="justify-content:center; border:none; margin-bottom:20px;">
+          <h2>COTIZAR <span>ENVÍO</span></h2>
         </div>
+        <p style="color:#aaa; margin-bottom:30px;">Calcula el costo real de envío a tu domicilio vía Envia.com</p>
         
-        <div style="max-width:500px; margin:0 auto; display:flex; gap:10px;">
-          <input id="zipQuote" class="search" placeholder="Código Postal (5 dígitos)" maxlength="5" style="width:100%;">
-          <button class="btn primary" id="quoteBtn" style="font-size:18px; padding:10px 20px;">CALCULAR</button>
+        <div class="shipBox">
+          <div style="display:flex; gap:10px;">
+            <input class="inputField" id="zipQuote" inputmode="numeric" maxlength="5" placeholder="Código Postal (5 dígitos)" style="flex:1;">
+            <button class="btn primary" id="quoteBtn" style="font-size:16px; padding:10px 20px;">CALCULAR</button>
+          </div>
+          <div id="shipResult" class="shipRes"></div>
         </div>
-        <div id="shipResult" style="margin-top:20px; font-weight:700; color:var(--red);"></div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section partners">
       <div class="container">
         <div class="partnersGrid">
           <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
           <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris">
           <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" style="opacity:1; filter:none; height:50px;">
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico Uniformes" style="opacity:1; filter:none; height:50px;">
         </div>
       </div>
     </section>
@@ -118,34 +116,34 @@
     <div class="container footerInner">
       
       <div class="fCol">
-        <img src="/assets/logo-unico.webp" alt="Único" class="footerLogo">
-        <p class="footerText">
-          Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.<br>
-          Calidad probada en el desierto.
+        <img src="/assets/logo-unico.webp" alt="Único" class="footerUnico">
+        <p class="fText">
+          Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
         </p>
       </div>
 
       <div class="fCol">
-        <div class="colTitle">SOPORTE</div>
-        <a href="#" onclick="openLegal('shipping');return false;" class="footerLink">Rastreo de Envíos</a>
-        <a href="#" onclick="openLegal('returns');return false;" class="footerLink">Devoluciones</a>
-        <a href="#" onclick="openLegal('billing');return false;" class="footerLink">Facturación</a>
+        <h4>SOPORTE</h4>
+        <a href="#" onclick="openLegal('shipping');return false;" class="fLink">Rastreo de Envíos</a>
+        <a href="#" onclick="openLegal('returns');return false;" class="fLink">Política de Devolución</a>
+        <a href="#" onclick="openLegal('billing');return false;" class="fLink">Facturación 4.0</a>
       </div>
 
       <div class="fCol">
-        <div class="colTitle">LEGAL</div>
-        <a href="#" onclick="openLegal('terms');return false;" class="footerLink">Términos y Condiciones</a>
-        <a href="#" onclick="openLegal('privacy');return false;" class="footerLink">Aviso de Privacidad</a>
+        <h4>LEGAL</h4>
+        <a href="#" onclick="openLegal('terms');return false;" class="fLink">Términos y Condiciones</a>
+        <a href="#" onclick="openLegal('privacy');return false;" class="fLink">Aviso de Privacidad</a>
       </div>
 
       <div class="fCol">
-        <div class="colTitle">CONTACTO</div>
-        <div class="contactBox">
+        <h4>CONTACTO</h4>
+        <div class="contactInfo">
           <strong>ÚNICO UNIFORMES</strong>
           <p>Palermo 6106 Interior JK,<br>Anexa Roma, 22614<br>Tijuana, B.C.</p>
-          <a href="https://wa.me/526642368701" target="_blank" style="color:#00E676; text-decoration:none; font-weight:700; display:flex; align-items:center; gap:5px; font-size:14px;">
-            📱 WhatsApp: 664 236 8701
+          <a href="https://wa.me/526642368701" target="_blank" style="color:#00E676; text-decoration:none; display:flex; align-items:center; gap:5px; margin-top:10px; font-weight:700;">
+            WhatsApp: 664 236 8701
           </a>
+          <a href="mailto:ventas.unicotextil@gmail.com" class="fLink" style="margin-top:5px;">ventas.unicotextil@gmail.com</a>
         </div>
       </div>
 
@@ -154,48 +152,71 @@
   </footer>
 
   <div class="overlay" id="overlay" onclick="closeAll()"></div>
-
+  
   <aside class="drawer" id="drawer">
     <div class="dHead">
-      <h3 class="dTitle">TU CARRITO</h3>
+      <h3 class="dTitle">TU EQUIPO</h3>
       <button class="dClose" onclick="closeAll()">✕</button>
     </div>
+    
     <div class="dBody">
       <div id="cartItems"></div>
-      <div id="cartEmpty" style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</div>
+      <div id="cartEmpty" style="text-align:center; padding:40px; color:#666;">Tu carrito está vacío.</div>
     </div>
+    
     <div class="dFoot">
-      <div class="totalsRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
-      <div class="totalsRow"><span>Envío</span><strong id="shipTotal">—</strong></div>
-      <div class="totalsRow big"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <button onclick="emptyCart()" style="background:none; border:none; color:#E10600; font-size:12px; cursor:pointer; text-decoration:underline;">VACIAR CARRITO</button>
+      </div>
+
+      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
+      <div class="sumRow"><span>Envío</span><strong id="shipTotal">—</strong></div>
+      <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
       
-      <button class="btn primary" style="width:100%; margin-top:20px;" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
+      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="margin-top:15px;">PAGAR AHORA</button>
+      <div style="text-align:center; font-size:11px; color:#555; margin-top:10px;">🔒 Pagos procesados por Stripe.</div>
     </div>
   </aside>
 
-  <aside class="drawer" id="legalModal" style="width:min(600px,100vw);">
+  <aside class="drawer" id="legalModal" style="width:min(600px, 100vw);">
     <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="dClose" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:40px;">
+    <div class="dBody" style="padding:30px; color:#ccc;">
        <div class="legalBlock" data-legal-block="shipping" style="display:none">
-         <h4 style="color:var(--red);margin-bottom:10px;font-size:24px;font-family:var(--font-display);">Envíos</h4>
-         <p style="color:#555;line-height:1.6;">Envíos a todo México (3-7 días hábiles). Pickup gratuito en nuestras oficinas de Tijuana.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Envíos y Entregas</h4>
+         <p style="line-height:1.6;">Enviamos a todo México vía FedEx o Estafeta (3-7 días hábiles). Pickup gratuito en nuestras oficinas de Tijuana.</p>
        </div>
+       <div class="legalBlock" data-legal-block="returns" style="display:none">
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Garantías</h4>
+         <p style="line-height:1.6;">7 días naturales por defectos de fabricación. Productos de liquidación son venta final.</p>
        </div>
+       <div class="legalBlock" data-legal-block="billing" style="display:none">
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Facturación</h4>
+         <p style="line-height:1.6;">Envía tu Constancia de Situación Fiscal a ventas.unicotextil@gmail.com.</p>
+       </div>
+       <div class="legalBlock" data-legal-block="terms" style="display:none">
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Términos</h4>
+         <p style="line-height:1.6;">Precios en MXN incluyen IVA.</p>
+       </div>
+       <div class="legalBlock" data-legal-block="privacy" style="display:none">
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Privacidad</h4>
+         <p style="line-height:1.6;">Tus datos son procesados de forma segura. No almacenamos información bancaria.</p>
+       </div>
+    </div>
   </aside>
 
-  <div id="toast" class="toast">Mensaje</div>
+  <div class="toast" id="toast">Notificación</div>
 
   <script>
     const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-    const CART_KEY = "score_cart_platinum";
+    const CART_KEY = "score_cart_final";
     
     let cart = [], catalog = [], shipQuote = null;
     const $ = (id) => document.getElementById(id);
     const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
     function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
-    function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
+    function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
 
-    /* CORE LOGIC */
+    /* --- INITIALIZATION --- */
     async function init(){
         loadCart(); updateTotals(); renderCart();
         try {
@@ -203,64 +224,61 @@
             const data = await res.json();
             catalog = data.products || [];
             
-            // Populate Filters
+            // Filtros
             const cats = new Set();
             catalog.forEach(p => { if(p.category) cats.add(p.category); });
             const sel = $("filterCat");
             cats.forEach(c => { const o=document.createElement("option"); o.value=c; o.text=c; sel.appendChild(o); });
 
-            renderCatalog(); renderDrops();
-        } catch(e){ console.error(e); }
+            renderCatalog();
+        } catch(e) { console.error("Error loading catalog"); }
         
         $("search").addEventListener("input", renderCatalog);
         $("filterCat").addEventListener("change", renderCatalog);
     }
 
+    /* --- CATALOG --- */
     function renderCatalog(){
         const grid = $("catalogGrid"); grid.innerHTML = "";
         const q = $("search").value.toLowerCase();
         const cat = $("filterCat").value;
+
         const filtered = catalog.filter(p => {
             if(q && !p.name.toLowerCase().includes(q)) return false;
             if(cat!=="all" && p.category!==cat) return false;
             return true;
         });
-        if(!filtered.length) { grid.innerHTML="<div style='text-align:center;width:100%;color:#999;grid-column:1/-1;padding:40px;'>Sin resultados.</div>"; return; }
-        filtered.forEach(p => grid.appendChild(createCard(p)));
-    }
 
-    function renderDrops(){
-        const grid = $("dropsGrid");
-        const drops = catalog.filter(p => p.tags && (p.tags.includes('limited') || p.tags.includes('drop')));
-        if(!drops.length) return;
-        drops.forEach(p => {
-            const card = createCard(p);
-            // Agregar badge
-            const badge = document.createElement("div");
-            badge.className = "dropBadge"; badge.innerText = "LIMITED DROP";
-            card.querySelector(".cardImg").appendChild(badge);
+        if(!filtered.length) { grid.innerHTML = "<div style='text-align:center;grid-column:1/-1;padding:40px;color:#666;'>No hay productos.</div>"; return; }
+
+        filtered.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "prodCard";
+            
+            // Selector de tallas (Pills)
+            const sizes = p.sizes || ["Unitalla"];
+            const sizeBtns = sizes.map(s => `<div class="sizePill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
+            
+            const badge = p.tags?.includes('limited') ? `<div class="cardBadge">LIMITED</div>` : '';
+
+            card.innerHTML = `
+                <div class="card-texture"></div>
+                <div class="prodImg">
+                   ${badge}
+                   <img src="${p.img}" loading="lazy" alt="${p.name}">
+                </div>
+                <div class="prodInfo">
+                    <div class="prodName">${p.name}</div>
+                    <div class="prodPrice">${money(p.baseMXN)}</div>
+                    <div class="sizeRow" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
+                    <button class="btn-add" onclick="add('${p.id}')">AGREGAR AL CARRITO</button>
+                </div>
+            `;
             grid.appendChild(card);
         });
     }
 
-    function createCard(p){
-        const el = document.createElement("div"); el.className = "card";
-        const sizes = p.sizes || ["Unitalla"];
-        const sizeBtns = sizes.map(s => `<div class="sizePill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
-        
-        el.innerHTML = `
-            <div class="cardImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
-            <div class="cardBody">
-                <div class="cardTitle">${p.name}</div>
-                <div class="cardPrice">${money(p.baseMXN)}</div>
-                <div class="sizeRow" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
-                <button class="cardBtn" onclick="add('${p.id}')">AGREGAR</button>
-            </div>
-        `;
-        return el;
-    }
-
-    /* ACTIONS */
+    /* --- ACTIONS --- */
     window.selectSize = (el, s) => {
         const p = el.parentElement;
         p.setAttribute("data-selected", s);
@@ -271,40 +289,43 @@
     window.add = (id) => {
         const sizeCont = document.getElementById(`sizes_${id}`);
         let s = sizeCont.getAttribute("data-selected");
-        if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText; // Auto-select single size
+        if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText;
         
-        if(!s) { toast("⚠️ Selecciona talla"); return; }
+        if(!s) { toast("⚠️ Selecciona una talla"); return; }
         
         const p = catalog.find(x=>x.id===id);
         const key = `${id}_${s}`;
         const exist = cart.find(i=>i.key===key);
         if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1, img:p.img});
         
-        saveCart(); renderCart(); openDrawer(); toast("Agregado");
+        saveCart(); renderCart(); openDrawer(); toast("Agregado al carrito");
     };
 
+    /* --- CART --- */
     function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
     function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-    
+    function emptyCart(){ cart=[]; saveCart(); renderCart(); }
+
     function renderCart(){
         const wrap = $("cartItems");
         const count = cart.reduce((a,b)=>a+b.qty,0);
         $("cartCount").innerText = count;
+        $("cartCount").style.display = count>0?"flex":"none";
         
         if(!cart.length){ wrap.innerHTML=""; $("cartEmpty").style.display="block"; updateTotals(); return; }
         $("cartEmpty").style.display="none";
         
         wrap.innerHTML = cart.map((i,x) => `
-            <div class="cartItem">
-                <img src="${i.img}" class="cartThumb">
-                <div style="flex:1;">
-                    <div style="font-weight:700;font-size:14px;margin-bottom:5px;">${i.name}</div>
-                    <div style="font-size:12px;color:#888;">${i.variant}</div>
-                    <div style="color:var(--red);font-weight:700;margin-top:5px;">${money(i.price)}</div>
+            <div class="cartRow">
+                <div class="cartThumb"><img src="${i.img}" style="width:100%;height:100%;object-fit:contain;"></div>
+                <div class="cInfo">
+                    <div class="cName">${i.name}</div>
+                    <div class="cMeta">${i.variant}</div>
+                    <div class="cPrice">${money(i.price)}</div>
                 </div>
-                <div style="text-align:right;">
-                    <button onclick="delCart(${x})" style="border:none;background:none;color:#999;cursor:pointer;font-size:18px;">&times;</button>
-                    <div style="margin-top:10px;font-weight:700;font-size:13px;">x${i.qty}</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <strong style="color:#fff;">x${i.qty}</strong>
+                    <button onclick="delCart(${x})" style="background:none;border:none;color:#E10600;font-size:18px;cursor:pointer;">&times;</button>
                 </div>
             </div>
         `).join("");
@@ -320,18 +341,18 @@
         $("grandTotal").innerText = money(sub + ship);
     }
 
-    /* QUOTE & CHECKOUT */
-    $("quoteBtn").addEventListener("click", async ()=>{
+    /* --- QUOTE & CHECKOUT --- */
+    $("quoteBtn")?.addEventListener("click", async ()=>{
         const zip = $("zipQuote").value;
-        if(zip.length!==5) { toast("CP Inválido"); return; }
-        $("shipResult").innerText = "Calculando...";
+        if(zip.length!==5) { toast("Código Postal inválido"); return; }
+        $("shipResult").innerText = "Calculando tarifa...";
         
         try {
             const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
             const d = await r.json();
-            if(d.ok) { shipQuote=d; $("shipResult").innerHTML=`${d.label}: ${money(d.mxn)}`; updateTotals(); }
-            else { $("shipResult").innerText="Tarifa estándar: $250"; shipQuote={mxn:250}; updateTotals(); }
-        } catch(e) { $("shipResult").innerText="Error conexión"; }
+            if(d.ok) { shipQuote=d; $("shipResult").innerText = `${d.label}: ${money(d.mxn)}`; updateTotals(); }
+            else { $("shipResult").innerText="Tarifa Estándar: $250.00"; shipQuote={mxn:250}; updateTotals(); }
+        } catch(e) { $("shipResult").innerText="Error de conexión."; }
     });
 
     window.checkout = async () => {
@@ -341,7 +362,7 @@
             const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode:"mx"})});
             const d = await r.json();
             if(d.url) location.href=d.url; else throw new Error();
-        } catch(e) { toast("Error checkout"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
+        } catch(e) { toast("Error iniciando pago"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
     };
 
     window.openDrawer=()=>{ $("drawer").classList.add("open"); $("overlay").classList.add("open"); document.body.classList.add("lock"); };
