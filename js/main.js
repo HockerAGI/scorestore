@@ -1,316 +1,149 @@
 /**
  * SCORE STORE - MAIN LOGIC
- * Design: Pro Racing Edition
  */
-const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
-const LS_CART = "score_cart_v1";
-const LS_PROMO = "score_promo_v1";
 const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
+const STRIPE_PK = "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"; 
 
 let catalog = null;
-let promoState = safeJson(localStorage.getItem(LS_PROMO), null);
-let cart = safeJson(localStorage.getItem(LS_CART), []);
-
+let cart = JSON.parse(localStorage.getItem("score_cart_v1") || "[]");
+let promoState = JSON.parse(localStorage.getItem("score_promo_v1") || "null");
 let ship = { mode: "pickup", mxn: 0, label: "Pickup", loading: false };
 
 const $ = (id) => document.getElementById(id);
-const moneyMXN = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n||0);
 
-function safeJson(raw, fallback) { try { return JSON.parse(raw); } catch { return fallback; } }
-
-function toast(msg) {
-  const t = $("toast");
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
-}
-
-function saveCart() { localStorage.setItem(LS_CART, JSON.stringify(cart)); }
-function cartCount() { return cart.reduce((a, b) => a + Number(b.qty || 0), 0); }
-function subtotal() { return cart.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0); }
-
-/* SHIPPING LOGIC */
-let _shipTimeout;
-async function fetchShippingRate(cp) {
-  ship.loading = true;
-  updateTotalsUI(); 
-  
-  try {
-    const res = await fetch(`${API_BASE}/quote_shipping`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postal_code: cp, items: cartCount() })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      ship.mxn = data.mxn;
-      ship.label = data.label;
-    } else {
-      ship.mxn = 250; 
-      ship.label = "Envío Nacional";
-    }
-  } catch (e) {
-    ship.mxn = 250; ship.label = "Envío Nacional";
-  } finally {
-    ship.loading = false;
-    updateTotalsUI();
-  }
-}
-
-/* UI UPDATES */
-function renderCartBody() {
+// --- CORE ---
+function renderCart() {
   const body = $("cartBody");
-  if (!body) return;
+  if(!body) return;
+  if(!cart.length) { body.innerHTML = '<div style="text-align:center; padding:30px; opacity:0.5">Carrito vacío</div>'; return; }
   
-  if (!cart.length) {
-    body.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#999;">Tu carrito está vacío.</div>`;
-    return;
-  }
-
-  body.innerHTML = cart.map((i, idx) => `
+  body.innerHTML = cart.map((i,x) => `
     <div class="cartItem">
-      <img src="${i.img}" alt="" class="cartThumb">
-      <div style="flex:1;">
-        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${i.name}</div>
-        <div style="font-size:12px; color:#666;">Talla: ${i.size}</div>
-        <div style="color:#D50000; font-weight:800; font-size:15px; margin-top:4px;">${moneyMXN(i.price)}</div>
+      <img src="${i.img}" class="cartThumb">
+      <div style="flex:1">
+        <div style="font-weight:700; font-size:14px">${i.name}</div>
+        <div style="font-size:12px; color:#666">Talla: ${i.size}</div>
+        <div style="color:#D50000; font-weight:700; margin-top:2px">${money(i.price)}</div>
       </div>
-      <div style="text-align:right;">
-        <button onclick="removeFromCart(${idx})" style="color:#D50000; background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
-        <div style="font-weight:700; font-size:14px; color:#333;">x${i.qty}</div>
+      <div style="text-align:right">
+        <button onclick="remCart(${x})" style="color:#999; border:none; background:none; cursor:pointer">&times;</button>
+        <div style="font-weight:700; font-size:13px">x${i.qty}</div>
       </div>
     </div>
   `).join("");
 }
 
-window.removeFromCart = function(idx) {
-  cart.splice(idx, 1);
-  saveCart();
-  updateCart({ recalcShip: true });
-};
+window.remCart = (idx) => { cart.splice(idx, 1); save(); update(); };
+function save() { localStorage.setItem("score_cart_v1", JSON.stringify(cart)); }
 
-async function updateCart({ recalcShip } = { recalcShip: true }) {
+async function update() {
   const radio = document.querySelector('input[name="shipMode"]:checked');
-  const selected = radio ? radio.value : "pickup";
-  const cpVal = $("cp")?.value || "";
+  const mode = radio ? radio.value : "pickup";
+  const cp = $("cp")?.value || "";
 
-  if (selected !== ship.mode) {
-    ship.mode = selected;
-    if (selected === "mx" && cpVal.length === 5) {
-      clearTimeout(_shipTimeout);
-      fetchShippingRate(cpVal);
-    } else if (selected === "mx") {
-      ship.mxn = 250;
-      ship.label = "Envío Nacional";
+  if(mode !== ship.mode) {
+    ship.mode = mode;
+    if(mode === "mx") {
+       ship.mxn = 250; ship.label = "Nacional"; 
+       if(cp.length === 5) fetchShip(cp);
+    } else {
+       ship.mxn = 0; ship.label = "Pickup";
     }
   }
-
-  const form = $("shipForm");
-  if (form) form.style.display = (selected === "mx" || selected === "tj") ? "block" : "none";
-
-  if (selected === "pickup") { ship.mxn = 0; ship.label = "Pickup"; }
-  else if (selected === "tj") { ship.mxn = 200; ship.label = "Local TJ"; }
   
-  renderCartBody();
-  updateTotalsUI();
+  $("shipForm").style.display = (mode === "mx") ? "block" : "none";
   
-  const addrVal = $("addr")?.value || "";
-  let valid = cart.length > 0;
-  if (selected !== "pickup") {
-    valid = valid && (cpVal.trim().length === 5) && (addrVal.trim().length > 3);
-  }
-  const btn = $("payBtn");
-  if(btn) btn.disabled = !valid || ship.loading;
-}
-
-function updateTotalsUI() {
-  const sub = subtotal();
+  let sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
   let disc = 0;
+  if(promoState) {
+      if(promoState.type==="pct") disc = Math.round(sub*(promoState.value/100));
+      else if(promoState.type==="free_shipping") disc = 0;
+  }
+  let finalShip = (promoState?.type==="free_shipping") ? 0 : ship.mxn;
+  let total = Math.max(0, sub - disc) + finalShip;
 
-  if (promoState) {
-    if (promoState.type === "pct") disc = Math.round(sub * (promoState.value / 100));
-    else if (promoState.type === "free_shipping") disc = 0; 
+  // UI Texts
+  if($("cartCount")) { $("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0); $("cartCount").style.display = cart.length?"flex":"none"; }
+  $("lnSub").innerText = money(sub);
+  $("lnShip").innerText = ship.loading ? "..." : (finalShip===0 ? "Gratis" : money(finalShip));
+  $("lnTotal").innerText = money(total);
+  
+  if($("rowDiscount")) {
+     $("rowDiscount").style.display = (disc>0 || promoState?.type==="free_shipping") ? "flex" : "none";
+     if(disc>0) $("lnDiscount").innerText = `-${money(disc)}`;
   }
 
-  let finalShip = ship.mxn;
-  if (promoState?.type === "free_shipping") finalShip = 0;
-  
-  const total = Math.max(0, sub - disc) + finalShip;
-
-  if ($("cartCount")) {
-      const cnt = cartCount();
-      $("cartCount").innerText = cnt;
-      $("cartCount").style.display = cnt > 0 ? "flex" : "none";
-  }
-  
-  if ($("lnSub")) $("lnSub").innerText = moneyMXN(sub);
-  
-  const lnShip = $("lnShip");
-  if (lnShip) {
-    if (ship.loading) lnShip.innerText = "...";
-    else if (promoState?.type === "free_shipping") lnShip.innerText = "GRATIS";
-    else lnShip.innerText = (finalShip === 0 && ship.mode === "pickup") ? "Gratis" : moneyMXN(finalShip);
-  }
-
-  if ($("lnTotal")) $("lnTotal").innerText = moneyMXN(total);
-  if ($("barTotal")) $("barTotal").innerText = moneyMXN(total);
-
-  const rDisc = $("rowDiscount");
-  if (rDisc) {
-      if (disc > 0 || promoState?.type === "free_shipping") {
-          rDisc.style.display = "flex";
-          if($("promoTag")) $("promoTag").innerText = promoState.code;
-          if($("lnDiscount")) $("lnDiscount").innerText = disc > 0 ? `- ${moneyMXN(disc)}` : "Envío Gratis";
-      } else {
-          rDisc.style.display = "none";
-      }
-  }
-  
-  $("paybar")?.classList.toggle("visible", cart.length > 0);
-}
-
-/* LISTENERS */
-const cpInput = $("cp");
-if (cpInput) {
-  cpInput.addEventListener("input", (e) => {
-    const val = e.target.value.replace(/\D/g, "");
-    e.target.value = val;
-    if (ship.mode === "mx" && val.length === 5) {
-      clearTimeout(_shipTimeout);
-      _shipTimeout = setTimeout(() => fetchShippingRate(val), 800);
-    }
-    updateCart({ recalcShip: false });
-  });
-}
-
-document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", () => updateCart()));
-["addr", "name"].forEach(id => $(id)?.addEventListener("input", () => updateCart({ recalcShip: false })));
-
-const promoBtn = $("promoApplyBtn");
-if(promoBtn) {
-    promoBtn.addEventListener("click", () => {
-       const code = $("promoInput")?.value.trim().toUpperCase();
-       if(code === "SCORE10") { promoState = { code, type:"pct", value:10 }; toast("CUPÓN APLICADO"); }
-       else if(code === "ENVIOFREE") { promoState = { code, type:"free_shipping", value:0 }; toast("ENVÍO GRATIS APLICADO"); }
-       else { promoState = null; toast("CUPÓN INVÁLIDO"); }
-       localStorage.setItem(LS_PROMO, JSON.stringify(promoState));
-       updateCart();
-    });
-}
-
-window.openDrawer = function() {
-  $("drawer").classList.add("active");
-  $("overlay").classList.add("active");
-  document.body.classList.add("modalOpen");
-  updateCart();
-};
-
-window.closeAll = function() {
-  $("drawer").classList.remove("active");
-  $("modalCatalog").classList.remove("active");
-  $("legalModal")?.classList.remove("active"); 
-  $("overlay").classList.remove("active");
-  document.body.classList.remove("modalOpen");
-};
-
-window.openCatalog = async function(sectionId, title) {
-  const tEl = $("catTitle");
-  if(tEl) tEl.innerText = title;
-  
-  const content = $("catContent");
-  content.innerHTML = '<div style="text-align:center; padding:50px;">Cargando...</div>';
-  
-  $("modalCatalog").classList.add("active");
-  $("overlay").classList.add("active");
-  document.body.classList.add("modalOpen");
-
-  if (!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
-  
-  const items = (catalog?.products || []).filter(p => p.sectionId === sectionId);
-  if (!items.length) { content.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">Próximamente.</div>'; return; }
-
-  content.innerHTML = `<div class="catGrid">` + items.map(p => `
-    <div class="prodCard">
-      <img src="${p.img}" loading="lazy" alt="${p.name}">
-      <div style="font-weight:700; font-size:14px; margin-bottom:5px; color:#333;">${p.name}</div>
-      <div style="color:#D50000; font-weight:800; font-size:16px;">${moneyMXN(p.baseMXN)}</div>
-      
-      <select id="size_${p.id}" style="margin:10px 0; padding:10px; width:100%; border:1px solid #ddd; border-radius:4px; background:#f9f9f9;">
-        ${(p.sizes || ["Unitalla"]).map(s => `<option value="${s}">${s}</option>`).join("")}
-      </select>
-      
-      <button class="btn primary full" style="padding:12px; font-size:14px; width:100%;" onclick="addToCart('${p.id}')">
-        AGREGAR
-      </button>
-    </div>
-  `).join("") + `</div>`;
-};
-
-window.addToCart = function(pid) {
-  if (!catalog) return;
-  const p = catalog.products.find(x => x.id === pid);
-  if (!p) return;
-  const size = $(`size_${pid}`)?.value || "Unitalla";
-  const key = `${pid}_${size}`;
-  const exist = cart.find(i => i.key === key);
-  
-  if (exist) exist.qty++; 
-  else cart.push({ key, id: pid, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
-
-  saveCart();
-  toast("PRODUCTO AGREGADO");
-  closeAll();
-  openDrawer();
-};
-
-window.checkout = async function() {
+  // Validar
+  const addr = $("addr")?.value || "";
   const btn = $("payBtn");
-  btn.innerText = "PROCESANDO...";
-  btn.disabled = true;
+  let valid = cart.length > 0;
+  if(mode === "mx") valid = valid && cp.length===5 && addr.length>3;
+  btn.disabled = !valid || ship.loading;
 
-  try {
-    const payload = {
-      items: cart.map(i => ({ id: i.id, qty: i.qty, size: i.size })),
-      mode: ship.mode,
-      promoCode: promoState?.code || "",
-      to: (ship.mode === "pickup") ? {} : {
-        postal_code: $("cp")?.value || "",
-        address1: $("addr")?.value || "",
-        city: $("city")?.value || "",
-        state_code: $("state")?.value || "",
-        name: $("name")?.value || "Cliente"
-      }
-    };
-
-    const res = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST", headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    
-    const data = await res.json();
-    if (data.url) location.href = data.url;
-    else throw new Error(data.error || "Error al iniciar pago");
-    
-  } catch (e) {
-    alert("Error: " + (e.message || "Intenta de nuevo"));
-    btn.innerText = "IR A PAGAR";
-    btn.disabled = false;
-  }
-};
-
-window.openLegal = function(type) {
-  const modal = $("legalModal");
-  if(modal) {
-      modal.classList.add("active");
-      $("overlay").classList.add("active");
-      document.querySelectorAll(".legalBlock").forEach(b => {
-          b.style.display = (b.dataset.legalBlock === type) ? "block" : "none";
-      });
-  }
-};
-window.closeLegal = closeAll;
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+  renderCart();
 }
-updateCart();
+
+async function fetchShip(cp) {
+  ship.loading = true; update();
+  try {
+    const res = await fetch(`${API_BASE}/quote_shipping`, { method:"POST", body: JSON.stringify({postal_code:cp, items:1})});
+    const d = await res.json();
+    if(d.ok) { ship.mxn = d.mxn; ship.label = d.label; }
+  } catch(e){ console.error(e); }
+  ship.loading = false; update();
+}
+
+// LISTENERS
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+document.querySelectorAll('input[type=radio]').forEach(i => i.addEventListener('change', update));
+$("promoApplyBtn")?.addEventListener("click", ()=>{
+   const c = $("promoInput").value.toUpperCase();
+   if(c==="SCORE10") promoState={code:c, type:"pct", value:10};
+   else if(c==="ENVIOFREE") promoState={code:c, type:"free_shipping", value:0};
+   else promoState=null;
+   localStorage.setItem("score_promo_v1", JSON.stringify(promoState));
+   update();
+});
+
+// ACTIONS
+window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); update(); };
+window.closeAll = () => { $("drawer").classList.remove("active"); $("overlay").classList.remove("active"); $("modalCatalog").classList.remove("active"); };
+
+window.openCatalog = async (secId, title) => {
+    $("modalCatalog").classList.add("active"); $("overlay").classList.add("active");
+    $("catTitle").innerText = title;
+    $("catContent").innerHTML = "Cargando...";
+    
+    if(!catalog) catalog = await fetch("/data/catalog.json").then(r=>r.json()).catch(()=>null);
+    const items = (catalog?.products||[]).filter(p=>p.sectionId===secId);
+    
+    $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => `
+      <div class="prodCard">
+        <img src="${p.img}">
+        <div style="font-weight:700; margin-bottom:5px">${p.name}</div>
+        <div style="color:#E10600; font-weight:700">${money(p.baseMXN)}</div>
+        <button class="btn primary full" style="margin-top:10px; font-size:14px; padding:10px" onclick="add('${p.id}')">AGREGAR</button>
+      </div>
+    `).join("") + `</div>`;
+};
+
+window.add = (id) => {
+    const p = catalog.products.find(x=>x.id===id);
+    const exist = cart.find(i=>i.id===id);
+    if(exist) exist.qty++; else cart.push({id, name:p.name, price:p.baseMXN, img:p.img, size:"Unitalla", qty:1});
+    save(); closeAll(); openDrawer();
+};
+
+window.checkout = async () => {
+    $("payBtn").innerText = "...";
+    const res = await fetch(`${API_BASE}/create_checkout`, { method:"POST", body: JSON.stringify({
+        items: cart, mode: ship.mode, promoCode: promoState?.code,
+        to: { postal_code: $("cp")?.value, address1: $("addr")?.value, name: $("name")?.value }
+    })});
+    const d = await res.json();
+    if(d.url) location.href = d.url; else alert("Error");
+    $("payBtn").innerText = "IR A PAGAR";
+};
+
+update();
