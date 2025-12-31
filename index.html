@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Official Store</title>
-  
+  <title>SCORE Store | Official Merchandise</title>
+  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por Único Uniformes." />
+
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="preload" href="/assets/hero.webp" as="image">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <link rel="preload" href="/assets/hero.webp" as="image">
   <script src="https://js.stripe.com/v3" async></script>
 </head>
 
@@ -22,7 +23,7 @@
       <img src="/assets/logo-score.webp" alt="SCORE International">
     </a>
     <div class="navRight">
-      <span class="location-pill">MX · <b>TIJUANA</b></span>
+      <div class="location-pill"><span>MX · <b>TIJUANA</b></span></div>
       <button class="cartTrigger" onclick="openDrawer()">
         🛒 <span id="cartCount" class="cartCount" style="display:none">0</span>
       </button>
@@ -33,56 +34,63 @@
     
     <section class="hero">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-      
+      <div class="heroOverlay"></div> <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="World Desert Championship">
+
       <div class="heroContent">
-        <div class="tagline">OFFICIAL MERCHANDISE</div>
-        <h1>SCORE INTERNATIONAL</h1>
+        <div class="tagline">MERCHANDISE OFICIAL</div>
+        <h1>SCORE<br>INTERNATIONAL</h1>
         
         <div class="sub">
-          Merch Oficial de las Off Road más importantes del mundo.<br>
+          Equipamiento oficial de las carreras más exigentes del mundo.<br>
           <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
         </div>
 
         <div class="ctaRow">
-          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">VER COLECCIÓN</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')"><span>VER COLECCIÓN</span></button>
+          <button class="btn secondary" onclick="openDrawer()"><span>MI PEDIDO</span></button>
         </div>
       </div>
     </section>
 
     <section class="championships">
       <div class="section-head">
-        <h2>COLECCIONES DISPONIBLES</h2>
+        <h2>COLECCIONES <span>DISPONIBLES</span></h2>
       </div>
 
       <div class="catalogGrid">
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-          <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
-          <span class="badge">TOP SELLER</span>
+          <div class="card-bg-texture"></div> <span class="badge"><span>TOP SELLER</span></span>
           <img src="/assets/logo-baja1000.webp" alt="Baja 1000" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <img src="/assets/logo-baja500.webp" alt="Baja 500" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <img src="/assets/logo-baja400.webp" alt="Baja 400" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
+          <span class="badge" style="background:#333;"><span>LAST CALL</span></span>
           <img src="/assets/logo-sf250.webp" alt="San Felipe 250" class="float-logo">
         </div>
       </div>
     </section>
+
+    <section class="partners">
+      <h3>OFFICIAL PARTNERS</h3>
+      <div class="partnerGrid">
+        <img src="/assets/logo-ford.webp" alt="Ford">
+        <img src="/assets/logo-rzr.webp" alt="Polaris">
+        <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich">
+        <img src="/assets/logo-unico.webp" alt="Unico Uniformes" style="opacity:1; filter:grayscale(0);">
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">
@@ -90,47 +98,51 @@
       <div class="footerTop">
         
         <div class="footerCol">
-          <img src="/assets/logo-unico.webp" alt="Unico" class="footerUnico">
+          <img src="/assets/logo-unico.webp" alt="Único Uniformes" class="footerUnico">
           <p class="footerDesc">
-            Operador Oficial de Merchandise SCORE.<br>
-            Fabricación y logística desde Tijuana, B.C.
+            Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
           </p>
-          <div class="partners-strip">
-            <img src="/assets/logo-score.webp" alt="Score">
-            <img src="/assets/logo-bfgodrich.webp" alt="BFG">
-            <img src="/assets/logo-ford.webp" alt="Ford">
-          </div>
         </div>
 
         <div class="footerCol">
-          <h4>AYUDA</h4>
+          <h4>SOPORTE</h4>
           <div class="footerLinks">
-            <button onclick="openLegal('shipping')">Rastreo de Orden</button>
+            <button onclick="openLegal('shipping')">Política de Envíos</button>
             <button onclick="openLegal('returns')">Cambios y Garantías</button>
-            <button onclick="openLegal('billing')">Facturación 4.0</button>
+            <button onclick="openLegal('billing')">Facturación Fiscal</button>
           </div>
         </div>
 
         <div class="footerCol">
           <h4>LEGAL</h4>
           <div class="footerLinks">
-            <button onclick="openLegal('terms')">Términos y Condiciones</button>
-            <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
+            <button onclick="openLegal('terms')">Términos del Servicio</button>
+            <button onclick="openLegal('privacy')">Privacidad de Datos</button>
           </div>
         </div>
 
         <div class="footerCol">
           <h4>CONTACTO</h4>
-          <div class="footerLinks">
-             <a href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
-             <span>Blvd. Diaz Ordaz, Tijuana BC</span>
+          <div class="addressBlock">
+            <b>Único Uniformes</b>
+            Palermo 6106 Interior JK,<br>
+            Anexa Roma, 22614<br>
+            Tijuana, B.C.
+          </div>
+          <div style="margin-top:15px; font-size:14px;">
+            <a href="https://wa.me/526642368701" style="color:#25D366; text-decoration:none; display:flex; align-items:center; gap:5px;">
+              WhatsApp: 664 236 8701
+            </a>
+            <a href="mailto:ventas.unicotextil@gmail.com" style="color:#aaa; display:block; margin-top:5px; text-decoration:none;">
+              ventas.unicotextil@gmail.com
+            </a>
           </div>
         </div>
 
       </div>
     </div>
-    <div style="text-align:center; padding:20px; font-size:12px; color:#888; border-top:1px solid #eee;">
-      © 2025 SCORE Store. Powered by Único Uniformes.
+    <div class="footerBottom">
+      SCORE Store © 2025 · Powered by Único Uniformes
     </div>
   </footer>
 
@@ -146,40 +158,75 @@
 
   <aside id="drawer" class="drawer">
     <div class="dHead">
-      <h3 class="dTitle">TU PEDIDO</h3>
+      <h3 class="dTitle">TU EQUIPO</h3>
       <button class="closeBtn" onclick="closeAll()">&times;</button>
     </div>
     <div id="cartBody" class="dBody"></div>
     <div class="dFoot">
       <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <input id="promoInput" type="text" placeholder="CÓDIGO" class="inputField" style="margin:0; text-transform:uppercase;">
+        <input id="promoInput" type="text" placeholder="CÓDIGO PROMO" class="inputField" style="margin:0; text-transform:uppercase;">
         <button id="promoApplyBtn" style="background:#333; color:white; border:none; padding:0 15px; border-radius:4px; font-weight:700;">OK</button>
       </div>
-      <div class="shipSelector">
-         <label><input type="radio" name="shipMode" value="pickup" checked> <span>Pickup Tienda (Gratis)</span></label>
-         <label><input type="radio" name="shipMode" value="mx"> <span>Envío a Domicilio (Cotizar)</span></label>
+      
+      <div style="margin-bottom:15px;">
+         <label style="display:flex; gap:10px; padding:10px; border:1px solid #eee; margin-bottom:5px; border-radius:4px;">
+            <input type="radio" name="shipMode" value="pickup" checked> <span>Pickup Tienda (Gratis)</span>
+         </label>
+         <label style="display:flex; gap:10px; padding:10px; border:1px solid #eee; border-radius:4px;">
+            <input type="radio" name="shipMode" value="mx"> <span>Envío a Domicilio (Cotizar)</span>
+         </label>
       </div>
-      <div id="shipForm" style="display:none; margin-top:10px;">
-        <input id="cp" type="text" placeholder="Código Postal (5 dígitos)" maxlength="5" class="inputField">
-        <input id="addr" type="text" placeholder="Dirección completa" class="inputField">
-        <input id="name" type="text" placeholder="Nombre quien recibe" class="inputField">
+      
+      <div id="shipForm" style="display:none; margin-bottom:15px;">
+        <input id="cp" type="text" placeholder="C.P. (5 dígitos)" maxlength="5" class="inputField">
+        <input id="addr" type="text" placeholder="Calle y Número" class="inputField">
+        <input id="name" type="text" placeholder="Nombre completo" class="inputField">
       </div>
+
       <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0</span></div>
       <div class="sumRow" id="rowDiscount" style="display:none; color:green;"><span>Desc.</span><span id="lnDiscount">-$0</span></div>
       <div class="sumRow"><span>Envío</span><span id="lnShip">$0</span></div>
       <div class="sumRow total"><span>TOTAL</span><span id="lnTotal">$0</span></div>
       
-      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>IR A PAGAR</button>
+      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>
+        <span>IR A PAGAR</span>
+      </button>
     </div>
   </aside>
 
-  <section id="legalModal" class="modal" style="height:auto;">
-    <div class="dHead"><h3 class="dTitle">INFO</h3><button class="closeBtn" onclick="closeLegal()">&times;</button></div>
+  <section id="legalModal" class="modal" style="height:auto; min-height:400px;">
+    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeLegal()">&times;</button></div>
     <div class="dBody">
       <div class="legalBlock" data-legal-block="shipping" style="display:none">
-        <h4>Envíos</h4><p>Nacionales 3-7 días.</p>
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Envíos y Entregas</h4>
+        <p style="font-size:14px; line-height:1.6; margin-bottom:10px;">
+          <strong>Nacional:</strong> Enviamos a todo México vía FedEx o Estafeta. El tiempo estimado es de 3 a 7 días hábiles dependiendo de la zona.
+        </p>
+        <p style="font-size:14px; line-height:1.6;">
+          <strong>Pickup:</strong> Puedes recoger tu pedido sin costo en nuestras oficinas de Tijuana (Palermo 6106, Anexa Roma) en horario de 9am a 5pm.
+        </p>
       </div>
+      <div class="legalBlock" data-legal-block="returns" style="display:none">
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Garantías</h4>
+        <p style="font-size:14px; line-height:1.6;">
+          Aceptamos cambios por defecto de fabricación dentro de los primeros 7 días naturales. La prenda debe estar sin usar y con etiquetas. No hay cambios en mercancía de liquidación.
+        </p>
       </div>
+      <div class="legalBlock" data-legal-block="billing" style="display:none">
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Facturación</h4>
+        <p style="font-size:14px; line-height:1.6;">
+          Para solicitar factura, envía tu Constancia de Situación Fiscal y número de pedido a <strong>ventas.unicotextil@gmail.com</strong> dentro del mismo mes de tu compra.
+        </p>
+      </div>
+      <div class="legalBlock" data-legal-block="terms" style="display:none">
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Términos</h4>
+        <p style="font-size:14px; line-height:1.6;">Todos los precios están en Pesos Mexicanos (MXN) e incluyen IVA. Productos oficiales sujetos a disponibilidad de inventario.</p>
+      </div>
+      <div class="legalBlock" data-legal-block="privacy" style="display:none">
+        <h4 style="color:var(--score-red); margin-bottom:10px;">Privacidad</h4>
+        <p style="font-size:14px; line-height:1.6;">Único Uniformes protege tus datos personales. Los pagos son procesados de forma encriptada directamente por Stripe; nosotros no almacenamos datos bancarios.</p>
+      </div>
+    </div>
   </section>
   
   <div id="toast" class="toast"></div>
