@@ -7,24 +7,24 @@
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="preload" href="/assets/hero.webp" as="image">
-  <link rel="preload" href="/assets/baja1000-texture.webp" as="image">
-  
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://js.stripe.com/v3"></script>
 </head>
 
 <body>
   <div class="page-bg"></div>
+  
   <div class="dust-container"><div class="dust"></div></div>
 
   <header class="topbar">
-    <div class="brand">
-      <img src="/assets/logo-score.webp" alt="SCORE International">
-    </div>
+    <a href="/" class="brand" aria-label="Inicio">
+      <img src="/assets/logo-score.webp" alt="SCORE International Oficial">
+    </a>
 
     <div class="navRight">
-      <div class="pill">MX + <b>TIJUANA</b></div>
-      <button class="cartTrigger" onclick="openDrawer()">
+      <div class="pill">MX · <b>TIJUANA</b></div>
+      <button class="cartTrigger" onclick="openDrawer()" aria-label="Carrito">
         🛒 <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
@@ -37,34 +37,36 @@
       <div class="heroOverlay"></div> <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Official Product">
 
       <div class="heroContent">
-        <span class="tagline">🔥 VENTA OFICIAL</span>
-        <h1>EQUIPAMIENTO<br>PREMIUM</h1>
+        <span class="tagline">🏁 TIENDA OFICIAL</span>
+        
+        <h1>LA CARRERA EMPIEZA AQUÍ.<br>VÍSTETE PARA GANAR.</h1>
+        
         <div class="sub">
-          <p>La colección oficial del desierto. <strong>Stock Limitado.</strong></p>
-          <small>Operado por <strong>ÚNICO UNIFORMES</strong> (Tijuana, BC).</small>
+          <p><strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial del merch de SCORE International.</p>
         </div>
 
         <div class="ctaRow">
           <button class="btn primary" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-            COMPRAR AHORA
+            COMPRAR COLECCIÓN
           </button>
           <button class="btn secondary" onclick="openDrawer()">
-            MI PEDIDO
+            VER MI PEDIDO
           </button>
         </div>
       </div>
     </section>
 
     <section class="championships">
-      <h2 style="text-transform: uppercase; letter-spacing: 1px;">Colecciones Disponibles</h2>
+      <h2>COLECCIONES DISPONIBLES</h2>
 
       <div class="catalogGrid">
+        
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-bg-texture"></div>
           <div class="card-overlay"></div>
           <span class="badge available">MÁS VENDIDO</span>
           <img src="/assets/logo-baja1000.webp" alt="Baja 1000" class="float-logo">
-          </div>
+        </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-bg-texture"></div>
@@ -86,6 +88,7 @@
           <span class="badge limited">ÚLTIMAS PIEZAS</span>
           <img src="/assets/logo-sf250.webp" alt="San Felipe 250" class="float-logo">
         </div>
+
       </div>
     </section>
 
@@ -107,7 +110,7 @@
         <div class="footerBrand">
           <img class="footerUnico" src="/assets/logo-unico.webp" alt="Único Uniformes">
           <p class="footerSmall">
-            <strong>Operador Oficial.</strong><br>
+            <strong>Operador Oficial de Merchandise.</strong><br>
             Venta directa de fábrica. Envíos seguros a todo México desde Tijuana, B.C.
           </p>
         </div>
@@ -156,7 +159,7 @@
 
     <div class="dFoot">
       <div class="shipSelector">
-        <p style="font-size:11px; font-weight:800; color:#888; margin-bottom:10px;">MÉTODO DE ENTREGA</p>
+        <p class="selectorLabel">MÉTODO DE ENTREGA</p>
         <label><input type="radio" name="shipMode" value="pickup" checked> Pickup Tienda (TJ)</label>
         <label><input type="radio" name="shipMode" value="tj"> Envío Local (TJ)</label>
         <label><input type="radio" name="shipMode" value="mx"> Envío Nacional (MX)</label>
@@ -188,17 +191,20 @@
       <button class="closeBtn" onclick="closeLegal()">×</button>
     </div>
     <div class="catContent legalContent">
-      <div id="legalDynamicContent">
-        <p>Selecciona una opción del pie de página.</p>
-      </div>
       <div class="legalBlock" data-legal-block="shipping" style="display:none">
         <h4>Envíos</h4><p>Envíos nacionales 3-7 días. Pickup gratis en TJ.</p>
       </div>
       <div class="legalBlock" data-legal-block="returns" style="display:none">
-        <h4>Garantías</h4><p>7 días por defectos de fábrica.</p>
+        <h4>Garantías</h4><p>7 días por defectos de fabricación.</p>
       </div>
       <div class="legalBlock" data-legal-block="billing" style="display:none">
         <h4>Facturación</h4><p>Envía tu constancia fiscal a ventas.unicotextil@gmail.com</p>
+      </div>
+      <div class="legalBlock" data-legal-block="terms" style="display:none">
+        <h4>Términos</h4><p>Productos oficiales sujetos a disponibilidad.</p>
+      </div>
+      <div class="legalBlock" data-legal-block="privacy" style="display:none">
+        <h4>Privacidad</h4><p>Pagos procesados de forma segura por Stripe.</p>
       </div>
     </div>
   </section>
