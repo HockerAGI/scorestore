@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Tienda Oficial</title>
+  <title>SCORE Store | Tienda Oficial Off-Road</title>
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="preload" href="/assets/hero.webp" as="image">
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image">
-  <link rel="preload" href="/assets/baja1000-texture.webp" as="image">
-  
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://js.stripe.com/v3"></script>
 </head>
@@ -36,17 +34,15 @@
 
     <section class="hero">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial">
+      <div class="heroOverlay"></div> <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Producto Oficial">
 
       <div class="heroContent">
         <span class="tagline">🏁 TIENDA OFICIAL</span>
         
-        <h1>LA CARRERA EMPIEZA AQUÍ.<br>VÍSTETE PARA GANAR.</h1>
+        <h1>SCORE INTERNATIONAL<br>MERCHANDISE OFICIAL</h1>
         
         <div class="sub">
-          <p><strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial de SCORE International.</p>
+          <p>Operado y fabricado por <strong>ÚNICO UNIFORMES</strong> bajo licencia oficial.</p>
         </div>
 
         <div class="ctaRow">
@@ -61,34 +57,30 @@
     </section>
 
     <section class="championships">
-      <h2>COLECCIONES DISPONIBLES</h2>
+      <h2 style="text-transform: uppercase; color:#111; margin-bottom:25px;">Colecciones Disponibles</h2>
 
       <div class="catalogGrid">
         
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <span class="badge available">MÁS VENDIDO</span>
           <img src="/assets/logo-baja1000.webp" alt="Baja 1000" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <span class="badge available">NUEVO STOCK</span>
           <img src="/assets/logo-baja500.webp" alt="Baja 500" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <span class="badge available">DISPONIBLE</span>
           <img src="/assets/logo-baja400.webp" alt="Baja 400" class="float-logo">
         </div>
 
         <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-bg-texture"></div>
-          <div class="card-overlay"></div>
           <span class="badge limited">ÚLTIMAS PIEZAS</span>
           <img src="/assets/logo-sf250.webp" alt="San Felipe 250" class="float-logo">
         </div>
@@ -114,7 +106,7 @@
         <div class="footerBrand">
           <img class="footerUnico" src="/assets/logo-unico.webp" alt="Único Uniformes">
           <p class="footerSmall">
-            <strong>Operador Oficial de Merchandise.</strong><br>
+            <strong>Operador Oficial.</strong><br>
             Venta directa de fábrica. Envíos seguros a todo México desde Tijuana, B.C.
           </p>
         </div>
@@ -158,9 +150,7 @@
       <h3 class="dTitle">TU PEDIDO</h3>
       <button class="closeBtn" onclick="closeAll()">×</button>
     </div>
-
     <div id="cartBody" class="dBody"></div>
-
     <div class="dFoot">
       <div class="shipSelector">
         <p class="selectorLabel">MÉTODO DE ENTREGA</p>
@@ -168,7 +158,6 @@
         <label><input type="radio" name="shipMode" value="tj"> Envío Local (TJ)</label>
         <label><input type="radio" name="shipMode" value="mx"> Envío Nacional (MX)</label>
       </div>
-      
       <div id="shipForm" style="display:none; margin-bottom:15px;">
         <input id="name" type="text" placeholder="Nombre completo" class="inputField">
         <div style="display:flex; gap:10px;">
@@ -178,14 +167,10 @@
         <input id="addr" type="text" placeholder="Calle y número" class="inputField">
         <input id="state" type="text" placeholder="Estado" class="inputField">
       </div>
-
       <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0 MXN</span></div>
       <div class="sumRow" id="lnShipRow"><span>Envío</span><span id="lnShip">$0 MXN</span></div>
       <div class="sumRow total"><span>Total</span><span id="lnTotal">$0 MXN</span></div>
-
-      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>
-        IR A PAGAR
-      </button>
+      <button id="payBtn" class="btn primary full" onclick="checkout()" disabled>IR A PAGAR</button>
     </div>
   </aside>
 
@@ -220,9 +205,7 @@
     </div>
     <button class="btn-sm white" onclick="openDrawer()">VER CARRITO</button>
   </div>
-
   <div id="toast" class="toast"></div>
-
   <script src="/js/main.js" defer></script>
 </body>
 </html>
