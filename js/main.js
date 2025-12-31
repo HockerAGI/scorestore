@@ -1,9 +1,5 @@
-/**
- * SCORE STORE - MAIN LOGIC
- * Theme: Desert Premium
- */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_v5";
+const CART_KEY = "score_cart_v5_pro";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -16,15 +12,21 @@ async function init(){
         const res = await fetch("/data/catalog.json");
         const data = await res.json();
         catalog = data.products || [];
-    } catch(e){ console.error("Error loading catalog"); }
+    } catch(e){ console.error(e); }
+    
+    // Listeners
+    document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
+    $("cp")?.addEventListener("input", (e)=>{
+       if(e.target.value.length === 5) quoteShipping(e.target.value);
+    });
 }
 
-/* CATALOG MODAL */
+/* CATALOG */
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     $("catTitle").innerText = title;
-    $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando inventario...</div>";
+    $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando...</div>";
 
     const items = catalog.filter(p => p.sectionId === secId);
     if(!items.length) { $("catContent").innerHTML = "<div style='padding:40px; text-align:center;'>Agotado.</div>"; return; }
@@ -32,10 +34,9 @@ window.openCatalog = (secId, title) => {
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
-        
         return `
           <div class="prodCard" id="card_${p.id}">
-            <div class="prodImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
+            <div class="prodImg"><img src="${p.img}" loading="lazy"></div>
             <div class="prodName">${p.name}</div>
             <div class="prodPrice">${money(p.baseMXN)}</div>
             <div class="size-row" id="sizes_${p.id}" data-selected="">${sizeBtns}</div>
@@ -56,7 +57,6 @@ window.add = (id) => {
     const sizeCont = document.getElementById(`sizes_${id}`);
     let s = sizeCont.getAttribute("data-selected");
     if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText;
-    
     if(!s) { toast("⚠️ Selecciona una talla"); return; }
     
     const p = catalog.find(x=>x.id===id);
@@ -67,10 +67,9 @@ window.add = (id) => {
     saveCart(); renderCart(); openDrawer(); toast("Agregado");
 };
 
-/* CART & CHECKOUT */
+/* CART & SHIP */
 function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
 function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-function emptyCart(){ cart=[]; saveCart(); renderCart(); }
 
 function renderCart(){
     const wrap = $("cartItems");
@@ -89,52 +88,58 @@ function renderCart(){
                 <div class="cMeta">${i.variant}</div>
                 <div class="cPrice">${money(i.price)}</div>
             </div>
-            <button onclick="delCart(${x})" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;">&times;</button>
+            <button onclick="delCart(${x})" style="background:none;border:none;color:#999;font-size:18px;">&times;</button>
         </div>
     `).join("");
     updateTotals();
 }
 window.delCart = (x)=>{ cart.splice(x,1); saveCart(); renderCart(); };
 
+async function quoteShipping(zip) {
+    $("shipTotal").innerText = "Calculando...";
+    try {
+        const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
+        const d = await r.json();
+        if(d.ok) { shipQuote=d; } else { shipQuote={mxn:250}; }
+        updateTotals();
+    } catch(e) { console.error(e); }
+}
+
 function updateTotals(){
     const sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
     $("subTotal").innerText = money(sub);
     
-    const ship = shipQuote ? shipQuote.mxn : 0;
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value || "pickup";
+    $("shipForm").style.display = (mode !== "pickup") ? "block" : "none";
     
-    if(mode === "pickup") $("shipTotal").innerText = "Gratis";
-    else $("shipTotal").innerText = shipQuote ? money(ship) : "Por calcular";
+    let shipCost = 0;
+    let shipLabel = "Gratis";
     
-    const total = sub + (mode==="mx" ? ship : (mode==="tj"?200:0));
-    $("grandTotal").innerText = money(total);
-    if($("barTotal")) $("barTotal").innerText = money(total);
+    if(mode === "tj") { shipCost = 200; shipLabel = "$200.00"; }
+    else if(mode === "mx") {
+        if(shipQuote) { shipCost = shipQuote.mxn; shipLabel = money(shipCost); }
+        else { shipLabel = "Cotizar"; }
+    }
     
-    $("paybar")?.classList.toggle("visible", cart.length > 0);
-    $("shipForm").style.display = (mode==="mx"||mode==="tj") ? "block" : "none";
+    $("shipTotal").innerText = shipLabel;
+    $("grandTotal").innerText = money(sub + shipCost);
+    
+    $("paybar")?.classList.toggle("visible", cart.length>0);
 }
-
-/* QUOTE & CHECKOUT */
-$("quoteBtn")?.addEventListener("click", async ()=>{
-    const zip = $("zipQuote").value;
-    if(zip.length!==5) { toast("CP Inválido"); return; }
-    $("shipResult").innerText = "Calculando...";
-    try {
-        const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
-        const d = await r.json();
-        if(d.ok) { shipQuote=d; $("shipResult").innerText = `${d.label}: ${money(d.mxn)}`; }
-        else { $("shipResult").innerText="Estándar: $250"; shipQuote={mxn:250}; }
-        updateTotals();
-    } catch(e) { $("shipResult").innerText="Error conexión"; }
-});
 
 window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
-    const mode = document.querySelector('input[name="shipMode"]:checked')?.value || "mx";
+    const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
+    const to = {
+        postal_code: $("cp")?.value,
+        address1: $("addr")?.value,
+        city: $("city")?.value,
+        name: $("name")?.value
+    };
     
     try {
-        const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode})});
+        const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
         const d = await r.json();
         if(d.url) location.href=d.url; else throw new Error();
     } catch(e) { toast("Error checkout"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
@@ -144,7 +149,4 @@ window.openDrawer=()=>{ $("drawer").classList.add("active"); $("overlay").classL
 window.closeAll=()=>{ document.querySelectorAll(".active").forEach(e=>e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
 window.openLegal=(t)=>{ $("legalModal").classList.add("active"); $("overlay").classList.add("active"); document.querySelectorAll(".legalBlock").forEach(b=>b.style.display=(b.dataset.legalBlock===t)?"block":"none"); };
 
-document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
-
 init();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
