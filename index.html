@@ -1,284 +1,268 @@
 <!DOCTYPE html>
-<html lang="es-MX">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Merch Oficial SCORE International. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES." />
-  
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="manifest" href="/site.webmanifest" />
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="preload" href="/assets/hero.webp" as="image">
-  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image">
-  
-  <script src="https://js.stripe.com/v3" async defer></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>SCORE STORE — Official Merchandise</title>
+<meta name="description" content="Tienda oficial de merch SCORE. Equipamiento auténtico fabricado en Tijuana por ÚNICO UNIFORMES."/>
+
+<link rel="icon" href="/icons-score.svg" type="image/svg+xml"/>
+<link rel="apple-touch-icon" href="/assets/icons/icon-192.png"/>
+<link rel="manifest" href="/site.webmanifest"/>
+
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Teko:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+<link href="/css/styles.css" rel="stylesheet"/>
+
+<link as="image" href="/assets/hero.webp" rel="preload"/>
+<link as="fetch" crossorigin="" href="/data/catalog.json" rel="preload"/>
+
+<script async="" defer="" src="https://js.stripe.com/v3/"></script>
 </head>
 
 <body>
-  <div class="page-bg"></div>
+  <div class="bgWrap">
+    <div class="bgImg"></div>
+    <div class="bgOverlay"></div>
+  </div>
 
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International" width="160" height="46" loading="eager">
+      <a class="brand" href="/">
+        <img alt="SCORE STORE" class="brandLogo" height="44" src="/assets/logo-score.webp" width="160"/>
       </a>
-
-      <nav class="navRight">
-        <div class="navLinks desktop-only">
-          <button onclick="scrollToId('drops')">DROPS</button>
-          <button onclick="scrollToId('catalog')">CATÁLOGO</button>
-          <button onclick="scrollToId('shipping')">ENVÍOS</button>
-        </div>
-
-        <div class="location-pill">MX · <b>TIJUANA</b></div>
-        
-        <button class="cartTrigger" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-16L4 4 2 2M4 4h16l-2 10H6L4 4z"></path></svg>
-          <span id="cartCount" class="cartCount" style="display:none">0</span>
+      <nav class="nav">
+        <button class="navBtn" onclick="scrollToId('drops')" type="button">Drops</button>
+        <button class="navBtn" onclick="scrollToId('catalog')" type="button">Catálogo</button>
+        <button class="navBtn cartBtn" id="openCartBtn" onclick="openDrawer()" type="button">
+          <span class="cartIcon" aria-hidden="true">🛒</span>
+          <span id="cartCount">0</span>
         </button>
       </nav>
     </div>
   </header>
 
-  <main class="wrap">
-
+  <main>
     <section class="hero" id="top">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
-      
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="World Desert" width="90" height="90">
-
-      <div class="heroContent">
-        <div class="tag-line">
-          <span class="tag-badge">OFICIAL</span>
-          <span>MERCHANDISE 2025</span>
+      <div class="container heroInner">
+        <div class="heroText">
+          <h1>SCORE<br><span style="color:var(--red)">INTERNATIONAL</span></h1>
+          <p class="lead">Equipamiento oficial de las carreras más duras del mundo. Fabricado en Tijuana por ÚNICO UNIFORMES.</p>
+          <div class="heroActions">
+            <button class="btn primary" onclick="scrollToId('catalog')" type="button">COMPRAR AHORA</button>
+            <button class="btn ghost" onclick="scrollToId('drops')" type="button">VER DROPS</button>
+          </div>
+          <div class="heroBadges">
+            <span class="badge">💳 Pagos Seguros</span>
+            <span class="badge">📦 Envíos Nacionales</span>
+            <span class="badge">🔥 Edición Limitada</span>
+          </div>
         </div>
         
-        <h1>SCORE<br><span>INTERNATIONAL</span></h1>
-        
-        <div class="marketing-copy">
-          Equipamiento oficial de las carreras más exigentes del mundo.<br>
-          <strong>ÚNICO UNIFORMES:</strong> Patrocinador y Fabricante Oficial.
-        </div>
-
-        <div class="ctaRow">
-          <button class="btn primary" onclick="scrollToId('catalog')">COMPRAR AHORA</button>
-          <button class="btn secondary" onclick="scrollToId('drops')">VER DROPS</button>
+        <div class="heroCard">
+          <div class="heroCardTop">
+            <div class="heroCardTitle">DROP DESTACADO</div>
+            <div class="heroCardTag">LIMITADO</div>
+          </div>
+          <div class="heroCardBody">
+            <div class="heroCardName" id="featuredName">Cargando...</div>
+            <div class="heroCardPrice" id="featuredPrice"></div>
+            <img id="featuredImg" src="" style="width:100%; height:150px; object-fit:contain; margin:10px 0; mix-blend-mode:lighten; display:none;">
+            <div class="heroCardCta">
+              <button class="btn primary full" id="featuredBtn" type="button">VER PRODUCTO</button>
+            </div>
+            <div class="heroCardNote">* Stock sujeto a disponibilidad.</div>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="section" id="drops">
-      <div class="section-head">
-        <h2>DROPS <span>LIMITADOS</span></h2>
-        <p>Ediciones especiales y lanzamientos exclusivos.</p>
+      <div class="container">
+        <div class="sectionHead">
+          <h2>DROPS <span>EXCLUSIVOS</span></h2>
+          <p>Ediciones limitadas y artículos de colección Baja 1000.</p>
+        </div>
+        <div class="grid" id="dropsGrid"></div>
       </div>
-      <div class="catalogGrid" id="dropsGrid"></div>
     </section>
 
     <section class="section" id="catalog">
-      <div class="section-head">
-        <h2>CATÁLOGO <span>COMPLETO</span></h2>
+      <div class="container">
+        <div class="sectionHead">
+          <h2>CATÁLOGO <span>OFICIAL</span></h2>
+          <p>Selecciona tu talla y agrega al carrito.</p>
+        </div>
         
         <div class="filters">
-          <input class="inputField searchInput" id="search" placeholder="Buscar producto..." type="search"/>
-          <select class="inputField select" id="filterCat">
-            <option value="all">Todas las Categorías</option>
+          <input class="search" id="search" placeholder="Buscar producto..." type="search"/>
+          <select class="select" id="filterCat">
+            <option value="all">Todas las categorías</option>
           </select>
         </div>
-      </div>
-
-      <div class="catalogGrid" id="catalogGrid"></div>
-    </section>
-
-    <section class="section partners" id="shipping">
-      <div class="partners-content shipping-box">
-        <div class="section-head" style="border:none; margin-bottom:20px;">
-          <h2>COTIZAR <span>ENVÍO</span></h2>
-        </div>
-        <p style="color:#aaa; margin-bottom:20px;">Calcula el costo real de envío a tu domicilio con nuestra integración oficial de Envia.com.</p>
         
-        <div class="ship-calculator">
-          <input class="inputField" id="zipQuote" inputmode="numeric" maxlength="5" placeholder="Código Postal (5 dígitos)" type="text" style="max-width:200px;">
-          <button class="btn secondary" id="quoteBtn">COTIZAR</button>
+        <div class="grid" id="catalogGrid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="shipping">
+      <div class="container">
+        <div class="sectionHead">
+          <h2>COTIZAR <span>ENVÍO</span></h2>
+          <p>Calcula el costo real de envío con Envia.com</p>
         </div>
-        <div id="shipResult" class="ship-result"></div>
+        <div class="shipBox">
+          <div class="shipRow">
+            <label class="lbl" for="zip">CÓDIGO POSTAL (5 DÍGITOS)</label>
+            <input class="input" id="zip" inputmode="numeric" maxlength="5" placeholder="Ej. 22000" type="text"/>
+          </div>
+          <div class="shipRow">
+            <button class="btn primary" id="quoteBtn" type="button">CALCULAR</button>
+          </div>
+          <div class="shipResult" id="shipResult"></div>
+        </div>
       </div>
     </section>
 
-    <section class="partners">
-      <h3>OFFICIAL PARTNERS</h3>
-      <div class="partnerGrid">
-        <img src="/assets/logo-ford.webp" alt="Ford" loading="lazy">
-        <img src="/assets/logo-rzr.webp" alt="Polaris" loading="lazy">
-        <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" loading="lazy">
-        <img src="/assets/logo-unico.webp" alt="Unico Uniformes" style="height:55px; opacity:1; filter:none;">
+    <section class="section partners" id="partners">
+      <div class="container">
+        <div class="partnersGrid">
+          <img alt="ÚNICO Uniformes" class="pLogo" src="/assets/logo-unico.webp" style="opacity:1; filter:none;"/>
+          <img alt="BFGoodrich" class="pLogo" src="/assets/logo-bfgodrich.webp"/>
+          <img alt="Ford" class="pLogo" src="/assets/logo-ford.webp"/>
+          <img alt="RZR" class="pLogo" src="/assets/logo-rzr.webp"/>
+        </div>
       </div>
     </section>
-
   </main>
 
-  <footer class="footer">
-    <div class="footerCard">
-      <div class="footerTop">
-        
-        <div class="footerCol">
-          <div class="unico-brand">
-            <img src="/assets/logo-unico.webp" alt="Único Uniformes" class="footerUnico">
-          </div>
-          <p class="footerDesc">
-            Operador, Fabricante y Distribuidor Oficial de Merchandise SCORE International.
-          </p>
-        </div>
-
-        <div class="footerCol">
-          <h4>SOPORTE</h4>
-          <div class="footerLinks">
-            <button onclick="openLegal('shipping')">Rastreo de Envíos</button>
-            <button onclick="openLegal('returns')">Política de Devolución</button>
-            <button onclick="openLegal('billing')">Facturación 4.0</button>
-          </div>
-        </div>
-
-        <div class="footerCol">
-          <h4>LEGAL</h4>
-          <div class="footerLinks">
-            <button onclick="openLegal('terms')">Términos del Servicio</button>
-            <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
-          </div>
-        </div>
-
-        <div class="footerCol">
-          <h4>CONTACTO</h4>
-          <div class="addressBlock">
-            <b>Único Uniformes</b>
-            Palermo 6106 Interior JK,<br>
-            Anexa Roma, 22614<br>
-            Tijuana, B.C.
-          </div>
-          <div style="margin-top:15px; font-size:14px;">
-            <a href="https://wa.me/526642368701" target="_blank" style="color:#00C853; text-decoration:none; font-weight:700;">
-              WhatsApp: 664 236 8701
-            </a>
-            <a href="mailto:ventas.unicotextil@gmail.com" style="color:#aaa; display:block; margin-top:5px; text-decoration:none;">
-              ventas.unicotextil@gmail.com
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-    <div class="footerBottom">
-      SCORE Store © 2025 · Powered by Único Uniformes
-    </div>
-  </footer>
-
-  <div id="overlay" class="overlay" onclick="closeAll()"></div>
-
-  <aside id="drawer" class="drawer">
-    <div class="dHead">
-      <h3 class="dTitle">TU EQUIPO</h3>
-      <button class="closeBtn" onclick="closeAll()">×</button>
+  <div class="overlay" id="overlay" onclick="closeAll()" aria-hidden="true"></div>
+  <aside class="drawer" id="drawer" role="dialog">
+    <div class="drawerHead">
+      <h3 class="dTitle">TU CARRITO</h3>
+      <button class="iconBtn" onclick="closeAll()" type="button">✕</button>
     </div>
     
-    <div id="cartBody" class="dBody"></div>
+    <div class="drawerBody">
+      <div class="cartItems" id="cartItems"></div>
+      <div class="cartEmpty" id="cartEmpty" style="text-align:center; padding:20px; color:#aaa;">Tu carrito está vacío.</div>
+    </div>
     
-    <div class="dFoot">
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <input id="promoInput" type="text" placeholder="CÓDIGO PROMO" class="inputField" style="margin:0; text-transform:uppercase;">
-        <button id="promoApplyBtn" class="btn-sm-black">OK</button>
+    <div class="drawerFoot">
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
+        <div class="row"><span>Envío</span><strong id="shipTotal">—</strong></div>
+        <div class="row big"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
       </div>
-
-      <div class="sumRow"><span>Subtotal</span><span id="lnSub">$0</span></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:var(--neon-green);"><span>Desc.</span><span id="lnDiscount">-$0</span></div>
-      <div class="sumRow total"><span>TOTAL</span><span id="lnTotal">$0</span></div>
-      
-      <button id="payBtn" class="btn primary full" style="width:100%; margin-top:15px;" onclick="checkout()">
-        PAGAR
-      </button>
-      <div style="text-align:center; font-size:11px; color:#888; margin-top:10px;">
-        🔒 Pago seguro vía Stripe. Envíos calculados al siguiente paso.
-      </div>
+      <button class="btn primary full" id="checkoutBtn" type="button">PAGAR AHORA</button>
+      <div class="smallNote">🔒 Pago seguro procesado por Stripe.</div>
     </div>
   </aside>
 
-  <section id="legalModal" class="modal" style="height:auto; min-height:400px;">
-    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeLegal()">×</button></div>
-    <div class="dBody">
-      <div class="legalBlock" data-legal-block="shipping" style="display:none">
-        <h4 style="color:var(--score-red);">Envíos y Entregas</h4>
-        <p>Envíos nacionales vía FedEx o Estafeta (3-7 días). Pickup gratuito en nuestras oficinas de Tijuana.</p>
+  <footer class="footer">
+    <div class="container footerInner">
+      <div class="fCol">
+        <div class="fTitle">SCORE STORE</div>
+        <p class="fText">Merch oficial fabricado en Tijuana, B.C. por ÚNICO UNIFORMES.</p>
+        <p class="fText" style="margin-top:10px;">Palermo 6106 Interior JK, Anexa Roma, 22614</p>
+        <a href="https://wa.me/526642368701" style="color:#00E676; text-decoration:none; display:block; margin-top:10px;">WhatsApp: 664 236 8701</a>
       </div>
-      <div class="legalBlock" data-legal-block="returns" style="display:none">
-        <h4 style="color:var(--score-red);">Garantías</h4>
-        <p>7 días naturales por defectos de fabricación. Productos de liquidación son venta final.</p>
+      <div class="fCol">
+        <div class="fTitle">LINKS</div>
+        <a class="fLink" href="#drops">Drops Limitados</a>
+        <a class="fLink" href="#catalog">Catálogo Completo</a>
+        <a class="fLink" href="/legal.html">Términos y Condiciones</a>
       </div>
-      </div>
-  </section>
+    </div>
+    <div class="copy">© 2025 SCORE STORE · Operado por Único Uniformes</div>
+  </footer>
 
-  <div id="toast" class="toast">Notificación</div>
+  <div class="toast" id="toast">Listo</div>
 
   <script>
     const DEBUG = (location.hostname === 'localhost');
-    const API_BASE = (location.hostname.includes("netlify")) ? "/.netlify/functions" : "/api";
+    const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
     const CART_KEY = "score_cart_v3";
-    
-    // Estado
-    let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    const PROMO_KEY = "score_promo_v3";
+
+    // Estado Global
+    let cart = [];
     let catalog = [];
-    let promoState = null;
+    let shipQuote = null;
 
-    // Helpers
+    /* ===== HELPERS ===== */
     const $ = (id) => document.getElementById(id);
-    const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n||0);
-    function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth", block:"start"}); }
-
-    function toast(msg) {
+    const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
+    function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
+    
+    function showToast(msg){
       const t = $("toast"); t.textContent = msg; t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 3000);
+      setTimeout(()=> t.classList.remove("show"), 2500);
     }
 
-    /* --- CATALOGO LOGIC --- */
-    async function init() {
-      renderCart();
-      try {
-        // Carga de catálogo real
-        const res = await fetch("/data/catalog.json");
-        const data = await res.json();
-        catalog = data.products || [];
-        
-        buildFilters();
-        renderCatalog(); // Render inicial
-        renderDrops();   // Render sección drops
-      } catch(e) {
-        console.error("Error loading catalog", e);
-      }
+    /* ===== CART LOGIC ===== */
+    function loadCart(){ try{ cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); } catch(e){ cart=[]; } }
+    function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+    
+    function cartCount(){ return cart.reduce((a,i)=>a + (i.qty||0), 0); }
+    function cartSubtotal(){ return cart.reduce((a,i)=>a + (i.price||0)*(i.qty||0), 0); }
+
+    function updateTotals(){
+      $("cartCount").textContent = cartCount();
+      $("subTotal").textContent = money(cartSubtotal());
+      
+      const shipCost = shipQuote ? shipQuote.mxn : 0;
+      $("shipTotal").textContent = shipQuote ? money(shipCost) : "Cotizar al pagar";
+      
+      const total = cartSubtotal() + shipCost;
+      $("grandTotal").textContent = money(total);
     }
 
-    function buildFilters() {
-      const cats = new Set();
-      catalog.forEach(p => { if(p.category) cats.add(p.category); });
-      const sel = $("filterCat");
-      cats.forEach(c => {
-        const o = document.createElement("option"); o.value = c; o.text = c;
-        sel.appendChild(o);
+    function renderCart(){
+      const wrap = $("cartItems");
+      wrap.innerHTML = "";
+      $("cartEmpty").style.display = cart.length ? "none" : "block";
+
+      cart.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "cartRow";
+        row.innerHTML = `
+          <div class="cInfo">
+            <div class="cName">${item.name}</div>
+            <div class="cMeta">${item.variant || ""}</div>
+            <div class="cPrice">${money(item.price)}</div>
+          </div>
+          <div class="cQty">
+            <button class="qtyBtn" data-act="dec" data-idx="${idx}">−</button>
+            <span class="qtyNum">${item.qty}</span>
+            <button class="qtyBtn" data-act="inc" data-idx="${idx}">+</button>
+          </div>
+          <button class="iconBtn" data-act="del" data-idx="${idx}" style="margin-left:10px; color:#E10600;">&times;</button>
+        `;
+        wrap.appendChild(row);
       });
-      // Listeners
-      $("search").addEventListener("input", renderCatalog);
-      $("filterCat").addEventListener("change", renderCatalog);
+
+      wrap.querySelectorAll("[data-act]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const idx = Number(btn.getAttribute("data-idx"));
+          const act = btn.getAttribute("data-act");
+          if(!cart[idx]) return;
+          if(act==="inc") cart[idx].qty++;
+          if(act==="dec") cart[idx].qty = Math.max(1, cart[idx].qty-1);
+          if(act==="del") cart.splice(idx,1);
+          saveCart(); renderCart(); updateTotals();
+        });
+      });
     }
 
-    function renderCatalog() {
+    /* ===== CATALOG LOGIC ===== */
+    function renderCatalog(){
       const grid = $("catalogGrid");
       grid.innerHTML = "";
       
-      const q = $("search").value.toLowerCase();
+      const q = ($("search").value||"").toLowerCase().trim();
       const cat = $("filterCat").value;
 
       const filtered = catalog.filter(p => {
@@ -287,154 +271,86 @@
         return true;
       });
 
-      if(!filtered.length) { grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:40px; color:#aaa;'>No se encontraron productos.</div>"; return; }
-
-      // Generación de Tarjetas "Gold Ops"
-      grid.innerHTML = filtered.map(p => createCardHTML(p)).join("");
+      filtered.forEach(p => {
+        const card = createProductCard(p);
+        grid.appendChild(card);
+      });
     }
 
-    function renderDrops() {
-      const dropsGrid = $("dropsGrid");
-      // Filtramos productos marcados como "featured" o "limited" en el JSON
-      const drops = catalog.filter(p => p.tags && (p.tags.includes("limited") || p.tags.includes("drop"))).slice(0, 4);
+    function renderDrops(){
+      const grid = $("dropsGrid");
+      // Productos marcados como "limited" o "drop" en el JSON
+      const drops = catalog.filter(p => p.tags && (p.tags.includes('limited') || p.tags.includes('drop')));
+      if(!drops.length) return; // Ocultar sección si no hay drops
       
-      if(!drops.length) { 
-        // Fallback: Mostrar los primeros 4 si no hay drops definidos
-        dropsGrid.innerHTML = catalog.slice(0,4).map(p => createCardHTML(p)).join("");
-        return;
-      }
-      dropsGrid.innerHTML = drops.map(p => createCardHTML(p)).join("");
+      drops.forEach(p => {
+        const card = createProductCard(p);
+        grid.appendChild(card);
+      });
     }
 
-    function createCardHTML(p) {
-      // Pill Buttons para tallas
+    function createProductCard(p){
+      const card = document.createElement("div");
+      card.className = "card prodCard";
+      const img = p.img || "/assets/logo-score.webp";
       const sizes = p.sizes || ["Unitalla"];
-      const sizeBtns = sizes.map(s => `<button class="size-pill" onclick="selectSize(this, '${s}')">${s}</button>`).join("");
+      
+      // Select HTML
+      const options = sizes.map(s => `<option value="${s}">${s}</option>`).join("");
 
-      return `
-        <div class="champItem prodCard" id="card_${p.id}">
-          <div class="card-bg-texture"></div>
-          <div class="card-content-wrap">
-            <div class="tags-container">
-               ${p.tags?.includes('new') ? '<span class="badge new">NUEVO</span>' : ''}
-               ${p.tags?.includes('limited') ? '<span class="badge limit">EDICIÓN LIMITADA</span>' : ''}
-            </div>
-            
-            <img src="${p.img}" alt="${p.name}" class="prod-img" loading="lazy">
-            
-            <div class="prod-info">
-              <div class="prod-name">${p.name}</div>
-              <div class="prod-price">${money(p.baseMXN)}</div>
-              
-              <div class="size-selector-row" id="sizes_${p.id}" data-selected="">
-                ${sizeBtns}
-              </div>
-              
-              <button class="btn primary full btn-add" onclick="addToCart('${p.id}')">
-                AGREGAR +
-              </button>
-            </div>
+      card.innerHTML = `
+        <div class="prodImg">
+          <img src="${img}" alt="${p.name}" loading="lazy">
+        </div>
+        <div class="prodBody">
+          <div class="prodTop">
+            <div class="prodName">${p.name}</div>
+            <div class="prodPrice">${money(p.baseMXN)}</div>
+          </div>
+          <div class="prodMeta">${p.sectionId || "Oficial"}</div>
+          <div class="prodActions">
+            <select class="select sizePick">
+              ${options}
+            </select>
+            <button class="btn primary addBtn">AGREGAR</button>
           </div>
         </div>
       `;
+      
+      card.querySelector(".addBtn").addEventListener("click", () => {
+        const s = card.querySelector(".sizePick").value;
+        const key = `${p.id}_${s}`;
+        const exist = cart.find(i => i.key === key);
+        
+        if(exist) exist.qty++;
+        else cart.push({ key, id:p.id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1 });
+        
+        saveCart(); updateTotals(); renderCart(); openDrawer(); showToast("Agregado al carrito");
+      });
+      return card;
     }
 
-    /* --- UI INTERACTION --- */
-    window.selectSize = (btn, size) => {
-      // Deseleccionar hermanos
-      const parent = btn.parentElement;
-      parent.setAttribute("data-selected", size);
-      parent.querySelectorAll(".size-pill").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    };
-
-    window.addToCart = (id) => {
-      const sizeContainer = $(`sizes_${id}`);
-      let s = sizeContainer.getAttribute("data-selected");
+    function setFeatured(){
+      // El producto destacado es el primero marcado como "featured"
+      const p = catalog.find(x => x.tags && x.tags.includes('featured')) || catalog[0];
+      if(!p) return;
       
-      // Auto-select si es Unitalla
-      if(!s && sizeContainer.children.length === 1) { s = sizeContainer.children[0].innerText; }
+      $("featuredName").textContent = p.name;
+      $("featuredPrice").textContent = money(p.baseMXN);
+      // Mostrar imagen si se desea
+      const img = $("featuredImg");
+      img.src = p.img;
+      img.style.display = "block";
       
-      if(!s) { toast("⚠️ Por favor selecciona una talla"); return; }
-
-      const p = catalog.find(x => x.id === id);
-      const key = `${id}_${s}`;
-      const exist = cart.find(i => i.key === key);
-      
-      if(exist) exist.qty++;
-      else cart.push({ key, id, name:p.name, price:p.baseMXN, img:p.img, size:s, qty:1 });
-      
-      saveCart();
-      renderCart();
-      openDrawer();
-      toast("Producto agregado");
-    };
-
-    /* --- CART & SHIPPING --- */
-    function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-    
-    function renderCart() {
-      const body = $("cartBody");
-      const countEl = $("cartCount");
-      
-      // Update count
-      const count = cart.reduce((a,b) => a+b.qty, 0);
-      if(countEl) { countEl.innerText = count; countEl.style.display = count > 0 ? "flex" : "none"; }
-
-      if(!cart.length) {
-        body.innerHTML = "<div style='text-align:center; padding:40px; color:#aaa;'>Tu carrito está vacío.</div>";
-        $("payBtn").disabled = true;
-        updateTotals(0);
-        return;
-      }
-
-      body.innerHTML = cart.map((i, idx) => `
-        <div class="cartItem">
-          <img src="${i.img}" class="cartThumb">
-          <div style="flex:1;">
-            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${i.name}</div>
-            <div style="font-size:11px; background:#f0f0f0; padding:2px 6px; border-radius:4px; display:inline-block;">${i.size}</div>
-            <div style="color:var(--score-red); font-weight:700; margin-top:4px;">${money(i.price)}</div>
-          </div>
-          <div style="text-align:right;">
-            <button onclick="removeFromCart(${idx})" class="iconBtn" style="color:#aaa;">&times;</button>
-            <div style="font-weight:700; font-size:13px; margin-top:5px;">x${i.qty}</div>
-          </div>
-        </div>
-      `).join("");
-      
-      updateTotals();
-      $("payBtn").disabled = false;
+      $("featuredBtn").onclick = () => scrollToId("catalog");
     }
 
-    window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); renderCart(); };
-
-    function updateTotals() {
-      const sub = cart.reduce((a,b) => a + (b.price*b.qty), 0);
-      let disc = 0;
-      if(promoState?.type === "pct") disc = Math.round(sub * (promoState.value/100));
+    /* ===== SHIPPING QUOTE (Envia.com via Server) ===== */
+    async function quoteShipping(){
+      const zip = $("zip").value.trim();
+      if(zip.length !== 5) { showToast("Código postal inválido"); return; }
       
-      const total = Math.max(0, sub - disc);
-      
-      $("lnSub").innerText = money(sub);
-      $("lnTotal").innerText = money(total);
-      
-      if(disc > 0) {
-        $("rowDiscount").style.display = "flex";
-        $("lnDiscount").innerText = `- ${money(disc)}`;
-      } else {
-        $("rowDiscount").style.display = "none";
-      }
-    }
-
-    /* --- QUOTE SHIPPING (ON PAGE) --- */
-    $("quoteBtn")?.addEventListener("click", async () => {
-      const zip = $("zipQuote").value;
-      const resDiv = $("shipResult");
-      
-      if(zip.length !== 5) { toast("Código postal inválido"); return; }
-      
-      resDiv.innerHTML = "Calculando...";
+      $("shipResult").innerHTML = "Calculando...";
       
       try {
         const res = await fetch(`${API_BASE}/quote_shipping`, {
@@ -444,54 +360,73 @@
         const data = await res.json();
         
         if(data.ok) {
-          resDiv.innerHTML = `<div style="color:var(--neon-green); font-weight:700; margin-top:10px;">${data.label}: ${money(data.mxn)}</div>`;
+          shipQuote = data;
+          $("shipResult").innerHTML = `<span style="color:#fff">${data.label}</span>: <strong>${money(data.mxn)}</strong>`;
         } else {
-          resDiv.innerHTML = `<div style="color:var(--score-red); margin-top:10px;">Envío Nacional: $250.00 MXN</div>`;
+          $("shipResult").innerText = "Envío Nacional Estándar: $250.00";
+          shipQuote = { mxn: 250 }; // Fallback
         }
       } catch(e) {
-        resDiv.innerHTML = "Error al cotizar.";
+        $("shipResult").innerText = "Error cotizando. Se aplicará tarifa estándar.";
       }
-    });
+    }
+    $("quoteBtn").addEventListener("click", quoteShipping);
 
-    /* --- CHECKOUT --- */
-    window.checkout = async () => {
-      const btn = $("payBtn");
-      btn.innerText = "PROCESANDO..."; btn.disabled = true;
-      
-      // Obtenemos info del formulario del drawer (opcional)
-      const shipMode = document.querySelector('input[name="shipMode"]:checked')?.value || "mx";
+    /* ===== CHECKOUT (Stripe) ===== */
+    async function checkout(){
+      if(!cart.length) { showToast("Carrito vacío"); return; }
+      const btn = $("checkoutBtn");
+      btn.disabled = true; btn.textContent = "PROCESANDO...";
       
       try {
         const res = await fetch(`${API_BASE}/create_checkout`, {
           method: "POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ 
-            items: cart, 
-            mode: "mx", // Por defecto enviamos a MX para que Stripe pida dirección
-            promoCode: promoState?.code
-          })
+          body: JSON.stringify({ items: cart, mode: "mx" })
         });
-        const d = await res.json();
-        if(d.url) location.href = d.url; else throw new Error("Error iniciando pago");
+        const data = await res.json();
+        if(data.url) location.href = data.url; else throw new Error("Error iniciando pago");
       } catch(e) {
-        alert("Error de conexión");
-        btn.innerText = "PAGAR"; btn.disabled = false;
+        showToast("Error de conexión");
+        btn.disabled = false; btn.textContent = "PAGAR AHORA";
       }
-    };
+    }
+    $("checkoutBtn").addEventListener("click", checkout);
 
-    /* --- NAVIGATION --- */
-    window.openDrawer = () => { $("drawer").classList.add("open"); $("overlay").classList.add("open"); document.body.classList.add("modalOpen"); };
-    window.closeAll = () => { 
-      document.querySelectorAll(".open").forEach(e => e.classList.remove("open")); 
-      document.body.classList.remove("modalOpen");
-    };
-    
-    window.openLegal = (type) => {
-      $("legalModal").classList.add("open"); $("overlay").classList.add("open");
-      document.querySelectorAll(".legalBlock").forEach(b => b.style.display = (b.dataset.legalBlock === type) ? "block" : "none");
-    };
-    window.closeLegal = closeAll;
+    /* ===== DRAWER ===== */
+    function openDrawer(){ $("drawer").classList.add("open"); $("overlay").classList.add("open"); document.body.classList.add("lock"); }
+    function closeAll(){ 
+      document.querySelectorAll(".open").forEach(e=>e.classList.remove("open")); 
+      document.body.classList.remove("lock"); 
+    }
 
-    // Start
+    /* ===== INIT ===== */
+    async function init(){
+      loadCart(); updateTotals(); renderCart();
+      
+      try {
+        const res = await fetch("/data/catalog.json");
+        const data = await res.json();
+        catalog = data.products || [];
+        
+        // Populate Filters
+        const cats = new Set();
+        catalog.forEach(p => { if(p.category) cats.add(p.category); });
+        const sel = $("filterCat");
+        cats.forEach(c => {
+           const o = document.createElement("option"); o.value = c; o.text = c;
+           sel.appendChild(o);
+        });
+        
+        renderCatalog();
+        renderDrops();
+        setFeatured();
+      } catch(e) { console.error("Error loading catalog"); }
+      
+      // Listeners
+      $("search").addEventListener("input", renderCatalog);
+      $("filterCat").addEventListener("change", renderCatalog);
+    }
+
     init();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
   </script>
