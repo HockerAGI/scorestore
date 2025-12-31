@@ -56,16 +56,91 @@ function validateSizes(items, productMap) {
 }
 
 /* =========================
+   ENVIA.COM (LOGIC)
+========================= */
+// Lógica para cotizar (usada por quote_shipping.js y create_checkout.js)
+async function getEnviaQuote(postalCode, itemsCount = 1) {
+  const apiKey = process.env.ENVIA_API_KEY;
+  if (!apiKey) return null; // Sin llave, fallback
+
+  try {
+    // Estimación de peso: 1kg base + 0.2kg por item extra
+    const weight = 1 + (Math.max(0, itemsCount - 1) * 0.2);
+    
+    const payload = {
+      origin: { postal_code: "22105", country_code: "MX" }, // TU ALMACÉN
+      destination: { postal_code: postalCode, country_code: "MX" },
+      packages: [{
+        content: "Ropa Deportiva",
+        amount: 1,
+        type: "box",
+        dimensions: { length: 30, width: 25, height: 10 },
+        weight: weight,
+        insurance: 0,
+        declared_value: 500
+      }],
+      shipment: { carrier: "fedex", service: "standard" } // Preferencia por FedEx
+    };
+
+    const res = await fetch("https://api.envia.com/ship/rate/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    
+    // Envia devuelve un array de paqueterías disponibles. Buscamos la mejor opción.
+    let rates = Array.isArray(data) ? data : (data.data || []);
+    if (!rates.length) return null;
+
+    // Filtramos para evitar paqueterías raras, nos quedamos con las confiables si existen
+    const trusted = rates.filter(r => ["fedex", "estafeta", "dhl", "paquetexpress"].includes(r.carrier?.toLowerCase()));
+    const candidates = trusted.length > 0 ? trusted : rates;
+
+    // Elegimos la más barata
+    const cheapest = candidates.reduce((min, curr) => 
+      (curr.total_price < min.total_price) ? curr : min
+    , candidates[0]);
+
+    return {
+      mxn: Math.ceil(cheapest.total_price), // Redondeamos hacia arriba para seguridad
+      label: `${cheapest.carrier.toUpperCase()} Standard`,
+      carrier: cheapest.carrier,
+      days: cheapest.delivery_estimate || 5
+    };
+
+  } catch (e) {
+    console.error("Error cotizando envío:", e);
+    return null;
+  }
+}
+
+/* =========================
    LOGIC: SHIPPING & PROMOS
 ========================= */
-async function computeShipping({ mode, to }) {
+async function computeShipping({ mode, to, itemsCount }) {
+  // 1. Pickup / Local
   if (mode === "pickup") return { ok: true, mxn: 0, label: "Pickup en Tienda (TJ)", days: 0 };
   if (mode === "tj") return { ok: true, mxn: 200, label: "Envío Local (Tijuana)", days: 2 };
+
+  // 2. Nacional (Intento de Cotización Real)
   if (mode === "mx") {
-    // Validación básica de CP
-    if (!to?.postal_code || to.postal_code.length !== 5) return { ok: true, mxn: 250, label: "Envío Nacional", days: 5 };
-    return { ok: true, mxn: 250, label: "Envío Nacional Standard", days: 5 };
+    const cp = digitsOnly(to?.postal_code);
+    
+    // Solo cotizamos si hay un CP válido de 5 dígitos
+    if (cp.length === 5) {
+      const quote = await getEnviaQuote(cp, itemsCount || 1);
+      if (quote) {
+        return { ok: true, mxn: quote.mxn, label: quote.label, carrier: quote.carrier, days: quote.days };
+      }
+    }
+    
+    // FALLBACK: Si no hay CP o falla la API, cobramos Tarifa Plana Segura
+    return { ok: true, mxn: 250, label: "Envío Nacional", days: 7 };
   }
+
   return { ok: true, mxn: 0, label: "Por definir", days: 7 };
 }
 
@@ -86,39 +161,36 @@ async function applyPromoToTotals({ promoCode, subtotalMXN, shippingMXN }) {
 }
 
 /* =========================
-   ENVIA.COM (PRODUCCIÓN)
+   ENVIA.COM (GENERACIÓN GUÍA)
 ========================= */
 async function createEnviaLabel(orderData) {
   const apiKey = process.env.ENVIA_API_KEY;
-  if (!apiKey) {
-    console.warn("⚠️ SKIPPED: Falta ENVIA_API_KEY.");
-    return null;
-  }
+  if (!apiKey) return null;
 
   const carrier = toStr(orderData.metadata?.ship_carrier || "fedex").toLowerCase(); 
   const service = toStr(orderData.metadata?.ship_service_code || "standard");
-  const address = orderData.shipping?.address || {};
-  const name = orderData.shipping?.name || "Cliente SCORE Store";
+  const address = orderData.shipping_details?.address || {};
+  const name = orderData.shipping_details?.name || "Cliente SCORE";
   
-  // DATOS REALES DE ORIGEN (TIJUANA)
+  // Origen Real
   const origin = {
-      name: "Logística SCORE Store",
+      name: "Logística SCORE",
       company: "Unico Uniformes",
       email: "ventas.unicotextil@gmail.com", 
-      phone: "6641234567", // <--- ACTUALIZAR CON TU TELÉFONO REAL
+      phone: "6641234567",
       street: "Blvd. Gustavo Díaz Ordaz", 
-      number: "12345",     // <--- ACTUALIZAR
+      number: "12345",
       district: "La Mesa", 
       city: "Tijuana",
       state: "BC",
       country: "MX",
-      postal_code: "22105" // <--- ACTUALIZAR
+      postal_code: "22105"
   };
 
   const payload = {
-    origin: origin,
+    origin,
     destination: {
-      name: name,
+      name,
       street: toStr(address.line1),
       number: "", 
       district: toStr(address.line2 || ""),
@@ -158,7 +230,7 @@ async function createEnviaLabel(orderData) {
     }
     return null;
   } catch (e) {
-    console.error("❌ Envia Exception:", e);
+    console.error("Envia Exception:", e);
     return null;
   }
 }
@@ -166,5 +238,5 @@ async function createEnviaLabel(orderData) {
 module.exports = {
   jsonResponse, safeJsonParse, toStr, upper, digitsOnly, normalizePromo, getSiteUrlFromEnv,
   loadCatalog, productMapFromCatalog, validateCartItems, validateSizes,
-  computeShipping, applyPromoToTotals, createEnviaLabel
+  computeShipping, applyPromoToTotals, createEnviaLabel, getEnviaQuote
 };
