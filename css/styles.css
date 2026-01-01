@@ -1,8 +1,9 @@
 /* ======================================================
-   SCORE STORE — DESERT PRO (FINAL FIXED)
+   SCORE STORE — FINAL FLOATING OPS
    ====================================================== */
 
 :root {
+  /* FUENTES */
   --font-title: "Teko", sans-serif;
   --font-body: "Inter", sans-serif;
 
@@ -10,24 +11,28 @@
   --score-red: #E10600;
   --score-blue: #003087;
   --neon-green: #00E676; /* Iconos */
-  --desert-overlay: rgba(60, 40, 20, 0.85); /* Café Desierto Profundo */
   
   /* UI */
+  --bg-dark: #121212;
   --white: #ffffff;
   --header-h: 76px;
-  --radius: 12px; /* Redondeado más suave */
-  --shadow-card: 0 15px 40px rgba(0,0,0,0.4);
+  --radius: 12px;
+  
+  /* EFECTOS FLOTANTES (SIN OVERLAY OSCURO) */
+  --shadow-card: 0 15px 35px rgba(0, 0, 0, 0.4); /* Sombra para separar del fondo */
+  --shadow-hover: 0 25px 60px rgba(0, 0, 0, 0.6);
+  --text-shadow: 0 2px 10px rgba(0,0,0,0.8); /* Para leer sobre el fondo */
 }
 
 /* RESET */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-body);
-  background-color: #1a1a1a;
+  background-color: var(--bg-dark);
   color: var(--white);
-  /* IMAGEN DE FONDO (Vertical) */
+  /* IMAGEN DE FONDO PURA */
   background-image: url("/assets/fondo-pagina-score.webp");
   background-attachment: fixed;
   background-size: cover;
@@ -36,28 +41,22 @@ body {
 }
 body.modalOpen { overflow: hidden; }
 
-/* OVERLAY CAFÉ DESIERTO (Para contraste de texto) */
-.page-overlay {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background: var(--desert-overlay); 
-  backdrop-filter: blur(2px); /* Blur leve para elegancia */
-}
-
-/* --- HEADER BLANCO CON DETALLES ROJOS --- */
+/* HEADER BLANCO */
 .topbar {
   position: fixed; top: 0; left: 0; width: 100%; height: var(--header-h);
   background: rgba(255, 255, 255, 0.98);
   border-bottom: 4px solid var(--score-red);
-  z-index: 1000; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  z-index: 1000; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
 }
 .container { width: min(1300px, 94vw); margin: 0 auto; }
 .topbarInner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
 
 .brandLogo { height: 48px; width: auto; display: block; transition: .2s; }
-.brandLogo:hover { transform: scale(1.05); }
+.brandLogo:hover { opacity: 0.8; }
 
-/* Icono Carrito Pro */
 .navRight { display: flex; align-items: center; gap: 20px; }
+
+/* Botón Carrito */
 .cartBtn {
   position: relative; background: #fff; border: 2px solid #eee;
   width: 46px; height: 46px; border-radius: 50%;
@@ -73,61 +72,59 @@ body.modalOpen { overflow: hidden; }
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
 
-/* --- LAYOUT --- */
+/* LAYOUT */
 .wrap { padding-top: calc(var(--header-h) + 40px); padding-bottom: 80px; width: min(1200px, 94vw); margin: 0 auto; }
 .section { margin-bottom: 100px; }
 
-/* --- HERO IMPONENTE --- */
+/* --- HERO (FLOTANTE) --- */
 .hero {
-  position: relative; min-height: 650px;
+  position: relative; min-height: 600px;
   border-radius: var(--radius); overflow: hidden; margin-bottom: 80px;
-  box-shadow: var(--shadow-card); border: 1px solid rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center; /* Centrado */
+  box-shadow: var(--shadow-card); 
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  background: #000; /* Fallback */
 }
 
 .heroBg {
   position: absolute; inset: 0; z-index: 0;
   background: url('/assets/hero.webp') center/cover no-repeat;
+  filter: brightness(0.9); /* Ligero oscurecimiento de la imagen misma */
   transition: transform 15s ease;
 }
 .hero:hover .heroBg { transform: scale(1.05); }
 
-/* Overlay Café Desierto Mínimo Notable */
+/* Overlay Mínimo (Solo un tinte café muy suave para unificar) */
 .heroOverlay {
-  position: absolute; inset: 0; z-index: 1;
-  background: rgba(62, 39, 35, 0.4); /* Café con 40% opacidad */
-  mix-blend-mode: multiply;
-}
-
-.heroSeal {
-  position: absolute; top: 30px; right: 30px; width: 90px; z-index: 5;
-  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: rgba(62, 39, 35, 0.2); mix-blend-mode: multiply;
 }
 
 .heroContent {
   position: relative; z-index: 2; padding: 40px; max-width: 800px; text-align: center;
+  /* Sombra de texto fuerte para leer sobre imagen */
+  text-shadow: 0 4px 20px rgba(0,0,0,0.9);
 }
 
 .tagline {
   display: inline-block; background: var(--score-red); color: #fff;
   font-family: var(--font-title); font-size: 24px; padding: 5px 15px;
   text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
-  transform: skew(-10deg);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 h1 {
   font-family: var(--font-title); font-size: clamp(70px, 15vw, 140px);
   line-height: 0.85; text-transform: uppercase; margin-bottom: 30px;
-  text-shadow: 0 10px 40px rgba(0,0,0,0.6); letter-spacing: -2px;
 }
 h1 span { color: var(--score-red); }
 
 .marketing-copy {
   font-size: 20px; line-height: 1.5; color: #fff; margin-bottom: 40px;
-  font-weight: 500; text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+  font-weight: 500;
 }
 
-.ctaRow { display: flex; gap: 20px; justify-content: center; }
+.ctaRow { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -135,39 +132,42 @@ h1 span { color: var(--score-red); }
   text-transform: uppercase; cursor: pointer; border-radius: 50px;
   transition: .3s; letter-spacing: 1px; border: none;
 }
-.btn.primary { background: var(--score-red); color: #fff; box-shadow: 0 10px 30px rgba(225,6,0,0.4); }
+.btn.primary { background: var(--score-red); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .btn.primary:hover { background: #fff; color: var(--score-red); transform: translateY(-3px); }
-.btn.secondary { background: rgba(0,0,0,0.5); border: 2px solid #fff; color: #fff; }
+.btn.secondary { background: rgba(0,0,0,0.6); border: 2px solid #fff; color: #fff; backdrop-filter: blur(5px); }
 .btn.secondary:hover { background: #fff; color: #000; }
 .btn.full { width: 100%; border-radius: 8px; }
 
-/* --- COLECCIONES (TARJETAS GRANDES & TEXTURA VISIBLE) --- */
+/* --- COLECCIONES (TARJETAS GRANDES) --- */
 .sectionHead { 
   display: flex; justify-content: space-between; align-items: flex-end; 
-  margin-bottom: 40px; border-bottom: 2px solid rgba(255,255,255,0.3); 
+  margin-bottom: 40px; border-bottom: 2px solid rgba(255,255,255,0.2); 
   padding-bottom: 15px; flex-wrap: wrap; 
+  text-shadow: var(--text-shadow); /* Legibilidad sobre fondo */
 }
 h2 { 
   font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.9; color: #fff; 
 }
 h2 span { color: var(--score-red); }
-.sectionHead p { color: #eee; margin: 0; font-size: 16px; max-width: 400px; text-align: right; }
+.sectionHead p { color: #fff; margin: 0; font-size: 18px; max-width: 400px; text-align: right; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
 
 .champItem {
-  position: relative; height: 380px; /* Más altas */
+  position: relative; height: 380px;
   border-radius: var(--radius); overflow: hidden; cursor: pointer;
-  background: #fff; /* Fondo blanco para que la textura resalte */
+  background: #fff; /* Base blanca */
   box-shadow: var(--shadow-card); transition: all 0.3s ease;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 .champItem:hover { 
-  transform: translateY(-10px); box-shadow: 0 20px 50px rgba(225,6,0,0.3); 
+  transform: translateY(-10px); 
+  box-shadow: var(--shadow-hover);
   border: 2px solid var(--score-red); 
 }
 
-/* TEXTURA SIN OVERLAY (VISIBLE 100%) */
+/* TEXTURA SIN OVERLAY OSCURO (100% VISIBLE) */
 .card-texture {
   position: absolute; inset: 0; z-index: 0;
   background-image: url('/assets/baja1000-texture.webp');
@@ -176,10 +176,10 @@ h2 span { color: var(--score-red); }
   mix-blend-mode: normal; 
 }
 
-/* Logo Centrado y Grande */
+/* Logo con Sombra para contraste */
 .float-logo {
-  position: relative; z-index: 2; width: 200px; /* Logo Gigante */
-  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+  position: relative; z-index: 2; width: 220px; /* Logo más grande */
+  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .champItem:hover .float-logo { transform: scale(1.1); }
@@ -187,10 +187,11 @@ h2 span { color: var(--score-red); }
 .card-btn {
   position: absolute; bottom: 30px; z-index: 2;
   background: var(--score-red); color: #fff; font-family: var(--font-title);
-  padding: 8px 20px; font-size: 18px; border-radius: 4px;
-  opacity: 0; transform: translateY(20px); transition: .3s;
+  padding: 8px 25px; font-size: 20px; border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  transition: .3s; opacity: 0.9;
 }
-.champItem:hover .card-btn { opacity: 1; transform: translateY(0); }
+.champItem:hover .card-btn { opacity: 1; transform: scale(1.05); background: #fff; color: var(--score-red); }
 
 .badge {
   position: absolute; top: 20px; right: 20px; z-index: 5;
@@ -199,37 +200,42 @@ h2 span { color: var(--score-red); }
   border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* --- PARTNERS (DIRECTO EN FONDO) --- */
+/* --- PARTNERS --- */
 .partners { margin-top: 100px; text-align: center; }
+.partners h3 { 
+  font-family: var(--font-title); font-size: 30px; color: #fff; 
+  margin-bottom: 40px; text-shadow: var(--text-shadow); letter-spacing: 2px;
+}
 .partnersGrid { 
   display: flex; gap: 60px; justify-content: center; flex-wrap: wrap; align-items: center; 
 }
+/* Logos grandes y blancos */
 .pLogo { 
-  height: 45px; width: auto; filter: grayscale(1) brightness(200%); /* Blancos/Grises */
-  opacity: 0.8; transition: .3s; 
+  height: 50px; width: auto; filter: brightness(0) invert(1); 
+  opacity: 0.9; transition: .3s; drop-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-.pLogo:hover { filter: none; opacity: 1; transform: scale(1.1); }
+.pLogo:hover { transform: scale(1.1); opacity: 1; }
 
-/* --- FOOTER (NEGRO PURO, LOGO UNICO BLANCO) --- */
+/* --- FOOTER (NEGRO SÓLIDO + IZQUIERDA) --- */
 .footer {
   margin-top: 120px; background: #000; color: #fff;
   padding: 80px 0 40px; border-top: 6px solid var(--score-red);
+  text-align: left;
 }
 .footerInner { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 50px; }
 
-/* Fix Logo Único */
-.footerUnicoFix { 
-  width: 160px; margin-bottom: 20px; 
-  filter: brightness(0) invert(1); /* Fuerza a blanco total */
+/* Tipografía de Marca (Reemplazo de logo isotipo) */
+.footerBrandName {
+  font-family: var(--font-title); font-size: 36px; color: #fff; line-height: 1; margin-bottom: 15px;
 }
-.footerText { font-size: 14px; color: #aaa; line-height: 1.6; }
+.fText { font-size: 14px; color: #aaa; line-height: 1.6; }
 
 .fCol h4 { 
   font-family: var(--font-title); font-size: 24px; color: #fff; 
   margin-bottom: 25px; letter-spacing: 1px;
 }
 
-/* Enlaces sin recuadro blanco */
+/* Enlaces limpios (sin recuadro) */
 .footerLinks button, .footerLinks a {
   display: block; background: none; border: none; color: #999; font-size: 15px;
   margin-bottom: 12px; cursor: pointer; padding: 0; text-align: left; 
@@ -242,7 +248,7 @@ h2 span { color: var(--score-red); }
   font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* --- MODAL CATÁLOGO (IMÁGENES VERTICALES) --- */
+/* --- MODAL CATÁLOGO (Vertical & Pro) --- */
 .overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
   z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s;
@@ -253,7 +259,7 @@ h2 span { color: var(--score-red); }
   position: fixed; top: 50%; left: 50%; width: min(1000px, 94vw); max-height: 85vh;
   transform: translate(-50%, -45%); background: #fff; z-index: 2100;
   opacity: 0; pointer-events: none; border-radius: 12px; transition: .3s;
-  display: flex; flex-direction: column; overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden; color: #333;
 }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
@@ -266,7 +272,6 @@ h2 span { color: var(--score-red); }
 
 .dBody { flex: 1; overflow-y: auto; padding: 30px; background: #fff; }
 
-/* Grid Catálogo PRO */
 .catGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
 
 .prodCard {
@@ -317,13 +322,18 @@ h2 span { color: var(--score-red); }
 
 .dFoot { padding: 25px; border-top: 1px solid #eee; background: #fbfbfb; }
 
-/* Envíos Real */
+/* Envío */
 .shipSelector { margin-bottom: 20px; }
 .radio-option {
   display: flex; align-items: center; gap: 10px; padding: 12px;
   background: #fff; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer;
 }
 .radio-option input:checked + div { color: var(--score-red); font-weight: 700; }
+
+.inputField { 
+  width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; 
+  font-family: inherit; font-size: 16px; color: #000; background: #fff;
+}
 
 .sumRow { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #666; }
 .sumRow.total { font-size: 22px; font-weight: 700; color: #000; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
@@ -336,10 +346,12 @@ h2 span { color: var(--score-red); }
 }
 .toast.show { transform: translateX(0); }
 
+/* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
   .hero { flex-direction: column; text-align: center; justify-content: center; padding: 20px; }
   .heroSeal { position: static; width: 80px; margin-bottom: 20px; }
   .heroContent { padding: 20px; }
   .footerInner { grid-template-columns: 1fr; gap: 40px; }
   .ctaRow { justify-content: center; }
+  .partnersGrid { gap: 30px; }
 }
