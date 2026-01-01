@@ -1,6 +1,6 @@
-/* SCORE STORE LOGIC */
+/* SCORE STORE LOGIC - FINAL */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v7";
+const CART_KEY = "score_cart_prod_final";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
