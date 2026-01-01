@@ -1,6 +1,6 @@
-/* SCORE STORE LOGIC - FINAL */
+/* SCORE STORE LOGIC - FINAL V8 */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_prod_final";
+const CART_KEY = "score_cart_prod_v8";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -23,7 +23,7 @@ async function init(){
     });
 }
 
-/* CATALOG */
+/* CATALOG (FIXED SIZING) */
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
