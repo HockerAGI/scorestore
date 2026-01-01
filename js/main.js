@@ -1,6 +1,6 @@
 /* SCORE STORE LOGIC */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v6";
+const CART_KEY = "score_cart_final_v7";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -28,7 +28,7 @@ window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     $("catTitle").innerText = title;
-    $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando...</div>";
+    $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando inventario...</div>";
 
     const items = catalog.filter(p => p.sectionId === secId);
     if(!items.length) { $("catContent").innerHTML = "<div style='padding:40px; text-align:center;'>Agotado.</div>"; return; }
@@ -60,7 +60,7 @@ window.add = (id) => {
     const sizeCont = document.getElementById(`sizes_${id}`);
     let s = sizeCont.getAttribute("data-selected");
     if(!s && sizeCont.children.length===1) s = sizeCont.children[0].innerText;
-    if(!s) { toast("⚠️ Selecciona talla"); return; }
+    if(!s) { toast("⚠️ Selecciona una talla"); return; }
     
     const p = catalog.find(x=>x.id===id);
     const key = `${id}_${s}`;
@@ -127,13 +127,20 @@ function updateTotals(){
     
     $("shipTotal").innerText = shipLabel;
     $("grandTotal").innerText = money(sub + shipCost);
+    
+    $("paybar")?.classList.toggle("visible", cart.length>0);
 }
 
 window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    const to = { postal_code: $("cp")?.value, address1: $("addr")?.value, name: $("name")?.value };
+    const to = {
+        postal_code: $("cp")?.value,
+        address1: $("addr")?.value,
+        city: $("city")?.value,
+        name: $("name")?.value
+    };
     
     try {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
