@@ -1,78 +1,98 @@
 {
   "site": {
     "currency": "MXN",
-    "fx_mxn_per_usd": 18.0
+    "fx_mxn_per_usd": 17.5
   },
   "sections": [
-    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "COLECCIÓN 2025" },
-    { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVO STOCK" },
+    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL" },
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "NUEVA LLEGADA" },
     { "id": "BAJA_400", "title": "BAJA 400", "badge": "DISPONIBLE" },
     { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS" }
   ],
   "products": [
     {
       "id": "b1k-cham-25",
-      "name": "Chamarra Oficial B1K 2025",
+      "sku": "B1K-CHAM-25",
+      "name": "Chamarra Oficial Baja 1000 · 2025",
+      "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1789,
       "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
+      "subSection": "COLECCION_2025",
+      "status": "available",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["featured", "limited"],
-      "sku": "JKT-B1K-25"
+      "tags": ["baja1000", "featured"]
     },
     {
-      "id": "b1k-hoodie-tech",
-      "name": "Hoodie Técnica Negro/Gris",
+      "id": "b1k-hood-tech",
+      "sku": "B1K-HOOD-TECH",
+      "name": "Hoodie Técnica B1K Negro/Gris",
+      "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
+      "subSection": "COLECCION_2025",
+      "status": "available",
       "sizes": ["S", "M", "L", "XL"],
       "tags": ["baja1000"]
     },
     {
-      "id": "b1k-tee-black",
-      "name": "Camiseta Oficial Negra",
+      "id": "b1k-tee-blk",
+      "sku": "B1K-TEE-BLK",
+      "name": "Camiseta Negra Oficial 2025",
+      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
+      "subSection": "COLECCION_2025",
+      "status": "available",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["baja1000", "new"]
+      "tags": ["baja1000"]
     },
     {
       "id": "b1k-cap-red",
+      "sku": "B1K-CAP-RED",
       "name": "Gorra Oficial Roja/Gris",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
       "baseMXN": 660,
       "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "subSection": "ACCESORIOS",
+      "status": "low_stock",
       "sizes": ["Unitalla"],
-      "tags": ["accesorios", "low_stock"]
+      "tags": ["baja1000", "accesorios"]
     },
     {
       "id": "b500-tee-gry",
-      "name": "T-Shirt Baja 500 Gris",
+      "sku": "B500-TEE-GRY",
+      "name": "Camiseta Oficial Baja 500 Gris",
+      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_500",
-      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": ["baja500"]
+      "subSection": "COLECCION_BAJA_500",
+      "status": "available",
+      "sizes": ["S", "M", "L", "XL", "2XL"],
+      "tags": ["baja500", "new"]
     },
     {
-      "id": "b400-tee-cafe",
-      "name": "Camiseta Café Desert B400",
+      "id": "b400-tee-brn",
+      "sku": "B400-TEE-BRN",
+      "name": "Camiseta Oficial Baja 400 Café",
+      "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_400",
-      "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
+      "subSection": "COLECCION_BAJA_400",
+      "status": "available",
       "sizes": ["S", "M", "L", "XL"],
       "tags": ["baja400"]
     },
     {
       "id": "sf250-tank",
-      "name": "Sleeveless SF250 Black",
+      "sku": "SF250-TANK",
+      "name": "Sleeveless SF250 Negra",
+      "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "baseMXN": 439,
       "sectionId": "SF_250",
-      "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
+      "subSection": "COLECCION_SF250",
+      "status": "available",
       "sizes": ["S", "M", "L", "XL"],
-      "tags": ["sale"]
+      "tags": ["sf250"]
     }
   ]
 }
