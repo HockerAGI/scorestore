@@ -4,20 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE Store | Tienda Oficial Off-Road</title>
-  <meta name="description" content="Merchandise Oficial SCORE International. Baja 1000, Baja 500. Envíos a todo México. Fabricado por ÚNICO UNIFORMES." />
+  <meta name="description" content="Ropa Oficial SCORE International. Baja 1000, Baja 500. Venta directa de fábrica. Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <link rel="manifest" href="/site.webmanifest" />
-
   <link rel="stylesheet" href="/css/styles.css">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="preload" href="/assets/hero.webp" as="image">
-  
   <script src="https://js.stripe.com/v3" async></script>
 </head>
 
@@ -27,12 +26,12 @@
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International Oficial" class="brandLogo" width="140" height="45">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" width="140" height="45">
       </a>
       
       <div class="navRight">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Ver Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00E676" stroke-width="2"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-16L4 4 2 2M4 4h16l-2 10H6L4 4z"></path></svg>
+        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cartIcon"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-16L4 4 2 2M4 4h16l-2 10H6L4 4z"></path></svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
       </div>
@@ -44,24 +43,18 @@
     <section class="hero" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
-      
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="World Desert Championship" aria-hidden="true">
+      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Desert" aria-hidden="true">
 
       <div class="heroContent">
-        <div class="tag-line">
-          <span class="tag-pill">TIENDA OFICIAL</span> COLECCIÓN 2025
-        </div>
-        
-        <h1>DOMINA EL<br><span>DESIERTO</span></h1>
-        
+        <div class="tagline">ROPA OFICIAL 2025</div>
+        <h1>LA LEYENDA DEL<br><span>DESIERTO</span></h1>
         <div class="marketing-copy">
-          Equipamiento oficial de alto rendimiento. Diseñado para resistir la Baja.<br>
-          <strong>Venta directa de fábrica.</strong>
+          Viste la Baja 1000. Colección oficial de alto rendimiento.<br>
+          Fabricado en México por <strong>ÚNICO UNIFORMES</strong>.
         </div>
-
         <div class="ctaRow">
           <button class="btn primary" onclick="scrollToId('collections')">COMPRAR AHORA</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button class="btn secondary" onclick="openDrawer()">VER CARRITO</button>
         </div>
       </div>
     </section>
@@ -73,29 +66,26 @@
       </div>
 
       <div class="grid">
-        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')" role="button" tabindex="0">
+        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-texture"></div>
           <span class="badge">MÁS VENDIDO</span>
           <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
-
-        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')" role="button" tabindex="0">
+        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-texture"></div>
           <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
-
-        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')" role="button" tabindex="0">
+        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-texture"></div>
           <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
-
-        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')" role="button" tabindex="0">
+        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-texture"></div>
-          <span class="badge" style="background:#333;">CLÁSICOS</span>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" loading="lazy">
+          <span class="badge" style="background:#333;">LAST CALL</span>
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
       </div>
@@ -105,9 +95,9 @@
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
         <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR" loading="lazy">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy">
         <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico Uniformes" loading="lazy">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy">
       </div>
     </section>
 
@@ -115,15 +105,13 @@
 
   <footer class="footer">
     <div class="container footerInner">
-      
       <div class="fCol">
         <div class="footerBrandName">ÚNICO UNIFORMES</div>
         <p class="fText">
-          Operador y Fabricante Oficial de Merchandise SCORE International.<br>
-          Calidad probada en la Baja 1000.
+          Tienda Oficial de Fábrica.<br>
+          Distribuidor autorizado de mercancía SCORE International.
         </p>
       </div>
-
       <div class="fCol">
         <h4>SOPORTE</h4>
         <div class="footerLinks">
@@ -132,7 +120,6 @@
           <button onclick="openLegal('billing')">Facturación 4.0</button>
         </div>
       </div>
-
       <div class="fCol">
         <h4>LEGAL</h4>
         <div class="footerLinks">
@@ -140,7 +127,6 @@
           <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
         </div>
       </div>
-
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText">
@@ -149,40 +135,36 @@
           22614 Tijuana, B.C. México.
         </p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-          664 236 8701
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.46-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.53.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.11.57-.08 1.76-.72 2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35m-5.42 7.4h0A9.87 9.87 0 017.02 20.4l-.36-.22-3.74.99 1-3.65-.24-.37a9.86 9.86 0 01-1.51-5.26c0-5.45 4.44-9.88 9.89-9.88 2.64 0 5.12 1.03 6.99 2.9 1.87 1.86 2.9 4.34 2.89 6.99-.01 5.45-4.44 9.88-9.89 9.88"/></svg>
+          WhatsApp: 664 236 8701
         </a>
       </div>
-
     </div>
     <div class="copy">SCORE Store © 2025 · Powered by Único Uniformes</div>
   </footer>
 
   <div id="overlay" class="overlay" onclick="closeAll()"></div>
-  <div id="modalCatalog" class="modal" role="dialog" aria-modal="true">
+  <div id="modalCatalog" class="modal">
     <div class="dHead">
       <h3 id="catTitle" class="dTitle">CATÁLOGO</h3>
-      <button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button>
+      <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
     <div id="catContent" class="dBody"></div>
   </div>
 
-  <aside id="drawer" class="drawer" role="dialog" aria-modal="true">
+  <aside id="drawer" class="drawer">
     <div class="dHead">
-      <h3 class="dTitle">TU CARRITO</h3>
-      <button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button>
+      <h3 class="dTitle">TU PEDIDO</h3>
+      <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
-    
     <div class="dBody">
       <div id="cartItems"></div>
       <div id="cartEmpty" style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</div>
     </div>
-    
     <div class="dFoot">
       <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
         <button onclick="emptyCart()" style="background:none; border:none; color:#E10600; font-size:12px; cursor:pointer; text-decoration:underline;">VACIAR CARRITO</button>
       </div>
-
       <div class="shipSelector">
          <label class="radio-option">
             <input type="radio" name="shipMode" value="pickup" checked> 
@@ -197,58 +179,46 @@
             <div><span>Nacional</span> <small style="color:#555; display:block;">Cotizar Envia.com</small></div>
          </label>
       </div>
-      
       <div id="shipForm" style="display:none; margin-bottom:15px;">
         <input id="cp" type="text" placeholder="Código Postal (5 dígitos)" class="inputField" style="width:100px; margin-bottom:5px;" maxlength="5">
         <input id="addr" type="text" placeholder="Calle y Número" class="inputField" style="width:100%;">
         <input id="name" type="text" placeholder="Nombre Completo" class="inputField" style="width:100%; margin-top:5px;">
       </div>
-
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
-      
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">
-        PAGAR AHORA
-      </button>
+      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
     </div>
   </aside>
 
   <aside class="drawer" id="legalModal" style="width:min(600px, 100vw);">
     <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div class="dBody" style="padding:40px; color:#333;">
-       
        <div class="legalBlock" data-legal-block="shipping" style="display:none">
          <h4 style="color:var(--score-red);margin-bottom:10px;">Política de Envíos</h4>
          <p style="line-height:1.6; margin-bottom:10px;"><strong>Nacional:</strong> Envíos a todo México vía FedEx/Estafeta. Tiempo estimado: 3-7 días hábiles.</p>
          <p style="line-height:1.6;"><strong>Local (TJ):</strong> Entrega express ($200) o Pickup gratuito en nuestra fábrica (Anexa Roma).</p>
        </div>
-
        <div class="legalBlock" data-legal-block="returns" style="display:none">
          <h4 style="color:var(--score-red);margin-bottom:10px;">Cambios y Devoluciones</h4>
-         <p style="line-height:1.6;">Aceptamos cambios por talla o defecto de fábrica dentro de los primeros 7 días naturales. El producto debe estar nuevo y con etiquetas. Artículos de liquidación son venta final.</p>
+         <p style="line-height:1.6;">Aceptamos cambios por talla o defecto dentro de los primeros 7 días. Productos de liquidación son venta final.</p>
        </div>
-
        <div class="legalBlock" data-legal-block="billing" style="display:none">
          <h4 style="color:var(--score-red);margin-bottom:10px;">Facturación 4.0</h4>
-         <p style="line-height:1.6;">Envía tu Constancia de Situación Fiscal y número de pedido a <strong>ventas.unicotextil@gmail.com</strong> dentro del mes de compra.</p>
+         <p style="line-height:1.6;">Envía tu constancia fiscal a ventas.unicotextil@gmail.com dentro del mes de compra.</p>
        </div>
-
        <div class="legalBlock" data-legal-block="terms" style="display:none">
          <h4 style="color:var(--score-red);margin-bottom:10px;">Términos del Servicio</h4>
-         <p style="line-height:1.6;">Operado por Único Uniformes S.A. de C.V. Precios en MXN incluyen IVA. Sujeto a disponibilidad.</p>
+         <p style="line-height:1.6;">Sitio operado por Único Uniformes S.A. de C.V. Precios en MXN incluyen IVA.</p>
        </div>
-
        <div class="legalBlock" data-legal-block="privacy" style="display:none">
          <h4 style="color:var(--score-red);margin-bottom:10px;">Privacidad</h4>
-         <p style="line-height:1.6;">Tus datos se usan solo para procesar el pedido. Pagos 100% seguros y encriptados vía Stripe.</p>
+         <p style="line-height:1.6;">Pagos seguros encriptados vía Stripe. No almacenamos datos bancarios.</p>
        </div>
-
     </div>
   </aside>
 
-  <div class="toast" id="toast" role="status"></div>
-
+  <div class="toast" id="toast">Mensaje</div>
   <script src="/js/main.js"></script>
 </body>
 </html>
