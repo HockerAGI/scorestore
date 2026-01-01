@@ -1,7 +1,7 @@
 {
   "site": {
     "currency": "MXN",
-    "fx_mxn_per_usd": 17.5
+    "fx_mxn_per_usd": 18.0
   },
   "sections": [
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL" },
@@ -17,10 +17,9 @@
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "baseMXN": 1789,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCION_2025",
       "status": "available",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["baja1000", "featured"]
+      "tags": ["featured", "limited"]
     },
     {
       "id": "b1k-hood-tech",
@@ -29,7 +28,6 @@
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "baseMXN": 1079,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCION_2025",
       "status": "available",
       "sizes": ["S", "M", "L", "XL"],
       "tags": ["baja1000"]
@@ -41,10 +39,9 @@
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_1000",
-      "subSection": "COLECCION_2025",
       "status": "available",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["baja1000"]
+      "tags": ["baja1000", "new"]
     },
     {
       "id": "b1k-cap-red",
@@ -53,10 +50,9 @@
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
       "baseMXN": 660,
       "sectionId": "BAJA_1000",
-      "subSection": "ACCESORIOS",
       "status": "low_stock",
       "sizes": ["Unitalla"],
-      "tags": ["baja1000", "accesorios"]
+      "tags": ["accesorios"]
     },
     {
       "id": "b500-tee-gry",
@@ -65,10 +61,9 @@
       "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_500",
-      "subSection": "COLECCION_BAJA_500",
       "status": "available",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["baja500", "new"]
+      "tags": ["baja500"]
     },
     {
       "id": "b400-tee-brn",
@@ -77,7 +72,6 @@
       "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
       "baseMXN": 479,
       "sectionId": "BAJA_400",
-      "subSection": "COLECCION_BAJA_400",
       "status": "available",
       "sizes": ["S", "M", "L", "XL"],
       "tags": ["baja400"]
@@ -89,10 +83,9 @@
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "baseMXN": 439,
       "sectionId": "SF_250",
-      "subSection": "COLECCION_SF250",
       "status": "available",
       "sizes": ["S", "M", "L", "XL"],
-      "tags": ["sf250"]
+      "tags": ["sf250", "sale"]
     }
   ]
 }
