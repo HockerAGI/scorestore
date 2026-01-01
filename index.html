@@ -9,10 +9,7 @@
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="stylesheet" href="/css/styles.css">
   
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
   <link rel="preload" href="/assets/hero.webp" as="image">
   <script src="https://js.stripe.com/v3" async></script>
 </head>
@@ -53,7 +50,7 @@
 
         <div class="ctaRow">
           <button class="btn primary" onclick="scrollToId('collections')">COMPRAR AHORA</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button class="btn secondary" onclick="openDrawer()">MI EQUIPO</button>
         </div>
       </div>
     </section>
@@ -109,7 +106,7 @@
     <div class="container footerInner">
       
       <div class="fCol">
-        <img src="/assets/logo-unico.webp" alt="Único" class="footerUnicoFix">
+        <h4 class="footerBrandName" style="margin-bottom:10px; font-size:32px;">ÚNICO UNIFORMES</h4>
         <p class="fText">
           Operador y Fabricante Oficial de Merchandise SCORE International.<br>
           Calidad probada en la Baja.
@@ -136,7 +133,7 @@
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText">Anexa Roma, Tijuana, B.C.</p>
-        <a href="mailto:ventas.unicotextil@gmail.com" style="color:#aaa; text-decoration:none;">ventas.unicotextil@gmail.com</a>
+        <a href="mailto:ventas.unicotextil@gmail.com" class="fLink">ventas.unicotextil@gmail.com</a>
       </div>
 
     </div>
@@ -158,7 +155,10 @@
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
     
-    <div id="cartBody" class="dBody"></div>
+    <div class="dBody">
+      <div id="cartItems"></div>
+      <div id="cartEmpty" style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</div>
+    </div>
     
     <div class="dFoot">
       <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -181,8 +181,9 @@
       </div>
       
       <div id="shipForm" style="display:none; margin-bottom:15px;">
-        <input id="cp" type="text" placeholder="Código Postal (5 dígitos)" class="inputField" style="width:100px; margin-bottom:5px;">
+        <input id="cp" type="text" placeholder="Código Postal (5 dígitos)" class="inputField" style="width:100px; margin-bottom:5px;" maxlength="5">
         <input id="addr" type="text" placeholder="Calle y Número" class="inputField" style="width:100%;">
+        <input id="name" type="text" placeholder="Nombre Completo" class="inputField" style="width:100%; margin-top:5px;">
       </div>
 
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
@@ -198,26 +199,57 @@
   <aside class="drawer" id="legalModal" style="width:min(600px, 100vw);">
     <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div class="dBody" style="padding:40px; color:#333;">
+       
        <div class="legalBlock" data-legal-block="shipping" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Envíos</h4>
-         <p>Envíos nacionales vía FedEx/Estafeta (3-7 días). Pickup gratuito en Tijuana.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Política de Envíos</h4>
+         <p style="line-height:1.6; margin-bottom:15px;">
+           <strong>Nacional:</strong> Realizamos envíos a todo México a través de FedEx y Estafeta. El tiempo estimado de entrega es de 3 a 7 días hábiles una vez procesado el pedido. El costo se calcula automáticamente en el checkout según el peso y destino.
+         </p>
+         <p style="line-height:1.6;">
+           <strong>Local (Tijuana):</strong> Ofrecemos entrega express (tarifa fija $200) o recolección gratuita en nuestras instalaciones (Pickup).
+         </p>
        </div>
+
        <div class="legalBlock" data-legal-block="returns" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Garantías</h4>
-         <p>7 días por defectos de fabricación.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Garantías y Cambios</h4>
+         <p style="line-height:1.6; margin-bottom:15px;">
+           Aceptamos cambios de talla o modelo dentro de los primeros 7 días naturales tras recibir tu compra, siempre y cuando la prenda se encuentre nueva, con etiquetas y sin usar.
+         </p>
+         <p style="line-height:1.6;">
+           <strong>Importante:</strong> Los productos de liquidación, drops exclusivos o "Last Call" son venta final y no aplican para cambios ni devoluciones.
+         </p>
        </div>
+
        <div class="legalBlock" data-legal-block="billing" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Facturación</h4>
-         <p>Envía tu constancia fiscal a ventas.unicotextil@gmail.com</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Facturación 4.0</h4>
+         <p style="line-height:1.6;">
+           Si requieres factura, por favor envía tu Constancia de Situación Fiscal actualizada, uso de CFDI y número de orden al correo <strong>ventas.unicotextil@gmail.com</strong>.
+         </p>
+         <p style="line-height:1.6;">
+           La solicitud debe realizarse dentro del mismo mes en que se efectuó la compra.
+         </p>
        </div>
+
        <div class="legalBlock" data-legal-block="terms" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Términos</h4>
-         <p>Precios en MXN incluyen IVA.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Términos del Servicio</h4>
+         <p style="line-height:1.6; margin-bottom:15px;">
+           Este sitio es operado por Único Uniformes S.A. de C.V., fabricante autorizado de SCORE International. Todos los productos mostrados son oficiales.
+         </p>
+         <p style="line-height:1.6;">
+           Los precios están expresados en Moneda Nacional (MXN) e incluyen IVA. Nos reservamos el derecho de cancelar órdenes por errores de inventario o precios incorrectos.
+         </p>
        </div>
+
        <div class="legalBlock" data-legal-block="privacy" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:10px;">Privacidad</h4>
-         <p>Tus datos son procesados de forma segura.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Privacidad y Seguridad</h4>
+         <p style="line-height:1.6; margin-bottom:15px;">
+           Tus datos personales son utilizados únicamente para procesar y entregar tu pedido. No compartimos tu información con terceros con fines publicitarios.
+         </p>
+         <p style="line-height:1.6;">
+           <strong>Pagos Seguros:</strong> Todas las transacciones son procesadas de forma encriptada a través de Stripe. Nosotros no tenemos acceso ni almacenamos tus datos bancarios.
+         </p>
        </div>
+
     </div>
   </aside>
 
