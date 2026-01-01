@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC - PRODUCTION V11 */
+/* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
 const CART_KEY = "score_cart_final_v11";
 
@@ -16,7 +16,6 @@ async function init(){
         catalog = data.products || [];
     } catch(e){ console.error("Error loading catalog", e); }
     
-    // Listeners Envío
     document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
     $("cp")?.addEventListener("input", (e)=>{
        if(e.target.value.length === 5) quoteShipping(e.target.value);
@@ -35,12 +34,19 @@ window.openCatalog = (secId, title) => {
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
+        
+        // Status Badge
+        let statusBadge = "";
+        if(p.status === "low_stock") statusBadge = `<div class="status-tag" style="background:#000;">ÚLTIMAS PIEZAS</div>`;
+        if(p.tags && p.tags.includes("new")) statusBadge = `<div class="status-tag" style="background:var(--score-blue);">NUEVO</div>`;
+
         return `
           <div class="prodCard" id="card_${p.id}">
-            <div class="prodImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
+            ${statusBadge}
+            <div class="prodImg"><img src="${p.img}" loading="lazy" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;"></div>
             <div style="font-weight:700; font-size:16px; margin-bottom:5px; height:42px; overflow:hidden; color:#333;">${p.name}</div>
             <div style="font-family:'Teko'; font-size:28px; color:var(--score-red); font-weight:600; margin-bottom:10px;">${money(p.baseMXN)}</div>
-            <div style="margin-bottom:15px;">${sizeBtns}</div>
+            <div style="margin-bottom:15px; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;">${sizeBtns}</div>
             <div id="sizes_${p.id}" data-selected="" style="display:none;"></div>
             <button class="btn-add" style="background:#fff; border:2px solid var(--score-red); color:var(--score-red); width:100%; padding:10px; font-weight:700; cursor:pointer; text-transform:uppercase; border-radius:6px;" onclick="add('${p.id}')">AGREGAR +</button>
           </div>
@@ -50,7 +56,7 @@ window.openCatalog = (secId, title) => {
 
 window.selectSize = (el, s) => {
     const parent = el.parentElement;
-    const hiddenInput = parent.nextElementSibling; // El div oculto para guardar la selección
+    const hiddenInput = parent.nextElementSibling;
     hiddenInput.setAttribute("data-selected", s);
     parent.querySelectorAll(".size-pill").forEach(b => { b.style.background="#f9f9f9"; b.style.color="#555"; });
     el.style.background="#000"; el.style.color="#fff";
@@ -59,7 +65,6 @@ window.selectSize = (el, s) => {
 window.add = (id) => {
     const sizeCont = document.getElementById(`sizes_${id}`);
     let s = sizeCont.getAttribute("data-selected");
-    // Auto-select si solo hay 1 talla (Unitalla)
     if(!s) {
        const btnContainer = sizeCont.previousElementSibling;
        if(btnContainer.children.length === 1) s = btnContainer.children[0].innerText;
@@ -138,7 +143,12 @@ window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    const to = { postal_code: $("cp")?.value, address1: $("addr")?.value, city: $("city")?.value, name: $("name")?.value };
+    const to = {
+        postal_code: $("cp")?.value,
+        address1: $("addr")?.value,
+        city: $("city")?.value,
+        name: $("name")?.value
+    };
     
     try {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
