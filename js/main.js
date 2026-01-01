@@ -1,6 +1,5 @@
-/* SCORE STORE LOGIC - FINAL V10 */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_prod_v10";
+const CART_KEY = "score_cart_v_final";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -13,18 +12,15 @@ async function init(){
     try {
         const res = await fetch("/data/catalog.json");
         const data = await res.json();
-        // NOTA: El JSON oficial tiene los productos dentro de "products"
         catalog = data.products || [];
-    } catch(e){ console.error("Error cargando catálogo", e); }
+    } catch(e){ console.error(e); }
     
-    // Listeners Envio
     document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
     $("cp")?.addEventListener("input", (e)=>{
        if(e.target.value.length === 5) quoteShipping(e.target.value);
     });
 }
 
-/* CATALOG (FIXED SIZING & STATUS) */
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
@@ -71,7 +67,6 @@ window.add = (id) => {
     saveCart(); renderCart(); openDrawer(); toast("Agregado");
 };
 
-/* CART */
 function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
 function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 function emptyCart(){ cart=[]; saveCart(); renderCart(); }
@@ -135,12 +130,7 @@ window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    const to = {
-        postal_code: $("cp")?.value,
-        address1: $("addr")?.value,
-        city: $("city")?.value,
-        name: $("name")?.value
-    };
+    const to = { postal_code: $("cp")?.value, address1: $("addr")?.value, city: $("city")?.value, name: $("name")?.value };
     
     try {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
