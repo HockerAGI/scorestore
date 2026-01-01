@@ -1,6 +1,6 @@
-/* SCORE STORE LOGIC - FINAL V8 */
+/* SCORE STORE LOGIC - FINAL V9 */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_prod_v8";
+const CART_KEY = "score_cart_prod_v9";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -13,8 +13,9 @@ async function init(){
     try {
         const res = await fetch("/data/catalog.json");
         const data = await res.json();
+        // NOTA IMPORTANTE: El JSON oficial tiene los productos dentro de "products"
         catalog = data.products || [];
-    } catch(e){ console.error(e); }
+    } catch(e){ console.error("Error cargando catálogo", e); }
     
     // Listeners Envio
     document.querySelectorAll('input[name="shipMode"]').forEach(r => r.addEventListener("change", updateTotals));
@@ -23,7 +24,7 @@ async function init(){
     });
 }
 
-/* CATALOG (FIXED SIZING) */
+/* CATALOG (FIXED SIZING & STATUS) */
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
@@ -37,8 +38,14 @@ window.openCatalog = (secId, title) => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
         
+        // Etiqueta de estado (Si existe en JSON)
+        let statusBadge = "";
+        if(p.status === "low_stock") statusBadge = `<div class="status-tag" style="background:#000;">ÚLTIMAS PIEZAS</div>`;
+        if(p.tags && p.tags.includes("new")) statusBadge = `<div class="status-tag" style="background:var(--score-blue);">NUEVO</div>`;
+
         return `
           <div class="prodCard" id="card_${p.id}">
+            ${statusBadge}
             <div class="prodImg"><img src="${p.img}" loading="lazy"></div>
             <div class="prodName">${p.name}</div>
             <div class="prodPrice">${money(p.baseMXN)}</div>
@@ -104,7 +111,8 @@ async function quoteShipping(zip) {
     try {
         const r = await fetch(`${API_BASE}/quote_shipping`, {method:"POST", body:JSON.stringify({postal_code:zip, items:1})});
         const d = await r.json();
-        if(d.ok) { shipQuote=d; } else { shipQuote={mxn:250}; }
+        if(d.ok) { shipQuote=d; $("shipTotal").innerText = money(d.mxn); } 
+        else { shipQuote={mxn:250}; $("shipTotal").innerText = "$250.00 (Estándar)"; }
         updateTotals();
     } catch(e) { console.error(e); }
 }
@@ -127,8 +135,6 @@ function updateTotals(){
     
     $("shipTotal").innerText = shipLabel;
     $("grandTotal").innerText = money(sub + shipCost);
-    
-    $("paybar")?.classList.toggle("visible", cart.length>0);
 }
 
 window.checkout = async () => {
