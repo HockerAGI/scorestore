@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC - FINAL MASTER */
+/* SCORE STORE LOGIC - FINAL V11 */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
 const CART_KEY = "score_cart_final_v11";
 
@@ -34,8 +34,6 @@ window.openCatalog = (secId, title) => {
     $("catContent").innerHTML = `<div class="catGrid">` + items.map(p => {
         const sizes = p.sizes || ["Unitalla"];
         const sizeBtns = sizes.map(s => `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`).join("");
-        
-        // Status Badge
         let statusBadge = "";
         if(p.status === "low_stock") statusBadge = `<div class="status-tag" style="background:#000;">ÚLTIMAS PIEZAS</div>`;
         if(p.tags && p.tags.includes("new")) statusBadge = `<div class="status-tag" style="background:var(--score-blue);">NUEVO</div>`;
@@ -69,7 +67,6 @@ window.add = (id) => {
        const btnContainer = sizeCont.previousElementSibling;
        if(btnContainer.children.length === 1) s = btnContainer.children[0].innerText;
     }
-
     if(!s) { toast("⚠️ Selecciona una talla"); return; }
     
     const p = catalog.find(x=>x.id===id);
@@ -89,10 +86,8 @@ function renderCart(){
     const count = cart.reduce((a,b)=>a+b.qty,0);
     $("cartCount").innerText = count;
     $("cartCount").style.display = count>0?"flex":"none";
-    
     if(!cart.length){ wrap.innerHTML=""; $("cartEmpty").style.display="block"; updateTotals(); return; }
     $("cartEmpty").style.display="none";
-    
     wrap.innerHTML = cart.map((i,x) => `
         <div class="cartItem">
             <img src="${i.img}" class="cartThumb">
@@ -122,19 +117,15 @@ async function quoteShipping(zip) {
 function updateTotals(){
     const sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
     $("subTotal").innerText = money(sub);
-    
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value || "pickup";
     $("shipForm").style.display = (mode !== "pickup") ? "block" : "none";
-    
     let shipCost = 0;
     let shipLabel = "Gratis";
-    
     if(mode === "tj") { shipCost = 200; shipLabel = "$200.00"; }
     else if(mode === "mx") {
         if(shipQuote) { shipCost = shipQuote.mxn; shipLabel = money(shipCost); }
         else { shipLabel = "Cotizar"; }
     }
-    
     $("shipTotal").innerText = shipLabel;
     $("grandTotal").innerText = money(sub + shipCost);
 }
@@ -143,13 +134,7 @@ window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    const to = {
-        postal_code: $("cp")?.value,
-        address1: $("addr")?.value,
-        city: $("city")?.value,
-        name: $("name")?.value
-    };
-    
+    const to = { postal_code: $("cp")?.value, address1: $("addr")?.value, city: $("city")?.value, name: $("name")?.value };
     try {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
         const d = await r.json();
@@ -162,4 +147,3 @@ window.closeAll=()=>{ document.querySelectorAll(".active").forEach(e=>e.classLis
 window.openLegal=(t)=>{ $("legalModal").classList.add("active"); $("overlay").classList.add("active"); document.querySelectorAll(".legalBlock").forEach(b=>b.style.display=(b.dataset.legalBlock===t)?"block":"none"); };
 
 init();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
