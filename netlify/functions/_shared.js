@@ -1,10 +1,16 @@
 const catalogData = require("../../data/catalog.json");
 
-/* UTILIDADES */
+/* =========================
+   HELPERS & RESPONSES
+========================= */
 function jsonResponse(statusCode, body) {
   return {
     statusCode,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: { 
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type"
+    },
     body: JSON.stringify(body),
   };
 }
@@ -15,7 +21,9 @@ function safeJsonParse(raw, fallback = null) {
 function digitsOnly(v) { return (v || "").toString().replace(/\D+/g, ""); }
 function toStr(v) { return (v || "").toString().trim(); }
 
-/* CATALOGO */
+/* =========================
+   CATALOG LOGIC
+========================= */
 async function loadCatalog() { return catalogData; }
 
 function productMapFromCatalog(catalog) {
@@ -35,13 +43,16 @@ function validateCartItems(items) {
   return { ok: true, items: clean };
 }
 
-/* ENVIA.COM LOGIC */
+/* =========================
+   ENVIA.COM LOGIC (CON REGLA MÍNIMA $250)
+========================= */
 async function getEnviaQuote(postalCode, itemsCount = 1) {
   const apiKey = process.env.ENVIA_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const weight = 0.8 + (Math.max(0, itemsCount - 1) * 0.3); // Peso estimado
+    // Peso estimado: 0.8kg base + 0.3kg por item adicional
+    const weight = 0.8 + (Math.max(0, itemsCount - 1) * 0.3);
 
     const payload = {
       origin: {
@@ -78,9 +89,10 @@ async function getEnviaQuote(postalCode, itemsCount = 1) {
     
     // Filtrar paqueterías confiables
     let rates = (data.data || []).filter(r => 
-      ["fedex", "estafeta", "dhl", "paquetexpress"].includes(r.carrier?.toLowerCase())
+      ["fedex", "estafeta", "dhl", "paquetexpress", "redpack"].includes(r.carrier?.toLowerCase())
     );
     
+    // Si no hay de las preferidas, usar cualquiera que la API devuelva
     if (!rates.length) rates = data.data || [];
     if (!rates.length) return null;
 
@@ -88,8 +100,12 @@ async function getEnviaQuote(postalCode, itemsCount = 1) {
     rates.sort((a, b) => a.total_price - b.total_price);
     const best = rates[0];
 
+    // --- REGLA DE NEGOCIO: MÍNIMO $250 ---
+    // Si la guía cuesta $180, cobramos $250. Si cuesta $300, cobramos $300.
+    const finalPrice = Math.max(250, Math.ceil(best.total_price));
+
     return {
-      mxn: Math.ceil(best.total_price),
+      mxn: finalPrice,
       label: `${best.carrier.toUpperCase()} Estándar`,
       carrier: best.carrier,
       days: best.delivery_estimate || "3-7"
