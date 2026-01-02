@@ -1,12 +1,20 @@
 /* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v12";
+const CART_KEY = "score_cart_final_v13";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
 function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
 function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
+
+// Mapeo de Logos para el Header del Catálogo
+const LOGOS = {
+  "BAJA_1000": "/assets/logo-baja1000.webp",
+  "BAJA_500": "/assets/logo-baja500.webp",
+  "BAJA_400": "/assets/logo-baja400.webp",
+  "SF_250": "/assets/logo-sf250.webp"
+};
 
 async function init(){
     loadCart(); updateTotals(); renderCart();
@@ -22,10 +30,19 @@ async function init(){
     });
 }
 
+// Abre Catálogo con LOGO
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
-    $("catTitle").innerText = title;
+    
+    // Inyectar Logo si existe, sino Texto
+    const logoUrl = LOGOS[secId];
+    if(logoUrl) {
+      $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}" style="height:50px;">`;
+    } else {
+      $("catTitle").innerText = title;
+    }
+
     $("catContent").innerHTML = "<div style='padding:40px; text-align:center; color:#555;'>Cargando inventario...</div>";
 
     const items = catalog.filter(p => p.sectionId === secId);
@@ -42,8 +59,8 @@ window.openCatalog = (secId, title) => {
         return `
           <div class="prodCard" id="card_${p.id}">
             ${statusBadge}
-            <div class="prodImg">
-                <img src="${p.img}" loading="lazy" alt="${p.name}">
+            <div class="prodImgWrapper">
+               <img src="${p.img}" loading="lazy" alt="${p.name}" class="prodImg">
             </div>
             <div style="font-weight:700; font-size:16px; margin-bottom:5px; height:42px; overflow:hidden; color:#333;">${p.name}</div>
             <div style="font-family:'Teko'; font-size:28px; color:var(--score-red); font-weight:600; margin-bottom:10px;">${money(p.baseMXN)}</div>
