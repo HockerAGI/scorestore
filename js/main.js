@@ -1,6 +1,5 @@
-/* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v13";
+const CART_KEY = "score_cart_final_v14";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -30,15 +29,14 @@ async function init(){
     });
 }
 
-// Abre Catálogo con LOGO
+// Abre Catálogo con LOGO (Fix Solicitado)
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     
-    // Inyectar Logo si existe, sino Texto
     const logoUrl = LOGOS[secId];
     if(logoUrl) {
-      $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}" style="height:50px;">`;
+      $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}" style="height:60px; object-fit:contain;">`;
     } else {
       $("catTitle").innerText = title;
     }
