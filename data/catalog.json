@@ -31,7 +31,7 @@
       "tags": ["baja1000"]
     },
     {
-      "id": "b1k-tee-prem",
+      "id": "b1k-tee-blk",
       "sku": "B1K-TEE-BLK",
       "name": "Camiseta Premium Official",
       "baseMXN": 480,
@@ -39,16 +39,6 @@
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "sizes": ["S", "M", "L", "XL", "2XL"],
       "tags": ["bestseller"]
-    },
-    {
-      "id": "b1k-cap-pro",
-      "sku": "B1K-CAP-RD",
-      "name": "Gorra Snapback Team Red",
-      "baseMXN": 650,
-      "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "sizes": ["Unitalla"],
-      "tags": ["accesorios"]
     },
     {
       "id": "b1k-tee-brn",
@@ -61,12 +51,32 @@
       "tags": ["new"]
     },
     {
+      "id": "b1k-cap-red",
+      "sku": "B1K-CAP-RD",
+      "name": "Gorra Snapback Team Red",
+      "baseMXN": 650,
+      "sectionId": "BAJA_1000",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "sizes": ["Unitalla"],
+      "tags": ["accesorios"]
+    },
+    {
       "id": "b500-tee-gry",
       "sku": "B500-TEE-GRY",
       "name": "T-Shirt Baja 500 Titanium",
       "baseMXN": 480,
       "sectionId": "BAJA_500",
       "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["baja500"]
+    },
+    {
+      "id": "b500-hoodie",
+      "sku": "B500-HOOD-BLK",
+      "name": "Hoodie Baja 500 Official",
+      "baseMXN": 1100,
+      "sectionId": "BAJA_500",
+      "img": "/assets/BAJA500/hoodie-negra-baja500.webp",
       "sizes": ["S", "M", "L", "XL"],
       "tags": []
     },
@@ -81,6 +91,16 @@
       "tags": []
     },
     {
+      "id": "b400-cap",
+      "sku": "B400-CAP-BLK",
+      "name": "Gorra Baja 400 Black",
+      "baseMXN": 650,
+      "sectionId": "BAJA_400",
+      "img": "/assets/BAJA400/gorra-negra-baja400.webp",
+      "sizes": ["Unitalla"],
+      "tags": ["accesorios"]
+    },
+    {
       "id": "sf250-tank",
       "sku": "SF250-TNK",
       "name": "Sleeveless SF250 Black",
@@ -89,6 +109,16 @@
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "sizes": ["S", "M", "L"],
       "tags": ["summer"]
+    },
+    {
+      "id": "sf250-tee",
+      "sku": "SF250-TEE-WHT",
+      "name": "Camiseta San Felipe 250",
+      "baseMXN": 480,
+      "sectionId": "SF_250",
+      "img": "/assets/SF250/camiseta-blanca-SF250.webp",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": []
     }
   ]
 }
