@@ -4,11 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Merchandise Oficial SCORE International. Baja 1000, Baja 500. Fabricado por ÚNICO UNIFORMES." />
-  <meta name="theme-color" content="#E10600" />
-
+  
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="stylesheet" href="/css/styles.css">
   
@@ -30,8 +27,8 @@
       </a>
       
       <div class="navRight">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Ver carrito">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cartIcon"><path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-16L4 4 2 2M4 4h16l-2 10H6L4 4z"></path></svg>
+        <button class="cartBtn" onclick="openDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" class="cartIcon"><path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="#00E676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="#00E676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="#00E676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
       </div>
@@ -43,14 +40,13 @@
     <section class="hero" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
-      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Desert Championship">
+      <img class="heroSeal" src="/assets/logo-world-desert.webp" alt="Desert">
 
       <div class="heroContent">
         <div class="tagline">EDICIÓN LIMITADA</div>
-        
-        <h1 class="hero-title">
-          <span class="line-score">SCORE</span>
-          <span class="line-int">INTERNATIONAL</span>
+        <h1>
+          <div class="word-score">SCORE</div>
+          <div class="word-intl">INTERNATIONAL</div>
         </h1>
         
         <div class="marketing-copy">
@@ -119,16 +115,16 @@
         <div class="footerBrandName">ÚNICO UNIFORMES</div>
         <p class="fText">
           Operador y Fabricante Oficial de Merchandise SCORE International.<br>
-          Productos certificados bajo licencia global.
+          Productos licenciados bajo estándares globales.
         </p>
       </div>
 
       <div class="fCol">
-        <h4>ATENCIÓN AL CLIENTE</h4>
+        <h4>ATENCIÓN A CLIENTES</h4>
         <div class="footerLinks">
-          <button onclick="openLegal('shipping')">Rastreo de Pedido</button>
+          <button onclick="openLegal('shipping')">Rastreo y Envíos</button>
           <button onclick="openLegal('returns')">Cambios y Devoluciones</button>
-          <button onclick="openLegal('billing')">Facturación 4.0</button>
+          <button onclick="openLegal('billing')">Facturación Electrónica</button>
         </div>
       </div>
 
@@ -147,7 +143,7 @@
           Palermo 6106 Interior JK, Anexa Roma,<br>
           22614 Tijuana, B.C. México.
         </p>
-        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">
+        <a href="https://wa.me/526642368701" target="_blank" class="whatsapp-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
           WhatsApp: 664 236 8701
         </a>
@@ -193,60 +189,58 @@
             <div><span>Nacional</span> <small style="color:#555; display:block;">Cotizar Envia.com</small></div>
          </label>
       </div>
-      
       <div id="shipForm" style="display:none; margin-bottom:15px;">
         <input id="cp" type="text" placeholder="Código Postal (5 dígitos)" class="inputField" style="width:100px; margin-bottom:5px;" maxlength="5">
         <input id="addr" type="text" placeholder="Calle y Número" class="inputField" style="width:100%;">
         <input id="name" type="text" placeholder="Nombre Completo" class="inputField" style="width:100%; margin-top:5px;">
       </div>
-
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
-      
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">
-        PAGAR AHORA
-      </button>
+      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
     </div>
   </aside>
 
   <aside class="drawer" id="legalModal" style="width:min(600px, 100vw);">
-    <div class="dHead"><h3 class="dTitle">INFORMACIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:40px; color:#333; line-height:1.6;">
+    <div class="dHead"><h3 class="dTitle">INFORMACIÓN LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dBody" style="padding:40px; color:#333; font-size:14px; line-height:1.6;">
        
        <div class="legalBlock" data-legal-block="shipping" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:15px;">Política de Envíos</h4>
-         <p style="margin-bottom:15px;"><strong>Cobertura Nacional:</strong> Realizamos envíos a toda la República Mexicana. El tiempo de tránsito es de 3 a 7 días hábiles vía paquetería certificada (FedEx/Estafeta).</p>
-         <p><strong>Pickup Tijuana:</strong> Opción gratuita. Recoge tu pedido en nuestra fábrica (Blvd. Díaz Ordaz / Anexa Roma) de Lunes a Viernes de 9am a 5pm.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Política de Envíos y Entregas</h4>
+         <p><strong>1. Cobertura:</strong> Realizamos envíos a toda la República Mexicana.</p>
+         <p><strong>2. Tiempos:</strong> Procesamos pedidos en 24-48 horas. Tránsito estándar: 3-7 días hábiles vía FedEx/Estafeta.</p>
+         <p><strong>3. Costos:</strong> Se calculan al finalizar la compra según CP. Recolección gratuita en Tijuana disponible.</p>
        </div>
 
        <div class="legalBlock" data-legal-block="returns" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:15px;">Cambios y Devoluciones</h4>
-         <p style="margin-bottom:15px;">De conformidad con la Ley Federal de Protección al Consumidor, aceptamos cambios de talla dentro de los primeros <strong>7 días naturales</strong> tras la recepción. El producto debe estar intacto y con etiquetas.</p>
-         <p><strong>Nota:</strong> Artículos de liquidación o "Last Call" son venta final sin devolución.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Garantías y Devoluciones</h4>
+         <p>Conforme a la Ley Federal de Protección al Consumidor:</p>
+         <ul>
+           <li>Cambios por defecto o talla en los primeros 7 días naturales.</li>
+           <li>Prendas nuevas con etiquetas.</li>
+           <li>No aplica en liquidaciones o uso personal (gorras).</li>
+         </ul>
        </div>
 
        <div class="legalBlock" data-legal-block="billing" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:15px;">Facturación 4.0</h4>
-         <p style="margin-bottom:15px;">Envía tu Constancia de Situación Fiscal (PDF), Uso de CFDI y número de orden a <strong>ventas.unicotextil@gmail.com</strong>.</p>
-         <p>La factura debe solicitarse dentro del mismo mes calendario de la compra.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Facturación 4.0</h4>
+         <p>Envía tu Constancia de Situación Fiscal a <strong>ventas.unicotextil@gmail.com</strong> dentro del mes de compra.</p>
        </div>
 
        <div class="legalBlock" data-legal-block="terms" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:15px;">Términos del Servicio</h4>
-         <p>Sitio operado por <strong>Único Uniformes S.A. de C.V.</strong>. Precios en Moneda Nacional (MXN) incluyen IVA. Nos reservamos el derecho de cancelar pedidos por errores de stock.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Términos del Servicio</h4>
+         <p>Sitio operado por Único Uniformes S.A. de C.V. Precios en MXN con IVA incluido. Nos reservamos el derecho de cancelar órdenes por errores de stock.</p>
        </div>
 
        <div class="legalBlock" data-legal-block="privacy" style="display:none">
-         <h4 style="color:var(--score-red);margin-bottom:15px;">Privacidad</h4>
-         <p>Sus datos personales se utilizan exclusivamente para la gestión, envío y facturación de su pedido. No compartimos información con terceros. Pagos procesados de forma segura vía Stripe.</p>
+         <h4 style="color:var(--score-red);margin-bottom:10px;">Privacidad</h4>
+         <p>Tus datos se usan exclusivamente para la entrega del pedido. Pagos procesados de forma segura por Stripe.</p>
        </div>
 
     </div>
   </aside>
 
   <div class="toast" id="toast">Mensaje</div>
-
   <script src="/js/main.js"></script>
 </body>
 </html>
