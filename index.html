@@ -56,6 +56,17 @@
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
     </div>
   </aside>
+  <aside id="legalModal" class="drawer">
+    <div class="dHead"><h3>INFORMACIÓN LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dBody" style="padding:40px;">
+       <div class="legalBlock" data-legal-block="shipping" style="display:none"><h4>Política de Envíos</h4><p>Envíos nacionales 3-7 días. Local TJ express $200. Pickup gratis en Palermo 6106.</p></div>
+       <div class="legalBlock" data-legal-block="returns" style="display:none"><h4>Devoluciones</h4><p>7 días naturales para cambios. Liquidación es venta final.</p></div>
+       <div class="legalBlock" data-legal-block="billing" style="display:none"><h4>Facturación</h4><p>Solicitar en el mes de compra a ventas.unicotextil@gmail.com</p></div>
+       <div class="legalBlock" data-legal-block="terms" style="display:none"><h4>Términos</h4><p>Operado por Único Uniformes S.A. de C.V. Precios incluyen IVA.</p></div>
+       <div class="legalBlock" data-legal-block="privacy" style="display:none"><h4>Privacidad</h4><p>Datos protegidos. Pagos vía Stripe.</p></div>
+    </div>
+  </aside>
+  <div class="toast" id="toast">Mensaje</div>
   <script src="/js/main.js"></script>
 </body>
 </html>
