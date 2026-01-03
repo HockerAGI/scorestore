@@ -71,16 +71,6 @@
       "tags": ["baja500"]
     },
     {
-      "id": "b500-hoodie",
-      "sku": "B500-HOOD-BLK",
-      "name": "Hoodie Baja 500 Official",
-      "baseMXN": 1100,
-      "sectionId": "BAJA_500",
-      "img": "/assets/BAJA500/hoodie-negra-baja500.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": []
-    },
-    {
       "id": "b400-tee-dark",
       "sku": "B400-TEE-DK",
       "name": "Camiseta Baja 400 Mocha",
@@ -89,16 +79,6 @@
       "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
       "sizes": ["S", "M", "L", "XL"],
       "tags": []
-    },
-    {
-      "id": "b400-cap",
-      "sku": "B400-CAP-BLK",
-      "name": "Gorra Baja 400 Black",
-      "baseMXN": 650,
-      "sectionId": "BAJA_400",
-      "img": "/assets/BAJA400/gorra-negra-baja400.webp",
-      "sizes": ["Unitalla"],
-      "tags": ["accesorios"]
     },
     {
       "id": "sf250-tank",
