@@ -1,4 +1,4 @@
-const CACHE_NAME = "score-store-pwa-v1";
+const CACHE_NAME = "score-store-pwa-v2";
 const ASSETS = [
   "/",
   "/index.html",
