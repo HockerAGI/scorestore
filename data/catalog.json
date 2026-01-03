@@ -18,10 +18,10 @@
       "sectionId": "BAJA_1000",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "sizes": ["S", "M", "L", "XL", "2XL"],
-      "tags": ["featured", "limited"]
+      "tags": ["featured"]
     },
     {
-      "id": "b1k-hoodie-tech",
+      "id": "b1k-hood-tech",
       "sku": "B1K-HOOD-TC",
       "name": "Hoodie Técnica Black/Grey",
       "baseMXN": 1100,
@@ -33,7 +33,7 @@
     {
       "id": "b1k-tee-blk",
       "sku": "B1K-TEE-BLK",
-      "name": "Camiseta Premium Official",
+      "name": "Camiseta Premium Official Negra",
       "baseMXN": 480,
       "sectionId": "BAJA_1000",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
@@ -48,12 +48,32 @@
       "sectionId": "BAJA_1000",
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "sizes": ["S", "M", "L", "XL"],
-      "tags": ["new"]
+      "tags": []
+    },
+    {
+      "id": "b1k-pit-gry",
+      "sku": "B1K-PIT-GRY",
+      "name": "Camisa de Pits Gris",
+      "baseMXN": 950,
+      "sectionId": "BAJA_1000",
+      "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["pro"]
+    },
+    {
+      "id": "b1k-pit-pnk",
+      "sku": "B1K-PIT-PNK",
+      "name": "Camisa de Pits Rosa (Dama)",
+      "baseMXN": 950,
+      "sectionId": "BAJA_1000",
+      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
+      "sizes": ["XS", "S", "M", "L"],
+      "tags": ["women"]
     },
     {
       "id": "b1k-cap-red",
       "sku": "B1K-CAP-RD",
-      "name": "Gorra Snapback Team Red",
+      "name": "Gorra Oficial Roja/Gris",
       "baseMXN": 650,
       "sectionId": "BAJA_1000",
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
@@ -61,29 +81,29 @@
       "tags": ["accesorios"]
     },
     {
-      "id": "b500-tee-gry",
-      "sku": "B500-TEE-GRY",
-      "name": "T-Shirt Baja 500 Titanium",
-      "baseMXN": 480,
-      "sectionId": "BAJA_500",
-      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": ["baja500"]
-    },
-    {
-      "id": "b500-hoodie",
-      "sku": "B500-HOOD-BLK",
-      "name": "Hoodie Baja 500 Official",
+      "id": "b1k-hood-blk",
+      "sku": "B1K-H-BLK",
+      "name": "Hoodie Clásica Negra",
       "baseMXN": 1100,
-      "sectionId": "BAJA_500",
-      "img": "/assets/BAJA500/hoodie-negra-baja500.webp",
+      "sectionId": "BAJA_1000",
+      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
       "sizes": ["S", "M", "L", "XL"],
       "tags": []
     },
     {
+      "id": "b500-tee-gry",
+      "sku": "B500-TEE-GRY",
+      "name": "Camiseta Baja 500 Gris",
+      "baseMXN": 480,
+      "sectionId": "BAJA_500",
+      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["new"]
+    },
+    {
       "id": "b400-tee-dark",
       "sku": "B400-TEE-DK",
-      "name": "Camiseta Baja 400 Mocha",
+      "name": "Camiseta Baja 400 Café Oscuro",
       "baseMXN": 480,
       "sectionId": "BAJA_400",
       "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
@@ -91,34 +111,14 @@
       "tags": []
     },
     {
-      "id": "b400-cap",
-      "sku": "B400-CAP-BLK",
-      "name": "Gorra Baja 400 Black",
-      "baseMXN": 650,
-      "sectionId": "BAJA_400",
-      "img": "/assets/BAJA400/gorra-negra-baja400.webp",
-      "sizes": ["Unitalla"],
-      "tags": ["accesorios"]
-    },
-    {
       "id": "sf250-tank",
       "sku": "SF250-TNK",
-      "name": "Sleeveless SF250 Black",
+      "name": "Sleeveless SF250 Negra",
       "baseMXN": 440,
       "sectionId": "SF_250",
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "sizes": ["S", "M", "L"],
       "tags": ["summer"]
-    },
-    {
-      "id": "sf250-tee",
-      "sku": "SF250-TEE-WHT",
-      "name": "Camiseta San Felipe 250",
-      "baseMXN": 480,
-      "sectionId": "SF_250",
-      "img": "/assets/SF250/camiseta-blanca-SF250.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": []
     }
   ]
 }
