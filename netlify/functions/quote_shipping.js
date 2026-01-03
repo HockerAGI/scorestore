@@ -6,7 +6,7 @@ exports.handler = async (event) => {
 
   const body = safeJsonParse(event.body, {});
   const zip = digitsOnly(body.postal_code);
-  const items = body.items || 1;
+  const items = Math.max(1, parseInt(body.items, 10) || 1);
 
   if (zip.length !== 5) return jsonResponse(400, { error: "CP Inválido" });
 
@@ -14,7 +14,7 @@ exports.handler = async (event) => {
 
   if (quote) {
     return jsonResponse(200, { ok: true, mxn: quote.mxn, label: quote.label, days: quote.days });
-  } else {
-    return jsonResponse(200, { ok: true, mxn: 250, label: "Envío Nacional", fallback: true });
   }
+
+  return jsonResponse(200, { ok: true, mxn: 250, label: "Envío Nacional", fallback: true });
 };
