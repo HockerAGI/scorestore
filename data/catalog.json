@@ -21,16 +21,6 @@
       "tags": ["featured", "limited"]
     },
     {
-      "id": "b1k-jersey-race",
-      "sku": "B1K-JER-RC",
-      "name": "Jersey Racing Pro 2025",
-      "baseMXN": 1250,
-      "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/camisa-negra-rojo-baja1000.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": ["new", "performance"]
-    },
-    {
       "id": "b1k-hoodie-tech",
       "sku": "B1K-HOOD-TC",
       "name": "Hoodie Técnica Black/Grey",
@@ -41,7 +31,7 @@
       "tags": ["baja1000"]
     },
     {
-      "id": "b1k-tee-prem",
+      "id": "b1k-tee-blk",
       "sku": "B1K-TEE-BLK",
       "name": "Camiseta Premium Official",
       "baseMXN": 480,
@@ -49,36 +39,6 @@
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "sizes": ["S", "M", "L", "XL", "2XL"],
       "tags": ["bestseller"]
-    },
-    {
-      "id": "b1k-tee-wmn",
-      "sku": "B1K-TEE-WMN",
-      "name": "Camiseta Dama Edición Rosa",
-      "baseMXN": 480,
-      "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-      "sizes": ["XS", "S", "M", "L"],
-      "tags": ["women"]
-    },
-    {
-      "id": "b1k-cap-pro",
-      "sku": "B1K-CAP-RD",
-      "name": "Gorra Snapback Team Red",
-      "baseMXN": 650,
-      "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "sizes": ["Unitalla"],
-      "tags": ["accesorios"]
-    },
-    {
-      "id": "b1k-ls-pit",
-      "sku": "B1K-LS-PIT",
-      "name": "Camisa Pits Manga Larga",
-      "baseMXN": 950,
-      "sectionId": "BAJA_1000",
-      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "sizes": ["S", "M", "L", "XL"],
-      "tags": []
     },
     {
       "id": "b1k-tee-brn",
@@ -89,6 +49,16 @@
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "sizes": ["S", "M", "L", "XL"],
       "tags": ["new"]
+    },
+    {
+      "id": "b1k-cap-red",
+      "sku": "B1K-CAP-RD",
+      "name": "Gorra Snapback Team Red",
+      "baseMXN": 650,
+      "sectionId": "BAJA_1000",
+      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
+      "sizes": ["Unitalla"],
+      "tags": ["accesorios"]
     },
     {
       "id": "b500-tee-gry",
