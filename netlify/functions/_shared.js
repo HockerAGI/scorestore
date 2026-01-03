@@ -69,7 +69,7 @@ async function getEnviaQuote(postalCode, itemsCount = 1) {
 async function createEnviaLabel(session) {
   const apiKey = process.env.ENVIA_API_KEY;
   if (!apiKey) return null;
-  // (Lógica de webhook simplificada para no repetir, usa la del bloque anterior si activas webhooks)
+  // (Simplificado para este ejemplo, pero funcional si se implementa webhook)
   return null; 
 }
 
