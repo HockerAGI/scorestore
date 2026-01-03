@@ -1,5 +1,5 @@
 /* ======================================================
-   SCORE STORE — FINAL MASTER CSS
+   SCORE STORE — V-MASTER (METALLIC + FIXED DRAWER + LOGOS)
    ====================================================== */
 
 :root {
@@ -98,18 +98,18 @@ h2 span { color: var(--score-red); }
 .copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
 .whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
 
-/* MODAL CATÁLOGO */
+/* MODAL CATÁLOGO (Header Rojo) */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
 .overlay.active { opacity: 1; pointer-events: auto; }
 .modal { position: fixed; top: 50%; left: 50%; width: min(1100px, 94vw); max-height: 90vh; transform: translate(-50%, -45%); background: #f9f9f9; z-index: 2100; opacity: 0; pointer-events: none; border-radius: 16px; transition: .3s; display: flex; flex-direction: column; overflow: hidden; }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
-/* HEADER ROJO */
+/* HEADER ROJO + LOGOS */
 .dHead { padding: 15px 30px; background: var(--score-red); border-bottom: 1px solid #cc0000; display: flex; justify-content: space-between; align-items: center; }
 .dTitle { margin: 0; display: flex; align-items: center; justify-content: center; height: 60px; }
 .dTitle img { max-height: 100%; width: auto; object-fit: contain; } 
 
-/* CLASES DE CONTORNO (CONTROLADAS POR JS) */
+/* CLASES DE CONTORNO */
 .outline-white { filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white); }
 .outline-black { filter: drop-shadow(2px 0 0 black) drop-shadow(-2px 0 0 black) drop-shadow(0 2px 0 black) drop-shadow(0 -2px 0 black); }
 
