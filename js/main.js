@@ -1,6 +1,6 @@
-/* SCORE STORE LOGIC - FINAL GOLDEN MASTER */
+/* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v21";
+const CART_KEY = "score_cart_final_v22";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -30,14 +30,14 @@ async function init(){
     });
 }
 
-// ABRIR CATÁLOGO CON LOGICA DE CONTORNOS ESPECÍFICA
+// ABRIR CATÁLOGO (LÓGICA DE CONTORNOS)
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     
     const logoUrl = LOGOS[secId];
     if(logoUrl) {
-      // Determinar clase según la carrera (Negro para SF/B500, Blanco para el resto)
+      // Regla: San Felipe y Baja 500 = Negro / Resto = Blanco
       let outlineClass = "outline-white";
       if (secId === "SF_250" || secId === "BAJA_500") {
           outlineClass = "outline-black";
