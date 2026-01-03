@@ -1,6 +1,5 @@
-/* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v22";
+const CART_KEY = "score_cart_final_v23";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -30,7 +29,7 @@ async function init(){
     });
 }
 
-// ABRIR CATÁLOGO (LÓGICA DE CONTORNOS)
+// ABRIR CATÁLOGO (LÓGICA BLANCO/NEGRO)
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
