@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC - FINAL MASTER */
+/* SCORE STORE LOGIC - FINAL GOLDEN MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
 const CART_KEY = "score_cart_final_v21";
 
@@ -30,15 +30,19 @@ async function init(){
     });
 }
 
-// Abre Catálogo con LOGO y CLASE CORRECTA (Negro para SF, Blanco para el resto)
+// ABRIR CATÁLOGO CON LOGICA DE CONTORNOS ESPECÍFICA
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     
     const logoUrl = LOGOS[secId];
     if(logoUrl) {
-      // Determinamos qué contorno aplicar
-      const outlineClass = (secId === "SF_250") ? "black-outline" : "white-outline";
+      // Determinar clase según la carrera (Negro para SF/B500, Blanco para el resto)
+      let outlineClass = "outline-white";
+      if (secId === "SF_250" || secId === "BAJA_500") {
+          outlineClass = "outline-black";
+      }
+      
       $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}" class="${outlineClass}">`;
     } else {
       $("catTitle").innerText = title;
@@ -96,7 +100,7 @@ window.add = (id) => {
     const exist = cart.find(i=>i.key===key);
     if(exist) exist.qty++; else cart.push({key, id, name:p.name, variant:`Talla: ${s}`, price:p.baseMXN, qty:1, img:p.img});
     
-    saveCart(); renderCart(); openDrawer(); toast("Agregado al carrito");
+    saveCart(); renderCart(); openDrawer(); toast("Agregado");
 };
 
 function loadCart(){ try{cart=JSON.parse(localStorage.getItem(CART_KEY)||"[]")}catch{cart=[]} }
@@ -162,7 +166,6 @@ window.checkout = async () => {
     if(!cart.length) return;
     const btn = $("checkoutBtn"); btn.disabled=true; btn.innerText="PROCESANDO...";
     const mode = document.querySelector('input[name="shipMode"]:checked')?.value;
-    
     const to = {
         postal_code: $("cp")?.value,
         address1: $("addr")?.value,
