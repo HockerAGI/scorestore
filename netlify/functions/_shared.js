@@ -1,6 +1,6 @@
 /* SCORE STORE LOGIC - FINAL MASTER */
 const API_BASE = (location.hostname.includes('netlify')) ? '/.netlify/functions' : '/api';
-const CART_KEY = "score_cart_final_v16";
+const CART_KEY = "score_cart_final_v17";
 
 let cart = [], catalog = [], shipQuote = null;
 const $ = (id) => document.getElementById(id);
@@ -8,7 +8,7 @@ const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"M
 function scrollToId(id){ const el=$(id); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
 function toast(msg){ const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
 
-// LOGOS DEL HEADER
+// Mapeo de Logos
 const LOGOS = {
   "BAJA_1000": "/assets/logo-baja1000.webp",
   "BAJA_500": "/assets/logo-baja500.webp",
@@ -30,14 +30,15 @@ async function init(){
     });
 }
 
-// LOGO EN TITULO
+// Abre Catálogo con LOGO ORIGINAL + Contorno
 window.openCatalog = (secId, title) => {
     $("modalCatalog").classList.add("active");
     $("overlay").classList.add("active");
     
     const logoUrl = LOGOS[secId];
     if(logoUrl) {
-      $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}" style="height:100%; width:auto; object-fit:contain;">`;
+      // Importante: No aplicamos estilos inline que rompan el CSS, dejamos que .dTitle img maneje el filtro
+      $("catTitle").innerHTML = `<img src="${logoUrl}" alt="${title}">`;
     } else {
       $("catTitle").innerText = title;
     }
