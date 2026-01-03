@@ -1,5 +1,5 @@
 /* ======================================================
-   SCORE STORE — V-FINAL "WHITE OUTLINE LOGOS"
+   SCORE STORE — FINAL MASTER CSS
    ====================================================== */
 
 :root {
@@ -61,7 +61,7 @@ body.modalOpen { overflow: hidden; }
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
 
-/* HERO (LOGO CENTRAL) */
+/* HERO (LOGO CENTRAL 80%) */
 .hero-main-logo {
   display: block; width: 80%; max-width: 400px; margin: 0 auto 30px;
   filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6));
@@ -139,29 +139,29 @@ h2 span { color: var(--score-red); }
 .copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
 .whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
 
-/* MODAL CATÁLOGO (CORRECCIÓN LOGOS CON CONTORNO) */
+/* MODAL CATÁLOGO (Header Rojo + Logos con Contorno) */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
 .overlay.active { opacity: 1; pointer-events: auto; }
 .modal { position: fixed; top: 50%; left: 50%; width: min(1100px, 94vw); max-height: 90vh; transform: translate(-50%, -45%); background: #f9f9f9; z-index: 2100; opacity: 0; pointer-events: none; border-radius: 16px; transition: .3s; display: flex; flex-direction: column; overflow: hidden; }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
-/* Header Rojo */
+/* --- HEADER ROJO SOLICITADO --- */
 .dHead { 
   padding: 15px 30px; 
-  background: var(--score-red); /* FONDO ROJO */
+  background: var(--score-red); /* Fondo Rojo */
   border-bottom: 1px solid #cc0000; 
   display: flex; justify-content: space-between; align-items: center; 
 }
 .dTitle { margin: 0; display: flex; align-items: center; justify-content: center; height: 60px; }
 
-/* LOGO ORIGINAL CON CONTORNO BLANCO (Drop Shadow Trick) */
+/* LOGO ORIGINAL CON CONTORNO BLANCO */
 .dTitle img { 
   max-height: 100%; width: auto; object-fit: contain; 
   filter: 
     drop-shadow(2px 0 0 white) 
     drop-shadow(-2px 0 0 white) 
     drop-shadow(0 2px 0 white) 
-    drop-shadow(0 -2px 0 white); /* Contorno Sólido */
+    drop-shadow(0 -2px 0 white); 
 } 
 
 .closeBtn { 
