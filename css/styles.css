@@ -1,7 +1,3 @@
-/* ======================================================
-   SCORE STORE — FINAL MASTER CSS
-   ====================================================== */
-
 :root {
   --font-title: "Teko", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -30,7 +26,6 @@ body {
 }
 body.modalOpen { overflow: hidden; }
 
-/* Overlay Mínimo */
 .page-overlay {
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background: rgba(12, 12, 12, 0.4); 
@@ -61,7 +56,7 @@ body.modalOpen { overflow: hidden; }
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
 
-/* HERO (LOGO CENTRAL 80%) */
+/* HERO */
 .hero-main-logo {
   display: block; width: 80%; max-width: 400px; margin: 0 auto 30px;
   filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6));
@@ -139,16 +134,16 @@ h2 span { color: var(--score-red); }
 .copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
 .whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
 
-/* MODAL CATÁLOGO (Header Rojo + Logos con Contorno) */
+/* MODAL CATÁLOGO (Header Rojo) */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
 .overlay.active { opacity: 1; pointer-events: auto; }
 .modal { position: fixed; top: 50%; left: 50%; width: min(1100px, 94vw); max-height: 90vh; transform: translate(-50%, -45%); background: #f9f9f9; z-index: 2100; opacity: 0; pointer-events: none; border-radius: 16px; transition: .3s; display: flex; flex-direction: column; overflow: hidden; }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
-/* --- HEADER ROJO SOLICITADO --- */
+/* HEADER ROJO + LOGOS */
 .dHead { 
   padding: 15px 30px; 
-  background: var(--score-red); /* Fondo Rojo */
+  background: var(--score-red); /* FONDO ROJO */
   border-bottom: 1px solid #cc0000; 
   display: flex; justify-content: space-between; align-items: center; 
 }
@@ -220,6 +215,7 @@ h2 span { color: var(--score-red); }
 .cartThumb { width: 70px; height: 90px; object-fit: contain; mix-blend-mode: multiply; }
 .shipSelector { margin-bottom: 15px; }
 .radio-option { display: flex; align-items: center; gap: 10px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+.radio-option input:checked + div { color: var(--score-red); font-weight: 700; }
 .inputField { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 16px; color: #000; background: #fff; }
 .sumRow { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; color: #666; }
 .sumRow.total { font-size: 24px; font-weight: 700; color: #000; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 10px; }
