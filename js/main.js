@@ -163,7 +163,7 @@ window.checkout = async () => {
     const to = {
         postal_code: $("cp")?.value,
         address1: $("addr")?.value,
-        city: $("city")?.value,
+        city: "Tijuana",
         name: $("name")?.value
     };
     
@@ -171,7 +171,7 @@ window.checkout = async () => {
         const r = await fetch(`${API_BASE}/create_checkout`, {method:"POST", body:JSON.stringify({items:cart, mode, to})});
         const d = await r.json();
         if(d.url) location.href=d.url; else throw new Error();
-    } catch(e) { toast("Error checkout"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
+    } catch(e) { toast("Error iniciando pago"); btn.disabled=false; btn.innerText="PAGAR AHORA"; }
 };
 
 window.openDrawer=()=>{ $("drawer").classList.add("active"); $("overlay").classList.add("active"); document.body.classList.add("modalOpen"); };
@@ -179,4 +179,6 @@ window.closeAll=()=>{ document.querySelectorAll(".active").forEach(e=>e.classLis
 window.openLegal=(t)=>{ $("legalModal").classList.add("active"); $("overlay").classList.add("active"); document.querySelectorAll(".legalBlock").forEach(b=>b.style.display=(b.dataset.legalBlock===t)?"block":"none"); };
 
 init();
+
+// SERVICE WORKER REGISTRATION (PWA)
 if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
