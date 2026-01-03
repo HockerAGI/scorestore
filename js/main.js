@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER (PROD SAFE) */
+/* SCORE STORE LOGIC — FINAL MASTER + PROMOS */
 
 const API_BASE =
   (location.hostname === "localhost" || location.hostname === "127.0.0.1")
@@ -6,22 +6,24 @@ const API_BASE =
     : "/.netlify/functions";
 
 const CART_KEY = "score_cart_final_v18";
+const PROMO_KEY = "score_promo_applied_v1";
 
 let cart = [];
 let catalog = [];
+let promos = [];
 let shipQuote = null;
+let appliedPromo = null;
 
-/* ================= HELPERS ================= */
 const $ = (id) => document.getElementById(id);
-
 const money = (n) =>
   new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
   }).format(n || 0);
 
+/* ================= UTIL ================= */
 function scrollToId(id) {
-  const el = document.getElementById(id);
+  const el = $(id);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -44,15 +46,20 @@ const LOGOS = {
 /* ================= INIT ================= */
 async function init() {
   loadCart();
+  loadPromo();
   renderCart();
-  updateTotals();
 
   try {
-    const res = await fetch("/data/catalog.json", { cache: "no-store" });
-    const data = await res.json();
-    catalog = data.products || [];
+    const [catRes, promoRes] = await Promise.all([
+      fetch("/data/catalog.json"),
+      fetch("/data/promos.json"),
+    ]);
+    const catData = await catRes.json();
+    const promoData = await promoRes.json();
+    catalog = catData.products || [];
+    promos = promoData.rules || [];
   } catch (e) {
-    console.error("❌ Error cargando catálogo", e);
+    console.error("Init error:", e);
   }
 
   document
@@ -62,9 +69,63 @@ async function init() {
   $("cp")?.addEventListener("input", (e) => {
     if (e.target.value.length === 5) quoteShipping(e.target.value);
   });
+
+  injectPromoUI();
+  updateTotals();
 }
 
-/* ================= CATÁLOGO ================= */
+/* ================= PROMOS ================= */
+function loadPromo() {
+  try {
+    appliedPromo = JSON.parse(localStorage.getItem(PROMO_KEY));
+  } catch {
+    appliedPromo = null;
+  }
+}
+
+function savePromo() {
+  localStorage.setItem(PROMO_KEY, JSON.stringify(appliedPromo));
+}
+
+function injectPromoUI() {
+  const foot = document.querySelector("#drawer .dFoot");
+  if (!foot || $("promoWrap")) return;
+
+  const wrap = document.createElement("div");
+  wrap.id = "promoWrap";
+  wrap.style.marginBottom = "12px";
+
+  wrap.innerHTML = `
+    <div style="display:flex;gap:8px;">
+      <input id="promoInput" class="inputField" placeholder="Código promocional">
+      <button id="promoBtn" class="btn secondary" style="padding:10px 18px;">Aplicar</button>
+    </div>
+    <div id="promoInfo" style="margin-top:6px;font-size:13px;color:#0a7;"></div>
+  `;
+
+  foot.insertBefore(wrap, foot.firstChild);
+
+  $("promoBtn").addEventListener("click", applyPromo);
+}
+
+function applyPromo() {
+  const code = $("promoInput").value.trim().toUpperCase();
+  if (!code) return;
+
+  const rule = promos.find((r) => r.code === code && r.active);
+  if (!rule) {
+    toast("Código inválido");
+    return;
+  }
+
+  appliedPromo = rule;
+  savePromo();
+  $("promoInfo").innerText = `Código aplicado: ${rule.code}`;
+  toast("Promoción aplicada");
+  updateTotals();
+}
+
+/* ================= CATALOG ================= */
 window.openCatalog = (secId, title) => {
   $("modalCatalog").classList.add("active");
   $("overlay").classList.add("active");
@@ -75,13 +136,9 @@ window.openCatalog = (secId, title) => {
     ? `<img src="${logoUrl}" alt="${title}">`
     : title;
 
-  $("catContent").innerHTML =
-    "<div style='padding:40px;text-align:center;'>Cargando...</div>";
-
   const items = catalog.filter((p) => p.sectionId === secId);
   if (!items.length) {
-    $("catContent").innerHTML =
-      "<div style='padding:40px;text-align:center;'>Agotado</div>";
+    $("catContent").innerHTML = "<p style='padding:40px'>Agotado</p>";
     return;
   }
 
@@ -90,30 +147,22 @@ window.openCatalog = (secId, title) => {
     items
       .map((p) => {
         const sizes = p.sizes || ["Unitalla"];
-        const sizeBtns = sizes
-          .map(
-            (s) =>
-              `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`
-          )
-          .join("");
-
-        const imgSrc = p.img.startsWith("http")
-          ? p.img
-          : `${location.origin}${p.img}`;
-
         return `
         <div class="prodCard">
           <div class="metallic-frame">
-            <img src="${imgSrc}"
-              class="prodImg"
-              alt="${p.name}"
-              loading="lazy"
-              onerror="this.src='/assets/img-placeholder.webp'">
+            <img src="${location.origin}${p.img}" class="prodImg" loading="lazy">
           </div>
           <div class="prodName">${p.name}</div>
           <div class="prodPrice">${money(p.baseMXN)}</div>
-          <div class="size-row">${sizeBtns}</div>
-          <div id="sizes_${p.id}" data-selected="" hidden></div>
+          <div class="size-row">
+            ${sizes
+              .map(
+                (s) =>
+                  `<div class="size-pill" onclick="selectSize(this,'${s}')">${s}</div>`
+              )
+              .join("")}
+          </div>
+          <div id="sizes_${p.id}" data-selected="" style="display:none"></div>
           <button class="btn-add" onclick="add('${p.id}')">AGREGAR +</button>
         </div>`;
       })
@@ -122,46 +171,28 @@ window.openCatalog = (secId, title) => {
 };
 
 window.selectSize = (el, s) => {
-  const hidden = el.parentElement.nextElementSibling;
-  hidden.dataset.selected = s;
-  el.parentElement
-    .querySelectorAll(".size-pill")
-    .forEach((b) => b.classList.remove("active"));
+  const parent = el.parentElement;
+  parent.nextElementSibling.setAttribute("data-selected", s);
+  parent.querySelectorAll(".size-pill").forEach((b) => b.classList.remove("active"));
   el.classList.add("active");
 };
 
 /* ================= CART ================= */
 window.add = (id) => {
   const sizeEl = document.getElementById(`sizes_${id}`);
-  let size = sizeEl?.dataset.selected;
+  let size = sizeEl.getAttribute("data-selected");
+  if (!size) return toast("Selecciona talla");
 
-  if (!size) {
-    toast("Selecciona una talla");
-    return;
-  }
-
-  const product = catalog.find((p) => p.id === id);
+  const p = catalog.find((x) => x.id === id);
   const key = `${id}_${size}`;
-  const existing = cart.find((i) => i.key === key);
+  const exist = cart.find((i) => i.key === key);
 
-  if (existing) existing.qty++;
-  else {
-    cart.push({
-      key,
-      id,
-      name: product.name,
-      size,
-      variant: `Talla: ${size}`,
-      price: product.baseMXN,
-      qty: 1,
-      img: product.img,
-    });
-  }
+  if (exist) exist.qty++;
+  else cart.push({ key, id, name: p.name, size, price: p.baseMXN, qty: 1, img: p.img });
 
   saveCart();
   renderCart();
   openDrawer();
-  toast("Agregado");
 };
 
 function loadCart() {
@@ -171,24 +202,9 @@ function loadCart() {
     cart = [];
   }
 }
-
 function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
-
-window.emptyCart = () => {
-  if (!cart.length) return;
-  if (!confirm("¿Vaciar carrito?")) return;
-  cart = [];
-  saveCart();
-  renderCart();
-};
-
-window.delCart = (i) => {
-  cart.splice(i, 1);
-  saveCart();
-  renderCart();
-};
 
 function renderCart() {
   const wrap = $("cartItems");
@@ -204,7 +220,6 @@ function renderCart() {
   }
 
   $("cartEmpty").style.display = "none";
-
   wrap.innerHTML = cart
     .map(
       (i, x) => `
@@ -212,10 +227,10 @@ function renderCart() {
         <img src="${location.origin}${i.img}" class="cartThumb">
         <div class="cInfo">
           <div class="cName">${i.name}</div>
-          <div class="cMeta">${i.variant}</div>
+          <div class="cMeta">Talla: ${i.size}</div>
           <div class="cPrice">${money(i.price)}</div>
         </div>
-        <button onclick="delCart(${x})">×</button>
+        <button onclick="delCart(${x})">&times;</button>
       </div>`
     )
     .join("");
@@ -223,7 +238,13 @@ function renderCart() {
   updateTotals();
 }
 
-/* ================= SHIPPING ================= */
+window.delCart = (x) => {
+  cart.splice(x, 1);
+  saveCart();
+  renderCart();
+};
+
+/* ================= SHIPPING & TOTALS ================= */
 async function quoteShipping(zip) {
   try {
     const pieces = cart.reduce((a, b) => a + b.qty, 0) || 1;
@@ -232,75 +253,32 @@ async function quoteShipping(zip) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postal_code: zip, items: pieces }),
     });
-    const d = await r.json();
-    shipQuote = d.ok ? d : { mxn: 250 };
-    updateTotals();
-  } catch (e) {
-    console.error("Shipping error", e);
-  }
+    shipQuote = await r.json();
+  } catch {}
+  updateTotals();
 }
 
 function updateTotals() {
   const sub = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  $("subTotal").innerText = money(sub);
+  let discount = 0;
+  let ship = 0;
 
   const mode =
-    document.querySelector('input[name="shipMode"]:checked')?.value ||
-    "pickup";
+    document.querySelector('input[name="shipMode"]:checked')?.value || "pickup";
 
-  $("shipForm").style.display = mode === "mx" ? "block" : "none";
-
-  let ship = 0;
   if (mode === "tj") ship = 200;
   if (mode === "mx") ship = shipQuote?.mxn || 250;
 
-  $("shipTotal").innerText = ship ? money(ship) : "Gratis";
-  $("grandTotal").innerText = money(sub + ship);
-}
-
-/* ================= CHECKOUT ================= */
-window.checkout = async () => {
-  if (!cart.length) return;
-
-  const btn = $("checkoutBtn");
-  btn.disabled = true;
-  btn.innerText = "PROCESANDO...";
-
-  const mode =
-    document.querySelector('input[name="shipMode"]:checked')?.value ||
-    "pickup";
-
-  try {
-    const payload = {
-      items: cart.map((i) => ({
-        id: i.id,
-        qty: i.qty,
-        size: i.size,
-      })),
-      mode,
-      to: {
-        postal_code: $("cp")?.value,
-        address1: $("addr")?.value,
-        name: $("name")?.value,
-      },
-    };
-
-    const r = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const d = await r.json();
-    if (d.url) location.href = d.url;
-    else throw new Error("No checkout URL");
-  } catch (e) {
-    console.error(e);
-    toast("Error iniciando pago");
-    btn.disabled = false;
-    btn.innerText = "PAGAR AHORA";
+  if (appliedPromo) {
+    if (appliedPromo.type === "percent") discount = sub * appliedPromo.value;
+    if (appliedPromo.type === "fixed_mxn") discount = appliedPromo.value;
+    if (appliedPromo.type === "free_shipping") ship = 0;
   }
-};
+
+  $("subTotal").innerText = money(sub);
+  $("shipTotal").innerText = money(ship);
+  $("grandTotal").innerText = money(sub - discount + ship);
+}
 
 /* ================= UI ================= */
 window.openDrawer = () => {
@@ -308,25 +286,12 @@ window.openDrawer = () => {
   $("overlay").classList.add("active");
   document.body.classList.add("modalOpen");
 };
-
 window.closeAll = () => {
-  document
-    .querySelectorAll(".active")
-    .forEach((e) => e.classList.remove("active"));
+  document.querySelectorAll(".active").forEach((e) => e.classList.remove("active"));
   document.body.classList.remove("modalOpen");
 };
 
-window.openLegal = (key) => {
-  closeAll();
-  $("legalModal").classList.add("active");
-  $("overlay").classList.add("active");
-  document.body.classList.add("modalOpen");
-
-  document.querySelectorAll(".legalBlock").forEach((b) => {
-    b.style.display = b.dataset.legalBlock === key ? "block" : "none";
-  });
-};
-
+/* ================= START ================= */
 init();
 
 if ("serviceWorker" in navigator) {
