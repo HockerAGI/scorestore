@@ -1,50 +1,37 @@
-const CACHE_NAME = "score-store-pwa-v6";
-
-// Assets estáticos inmutables (fuentes, logos, UI core)
-const STATIC_ASSETS = [
+const CACHE_NAME = "score-store-pwa-v3-unified";
+const ASSETS = [
   "/",
+  "/index.html",
+  "/legal.html",
   "/css/styles.css",
-  "/js/main.js", // Logica UI
+  "/js/main.js",
+  "/data/catalog.json",
+  "/icons-score.svg",
   "/assets/logo-score.webp",
   "/assets/hero.webp",
-  "/assets/fondo-pagina-score.webp",
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png"
+  "/assets/fondo-pagina-score.webp"
 ];
 
-/* INSTALL */
-self.addEventListener("install", e => {
+self.addEventListener("install", (e) => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
 });
 
-/* ACTIVATE */
-self.addEventListener("activate", e => {
-  e.waitUntil(
-    Promise.all([
-      self.clients.claim(),
-      caches.keys().then(keys =>
-        Promise.all(
-          keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : null))
-        )
-      )
-    ])
-  );
+self.addEventListener("activate", (e) => {
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => { 
+    if (k !== CACHE_NAME) return caches.delete(k); 
+  }))));
+  self.clients.claim();
 });
 
-/* FETCH */
-self.addEventListener("fetch", e => {
+self.addEventListener("fetch", (e) => {
   const req = e.request;
-
-  if (req.method !== "GET") return;
-
-  // ❌ Nunca cachear funciones serverless
+  
+  // No cachear API
   if (req.url.includes("/.netlify/functions/")) return;
 
-  // 🛒 Catálogo: Network First (Priorizar datos frescos)
-  if (req.url.includes("/data/catalog.json")) {
+  // Network First para HTML y Datos (Prioridad: contenido actualizado)
+  if (req.headers.get("accept")?.includes("text/html") || req.url.includes("/data/")) {
     e.respondWith(
       fetch(req)
         .then(res => {
@@ -57,23 +44,7 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // 📄 HTML: Network First
-  if (req.headers.get("accept")?.includes("text/html")) {
-    e.respondWith(
-      fetch(req).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  // 🖼️ Imágenes: Cache First con Network Fallback
-  if (req.destination === "image") {
-    e.respondWith(
-      caches.match(req).then(res => res || fetch(req))
-    );
-    return;
-  }
-
-  // 📦 Resto de Assets: Cache First
+  // Cache First para lo demás (Imágenes, CSS, JS estático)
   e.respondWith(
     caches.match(req).then(res => res || fetch(req))
   );
