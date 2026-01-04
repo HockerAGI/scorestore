@@ -599,3 +599,44 @@ h2 span { color: var(--score-red); }
 
   .shipGrid { grid-template-columns: 1fr; }
 }
+/* Agrega esto al final de tu archivo styles.css actual */
+
+/* LEGAL PAGES */
+.legal {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: calc(var(--header-h) + 40px) 20px 80px;
+}
+.legalCard {
+  background: #fff;
+  color: #111;
+  padding: 30px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+.h1 { font-family: var(--font-title); font-size: 48px; color: #fff; margin-bottom: 10px; }
+.h2 { font-family: var(--font-title); font-size: 32px; color: var(--score-red); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.p { line-height: 1.6; margin-bottom: 15px; font-size: 16px; }
+.ul { margin-left: 20px; line-height: 1.6; margin-bottom: 15px; }
+.ul li { margin-bottom: 8px; }
+.muted { color: #999; }
+.small { font-size: 14px; }
+
+/* UTILS */
+.btnGhost {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  transition: .2s;
+}
+.btnGhost:hover { background: #fff; color: #000; }
+.footer__bottom { text-align: center; color: #666; font-size: 13px; margin-top: 40px; }
