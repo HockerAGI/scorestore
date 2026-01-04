@@ -1,5 +1,5 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const promos = require("../../data/promos.json"); // Archivo unificado
+const promos = require("../../data/promos.json"); // Usa .json, borra el .js
 const {
   jsonResponse,
   safeJsonParse,
@@ -12,20 +12,22 @@ const {
 
 exports.handler = async (event) => {
   try {
-    if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
+    if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Método no permitido" });
 
     const body = safeJsonParse(event.body);
     const catalog = await loadCatalog();
     const map = productMapFromCatalog(catalog);
     
-    // 1. Validar Items
+    // 1. Validar Productos
     const cartCheck = validateCartItems(body.items);
     if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
 
-    // 2. Construir Line Items (Productos)
+    // 2. Construir Line Items
     const line_items = cartCheck.items.map(i => {
       const p = map[i.id];
-      // Nota: Asegúrate de que tu data/catalog.json tenga las rutas de img completas o relativas
+      if (!p) throw new Error(`Producto no encontrado: ${i.id}`);
+      
+      // Url absoluta para que Stripe muestre la foto
       const imgUrl = p.img.startsWith("http") ? p.img : `https://scorestore.netlify.app${p.img}`;
       
       return {
@@ -36,7 +38,7 @@ exports.handler = async (event) => {
             description: `Talla: ${i.size}`,
             images: [imgUrl]
           },
-          unit_amount: p.baseMXN * 100 // a centavos
+          unit_amount: p.baseMXN * 100
         },
         quantity: i.qty
       };
@@ -48,7 +50,7 @@ exports.handler = async (event) => {
     const zip = digitsOnly(body.customer?.postal_code);
 
     if (mode === "pickup") {
-      // Opción de costo 0 pero explícita
+      // Opción de costo 0 para Recoger en Tienda
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
@@ -57,6 +59,7 @@ exports.handler = async (event) => {
         }
       });
     } else if (mode === "tj") {
+      // Costo fijo local
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
@@ -66,38 +69,30 @@ exports.handler = async (event) => {
         }
       });
     } else if (mode === "mx") {
-      // Cotizar en tiempo real para asegurar el precio final en Stripe
+      // Cotización dinámica Envia.com
       const totalQty = cartCheck.items.reduce((s, i) => s + i.qty, 0);
-      const quote = await getEnviaQuote(zip, totalQty);
-      const cost = quote ? quote.mxn : 250; // Fallback
+      const quote = await getEnviaQuote(zip, totalQty); // Usa la función de _shared.js
+      const cost = quote ? quote.mxn : 250; // Fallback seguro
       
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
           fixed_amount: { amount: cost * 100, currency: 'mxn' },
-          display_name: 'Envío Nacional Estándar',
+          display_name: quote ? `Envío Nacional (${quote.carrier})` : 'Envío Nacional Estándar',
           delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 7 } }
         }
       });
     }
 
-    // 4. Pre-llenado de Cliente (Customer Details)
-    // Usamos los datos que el usuario llenó en TU carrito
-    const customer_details = {};
-    if (body.customer?.name) customer_details.name = body.customer.name;
-    // La dirección se pasa en metadata o intentamos pre-llenar si Stripe lo permite en esa sesión
-    // Stripe Checkout prefiere recolectar la dirección billing ellos mismos para validar fraude.
-    // Pasaremos el ZIP como pre-llenado si es posible o en metadata.
-
-    // 5. Crear Sesión
+    // 4. Crear Sesión Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card", "oxxo"],
       line_items,
       mode: "payment",
       shipping_options,
       
-      // Forzamos colección de dirección en Stripe para que la etiqueta de envío sea válida
-      // pero podemos intentar pasar el email si lo tuviéramos.
+      // Permitimos que el usuario edite la dirección en Stripe si es necesario, 
+      // pero restringimos a México.
       shipping_address_collection: { allowed_countries: ["MX"] },
       
       success_url: "https://scorestore.netlify.app/?status=success",
@@ -106,7 +101,7 @@ exports.handler = async (event) => {
       metadata: {
         score_mode: mode,
         customer_provided_zip: zip,
-        customer_provided_addr: body.customer?.address // Guardar para referencia interna
+        customer_name: body.customer?.name
       }
     });
 
