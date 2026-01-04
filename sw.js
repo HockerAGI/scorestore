@@ -1,10 +1,10 @@
-const CACHE_NAME = "score-store-pwa-v5";
+const CACHE_NAME = "score-store-pwa-v6";
 
-const ASSETS = [
+// Assets estáticos inmutables (fuentes, logos, UI core)
+const STATIC_ASSETS = [
   "/",
   "/css/styles.css",
-  "/js/main.js",
-  "/data/catalog.json",
+  "/js/main.js", // Logica UI
   "/assets/logo-score.webp",
   "/assets/hero.webp",
   "/assets/fondo-pagina-score.webp",
@@ -16,7 +16,7 @@ const ASSETS = [
 self.addEventListener("install", e => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
@@ -38,13 +38,26 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const req = e.request;
 
-  // Solo GET
   if (req.method !== "GET") return;
 
-  // ❌ Nunca cachear funciones (Stripe / Netlify)
+  // ❌ Nunca cachear funciones serverless
   if (req.url.includes("/.netlify/functions/")) return;
 
-  // 📄 HTML → network first (evita bugs visuales / JS viejo)
+  // 🛒 Catálogo: Network First (Priorizar datos frescos)
+  if (req.url.includes("/data/catalog.json")) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, clone));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // 📄 HTML: Network First
   if (req.headers.get("accept")?.includes("text/html")) {
     e.respondWith(
       fetch(req).catch(() => caches.match(req))
@@ -52,15 +65,15 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // 🖼️ Imágenes → network first con fallback
+  // 🖼️ Imágenes: Cache First con Network Fallback
   if (req.destination === "image") {
     e.respondWith(
-      fetch(req).catch(() => caches.match(req))
+      caches.match(req).then(res => res || fetch(req))
     );
     return;
   }
 
-  // 📦 Assets estáticos → cache first
+  // 📦 Resto de Assets: Cache First
   e.respondWith(
     caches.match(req).then(res => res || fetch(req))
   );
