@@ -1,267 +1,250 @@
-/* ======================================================
-   SCORE STORE — MAIN JS (UNIFICADO Y ESTABLE)
-====================================================== */
+const API_BASE = location.hostname === "localhost" ? "/api" : "/.netlify/functions";
+const CART_KEY = "score_cart_v25";
 
-const API_BASE = "/.netlify/functions";
-const CART_KEY = "score_cart_v1";
+// Estado Global
+let state = {
+  cart: [],
+  catalog: {}, // Mapa de ID -> Producto
+  shippingMode: "mx", // mx, tj, pickup
+  zip: "",
+  promo: ""
+};
 
-let catalog = null;
-let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-
-/* =====================
-   HELPERS
-===================== */
+// Selectores DOM
 const $ = (id) => document.getElementById(id);
-const money = (n) => `$${Number(n).toLocaleString("es-MX")}`;
-const saveCart = () => localStorage.setItem(CART_KEY, JSON.stringify(cart));
+const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 
-/* =====================
-   TOAST
-===================== */
-function toast(msg) {
-  const t = $("toast");
-  if (!t) return;
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2500);
+// --- INIT ---
+async function init() {
+  // Cargar carrito guardado
+  const saved = localStorage.getItem(CART_KEY);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    state.cart = parsed.items || [];
+    state.shippingMode = parsed.mode || "mx";
+    state.zip = parsed.zip || "";
+  }
+
+  // Restaurar UI inputs
+  if ($("shippingMode")) $("shippingMode").value = state.shippingMode;
+  if ($("zipCode")) $("zipCode").value = state.zip;
+
+  await loadCatalog();
+  updateCartUI();
 }
 
-/* =====================
-   LOAD CATALOG
-===================== */
 async function loadCatalog() {
   try {
-    const r = await fetch("/data/catalog.json");
-    catalog = await r.json();
+    const res = await fetch("/data/catalog.json");
+    const data = await res.json();
+    
+    // Renderizar Catálogo
+    const container = $("catalog");
+    container.innerHTML = "";
+    
+    data.sections.forEach(sec => {
+      // Filtrar productos de esta sección
+      const prods = data.products.filter(p => p.sectionId === sec.id);
+      if(prods.length === 0) return;
+
+      const secHtml = `
+        <section class="catalogSection">
+          <h2 class="sectionTitle">${sec.title} <span class="badge">${sec.badge}</span></h2>
+          <div class="grid">
+            ${prods.map(p => {
+              state.catalog[p.id] = p; // Guardar en memoria
+              return `
+                <article class="card">
+                  <div class="cardImg">
+                    <img src="${p.img}" alt="${p.name}" loading="lazy">
+                  </div>
+                  <div class="cardBody">
+                    <h3>${p.name}</h3>
+                    <div class="price">${money(p.baseMXN)}</div>
+                    <div class="cardActions">
+                      <select id="size-${p.id}" class="sizeSel">
+                        ${p.sizes.map(s => `<option value="${s}">${s}</option>`).join("")}
+                      </select>
+                      <button class="btnAdd" onclick="addToCart('${p.id}')">AGREGAR</button>
+                    </div>
+                  </div>
+                </article>
+              `;
+            }).join("")}
+          </div>
+        </section>
+      `;
+      container.innerHTML += secHtml;
+    });
+
   } catch (e) {
-    console.error("Error cargando catálogo", e);
-    toast("Error cargando catálogo");
+    console.error(e);
+    $("catalog").innerHTML = "<p>Error cargando catálogo. Recarga la página.</p>";
   }
 }
-loadCatalog();
 
-/* =====================
-   UI — DRAWER / OVERLAY
-===================== */
-function openDrawer() {
-  $("drawer")?.classList.add("active");
-  $("overlay")?.classList.add("active");
-  renderCart();
-}
+// --- CART LOGIC ---
 
-function closeAll() {
-  document.querySelectorAll(".drawer,.modal").forEach(e => e.classList.remove("active"));
-  $("overlay")?.classList.remove("active");
-}
-
-/* =====================
-   CART LOGIC
-===================== */
-function addToCart(prod, size) {
-  if (!catalog) return toast("Catálogo no cargado");
-
-  const found = cart.find(i => i.id === prod.id && i.size === size);
-  if (found) {
-    found.qty = Math.min(found.qty + 1, 10);
+window.addToCart = (id) => {
+  const size = $(`size-${id}`).value;
+  const existing = state.cart.find(i => i.id === id && i.size === size);
+  
+  if (existing) {
+    existing.qty++;
   } else {
-    cart.push({ id: prod.id, size, qty: 1 });
+    state.cart.push({ id, size, qty: 1 });
   }
-
+  
   saveCart();
-  updateCount();
-  toast("Producto agregado");
-}
+  updateCartUI();
+  openDrawer();
+};
 
-function updateQty(id, size, delta) {
-  const item = cart.find(i => i.id === id && i.size === size);
-  if (!item) return;
-
-  item.qty += delta;
-  if (item.qty <= 0) {
-    cart = cart.filter(i => !(i.id === id && i.size === size));
-  }
-
+window.removeFromCart = (idx) => {
+  state.cart.splice(idx, 1);
   saveCart();
-  renderCart();
-  updateCount();
+  updateCartUI();
+};
+
+function saveCart() {
+  // Guardamos items y preferencias de envío
+  state.shippingMode = $("shippingMode").value;
+  state.zip = $("zipCode").value;
+  
+  localStorage.setItem(CART_KEY, JSON.stringify({
+    items: state.cart,
+    mode: state.shippingMode,
+    zip: state.zip
+  }));
 }
 
-function emptyCart() {
-  cart = [];
-  saveCart();
-  renderCart();
-  updateCount();
-}
+window.updateCartUI = () => {
+  const list = $("cartItems");
+  const count = $("cartCount");
+  const subLabel = $("subtotalLabel");
+  const shipLabel = $("shippingLabel");
+  const totLabel = $("totalLabel");
+  const mode = $("shippingMode").value;
 
-function updateCount() {
-  const el = $("cartCount");
-  if (!el) return;
-  el.innerText = cart.reduce((a, b) => a + b.qty, 0);
-}
-updateCount();
+  // Actualizar visibilidad de ZIP
+  const zipGroup = $("zipGroup");
+  if(mode === "pickup") zipGroup.style.display = "none";
+  else zipGroup.style.display = "block";
 
-/* =====================
-   RENDER CART
-===================== */
-function renderCart() {
-  const box = $("cartItems");
-  const empty = $("cartEmpty");
-  if (!box || !catalog) return;
-
-  box.innerHTML = "";
-
-  if (!cart.length) {
-    empty.style.display = "block";
-    $("subTotal").innerText = "$0";
-    $("shipTotal").innerText = "$0";
-    $("grandTotal").innerText = "$0";
-    return;
-  }
-
-  empty.style.display = "none";
-
+  // Render Items
+  list.innerHTML = "";
   let subtotal = 0;
+  let itemCount = 0;
 
-  cart.forEach(item => {
-    const p = catalog.products.find(x => x.id === item.id);
-    if (!p) return;
+  state.cart.forEach((item, idx) => {
+    const product = state.catalog[item.id];
+    if(!product) return;
+    
+    const itemTotal = product.baseMXN * item.qty;
+    subtotal += itemTotal;
+    itemCount += item.qty;
 
-    subtotal += p.baseMXN * item.qty;
-
-    const div = document.createElement("div");
-    div.className = "cartItem";
-    div.innerHTML = `
-      <img src="${p.img}" class="cartThumb" />
-      <div class="cInfo">
-        <div class="cName">${p.name}</div>
-        <div class="cMeta">Talla: ${item.size}</div>
-        <div class="cPrice">${money(p.baseMXN)}</div>
-        <div class="qtyRow">
-          <button class="qtyBtn" onclick="updateQty('${item.id}','${item.size}',-1)">−</button>
-          <span class="qtyVal">${item.qty}</span>
-          <button class="qtyBtn" onclick="updateQty('${item.id}','${item.size}',1)">+</button>
+    list.innerHTML += `
+      <div class="cartItem">
+        <img src="${product.img}" class="itemThumb">
+        <div class="itemInfo">
+          <h4>${product.name}</h4>
+          <p class="meta">Talla: ${item.size} | Cant: ${item.qty}</p>
+          <div class="itemPrice">${money(itemTotal)}</div>
         </div>
+        <button class="btnRemove" onclick="removeFromCart(${idx})">×</button>
       </div>
     `;
-    box.appendChild(div);
   });
 
-  $("subTotal").innerText = money(subtotal);
-  $("shipTotal").innerText = "Se calcula al pagar";
-  $("grandTotal").innerText = money(subtotal);
-}
+  if(state.cart.length === 0) list.innerHTML = `<div class="emptyCart">Carrito vacío</div>`;
+  
+  count.innerText = itemCount;
+  subLabel.innerText = money(subtotal);
 
-/* =====================
-   CHECKOUT
-===================== */
-async function checkout() {
-  if (!cart.length) return toast("Carrito vacío");
+  // Estimación de Envío (Solo UI, cálculo real en backend)
+  let shippingCost = 0;
+  let shipText = "Pendiente";
 
-  const mode = document.querySelector('input[name="shipMode"]:checked')?.value || "pickup";
-
-  if (mode !== "pickup") {
-    if (!$("cp")?.value || $("cp").value.length !== 5) return toast("CP inválido");
-    if (!$("addr")?.value) return toast("Dirección requerida");
-    if (!$("name")?.value) return toast("Nombre requerido");
+  if (mode === "pickup") {
+    shippingCost = 0;
+    shipText = "Gratis (Fábrica)";
+  } else if (mode === "tj") {
+    shippingCost = 200;
+    shipText = "$200.00 MXN";
+  } else {
+    // Nacional
+    shippingCost = 250; // Base para display
+    shipText = "Calc. al pagar";
   }
 
-  const btn = $("checkoutBtn");
-  if (btn) btn.disabled = true;
+  shipLabel.innerText = shipText;
+  
+  // Total Aproximado (Final se calcula en Stripe)
+  totLabel.innerText = money(subtotal + shippingCost);
+};
 
-  const payload = {
-    items: cart,
-    mode,
-    promo: $("promoCode")?.value || null,
-    to: {
-      postal_code: $("cp")?.value || "",
-      address1: $("addr")?.value || "",
-      name: $("name")?.value || ""
-    }
-  };
+// --- CHECKOUT ---
+
+window.initCheckout = async () => {
+  const btn = $("checkoutBtn");
+  const mode = $("shippingMode").value;
+  const zip = $("zipCode").value;
+  const promo = $("promoCode").value;
+
+  if (state.cart.length === 0) return toast("Carrito vacío");
+  if (mode === "mx" && (!zip || zip.length < 5)) return toast("Ingresa tu Código Postal");
+
+  btn.disabled = true;
+  btn.innerText = "Procesando...";
 
   try {
-    const r = await fetch(`${API_BASE}/create_checkout`, {
+    const payload = {
+      items: state.cart,
+      mode: mode,
+      promo: promo,
+      to: { postal_code: zip }
+    };
+
+    const res = await fetch(`${API_BASE}/create_checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
-    const d = await r.json();
-    if (d.url) {
-      localStorage.removeItem(CART_KEY);
-      location.href = d.url;
+    const data = await res.json();
+    
+    if (data.url) {
+      window.location.href = data.url;
     } else {
-      toast("Error iniciando pago");
-      if (btn) btn.disabled = false;
+      throw new Error(data.error || "Error desconocido");
     }
-  } catch {
-    toast("Error de red");
-    if (btn) btn.disabled = false;
+
+  } catch (err) {
+    console.error(err);
+    toast("Error: " + err.message);
+    btn.disabled = false;
+    btn.innerText = "PAGAR AHORA SEGURO";
   }
-}
+};
 
-/* =====================
-   CATÁLOGO / MODAL
-===================== */
-function openCatalog(sectionId, title) {
-  if (!catalog) return toast("Catálogo no cargado");
+window.openDrawer = () => {
+  $("drawer").classList.add("active");
+  $("overlay").classList.add("active");
+  document.body.classList.add("modalOpen");
+};
 
-  const modal = $("modalCatalog");
-  const overlay = $("overlay");
-  const content = $("catContent");
-  const titleEl = $("catTitle");
+window.closeAll = () => {
+  document.querySelectorAll(".active").forEach(e => e.classList.remove("active"));
+  document.body.classList.remove("modalOpen");
+};
 
-  if (!modal || !overlay || !content || !titleEl) {
-    console.error("Modal de catálogo incompleto");
-    return;
-  }
+window.toast = (msg) => {
+  const t = $("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 3000);
+};
 
-  titleEl.innerText = title || "";
-
-  const products = catalog.products.filter(p => p.sectionId === sectionId);
-
-  if (!products.length) {
-    content.innerHTML = `<p style="text-align:center;">No hay productos disponibles.</p>`;
-  } else {
-    content.innerHTML = `
-      <div class="catGrid">
-        ${products.map(p => `
-          <div class="prodCard">
-            <div class="metallic-frame">
-              <img src="${p.img}" alt="${p.name}" class="prodImg" loading="lazy">
-            </div>
-            <div class="prodName">${p.name}</div>
-            <div class="prodPrice">${money(p.baseMXN)}</div>
-
-            <div class="sizeRow">
-              ${p.sizes.map(s => `
-                <button class="size-pill" onclick="addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')},'${s}')">
-                  ${s}
-                </button>
-              `).join("")}
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    `;
-  }
-
-  modal.classList.add("active");
-  overlay.classList.add("active");
-}
-
-/* =====================
-   LEGAL MODAL
-===================== */
-function openLegal(block) {
-  const modal = $("legalModal");
-  const overlay = $("overlay");
-  if (!modal || !overlay) return;
-
-  modal.querySelectorAll("[data-legal-block]").forEach(b => {
-    b.style.display = b.dataset.legalBlock === block ? "block" : "none";
-  });
-
-  modal.classList.add("active");
-  overlay.classList.add("active");
-}
+// Iniciar app
+init();
