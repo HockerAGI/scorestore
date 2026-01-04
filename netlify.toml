@@ -17,7 +17,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# --- ASSETS ESTÁTICOS (Cache Largo) ---
+# --- NO CACHEAR HTML ---
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# --- ASSETS ESTÁTICOS ---
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -28,7 +34,12 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# --- NO CACHEAR SW NI MANIFEST (PWA) ---
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# --- PWA ---
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -39,7 +50,7 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# --- API FUNCTIONS (CORS & NO-CACHE) ---
+# --- API FUNCTIONS ---
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
@@ -48,7 +59,7 @@
     Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# --- REDIRECTS (Standard API) ---
+# --- REDIRECTS ---
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
