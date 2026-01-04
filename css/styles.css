@@ -302,7 +302,7 @@ h2 span { color: var(--score-red); }
 }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
-/* ✅ SCOPED header/body para MODAL */
+/* MODAL HEADER/BODY */
 .modal .dHead {
   padding: 14px 18px;
   background: var(--score-red);
@@ -430,7 +430,7 @@ h2 span { color: var(--score-red); }
 }
 .drawer.active { transform: translateX(0); }
 
-/* ✅ SCOPED para DRAWER */
+/* DRAWER HEADER */
 .drawer .dHead {
   padding: 16px 18px;
   background: #fff;
@@ -468,7 +468,7 @@ h2 span { color: var(--score-red); }
   padding-bottom: max(18px, env(safe-area-inset-bottom));
 }
 
-/* Items carrito */
+/* Items Carrito */
 .cartItem {
   display: grid;
   grid-template-columns: 70px 1fr 26px;
@@ -492,7 +492,7 @@ h2 span { color: var(--score-red); }
 .cMeta { font-size: 12px; color: #666; margin-bottom: 6px; }
 .cPrice { font-family: var(--font-title); font-size: 22px; color: var(--score-red); letter-spacing: 0.5px; }
 
-/* Qty (mejora pro) */
+/* Qty */
 .qtyRow { display: inline-flex; gap: 10px; align-items: center; margin-top: 8px; }
 .qtyBtn {
   width: 34px; height: 34px;
@@ -532,7 +532,7 @@ h2 span { color: var(--score-red); }
   background: #fff;
 }
 
-/* Ship form layout */
+/* Ship Form Layout */
 .shipForm { margin-bottom: 10px; display: grid; gap: 10px; }
 .shipGrid { display: grid; grid-template-columns: 140px 1fr; gap: 10px; }
 
@@ -540,7 +540,7 @@ h2 span { color: var(--score-red); }
 .sumRow strong { color: #111; }
 .sumRow.total { font-size: 24px; font-weight: 900; color: #000; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 10px; }
 
-/* Link danger */
+/* Link Danger */
 .linkDanger {
   background: none;
   border: none;
@@ -551,7 +551,7 @@ h2 span { color: var(--score-red); }
   font-weight: 900;
 }
 
-/* Promo UI (bonito, NO inline) */
+/* Promo UI */
 .promoBox { margin: 10px 0 12px; }
 .promoLabel { font-size: 12px; color: #666; font-weight: 900; margin-bottom: 6px; letter-spacing: .4px; }
 .promoRow { display: flex; gap: 10px; align-items: center; }
@@ -599,9 +599,9 @@ h2 span { color: var(--score-red); }
 
   .shipGrid { grid-template-columns: 1fr; }
 }
-/* Agrega esto al final de tu archivo styles.css actual */
 
-/* LEGAL PAGES */
+/* --- LEGAL PAGES & UTILS --- */
+
 .legal {
   max-width: 800px;
   margin: 0 auto;
@@ -623,7 +623,6 @@ h2 span { color: var(--score-red); }
 .muted { color: #999; }
 .small { font-size: 14px; }
 
-/* UTILS */
 .btnGhost {
   background: transparent;
   border: 1px solid #fff;
