@@ -12,6 +12,7 @@ const ASSETS = [
   "/assets/icons/icon-512.png"
 ];
 
+/* INSTALL */
 self.addEventListener("install", e => {
   self.skipWaiting();
   e.waitUntil(
@@ -19,24 +20,39 @@ self.addEventListener("install", e => {
   );
 });
 
+/* ACTIVATE */
 self.addEventListener("activate", e => {
   e.waitUntil(
     Promise.all([
       self.clients.claim(),
       caches.keys().then(keys =>
-        Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))
+        Promise.all(
+          keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : null))
+        )
       )
     ])
   );
 });
 
+/* FETCH */
 self.addEventListener("fetch", e => {
   const req = e.request;
 
-  // Nunca cachear llamadas dinámicas (Stripe / Netlify)
+  // Solo GET
+  if (req.method !== "GET") return;
+
+  // ❌ Nunca cachear funciones (Stripe / Netlify)
   if (req.url.includes("/.netlify/functions/")) return;
 
-  // Imágenes: network first con fallback
+  // 📄 HTML → network first (evita bugs visuales / JS viejo)
+  if (req.headers.get("accept")?.includes("text/html")) {
+    e.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // 🖼️ Imágenes → network first con fallback
   if (req.destination === "image") {
     e.respondWith(
       fetch(req).catch(() => caches.match(req))
@@ -44,7 +60,7 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Static assets: cache first
+  // 📦 Assets estáticos → cache first
   e.respondWith(
     caches.match(req).then(res => res || fetch(req))
   );
