@@ -1,7 +1,5 @@
 {
-  "site": {
-    "currency": "MXN"
-  },
+  "site": { "currency": "MXN" },
   "sections": [
     { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL" },
     { "id": "BAJA_500", "title": "BAJA 500", "badge": "EDICIÓN OFICIAL" },
@@ -10,162 +8,68 @@
   ],
   "products": [
     {
-      "id": "b1k-jacket",
-      "sku": "B1K-JKT-25",
-      "name": "Chamarra Oficial Baja 1000",
-      "baseMXN": 1890,
-      "sectionId": "BAJA_1000",
-      "subSection": "Chamarras",
+      "id": "b1k-jacket", "sku": "B1K-JKT-25", "name": "Chamarra Oficial Baja 1000",
+      "baseMXN": 1890, "sectionId": "BAJA_1000", "subSection": "Chamarras",
       "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-hoodie-ng",
-      "sku": "B1K-HOOD-NG",
-      "name": "Hoodie Oficial Negro / Gris",
-      "baseMXN": 1100,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
+      "id": "b1k-hoodie-ng", "sku": "B1K-HOOD-NG", "name": "Hoodie Oficial Negro / Gris",
+      "baseMXN": 1100, "sectionId": "BAJA_1000", "subSection": "Hoodies",
       "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-hoodie-blk",
-      "sku": "B1K-HOOD-BLK",
-      "name": "Hoodie Clásica Negra",
-      "baseMXN": 1100,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
+      "id": "b1k-hoodie-blk", "sku": "B1K-HOOD-BLK", "name": "Hoodie Clásica Negra",
+      "baseMXN": 1100, "sectionId": "BAJA_1000", "subSection": "Hoodies",
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-hoodie-red-blk",
-      "sku": "B1K-HOOD-RB",
-      "name": "Hoodie Contrast Rojo / Negro",
-      "baseMXN": 1100,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
+      "id": "b1k-hoodie-red-blk", "sku": "B1K-HOOD-RB", "name": "Hoodie Contrast Rojo / Negro",
+      "baseMXN": 1100, "sectionId": "BAJA_1000", "subSection": "Hoodies",
       "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-hoodie-pink",
-      "sku": "B1K-HOOD-PNK",
-      "name": "Hoodie Edición Rosa",
-      "baseMXN": 1100,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
-      "img": "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp",
-      "sizes": ["XS","S","M","L","XL"]
-    },
-    {
-      "id": "b1k-tee-black",
-      "sku": "B1K-TEE-BLK",
-      "name": "Camiseta Negra Oficial Baja 1000",
-      "baseMXN": 480,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisetas",
+      "id": "b1k-tee-black", "sku": "B1K-TEE-BLK", "name": "Camiseta Negra Oficial Baja 1000",
+      "baseMXN": 480, "sectionId": "BAJA_1000", "subSection": "Camisetas",
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-tee-brown",
-      "sku": "B1K-TEE-BRN",
-      "name": "Camiseta Café Baja 1000",
-      "baseMXN": 480,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisetas",
+      "id": "b1k-tee-brown", "sku": "B1K-TEE-BRN", "name": "Camiseta Café Baja 1000",
+      "baseMXN": 480, "sectionId": "BAJA_1000", "subSection": "Camisetas",
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-tee-brown-light",
-      "sku": "B1K-TEE-BRNL",
-      "name": "Camiseta Café Claro Baja 1000",
-      "baseMXN": 480,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisetas",
-      "img": "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp",
-      "sizes": ["S","M","L","XL","2XL"]
-    },
-    {
-      "id": "b1k-shirt-pits-grey",
-      "sku": "B1K-SHIRT-GRY",
-      "name": "Camisa Pits Gris Baja 1000",
-      "baseMXN": 690,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
+      "id": "b1k-shirt-pits-grey", "sku": "B1K-SHIRT-GRY", "name": "Camisa Pits Gris Baja 1000",
+      "baseMXN": 690, "sectionId": "BAJA_1000", "subSection": "Camisas",
       "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-shirt-pits-black",
-      "sku": "B1K-SHIRT-BLK",
-      "name": "Camisa Pits Negra Baja 1000",
-      "baseMXN": 690,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
+      "id": "b1k-shirt-pits-black", "sku": "B1K-SHIRT-BLK", "name": "Camisa Pits Negra Baja 1000",
+      "baseMXN": 690, "sectionId": "BAJA_1000", "subSection": "Camisas",
       "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b1k-shirt-pits-pink",
-      "sku": "B1K-SHIRT-PNK",
-      "name": "Camisa Pits Rosa Dama",
-      "baseMXN": 690,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
-      "img": "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-      "sizes": ["XS","S","M","L","XL"]
-    },
-    {
-      "id": "b1k-shirt-team-red",
-      "sku": "B1K-SHIRT-RED",
-      "name": "Camisa Team Negro / Rojo",
-      "baseMXN": 690,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
-      "img": "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
-      "sizes": ["S","M","L","XL","2XL"]
-    },
-    {
-      "id": "b1k-cap",
-      "sku": "B1K-CAP-RG",
-      "name": "Gorra Oficial Roja / Gris",
-      "baseMXN": 650,
-      "sectionId": "BAJA_1000",
-      "subSection": "Gorras",
+      "id": "b1k-cap", "sku": "B1K-CAP-RG", "name": "Gorra Oficial Roja / Gris",
+      "baseMXN": 650, "sectionId": "BAJA_1000", "subSection": "Gorras",
       "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
       "sizes": ["Unitalla"]
     },
     {
-      "id": "b500-tee-grey",
-      "sku": "B500-TEE-GRY",
-      "name": "Camiseta Oficial Baja 500",
-      "baseMXN": 480,
-      "sectionId": "BAJA_500",
-      "subSection": "Camisetas",
+      "id": "b500-tee-grey", "sku": "B500-TEE-GRY", "name": "Camiseta Oficial Baja 500",
+      "baseMXN": 480, "sectionId": "BAJA_500", "subSection": "Camisetas",
       "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
       "sizes": ["S","M","L","XL","2XL"]
     },
     {
-      "id": "b400-tee-dark",
-      "sku": "B400-TEE-DK",
-      "name": "Camiseta Café Oscuro Baja 400",
-      "baseMXN": 480,
-      "sectionId": "BAJA_400",
-      "subSection": "Camisetas",
-      "img": "/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
-      "sizes": ["S","M","L","XL","2XL"]
-    },
-    {
-      "id": "sf250-tank",
-      "sku": "SF250-TNK-BLK",
-      "name": "Tank Top San Felipe 250",
-      "baseMXN": 440,
-      "sectionId": "SF_250",
-      "subSection": "Camisetas",
+      "id": "sf250-tank", "sku": "SF250-TNK-BLK", "name": "Tank Top San Felipe 250",
+      "baseMXN": 440, "sectionId": "SF_250", "subSection": "Camisetas",
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "sizes": ["S","M","L","XL","2XL"]
     }
