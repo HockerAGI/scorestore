@@ -1,7 +1,7 @@
-const CACHE_NAME = "score-store-pwa-v4";
+const CACHE_NAME = "score-store-pwa-v5";
+
 const ASSETS = [
   "/",
-  "/index.html",
   "/css/styles.css",
   "/js/main.js",
   "/data/catalog.json",
@@ -13,6 +13,7 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
@@ -20,18 +21,31 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))
-    )
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then(keys =>
+        Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))
+      )
+    ])
   );
 });
 
 self.addEventListener("fetch", e => {
-  if (e.request.destination === "image") {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  const req = e.request;
+
+  // Nunca cachear llamadas dinámicas (Stripe / Netlify)
+  if (req.url.includes("/.netlify/functions/")) return;
+
+  // Imágenes: network first con fallback
+  if (req.destination === "image") {
+    e.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
     return;
   }
+
+  // Static assets: cache first
   e.respondWith(
-    caches.match(e.request).then(res => res || fetch(e.request))
+    caches.match(req).then(res => res || fetch(req))
   );
 });
