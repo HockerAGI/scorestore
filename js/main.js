@@ -1,15 +1,23 @@
+/* ======================================================
+   SCORE STORE — MAIN JS (UNIFICADO Y ESTABLE)
+====================================================== */
+
 const API_BASE = "/.netlify/functions";
 const CART_KEY = "score_cart_v1";
 
 let catalog = null;
 let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 
-/* Helpers */
+/* =====================
+   HELPERS
+===================== */
 const $ = (id) => document.getElementById(id);
 const money = (n) => `$${Number(n).toLocaleString("es-MX")}`;
 const saveCart = () => localStorage.setItem(CART_KEY, JSON.stringify(cart));
 
-/* Toast */
+/* =====================
+   TOAST
+===================== */
 function toast(msg) {
   const t = $("toast");
   if (!t) return;
@@ -18,26 +26,37 @@ function toast(msg) {
   setTimeout(() => t.classList.remove("show"), 2500);
 }
 
-/* Load Catalog */
+/* =====================
+   LOAD CATALOG
+===================== */
 async function loadCatalog() {
-  const r = await fetch("/data/catalog.json");
-  catalog = await r.json();
+  try {
+    const r = await fetch("/data/catalog.json");
+    catalog = await r.json();
+  } catch (e) {
+    console.error("Error cargando catálogo", e);
+    toast("Error cargando catálogo");
+  }
 }
 loadCatalog();
 
-/* UI */
+/* =====================
+   UI — DRAWER / OVERLAY
+===================== */
 function openDrawer() {
-  $("drawer").classList.add("active");
-  $("overlay").classList.add("active");
+  $("drawer")?.classList.add("active");
+  $("overlay")?.classList.add("active");
   renderCart();
 }
 
 function closeAll() {
   document.querySelectorAll(".drawer,.modal").forEach(e => e.classList.remove("active"));
-  $("overlay").classList.remove("active");
+  $("overlay")?.classList.remove("active");
 }
 
-/* Cart */
+/* =====================
+   CART LOGIC
+===================== */
 function addToCart(prod, size) {
   if (!catalog) return toast("Catálogo no cargado");
 
@@ -75,11 +94,15 @@ function emptyCart() {
 }
 
 function updateCount() {
-  $("cartCount").innerText = cart.reduce((a, b) => a + b.qty, 0);
+  const el = $("cartCount");
+  if (!el) return;
+  el.innerText = cart.reduce((a, b) => a + b.qty, 0);
 }
 updateCount();
 
-/* Render Cart */
+/* =====================
+   RENDER CART
+===================== */
 function renderCart() {
   const box = $("cartItems");
   const empty = $("cartEmpty");
@@ -128,7 +151,9 @@ function renderCart() {
   $("grandTotal").innerText = money(subtotal);
 }
 
-/* Checkout */
+/* =====================
+   CHECKOUT
+===================== */
 async function checkout() {
   if (!cart.length) return toast("Carrito vacío");
 
@@ -140,7 +165,8 @@ async function checkout() {
     if (!$("name")?.value) return toast("Nombre requerido");
   }
 
-  $("checkoutBtn").disabled = true;
+  const btn = $("checkoutBtn");
+  if (btn) btn.disabled = true;
 
   const payload = {
     items: cart,
@@ -166,10 +192,76 @@ async function checkout() {
       location.href = d.url;
     } else {
       toast("Error iniciando pago");
-      $("checkoutBtn").disabled = false;
+      if (btn) btn.disabled = false;
     }
   } catch {
     toast("Error de red");
-    $("checkoutBtn").disabled = false;
+    if (btn) btn.disabled = false;
   }
+}
+
+/* =====================
+   CATÁLOGO / MODAL
+===================== */
+function openCatalog(sectionId, title) {
+  if (!catalog) return toast("Catálogo no cargado");
+
+  const modal = $("modalCatalog");
+  const overlay = $("overlay");
+  const content = $("catContent");
+  const titleEl = $("catTitle");
+
+  if (!modal || !overlay || !content || !titleEl) {
+    console.error("Modal de catálogo incompleto");
+    return;
+  }
+
+  titleEl.innerText = title || "";
+
+  const products = catalog.products.filter(p => p.sectionId === sectionId);
+
+  if (!products.length) {
+    content.innerHTML = `<p style="text-align:center;">No hay productos disponibles.</p>`;
+  } else {
+    content.innerHTML = `
+      <div class="catGrid">
+        ${products.map(p => `
+          <div class="prodCard">
+            <div class="metallic-frame">
+              <img src="${p.img}" alt="${p.name}" class="prodImg" loading="lazy">
+            </div>
+            <div class="prodName">${p.name}</div>
+            <div class="prodPrice">${money(p.baseMXN)}</div>
+
+            <div class="sizeRow">
+              ${p.sizes.map(s => `
+                <button class="size-pill" onclick="addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')},'${s}')">
+                  ${s}
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  modal.classList.add("active");
+  overlay.classList.add("active");
+}
+
+/* =====================
+   LEGAL MODAL
+===================== */
+function openLegal(block) {
+  const modal = $("legalModal");
+  const overlay = $("overlay");
+  if (!modal || !overlay) return;
+
+  modal.querySelectorAll("[data-legal-block]").forEach(b => {
+    b.style.display = b.dataset.legalBlock === block ? "block" : "none";
+  });
+
+  modal.classList.add("active");
+  overlay.classList.add("active");
 }
