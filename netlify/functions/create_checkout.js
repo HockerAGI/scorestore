@@ -57,8 +57,8 @@ exports.handler = async (event) => {
       };
     });
 
-    // --- Descuentos ---
-    let discounts;
+    // --- Descuentos (Cupón) ---
+    let discounts = [];
     if (promo && promo.type !== "free_shipping") {
       const coupon = await stripe.coupons.create(
         promo.type === "percent"
@@ -68,30 +68,57 @@ exports.handler = async (event) => {
       discounts = [{ coupon: coupon.id }];
     }
 
-    // --- Envío ---
-    let shipping_options;
-    if (body.mode === "mx" && promo?.type !== "free_shipping") {
-      let cost = 250;
-      const zip = digitsOnly(body?.to?.postal_code);
-      const quote = await getEnviaQuote(zip, cartCheck.items.length);
-      if (quote?.mxn) cost = quote.mxn;
+    // --- Lógica de Envío ---
+    let shipping_options = [];
+    const isFreeShipping = promo?.type === "free_shipping";
+    
+    // 1. Envío Nacional (MX)
+    if (body.mode === "mx") {
+      if (isFreeShipping) {
+        shipping_options = [{
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: 0, currency: "mxn" },
+            display_name: "Envío Gratis (Promoción)"
+          }
+        }];
+      } else {
+        // Cálculo de peso real (sumando cantidades)
+        const totalQty = cartCheck.items.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 1), 0);
+        const zip = digitsOnly(body?.to?.postal_code);
+        
+        let cost = 250; // Costo base fallback
+        const quote = await getEnviaQuote(zip, totalQty);
+        if (quote?.mxn) cost = quote.mxn;
 
-      shipping_options = [{
-        shipping_rate_data: {
-          type: "fixed_amount",
-          fixed_amount: { amount: cost * 100, currency: "mxn" },
-          display_name: "Envío Nacional"
-        }
-      }];
+        shipping_options = [{
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: cost * 100, currency: "mxn" },
+            display_name: "Envío Nacional"
+          }
+        }];
+      }
+    } 
+    // 2. Local Express (Tijuana)
+    else if (body.mode === "tj") {
+       shipping_options = [{
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: isFreeShipping ? 0 : 20000, currency: "mxn" }, // 200.00 MXN
+            display_name: isFreeShipping ? "Envío Local Gratis" : "Entrega Local Express (Tijuana)"
+          }
+        }];
     }
+    // 3. Pickup: No se agregan shipping_options (Stripe no cobrará envío)
 
     // --- Crear sesión Stripe ---
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card", "oxxo"],
       line_items,
-      discounts,
-      shipping_options,
+      discounts: discounts.length ? discounts : undefined,
+      shipping_options: shipping_options.length ? shipping_options : undefined,
       success_url: "https://scorestore.netlify.app/?success=true",
       cancel_url: "https://scorestore.netlify.app/?cancel=true",
       metadata: {
@@ -104,6 +131,7 @@ exports.handler = async (event) => {
     return jsonResponse(200, { url: session.url });
 
   } catch (err) {
+    console.error(err);
     return jsonResponse(400, { error: err.message });
   }
 };
