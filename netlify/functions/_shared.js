@@ -73,8 +73,7 @@ async function getEnviaQuote(zipCode, itemCount) {
   };
 
   try {
-    const fetch = await import("node-fetch").then(mod => mod.default); // Import dinámico para Node 18+
-    
+    // EN NODE 18+ FETCH ES NATIVO. NO SE REQUIERE IMPORTAR NADA.
     const res = await fetch("https://api.envia.com/ship/rate/", {
       method: "POST",
       headers: {
