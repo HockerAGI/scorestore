@@ -1,101 +1,55 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const Stripe = require("stripe");
+const { corsHeaders, ok, bad } = require("./_shared");
 
-// Helper para respuestas consistentes
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  };
-}
-
-// Helper para obtener el cuerpo crudo (Crucial para validar firma en Netlify)
-function getRawBody(event) {
-  const headers = event.headers || {};
-  const rawBody = event.body;
-  
-  if (event.isBase64Encoded) {
-    return Buffer.from(rawBody, 'base64');
-  }
-  return rawBody;
+function getSignatureHeader(headers) {
+  // Netlify suele normalizar headers a lowercase
+  return (
+    headers["stripe-signature"] ||
+    headers["Stripe-Signature"] ||
+    headers["STRIPE-SIGNATURE"] ||
+    null
+  );
 }
 
 exports.handler = async (event) => {
-  // 1. Solo aceptar POST
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: corsHeaders() };
+  }
+
   if (event.httpMethod !== "POST") {
-    return json(405, { error: "Method Not Allowed" });
+    return bad(405, { error: "Method not allowed" });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const sig = event.headers["stripe-signature"];
-
-  // 2. Validar configuración
-  if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
-    console.error("❌ Faltan llaves de Stripe en Netlify (Environment Variables).");
-    return json(500, { error: "Server Configuration Error" });
-  }
-
-  // 3. Verificar Firma de Stripe (Seguridad)
-  let stripeEvent;
   try {
-    stripeEvent = stripe.webhooks.constructEvent(
-      getRawBody(event),
-      sig,
-      webhookSecret
-    );
-  } catch (err) {
-    console.error(`⚠️ Firma inválida: ${err.message}`);
-    return json(400, { error: `Webhook Error: ${err.message}` });
-  }
+    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
-  // 4. Filtrar eventos relevantes (Pago exitoso inmediato o diferido/OXXO)
-  const validEvents = [
-    "checkout.session.completed",
-    "checkout.session.async_payment_succeeded"
-  ];
+    if (!STRIPE_SECRET_KEY) return bad(500, { error: "Missing STRIPE_SECRET_KEY env var" });
+    if (!STRIPE_WEBHOOK_SECRET) return bad(500, { error: "Missing STRIPE_WEBHOOK_SECRET env var" });
 
-  if (!validEvents.includes(stripeEvent.type)) {
-    // Respondemos 200 a eventos que no nos interesan para que Stripe no reintente
-    return json(200, { received: true, ignored: true });
-  }
+    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
 
-  // 5. Procesar la Orden
-  try {
-    const session = stripeEvent.data.object;
+    const sig = getSignatureHeader(event.headers || {});
+    if (!sig) return bad(400, { error: "Missing Stripe-Signature header" });
 
-    // Expandir datos si es necesario (generalmente el objeto session ya trae lo vital)
-    // Nota: 'line_items' requiere una llamada extra a la API si los necesitas aquí,
-    // pero para confirmar la orden básica, con metadata basta.
-    
-    // ALINEACIÓN DE METADATOS (CRÍTICO)
-    // En create_checkout.js usamos 'score_mode', no 'shipping_mode'
-    const shippingMode = session.metadata?.score_mode || "pickup"; 
-    const customerZip = session.metadata?.customer_provided_zip || "";
-    const customerName = session.customer_details?.name || "Cliente";
-    const customerEmail = session.customer_details?.email || "";
-    
-    console.log(`✅ PAGO CONFIRMADO [${session.id}]`);
-    console.log(`   Cliente: ${customerName} (${customerEmail})`);
-    console.log(`   Total: $${session.amount_total / 100} ${session.currency.toUpperCase()}`);
-    console.log(`   Modo Entrega: ${shippingMode.toUpperCase()}`);
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body || "", "base64")
+      : Buffer.from(event.body || "", "utf8");
 
-    if (shippingMode === "mx") {
-      console.log("   🚚 Generar Guía Nacional a CP:", customerZip);
-      // AQUÍ: Llamar a función para comprar guía en Envia.com automáticamente
-      // await comprarGuia(...);
-    } else if (shippingMode === "tj") {
-      console.log("   🛵 Programar Chofer Local");
-    } else {
-      console.log("   🏭 Apartar en Fábrica (Pickup)");
+    const stripeEvent = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
+
+    // Manejo mínimo (puedes ampliar después)
+    switch (stripeEvent.type) {
+      case "checkout.session.completed":
+        // Aquí puedes registrar en DB, mandar correo, etc.
+        break;
+      default:
+        break;
     }
 
-    // Aquí podrías guardar en Base de Datos (Supabase, Firebase, Google Sheets)
-
+    return ok({ received: true });
   } catch (err) {
-    console.error("❌ Error procesando orden interna:", err);
-    // Respondemos 200 aunque falle nuestra lógica interna para evitar bucle de Stripe
-    // (Opcional: responder 500 si quieres que Stripe reintente más tarde)
+    console.error("[stripe_webhook] error:", err);
+    return bad(400, { error: "Webhook signature failed", detail: String(err.message || err) });
   }
-
-  return json(200, { received: true });
 };
