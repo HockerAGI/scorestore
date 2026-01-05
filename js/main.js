@@ -66,43 +66,46 @@ function setupListeners() {
 window.openCatalog = (tag, title) => {
   if (!catalog || catalog.length === 0) return toast("Cargando catálogo...");
   
-  $("catTitle").innerText = title || "PRODUCTOS";
-  const container = $("catContent");
-  container.innerHTML = "";
+  const titleEl = $("catTitle");
+  if (titleEl) titleEl.innerText = title || "PRODUCTOS";
   
-  // Filtrar productos que coincidan con la etiqueta (en ID, categoría o nombre)
-  const tagLower = tag.toLowerCase();
-  const items = catalog.filter(p => {
-    const idMatch = p.id && p.id.toLowerCase().includes(tagLower);
-    const catMatch = p.category && p.category.toLowerCase() === tagLower;
-    // Si la etiqueta es BAJA_1000, busca coincidencias
-    return idMatch || catMatch;
-  });
-
-  if (items.length === 0) {
-    container.innerHTML = "<p style='text-align:center;padding:20px;'>Próximamente stock disponible.</p>";
-  } else {
-    // Renderizar Grid
-    const grid = document.createElement("div");
-    grid.className = "catGrid";
+  const container = $("catContent");
+  if (container) {
+    container.innerHTML = "";
     
-    items.forEach(p => {
-      const el = document.createElement("div");
-      el.className = "prodCard";
-      el.innerHTML = `
-        <div class="metallic-frame">
-          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy">
-        </div>
-        <div class="prodName">${p.name}</div>
-        <div class="prodPrice">${money(p.baseMXN)}</div>
-        <div class="sizeRow">
-          <div class="size-pill active">Unitalla</div>
-        </div>
-        <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR</button>
-      `;
-      grid.appendChild(el);
+    // Filtrar productos que coincidan con la etiqueta (en ID, categoría o nombre)
+    const tagLower = tag.toLowerCase();
+    const items = catalog.filter(p => {
+      const idMatch = p.id && p.id.toLowerCase().includes(tagLower);
+      const catMatch = p.category && p.category.toLowerCase() === tagLower;
+      return idMatch || catMatch;
     });
-    container.appendChild(grid);
+
+    if (items.length === 0) {
+      container.innerHTML = "<p style='text-align:center;padding:20px;'>Próximamente stock disponible.</p>";
+    } else {
+      // Renderizar Grid
+      const grid = document.createElement("div");
+      grid.className = "catGrid";
+      
+      items.forEach(p => {
+        const el = document.createElement("div");
+        el.className = "prodCard";
+        el.innerHTML = `
+          <div class="metallic-frame">
+            <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy">
+          </div>
+          <div class="prodName">${p.name}</div>
+          <div class="prodPrice">${money(p.baseMXN)}</div>
+          <div class="sizeRow">
+            <div class="size-pill active">Unitalla</div>
+          </div>
+          <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR</button>
+        `;
+        grid.appendChild(el);
+      });
+      container.appendChild(grid);
+    }
   }
 
   openModal("modalCatalog");
@@ -122,12 +125,12 @@ window.openLegal = (section) => {
 
 function openModal(modalId) {
   const modal = $(modalId);
-  const overlay = $("overlay");
-  if(modal && overlay) {
-    modal.classList.add("active");
-    overlay.classList.add("active");
-    document.body.classList.add("modalOpen");
-  }
+  const overlay = $("overlay"); // Busca el ID "overlay"
+  
+  if(modal) modal.classList.add("active");
+  if(overlay) overlay.classList.add("active");
+  
+  document.body.classList.add("modalOpen");
 }
 
 /* ================= SHIPPING LOGIC ================= */
@@ -350,12 +353,11 @@ window.toast = (msg) => {
 
 window.openDrawer = () => {
   const d = $("drawer");
-  const o = $("overlay");
-  if(d && o) {
-    d.classList.add("active");
-    o.classList.add("active");
-    document.body.classList.add("modalOpen");
-  }
+  const o = $("overlay"); // Busca el ID "overlay"
+  
+  if(d) d.classList.add("active");
+  if(o) o.classList.add("active");
+  document.body.classList.add("modalOpen");
 };
 
 window.closeAll = () => {
