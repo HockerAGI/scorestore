@@ -29,11 +29,11 @@ body {
 }
 body.modalOpen { overflow: hidden; }
 
-/* OVERLAY - FIXED */
+/* OVERLAY (CORREGIDO Y UNIFICADO) */
 .page-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85); /* Fondo oscuro consistente */
+  background: rgba(0,0,0,0.85); /* Fondo oscuro elegante */
   z-index: 2000;
   opacity: 0;
   pointer-events: none;
@@ -42,7 +42,7 @@ body.modalOpen { overflow: hidden; }
 }
 .page-overlay.active { 
   opacity: 1; 
-  pointer-events: auto; /* Permite click para cerrar */
+  pointer-events: auto;
 }
 
 /* HEADER */
@@ -278,7 +278,7 @@ h2 span { color: var(--score-red); }
 .copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
 .whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
 
-/* MODAL (CATÁLOGO / LEGAL) */
+/* MODAL (CATÁLOGO / LEGAL) - Z-INDEX 2100 */
 .modal {
   position: fixed;
   top: 50%;
@@ -287,7 +287,7 @@ h2 span { color: var(--score-red); }
   max-height: 90vh;
   transform: translate(-50%, -45%);
   background: #f9f9f9;
-  z-index: 2100; /* Por encima del overlay (2000) */
+  z-index: 2100;
   opacity: 0;
   pointer-events: none;
   border-radius: 16px;
@@ -411,7 +411,7 @@ h2 span { color: var(--score-red); }
 }
 .btn-add:hover { background: var(--score-red); color: #fff; }
 
-/* DRAWER (CARRITO) */
+/* DRAWER (CARRITO) - Z-INDEX 2100 */
 .drawer {
   position: fixed;
   top: 0; right: 0; bottom: 0;
