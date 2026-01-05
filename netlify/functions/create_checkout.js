@@ -1,5 +1,4 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const promos = require("../../data/promos.json"); // Usa .json, borra el .js
 const {
   jsonResponse,
   safeJsonParse,
@@ -18,6 +17,10 @@ exports.handler = async (event) => {
     const catalog = await loadCatalog();
     const map = productMapFromCatalog(catalog);
     
+    // Obtener URL base dinámica (Netlify provee process.env.URL)
+    // Fallback a localhost si no existe (para pruebas locales)
+    const SITE_URL = process.env.URL || "http://localhost:8888";
+
     // 1. Validar Productos
     const cartCheck = validateCartItems(body.items);
     if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
@@ -27,8 +30,8 @@ exports.handler = async (event) => {
       const p = map[i.id];
       if (!p) throw new Error(`Producto no encontrado: ${i.id}`);
       
-      // Url absoluta para que Stripe muestre la foto
-      const imgUrl = p.img.startsWith("http") ? p.img : `https://scorestore.netlify.app${p.img}`;
+      // Url absoluta dinámica para que Stripe muestre la foto correctamente
+      const imgUrl = p.img.startsWith("http") ? p.img : `${SITE_URL}${p.img}`;
       
       return {
         price_data: {
@@ -95,8 +98,8 @@ exports.handler = async (event) => {
       // pero restringimos a México.
       shipping_address_collection: { allowed_countries: ["MX"] },
       
-      success_url: "https://scorestore.netlify.app/?status=success",
-      cancel_url: "https://scorestore.netlify.app/?status=cancel",
+      success_url: `${SITE_URL}/?status=success`,
+      cancel_url: `${SITE_URL}/?status=cancel`,
       
       metadata: {
         score_mode: mode,
