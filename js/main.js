@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL UNIFIED v2 */
+/* SCORE STORE LOGIC — FINAL UNIFIED v3 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api"
@@ -7,7 +7,7 @@ const API_BASE = (location.hostname === "localhost" || location.hostname === "12
 const CART_KEY = "score_cart_final_v20";
 let cart = [];
 let catalog = [];
-// Estado local de envío para la UI
+// Estado local de envío
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis" };
 
 const $ = (id) => document.getElementById(id);
@@ -16,15 +16,10 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 /* ================= INIT ================= */
 
 async function init() {
-  // 1. Cargar Carrito y Catálogo
   loadCart();
   await loadCatalog();
-  
-  // 2. Restaurar UI
   updateCartUI();
-  
-  // 3. Listeners para tus inputs de envío
-  setupShippingListeners();
+  setupListeners();
 }
 
 function loadCart() {
@@ -45,16 +40,14 @@ async function loadCatalog() {
   }
 }
 
-/* ================= LOGIC & LISTENERS ================= */
-
-function setupShippingListeners() {
-  // Radio Buttons (name="shipMode")
+function setupListeners() {
+  // Radio Buttons de Envío
   const radios = document.getElementsByName("shipMode");
   radios.forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // Input CP (para cotizar en tiempo real)
+  // Input CP
   const cpInput = $("cp");
   if(cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -67,12 +60,82 @@ function setupShippingListeners() {
   }
 }
 
+/* ================= CATALOG & UI ACTIONS ================= */
+
+// ESTA FUNCIÓN FALTABA Y ROMPÍA LOS BOTONES DE COLECCIÓN
+window.openCatalog = (tag, title) => {
+  if (!catalog || catalog.length === 0) return toast("Cargando catálogo...");
+  
+  $("catTitle").innerText = title || "PRODUCTOS";
+  const container = $("catContent");
+  container.innerHTML = "";
+  
+  // Filtrar productos que coincidan con la etiqueta (en ID, categoría o nombre)
+  const tagLower = tag.toLowerCase();
+  const items = catalog.filter(p => {
+    const idMatch = p.id && p.id.toLowerCase().includes(tagLower);
+    const catMatch = p.category && p.category.toLowerCase() === tagLower;
+    // Si la etiqueta es BAJA_1000, busca coincidencias
+    return idMatch || catMatch;
+  });
+
+  if (items.length === 0) {
+    container.innerHTML = "<p style='text-align:center;padding:20px;'>Próximamente stock disponible.</p>";
+  } else {
+    // Renderizar Grid
+    const grid = document.createElement("div");
+    grid.className = "catGrid";
+    
+    items.forEach(p => {
+      const el = document.createElement("div");
+      el.className = "prodCard";
+      el.innerHTML = `
+        <div class="metallic-frame">
+          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy">
+        </div>
+        <div class="prodName">${p.name}</div>
+        <div class="prodPrice">${money(p.baseMXN)}</div>
+        <div class="sizeRow">
+          <div class="size-pill active">Unitalla</div>
+        </div>
+        <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR</button>
+      `;
+      grid.appendChild(el);
+    });
+    container.appendChild(grid);
+  }
+
+  openModal("modalCatalog");
+};
+
+// ESTA FUNCIÓN FALTABA Y ROMPÍA EL FOOTER
+window.openLegal = (section) => {
+  // Ocultar todos los bloques primero
+  document.querySelectorAll(".legalBlock").forEach(b => b.style.display = "none");
+  
+  // Mostrar el seleccionado
+  const block = document.querySelector(`.legalBlock[data-legal-block="${section}"]`);
+  if (block) block.style.display = "block";
+  
+  openModal("legalModal");
+};
+
+function openModal(modalId) {
+  const modal = $(modalId);
+  const overlay = $("overlay");
+  if(modal && overlay) {
+    modal.classList.add("active");
+    overlay.classList.add("active");
+    document.body.classList.add("modalOpen");
+  }
+}
+
+/* ================= SHIPPING LOGIC ================= */
+
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
   const form = $("shipForm");
-  const shipTotalEl = $("shipTotal");
 
-  // Mostrar/Ocultar formulario según tu diseño
   if (mode === "pickup") {
     if(form) form.style.display = "none";
     shippingState.cost = 0;
@@ -85,7 +148,6 @@ function handleShipModeChange(mode) {
   } 
   else if (mode === "mx") {
     if(form) form.style.display = "block";
-    // Si ya hay CP, recotizar, si no, poner pendiente
     const currentCP = $("cp")?.value;
     if (currentCP && currentCP.length === 5) {
       quoteShipping(currentCP);
@@ -113,7 +175,6 @@ async function quoteShipping(zip) {
       shippingState.cost = data.cost;
       shippingState.label = `${money(data.cost)} (${data.carrier || 'Nacional'})`;
     } else {
-      // Fallback
       shippingState.cost = 250;
       shippingState.label = "$250.00 (Estándar)";
     }
@@ -128,11 +189,9 @@ async function quoteShipping(zip) {
 /* ================= CART ACTIONS ================= */
 
 window.addToCart = (id, sizeOverride) => {
-  // Lógica para detectar talla seleccionada en tu UI (si existe un select específico)
-  // Asumimos que si viene del modal usa un select dentro del modal, si viene de la card usa uno genérico.
-  // Ajusta esto según cómo tengas tus selects en el HTML generado.
   let size = "Unitalla";
-  const sizeSel = document.querySelector(`select[data-product-id="${id}"]`) || document.getElementById(`size-${id}`);
+  // Si hubiera selectores de talla en el futuro:
+  const sizeSel = document.querySelector(`select[data-product-id="${id}"]`);
   if (sizeSel) size = sizeSel.value;
   if (sizeOverride) size = sizeOverride;
 
@@ -143,7 +202,7 @@ window.addToCart = (id, sizeOverride) => {
   saveCart();
   updateCartUI();
   toast("Agregado al carrito");
-  window.openDrawer(); // Tu función existente
+  window.openDrawer();
 };
 
 window.emptyCart = () => {
@@ -165,13 +224,12 @@ function saveCart() {
 
 function updateCartUI() {
   const container = $("cartItems");
-  const countBadge = $("cartCount"); // En el header
+  const countBadge = $("cartCount");
   const cartEmpty = $("cartEmpty");
   const subTotalEl = $("subTotal");
   const shipTotalEl = $("shipTotal");
   const grandTotalEl = $("grandTotal");
 
-  // 1. Render Items
   if (cart.length === 0) {
     if(container) container.innerHTML = "";
     if(cartEmpty) cartEmpty.style.display = "block";
@@ -195,13 +253,15 @@ function updateCartUI() {
 
     html += `
       <div class="cartItem" style="display:flex;gap:10px;margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:10px;">
-        <img src="${p.img}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+        <div style="width:60px;height:60px;background:#f4f4f4;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            <img src="${p.img}" style="max-width:100%;max-height:100%;">
+        </div>
         <div style="flex:1;">
           <h4 style="font-size:14px;margin:0 0 4px;color:#000;">${p.name}</h4>
-          <p style="font-size:12px;color:#666;margin:0;">Talla: ${item.size} | x${item.qty}</p>
-          <div style="font-weight:bold;font-size:14px;color:#000;">${money(totalItem)}</div>
+          <p style="font-size:12px;color:#666;margin:0;">Cant: ${item.qty}</p>
+          <div style="font-weight:bold;font-size:14px;color:#E10600;">${money(totalItem)}</div>
         </div>
-        <button onclick="removeFromCart(${idx})" style="border:none;background:transparent;color:#999;font-size:20px;cursor:pointer;">&times;</button>
+        <button onclick="removeFromCart(${idx})" style="border:none;background:transparent;color:#999;font-size:24px;cursor:pointer;align-self:flex-start;">&times;</button>
       </div>
     `;
   });
@@ -209,7 +269,6 @@ function updateCartUI() {
   if(container) container.innerHTML = html;
   if(countBadge) countBadge.innerText = totalQty;
   
-  // 2. Totales
   if(subTotalEl) subTotalEl.innerText = money(subtotal);
   if(shipTotalEl) shipTotalEl.innerText = shippingState.label;
   if(grandTotalEl) grandTotalEl.innerText = money(subtotal + shippingState.cost);
@@ -219,10 +278,8 @@ function updateCartUI() {
 
 window.checkout = async () => {
   const btn = $("checkoutBtn");
-  
   if (cart.length === 0) return toast("Tu carrito está vacío");
 
-  // Validaciones usando tus IDs
   const mode = shippingState.mode;
   const name = $("name")?.value.trim();
   const addr = $("addr")?.value.trim();
@@ -243,7 +300,7 @@ window.checkout = async () => {
   try {
     const payload = {
       items: cart,
-      mode: mode, // 'pickup', 'tj', 'mx'
+      mode: mode, 
       customer: {
         name: name || "Cliente Mostrador",
         address: addr || "Tienda",
@@ -273,7 +330,8 @@ window.checkout = async () => {
   }
 };
 
-// UI Helpers (Manteniendo los tuyos)
+/* ================= UTILS ================= */
+
 window.scrollToId = (id) => {
   const el = $(id);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -291,9 +349,13 @@ window.toast = (msg) => {
 };
 
 window.openDrawer = () => {
-  $("drawer").classList.add("active");
-  $("overlay").classList.add("active");
-  document.body.classList.add("modalOpen");
+  const d = $("drawer");
+  const o = $("overlay");
+  if(d && o) {
+    d.classList.add("active");
+    o.classList.add("active");
+    document.body.classList.add("modalOpen");
+  }
 };
 
 window.closeAll = () => {
@@ -301,5 +363,5 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
-// Iniciar
+// Iniciar app
 init();
