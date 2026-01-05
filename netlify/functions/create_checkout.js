@@ -1,36 +1,26 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const {
-  jsonResponse,
-  safeJsonParse,
-  loadCatalog,
-  productMapFromCatalog,
-  validateCartItems,
-  getEnviaQuote,
-  digitsOnly
+  jsonResponse, safeJsonParse, loadCatalog, productMapFromCatalog, validateCartItems, digitsOnly, getEnviaQuote
 } = require("./_shared");
 
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Método no permitido" });
-
     const body = safeJsonParse(event.body);
     const catalog = await loadCatalog();
     const map = productMapFromCatalog(catalog);
     
-    // Obtener URL base dinámica (Netlify provee process.env.URL)
-    // Fallback a localhost si no existe (para pruebas locales)
+    // URL DINÁMICA: Netlify inyecta process.env.URL automáticamente
     const SITE_URL = process.env.URL || "http://localhost:8888";
 
-    // 1. Validar Productos
     const cartCheck = validateCartItems(body.items);
     if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
 
-    // 2. Construir Line Items
     const line_items = cartCheck.items.map(i => {
       const p = map[i.id];
       if (!p) throw new Error(`Producto no encontrado: ${i.id}`);
       
-      // Url absoluta dinámica para que Stripe muestre la foto correctamente
+      // Aseguramos URL absoluta para imágenes en Stripe
       const imgUrl = p.img.startsWith("http") ? p.img : `${SITE_URL}${p.img}`;
       
       return {
@@ -47,13 +37,11 @@ exports.handler = async (event) => {
       };
     });
 
-    // 3. Configurar Envío (Shipping Options)
     let shipping_options = [];
     const mode = body.mode || "pickup";
     const zip = digitsOnly(body.customer?.postal_code);
 
     if (mode === "pickup") {
-      // Opción de costo 0 para Recoger en Tienda
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
@@ -62,21 +50,18 @@ exports.handler = async (event) => {
         }
       });
     } else if (mode === "tj") {
-      // Costo fijo local
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
-          fixed_amount: { amount: 20000, currency: 'mxn' }, // $200.00
+          fixed_amount: { amount: 20000, currency: 'mxn' },
           display_name: 'Entrega Local Express',
           delivery_estimate: { minimum: { unit: 'business_day', value: 1 }, maximum: { unit: 'business_day', value: 2 } }
         }
       });
     } else if (mode === "mx") {
-      // Cotización dinámica Envia.com
       const totalQty = cartCheck.items.reduce((s, i) => s + i.qty, 0);
-      const quote = await getEnviaQuote(zip, totalQty); // Usa la función de _shared.js
-      const cost = quote ? quote.mxn : 250; // Fallback seguro
-      
+      const quote = await getEnviaQuote(zip, totalQty);
+      const cost = quote ? quote.mxn : 250;
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
@@ -87,20 +72,14 @@ exports.handler = async (event) => {
       });
     }
 
-    // 4. Crear Sesión Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card", "oxxo"],
       line_items,
       mode: "payment",
       shipping_options,
-      
-      // Permitimos que el usuario edite la dirección en Stripe si es necesario, 
-      // pero restringimos a México.
       shipping_address_collection: { allowed_countries: ["MX"] },
-      
       success_url: `${SITE_URL}/?status=success`,
       cancel_url: `${SITE_URL}/?status=cancel`,
-      
       metadata: {
         score_mode: mode,
         customer_provided_zip: zip,
