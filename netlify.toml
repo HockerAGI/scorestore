@@ -5,41 +5,14 @@
 [functions]
   node_bundler = "esbuild"
 
-[build.environment]
-  NODE_VERSION = "18"
+# Permite usar /api/* como alias limpio a Functions (además de /.netlify/functions/*)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
 
-# --- SEGURIDAD GLOBAL ---
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-
-# --- NO CACHEAR HTML ---
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "no-cache"
-
-# --- ASSETS ESTÁTICOS ---
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# --- PWA ---
+# Service Worker y manifest: siempre frescos (evita bugs visuales por caché)
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -50,17 +23,21 @@
   [headers.values]
     Cache-Control = "no-cache"
 
-# --- API FUNCTIONS ---
 [[headers]]
-  for = "/.netlify/functions/*"
+  for = "/data/*"
   [headers.values]
-    Cache-Control = "no-store"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Cache-Control = "no-cache"
 
-# --- REDIRECTS ---
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# Assets: cache largo
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Seguridad básica (sin CSP para no romper scripts inline)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
