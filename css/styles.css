@@ -29,17 +29,16 @@ body {
 }
 body.modalOpen { overflow: hidden; }
 
-/* OVERLAY UNIFICADO (AJUSTE VISUAL) */
-/* Se redujo la opacidad para que el fondo siga siendo visible */
+/* OVERLAY UNIFICADO (AJUSTE VISUAL 0.35) */
 .page-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35); /* Mucho más transparente (antes 0.85) */
+  background: rgba(0, 0, 0, 0.35);
   z-index: 2000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
-  backdrop-filter: blur(2px); /* Blur mínimo para mantener textura visible */
+  backdrop-filter: blur(2px);
 }
 .page-overlay.active { 
   opacity: 1; 
