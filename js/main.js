@@ -22,7 +22,6 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Stripe Feedback
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -68,12 +67,10 @@ async function loadCatalog() {
 /* ================= LISTENERS ================= */
 
 function setupListeners() {
-  // Envíos
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // CP Input
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -83,24 +80,19 @@ function setupListeners() {
     });
   }
 
-  // Delegación Catálogo (Tallas y Add)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
-      // Click en Talla
       const btnSize = e.target.closest("[data-size]");
       if (btnSize) {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
-        
-        // Update visual
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
         return;
       }
-      // Click en Agregar
       const btnAdd = e.target.closest("[data-add]");
       if (btnAdd) {
         const pid = btnAdd.dataset.add;
@@ -123,7 +115,6 @@ window.openCatalog = (sectionId, title) => {
   if (!container) return;
   container.innerHTML = "";
 
-  // Filtro inteligente (por ID de sección o coincidencia de texto)
   const items = catalogProducts.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
@@ -136,7 +127,6 @@ window.openCatalog = (sectionId, title) => {
     grid.className = "catGrid";
     
     items.forEach(p => {
-      // Init talla por defecto
       const sizes = p.sizes || ["Unitalla"];
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
@@ -257,7 +247,6 @@ function updateCartUI() {
     }
   }
 
-  // Totales
   if (countBadge) countBadge.innerText = totalQty;
   if ($("subTotal")) $("subTotal").innerText = money(subtotal);
   if ($("shipTotal")) $("shipTotal").innerText = shippingState.label;
@@ -321,7 +310,6 @@ window.checkout = async () => {
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
-  // Validación
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
@@ -354,7 +342,6 @@ window.checkout = async () => {
   }
 };
 
-/* ================= UTILS ================= */
 window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
