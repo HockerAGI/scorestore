@@ -11,11 +11,9 @@ exports.handler = async (event) => {
     const map = productMapFromCatalog(catalog);
     const SITE_URL = process.env.URL || "http://localhost:8888";
 
-    // Validar
     const cartCheck = validateCartItems(body.items);
     if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
 
-    // Items
     const line_items = cartCheck.items.map(i => {
       const p = map[i.id];
       if (!p) throw new Error(`Producto ${i.id} no encontrado`);
@@ -30,7 +28,6 @@ exports.handler = async (event) => {
       };
     });
 
-    // Envío
     const mode = body.mode || "pickup";
     const zip = digitsOnly(body.customer?.postal_code);
     let shipping_options = [];
