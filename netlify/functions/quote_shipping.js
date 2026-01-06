@@ -6,7 +6,7 @@ const {
 } = require("./_shared");
 
 exports.handler = async (event) => {
-  // CORS Pre-flight
+  // CORS preflight
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
@@ -25,7 +25,7 @@ exports.handler = async (event) => {
       return jsonResponse(200, {
         ok: true,
         cost: quote.mxn,
-        label: `${quote.carrier} (${quote.days || "3-7 días"})`,
+        label: `${quote.carrier}${quote.days ? ` (${quote.days})` : ""}`,
         carrier: quote.carrier,
         source: "envia"
       });
@@ -41,7 +41,8 @@ exports.handler = async (event) => {
 
   } catch (err) {
     console.error("Shipping Quote Error:", err);
-    // Recuperación de error para no bloquear la UI
+
+    // Recuperación para no bloquear la UI
     return jsonResponse(200, {
       ok: true,
       cost: 250,
