@@ -6,69 +6,63 @@
   <title>Legales · SCORE Store</title>
   <meta name="robots" content="noindex" />
   <link rel="stylesheet" href="/css/styles.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <header class="topbar">
     <div class="container topbarInner">
       <a class="btnGhost" href="/">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;"></div>
-    </div>
+      <div style="width:40px;"></div> </div>
   </header>
 
-  <main class="legal" style="background:#0b0b0b; min-height: calc(100vh - 80px); padding: 34px 0;">
-    <div class="container" style="background:#fff; border-radius: 18px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.18);">
-      <h1 style="margin:0; font-family:Teko,Inter; font-size: 46px; letter-spacing:1px;">INFORMACIÓN LEGAL</h1>
-      <p style="margin: 6px 0 18px; color:#666; font-weight: 700;">
-        Términos, condiciones, privacidad y políticas de envío.
+  <main class="legal">
+    <h1 class="h1">INFORMACIÓN LEGAL</h1>
+    <p class="p muted">Términos, condiciones y políticas de privacidad aplicables a SCORE Store.</p>
+
+    <section id="terminos" class="legalCard">
+      <h2 class="h2">Términos y condiciones</h2>
+      <ul class="ul">
+        <li>Al realizar una compra, aceptas estos términos y las políticas descritas.</li>
+        <li>Los precios están en MXN e incluyen impuestos.</li>
+        <li>Las imágenes son ilustrativas. La disponibilidad de tallas es en tiempo real.</li>
+        <li>Nos reservamos el derecho de cancelar pedidos sospechosos de fraude.</li>
+      </ul>
+    </section>
+
+    <section id="privacidad" class="legalCard">
+      <h2 class="h2">Aviso de privacidad</h2>
+      <p class="p">
+        Sus datos personales (nombre, dirección, teléfono) se utilizan exclusivamente para procesar el envío y la facturación.
+        No compartimos su información con terceros ajenos a la logística (paquetería) o el pago (Stripe).
       </p>
+    </section>
 
-      <section style="padding: 14px 0; border-top: 1px solid rgba(0,0,0,.08);">
-        <h2 style="margin:0 0 8px;">Términos y Condiciones</h2>
-        <p style="margin:0; line-height:1.6; color:#444;">
-          Al comprar en SCORE Store aceptas que se trata de mercancía física de edición limitada. Los precios están en MXN e incluyen
-          los impuestos aplicables. Nos reservamos el derecho de cancelar órdenes por errores evidentes de inventario o precio.
-        </p>
-      </section>
+    <section id="envios" class="legalCard">
+      <h2 class="h2">Envíos y Entregas</h2>
+      <ul class="ul">
+        <li><strong>Pickup en Fábrica:</strong> Gratis. Se le notificará cuando su pedido esté listo.</li>
+        <li><strong>Local Tijuana:</strong> Tarifa fija de $200 MXN. Entrega en 1-2 días hábiles.</li>
+        <li><strong>Nacional:</strong> Tarifa dinámica calculada al pagar (min. $250 MXN). 3-7 días hábiles vía Paquetería.</li>
+      </ul>
+    </section>
 
-      <section style="padding: 14px 0; border-top: 1px solid rgba(0,0,0,.08);">
-        <h2 style="margin:0 0 8px;">Privacidad</h2>
-        <p style="margin:0; line-height:1.6; color:#444;">
-          Usamos datos esenciales para procesar pedidos y envíos (nombre, dirección, CP y teléfono). No vendemos tu información.
-          Los pagos se procesan mediante Stripe. Nosotros no almacenamos datos de tarjetas.
-        </p>
-      </section>
-
-      <section style="padding: 14px 0; border-top: 1px solid rgba(0,0,0,.08);">
-        <h2 style="margin:0 0 8px;">Envíos</h2>
-        <ul style="margin:0; padding-left: 18px; line-height:1.6; color:#444;">
-          <li><strong>Pickup (Fábrica):</strong> gratis (coordinación posterior).</li>
-          <li><strong>Entrega local TJ:</strong> tarifa fija (puede variar en campañas especiales).</li>
-          <li><strong>Envío nacional MX:</strong> cotización por CP (si no hay respuesta del proveedor, aplica tarifa estándar).</li>
-        </ul>
-      </section>
-
-      <section style="padding: 14px 0; border-top: 1px solid rgba(0,0,0,.08);">
-        <h2 style="margin:0 0 8px;">Devoluciones</h2>
-        <p style="margin:0; line-height:1.6; color:#444;">
-          En prendas de edición limitada, las devoluciones pueden estar sujetas a condiciones por uso, daño o personalización.
-          Si recibes un producto defectuoso, contáctanos para evaluación.
-        </p>
-      </section>
-
-      <section style="padding: 14px 0; border-top: 1px solid rgba(0,0,0,.08);">
-        <h2 style="margin:0 0 8px;">Contacto</h2>
-        <p style="margin:0; line-height:1.6; color:#444;">
-          Para soporte, facturación o aclaraciones: <strong>ventas.unicotextil@gmail.com</strong>
-        </p>
-      </section>
-
-      <div style="margin-top:18px; display:flex; gap: 10px; flex-wrap: wrap;">
-        <a class="btnPrimary" href="/" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Volver</a>
-        <a class="btnSecondary" href="/#collections" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Ver colecciones</a>
-      </div>
-    </div>
+    <section id="contacto" class="legalCard">
+      <h2 class="h2">Contacto</h2>
+      <p class="p">
+        Para dudas sobre su pedido, por favor contáctenos vía WhatsApp o correo electrónico indicando su número de orden.
+      </p>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="footer__bottom">
+      <small>© <span id="y"></span> SCORE Store · Operado por Único Uniformes</small>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
