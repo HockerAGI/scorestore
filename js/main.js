@@ -22,7 +22,7 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Feedback post-compra (Redirección desde Stripe)
+  // Feedback post-compra (Stripe Redirect)
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -73,7 +73,7 @@ function setupListeners() {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // Input CP (solo números y gatillo de cotización)
+  // Input CP (gatillo de cotización)
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -83,21 +83,22 @@ function setupListeners() {
     });
   }
 
-  // Delegación de eventos en Catálogo (Tallas y Agregar)
+  // Delegación de eventos en Catálogo
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
+      // Tallas
       const btnSize = e.target.closest("[data-size]");
       if (btnSize) {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
-        
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
         return;
       }
+      // Agregar al carrito
       const btnAdd = e.target.closest("[data-add]");
       if (btnAdd) {
         const pid = btnAdd.dataset.add;
@@ -120,14 +121,14 @@ window.openCatalog = (sectionId, title) => {
   if (!container) return;
   container.innerHTML = "";
 
-  // Filtro robusto (por ID de sección o coincidencia parcial)
+  // Filtro inteligente
   const items = catalogProducts.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
   });
 
   if (items.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">No hay productos disponibles por el momento.</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">Próximamente disponible.</div>`;
   } else {
     const grid = document.createElement("div");
     grid.className = "catGrid";
@@ -316,7 +317,6 @@ window.checkout = async () => {
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
-  // Validación de formulario
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
@@ -349,7 +349,6 @@ window.checkout = async () => {
   }
 };
 
-/* ================= UTILS ================= */
 window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
@@ -373,5 +372,4 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
-// Iniciar aplicación
 init();
