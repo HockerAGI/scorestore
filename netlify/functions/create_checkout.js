@@ -10,7 +10,6 @@ const {
 } = require("./_shared");
 
 function resolveSiteUrl() {
-  // Netlify expone varias URLs dependiendo del tipo de deploy
   return (
     process.env.URL ||
     process.env.DEPLOY_PRIME_URL ||
@@ -22,20 +21,19 @@ function resolveSiteUrl() {
 exports.handler = async (event) => {
   // CORS preflight
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
+  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
   try {
-    if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
-
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error("Missing STRIPE_SECRET_KEY");
       return jsonResponse(500, { error: "Server misconfigured (Stripe key missing)" });
     }
 
     const body = safeJsonParse(event.body);
-    const catalog = await loadCatalog();
-    const map = productMapFromCatalog(catalog);
 
     const SITE_URL = resolveSiteUrl();
+    const catalog = await loadCatalog();
+    const map = productMapFromCatalog(catalog);
 
     // 1) Validar carrito
     const cartCheck = validateCartItems(body.items);
@@ -45,19 +43,15 @@ exports.handler = async (event) => {
     const mode = String(body.mode || "pickup");
     const customerName = String(body.customer?.name || "");
     const customerAddr = String(body.customer?.address || "");
-    const customerZip = digitsOnly(body.customer?.postal_code);
+    const zip = digitsOnly(body.customer?.postal_code);
 
     if (!["pickup", "tj", "mx"].includes(mode)) {
       return jsonResponse(400, { error: "Modo de entrega inválido" });
     }
 
     if (mode !== "pickup") {
-      if (!customerName || !customerAddr || !customerZip) {
-        return jsonResponse(400, { error: "Faltan datos de envío" });
-      }
-      if (mode === "mx" && customerZip.length < 5) {
-        return jsonResponse(400, { error: "Código postal inválido" });
-      }
+      if (!customerName || !customerAddr || !zip) return jsonResponse(400, { error: "Faltan datos de envío" });
+      if (mode === "mx" && zip.length < 5) return jsonResponse(400, { error: "Código postal inválido" });
     }
 
     // 3) Construir line_items
@@ -65,29 +59,32 @@ exports.handler = async (event) => {
       const p = map[i.id];
       if (!p) throw new Error(`Producto ID inválido: ${i.id}`);
 
-      // Imagen absoluta (Stripe exige URL pública)
+      // Stripe exige URLs públicas absolutas para images
       let imgUrl = p.img;
       if (imgUrl && !imgUrl.startsWith("http")) {
         imgUrl = `${SITE_URL}${imgUrl.startsWith("/") ? "" : "/"}${imgUrl}`;
       }
 
+      const product_data = {
+        name: p.name,
+        description: `Talla: ${i.size}`
+      };
+
+      if (imgUrl) product_data.images = [imgUrl];
+
       return {
         price_data: {
           currency: "mxn",
-          product_data: {
-            name: p.name,
-            description: `Talla: ${i.size}`,
-            images: imgUrl ? [imgUrl] : undefined,
-          },
-          unit_amount: Math.round(Number(p.baseMXN) * 100), // centavos
+          product_data,
+          unit_amount: Math.round(Number(p.baseMXN) * 100)
         },
-        quantity: i.qty,
+        quantity: i.qty
       };
     });
 
-    // 4) Shipping options (solo si NO es pickup)
-    let shipping_options = undefined;
-    let shipping_address_collection = undefined;
+    // 4) Shipping (solo si NO es pickup)
+    let shipping_options;
+    let shipping_address_collection;
 
     if (mode !== "pickup") {
       shipping_address_collection = { allowed_countries: ["MX"] };
@@ -101,15 +98,15 @@ exports.handler = async (event) => {
             display_name: "Entrega Local (Tijuana)",
             delivery_estimate: {
               minimum: { unit: "business_day", value: 1 },
-              maximum: { unit: "business_day", value: 2 },
-            },
-          },
+              maximum: { unit: "business_day", value: 2 }
+            }
+          }
         });
       }
 
       if (mode === "mx") {
         const totalQty = cartCheck.items.reduce((acc, item) => acc + item.qty, 0);
-        const quote = await getEnviaQuote(customerZip, totalQty);
+        const quote = await getEnviaQuote(zip, totalQty);
 
         const finalCost = quote ? quote.mxn : 250;
         const label = quote ? `Envío Nacional (${quote.carrier})` : "Envío Nacional Estándar";
@@ -121,9 +118,9 @@ exports.handler = async (event) => {
             display_name: label,
             delivery_estimate: {
               minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: 7 },
-            },
-          },
+              maximum: { unit: "business_day", value: 7 }
+            }
+          }
         });
       }
     }
@@ -134,24 +131,20 @@ exports.handler = async (event) => {
       mode: "payment",
       line_items,
 
-      // Shipping config (condicional)
       shipping_options,
       shipping_address_collection,
 
-      // URLs
       success_url: `${SITE_URL}/?status=success`,
       cancel_url: `${SITE_URL}/?status=cancel`,
 
-      // Metadata útil para webhook / operaciones
+      phone_number_collection: { enabled: true },
+
       metadata: {
         score_mode: mode,
-        customer_provided_zip: customerZip || "",
+        customer_provided_zip: zip || "",
         customer_name: customerName || "",
-        customer_address: customerAddr || "",
-      },
-
-      // UX
-      phone_number_collection: { enabled: true },
+        customer_address: customerAddr || ""
+      }
     });
 
     return jsonResponse(200, { url: session.url });
