@@ -1,4 +1,4 @@
-const CACHE_NAME = "score-store-v5";
+const CACHE_NAME = "score-store-v7";
 const ASSETS = [ "/", "/index.html", "/css/styles.css", "/js/main.js", "/data/catalog.json" ];
 
 self.addEventListener("install", (e) => {
@@ -19,7 +19,6 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
-  
   if (e.request.destination === "document" || e.request.url.includes("/data/")) {
     e.respondWith(
       fetch(e.request).then(res => {
