@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Fabricado por Único Uniformes, Patrocinador Oficial." />
+  <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Operado y fabricado por Único Uniformes en Tijuana, B.C." />
   <meta name="theme-color" content="#E10600" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
@@ -19,7 +19,6 @@
   <script src="https://js.stripe.com/v3" async></script>
 
   <style>
-    /* Cookie Banner Inline Critical CSS */
     .cookieBanner {
       position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000;
       max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92);
@@ -68,25 +67,20 @@
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="heroLogos">
-          <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
-          <div class="divider-v"></div>
-          <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-desert-logo">
-        </div>
-
-        <div class="tagline"><span class="tag-pill">TIENDA OFICIAL</span></div>
+        <div class="tagline"><span class="tag-pill">EDICIÓN LIMITADA 2025</span></div>
         
-        <div class="marketing-copy">
-          <h1 style="font-size:0;height:0;overflow:hidden;">SCORE Store</h1>
-          <p style="font-size:24px; line-height:1.4; max-width:700px; margin:0 auto 30px;">
-            Sitio Oficial de Merchandise SCORE International.<br>
-            <span style="color:var(--neon-green); font-weight:700;">Único Uniformes</span> Patrocinador y Fabricante Oficial.
-          </p>
+        <div class="logos-row">
+          <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
+          <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-desert-seal">
         </div>
 
+        <div class="marketing-copy">
+          <strong>SITIO OFICIAL DE MERCHANDISE SCORE INTERNATIONAL</strong><br>
+          Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.
+        </div>
         <div class="ctaRow">
-          <button class="btn primary" onclick="scrollToId('collections')">VER COLECCIÓN 2025</button>
-          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
+          <button class="btn primary" onclick="scrollToId('collections')">VER COLECCIÓN</button>
+          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
     </section>
@@ -138,11 +132,8 @@
     <div class="container footerInner">
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador y fabricante oficial de merchandise SCORE International.</p>
-        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.591 1.974.869 3.035.869 3.183 0 5.768-2.587 5.768-5.767 0-3.181-2.585-5.767-5.767-5.767zm8.265 10.741l-.973-.42c-.407-.176-.787-.282-1.127.261-.413.661-.92 1.352-1.229 1.382-.36.03-1.639-.569-3.08-1.853-1.129-1.006-1.579-1.956-1.688-2.284-.112-.33-.016-.503.221-.737.159-.158.37-.417.551-.627.172-.199.231-.339.349-.567.118-.228.06-.427-.028-.606-.094-.19-.836-2.016-1.145-2.761-.301-.722-.607-.624-.836-.635-.22-.011-.472-.014-.723-.014-.252 0-.66.094-1.005.471-.345.378-1.319 1.289-1.319 3.143 0 1.854 1.35 3.646 1.538 3.896.187.251 2.656 4.056 6.435 5.688 2.571 1.11 3.538.89 4.219.835.887-.071 2.716-1.11 3.097-2.18.381-1.071.381-1.99.267-2.18-.113-.191-.421-.305-.873-.515z"/></svg>
-          WhatsApp Oficial
-        </a>
+        <p class="fText">Operador oficial de merchandise SCORE International.</p>
+        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
       </div>
       <div class="fCol">
         <h4>ATENCIÓN A CLIENTES</h4>
@@ -157,13 +148,13 @@
         <div class="footerLinks">
           <button onclick="openLegal('terms')">Términos y Condiciones</button>
           <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
-          <a href="/legal.html" class="link-muted">Ver Legal Completo</a>
+          <a href="/legal.html" class="link-muted" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a>
         </div>
       </div>
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Tijuana, B.C.</p>
-        <p class="fText" style="margin-top:10px;">ventas.unicotextil@gmail.com</p>
+        <p class="fText" style="margin-top:10px; font-size:13px;">ventas.unicotextil@gmail.com</p>
       </div>
     </div>
     <div class="copy">SCORE Store © 2025 · Operado por BAJATEX S. de R.L. de C.V.</div>
@@ -185,7 +176,7 @@
 
     <div class="dBody">
       <div id="cartItems"></div>
-      <div id="cartEmpty" style="text-align:center;padding:40px;color:#666;">Tu carrito está vacío.</div>
+      <div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Tu carrito está vacío.</div>
     </div>
 
     <div class="dFoot">
