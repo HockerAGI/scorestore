@@ -14,7 +14,65 @@
   "dir": "ltr",
   "categories": ["shopping", "sports", "lifestyle"],
   "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Ver Colecciones",
+      "short_name": "Colecciones",
+      "description": "Ir a colecciones oficiales",
+      "url": "/#collections",
+      "icons": [
+        {
+          "src": "/assets/icons/shortcut-collections.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Abrir Carrito",
+      "short_name": "Carrito",
+      "description": "Abrir el carrito",
+      "url": "/?openCart=1",
+      "icons": [
+        {
+          "src": "/assets/icons/shortcut-cart.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "icons": [
+    {
+      "src": "/assets/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/assets/icons/icon-192.png",
       "sizes": "192x192",
@@ -22,10 +80,10 @@
       "purpose": "any"
     },
     {
-      "src": "/assets/icons/icon-192-maskable.png",
-      "sizes": "192x192",
+      "src": "/assets/icons/icon-384.png",
+      "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/assets/icons/icon-512.png",
