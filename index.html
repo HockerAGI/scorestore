@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE Store | Tienda Oficial</title>
-  <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Operado y fabricado por Único Uniformes en Tijuana, B.C." />
+  <title>SCORE | Tienda Oficial</title>
+  <meta name="description" content="Sitio Oficial de SCORE International. Único Uniformes, patrocinador y fabricante oficial." />
   <meta name="theme-color" content="#E10600" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
@@ -19,12 +19,13 @@
   <script src="https://js.stripe.com/v3" async></script>
 
   <style>
+    /* Estilos inline críticos para el banner de cookies */
     .cookieBanner {
       position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000;
       max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92);
       border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600;
       border-radius: 16px; padding: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-      display: none; /* Controlado por JS */
+      display: none;
     }
     .cookieInner { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
     .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; line-height:1.45; flex: 1 1 520px; }
@@ -71,7 +72,7 @@
         <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
         <div class="marketing-copy">
           <strong>MERCH OFICIAL SCORE INTERNATIONAL</strong><br>
-          Fabricado en Tijuana por <strong>Único Uniformes</strong>. Calidad premium, stock limitado.
+          Operado por <strong>BAJATEX / Único Uniformes</strong>. Calidad premium, envíos nacionales.
         </div>
         <div class="ctaRow">
           <button class="btn primary" onclick="scrollToId('collections')">VER COLECCIÓN</button>
@@ -126,15 +127,15 @@
   <footer class="footer">
     <div class="container footerInner">
       <div class="fCol">
-        <div class="footerBrandName">ÚNICO UNIFORMES</div>
-        <p class="fText">Operador y fabricante oficial de merchandise SCORE International.</p>
+        <div class="footerBrandName">BAJATEX</div>
+        <p class="fText">Operador oficial de merchandise SCORE International.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
       </div>
       <div class="fCol">
         <h4>ATENCIÓN A CLIENTES</h4>
         <div class="footerLinks">
-          <button onclick="openLegal('shipping')">Rastreo y Envíos</button>
-          <button onclick="openLegal('returns')">Cambios y Devoluciones</button>
+          <button onclick="openLegal('shipping')">Política de Envíos</button>
+          <button onclick="openLegal('returns')">Devoluciones</button>
           <button onclick="openLegal('billing')">Facturación</button>
         </div>
       </div>
@@ -143,15 +144,16 @@
         <div class="footerLinks">
           <button onclick="openLegal('terms')">Términos y Condiciones</button>
           <button onclick="openLegal('privacy')">Aviso de Privacidad</button>
-          <button onclick="openLegal('cookies')">Cookies</button>
+          <a href="/legal.html" class="link-muted" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a>
         </div>
       </div>
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Tijuana, B.C.</p>
+        <p class="fText" style="margin-top:10px; font-size:13px;">ventas.unicotextil@gmail.com</p>
       </div>
     </div>
-    <div class="copy">SCORE Store © 2025 · Powered by Único Uniformes</div>
+    <div class="copy">SCORE Store © 2025 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
   <div id="modalCatalog" class="modal">
@@ -232,35 +234,47 @@
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
     <div class="dBody" style="padding:30px; color:#222; font-size:14px; line-height:1.6;">
+      
       <div class="legalBlock" data-legal-block="shipping" style="display:none;">
-        <h4>Envíos</h4>
-        <p>Envíos a todo México vía Envia.com. Tiempos estimados de 3 a 7 días hábiles.</p>
+        <h4>POLÍTICA DE ENVÍOS</h4>
+        <p><strong>Cobertura:</strong> Envíos disponibles dentro de la República Mexicana.</p>
+        <p><strong>Tiempos de entrega:</strong></p>
         <ul>
-          <li>Pickup en Fábrica: Gratis.</li>
-          <li>Local Tijuana: $200 MXN (1-2 días).</li>
-          <li>Nacional: Cotización en tiempo real.</li>
+          <li>Productos estándar: 3 a 7 días hábiles.</li>
+          <li>Local Tijuana: 1 a 2 días hábiles ($200 MXN).</li>
+          <li>Pickup en Fábrica: Gratis (se notifica cuando esté listo).</li>
         </ul>
+        <p>Los tiempos pueden variar por causas ajenas a BAJATEX (clima, paquetería, alta demanda). Una vez entregado el pedido a la paquetería, la responsabilidad se limita a la gestión del reclamo ante el proveedor logístico.</p>
       </div>
+
       <div class="legalBlock" data-legal-block="returns" style="display:none;">
-        <h4>Devoluciones</h4>
-        <p>Solo cambios por defecto de fábrica dentro de los 7 días posteriores a la entrega.</p>
+        <h4>POLÍTICA DE DEVOLUCIONES Y REEMBOLSOS</h4>
+        <p>Aplicable únicamente a productos sin personalización con defectos de fabricación comprobables.</p>
+        <p><strong>No aplican devoluciones en:</strong> Productos personalizados, pedidos especiales o daños por uso indebido.</p>
+        <p><strong>Procedimiento:</strong> El cliente deberá notificar dentro de los 5 días hábiles posteriores a la recepción al correo: <strong>ventas.unicotextil@gmail.com</strong></p>
       </div>
+
       <div class="legalBlock" data-legal-block="terms" style="display:none;">
-        <h4>Términos y Condiciones</h4>
-        <p>Al comprar aceptas nuestras políticas de servicio y privacidad. Los precios incluyen impuestos aplicables.</p>
+        <h4>TÉRMINOS Y CONDICIONES</h4>
+        <p>Al acceder y utilizar este sitio, acepta los presentes términos. Este sitio es propiedad de <strong>BAJATEX, S. de R.L. de C.V.</strong></p>
+        <p><strong>Venta:</strong> Los precios están en MXN. BAJATEX puede modificar precios sin previo aviso. Los productos personalizados no aplican a cambios salvo defecto.</p>
+        <p><strong>Pagos:</strong> El pedido se procesa una vez confirmado el pago vía Stripe o transferencia.</p>
+        <p><strong>Jurisdicción:</strong> Para cualquier controversia, las partes se someten a los tribunales competentes de Tijuana, Baja California.</p>
       </div>
+
       <div class="legalBlock" data-legal-block="privacy" style="display:none;">
-        <h4>Privacidad</h4>
-        <p>Tus datos son usados únicamente para procesar tu pedido y generar la guía de envío.</p>
+        <h4>AVISO DE PRIVACIDAD INTEGRAL</h4>
+        <p><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), San José del Cabo No. 6412, Col. Guaycura, Tijuana, B.C.</p>
+        <p><strong>Datos:</strong> Recabamos nombre, envío y facturación para procesar pedidos. No vendemos datos.</p>
+        <p><strong>Derechos ARCO:</strong> Puede ejercer sus derechos enviando solicitud a: <strong>contacto.hocker@gmail.com</strong></p>
       </div>
-      <div class="legalBlock" data-legal-block="cookies" style="display:none;">
-        <h4>Uso de Cookies</h4>
-        <p>Usamos cookies esenciales para el funcionamiento del carrito de compras.</p>
-      </div>
+
       <div class="legalBlock" data-legal-block="billing" style="display:none;">
-        <h4>Facturación</h4>
-        <p>Solicita tu factura al correo: <strong>ventas.unicotextil@gmail.com</strong> con tu número de orden.</p>
+        <h4>POLÍTICA DE FACTURACIÓN</h4>
+        <p>El cliente deberá solicitar su factura (CFDI) dentro del mes fiscal en que se realizó el pago.</p>
+        <p>Envíe su Constancia de Situación Fiscal y número de orden a: <strong>ventas.unicotextil@gmail.com</strong></p>
       </div>
+
     </div>
   </aside>
 
@@ -270,10 +284,10 @@
     <div class="cookieInner">
       <div class="cookieText">
         <strong>Cookies:</strong> Usamos tecnología esencial para que el carrito funcione.
-        <a href="javascript:void(0)" onclick="openLegal('cookies')">Ver detalle</a>.
+        <a href="javascript:void(0)" onclick="openLegal('privacy')">Ver Aviso de Privacidad</a>.
       </div>
       <div class="cookieActions">
-        <button class="cookieBtn ghost" id="cookieReject">Esenciales</button>
+        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
         <button class="cookieBtn primary" id="cookieAccept">Aceptar</button>
       </div>
     </div>
