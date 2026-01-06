@@ -23,7 +23,7 @@
     Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# Redirección para probar en local igual que en producción
+# Redirección para desarrollo local
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
