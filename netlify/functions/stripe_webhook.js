@@ -1,55 +1,87 @@
-const Stripe = require("stripe");
-const { corsHeaders, ok, bad } = require("./_shared");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-function getSignatureHeader(headers) {
-  // Netlify suele normalizar headers a lowercase
-  return (
-    headers["stripe-signature"] ||
-    headers["Stripe-Signature"] ||
-    headers["STRIPE-SIGNATURE"] ||
-    null
-  );
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
+}
+
+function getHeader(headers, name) {
+  if (!headers) return undefined;
+  const key = Object.keys(headers).find(k => k.toLowerCase() === name.toLowerCase());
+  return key ? headers[key] : undefined;
+}
+
+// Crucial: Stripe firma el cuerpo crudo
+function getRawBody(event) {
+  const rawBody = event.body || "";
+  if (event.isBase64Encoded) return Buffer.from(rawBody, "base64");
+  return rawBody;
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: corsHeaders() };
+  if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
+    console.error("❌ Faltan llaves Stripe: STRIPE_SECRET_KEY o STRIPE_WEBHOOK_SECRET");
+    return json(500, { error: "Server Configuration Error" });
   }
 
-  if (event.httpMethod !== "POST") {
-    return bad(405, { error: "Method not allowed" });
+  const sig = getHeader(event.headers, "stripe-signature");
+  if (!sig) {
+    console.error("⚠️ Falta header stripe-signature");
+    return json(400, { error: "Missing Stripe-Signature header" });
+  }
+
+  let stripeEvent;
+  try {
+    stripeEvent = stripe.webhooks.constructEvent(getRawBody(event), sig, webhookSecret);
+  } catch (err) {
+    console.error(`⚠️ Firma inválida: ${err.message}`);
+    return json(400, { error: `Webhook Error: ${err.message}` });
+  }
+
+  const validEvents = [
+    "checkout.session.completed",
+    "checkout.session.async_payment_succeeded",
+  ];
+
+  if (!validEvents.includes(stripeEvent.type)) {
+    return json(200, { received: true, ignored: true });
   }
 
   try {
-    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+    const session = stripeEvent.data.object;
 
-    if (!STRIPE_SECRET_KEY) return bad(500, { error: "Missing STRIPE_SECRET_KEY env var" });
-    if (!STRIPE_WEBHOOK_SECRET) return bad(500, { error: "Missing STRIPE_WEBHOOK_SECRET env var" });
+    const shippingMode = session.metadata?.score_mode || "pickup";
+    const customerZip = session.metadata?.customer_provided_zip || "";
+    const customerName = session.customer_details?.name || session.metadata?.customer_name || "Cliente";
+    const customerEmail = session.customer_details?.email || "";
+    const amount = (session.amount_total || 0) / 100;
+    const currency = String(session.currency || "mxn").toUpperCase();
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
+    console.log(`✅ PAGO CONFIRMADO [${session.id}]`);
+    console.log(`   Cliente: ${customerName} (${customerEmail})`);
+    console.log(`   Total: $${amount} ${currency}`);
+    console.log(`   Modo Entrega: ${String(shippingMode).toUpperCase()}`);
 
-    const sig = getSignatureHeader(event.headers || {});
-    if (!sig) return bad(400, { error: "Missing Stripe-Signature header" });
-
-    const rawBody = event.isBase64Encoded
-      ? Buffer.from(event.body || "", "base64")
-      : Buffer.from(event.body || "", "utf8");
-
-    const stripeEvent = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
-
-    // Manejo mínimo (puedes ampliar después)
-    switch (stripeEvent.type) {
-      case "checkout.session.completed":
-        // Aquí puedes registrar en DB, mandar correo, etc.
-        break;
-      default:
-        break;
+    if (shippingMode === "mx") {
+      console.log("   🚚 Generar Guía Nacional a CP:", customerZip);
+      // TODO: comprar guía Envia.com y notificar
+    } else if (shippingMode === "tj") {
+      console.log("   🛵 Programar entrega local TJ");
+    } else {
+      console.log("   🏭 Pickup en fábrica");
     }
 
-    return ok({ received: true });
+    // TODO: Persistencia (Sheets / DB) + notificación
   } catch (err) {
-    console.error("[stripe_webhook] error:", err);
-    return bad(400, { error: "Webhook signature failed", detail: String(err.message || err) });
+    console.error("❌ Error interno procesando orden:", err);
+    // Respondemos 200 para evitar reintentos infinitos
   }
+
+  return json(200, { received: true });
 };
