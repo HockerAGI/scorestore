@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v5 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v6 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" 
@@ -22,6 +22,7 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
+  // Feedback post-compra (Stripe)
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -67,10 +68,12 @@ async function loadCatalog() {
 /* ================= LISTENERS ================= */
 
 function setupListeners() {
+  // Selectores de Envío
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
+  // Input CP (solo números y gatillo de cotización)
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -80,6 +83,7 @@ function setupListeners() {
     });
   }
 
+  // Delegación de eventos en Catálogo (Tallas y Agregar)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
@@ -88,6 +92,8 @@ function setupListeners() {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
+        
+        // Actualizar visualmente
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
@@ -115,19 +121,21 @@ window.openCatalog = (sectionId, title) => {
   if (!container) return;
   container.innerHTML = "";
 
+  // Filtro robusto (por ID exacto o coincidencia de texto)
   const items = catalogProducts.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
   });
 
   if (items.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">No hay productos disponibles.</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">No hay productos disponibles por el momento.</div>`;
   } else {
     const grid = document.createElement("div");
     grid.className = "catGrid";
     
     items.forEach(p => {
       const sizes = p.sizes || ["Unitalla"];
+      // Seleccionar primera talla por defecto
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
       const sizesHtml = sizes.map(sz => {
@@ -310,6 +318,7 @@ window.checkout = async () => {
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
+  // Validación
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
@@ -342,6 +351,7 @@ window.checkout = async () => {
   }
 };
 
+/* ================= UTILS ================= */
 window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
@@ -365,4 +375,5 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
+// Iniciar aplicación
 init();
