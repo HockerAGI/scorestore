@@ -1,121 +1,162 @@
-const Stripe = require("stripe");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const {
-  corsHeaders,
-  json,
-  ok,
-  bad,
-  readBody,
-  validateCheckoutPayload,
-  getProductById,
-  computeItemsSubtotalMXN,
-  getEnviaQuote
+  jsonResponse,
+  safeJsonParse,
+  loadCatalog,
+  productMapFromCatalog,
+  validateCartItems,
+  getEnviaQuote,
+  digitsOnly
 } = require("./_shared");
 
-function getBaseUrl(event) {
-  // 1) override explícito
-  const envBase = process.env.PUBLIC_BASE_URL;
-  if (envBase && /^https?:\/\//i.test(envBase)) return envBase.replace(/\/+$/, "");
-
-  // 2) headers (Netlify)
-  const xfProto = (event.headers["x-forwarded-proto"] || "https").split(",")[0].trim();
-  const xfHost =
-    (event.headers["x-forwarded-host"] || event.headers["host"] || "").split(",")[0].trim();
-
-  if (xfHost) return `${xfProto}://${xfHost}`.replace(/\/+$/, "");
-
-  // 3) fallback seguro (no debería pasar en Netlify)
-  return "https://YOURDOMAIN.COM";
+function resolveSiteUrl() {
+  // Netlify expone varias URLs dependiendo del tipo de deploy
+  return (
+    process.env.URL ||
+    process.env.DEPLOY_PRIME_URL ||
+    process.env.DEPLOY_URL ||
+    "http://localhost:8888"
+  ).replace(/\/$/, "");
 }
 
 exports.handler = async (event) => {
   // CORS preflight
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: corsHeaders() };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return bad(405, { error: "Method not allowed" });
-  }
+  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
 
   try {
-    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-    if (!STRIPE_SECRET_KEY) return bad(500, { error: "Missing STRIPE_SECRET_KEY env var" });
+    if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("Missing STRIPE_SECRET_KEY");
+      return jsonResponse(500, { error: "Server misconfigured (Stripe key missing)" });
+    }
 
-    const body = await readBody(event);
-    const val = validateCheckoutPayload(body);
-    if (!val.ok) return bad(400, { error: val.error });
+    const body = safeJsonParse(event.body);
+    const catalog = await loadCatalog();
+    const map = productMapFromCatalog(catalog);
 
-    const baseUrl = getBaseUrl(event);
+    const SITE_URL = resolveSiteUrl();
 
-    // items => stripe line_items
-    const line_items = body.items.map((it) => {
-      const p = getProductById(it.id);
-      if (!p) throw new Error(`Unknown product id: ${it.id}`);
+    // 1) Validar carrito
+    const cartCheck = validateCartItems(body.items);
+    if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
 
-      const unit_amount = Math.round(Number(p.baseMXN) * 100);
+    // 2) Validar modo y datos del cliente
+    const mode = String(body.mode || "pickup");
+    const customerName = String(body.customer?.name || "");
+    const customerAddr = String(body.customer?.address || "");
+    const customerZip = digitsOnly(body.customer?.postal_code);
 
-      const imgUrl = new URL(p.img, baseUrl).toString();
+    if (!["pickup", "tj", "mx"].includes(mode)) {
+      return jsonResponse(400, { error: "Modo de entrega inválido" });
+    }
+
+    if (mode !== "pickup") {
+      if (!customerName || !customerAddr || !customerZip) {
+        return jsonResponse(400, { error: "Faltan datos de envío" });
+      }
+      if (mode === "mx" && customerZip.length < 5) {
+        return jsonResponse(400, { error: "Código postal inválido" });
+      }
+    }
+
+    // 3) Construir line_items
+    const line_items = cartCheck.items.map((i) => {
+      const p = map[i.id];
+      if (!p) throw new Error(`Producto ID inválido: ${i.id}`);
+
+      // Imagen absoluta (Stripe exige URL pública)
+      let imgUrl = p.img;
+      if (imgUrl && !imgUrl.startsWith("http")) {
+        imgUrl = `${SITE_URL}${imgUrl.startsWith("/") ? "" : "/"}${imgUrl}`;
+      }
 
       return {
-        quantity: it.qty,
         price_data: {
           currency: "mxn",
-          unit_amount,
           product_data: {
             name: p.name,
-            images: [imgUrl],
-            metadata: {
-              product_id: p.id,
-              sku: p.sku || "",
-              size: it.size || ""
-            }
-          }
-        }
+            description: `Talla: ${i.size}`,
+            images: imgUrl ? [imgUrl] : undefined,
+          },
+          unit_amount: Math.round(Number(p.baseMXN) * 100), // centavos
+        },
+        quantity: i.qty,
       };
     });
 
-    // Shipping
-    let shippingCostMXN = 0;
-    if (body.mode === "delivery") {
-      const subtotal = computeItemsSubtotalMXN(body.items);
+    // 4) Shipping options (solo si NO es pickup)
+    let shipping_options = undefined;
+    let shipping_address_collection = undefined;
 
-      const quote = await getEnviaQuote({
-        to: body.to,
-        subtotalMXN: subtotal
-      });
+    if (mode !== "pickup") {
+      shipping_address_collection = { allowed_countries: ["MX"] };
+      shipping_options = [];
 
-      shippingCostMXN = Math.max(0, Math.round(Number(quote.totalMXN || 0)));
-    }
-
-    if (shippingCostMXN > 0) {
-      line_items.unshift({
-        quantity: 1,
-        price_data: {
-          currency: "mxn",
-          unit_amount: shippingCostMXN * 100,
-          product_data: { name: "Envío" }
-        }
-      });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card", "oxxo"],
-      line_items,
-      success_url: `${baseUrl}/?paid=1`,
-      cancel_url: `${baseUrl}/?canceled=1`,
-      metadata: {
-        shipping_mode: body.mode,
-        shipping_to_zip: body.to?.zip || ""
+      if (mode === "tj") {
+        shipping_options.push({
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: 20000, currency: "mxn" }, // $200.00
+            display_name: "Entrega Local (Tijuana)",
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 1 },
+              maximum: { unit: "business_day", value: 2 },
+            },
+          },
+        });
       }
+
+      if (mode === "mx") {
+        const totalQty = cartCheck.items.reduce((acc, item) => acc + item.qty, 0);
+        const quote = await getEnviaQuote(customerZip, totalQty);
+
+        const finalCost = quote ? quote.mxn : 250;
+        const label = quote ? `Envío Nacional (${quote.carrier})` : "Envío Nacional Estándar";
+
+        shipping_options.push({
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: Math.round(finalCost * 100), currency: "mxn" },
+            display_name: label,
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 3 },
+              maximum: { unit: "business_day", value: 7 },
+            },
+          },
+        });
+      }
+    }
+
+    // 5) Crear sesión de Stripe Checkout
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card", "oxxo"],
+      mode: "payment",
+      line_items,
+
+      // Shipping config (condicional)
+      shipping_options,
+      shipping_address_collection,
+
+      // URLs
+      success_url: `${SITE_URL}/?status=success`,
+      cancel_url: `${SITE_URL}/?status=cancel`,
+
+      // Metadata útil para webhook / operaciones
+      metadata: {
+        score_mode: mode,
+        customer_provided_zip: customerZip || "",
+        customer_name: customerName || "",
+        customer_address: customerAddr || "",
+      },
+
+      // UX
+      phone_number_collection: { enabled: true },
     });
 
-    return ok({ url: session.url });
+    return jsonResponse(200, { url: session.url });
   } catch (err) {
-    console.error("[create_checkout] error:", err);
-    return bad(500, { error: "Checkout error", detail: String(err.message || err) });
+    console.error("Checkout Error:", err);
+    return jsonResponse(500, { error: "Error interno al procesar pago." });
   }
 };
