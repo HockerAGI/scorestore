@@ -9,6 +9,7 @@ exports.handler = async (event) => {
     const body = safeJsonParse(event.body);
     const catalog = await loadCatalog();
     const map = productMapFromCatalog(catalog);
+    // URL dinámica para imágenes
     const SITE_URL = process.env.URL || "http://localhost:8888";
 
     const cartCheck = validateCartItems(body.items);
@@ -17,7 +18,12 @@ exports.handler = async (event) => {
     const line_items = cartCheck.items.map(i => {
       const p = map[i.id];
       if (!p) throw new Error(`Producto ${i.id} no encontrado`);
-      const imgUrl = p.img.startsWith("http") ? p.img : `${SITE_URL}${p.img}`;
+      
+      let imgUrl = p.img;
+      if (imgUrl && !imgUrl.startsWith("http")) {
+        imgUrl = `${SITE_URL}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+      }
+
       return {
         price_data: {
           currency: "mxn",
@@ -36,13 +42,18 @@ exports.handler = async (event) => {
     if (mode !== "pickup") {
       shipping_address_collection = { allowed_countries: ["MX"] };
       if (mode === "tj") {
-        shipping_options.push({ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: 20000, currency: 'mxn' }, display_name: 'Local Tijuana' } });
+        shipping_options.push({ 
+          shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: 20000, currency: 'mxn' }, display_name: 'Local Tijuana (Express)' } 
+        });
       } else if (mode === "mx") {
         const qty = cartCheck.items.reduce((s, i) => s + i.qty, 0);
         const quote = await getEnviaQuote(zip, qty);
         const cost = quote ? quote.mxn : 250;
         const label = quote ? `Nacional (${quote.carrier})` : 'Nacional Estándar';
-        shipping_options.push({ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: cost * 100, currency: 'mxn' }, display_name: label } });
+        
+        shipping_options.push({ 
+          shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: cost * 100, currency: 'mxn' }, display_name: label } 
+        });
       }
     }
 
@@ -60,6 +71,7 @@ exports.handler = async (event) => {
     return jsonResponse(200, { url: session.url });
 
   } catch (err) {
-    return jsonResponse(500, { error: err.message });
+    console.error(err);
+    return jsonResponse(500, { error: "Error iniciando el pago." });
   }
 };
