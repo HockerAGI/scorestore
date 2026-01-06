@@ -8,47 +8,21 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# --- SEGURIDAD GLOBAL ---
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 
-# Cache estáticos (ajusta si lo necesitas)
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/css/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800"
-
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800"
-
-[[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "no-store"
-
-# --- API FUNCTIONS ---
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Cache-Control = "no-store"
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
+    Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# --- REDIRECTS ---
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
