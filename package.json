@@ -1,15 +1,12 @@
 {
-  "name": "score-store",
+  "name": "score-store-official",
   "version": "2.0.0",
-  "private": true,
-  "description": "SCORE Store - Ecommerce Oficial",
+  "description": "Tienda Oficial SCORE International",
+  "main": "index.html",
   "scripts": {
-    "build": "echo 'Static site ready'"
+    "start": "netlify dev"
   },
   "dependencies": {
-    "stripe": "^16.0.0"
-  },
-  "engines": {
-    "node": ">=18"
+    "stripe": "^14.0.0"
   }
 }
