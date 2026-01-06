@@ -1,21 +1,14 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION (Netlify Static + Functions)
-   Frontend: /index.html + /css/styles.css + /js/main.js
-   Data:     /data/catalog.json + /data/promos.json
-   Backend:  /.netlify/functions/*  (Netlify Functions)
-*/
+/* SCORE STORE LOGIC — FINAL PRODUCTION v5 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-  ? "/api" // Netlify Dev proxy
+  ? "/api" 
   : "/.netlify/functions";
 
 const CART_KEY = "score_cart_prod_v1";
-
 let cart = [];
 let catalogProducts = [];
-let catalogSections = [];
-
-let shippingState = { mode: "pickup", cost: 0, label: "Gratis" };
-let selectedSizeByProduct = {}; // { [productId]: "M" }
+let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
+let selectedSizeByProduct = {};
 
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
@@ -25,15 +18,11 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 async function init() {
   loadCart();
   await loadCatalog();
-
   setupListeners();
-  markEmptyCollections();
-  syncShipUIFromState();
-
   updateCartUI();
   registerServiceWorker();
 
-  // Stripe redirect feedback
+  // Stripe Feedback
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -48,19 +37,15 @@ async function init() {
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("SW registration failed:", err));
+  navigator.serviceWorker.register("/sw.js").catch(console.warn);
 }
 
 /* ================= DATA ================= */
 
 function loadCart() {
   const saved = localStorage.getItem(CART_KEY);
-  if (!saved) return;
-  try {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed)) cart = parsed;
-  } catch (e) {
-    console.warn("Cart parse error:", e);
+  if (saved) {
+    try { cart = JSON.parse(saved); } catch (e) { console.warn(e); }
   }
 }
 
@@ -70,75 +55,55 @@ function saveCart() {
 
 async function loadCatalog() {
   try {
-    const res = await fetch("/data/catalog.json", { cache: "no-store" });
-    if (!res.ok) throw new Error(`Catálogo no disponible (${res.status})`);
+    const res = await fetch("/data/catalog.json");
+    if (!res.ok) throw new Error("Error HTTP " + res.status);
     const data = await res.json();
-
-    catalogProducts = Array.isArray(data.products) ? data.products : [];
-    catalogSections = Array.isArray(data.sections) ? data.sections : [];
-
-    // Preparar talla default por producto
-    catalogProducts.forEach((p) => {
-      if (!p?.id) return;
-      const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
-      if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
-    });
+    catalogProducts = data.products || [];
   } catch (e) {
-    console.error("Error cargando catálogo:", e);
-    toast("No se pudo cargar el catálogo.");
-    catalogProducts = [];
-    catalogSections = [];
+    console.error("Error catálogo:", e);
+    toast("Error cargando productos.");
   }
 }
 
 /* ================= LISTENERS ================= */
 
 function setupListeners() {
-  // Shipping radios
-  Array.from(document.getElementsByName("shipMode") || []).forEach((r) => {
+  // Envíos
+  document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // CP input (solo dígitos + autcotiza si es nacional)
+  // CP Input
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
-      const val = String(e.target.value || "").replace(/\D/g, "").slice(0, 5);
+      const val = e.target.value.replace(/\D/g, "").slice(0, 5);
       e.target.value = val;
-
-      if (val.length === 5 && shippingState.mode === "mx") {
-        quoteShipping(val);
-      } else if (shippingState.mode === "mx") {
-        shippingState.cost = 0;
-        shippingState.label = "Ingresa CP para cotizar";
-        updateCartUI();
-      }
+      if (val.length === 5 && shippingState.mode === "mx") quoteShipping(val);
     });
   }
 
-  // Delegación de eventos para catálogo (tallas + add)
+  // Delegación Catálogo (Tallas y Add)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
-      const sizeBtn = e.target.closest?.("[data-size]");
-      if (sizeBtn) {
-        const pid = sizeBtn.getAttribute("data-pid");
-        const size = sizeBtn.getAttribute("data-size");
-        if (!pid || !size) return;
-
+      // Click en Talla
+      const btnSize = e.target.closest("[data-size]");
+      if (btnSize) {
+        const pid = btnSize.dataset.pid;
+        const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
-
-        // Active state en pills
-        const row = sizeBtn.closest(".sizeRow");
-        if (row) row.querySelectorAll(".size-pill").forEach((b) => b.classList.remove("active"));
-        sizeBtn.classList.add("active");
+        
+        // Update visual
+        const row = btnSize.closest(".sizeRow");
+        row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
+        btnSize.classList.add("active");
         return;
       }
-
-      const addBtn = e.target.closest?.("[data-add]");
-      if (addBtn) {
-        const pid = addBtn.getAttribute("data-add");
-        if (!pid) return;
+      // Click en Agregar
+      const btnAdd = e.target.closest("[data-add]");
+      if (btnAdd) {
+        const pid = btnAdd.dataset.add;
         const size = selectedSizeByProduct[pid] || "Unitalla";
         addToCart(pid, size);
       }
@@ -146,37 +111,64 @@ function setupListeners() {
   }
 }
 
-/* ================= COLLECTIONS (AUTO) ================= */
+/* ================= CATALOG & UI ================= */
 
-function markEmptyCollections() {
-  // Mapa: sectionId -> count
-  const counts = {};
-  catalogProducts.forEach((p) => {
-    const sid = String(p.sectionId || "");
-    if (!sid) return;
-    counts[sid] = (counts[sid] || 0) + 1;
+window.openCatalog = (sectionId, title) => {
+  if (!catalogProducts.length) return toast("Cargando...");
+  
+  const titleEl = $("catTitle");
+  if(titleEl) titleEl.innerText = title || "COLECCIÓN";
+  
+  const container = $("catContent");
+  if (!container) return;
+  container.innerHTML = "";
+
+  // Filtro inteligente (por ID de sección o coincidencia de texto)
+  const items = catalogProducts.filter(p => {
+    if (p.sectionId) return p.sectionId === sectionId;
+    return p.id.toLowerCase().includes(sectionId.toLowerCase());
   });
 
-  document.querySelectorAll(".champItem[data-section]").forEach((el) => {
-    const sid = el.getAttribute("data-section");
-    const n = counts[sid] || 0;
-    const cta = el.querySelector(".card-btn[data-cta]");
+  if (items.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">No hay productos disponibles.</div>`;
+  } else {
+    const grid = document.createElement("div");
+    grid.className = "catGrid";
+    
+    items.forEach(p => {
+      // Init talla por defecto
+      const sizes = p.sizes || ["Unitalla"];
+      if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
-    if (n <= 0) {
-      el.classList.add("is-disabled");
-      if (cta) cta.textContent = "PRÓXIMAMENTE";
+      const sizesHtml = sizes.map(sz => {
+        const active = (selectedSizeByProduct[p.id] === sz) ? "active" : "";
+        return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
+      }).join("");
 
-      // Si tenía onclick inline, lo anulamos (sin tocar HTML a mano luego)
-      el.removeAttribute("onclick");
-      el.onclick = () => toast("Próximamente 🔥");
-    } else {
-      el.classList.remove("is-disabled");
-      if (cta) cta.textContent = "VER PRODUCTOS";
-    }
-  });
-}
+      const el = document.createElement("div");
+      el.className = "prodCard";
+      el.innerHTML = `
+        <div class="metallic-frame">
+          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy" onerror="this.style.opacity=0.3">
+        </div>
+        <div class="prodName">${p.name}</div>
+        <div class="prodPrice">${money(p.baseMXN)}</div>
+        <div class="sizeRow">${sizesHtml}</div>
+        <button class="btn-add" data-add="${p.id}">AGREGAR</button>
+      `;
+      grid.appendChild(el);
+    });
+    container.appendChild(grid);
+  }
+  openModal("modalCatalog");
+};
 
-/* ================= MODALS / DRAWER ================= */
+window.openLegal = (section) => {
+  document.querySelectorAll(".legalBlock").forEach(b => b.style.display = "none");
+  const block = document.querySelector(`.legalBlock[data-legal-block="${section}"]`);
+  if (block) block.style.display = "block";
+  openModal("legalModal");
+};
 
 function openModal(id) {
   const m = $(id);
@@ -186,103 +178,18 @@ function openModal(id) {
   document.body.classList.add("modalOpen");
 }
 
-window.closeAll = () => {
-  $("overlay")?.classList.remove("active");
-  $("modalCatalog")?.classList.remove("active");
-  $("legalModal")?.classList.remove("active");
-  $("drawer")?.classList.remove("active");
-  document.body.classList.remove("modalOpen");
-};
-
-window.openDrawer = () => {
-  $("drawer")?.classList.add("active");
-  $("overlay")?.classList.add("active");
-  document.body.classList.add("modalOpen");
-};
-
-window.openLegal = (section) => {
-  document.querySelectorAll(".legalBlock").forEach((b) => (b.style.display = "none"));
-  const block = document.querySelector(`.legalBlock[data-legal-block="${section}"]`);
-  if (block) block.style.display = "block";
-  openModal("legalModal");
-};
-
-/* ================= CATALOG MODAL ================= */
-
-window.openCatalog = (sectionId, title) => {
-  if (!catalogProducts || catalogProducts.length === 0) return toast("Cargando productos...");
-
-  const titleEl = $("catTitle");
-  if (titleEl) titleEl.innerText = title || "COLECCIÓN";
-
-  const container = $("catContent");
-  if (!container) return;
-  container.innerHTML = "";
-
-  const items = catalogProducts.filter((p) => String(p.sectionId || "") === String(sectionId || ""));
-
-  if (items.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center;padding:40px;width:100%;">
-        <p style="color:#666;">No se encontraron productos disponibles en esta colección por el momento.</p>
-      </div>
-    `;
-    openModal("modalCatalog");
-    return;
-  }
-
-  const grid = document.createElement("div");
-  grid.className = "catGrid";
-
-  items.forEach((p) => {
-    const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
-    const currentSize = selectedSizeByProduct[p.id] || sizes[0];
-
-    const sizesHtml = sizes
-      .map((sz) => {
-        const active = currentSize === sz ? "active" : "";
-        return `<button class="size-pill ${active}" type="button" data-pid="${escapeHtml(p.id)}" data-size="${escapeHtml(sz)}">${escapeHtml(sz)}</button>`;
-      })
-      .join("");
-
-    const card = document.createElement("div");
-    card.className = "prodCard";
-    card.innerHTML = `
-      <div class="metallic-frame">
-        <img src="${p.img}" class="prodImg" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.opacity=0.2">
-      </div>
-
-      <div class="prodName">${escapeHtml(p.name)}</div>
-      <div class="prodPrice">${money(p.baseMXN)}</div>
-
-      <div class="sizeRow" aria-label="Tallas">${sizesHtml}</div>
-
-      <button class="btn-add" type="button" data-add="${escapeHtml(p.id)}">AGREGAR AL CARRITO</button>
-    `;
-    grid.appendChild(card);
-  });
-
-  container.appendChild(grid);
-  openModal("modalCatalog");
-};
-
-/* ================= CART ================= */
+/* ================= CART LOGIC ================= */
 
 function addToCart(id, size) {
-  const safeId = String(id || "");
-  const safeSize = String(size || "Unitalla");
-
-  const existing = cart.find((i) => i.id === safeId && i.size === safeSize);
+  const existing = cart.find(i => i.id === id && i.size === size);
   if (existing) existing.qty++;
-  else cart.push({ id: safeId, size: safeSize, qty: 1 });
-
+  else cart.push({ id, size, qty: 1 });
+  
   saveCart();
   updateCartUI();
   toast("Agregado al carrito");
-  window.openDrawer();
+  openDrawer();
 }
-
-window.addToCart = (id) => addToCart(id, selectedSizeByProduct[id] || "Unitalla");
 
 window.emptyCart = (silent) => {
   if (!silent && !confirm("¿Vaciar carrito?")) return;
@@ -291,16 +198,17 @@ window.emptyCart = (silent) => {
   updateCartUI();
 };
 
-window.removeFromCart = (index) => {
-  cart.splice(index, 1);
+window.removeFromCart = (idx) => {
+  cart.splice(idx, 1);
   saveCart();
   updateCartUI();
 };
 
-window.changeQty = (index, delta) => {
-  const item = cart[index];
-  if (!item) return;
-  item.qty = Math.max(1, (parseInt(item.qty, 10) || 1) + delta);
+window.changeQty = (idx, delta) => {
+  if (!cart[idx]) return;
+  const newQty = cart[idx].qty + delta;
+  if (newQty < 1) return;
+  cart[idx].qty = newQty;
   saveCart();
   updateCartUI();
 };
@@ -309,141 +217,117 @@ function updateCartUI() {
   const container = $("cartItems");
   const countBadge = $("cartCount");
   const cartEmpty = $("cartEmpty");
-  const subTotalEl = $("subTotal");
-  const shipTotalEl = $("shipTotal");
-  const grandTotalEl = $("grandTotal");
-
+  
   let subtotal = 0;
   let totalQty = 0;
 
   if (container) {
     if (cart.length === 0) {
       container.innerHTML = "";
-      if (cartEmpty) cartEmpty.style.display = "block";
+      if(cartEmpty) cartEmpty.style.display = "block";
     } else {
-      if (cartEmpty) cartEmpty.style.display = "none";
-
+      if(cartEmpty) cartEmpty.style.display = "none";
       let html = "";
+      
       cart.forEach((item, idx) => {
-        const p = catalogProducts.find((x) => x.id === item.id);
+        const p = catalogProducts.find(x => x.id === item.id);
         if (!p) return;
-
-        const qty = Math.max(1, parseInt(item.qty, 10) || 1);
-        const totalItem = (Number(p.baseMXN) || 0) * qty;
-
+        const totalItem = p.baseMXN * item.qty;
         subtotal += totalItem;
-        totalQty += qty;
+        totalQty += item.qty;
 
         html += `
           <div class="cartItem">
-            <img src="${p.img}" class="cartThumb" alt="${escapeHtml(p.name)}" onerror="this.style.opacity=0.2">
+            <img src="${p.img}" class="cartThumb">
             <div class="cInfo">
-              <div class="cName">${escapeHtml(p.name)}</div>
-              <div class="cMeta">Talla: <strong>${escapeHtml(item.size || "Unitalla")}</strong></div>
-
-              <div class="qtyRow" aria-label="Cantidad">
-                <button class="qtyBtn" type="button" onclick="changeQty(${idx},-1)">−</button>
-                <div class="qtyVal">${qty}</div>
-                <button class="qtyBtn" type="button" onclick="changeQty(${idx},1)">+</button>
+              <div class="cName">${p.name}</div>
+              <div class="cMeta">Talla: <strong>${item.size}</strong></div>
+              <div class="qtyRow">
+                <button class="qtyBtn" onclick="changeQty(${idx}, -1)">-</button>
+                <div class="qtyVal">${item.qty}</div>
+                <button class="qtyBtn" onclick="changeQty(${idx}, 1)">+</button>
               </div>
-
               <div class="cPrice">${money(totalItem)}</div>
             </div>
             <button onclick="removeFromCart(${idx})" class="linkDanger" style="font-size:20px;">&times;</button>
           </div>
         `;
       });
-
       container.innerHTML = html;
     }
   }
 
-  if (countBadge) countBadge.innerText = String(totalQty);
-  if (subTotalEl) subTotalEl.innerText = money(subtotal);
-
-  if (shipTotalEl) shipTotalEl.innerText = shippingState.label;
-  if (grandTotalEl) grandTotalEl.innerText = money(subtotal + (Number(shippingState.cost) || 0));
+  // Totales
+  if (countBadge) countBadge.innerText = totalQty;
+  if ($("subTotal")) $("subTotal").innerText = money(subtotal);
+  if ($("shipTotal")) $("shipTotal").innerText = shippingState.label;
+  if ($("grandTotal")) $("grandTotal").innerText = money(subtotal + shippingState.cost);
 }
 
-/* ================= SHIPPING ================= */
+/* ================= CHECKOUT & SHIPPING ================= */
 
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
+  const form = $("shipForm");
+  if (form) form.style.display = (mode === "pickup") ? "none" : "block";
 
   if (mode === "pickup") {
     shippingState.cost = 0;
-    shippingState.label = "Gratis";
+    shippingState.label = "Gratis (Fábrica)";
   } else if (mode === "tj") {
     shippingState.cost = 200;
-    shippingState.label = `${money(200)}`;
+    shippingState.label = "$200.00 (Local)";
   } else if (mode === "mx") {
-    const cp = String($("cp")?.value || "").trim();
-    shippingState.cost = 0;
-    shippingState.label = cp && cp.length === 5 ? "Calculando..." : "Ingresa CP para cotizar";
+    const cp = $("cp")?.value;
     if (cp && cp.length === 5) quoteShipping(cp);
+    else {
+      shippingState.cost = 0;
+      shippingState.label = "Ingresa CP...";
+    }
   }
-
-  syncShipUIFromState();
   updateCartUI();
-}
-
-function syncShipUIFromState() {
-  const form = $("shipForm");
-  if (form) form.style.display = shippingState.mode === "pickup" ? "none" : "block";
 }
 
 async function quoteShipping(zip) {
+  $("shipTotal").innerText = "Calculando...";
   try {
-    const qty = cart.reduce((acc, i) => acc + (parseInt(i.qty, 10) || 1), 0) || 1;
-
-    shippingState.label = "Calculando...";
-    updateCartUI();
-
+    const qty = cart.reduce((acc, i) => acc + i.qty, 0);
     const res = await fetch(`${API_BASE}/quote_shipping`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ zip, items: qty })
     });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (data && Number.isFinite(Number(data.cost))) {
-      shippingState.cost = Number(data.cost);
-      shippingState.label = data.label ? `${money(shippingState.cost)} · ${data.label}` : money(shippingState.cost);
+    const data = await res.json();
+    
+    if (data.cost) {
+      shippingState.cost = data.cost;
+      shippingState.label = data.label || money(data.cost);
     } else {
       shippingState.cost = 250;
-      shippingState.label = `${money(250)} · Estándar`;
+      shippingState.label = "$250.00 (Estándar)";
     }
   } catch (e) {
-    console.error("quoteShipping error:", e);
     shippingState.cost = 250;
-    shippingState.label = `${money(250)} · Estándar`;
+    shippingState.label = "$250.00 (Fallback)";
   }
-
   updateCartUI();
 }
 
-/* ================= CHECKOUT ================= */
-
 window.checkout = async () => {
   const btn = $("checkoutBtn");
-  if (!btn) return;
-
   if (cart.length === 0) return toast("Carrito vacío");
 
   const mode = shippingState.mode;
-  const name = String($("name")?.value || "").trim();
-  const addr = String($("addr")?.value || "").trim();
-  const cp = String($("cp")?.value || "").trim();
+  const name = $("name")?.value.trim();
+  const addr = $("addr")?.value.trim();
+  const cp = $("cp")?.value.trim();
 
+  // Validación
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
-    if (mode === "mx" && (!shippingState.cost || shippingState.cost <= 0)) return toast("Cotiza el envío (CP) antes de pagar.");
   }
 
   btn.disabled = true;
-  const originalText = btn.innerText;
   btn.innerText = "Procesando...";
 
   try {
@@ -455,51 +339,43 @@ window.checkout = async () => {
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else throw new Error(data.error || "Error iniciando pago");
 
-    if (data?.url) {
-      window.location.href = data.url;
-      return;
-    }
-
-    throw new Error(data?.error || "No se pudo iniciar el pago.");
   } catch (err) {
-    console.error("checkout error:", err);
-    toast("Error: " + (err.message || "desconocido"));
+    console.error(err);
+    toast("Error: " + err.message);
     btn.disabled = false;
-    btn.innerText = originalText || "PAGAR AHORA";
+    btn.innerText = "PAGAR AHORA";
   }
 };
 
-/* ================= UTIL ================= */
-
-window.scrollToId = (id) => {
-  const el = $(id);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-};
+/* ================= UTILS ================= */
+window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
   const t = $("toast");
-  if (!t) return alert(msg);
-  t.textContent = String(msg || "");
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2600);
+  if (t) {
+    t.innerText = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3000);
+  } else alert(msg);
+};
+function toast(m) { window.toast(m); }
+
+window.openDrawer = () => {
+  $("drawer")?.classList.add("active");
+  $("overlay")?.classList.add("active");
+  document.body.classList.add("modalOpen");
 };
 
-function toast(msg) { window.toast(msg); }
+window.closeAll = () => {
+  document.querySelectorAll(".active").forEach(e => e.classList.remove("active"));
+  document.body.classList.remove("modalOpen");
+};
 
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-// Start
 init();
