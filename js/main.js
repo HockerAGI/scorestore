@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v6 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v7 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" 
@@ -22,7 +22,7 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Feedback post-compra (Stripe)
+  // Feedback post-compra (Redirección desde Stripe)
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -93,7 +93,6 @@ function setupListeners() {
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
         
-        // Actualizar visualmente
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
@@ -121,7 +120,7 @@ window.openCatalog = (sectionId, title) => {
   if (!container) return;
   container.innerHTML = "";
 
-  // Filtro robusto (por ID exacto o coincidencia de texto)
+  // Filtro robusto (por ID de sección o coincidencia parcial)
   const items = catalogProducts.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
@@ -135,7 +134,6 @@ window.openCatalog = (sectionId, title) => {
     
     items.forEach(p => {
       const sizes = p.sizes || ["Unitalla"];
-      // Seleccionar primera talla por defecto
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
       const sizesHtml = sizes.map(sz => {
@@ -318,7 +316,7 @@ window.checkout = async () => {
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
-  // Validación
+  // Validación de formulario
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
