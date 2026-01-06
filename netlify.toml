@@ -14,6 +14,7 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 
 [[headers]]
   for = "/.netlify/functions/*"
@@ -23,7 +24,7 @@
     Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# Redirección para desarrollo local
+# Redirección para que '/api' funcione igual en local y producción
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
