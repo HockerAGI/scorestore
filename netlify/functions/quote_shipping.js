@@ -6,21 +6,37 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
-    const zip = digitsOnly(body.zip);
+    const zip = digitsOnly(body.zip || body.postal_code);
     const qty = Math.max(1, parseInt(body.items || 1));
 
-    if (!zip || zip.length < 5) return jsonResponse(400, { error: "CP inválido" });
-
-    const quote = await getEnviaQuote(zip, qty);
-    
-    if (quote) {
-      return jsonResponse(200, { ok: true, cost: quote.mxn, label: `${quote.carrier} (${quote.days})` });
+    if (!zip || zip.length < 5) {
+      return jsonResponse(400, { error: "Código postal inválido" });
     }
 
-    return jsonResponse(200, { ok: true, cost: 250, label: "Envío Nacional Estándar" });
+    const quote = await getEnviaQuote(zip, qty);
+
+    if (quote) {
+      return jsonResponse(200, {
+        ok: true,
+        cost: quote.mxn,
+        label: `${quote.carrier} (${quote.days})`
+      });
+    }
+
+    // Fallback seguro
+    return jsonResponse(200, {
+      ok: true,
+      cost: 250,
+      label: "Envío Nacional Estándar"
+    });
 
   } catch (err) {
     console.error(err);
-    return jsonResponse(200, { ok: true, cost: 250, label: "Envío Nacional Estándar" });
+    // Recuperación de error
+    return jsonResponse(200, {
+      ok: true,
+      cost: 250,
+      label: "Envío Nacional Estándar"
+    });
   }
 };
