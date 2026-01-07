@@ -1,10 +1,10 @@
 {
   "site": { "currency": "MXN" },
   "sections": [
-    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL" },
-    { "id": "BAJA_500", "title": "BAJA 500", "badge": "EDICIÓN OFICIAL" },
-    { "id": "BAJA_400", "title": "BAJA 400", "badge": "EDICIÓN ESPECIAL" },
-    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS" }
+    { "id": "BAJA_1000", "title": "BAJA 1000", "badge": "TIENDA OFICIAL", "logo": "/assets/logo-baja1000.webp" },
+    { "id": "BAJA_500", "title": "BAJA 500", "badge": "EDICIÓN OFICIAL", "logo": "/assets/logo-baja500.webp" },
+    { "id": "BAJA_400", "title": "BAJA 400", "badge": "EDICIÓN ESPECIAL", "logo": "/assets/logo-baja400.webp" },
+    { "id": "SF_250", "title": "SAN FELIPE 250", "badge": "CLÁSICOS", "logo": "/assets/logo-sf250.webp" }
   ],
   "products": [
     {
