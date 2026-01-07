@@ -9,34 +9,17 @@ exports.handler = async (event) => {
     const zip = digitsOnly(body.zip || body.postal_code);
     const qty = Math.max(1, parseInt(body.items || 1));
 
-    if (!zip || zip.length < 5) {
-      return jsonResponse(400, { error: "Código postal inválido" });
-    }
+    if (!zip || zip.length < 5) return jsonResponse(400, { error: "CP inválido" });
 
     const quote = await getEnviaQuote(zip, qty);
-
+    
     if (quote) {
-      return jsonResponse(200, {
-        ok: true,
-        cost: quote.mxn,
-        label: `${quote.carrier} (${quote.days})`
-      });
+      return jsonResponse(200, { ok: true, cost: quote.mxn, label: `${quote.carrier} (${quote.days})` });
     }
 
-    // Fallback seguro
-    return jsonResponse(200, {
-      ok: true,
-      cost: 250,
-      label: "Envío Nacional Estándar"
-    });
+    return jsonResponse(200, { ok: true, cost: 250, label: "Envío Nacional Estándar" });
 
   } catch (err) {
-    console.error(err);
-    // Recuperación de error
-    return jsonResponse(200, {
-      ok: true,
-      cost: 250,
-      label: "Envío Nacional Estándar"
-    });
+    return jsonResponse(200, { ok: true, cost: 250, label: "Envío Nacional Estándar" });
   }
 };
