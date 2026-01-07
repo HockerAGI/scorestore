@@ -1,12 +1,11 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v8 */
+/* SCORE STORE LOGIC — FINAL MASTER v9 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-  ? "/api" 
-  : "/.netlify/functions";
+  ? "/api" : "/.netlify/functions";
 
 const CART_KEY = "score_cart_prod_v1";
 let cart = [];
-let catalogProducts = [];
+let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
 
@@ -22,7 +21,7 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Feedback post-compra
+  // Feedback post-compra (Stripe Redirect)
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -58,22 +57,22 @@ async function loadCatalog() {
     const res = await fetch("/data/catalog.json");
     if (!res.ok) throw new Error("Error HTTP " + res.status);
     const data = await res.json();
-    catalogProducts = data.products || [];
+    catalogData = data;
   } catch (e) {
     console.error("Error catálogo:", e);
     toast("Error cargando productos. Recarga la página.");
   }
 }
 
-/* ================= UI LISTENERS ================= */
+/* ================= LISTENERS ================= */
 
 function setupListeners() {
-  // Envío
+  // Selectores de Envío
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // Input CP
+  // Input CP (gatillo de cotización)
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -83,7 +82,7 @@ function setupListeners() {
     });
   }
 
-  // Delegación de eventos (Tallas y Agregar)
+  // Delegación de eventos en Catálogo (Tallas y Agregar)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
@@ -93,7 +92,6 @@ function setupListeners() {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
-        
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
@@ -112,17 +110,28 @@ function setupListeners() {
 
 /* ================= CATALOG MODAL ================= */
 
-window.openCatalog = (sectionId, title) => {
-  if (!catalogProducts.length) return toast("Cargando catálogo...");
+window.openCatalog = (sectionId, titleFallback) => {
+  const products = catalogData.products || [];
+  if (!products.length) return toast("Cargando catálogo...");
   
+  // 1. Configurar Encabezado (Logo o Texto)
   const titleEl = $("catTitle");
-  if(titleEl) titleEl.innerText = title || "COLECCIÓN";
+  const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
+  if (sectionInfo && sectionInfo.logo) {
+    // Si hay logo, lo usamos
+    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;">`;
+  } else {
+    // Si no, texto fallback
+    titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
+  }
+  
+  // 2. Filtrar y Renderizar
   const container = $("catContent");
   if (!container) return;
   container.innerHTML = "";
 
-  const items = catalogProducts.filter(p => {
+  const items = products.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
   });
@@ -214,6 +223,7 @@ function updateCartUI() {
   const container = $("cartItems");
   const countBadge = $("cartCount");
   const cartEmpty = $("cartEmpty");
+  const products = catalogData.products || [];
   
   let subtotal = 0;
   let totalQty = 0;
@@ -227,7 +237,7 @@ function updateCartUI() {
       let html = "";
       
       cart.forEach((item, idx) => {
-        const p = catalogProducts.find(x => x.id === item.id);
+        const p = products.find(x => x.id === item.id);
         if (!p) return;
         const totalItem = p.baseMXN * item.qty;
         subtotal += totalItem;
@@ -308,7 +318,7 @@ async function quoteShipping(zip) {
   updateCartUI();
 }
 
-// NOMBRE UNIFICADO: checkout() (no initCheckout)
+// NOMBRE UNIFICADO: checkout()
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Tu carrito está vacío");
@@ -320,7 +330,7 @@ window.checkout = async () => {
 
   // Validación
   if (mode !== "pickup") {
-    if (!name || !addr || !cp) return toast("Faltan datos de envío");
+    if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
   }
 
@@ -354,7 +364,6 @@ window.checkout = async () => {
   }
 };
 
-/* ================= UTILS ================= */
 window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
