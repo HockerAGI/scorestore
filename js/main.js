@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v7 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v8 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" 
@@ -22,7 +22,7 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Feedback post-compra (Stripe Redirect)
+  // Feedback post-compra
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -61,19 +61,19 @@ async function loadCatalog() {
     catalogProducts = data.products || [];
   } catch (e) {
     console.error("Error catálogo:", e);
-    toast("Error cargando productos.");
+    toast("Error cargando productos. Recarga la página.");
   }
 }
 
-/* ================= LISTENERS ================= */
+/* ================= UI LISTENERS ================= */
 
 function setupListeners() {
-  // Selectores de Envío
+  // Envío
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // Input CP (gatillo de cotización)
+  // Input CP
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -83,22 +83,23 @@ function setupListeners() {
     });
   }
 
-  // Delegación de eventos en Catálogo
+  // Delegación de eventos (Tallas y Agregar)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
-      // Tallas
+      // Click en Talla
       const btnSize = e.target.closest("[data-size]");
       if (btnSize) {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
+        
         const row = btnSize.closest(".sizeRow");
         row.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
         return;
       }
-      // Agregar al carrito
+      // Click en Agregar
       const btnAdd = e.target.closest("[data-add]");
       if (btnAdd) {
         const pid = btnAdd.dataset.add;
@@ -109,10 +110,10 @@ function setupListeners() {
   }
 }
 
-/* ================= CATALOG & UI ================= */
+/* ================= CATALOG MODAL ================= */
 
 window.openCatalog = (sectionId, title) => {
-  if (!catalogProducts.length) return toast("Cargando...");
+  if (!catalogProducts.length) return toast("Cargando catálogo...");
   
   const titleEl = $("catTitle");
   if(titleEl) titleEl.innerText = title || "COLECCIÓN";
@@ -121,14 +122,13 @@ window.openCatalog = (sectionId, title) => {
   if (!container) return;
   container.innerHTML = "";
 
-  // Filtro inteligente
   const items = catalogProducts.filter(p => {
     if (p.sectionId) return p.sectionId === sectionId;
     return p.id.toLowerCase().includes(sectionId.toLowerCase());
   });
 
   if (items.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">Próximamente disponible.</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#666;">No hay productos disponibles por el momento.</div>`;
   } else {
     const grid = document.createElement("div");
     grid.className = "catGrid";
@@ -146,7 +146,7 @@ window.openCatalog = (sectionId, title) => {
       el.className = "prodCard";
       el.innerHTML = `
         <div class="metallic-frame">
-          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy" onerror="this.style.opacity=0.3">
+          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy">
         </div>
         <div class="prodName">${p.name}</div>
         <div class="prodPrice">${money(p.baseMXN)}</div>
@@ -175,7 +175,7 @@ function openModal(id) {
   document.body.classList.add("modalOpen");
 }
 
-/* ================= CART LOGIC ================= */
+/* ================= CART ACTIONS ================= */
 
 function addToCart(id, size) {
   const existing = cart.find(i => i.id === id && i.size === size);
@@ -260,7 +260,7 @@ function updateCartUI() {
   if ($("grandTotal")) $("grandTotal").innerText = money(subtotal + shippingState.cost);
 }
 
-/* ================= CHECKOUT & SHIPPING ================= */
+/* ================= CHECKOUT ================= */
 
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
@@ -308,17 +308,19 @@ async function quoteShipping(zip) {
   updateCartUI();
 }
 
+// NOMBRE UNIFICADO: checkout() (no initCheckout)
 window.checkout = async () => {
   const btn = $("checkoutBtn");
-  if (cart.length === 0) return toast("Carrito vacío");
+  if (cart.length === 0) return toast("Tu carrito está vacío");
 
   const mode = shippingState.mode;
   const name = $("name")?.value.trim();
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
+  // Validación
   if (mode !== "pickup") {
-    if (!name || !addr || !cp) return toast("Completa los datos de envío");
+    if (!name || !addr || !cp) return toast("Faltan datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
   }
 
@@ -338,8 +340,11 @@ window.checkout = async () => {
     });
 
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else throw new Error(data.error || "Error iniciando pago");
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Error iniciando pago");
+    }
 
   } catch (err) {
     console.error(err);
@@ -349,6 +354,7 @@ window.checkout = async () => {
   }
 };
 
+/* ================= UTILS ================= */
 window.scrollToId = (id) => $(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 window.toast = (msg) => {
