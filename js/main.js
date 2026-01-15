@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER v9 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v11 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
@@ -21,7 +21,6 @@ async function init() {
   updateCartUI();
   registerServiceWorker();
 
-  // Feedback post-compra (Stripe Redirect)
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
@@ -67,12 +66,10 @@ async function loadCatalog() {
 /* ================= LISTENERS ================= */
 
 function setupListeners() {
-  // Selectores de Envío
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 
-  // Input CP (gatillo de cotización)
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
@@ -82,11 +79,9 @@ function setupListeners() {
     });
   }
 
-  // Delegación de eventos en Catálogo (Tallas y Agregar)
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
-      // Click en Talla
       const btnSize = e.target.closest("[data-size]");
       if (btnSize) {
         const pid = btnSize.dataset.pid;
@@ -97,7 +92,6 @@ function setupListeners() {
         btnSize.classList.add("active");
         return;
       }
-      // Click en Agregar
       const btnAdd = e.target.closest("[data-add]");
       if (btnAdd) {
         const pid = btnAdd.dataset.add;
@@ -114,19 +108,15 @@ window.openCatalog = (sectionId, titleFallback) => {
   const products = catalogData.products || [];
   if (!products.length) return toast("Cargando catálogo...");
   
-  // 1. Configurar Encabezado (Logo o Texto)
   const titleEl = $("catTitle");
   const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
   if (sectionInfo && sectionInfo.logo) {
-    // Si hay logo, lo usamos
     titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;">`;
   } else {
-    // Si no, texto fallback
     titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
   }
   
-  // 2. Filtrar y Renderizar
   const container = $("catContent");
   if (!container) return;
   container.innerHTML = "";
@@ -151,11 +141,33 @@ window.openCatalog = (sectionId, titleFallback) => {
         return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
       }).join("");
 
+      // --- LOGICA DEL SLIDER ---
+      // Usamos el array images si existe, sino usamos la imagen unica como fallback
+      const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
+      
+      let slidesHtml = "";
+      imageList.forEach(imgSrc => {
+        slidesHtml += `<div class="prod-slide"><img src="${imgSrc}" class="prodImg" alt="${p.name}" loading="lazy"></div>`;
+      });
+
+      // Si hay mas de 1 imagen, mostramos los puntitos indicadores
+      let dotsHtml = "";
+      if (imageList.length > 1) {
+        dotsHtml = `<div class="slider-dots">`;
+        imageList.forEach((_, idx) => {
+          dotsHtml += `<div class="slider-dot ${idx===0?'active':''}"></div>`;
+        });
+        dotsHtml += `</div>`;
+      }
+
       const el = document.createElement("div");
       el.className = "prodCard";
       el.innerHTML = `
         <div class="metallic-frame">
-          <img src="${p.img}" class="prodImg" alt="${p.name}" loading="lazy">
+          <div class="prod-slider">
+            ${slidesHtml}
+          </div>
+          ${dotsHtml}
         </div>
         <div class="prodName">${p.name}</div>
         <div class="prodPrice">${money(p.baseMXN)}</div>
@@ -318,7 +330,6 @@ async function quoteShipping(zip) {
   updateCartUI();
 }
 
-// NOMBRE UNIFICADO: checkout()
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Tu carrito está vacío");
