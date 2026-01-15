@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v11 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v12 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
@@ -108,12 +108,15 @@ window.openCatalog = (sectionId, titleFallback) => {
   const products = catalogData.products || [];
   if (!products.length) return toast("Cargando catálogo...");
   
+  // 1. Configurar Encabezado (LOGO)
   const titleEl = $("catTitle");
   const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
   if (sectionInfo && sectionInfo.logo) {
-    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;">`;
+    // Si hay logo definido en el JSON, lo usamos
+    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;filter: brightness(0) invert(1);">`;
   } else {
+    // Fallback texto
     titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
   }
   
@@ -141,8 +144,8 @@ window.openCatalog = (sectionId, titleFallback) => {
         return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
       }).join("");
 
-      // --- LOGICA DEL SLIDER ---
-      // Usamos el array images si existe, sino usamos la imagen unica como fallback
+      // --- SLIDER LOGIC ---
+      // Si el array images existe y tiene elementos, lo usamos. Si no, usamos img como fallback.
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
       
       let slidesHtml = "";
@@ -150,7 +153,7 @@ window.openCatalog = (sectionId, titleFallback) => {
         slidesHtml += `<div class="prod-slide"><img src="${imgSrc}" class="prodImg" alt="${p.name}" loading="lazy"></div>`;
       });
 
-      // Si hay mas de 1 imagen, mostramos los puntitos indicadores
+      // Indicadores (dots)
       let dotsHtml = "";
       if (imageList.length > 1) {
         dotsHtml = `<div class="slider-dots">`;
