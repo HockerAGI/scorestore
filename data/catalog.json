@@ -57,8 +57,8 @@
       "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "images": [
         "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
-        "/assets/EDICION_2025/camiseta-negra-baja1000-detalle.webp",
-        "/assets/EDICION_2025/camiseta-negra-baja1000-atras.webp"
+        "/assets/EDICION_2025/camiseta-negra-baja1000-detalles.jpg.webp",
+        "/assets/EDICION_2025/camiseta-negra-baja1000-atras.jpg.webp"
       ],
       "sizes": ["S","M","L","XL","2XL"]
     },
@@ -68,8 +68,8 @@
       "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
       "images": [
         "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
-        "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg-detalle.webp",
-        "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg-atras.webp"
+        "/assets/EDICION_2025/camiseta-cafe-baja1000-detalles.jpg.webp",
+        "/assets/EDICION_2025/camiseta-cafe-baja1000-atras.jpg.webp"
       ],
       "sizes": ["S","M","L","XL","2XL"]
     },
@@ -79,8 +79,8 @@
       "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
       "images": [
         "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-        "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg-detalle.webp",
-        "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg-atras.webp"
+        "/assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp",
+        "/assets/EDICION_2025/camisa-gris-pits-baja1000-atras.jpg.webp"
       ],
       "sizes": ["S","M","L","XL","2XL"]
     },
@@ -134,8 +134,8 @@
       "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "images": [
         "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
-        "/assets/SF250/camiseta-negra-sinmangas-SF250-detalle.webp",
-        "/assets/SF250/camiseta-negra-sinmangas-SF250-atras.webp"
+        "/assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp",
+        "/assets/SF250/camiseta-negra-sinmangas-S250-atras.webp"
       ],
       "sizes": ["S","M","L","XL","2XL"]
     }
