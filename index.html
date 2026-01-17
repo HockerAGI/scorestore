@@ -43,6 +43,10 @@
 <body>
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
+  <div class="promo-bar">
+    <span>⚠️ <strong>GRAN APERTURA:</strong> 80% DE DESCUENTO EN TODA LA TIENDA · OFERTA POR TIEMPO LIMITADO ⚠️</span>
+  </div>
+
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
@@ -66,7 +70,10 @@
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">EDICIÓN LIMITADA 2025</span></div>
+        <div class="tagline"><span class="tag-pill">INAUGURACIÓN OFICIAL 2026</span></div>
+        <h1 style="font-family: 'Teko'; font-size: 60px; line-height: 0.9; margin-bottom: 20px; color: white;">
+          <span style="color: var(--neon-green)">80% OFF</span> EN TODO
+        </h1>
         <div class="logos-row">
           <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
           <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-desert-seal">
@@ -76,7 +83,7 @@
           Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.
         </div>
         <div class="ctaRow">
-          <button class="btn primary" onclick="scrollToId('collections')">VER COLECCIÓN</button>
+          <button class="btn primary" onclick="scrollToId('collections')">VER OFERTAS</button>
           <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
@@ -85,7 +92,7 @@
     <section class="section" id="collections">
       <div class="sectionHead">
         <h2>COLECCIONES <span>OFICIALES</span></h2>
-        <p>SELECCIONA TU CARRERA FAVORITA</p>
+        <p>APROVECHA PRECIOS DE INAUGURACIÓN</p>
       </div>
       <div class="grid">
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
@@ -188,7 +195,7 @@
         <input id="addr" type="text" placeholder="Calle, Número y Colonia" class="inputField" style="width:100%; margin-bottom:8px;">
         <input id="name" type="text" placeholder="Nombre Completo de quien recibe" class="inputField" style="width:100%;">
       </div>
-      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
+      <div class="sumRow"><span>Subtotal (Inauguración)</span><strong id="subTotal">$0.00</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
