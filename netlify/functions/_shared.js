@@ -4,7 +4,7 @@ const catalogData = require("../../data/catalog.json");
 const FACTORY_ORIGIN = {
   name: "Score Store / Unico Uniformes",
   company: "BAJATEX S DE RL DE CV",
-  email: "ventas.unicotexti@gmail.com",
+  email: "ventas.unicotextil@gmail.com",
   phone: "6642368701",
   street: "Palermo",
   number: "6106",
@@ -15,6 +15,9 @@ const FACTORY_ORIGIN = {
   postalCode: "22614",
   reference: "Interior JK"
 };
+
+const FALLBACK_MX_PRICE = 250;
+const FALLBACK_US_PRICE = 800; // ~$40 USD
 
 /* HELPERS */
 const jsonResponse = (status, body) => ({
@@ -67,12 +70,12 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
       body: JSON.stringify({
         origin: { country_code: "MX", postal_code: FACTORY_ORIGIN.postalCode },
         destination: { country_code: countryCode, postal_code: zip },
-        shipment: { carrier: "fedex", type: 1 }, // Type 1 = Paquete
+        shipment: { carrier: "fedex", type: 1 }, 
         packages: [{
           content: "Ropa Deportiva SCORE",
           amount: 1,
           type: "box",
-          weight: qty * 0.6, // Peso estimado
+          weight: qty * 0.6,
           dimensions: { length: 30, width: 25, height: 10 + (qty * 2) },
           declared_value: 400 * qty
         }]
@@ -82,13 +85,11 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
     const data = await res.json();
     
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
-      // Ordenar por precio y tomar la mejor opción económica
       const best = data.data.sort((a,b) => a.total_price - b.total_price)[0];
       return {
-        mxn: Math.ceil(best.total_price),
+        mxn: Math.ceil(best.total_price * 1.05), // +5% margen
         carrier: best.carrier,
-        days: best.delivery_estimate,
-        serviceId: best.service_id // Útil si quieres forzar este servicio al generar guía
+        days: best.delivery_estimate
       };
     }
     return null;
@@ -100,19 +101,12 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
 
 /* ENVIA: GENERAR GUÍA REAL (Label) */
 async function createEnviaLabel(customer, itemsQty) {
-  if (!process.env.ENVIA_API_KEY) {
-    console.error("Falta ENVIA_API_KEY");
-    return null;
-  }
+  if (!process.env.ENVIA_API_KEY) return null;
 
   try {
-    // Dividir dirección de Stripe (Calle y Número)
-    // Stripe suele enviar "Calle 123 Col Centro". Envia requiere separar si es posible, 
-    // pero para seguridad mandamos todo en street si no hay número claro.
     const addressLine = customer.address.line1 || "";
     const addressLine2 = customer.address.line2 || "";
     
-    // Payload para Envia.com
     const payload = {
       origin: {
         company: FACTORY_ORIGIN.company,
@@ -132,11 +126,11 @@ async function createEnviaLabel(customer, itemsQty) {
         email: customer.email || "cliente@scorestore.com",
         phone: customer.phone || "0000000000",
         street: addressLine,
-        number: "", // Se asume va en street si Stripe no lo separa
-        district: addressLine2, // Usamos linea 2 como colonia/referencia
+        number: "", 
+        district: addressLine2,
         city: customer.address.city,
         state: customer.address.state,
-        country: customer.address.country, // MX o US
+        country: customer.address.country, 
         postal_code: customer.address.postal_code
       },
       packages: [{
@@ -145,19 +139,12 @@ async function createEnviaLabel(customer, itemsQty) {
         type: "box",
         weight: itemsQty * 0.6,
         dimensions: { length: 30, width: 25, height: 10 + (itemsQty * 2) },
-        declared_value: 400 * itemsQty // Seguro básico
+        declared_value: 400 * itemsQty 
       }],
-      shipment: {
-        carrier: "fedex", // Puedes hacer dinámico esto guardando la cotización en metadata
-        type: 1
-      },
-      settings: {
-        print_format: "PDF",
-        print_size: "STOCK_4X6"
-      }
+      shipment: { carrier: "fedex", type: 1 },
+      settings: { print_format: "PDF", print_size: "STOCK_4X6" }
     };
 
-    console.log("Generando guía Envia...");
     const res = await fetch("https://api.envia.com/ship/generate/", {
       method: "POST",
       headers: {
@@ -170,12 +157,10 @@ async function createEnviaLabel(customer, itemsQty) {
     const result = await res.json();
     
     if (result && result.meta === "generate") {
-      const labelData = result.data[0];
-      console.log("✅ Guía Generada:", labelData.tracking_number);
       return {
-        tracking: labelData.tracking_number,
-        labelUrl: labelData.label,
-        carrier: labelData.carrier
+        tracking: result.data[0].tracking_number,
+        labelUrl: result.data[0].label,
+        carrier: result.data[0].carrier
       };
     } else {
       console.error("❌ Error Envia API:", JSON.stringify(result));
@@ -189,12 +174,7 @@ async function createEnviaLabel(customer, itemsQty) {
 }
 
 module.exports = {
-  jsonResponse,
-  safeJsonParse,
-  loadCatalog,
-  productMapFromCatalog,
-  validateCartItems,
-  getEnviaQuote,
-  createEnviaLabel,
-  digitsOnly
+  jsonResponse, safeJsonParse, loadCatalog, productMapFromCatalog, 
+  validateCartItems, getEnviaQuote, createEnviaLabel, digitsOnly,
+  FALLBACK_MX_PRICE, FALLBACK_US_PRICE
 };
