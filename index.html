@@ -3,9 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Tienda Oficial</title>
-  <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Operado y fabricado por Único Uniformes en Tijuana, B.C." />
+  <title>SCORE | Tienda Oficial - Fabricado por Único</title>
+  
+  <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
+  
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://unicouniformes.com/" />
+  <meta property="og:title" content="SCORE Store | 80% OFF Inauguración" />
+  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes. ¡Aprovecha la promoción!" />
+  <meta property="og:image" content="/assets/hero.webp" />
+  
+  <meta property="fb:pages" content="1496305187347575" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -18,8 +27,22 @@
   <link rel="preload" href="/assets/hero.webp" as="image">
   <script src="https://js.stripe.com/v3" async></script>
 
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  /></noscript>
   <style>
-    /* Estilos críticos para Cookie Banner (Inline para carga rápida) */
     .cookieBanner {
       position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000;
       max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92);
@@ -38,6 +61,11 @@
     }
     .cookieBtn.primary { background: #E10600; border-color: #E10600; }
     @media (max-width: 520px){ .cookieActions { width: 100%; justify-content: flex-end; } }
+    
+    /* Social Links Footer Style */
+    .social-row { display: flex; gap: 15px; margin-top: 15px; }
+    .social-link { color: #999; text-decoration: none; font-size: 14px; transition: .3s; display: flex; align-items: center; gap: 6px; }
+    .social-link:hover { color: #fff; }
   </style>
 </head>
 
@@ -146,8 +174,13 @@
     <div class="container footerInner">
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador oficial de merchandise SCORE International.</p>
+        <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
+        <div class="social-row">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
+          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" class="social-link">YouTube</a>
+        </div>
       </div>
       <div class="fCol">
         <h4>ATENCIÓN A CLIENTES</h4>
@@ -168,7 +201,9 @@
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Interior JK<br>Col. Anexa Roma, Tijuana, B.C.<br>CP 22614</p>
-        <p class="fText" style="margin-top:10px; font-size:13px;">ventas.unicotextil@gmail.com</p>
+        <p class="fText" style="margin-top:10px; font-size:13px;">
+          <a href="mailto:grupo.unico11@gmail.com" style="color:inherit;text-decoration:none;">grupo.unico11@gmail.com</a>
+        </p>
       </div>
     </div>
     <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
@@ -228,7 +263,7 @@
       </div>
       <div class="legalBlock" data-legal-block="returns" style="display:none;">
         <h4>POLÍTICA DE DEVOLUCIONES</h4>
-        <p>Solo por defecto de fábrica. Notificar máximo 5 días hábiles a <strong>ventas.unicotextil@gmail.com</strong>.</p>
+        <p>Solo por defecto de fábrica. Notificar máximo 5 días hábiles a <strong>grupo.unico11@gmail.com</strong>.</p>
         <p>No aplica en personalizados.</p>
       </div>
       <div class="legalBlock" data-legal-block="terms" style="display:none;">
@@ -243,7 +278,7 @@
       </div>
       <div class="legalBlock" data-legal-block="billing" style="display:none;">
         <h4>FACTURACIÓN</h4>
-        <p>Solicitar dentro del mes fiscal a <strong>ventas.unicotextil@gmail.com</strong></p>
+        <p>Solicitar dentro del mes fiscal a <strong>grupo.unico11@gmail.com</strong></p>
       </div>
     </div>
   </aside>
