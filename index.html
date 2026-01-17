@@ -19,6 +19,7 @@
   <script src="https://js.stripe.com/v3" async></script>
 
   <style>
+    /* Estilos críticos para Cookie Banner (Inline para carga rápida) */
     .cookieBanner {
       position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000;
       max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92);
@@ -28,7 +29,7 @@
     }
     .cookieInner { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
     .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; line-height:1.45; flex: 1 1 520px; }
-    .cookieText a { color:#00E676; text-decoration:none; font-weight:700; }
+    .cookieText a { color:#E10600; text-decoration:none; font-weight:700; }
     .cookieActions { display:flex; gap:10px; flex: 0 0 auto; align-items:center; }
     .cookieBtn {
       border-radius: 999px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.18);
@@ -41,10 +42,20 @@
 </head>
 
 <body>
+  <div id="splash-screen">
+    <div class="splash-content">
+      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
+      <div class="rpm-bar-container">
+        <div class="rpm-bar"></div>
+      </div>
+      <div class="splash-text">INICIANDO MOTORES...</div>
+    </div>
+  </div>
+
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <div class="promo-bar">
-    <span>⚠️ <strong>GRAN APERTURA:</strong> 80% DE DESCUENTO EN TODA LA TIENDA · OFERTA POR TIEMPO LIMITADO ⚠️</span>
+  <div class="promo-bar slide-in-top">
+    <span>⚠️ <span class="promo-highlight blink-text">GRAN APERTURA:</span> 80% DE DESCUENTO EN TODA LA TIENDA ⚠️</span>
   </div>
 
   <header class="topbar">
@@ -54,7 +65,7 @@
       </a>
       <div class="navRight">
         <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00E676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
             <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
             <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
@@ -66,13 +77,13 @@
   </header>
 
   <main class="wrap">
-    <section class="hero" id="top">
+    <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
         <div class="tagline"><span class="tag-pill">INAUGURACIÓN OFICIAL 2026</span></div>
-        <h1 style="font-family: 'Teko'; font-size: 60px; line-height: 0.9; margin-bottom: 20px; color: white;">
-          <span style="color: var(--neon-green)">80% OFF</span> EN TODO
+        <h1 class="hero-title">
+          <span class="neon-text">80% OFF</span> EN TODO
         </h1>
         <div class="logos-row">
           <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
@@ -83,13 +94,13 @@
           Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.
         </div>
         <div class="ctaRow">
-          <button class="btn primary" onclick="scrollToId('collections')">VER OFERTAS</button>
+          <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
           <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
     </section>
 
-    <section class="section" id="collections">
+    <section class="section scroll-reveal" id="collections">
       <div class="sectionHead">
         <h2>COLECCIONES <span>OFICIALES</span></h2>
         <p>APROVECHA PRECIOS DE INAUGURACIÓN</p>
@@ -120,7 +131,7 @@
       </div>
     </section>
 
-    <section class="partners">
+    <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
         <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
@@ -131,7 +142,7 @@
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer scroll-reveal">
     <div class="container footerInner">
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
@@ -195,7 +206,7 @@
         <input id="addr" type="text" placeholder="Calle, Número y Colonia" class="inputField" style="width:100%; margin-bottom:8px;">
         <input id="name" type="text" placeholder="Nombre Completo de quien recibe" class="inputField" style="width:100%;">
       </div>
-      <div class="sumRow"><span>Subtotal (Inauguración)</span><strong id="subTotal">$0.00</strong></div>
+      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
