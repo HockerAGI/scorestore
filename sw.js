@@ -1,4 +1,4 @@
-const CACHE_NAME = "score-store-v11";
+const CACHE_NAME = "score-store-v15";
 const ASSETS = [ "/", "/index.html", "/css/styles.css", "/js/main.js", "/data/catalog.json" ];
 
 self.addEventListener("install", (e) => {
