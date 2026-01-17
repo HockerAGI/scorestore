@@ -1,12 +1,11 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v13 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v16 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
 
 const CART_KEY = "score_cart_prod_v1";
-// CONFIGURACIÓN DE PROMOCIÓN (No modifica JSON, solo cálculo)
 const PROMO_ACTIVE = true; 
-const DISCOUNT_FACTOR = 0.20; // Pagas el 20% (80% OFF)
+const FAKE_MARKUP_FACTOR = 1.8; 
 
 let cart = [];
 let catalogData = { products: [], sections: [] };
@@ -16,19 +15,16 @@ let selectedSizeByProduct = {};
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// Helper para precio con descuento
-const getFinalPrice = (basePrice) => {
-    return PROMO_ACTIVE ? Math.round(basePrice * DISCOUNT_FACTOR) : basePrice;
-};
-
 /* ================= INIT ================= */
 
 async function init() {
+  initSplash();
   loadCart();
   await loadCatalog();
   setupListeners();
   updateCartUI();
   registerServiceWorker();
+  initScrollReveal();
 
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
@@ -40,6 +36,25 @@ async function init() {
     toast("Pago cancelado.");
     window.history.replaceState({}, document.title, "/");
   }
+}
+
+function initSplash() {
+  const splash = $("splash-screen");
+  if (splash) {
+    setTimeout(() => { splash.classList.add("hidden"); }, 2200);
+  }
+}
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 }
 
 function registerServiceWorker() {
@@ -117,15 +132,13 @@ window.openCatalog = (sectionId, titleFallback) => {
   const products = catalogData.products || [];
   if (!products.length) return toast("Cargando catálogo...");
   
-  // 1. Configurar Encabezado (LOGO)
   const titleEl = $("catTitle");
   const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
   if (sectionInfo && sectionInfo.logo) {
-    // FIX: Se eliminó filter brightness para mostrar logo original
-    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
+    // UPDATED: Logo height aumentado a 90px para mejor visibilidad en cuadrados
+    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:90px;width:auto;vertical-align:middle;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
   } else {
-    // Fallback texto
     titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
   }
   
@@ -153,15 +166,19 @@ window.openCatalog = (sectionId, titleFallback) => {
         return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
       }).join("");
 
-      // --- SLIDER LOGIC ---
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
       
       let slidesHtml = "";
       imageList.forEach(imgSrc => {
-        slidesHtml += `<div class="prod-slide"><img src="${imgSrc}" class="prodImg" alt="${p.name}" loading="lazy"></div>`;
+        // UPDATED: Agregado onerror para ocultar slides rotos.
+        // Si la imagen falla, ocultamos el contenedor padre (.prod-slide) para que no ocupe espacio.
+        slidesHtml += `
+          <div class="prod-slide">
+            <img src="${imgSrc}" class="prodImg" alt="${p.name}" loading="lazy" 
+                 onerror="this.parentElement.style.display='none'; if(this.closest('.prod-slider').children.length <= 1) this.closest('.prodCard').style.display='none';">
+          </div>`;
       });
 
-      // Indicadores (dots)
       let dotsHtml = "";
       if (imageList.length > 1) {
         dotsHtml = `<div class="slider-dots">`;
@@ -171,14 +188,15 @@ window.openCatalog = (sectionId, titleFallback) => {
         dotsHtml += `</div>`;
       }
 
-      // PRECIOS CON PROMOCIÓN VISUAL
-      const finalPrice = getFinalPrice(p.baseMXN);
+      const sellPrice = p.baseMXN;
+      const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
+
       const priceHtml = PROMO_ACTIVE 
         ? `<div class="price-container">
-             <span class="old-price">${money(p.baseMXN)}</span>
-             <span class="new-price">${money(finalPrice)}</span>
+             <span class="old-price">${money(fakeOldPrice)}</span>
+             <span class="new-price">${money(sellPrice)}</span>
            </div>`
-        : `<div class="prodPrice">${money(p.baseMXN)}</div>`;
+        : `<div class="prodPrice">${money(sellPrice)}</div>`;
 
       const promoBadge = PROMO_ACTIVE ? `<div class="promo-badge">80% OFF</div>` : '';
 
@@ -225,7 +243,6 @@ function addToCart(id, size) {
   const existing = cart.find(i => i.id === id && i.size === size);
   if (existing) existing.qty++;
   else cart.push({ id, size, qty: 1 });
-  
   saveCart();
   updateCartUI();
   toast("Agregado al carrito");
@@ -270,13 +287,10 @@ function updateCartUI() {
     } else {
       if(cartEmpty) cartEmpty.style.display = "none";
       let html = "";
-      
       cart.forEach((item, idx) => {
         const p = products.find(x => x.id === item.id);
         if (!p) return;
-        
-        // CALCULO DE PRECIO EN CARRITO CON PROMO
-        const unitPrice = getFinalPrice(p.baseMXN);
+        const unitPrice = p.baseMXN;
         const totalItem = unitPrice * item.qty;
         subtotal += totalItem;
         totalQty += item.qty;
@@ -295,8 +309,7 @@ function updateCartUI() {
               <div class="cPrice">${money(totalItem)}</div>
             </div>
             <button onclick="removeFromCart(${idx})" class="linkDanger" style="font-size:20px;">&times;</button>
-          </div>
-        `;
+          </div>`;
       });
       container.innerHTML = html;
     }
@@ -365,7 +378,6 @@ window.checkout = async () => {
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
-  // Validación
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
@@ -374,25 +386,12 @@ window.checkout = async () => {
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
-  // Inyectar precio de promo en el payload para el backend
-  // NOTA: Idealmente el backend valida precios, pero para esta estructura 
-  // ligera, enviamos los ítems con el precio esperado implícito o
-  // dejamos que el backend recalcule. 
-  // *IMPORTANTE*: Si tu backend 'create_checkout' lee el catálogo JSON, 
-  // cobrará precio full. Si lee el precio del objeto 'item', 
-  // necesitamos asegurarnos de pasar el precio correcto.
-  // Asumiremos que el backend confía en el ID o recalculamos aquí si el backend lo permite.
-  
-  // Para asegurar que se cobra el 20%, enviamos la data tal cual y 
-  // esperamos que tu función serverless maneje la lógica o acepte "price_data".
-  // Dado que no puedo editar el backend, el cambio visual y de carrito está hecho.
-
   try {
     const payload = {
       items: cart,
       mode,
       customer: { name, address: addr, postal_code: cp },
-      promo: PROMO_ACTIVE // Flag para que el backend sepa (si está programado para ello)
+      promo: PROMO_ACTIVE 
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
