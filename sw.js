@@ -1,5 +1,5 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v18 */
-const CACHE_NAME = "score-store-v18"; // <--- CAMBIO OBLIGATORIO
+/* sw.js - VERSIÓN DE PRODUCCIÓN v19 (BUMP) */
+const CACHE_NAME = "score-store-v19"; 
 const ASSETS = [ 
   "/", 
   "/index.html", 
@@ -10,7 +10,7 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  self.skipWaiting(); // Fuerza la instalación inmediata
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => 
       Promise.allSettled(ASSETS.map(url => cache.add(url)))
@@ -22,13 +22,11 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then(keys => Promise.all(
     keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
   )));
-  self.clients.claim(); // Toma control inmediato de la página
+  self.clients.claim();
 });
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
-
-  // ESTRATEGIA: Network First para HTML y Datos (para ver cambios al instante)
   if (e.request.destination === "document" || e.request.url.includes("/data/")) {
     e.respondWith(
       fetch(e.request).then(res => {
@@ -38,7 +36,6 @@ self.addEventListener("fetch", (e) => {
       }).catch(() => caches.match(e.request))
     );
   } else {
-    // ESTRATEGIA: Cache First para imágenes y estilos (velocidad)
     e.respondWith(
       caches.match(e.request).then(res => res || fetch(e.request))
     );
