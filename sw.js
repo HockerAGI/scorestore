@@ -1,4 +1,4 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v19 (BUMP) */
+/* sw.js - VERSIÓN DE PRODUCCIÓN v20 (BUMP) */
 const CACHE_NAME = "score-store-v19"; 
 const ASSETS = [ 
   "/", 
