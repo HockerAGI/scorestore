@@ -7,7 +7,7 @@
   --bg-dark: #121212;
   --white: #ffffff;
   --header-h: 80px;
-  --promo-h: 40px;
+  --promo-h: 40px; /* Altura fija barra promo */
   --radius: 20px;
   --shadow-pro: 0 15px 40px rgba(0,0,0,0.4);
 }
@@ -24,11 +24,13 @@ body {
   background-size: cover;
   background-position: center top;
   overflow-x: hidden;
-  padding-top: var(--promo-h);
+  margin: 0; /* IMPORTANTE: Margin 0 para evitar espacios blancos */
 }
 body.modalOpen { overflow: hidden; }
 
-/* --- SPLASH SCREEN (RACING) --- */
+/* =========================================
+   1. SPLASH SCREEN (RACING THEME)
+   ========================================= */
 #splash-screen {
   position: fixed; inset: 0; z-index: 9999;
   background-color: #000;
@@ -73,25 +75,35 @@ body.modalOpen { overflow: hidden; }
 }
 @keyframes blinkText { from { opacity: 0.6; } to { opacity: 1; } }
 
-/* --- ANIMACIONES GENERALES --- */
+/* =========================================
+   2. ANIMACIONES GENERALES
+   ========================================= */
 .scroll-reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
 .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+
 .slide-in-top { animation: slideDown 0.8s ease-out forwards; }
 @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
 .blink-text { animation: blink 2s infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-/* --- PROMO BAR --- */
+/* =========================================
+   3. ESTRUCTURA FIJA (PROMO + HEADER)
+   ========================================= */
+/* Barra Promo: Z-Index más alto (2001) */
 .promo-bar {
   position: fixed; top: 0; left: 0; width: 100%; height: var(--promo-h);
   background: #000; color: #fff;
   border-bottom: 2px solid var(--score-red);
   display: flex; align-items: center; justify-content: center;
-  z-index: 2000; font-size: 14px; font-weight: 700; text-transform: uppercase;
+  z-index: 2001; 
+  font-size: 14px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 .promo-highlight { color: var(--score-red); margin-right: 6px; font-weight: 800; }
 
+/* Ajuste Mobile Promo (Marquesina) */
 @media (max-width: 480px) {
   .promo-bar {
     font-size: 12px; justify-content: flex-start; overflow: hidden; white-space: nowrap;
@@ -102,14 +114,19 @@ body.modalOpen { overflow: hidden; }
   @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 }
 
-/* OVERLAY */
-.page-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px);
+/* Header: Debajo de Promo (Top 40px, Z-Index 2000) */
+.topbar { 
+  position: fixed; 
+  top: var(--promo-h); /* 40px */
+  left: 0; 
+  width: 100%; 
+  height: var(--header-h); /* 80px */
+  background: rgba(255,255,255,0.98); 
+  border-bottom: 4px solid var(--score-red); 
+  z-index: 2000; 
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15); 
+  transition: .3s; 
 }
-.page-overlay.active { opacity: 1; pointer-events: auto; }
-
-/* HEADER */
-.topbar { position: fixed; top: var(--promo-h); left: 0; width: 100%; height: var(--header-h); background: rgba(255,255,255,0.98); border-bottom: 4px solid var(--score-red); z-index: 1000; box-shadow: 0 5px 25px rgba(0,0,0,0.15); transition: .3s; }
 .container { width: min(1300px, 94vw); margin: 0 auto; }
 .topbarInner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
 .brandLogo { height: 50px; width: auto; display: block; transition: .2s; }
@@ -119,9 +136,19 @@ body.modalOpen { overflow: hidden; }
 .cartBtn:hover { border-color: var(--score-red); box-shadow: 0 5px 15px rgba(225,6,0,0.2); transform: scale(1.05); }
 .cartCount { position: absolute; top: -4px; right: -4px; background: var(--score-red); color: #fff; font-size: 11px; font-weight: 800; height: 20px; min-width: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-/* HERO */
-.wrap { padding-top: calc(var(--header-h) + 40px); padding-bottom: 80px; width: min(1300px, 94vw); margin: 0 auto; }
+/* =========================================
+   4. WRAP & CONTENIDO (CORRECCIÓN DESCUADRE)
+   ========================================= */
+.wrap { 
+  /* FIX: 40px (Promo) + 80px (Header) + 40px (Espacio) = 160px Padding Top */
+  padding-top: 160px; 
+  padding-bottom: 80px; 
+  width: min(1300px, 94vw); 
+  margin: 0 auto; 
+}
 .section { margin-bottom: 120px; }
+
+/* HERO */
 .hero { position: relative; min-height: 600px; border-radius: 20px; overflow: hidden; margin-bottom: 80px; box-shadow: var(--shadow-pro); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; background: #000; }
 .heroBg { position: absolute; inset: 0; z-index: 0; background: url('/assets/hero.webp') center/cover no-repeat; transition: transform 15s ease; }
 .hero:hover .heroBg { transform: scale(1.05); }
@@ -135,11 +162,13 @@ body.modalOpen { overflow: hidden; }
 .logos-row { display: flex; align-items: center; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
 .hero-main-logo, .hero-desert-seal { display: block; height: 100px; width: auto; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); transition: transform 0.5s; }
 .hero-main-logo:hover, .hero-desert-seal:hover { transform: scale(1.05); }
+
 .tagline { display: inline-block; background: var(--score-red); color: #fff; font-family: var(--font-title); font-size: 24px; padding: 4px 16px; margin-bottom: 25px; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 .tag-pill { display: inline-flex; align-items: center; gap: 8px; letter-spacing: 1px; text-transform: uppercase; }
 .marketing-copy { font-size: 22px; line-height: 1.6; color: #fff; margin-bottom: 40px; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 .ctaRow { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
+/* BOTONES */
 .btn { display: inline-flex; align-items: center; justify-content: center; padding: 16px 40px; font-family: var(--font-title); font-size: 24px; text-transform: uppercase; cursor: pointer; border-radius: 50px; transition: .3s; letter-spacing: 1px; border: none; position: relative; overflow: hidden; }
 .btn.primary { background: var(--score-red); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .btn.primary:hover { background: #fff; color: var(--score-red); transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255,255,255,0.2); }
@@ -149,6 +178,7 @@ body.modalOpen { overflow: hidden; }
 .pulse-btn { animation: gentlePulse 2s infinite; }
 @keyframes gentlePulse { 0% { box-shadow: 0 0 0 0 rgba(225,6,0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(225,6,0, 0); } 100% { box-shadow: 0 0 0 0 rgba(225,6,0, 0); } }
 
+/* COLECCIONES */
 .sectionHead { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 15px; flex-wrap: wrap; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
 h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.9; color: #fff; }
 h2 span { color: var(--score-red); }
@@ -164,6 +194,7 @@ h2 span { color: var(--score-red); }
 .champItem:hover .card-btn { opacity: 1; transform: translateY(0); }
 .badge { position: absolute; top: 20px; right: 20px; z-index: 5; font-size: 14px; font-weight: 800; padding: 6px 14px; background: #000; color: #fff; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 
+/* PARTNERS & FOOTER */
 .partners { margin-top: 120px; text-align: center; }
 .partners h3 { font-family: var(--font-title); font-size: 36px; color: #fff; margin-bottom: 60px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
 .partnersGrid { display: flex; gap: 60px; justify-content: center; flex-wrap: wrap; align-items: center; }
@@ -179,26 +210,26 @@ h2 span { color: var(--score-red); }
 .footerLinks button:hover, .footerLinks a:hover { color: var(--score-red); padding-left: 5px; }
 .copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
 .whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
+.social-row { display: flex; gap: 15px; margin-top: 15px; }
+.social-link { color: #999; text-decoration: none; font-size: 14px; transition: .3s; display: flex; align-items: center; gap: 6px; }
+.social-link:hover { color: #fff; }
 
-/* --- MODAL UPDATES (PARA LOGO GRANDE) --- */
+/* MODAL & PRODUCT CARDS */
 .modal { position: fixed; top: 50%; left: 50%; width: min(1100px, 94vw); max-height: 90vh; transform: translate(-50%, -45%); background: #f9f9f9; z-index: 2100; opacity: 0; pointer-events: none; border-radius: 16px; transition: .3s; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
 .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 
-/* FIX: Altura flexible para el encabezado para permitir logo grande */
+/* Logo grande en modal */
 .modal .dHead { 
   padding: 14px 18px; 
   background: var(--score-red); 
   border-bottom: 1px solid #cc0000; 
   display: flex; justify-content: space-between; align-items: center; 
   flex: 0 0 auto;
-  min-height: 70px; /* Asegura espacio mínimo */
+  min-height: 70px;
 }
-/* FIX: Remover restricción de altura en el título/logo */
 .modal .dTitle { 
-  margin: 0; 
-  display: flex; align-items: center; justify-content: center; 
-  height: auto; 
-  width: 100%; 
+  margin: 0; display: flex; align-items: center; justify-content: center; 
+  height: auto; width: 100%; 
   font-family: var(--font-title); font-size: 28px; color: #fff; letter-spacing: 1px; 
 }
 .modal .closeBtn { background: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 24px; color: var(--score-red); flex: 0 0 auto; margin-left: 10px; }
@@ -231,6 +262,7 @@ h2 span { color: var(--score-red); }
 .btn-add { background: #fff; border: 2px solid var(--score-red); color: var(--score-red); width: 100%; padding: 12px; font-weight: 900; font-size: 15px; cursor: pointer; text-transform: uppercase; border-radius: 8px; transition: .2s; }
 .btn-add:hover { background: var(--score-red); color: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(225,6,0,0.2); }
 
+/* DRAWER */
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); height: 100dvh; background: #fff; z-index: 2100; transform: translateX(100%); transition: 0.3s ease; display: flex; flex-direction: column; box-shadow: -10px 0 50px rgba(0,0,0,0.5); }
 .drawer.active { transform: translateX(0); }
 .drawer .dHead { padding: 16px 18px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto; }
@@ -263,6 +295,13 @@ h2 span { color: var(--score-red); }
 .toast { position: fixed; top: 100px; right: 20px; background: var(--score-red); color: #fff; padding: 15px 30px; border-radius: 50px; font-weight: 900; z-index: 3000; box-shadow: 0 10px 30px rgba(225,6,0,0.3); transition: .3s; transform: translateX(150%); }
 .toast.show { transform: translateX(0); }
 
+/* OVERLAY */
+.page-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px);
+}
+.page-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* MEDIA QUERIES GENERALES */
 @media (max-width: 768px) {
   .hero { padding: 20px; min-height: 520px; }
   .hero-title { font-size: 42px; }
