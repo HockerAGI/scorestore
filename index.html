@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Tienda Oficial - Fabricado por Único</title>
+  <title>SCORE | Tienda Oficial</title>
   
   <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
@@ -13,12 +13,12 @@
   <meta property="og:title" content="SCORE Store | 80% OFF Inauguración" />
   <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes. ¡Aprovecha la promoción!" />
   <meta property="og:image" content="/assets/hero.webp" />
-  
   <meta property="fb:pages" content="1496305187347575" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css">
+  
+  <link rel="stylesheet" href="/css/styles.css?v=2.0">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,6 +42,7 @@
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
+
   <style>
     .cookieBanner {
       position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000;
@@ -61,8 +62,6 @@
     }
     .cookieBtn.primary { background: #E10600; border-color: #E10600; }
     @media (max-width: 520px){ .cookieActions { width: 100%; justify-content: flex-end; } }
-    
-    /* Social Links Footer Style */
     .social-row { display: flex; gap: 15px; margin-top: 15px; }
     .social-link { color: #999; text-decoration: none; font-size: 14px; transition: .3s; display: flex; align-items: center; gap: 6px; }
     .social-link:hover { color: #fff; }
@@ -110,9 +109,7 @@
       <div class="heroOverlay"></div>
       <div class="heroContent">
         <div class="tagline"><span class="tag-pill">INAUGURACIÓN OFICIAL 2026</span></div>
-        <h1 class="hero-title">
-          <span class="neon-text">80% OFF</span> EN TODO
-        </h1>
+        <h1 class="hero-title"><span class="neon-text">80% OFF</span> EN TODO</h1>
         <div class="logos-row">
           <img src="/assets/logo-score.webp" alt="SCORE International" class="hero-main-logo">
           <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-desert-seal">
@@ -298,7 +295,8 @@
     </div>
   </section>
 
-  <script src="/js/main.js" defer></script>
+  <script src="/js/main.js?v=2.0" defer></script>
+  
   <script>
     (function () {
       const KEY = "score_cookie_consent";
@@ -307,6 +305,23 @@
       document.getElementById("cookieAccept").onclick = () => { localStorage.setItem(KEY, "all"); banner.style.display = "none"; };
       document.getElementById("cookieReject").onclick = () => { localStorage.setItem(KEY, "essential"); banner.style.display = "none"; };
     })();
+
+    // CACHE BUSTING: Registro del SW con query param para forzar actualización
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js?v=2.0").then(reg => {
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // Nuevo contenido disponible: forzamos recarga
+                window.location.reload(); 
+              }
+            }
+          };
+        };
+      }).catch(console.warn);
+    }
   </script>
 </body>
 </html>
