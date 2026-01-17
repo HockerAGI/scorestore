@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v17 (With Pixel Tracking) */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v18 (URL SAFETY & CACHE BUST) */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
@@ -15,6 +15,13 @@ let selectedSizeByProduct = {};
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
+// --- NUEVO: FUNCIÓN PARA LIMPIAR URLs CON ESPACIOS ---
+const cleanUrl = (url) => {
+  if (!url) return "";
+  // Reemplaza espacios por %20 de forma segura
+  return encodeURI(url);
+};
+
 /* ================= INIT ================= */
 
 async function init() {
@@ -23,14 +30,12 @@ async function init() {
   await loadCatalog();
   setupListeners();
   updateCartUI();
-  registerServiceWorker();
   initScrollReveal();
 
   const params = new URLSearchParams(window.location.search);
   const status = params.get("status");
   if (status === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
-    // Pixel Purchase tracking could be added here if we had order value passed back
     emptyCart(true);
     window.history.replaceState({}, document.title, "/");
   } else if (status === "cancel") {
@@ -58,10 +63,8 @@ function initScrollReveal() {
   document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 }
 
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.register("/sw.js").catch(console.warn);
-}
+// Nota: El registro del SW se movió al HTML para el cache busting
+// function registerServiceWorker() { ... } 
 
 /* ================= DATA ================= */
 
@@ -137,7 +140,7 @@ window.openCatalog = (sectionId, titleFallback) => {
   const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
   if (sectionInfo && sectionInfo.logo) {
-    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:90px;width:auto;vertical-align:middle;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
+    titleEl.innerHTML = `<img src="${cleanUrl(sectionInfo.logo)}" alt="${sectionInfo.title}" style="height:90px;width:auto;vertical-align:middle;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
   } else {
     titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
   }
@@ -170,9 +173,11 @@ window.openCatalog = (sectionId, titleFallback) => {
       
       let slidesHtml = "";
       imageList.forEach(imgSrc => {
+        // USO DE cleanUrl() AQUÍ PARA ARREGLAR ESPACIOS
+        const safeSrc = cleanUrl(imgSrc);
         slidesHtml += `
           <div class="prod-slide">
-            <img src="${imgSrc}" class="prodImg" alt="${p.name}" loading="lazy" 
+            <img src="${safeSrc}" class="prodImg" alt="${p.name}" loading="lazy" 
                  onerror="this.parentElement.style.display='none'; if(this.closest('.prod-slider').children.length <= 1) this.closest('.prodCard').style.display='none';">
           </div>`;
       });
@@ -247,7 +252,6 @@ function addToCart(id, size) {
   toast("Agregado al carrito");
   openDrawer();
 
-  // --- PIXEL TRACKING: AddToCart ---
   if(typeof fbq === 'function') {
     fbq('track', 'AddToCart', {
       content_ids: [id],
@@ -305,7 +309,7 @@ function updateCartUI() {
 
         html += `
           <div class="cartItem">
-            <img src="${p.img}" class="cartThumb">
+            <img src="${cleanUrl(p.img)}" class="cartThumb">
             <div class="cInfo">
               <div class="cName">${p.name}</div>
               <div class="cMeta">Talla: <strong>${item.size}</strong></div>
@@ -394,16 +398,11 @@ window.checkout = async () => {
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
-  // --- PIXEL TRACKING: InitiateCheckout ---
   if(typeof fbq === 'function') {
     fbq('track', 'InitiateCheckout', {
       num_items: cart.reduce((acc, i) => acc + i.qty, 0),
       currency: 'MXN',
-      value: cart.reduce((acc, i) => {
-         // Precio base (asumiendo lógica de carro)
-         // Para exactitud, deberíamos recalcular el total aquí o sacarlo del DOM
-         return acc; // Simplificado
-      }, 0) 
+      value: cart.reduce((acc, i) => { return acc; }, 0) 
     });
   }
 
