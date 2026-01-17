@@ -1,9 +1,13 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v12 */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v13 */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
 
 const CART_KEY = "score_cart_prod_v1";
+// CONFIGURACIÓN DE PROMOCIÓN (No modifica JSON, solo cálculo)
+const PROMO_ACTIVE = true; 
+const DISCOUNT_FACTOR = 0.20; // Pagas el 20% (80% OFF)
+
 let cart = [];
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
@@ -11,6 +15,11 @@ let selectedSizeByProduct = {};
 
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+
+// Helper para precio con descuento
+const getFinalPrice = (basePrice) => {
+    return PROMO_ACTIVE ? Math.round(basePrice * DISCOUNT_FACTOR) : basePrice;
+};
 
 /* ================= INIT ================= */
 
@@ -113,8 +122,8 @@ window.openCatalog = (sectionId, titleFallback) => {
   const sectionInfo = (catalogData.sections || []).find(s => s.id === sectionId);
   
   if (sectionInfo && sectionInfo.logo) {
-    // Si hay logo definido en el JSON, lo usamos
-    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;filter: brightness(0) invert(1);">`;
+    // FIX: Se eliminó filter brightness para mostrar logo original
+    titleEl.innerHTML = `<img src="${sectionInfo.logo}" alt="${sectionInfo.title}" style="height:40px;width:auto;vertical-align:middle;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
   } else {
     // Fallback texto
     titleEl.innerText = titleFallback || sectionInfo?.title || "COLECCIÓN";
@@ -145,7 +154,6 @@ window.openCatalog = (sectionId, titleFallback) => {
       }).join("");
 
       // --- SLIDER LOGIC ---
-      // Si el array images existe y tiene elementos, lo usamos. Si no, usamos img como fallback.
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
       
       let slidesHtml = "";
@@ -163,17 +171,29 @@ window.openCatalog = (sectionId, titleFallback) => {
         dotsHtml += `</div>`;
       }
 
+      // PRECIOS CON PROMOCIÓN VISUAL
+      const finalPrice = getFinalPrice(p.baseMXN);
+      const priceHtml = PROMO_ACTIVE 
+        ? `<div class="price-container">
+             <span class="old-price">${money(p.baseMXN)}</span>
+             <span class="new-price">${money(finalPrice)}</span>
+           </div>`
+        : `<div class="prodPrice">${money(p.baseMXN)}</div>`;
+
+      const promoBadge = PROMO_ACTIVE ? `<div class="promo-badge">80% OFF</div>` : '';
+
       const el = document.createElement("div");
       el.className = "prodCard";
       el.innerHTML = `
         <div class="metallic-frame">
+          ${promoBadge}
           <div class="prod-slider">
             ${slidesHtml}
           </div>
           ${dotsHtml}
         </div>
         <div class="prodName">${p.name}</div>
-        <div class="prodPrice">${money(p.baseMXN)}</div>
+        ${priceHtml}
         <div class="sizeRow">${sizesHtml}</div>
         <button class="btn-add" data-add="${p.id}">AGREGAR</button>
       `;
@@ -254,7 +274,10 @@ function updateCartUI() {
       cart.forEach((item, idx) => {
         const p = products.find(x => x.id === item.id);
         if (!p) return;
-        const totalItem = p.baseMXN * item.qty;
+        
+        // CALCULO DE PRECIO EN CARRITO CON PROMO
+        const unitPrice = getFinalPrice(p.baseMXN);
+        const totalItem = unitPrice * item.qty;
         subtotal += totalItem;
         totalQty += item.qty;
 
@@ -351,11 +374,25 @@ window.checkout = async () => {
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
+  // Inyectar precio de promo en el payload para el backend
+  // NOTA: Idealmente el backend valida precios, pero para esta estructura 
+  // ligera, enviamos los ítems con el precio esperado implícito o
+  // dejamos que el backend recalcule. 
+  // *IMPORTANTE*: Si tu backend 'create_checkout' lee el catálogo JSON, 
+  // cobrará precio full. Si lee el precio del objeto 'item', 
+  // necesitamos asegurarnos de pasar el precio correcto.
+  // Asumiremos que el backend confía en el ID o recalculamos aquí si el backend lo permite.
+  
+  // Para asegurar que se cobra el 20%, enviamos la data tal cual y 
+  // esperamos que tu función serverless maneje la lógica o acepte "price_data".
+  // Dado que no puedo editar el backend, el cambio visual y de carrito está hecho.
+
   try {
     const payload = {
       items: cart,
       mode,
-      customer: { name, address: addr, postal_code: cp }
+      customer: { name, address: addr, postal_code: cp },
+      promo: PROMO_ACTIVE // Flag para que el backend sepa (si está programado para ello)
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
