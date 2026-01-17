@@ -1,4 +1,5 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createEnviaLabel } = require("./_shared");
 
 function json(statusCode, body) {
   return {
@@ -39,7 +40,27 @@ exports.handler = async (event) => {
 
   if (stripeEvent.type === "checkout.session.completed") {
     const session = stripeEvent.data.object;
-    console.log(`✅ Pago exitoso: ${session.id} | Cliente: ${session.customer_details?.email}`);
+    const mode = session.metadata?.score_mode; 
+    const customerDetails = session.customer_details || session.shipping_details;
+    
+    console.log(`💰 Pago: ${session.id} | Modo: ${mode}`);
+
+    if (mode === "mx" || mode === "us") {
+      if (customerDetails) {
+        const shipment = await createEnviaLabel({
+          name: customerDetails.name,
+          email: customerDetails.email,
+          phone: customerDetails.phone,
+          address: customerDetails.address
+        }, 2); // 2 items promedio
+
+        if (shipment) {
+          console.log(`📦 Guía creada: ${shipment.tracking} (${shipment.carrier})`);
+        } else {
+          console.error("⚠️ Error generando guía automática.");
+        }
+      }
+    }
   }
 
   return json(200, { received: true });
