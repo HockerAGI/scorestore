@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL PRODUCTION v18 (URL SAFETY & CACHE BUST) */
+/* SCORE STORE LOGIC — FINAL PRODUCTION v19 (PIXEL + USA) */
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
@@ -15,10 +15,9 @@ let selectedSizeByProduct = {};
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- NUEVO: FUNCIÓN PARA LIMPIAR URLs CON ESPACIOS ---
+// --- LIMPIEZA URL (SAMSUNG FIX) ---
 const cleanUrl = (url) => {
   if (!url) return "";
-  // Reemplaza espacios por %20 de forma segura
   return encodeURI(url);
 };
 
@@ -36,6 +35,10 @@ async function init() {
   const status = params.get("status");
   if (status === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
+    // Pixel Purchase
+    if(typeof fbq === 'function') {
+        fbq('track', 'Purchase', { currency: "MXN", value: 0.0 }); // Valor dinámico ideal
+    }
     emptyCart(true);
     window.history.replaceState({}, document.title, "/");
   } else if (status === "cancel") {
@@ -62,9 +65,6 @@ function initScrollReveal() {
   }, { threshold: 0.1 });
   document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 }
-
-// Nota: El registro del SW se movió al HTML para el cache busting
-// function registerServiceWorker() { ... } 
 
 /* ================= DATA ================= */
 
@@ -101,9 +101,15 @@ function setupListeners() {
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
-      const val = e.target.value.replace(/\D/g, "").slice(0, 5);
+      // Permitir guiones para USA
+      const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       e.target.value = val;
-      if (val.length === 5 && shippingState.mode === "mx") quoteShipping(val);
+      
+      if (shippingState.mode === "mx" && val.length === 5) {
+        quoteShipping(val, "MX");
+      } else if (shippingState.mode === "us" && val.length >= 5) {
+        quoteShipping(val, "US");
+      }
     });
   }
 
@@ -173,7 +179,6 @@ window.openCatalog = (sectionId, titleFallback) => {
       
       let slidesHtml = "";
       imageList.forEach(imgSrc => {
-        // USO DE cleanUrl() AQUÍ PARA ARREGLAR ESPACIOS
         const safeSrc = cleanUrl(imgSrc);
         slidesHtml += `
           <div class="prod-slide">
@@ -252,6 +257,7 @@ function addToCart(id, size) {
   toast("Agregado al carrito");
   openDrawer();
 
+  // --- PIXEL TRACKING: AddToCart ---
   if(typeof fbq === 'function') {
     fbq('track', 'AddToCart', {
       content_ids: [id],
@@ -340,6 +346,7 @@ function handleShipModeChange(mode) {
   const form = $("shipForm");
   if (form) form.style.display = (mode === "pickup") ? "none" : "block";
 
+  // Reset visual
   if (mode === "pickup") {
     shippingState.cost = 0;
     shippingState.label = "Gratis (Fábrica)";
@@ -347,36 +354,40 @@ function handleShipModeChange(mode) {
     shippingState.cost = 200;
     shippingState.label = "$200.00 (Local)";
   } else if (mode === "mx") {
+    shippingState.cost = 0;
+    shippingState.label = "Ingresa CP (5 dígitos)...";
     const cp = $("cp")?.value;
-    if (cp && cp.length === 5) quoteShipping(cp);
-    else {
-      shippingState.cost = 0;
-      shippingState.label = "Ingresa CP...";
-    }
+    if (cp && cp.length === 5) quoteShipping(cp, "MX");
+  } else if (mode === "us") {
+    shippingState.cost = 0;
+    shippingState.label = "Ingresa ZIP Code...";
+    const cp = $("cp")?.value;
+    if (cp && cp.length >= 5) quoteShipping(cp, "US");
   }
   updateCartUI();
 }
 
-async function quoteShipping(zip) {
-  $("shipTotal").innerText = "Calculando...";
+async function quoteShipping(zip, country) {
+  $("shipTotal").innerText = "Cotizando...";
   try {
     const qty = cart.reduce((acc, i) => acc + i.qty, 0);
     const res = await fetch(`${API_BASE}/quote_shipping`, {
       method: "POST",
-      body: JSON.stringify({ zip, items: qty })
+      body: JSON.stringify({ zip, items: qty, country })
     });
     const data = await res.json();
     
-    if (data.cost) {
+    if (data.ok && data.cost) {
       shippingState.cost = data.cost;
       shippingState.label = data.label || money(data.cost);
     } else {
-      shippingState.cost = 250;
-      shippingState.label = "$250.00 (Estándar)";
+      // Fallback Visual
+      shippingState.cost = (country === "US") ? 800 : 250;
+      shippingState.label = (country === "US") ? "$800.00 (Estándar USA)" : "$250.00 (Estándar MX)";
     }
   } catch (e) {
-    shippingState.cost = 250;
-    shippingState.label = "$250.00 (Fallback)";
+    shippingState.cost = (country === "US") ? 800 : 250;
+    shippingState.label = "Envío Estándar";
   }
   updateCartUI();
 }
@@ -393,16 +404,18 @@ window.checkout = async () => {
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Completa los datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
+    if (mode === "us" && cp.length < 5) return toast("ZIP inválido");
   }
 
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
+  // --- PIXEL TRACKING: InitiateCheckout ---
   if(typeof fbq === 'function') {
     fbq('track', 'InitiateCheckout', {
       num_items: cart.reduce((acc, i) => acc + i.qty, 0),
       currency: 'MXN',
-      value: cart.reduce((acc, i) => { return acc; }, 0) 
+      value: 0 
     });
   }
 
