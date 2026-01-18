@@ -11,9 +11,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Stripe + Supabase (misma base que la tienda; no rompe nada) -->
+  <!-- Opcional (no rompe nada): si Stripe/Supabase ya están cacheados, ok.
+       main.js solo usa Supabase si window.supabase existe. -->
   <script src="https://js.stripe.com/v3" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
+
+  <style>
+    /* mini ajuste para que el header se vea igual que tienda */
+    .btnGhost { text-decoration:none; }
+  </style>
 </head>
 
 <body>
@@ -25,7 +31,7 @@
 
       <div style="width:40px;">
         <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.8);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
             <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
             <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
@@ -42,7 +48,11 @@
 
     <section id="privacidad" class="legalCard">
       <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
-      <p class="p"><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), nombre comercial BAJATEX, operando bajo la marca Único Uniformes y proyectos derivados como SCORE Store, con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.</p>
+      <p class="p">
+        <strong>Responsable:</strong>
+        BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), nombre comercial BAJATEX, operando bajo la marca Único Uniformes y proyectos derivados como SCORE Store,
+        con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.
+      </p>
 
       <h3 style="font-size:18px;margin:10px 0;">Datos Personales que se Recaban:</h3>
       <ul class="ul">
@@ -87,7 +97,11 @@
 
     <section id="devoluciones" class="legalCard">
       <h2 class="h2">4. DEVOLUCIONES Y GARANTÍAS</h2>
-      <p class="p">Aplicable únicamente a defectos de fabricación comprobables en productos de línea. El cliente deberá notificar dentro de los 5 días hábiles posteriores a la recepción al correo: <strong>ventas.unicotextil@gmail.com</strong></p>
+      <p class="p">
+        Aplicable únicamente a defectos de fabricación comprobables en productos de línea.
+        El cliente deberá notificar dentro de los 5 días hábiles posteriores a la recepción al correo:
+        <strong>ventas.unicotextil@gmail.com</strong>
+      </p>
     </section>
 
     <section id="facturacion" class="legalCard">
@@ -114,13 +128,13 @@
     </div>
   </footer>
 
-  <!-- Overlay + Drawer (mismos IDs que la tienda, para que main.js funcione igual) -->
+  <!-- Overlay + Drawer (IDs EXACTOS para que main.js funcione igual) -->
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <aside id="drawer" class="drawer">
+  <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">TU PEDIDO</h3>
-      <button class="closeBtn" onclick="closeAll()">✕</button>
+      <button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button>
     </div>
 
     <div class="dBody">
@@ -173,8 +187,7 @@
 
   <div class="toast" id="toast">Mensaje</div>
 
-  <!-- IMPORTANTE: No redefinir openDrawer/closeAll aquí.
-       main.js ya trae estas funciones y listeners, y además inyecta Pixel desde DB. -->
+  <!-- IMPORTANTE: No redefinir openDrawer/closeAll aquí. -->
   <script src="/js/main.js?v=2.2" defer></script>
 </body>
 </html>
