@@ -1,6 +1,6 @@
 /* SCORE STORE LOGIC — UNIFIED v2.0 (SAMSUNG FIX + ADMIN APP) */
 
-// --- CREDENCIALES REALES ---
+// CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
@@ -17,7 +17,7 @@ let supabase = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- SAMSUNG FIX: LIMPIEZA DE URLS ---
+// --- SAMSUNG FIX ---
 const cleanUrl = (url) => {
   if (!url) return "";
   return encodeURI(url.trim());
@@ -44,6 +44,7 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias.");
+    if(typeof fbq === 'function') fbq('track', 'Purchase', { currency: "MXN", value: 0.0 });
     emptyCart(true);
     window.history.replaceState({}, document.title, "/");
   }
@@ -75,6 +76,16 @@ async function loadSiteConfig() {
       PROMO_ACTIVE = true; FAKE_MARKUP_FACTOR = 1.3;
       const bar = $("promo-bar");
       if(bar) { bar.style.display = "flex"; $("promo-text").innerHTML = config.promo_text || "🔥 OFERTA ACTIVA 🔥"; }
+    }
+    // Pixel Injection Dynamic
+    if (config.pixel_id) {
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', config.pixel_id);
+        fbq('track', 'PageView');
     }
   }
 }
@@ -188,6 +199,7 @@ function setupListeners() {
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
+      // Permitir guiones para ZIP USA
       const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       e.target.value = val;
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
@@ -196,7 +208,6 @@ function setupListeners() {
   }
 }
 
-// ... CHECKOUT ...
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Carrito vacío");
@@ -210,6 +221,11 @@ window.checkout = async () => {
   }
 
   btn.disabled = true; btn.innerText = "Procesando...";
+
+  // Pixel Checkout
+  if(typeof fbq === 'function') {
+    fbq('track', 'InitiateCheckout', { num_items: cart.length, currency: 'MXN', value: 0 });
+  }
 
   try {
     const payload = { items: cart, mode, customer: { name, address: addr, postal_code: cp }, promo: PROMO_ACTIVE };
