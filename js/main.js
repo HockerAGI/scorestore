@@ -1,13 +1,16 @@
-/* SCORE STORE LOGIC — UNIFIED v2.1 (BLINDADO) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.2 (80% OFF + ARRANCANDO MOTORES) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
-const CART_KEY = "score_cart_prod_v4";
-let PROMO_ACTIVE = false;
-let FAKE_MARKUP_FACTOR = 1.0; 
+const CART_KEY = "score_cart_prod_v5";
+
+// CONFIGURACIÓN OBLIGATORIA: 80% OFF
+let PROMO_ACTIVE = true; // Forzado a TRUE para respetar el diseño
+let FAKE_MARKUP_FACTOR = 1.6; // Factor para crear el "precio anterior" y mostrar el 80% OFF real
+
 let cart = [];
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
@@ -17,23 +20,28 @@ let supabase = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- SAMSUNG FIX ---
+// --- SAMSUNG FIX & CLEAN URL ---
 const cleanUrl = (url) => {
   if (!url) return "";
   return encodeURI(url.trim());
 };
 
 async function init() {
+  // 1. Inicializar Supabase si está disponible
   if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   
+  // 2. Ejecutar Animación "Arrancando Motores"
   initSplash();
+  
   loadCart();
   
   try {
+    // 3. Cargar catálogo (DB o Local)
     await loadCatalogFromDB();
+    // 4. Cargar configuraciones extra (Pixel, Textos)
     await loadSiteConfig();
   } catch (e) {
-    console.warn("Offline mode / Fallback", e);
+    console.warn("Offline mode / Fallback active:", e);
     await loadCatalogLocal();
   }
 
@@ -43,26 +51,26 @@ async function init() {
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
-    toast("¡Pago exitoso! Gracias.");
+    toast("¡Pago exitoso! Gracias por tu compra.");
     if(typeof fbq === 'function') fbq('track', 'Purchase', { currency: "MXN", value: 0.0 });
     emptyCart(true);
     window.history.replaceState({}, document.title, "/");
   }
 }
 
-// --- SPLASH BLINDADO ---
+// --- SPLASH SCREEN: ARRANCANDO MOTORES ---
 function initSplash() {
   const splash = $("splash-screen");
   if (splash) {
-    setTimeout(() => { splash.classList.add("hidden"); }, 2000);
+    // Retraso de 2.2s para permitir la animación de la barra RPM
+    setTimeout(() => { splash.classList.add("hidden"); }, 2200);
   }
-  // SEGURIDAD:
+  // Fail-safe: Si por algo no se oculta en 5s, forzar ocultado.
   setTimeout(() => {
     if (splash && !splash.classList.contains("hidden")) {
-      console.warn("⚠️ Splash forzado.");
       splash.classList.add("hidden");
     }
-  }, 4500);
+  }, 5000);
 }
 
 function initScrollReveal() {
@@ -82,12 +90,15 @@ async function loadSiteConfig() {
   if (config) {
     const h1 = $("hero-title");
     if(h1 && config.hero_title) h1.innerHTML = config.hero_title;
-    if (config.promo_active) {
-      PROMO_ACTIVE = true; FAKE_MARKUP_FACTOR = 1.3;
+    
+    // Si la DB dice explícitamente que NO hay promo, la quitamos. Si no, se queda activa (default).
+    if (config.promo_active === false) {
+      PROMO_ACTIVE = false;
       const bar = $("promo-bar");
-      if(bar) { bar.style.display = "flex"; $("promo-text").innerHTML = config.promo_text || "🔥 OFERTA ACTIVA 🔥"; }
+      if(bar) bar.style.display = "none";
     }
-    // Pixel Injection Dynamic
+    
+    // Inyección dinámica de Pixel
     if (config.pixel_id) {
         !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -105,13 +116,17 @@ async function loadCatalogFromDB() {
   const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
   const { data: products } = await supabase.from('products').select('*').eq('org_id', org.id).eq('active', true);
   
-  if(!products) throw new Error("No data");
+  if(!products || products.length === 0) throw new Error("No data");
 
   catalogData.products = products.map(p => ({
-    id: p.id, name: p.name, baseMXN: p.price, sectionId: p.category || 'BAJA_1000',
+    id: p.id, 
+    name: p.name, 
+    baseMXN: p.price, 
+    sectionId: p.category || 'BAJA_1000',
     img: p.image_url || '/assets/logo-score.webp',
     images: [p.image_url || '/assets/logo-score.webp'],
-    sizes: ["S","M","L","XL","2XL"], sku: p.sku
+    sizes: ["S","M","L","XL","2XL"], 
+    sku: p.sku
   }));
   
   catalogData.sections = [
@@ -127,12 +142,12 @@ async function loadCatalogLocal() {
   catalogData = await res.json();
 }
 
-// --- LOGIC ---
+// --- LOGIC UI ---
 function loadCart() { const saved = localStorage.getItem(CART_KEY); if (saved) try { cart = JSON.parse(saved); } catch (e) {} }
 function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 
 window.openCatalog = (sectionId, titleFallback) => {
-  const items = catalogData.products.filter(p => (p.sectionId === sectionId) || (p.name.toUpperCase().includes(sectionId.replace('_',' '))));
+  const items = catalogData.products.filter(p => (p.sectionId === sectionId) || (p.name && p.name.toUpperCase().includes(sectionId.replace('_',' '))));
   const titleEl = $("catTitle");
   const sectionInfo = catalogData.sections.find(s => s.id === sectionId);
   
@@ -154,18 +169,19 @@ window.openCatalog = (sectionId, titleFallback) => {
       }).join("");
 
       const sellPrice = p.baseMXN;
-      const fakeOldPrice = Math.round(sellPrice * (PROMO_ACTIVE ? FAKE_MARKUP_FACTOR : 1));
+      // Lógica 80% OFF: Si PROMO_ACTIVE, el precio base es el de venta, y creamos un precio "falso" mayor para tachar.
+      const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
+      
       const priceHtml = PROMO_ACTIVE 
         ? `<div class="price-container"><span class="old-price">${money(fakeOldPrice)}</span><span class="new-price">${money(sellPrice)}</span></div>`
         : `<div class="prodPrice">${money(sellPrice)}</div>`;
 
-      // USO DE cleanUrl PARA IMÁGENES
       const safeImg = cleanUrl(p.img);
 
       const el = document.createElement("div"); el.className = "prodCard";
       el.innerHTML = `
         <div class="metallic-frame">
-          ${PROMO_ACTIVE ? '<div class="promo-badge">OFERTA</div>' : ''}
+          ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ''}
           <div class="prod-slider"><div class="prod-slide"><img src="${safeImg}" class="prodImg" loading="lazy"></div></div>
         </div>
         <div class="prodName">${p.name}</div>
@@ -209,7 +225,6 @@ function setupListeners() {
   const cpInput = $("cp");
   if (cpInput) {
     cpInput.addEventListener("input", (e) => {
-      // Permitir guiones para ZIP USA
       const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       e.target.value = val;
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
@@ -228,11 +243,11 @@ window.checkout = async () => {
 
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Faltan datos de envío");
+    if (mode === "mx" && cp.length < 5) return toast("CP inválido");
   }
 
   btn.disabled = true; btn.innerText = "Procesando...";
 
-  // Pixel Checkout
   if(typeof fbq === 'function') {
     fbq('track', 'InitiateCheckout', { num_items: cart.length, currency: 'MXN', value: 0 });
   }
@@ -242,7 +257,7 @@ window.checkout = async () => {
     const res = await fetch(`${API_BASE}/create_checkout`, { method: "POST", body: JSON.stringify(payload) });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else throw new Error(data.error);
+    else throw new Error(data.error || "Error al iniciar pago");
   } catch (err) {
     toast("Error: " + err.message);
     btn.disabled = false; btn.innerText = "PAGAR AHORA";
@@ -250,8 +265,8 @@ window.checkout = async () => {
 };
 
 /* UTILS */
-window.openModal = (id) => { $(id)?.classList.add("active"); $("overlay")?.classList.add("active"); };
-window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); };
+window.openModal = (id) => { $(id)?.classList.add("active"); $("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); };
+window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
 window.addToCart = (id, size) => {
   const existing = cart.find(i => i.id === id && i.size === size);
   if (existing) existing.qty++; else cart.push({ id, size, qty: 1 });
@@ -261,7 +276,7 @@ window.addToCart = (id, size) => {
 window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); updateCartUI(); };
 window.emptyCart = (silent) => { if(silent || confirm("¿Vaciar?")) { cart=[]; saveCart(); updateCartUI(); }};
 window.toast = (m) => { const t=$("toast"); t.innerText=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),3000); };
-window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); };
+window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); document.body.classList.add("modalOpen"); };
 
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
