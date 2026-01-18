@@ -18,7 +18,7 @@ const FACTORY_ORIGIN = {
 };
 
 const FALLBACK_MX_PRICE = 250;
-const FALLBACK_US_PRICE = 800;
+const FALLBACK_US_PRICE = 800; // $38-40 USD Fallback
 
 const jsonResponse = (status, body) => ({
   statusCode: status,
