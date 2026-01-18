@@ -1,12 +1,13 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v20 (BUMP & UNIFIED) */
-const CACHE_NAME = "score-store-prod-v20"; 
+/* sw.js - VERSIÓN DE PRODUCCIÓN v20 (BUMP) */
+const CACHE_NAME = "score-store-v20"; 
 const ASSETS = [ 
   "/", 
   "/index.html", 
   "/css/styles.css", 
   "/js/main.js", 
   "/data/catalog.json",
-  "/assets/logo-score.webp" 
+  "/assets/logo-score.webp",
+  "/assets/icons/icon-192.png"
 ];
 
 self.addEventListener("install", (e) => {
@@ -26,24 +27,25 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  // Ignorar Supabase y Stripe para garantizar datos frescos del Admin App
-  if (e.request.url.includes('supabase.co') || e.request.url.includes('stripe.com')) {
+  // Ignorar API Backend y Supabase para datos frescos
+  if (e.request.url.includes('supabase.co') || e.request.url.includes('stripe.com') || e.request.url.includes('netlify/functions')) {
      return; 
   }
 
   if (e.request.method !== "GET") return;
 
-  // Lógica de Red Primero (Network First) para asegurar contenido fresco
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        // Si es un asset válido, actualizamos el caché
-        if (res && res.status === 200 && (e.request.destination === "document" || e.request.url.includes("/data/") || e.request.url.includes("/assets/"))) {
-           const clone = res.clone();
-           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
+  // Network First para HTML/Data, Cache First para todo lo demás
+  if (e.request.destination === "document" || e.request.url.includes("/data/")) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
         return res;
-      })
-      .catch(() => caches.match(e.request)) // Fallback al caché si no hay internet
-  );
+      }).catch(() => caches.match(e.request))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(res => res || fetch(e.request))
+    );
+  }
 });
