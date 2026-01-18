@@ -24,7 +24,6 @@
     Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# REDIRECCIÓN CRÍTICA: Permite usar /api/ en el frontend
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
