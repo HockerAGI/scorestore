@@ -1,5 +1,13 @@
+/**
+ * stripe_webhook.js — FINAL MASTER (unificado)
+ * - Verifica firma Stripe (RAW body / base64 Netlify)
+ * - Crea/actualiza orden en Supabase (idempotente)
+ * - Genera guía Envia SOLO para mx/us (si ENVIA_API_KEY existe)
+ */
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require("@supabase/supabase-js");
+
 const { createEnviaLabel } = require("./_shared");
 
 const json = (statusCode, body) => ({
@@ -15,7 +23,7 @@ const SUPABASE_URL =
   "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 
 const SUPABASE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || // ✅ recomendado (Netlify env)
+  process.env.SUPABASE_SERVICE_ROLE_KEY || // recomendado (Netlify env)
   process.env.SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
@@ -60,7 +68,7 @@ exports.handler = async (event) => {
     return json(400, { error: "Missing Signature" });
   }
 
-  // ✅ CRÍTICO: Stripe requiere RAW body correcto (Netlify a veces lo manda base64)
+  // Stripe requiere RAW body correcto (Netlify a veces lo manda base64)
   const payload = event.isBase64Encoded
     ? Buffer.from(event.body || "", "base64")
     : event.body;
@@ -83,17 +91,21 @@ exports.handler = async (event) => {
 
     const stripe_session_id = session.id;
     const mode = String(session.metadata?.score_mode || "pickup").toLowerCase(); // pickup | tj | mx | us
-    const org_id = session.metadata?.org_id || (await getScoreOrgId()); // metadata si viene, si no lookup por slug
+    const org_id = session.metadata?.org_id || (await getScoreOrgId());
 
     const customer = session.customer_details || {};
     const shipping = session.shipping_details || null;
 
     const customer_email = customer.email || null;
-    const currency = (session.currency || "mxn").toUpperCase();
+    const currency = String(session.currency || "mxn").toUpperCase();
 
-    const total = toMoneyFromCents(session.amount_total); // MXN (pesos) porque Stripe manda centavos
-    const shipping_cost = toMoneyFromCents(session.total_details?.amount_shipping); // MXN (pesos)
-    const address = (shipping && shipping.address) ? shipping.address : customer.address || null;
+    const total = toMoneyFromCents(session.amount_total);
+    const shipping_cost = toMoneyFromCents(session.total_details?.amount_shipping);
+
+    const address =
+      shipping && shipping.address
+        ? shipping.address
+        : customer.address || null;
 
     // Line items reales
     let items = [];
@@ -103,7 +115,7 @@ exports.handler = async (event) => {
         description: x.description || null,
         quantity: Number(x.quantity || 0),
         amount_total: toMoneyFromCents(x.amount_total),
-        currency: currency,
+        currency,
         price: x.price
           ? {
               id: x.price.id,
@@ -117,10 +129,9 @@ exports.handler = async (event) => {
       items = [];
     }
 
-    // Idempotencia: si ya existe orden con tracking, no volvemos a generar guía
+    // Idempotencia: si ya existe, no repetir guía
     const existing = await getExistingOrderBySession(stripe_session_id);
 
-    // Upsert base: orden "paid"
     const basePayload = {
       org_id,
       stripe_session_id,
@@ -134,7 +145,7 @@ exports.handler = async (event) => {
       items_json: items && items.length ? items : null,
     };
 
-    // UPSERT por stripe_session_id (ya es UNIQUE)
+    // UPSERT por stripe_session_id (asumido UNIQUE)
     const { data: upserted, error: upsertErr } = await supabase
       .from("orders")
       .upsert(basePayload, { onConflict: "stripe_session_id" })
@@ -143,31 +154,26 @@ exports.handler = async (event) => {
 
     if (upsertErr) {
       console.error("❌ Supabase upsert error:", upsertErr);
-      // Responder 200 para que Stripe no reintente infinito (pero logueamos)
       return json(200, { received: true, warning: "supabase_upsert_failed" });
     }
 
     console.log(`✅ Order upsert OK: session=${stripe_session_id} mode=${mode} total=${total}`);
 
     // Generar guía solo para mx/us
-    if ((mode === "mx" || mode === "us")) {
-      // Si ya tenemos tracking, no repetir
+    if (mode === "mx" || mode === "us") {
       if (upserted?.tracking_number) {
         console.log("ℹ️ Orden ya tiene tracking. Skip Envia.");
         return json(200, { received: true });
       }
 
-      // Necesitamos address con postal_code
       const postal = address?.postal_code;
       if (!postal) {
         console.error("⚠️ Sin postal_code. No se puede generar guía.");
         return json(200, { received: true, warning: "missing_postal_code" });
       }
 
-      // Qty total para peso/paquetes
       const itemsQty = (items || []).reduce((acc, x) => acc + Number(x.quantity || 0), 0) || 1;
 
-      // Crear guía
       const shipment = await createEnviaLabel(
         {
           name: shipping?.name || customer?.name || "Cliente",
@@ -202,7 +208,7 @@ exports.handler = async (event) => {
     return json(200, { received: true });
   } catch (err) {
     console.error("Webhook Handler Error:", err);
-    // 200 para evitar reintentos infinitos en fallos de terceros
+    // 200 para evitar reintentos infinitos
     return json(200, { received: true, warning: "handled_with_error" });
   }
 };
