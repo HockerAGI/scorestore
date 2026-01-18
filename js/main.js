@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER v2.2 (80% OFF + ARRANCANDO MOTORES) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.2.1 (UNIFIED: PWA shortcuts + Legal + robust DOM) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -44,6 +44,7 @@ const safeText = (v) =>
 
 // --- FLAGS internos ---
 let _splashInitialized = false;
+let _listenersBound = false;
 
 // --- INIT ---
 async function init() {
@@ -65,11 +66,20 @@ async function init() {
     await loadCatalogLocal();
   }
 
-  setupListeners();
+  // 5. Listeners + UI
+  setupListeners(); // robusto aunque drawer/modal exista después
   updateCartUI();
   initScrollReveal();
 
+  // 6. Query actions (PWA shortcuts / status)
+  handleQueryActions();
+}
+
+// --- QUERY ACTIONS (PWA shortcuts + success) ---
+function handleQueryActions() {
   const params = new URLSearchParams(window.location.search);
+
+  // Payment success
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
     if (typeof fbq === "function") fbq("track", "Purchase", { currency: "MXN", value: 0.0 });
@@ -77,9 +87,35 @@ async function init() {
     // vaciar carrito silencioso
     emptyCart(true);
 
-    // limpiar query
-    window.history.replaceState({}, document.title, "/");
+    // limpiar query SIN cambiar ruta (importante para legal.html)
+    clearQueryPreservingPath();
+    return;
   }
+
+  // PWA Shortcut: openCart=1
+  if (params.get("openCart") === "1") {
+    // Esperar un tick por si el drawer se inyecta después
+    setTimeout(() => {
+      if ($("drawer")) openDrawer();
+    }, 0);
+    clearQueryPreservingPath();
+    return;
+  }
+
+  // Optional: abrir legal por query (útil si lo quieres)
+  // /?openLegal=privacy|terms|shipping|returns|billing
+  const openLegalKey = params.get("openLegal");
+  if (openLegalKey) {
+    setTimeout(() => {
+      if (typeof window.openLegal === "function") window.openLegal(openLegalKey);
+    }, 0);
+    clearQueryPreservingPath();
+  }
+}
+
+function clearQueryPreservingPath() {
+  const path = window.location.pathname || "/";
+  window.history.replaceState({}, document.title, path);
 }
 
 // --- SPLASH SCREEN: ARRANCANDO MOTORES (REGLA #2) ---
@@ -263,14 +299,13 @@ window.openCatalog = (sectionId, titleFallback) => {
 
   const container = $("catContent");
   if (!container) {
-    // Si el modal todavía no está cargado, no reventamos.
     console.warn("catContent no existe (modal no cargado aún).");
     return;
   }
 
   container.innerHTML = "";
 
-  if (items.length === 0) {
+  if (!items.length) {
     container.innerHTML = `<div style="text-align:center;padding:50px;color:#666;">Próximamente...</div>`;
   } else {
     const grid = document.createElement("div");
@@ -321,43 +356,57 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
-// --- LISTENERS ---
+// --- LISTENERS (robusto para HTML que aparece después) ---
 function setupListeners() {
-  const catContent = $("catContent");
-  if (catContent) {
-    catContent.addEventListener("click", (e) => {
-      const btnSize = e.target.closest("[data-size]");
-      if (btnSize) {
-        const pid = btnSize.dataset.pid;
-        const size = btnSize.dataset.size;
-        selectedSizeByProduct[pid] = size;
+  if (_listenersBound) return;
+  _listenersBound = true;
 
-        const row = btnSize.parentElement;
-        if (row) row.querySelectorAll(".size-pill").forEach((p) => p.classList.remove("active"));
-        btnSize.classList.add("active");
-        return;
-      }
+  // Delegación para catálogo (si el contenedor existe ahora o después)
+  document.addEventListener("click", (e) => {
+    // Sizes inside catalog
+    const btnSize = e.target.closest && e.target.closest("[data-size]");
+    if (btnSize) {
+      const pid = btnSize.dataset.pid;
+      const size = btnSize.dataset.size;
+      selectedSizeByProduct[pid] = size;
 
-      const btnAdd = e.target.closest("[data-add]");
-      if (btnAdd) {
-        const pid = btnAdd.dataset.add;
-        const size = selectedSizeByProduct[pid] || "Unitalla";
-        addToCart(pid, size);
-      }
-    });
-  }
+      const row = btnSize.parentElement;
+      if (row) row.querySelectorAll(".size-pill").forEach((p) => p.classList.remove("active"));
+      btnSize.classList.add("active");
+      return;
+    }
 
-  // radios: shipMode
-  document.getElementsByName("shipMode").forEach((r) => {
-    r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
+    // Add button inside catalog
+    const btnAdd = e.target.closest && e.target.closest("[data-add]");
+    if (btnAdd) {
+      const pid = btnAdd.dataset.add;
+      const size = selectedSizeByProduct[pid] || "Unitalla";
+      addToCart(pid, size);
+      return;
+    }
   });
 
-  // INPUT CP LOGIC USA/MX
-  const cpInput = $("cp");
-  if (cpInput) {
-    cpInput.addEventListener("input", (e) => {
-      const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
-      e.target.value = val;
+  // Shipping mode radios (pueden no existir aún)
+  const bindShipMode = () => {
+    const radios = document.getElementsByName("shipMode");
+    if (!radios || !radios.length) return false;
+    Array.from(radios).forEach((r) => {
+      if (r._boundShip) return;
+      r._boundShip = true;
+      r.addEventListener("change", (ev) => handleShipModeChange(ev.target.value));
+    });
+    return true;
+  };
+
+  // CP input
+  const bindCp = () => {
+    const cpInput = $("cp");
+    if (!cpInput || cpInput._boundCp) return false;
+    cpInput._boundCp = true;
+
+    cpInput.addEventListener("input", (ev) => {
+      const val = ev.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
+      ev.target.value = val;
 
       // No cotizamos si no hay items
       if (!cart.length) return;
@@ -365,7 +414,23 @@ function setupListeners() {
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
       else if (shippingState.mode === "us" && val.length >= 5) quoteShipping(val, "US");
     });
-  }
+
+    return true;
+  };
+
+  // Intento inmediato y luego un par de reintentos ligeros por si el drawer se inyecta después
+  bindShipMode();
+  bindCp();
+  setTimeout(() => {
+    bindShipMode();
+    bindCp();
+    updateCartUI();
+  }, 250);
+  setTimeout(() => {
+    bindShipMode();
+    bindCp();
+    updateCartUI();
+  }, 900);
 }
 
 // --- CHECKOUT ---
@@ -427,7 +492,9 @@ window.checkout = async () => {
 
 /* UTILS */
 window.openModal = (id) => {
-  $(id)?.classList.add("active");
+  const el = $(id);
+  if (!el) return;
+  el.classList.add("active");
   $("overlay")?.classList.add("active");
   document.body.classList.add("modalOpen");
 };
@@ -447,6 +514,7 @@ window.closeAll = () => {
 window.openLegal = window.openLegal || function (key) {
   const modal = $("legalModal");
   if (!modal) return;
+
   modal.classList.add("active");
   $("overlay")?.classList.add("active");
   document.body.classList.add("modalOpen");
@@ -457,7 +525,7 @@ window.openLegal = window.openLegal || function (key) {
 };
 
 window.addToCart = (id, size) => {
-  const existing = cart.find((i) => i.id === id && i.size === size);
+  const existing = cart.find((i) => String(i.id) === String(id) && i.size === size);
   if (existing) existing.qty++;
   else cart.push({ id, size, qty: 1 });
 
@@ -467,7 +535,7 @@ window.addToCart = (id, size) => {
   openDrawer();
 
   if (typeof fbq === "function") {
-    fbq("track", "AddToCart", { content_ids: [id], content_type: "product" });
+    fbq("track", "AddToCart", { content_ids: [String(id)], content_type: "product" });
   }
 };
 
@@ -495,7 +563,7 @@ window.toast = (m) => {
   setTimeout(() => t.classList.remove("show"), 3000);
 };
 
-// Qty controls (definidas una sola vez)
+// Qty controls
 window.incQty = (idx) => {
   const item = cart[idx];
   if (!item) return;
@@ -536,6 +604,11 @@ function handleShipModeChange(mode) {
   } else if (mode === "us") {
     shippingState.cost = 0;
     shippingState.label = "Ingresa ZIP...";
+  } else {
+    // modo raro -> tratar como MX para no romper UI
+    shippingState.cost = 0;
+    shippingState.label = "Ingresa CP...";
+    shippingState.mode = "mx";
   }
 
   updateCartUI();
@@ -573,7 +646,7 @@ async function quoteShipping(zip, country) {
       shippingState.cost = country === "US" ? 800 : 250;
       shippingState.label = "Estándar";
     }
-  } catch (e) {
+  } catch {
     shippingState.cost = country === "US" ? 800 : 250;
     shippingState.label = "Estándar";
   }
