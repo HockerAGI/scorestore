@@ -1,6 +1,8 @@
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
 
-Disallow: /deploy-preview-*
 
 Sitemap: https://scorestore.netlify.app/sitemap.xml
