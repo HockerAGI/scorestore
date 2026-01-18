@@ -1,12 +1,16 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v20 (BUMP) */
-const CACHE_NAME = "score-store-v19"; 
+/* sw.js - VERSIÓN ÚNICO OS v4.0 (FORCE UPDATE) */
+// Hemos subido la versión para obligar a los celulares a borrar el main.js viejo
+// y descargar el nuevo con la conexión a Supabase.
+const CACHE_NAME = "score-store-unico-v4"; 
+
 const ASSETS = [ 
   "/", 
   "/index.html", 
   "/css/styles.css", 
   "/js/main.js", 
-  "/data/catalog.json",
-  "/assets/logo-score.webp" 
+  "/data/catalog.json", // Mantenemos esto para el modo "Respaldo Offline"
+  "/assets/logo-score.webp",
+  "/assets/icons/icon-192.png"
 ];
 
 self.addEventListener("install", (e) => {
@@ -26,7 +30,14 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  // Ignorar peticiones a Supabase o Stripe (siempre deben ser en vivo)
+  if (e.request.url.includes('supabase.co') || e.request.url.includes('stripe.com')) {
+     return; // Dejar que la red maneje esto sin caché
+  }
+
   if (e.request.method !== "GET") return;
+
+  // Estrategia: Network First para datos, Cache First para imágenes/assets
   if (e.request.destination === "document" || e.request.url.includes("/data/")) {
     e.respondWith(
       fetch(e.request).then(res => {
