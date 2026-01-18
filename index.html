@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#E10600" />
   
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://unicouniformes.com/" />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
   <meta property="og:title" content="SCORE Store | 80% OFF Inauguración" />
   <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes. ¡Aprovecha la promoción!" />
   <meta property="og:image" content="/assets/hero.webp" />
@@ -30,17 +30,7 @@
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"/></noscript>
-
+  <!-- ⚠️ PIXEL SE INYECTA DESDE ADMIN APP (site_settings) -->
   <style>
     .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
     .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
@@ -74,7 +64,7 @@
         <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
       </a>
       <div class="navRight">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
+        <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
             <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
@@ -104,8 +94,8 @@
           Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.
         </div>
         <div class="ctaRow">
-          <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button type="button" class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
+          <button type="button" class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
     </section>
@@ -155,56 +145,65 @@
         <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
         <div class="social-row">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
-          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" class="social-link">YouTube</a>
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" class="social-link">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" class="social-link">Instagram</a>
+          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener" class="social-link">YouTube</a>
         </div>
       </div>
-      <div class="fCol"><h4>ATENCIÓN A CLIENTES</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Política de Envíos</button><button onclick="openLegal('returns')">Devoluciones</button><button onclick="openLegal('billing')">Facturación</button></div></div>
-      <div class="fCol"><h4>LEGAL</h4><div class="footerLinks"><button onclick="openLegal('terms')">Términos y Condiciones</button><button onclick="openLegal('privacy')">Aviso de Privacidad</button><a href="/legal.html" class="link-muted" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a></div></div>
-      <div class="fCol"><h4>CONTACTO</h4><p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Interior JK<br>Col. Anexa Roma, Tijuana, B.C.<br>CP 22614</p><p class="fText" style="margin-top:10px; font-size:13px;"><a href="mailto:grupo.unico11@gmail.com" style="color:inherit;text-decoration:none;">grupo.unico11@gmail.com</a></p></div>
+      <div class="fCol">
+        <h4>ATENCIÓN A CLIENTES</h4>
+        <div class="footerLinks">
+          <button type="button" onclick="openLegal('shipping')">Política de Envíos</button>
+          <button type="button" onclick="openLegal('returns')">Devoluciones</button>
+          <button type="button" onclick="openLegal('billing')">Facturación</button>
+        </div>
+      </div>
+      <div class="fCol">
+        <h4>LEGAL</h4>
+        <div class="footerLinks">
+          <button type="button" onclick="openLegal('terms')">Términos y Condiciones</button>
+          <button type="button" onclick="openLegal('privacy')">Aviso de Privacidad</button>
+          <a href="/legal.html" class="link-muted" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a>
+        </div>
+      </div>
+      <div class="fCol">
+        <h4>CONTACTO</h4>
+        <p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Interior JK<br>Col. Anexa Roma, Tijuana, B.C.<br>CP 22614</p>
+        <p class="fText" style="margin-top:10px; font-size:13px;">
+          <a href="mailto:ventas.unicotextil@gmail.com" style="color:inherit;text-decoration:none;">ventas.unicotextil@gmail.com</a>
+        </p>
+      </div>
     </div>
     <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
-  <div id="modalCatalog" class="modal">
-    <div class="dHead"><div id="catTitle" class="dTitle logo-header">PRODUCTOS</div><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div id="catContent" class="dBody"></div>
-  </div>
-
-  <aside id="drawer" class="drawer">
-    <div class="dHead"><h3 class="dTitle">TU PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody"><div id="cartItems"></div><div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Tu carrito está vacío.</div></div>
-    <div class="dFoot">
-      <div style="text-align:right; margin-bottom:10px;"><button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR CARRITO</button></div>
-      <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="tj"><div><span>Local Express</span><small style="color:#555;display:block;">$200 (Solo Tijuana)</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div><span>Nacional (México)</span><small style="color:#555;display:block;">Cotizar Envia.com</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us"><div><span>USA International</span><small style="color:#555;display:block;">Envíos a Estados Unidos</small></div></label>
-      </div>
-      <div id="shipForm" style="display:none; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
-        <p style="margin-bottom:8px; font-weight:bold; color:#333; font-size:13px;">Datos de Envío:</p>
-        <input id="cp" type="tel" placeholder="Código Postal" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="addr" type="text" placeholder="Calle, Número y Colonia" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="name" type="text" placeholder="Nombre Completo de quien recibe" class="inputField" style="width:100%;">
-      </div>
-      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
-      <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
-      <p style="text-align:center; font-size:11px; color:#999; margin-top:8px;">Pagos seguros vía Stripe · Envíos por Envia.com</p>
-    </div>
-  </aside>
-
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);">
-    <div class="dHead"><h3 class="dTitle">INFORMACIÓN LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dHead">
+      <h3 class="dTitle">INFORMACIÓN LEGAL</h3>
+      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
+    </div>
     <div class="dBody" style="padding:30px; color:#222; font-size:14px; line-height:1.6;">
-      <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>POLÍTICA DE ENVÍOS</h4><p><strong>Cobertura:</strong> Envíos disponibles dentro de la República Mexicana y USA.</p><p><strong>Tiempos:</strong> 3 a 7 días hábiles (Nacional). USA sujeto a aduanas.</p></div>
-      <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>POLÍTICA DE DEVOLUCIONES</h4><p>Solo por defecto de fábrica. Notificar máximo 5 días hábiles.</p></div>
-      <div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS Y CONDICIONES</h4><p>Sitio operado por <strong>BAJATEX, S. de R.L. de C.V.</strong></p></div>
-      <div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>AVISO DE PRIVACIDAD INTEGRAL</h4><p>Datos recabados para fines comerciales y de envío.</p></div>
-      <div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>Solicitar dentro del mes fiscal a <strong>grupo.unico11@gmail.com</strong></p></div>
+      <div class="legalBlock" data-legal-block="shipping" style="display:none;">
+        <h4>POLÍTICA DE ENVÍOS</h4>
+        <p><strong>Cobertura:</strong> Envíos disponibles dentro de la República Mexicana y USA.</p>
+        <p><strong>Tiempos:</strong> 3 a 7 días hábiles (Nacional). USA sujeto a aduanas.</p>
+      </div>
+      <div class="legalBlock" data-legal-block="returns" style="display:none;">
+        <h4>POLÍTICA DE DEVOLUCIONES</h4>
+        <p>Solo por defecto de fábrica. Notificar máximo 5 días hábiles.</p>
+      </div>
+      <div class="legalBlock" data-legal-block="terms" style="display:none;">
+        <h4>TÉRMINOS Y CONDICIONES</h4>
+        <p>Sitio operado por <strong>BAJATEX, S. de R.L. de C.V.</strong></p>
+      </div>
+      <div class="legalBlock" data-legal-block="privacy" style="display:none;">
+        <h4>AVISO DE PRIVACIDAD INTEGRAL</h4>
+        <p>Datos recabados para fines comerciales y de envío.</p>
+      </div>
+      <div class="legalBlock" data-legal-block="billing" style="display:none;">
+        <h4>FACTURACIÓN</h4>
+        <p>Solicitar dentro del mes fiscal a <strong>ventas.unicotextil@gmail.com</strong></p>
+      </div>
     </div>
   </aside>
 
@@ -213,7 +212,10 @@
   <section class="cookieBanner" id="cookieBanner">
     <div class="cookieInner">
       <div class="cookieText"><strong>Cookies:</strong> Usamos tecnología esencial para el carrito.</div>
-      <div class="cookieActions"><button class="cookieBtn ghost" id="cookieReject">Cerrar</button><button class="cookieBtn primary" id="cookieAccept">Aceptar</button></div>
+      <div class="cookieActions">
+        <button type="button" class="cookieBtn ghost" id="cookieReject">Cerrar</button>
+        <button type="button" class="cookieBtn primary" id="cookieAccept">Aceptar</button>
+      </div>
     </div>
   </section>
 
@@ -233,7 +235,9 @@
         reg.onupdatefound = () => {
           const installingWorker = reg.installing;
           installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) { window.location.reload(); }
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
           };
         };
       }).catch(console.warn);
