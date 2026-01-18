@@ -33,7 +33,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* Estilos Críticos */
     .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
     .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
     .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; }
@@ -140,8 +139,9 @@
         <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
         <div class="social-row">
-          <a href="#" class="social-link">Facebook</a>
-          <a href="#" class="social-link">Instagram</a>
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
+          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" class="social-link">YouTube</a>
         </div>
       </div>
       <div class="fCol"><h4>ATENCIÓN</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button></div></div>
@@ -212,6 +212,7 @@
       document.getElementById('legalModal').classList.add('active'); document.getElementById('overlay').classList.add('active');
     }
     
+    // Cookie Logic
     (function () {
       const KEY = "score_cookie_consent";
       const banner = document.getElementById("cookieBanner");
@@ -220,6 +221,7 @@
       document.getElementById("cookieReject").onclick = () => { localStorage.setItem(KEY, "essential"); banner.style.display = "none"; };
     })();
 
+    // SW REGISTRATION v2.0
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js?v=2.0").then(reg => {
         reg.onupdatefound = () => {
