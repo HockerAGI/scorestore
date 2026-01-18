@@ -140,9 +140,8 @@
         <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
         <div class="social-row">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
-          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" class="social-link">YouTube</a>
+          <a href="#" class="social-link">Facebook</a>
+          <a href="#" class="social-link">Instagram</a>
         </div>
       </div>
       <div class="fCol"><h4>ATENCIÓN</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button></div></div>
@@ -213,7 +212,6 @@
       document.getElementById('legalModal').classList.add('active'); document.getElementById('overlay').classList.add('active');
     }
     
-    // Cookie Logic
     (function () {
       const KEY = "score_cookie_consent";
       const banner = document.getElementById("cookieBanner");
@@ -222,7 +220,6 @@
       document.getElementById("cookieReject").onclick = () => { localStorage.setItem(KEY, "essential"); banner.style.display = "none"; };
     })();
 
-    // SW REGISTRATION v2.0
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js?v=2.0").then(reg => {
         reg.onupdatefound = () => {
