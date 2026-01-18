@@ -1,9 +1,7 @@
 /**
- * create_checkout.js — FINAL MASTER (unificado)
+ * create_checkout.js — FINAL MASTER (CORREGIDO)
  * - Precios SIEMPRE desde DB (Supabase)
- * - Envíos: pickup=0, tj=200, mx=fallback 250, us=fallback 800 (o cotización válida)
- * - CORS + utils vía _shared.js
- * - Metadata lista para webhook/órdenes
+ * - Fix: Convierte URLs relativas de imágenes a absolutas para Stripe
  */
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -16,7 +14,6 @@ const {
   FALLBACK_US_PRICE,
 } = require("./_shared");
 
-// Constantes del manifiesto
 const TJ_FLAT = 200; // MXN
 
 function toNumber(n, fallback = 0) {
@@ -39,17 +36,17 @@ function normalizeSize(size) {
   return s.slice(0, 12) || "Unitalla";
 }
 
+// Detectar URL base para convertir imágenes relativas
 function baseUrl() {
   return (
     process.env.URL ||
     process.env.DEPLOY_PRIME_URL ||
     process.env.DEPLOY_URL ||
-    "https://scorestore.netlify.app"
+    "https://scorestore.netlify.app" // Tu dominio fallback
   );
 }
 
 exports.handler = async (event) => {
-  // Preflight
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
 
   if (event.httpMethod !== "POST") {
@@ -62,11 +59,10 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
-
     const cartItems = Array.isArray(body.items) ? body.items : [];
     if (!cartItems.length) return jsonResponse(400, { error: "Carrito vacío" });
 
-    // 1) Normalizar items (nunca confiar en price del cliente)
+    // 1) Normalizar items
     const normalizedItems = cartItems
       .map((i) => ({
         id: i?.id,
@@ -77,7 +73,7 @@ exports.handler = async (event) => {
 
     if (!normalizedItems.length) return jsonResponse(400, { error: "Items inválidos" });
 
-    // 2) Org
+    // 2) Obtener Organización
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
       .select("id")
@@ -86,7 +82,7 @@ exports.handler = async (event) => {
 
     if (orgErr || !org?.id) return jsonResponse(500, { error: "Tienda no configurada" });
 
-    // 3) Productos reales (solo activos)
+    // 3) Productos reales (DB)
     const { data: dbProducts, error: prodErr } = await supabase
       .from("products")
       .select("id,name,price,image_url,active,sku")
@@ -95,7 +91,7 @@ exports.handler = async (event) => {
 
     if (prodErr || !dbProducts?.length) return jsonResponse(500, { error: "No hay productos activos" });
 
-    // 4) Line items (precio SIEMPRE desde DB)
+    // 4) Armar Line Items para Stripe
     const line_items = normalizedItems.map((item) => {
       const product = dbProducts.find((p) => String(p.id) === String(item.id));
       if (!product) throw new Error(`Producto no disponible: ${item.id}`);
@@ -103,8 +99,14 @@ exports.handler = async (event) => {
       const unit_amount = Math.round(toNumber(product.price, 0) * 100);
       if (!unit_amount || unit_amount < 1) throw new Error(`Precio inválido: ${product.name}`);
 
-      // Stripe espera URLs absolutas públicas para images; pero si tu image_url ya es pública, ok.
-      const images = product.image_url ? [String(product.image_url)] : [];
+      // FIX CRÍTICO: Stripe requiere URL absoluta (https://...).
+      // Si la imagen en DB es relativa (/assets/...), le pegamos el dominio.
+      let finalImage = String(product.image_url || "");
+      if (finalImage && finalImage.startsWith("/")) {
+        finalImage = `${baseUrl()}${finalImage}`;
+      }
+      
+      const images = finalImage ? [finalImage] : [];
 
       return {
         price_data: {
@@ -125,7 +127,7 @@ exports.handler = async (event) => {
     });
 
     // 5) Shipping
-    const mode = String(body.mode || "pickup").toLowerCase(); // pickup | tj | mx | us
+    const mode = String(body.mode || "pickup").toLowerCase();
     const customer = body.customer || {};
     const postal_code = String(customer.postal_code || "").trim().slice(0, 20);
     const address = String(customer.address || "").trim().slice(0, 500);
@@ -133,33 +135,26 @@ exports.handler = async (event) => {
 
     let shipping_options = [];
     let shipping_address_collection = undefined;
-
-    // audit/debug
     let shipCostMXN = 0;
     let shipLabel = "Gratis (Pickup)";
 
     if (mode !== "pickup") {
-      // En Stripe, esto abre el form de dirección (MX/US permitido).
       shipping_address_collection = { allowed_countries: ["MX", "US"] };
 
       if (mode === "tj") {
         shipCostMXN = TJ_FLAT;
         shipLabel = "Local Express Tijuana";
       } else if (mode === "mx") {
-        // Solo aceptar quote si es válido y razonable (anti-abuso)
         const quoted = body.shipping && body.shipping.cost != null ? toNumber(body.shipping.cost, NaN) : NaN;
         const validQuote = Number.isFinite(quoted) && quoted > 0;
-
         shipCostMXN = validQuote ? clamp(quoted, 50, 3000) : FALLBACK_MX_PRICE;
         shipLabel = String(body.shipping?.label || (validQuote ? "Envío Nacional" : "Envío Nacional (Estándar)")).slice(0, 120);
       } else if (mode === "us") {
         const quoted = body.shipping && body.shipping.cost != null ? toNumber(body.shipping.cost, NaN) : NaN;
         const validQuote = Number.isFinite(quoted) && quoted > 0;
-
         shipCostMXN = validQuote ? clamp(quoted, 100, 9000) : FALLBACK_US_PRICE;
         shipLabel = String(body.shipping?.label || (validQuote ? "Envío USA" : "Envío USA (Estándar)")).slice(0, 120);
       } else {
-        // modo desconocido -> nacional estándar
         shipCostMXN = FALLBACK_MX_PRICE;
         shipLabel = "Envío (Estándar)";
       }
@@ -172,7 +167,6 @@ exports.handler = async (event) => {
         },
       });
 
-      // Validación mínima del lado server (tu main.js ya valida)
       if (!cname || !address || !postal_code) {
         return jsonResponse(400, { error: "Faltan datos de envío" });
       }
@@ -190,16 +184,10 @@ exports.handler = async (event) => {
       metadata: {
         score_mode: mode,
         org_id: String(org.id),
-
-        // Cliente (para orden/webhook)
         customer_name: cname,
         customer_address: address,
         customer_postal_code: postal_code,
-
-        // Promo (solo etiqueta; precios reales vienen DB)
         promo_active: body.promo ? "true" : "false",
-
-        // Shipping (para webhook)
         shipping_cost_mxn: String(shipCostMXN || 0),
         shipping_label: shipLabel,
       },
