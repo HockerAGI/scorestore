@@ -1,51 +1,93 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v21 (BUMP) */
-const CACHE_NAME = "score-store-v20"; 
-const ASSETS = [ 
-  "/", 
-  "/index.html", 
-  "/css/styles.css", 
-  "/js/main.js", 
+/* sw.js - VERSIÓN DE PRODUCCIÓN v21 (FIXED + CONSISTENTE) */
+const CACHE_NAME = "score-store-v21";
+
+const ASSETS = [
+  "/",
+  "/index.html",
+  "/legal.html",
+  "/css/styles.css",
+  "/js/main.js",
   "/data/catalog.json",
   "/assets/logo-score.webp",
-  "/assets/icons/icon-192.png"
+  "/assets/icons/icon-192.png",
+  "/site.webmanifest"
 ];
+
+// helper: agrega assets sin romper instalación si alguno falla
+async function safePrecache(cache, urls) {
+  await Promise.allSettled(
+    urls.map(async (url) => {
+      try {
+        await cache.add(url);
+      } catch (e) {
+        // no rompas install por un asset faltante
+        // (ej: legal.html no existe aún, o icon missing)
+      }
+    })
+  );
+}
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => 
-      Promise.allSettled(ASSETS.map(url => cache.add(url)))
-    )
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await safePrecache(cache, ASSETS);
+    })
   );
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(
-    keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-  )));
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (e) => {
-  // Ignorar API Backend y Supabase para datos frescos
-  if (e.request.url.includes('supabase.co') || e.request.url.includes('stripe.com') || e.request.url.includes('netlify/functions')) {
-     return; 
+  const req = e.request;
+  const url = req.url || "";
+
+  // Ignorar backend / proveedores: datos frescos SIEMPRE
+  if (
+    url.includes("supabase.co") ||
+    url.includes("stripe.com") ||
+    url.includes("/.netlify/functions") ||
+    url.includes("/api/")
+  ) {
+    return;
   }
 
-  if (e.request.method !== "GET") return;
+  if (req.method !== "GET") return;
 
-  // Network First para HTML/Data, Cache First para todo lo demás
-  if (e.request.destination === "document" || e.request.url.includes("/data/")) {
+  const isHTML =
+    req.destination === "document" ||
+    (req.headers.get("accept") || "").includes("text/html");
+
+  const isData = url.includes("/data/");
+
+  // Network First para HTML y data JSON (catálogo fresco)
+  if (isHTML || isData) {
     e.respondWith(
-      fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match(e.request))
+      fetch(req)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          return res;
+        })
+        .catch(async () => {
+          const cached = await caches.match(req);
+          if (cached) return cached;
+          // fallback navegación offline al home si existe
+          return caches.match("/index.html");
+        })
     );
-  } else {
-    e.respondWith(
-      caches.match(e.request).then(res => res || fetch(e.request))
-    );
+    return;
   }
+
+  // Cache First para assets
+  e.respondWith(
+    caches.match(req).then((cached) => cached || fetch(req))
+  );
 });
