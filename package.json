@@ -1,7 +1,7 @@
 {
   "name": "score-store-official",
   "version": "2.1.0",
-  "description": "Tienda Oficial SCORE International - Powered by Unico OS",
+  "description": "Tienda Oficial SCORE - Powered by Unico OS",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
