@@ -1,19 +1,17 @@
-/* SCORE STORE LOGIC — CONNECTED TO UNICO OS v2.0 */
+/* SCORE STORE LOGIC — CONNECTED TO UNICO OS v4.0 */
 
-// --- CONFIGURACIÓN DE SUPABASE (Inyectada por Variables de Entorno en Netlify si fuera posible, o manual aquí) ---
-// IMPORTANTE: REEMPLAZA ESTO CON TUS CLAVES REALES DE SUPABASE ANTES DE SUBIR
-const SUPABASE_URL = "https://TU_PROYECTO.supabase.co"; 
-const SUPABASE_KEY = "TU_CLAVE_ANON_LARGA_AQUI";
+// --- CREDENCIALES REALES DE SUPABASE (Inyectadas) ---
+const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
 
-const CART_KEY = "score_cart_prod_v2";
-let PROMO_ACTIVE = false; // Se sobrescribe desde DB
+const CART_KEY = "score_cart_prod_v4"; // Actualizado a v4 para limpiar caché vieja
+let PROMO_ACTIVE = false;
 let FAKE_MARKUP_FACTOR = 1.0; 
 
 let cart = [];
-// Estructura compatible con el diseño original
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
@@ -25,29 +23,30 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 /* ================= INIT ================= */
 
 async function init() {
+  // Inicializar Supabase con tus claves reales
   if (window.supabase) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("✅ Conexión a Único OS establecida");
   } else {
-    console.error("❌ Supabase SDK no cargado");
+    console.error("❌ Error Crítico: Supabase SDK no cargó. Revisa index.html");
   }
 
   initSplash();
   loadCart();
   
-  // Carga Inteligente: Intenta DB, si falla, usa local (Fallover)
+  // Carga de Datos (Nube)
   try {
     await loadCatalogFromDB();
     await loadSiteConfig();
   } catch (e) {
-    console.error("Error conectando a Nube, usando respaldo local...", e);
-    await loadCatalogLocal(); 
+    console.error("⚠️ Error conectando a Nube, revisa tu internet.", e);
   }
 
   setupListeners();
   updateCartUI();
   initScrollReveal();
 
+  // Verificar pagos exitosos
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
@@ -56,9 +55,15 @@ async function init() {
   }
 }
 
+// Inicializar Splash Screen y Service Worker (PWA)
 function initSplash() {
   const splash = $("splash-screen");
-  if (splash) setTimeout(() => { splash.classList.add("hidden"); }, 2500);
+  if (splash) setTimeout(() => { splash.classList.add("hidden"); }, 2000);
+  
+  // Registro PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(() => console.log('App lista para instalar'));
+  }
 }
 
 function initScrollReveal() {
@@ -77,7 +82,6 @@ function initScrollReveal() {
 
 async function loadSiteConfig() {
   if (!supabase) return;
-  // Obtenemos configuración de Score Store
   const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
   if(!org) return;
 
@@ -86,12 +90,12 @@ async function loadSiteConfig() {
   if (config) {
     // 1. Título
     const h1 = $("hero-title");
-    if(h1 && config.hero_title) h1.innerHTML = config.hero_title; // Permite HTML simple
+    if(h1 && config.hero_title) h1.innerHTML = config.hero_title;
 
     // 2. Promo Bar
     if (config.promo_active) {
       PROMO_ACTIVE = true;
-      FAKE_MARKUP_FACTOR = 1.3; // Activa markup visual si hay promo
+      FAKE_MARKUP_FACTOR = 1.3;
       const bar = $("promo-bar");
       if(bar) {
         bar.style.display = "flex";
@@ -101,7 +105,6 @@ async function loadSiteConfig() {
 
     // 3. Pixel Injection
     if (config.pixel_id) {
-      console.log("Inyectando Pixel:", config.pixel_id);
       !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
       n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
       n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -115,29 +118,27 @@ async function loadSiteConfig() {
 
 async function loadCatalogFromDB() {
   if (!supabase) throw new Error("No client");
-  
   const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
   
-  // Traer productos activos
   const { data: products } = await supabase
       .from('products')
       .select('*')
       .eq('org_id', org.id)
       .eq('active', true);
 
-  // Mapear DB simple a Estructura Compleja del Frontend
+  // Mapear DB a Frontend
   catalogData.products = products.map(p => ({
     id: p.id,
     name: p.name,
     baseMXN: p.price,
-    sectionId: p.category || 'BAJA_1000', // Default a Baja 1000 si no tiene categoría
+    sectionId: p.category || 'BAJA_1000',
     img: p.image_url || '/assets/logo-score.webp',
-    images: [p.image_url || '/assets/logo-score.webp'], // Array de 1 imagen por compatibilidad
-    sizes: ["S","M","L","XL","2XL"], // Tallas hardcoded por ahora para no romper UI
+    images: [p.image_url || '/assets/logo-score.webp'],
+    sizes: ["S","M","L","XL","2XL"],
     sku: p.sku
   }));
 
-  // Secciones estáticas (no cambian mucho)
+  // Secciones estáticas
   catalogData.sections = [
     { "id": "BAJA_1000", "title": "BAJA 1000", "logo": "/assets/logo-baja1000.webp" },
     { "id": "BAJA_500", "title": "BAJA 500", "logo": "/assets/logo-baja500.webp" },
@@ -146,27 +147,12 @@ async function loadCatalogFromDB() {
   ];
 }
 
-async function loadCatalogLocal() {
-  const res = await fetch("/data/catalog.json");
-  const data = await res.json();
-  catalogData = data;
-}
-
-/* ================= CART & LOGIC (PRESERVADO) ================= */
-function loadCart() {
-  const saved = localStorage.getItem(CART_KEY);
-  if (saved) try { cart = JSON.parse(saved); } catch (e) {}
-}
+/* ================= CART & LOGIC ================= */
+function loadCart() { const saved = localStorage.getItem(CART_KEY); if (saved) try { cart = JSON.parse(saved); } catch (e) {} }
 function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 
-/* ================= UI RENDERERS ================= */
-
 window.openCatalog = (sectionId, titleFallback) => {
-  const items = catalogData.products.filter(p => {
-    // Búsqueda flexible: coincide si el ID o la categoría contienen el texto
-    return (p.sectionId === sectionId) || (p.name.toUpperCase().includes(sectionId.replace('_',' ')));
-  });
-  
+  const items = catalogData.products.filter(p => (p.sectionId === sectionId) || (p.name.toUpperCase().includes(sectionId.replace('_',' '))));
   const titleEl = $("catTitle");
   const sectionInfo = catalogData.sections.find(s => s.id === sectionId);
   
@@ -184,11 +170,9 @@ window.openCatalog = (sectionId, titleFallback) => {
   } else {
     const grid = document.createElement("div");
     grid.className = "catGrid";
-    
     items.forEach(p => {
       const sizes = p.sizes || ["Unitalla"];
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
-
       const sizesHtml = sizes.map(sz => {
         const active = (selectedSizeByProduct[p.id] === sz) ? "active" : "";
         return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
@@ -196,7 +180,6 @@ window.openCatalog = (sectionId, titleFallback) => {
 
       const sellPrice = p.baseMXN;
       const fakeOldPrice = Math.round(sellPrice * (PROMO_ACTIVE ? FAKE_MARKUP_FACTOR : 1));
-      
       const priceHtml = PROMO_ACTIVE 
         ? `<div class="price-container"><span class="old-price">${money(fakeOldPrice)}</span><span class="new-price">${money(sellPrice)}</span></div>`
         : `<div class="prodPrice">${money(sellPrice)}</div>`;
@@ -220,9 +203,7 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
-/* ================= LISTENERS ================= */
 function setupListeners() {
-  // Manejo de Tallas y Add to Cart
   const catContent = $("catContent");
   if (catContent) {
     catContent.addEventListener("click", (e) => {
@@ -231,7 +212,6 @@ function setupListeners() {
         const pid = btnSize.dataset.pid;
         const size = btnSize.dataset.size;
         selectedSizeByProduct[pid] = size;
-        // Visual update
         btnSize.parentElement.querySelectorAll(".size-pill").forEach(p => p.classList.remove("active"));
         btnSize.classList.add("active");
         return;
@@ -244,54 +224,30 @@ function setupListeners() {
       }
     });
   }
-  
-  // Shipping Listeners
   document.getElementsByName("shipMode").forEach(r => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
 }
 
-// ... RESTO DE FUNCIONES DEL CARRITO (addToCart, updateCartUI, handleShipModeChange) SE MANTIENEN IGUALES ...
-// Solo asegúrate de copiar las funciones addToCart, removeFromCart, changeQty, updateCartUI, handleShipModeChange, quoteShipping del archivo original.
-// Por brevedad, asumo que las tienes. Si no, avísame y las pego completas.
-
-/* ================= CHECKOUT ================= */
 window.checkout = async () => {
   const btn = $("checkoutBtn");
-  if (cart.length === 0) return toast("Tu carrito está vacío");
-
+  if (cart.length === 0) return toast("Carrito vacío");
   const mode = shippingState.mode;
   const name = $("name")?.value.trim();
   const addr = $("addr")?.value.trim();
   const cp = $("cp")?.value.trim();
 
-  if (mode !== "pickup") {
-    if (!name || !addr || !cp) return toast("Completa los datos de envío");
-  }
+  if (mode !== "pickup" && (!name || !addr || !cp)) return toast("Completa los datos de envío");
 
   btn.disabled = true;
   btn.innerText = "Procesando...";
 
   try {
-    const payload = {
-      items: cart,
-      mode,
-      customer: { name, address: addr, postal_code: cp },
-      promo: PROMO_ACTIVE 
-    };
-
-    const res = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
+    const payload = { items: cart, mode, customer: { name, address: addr, postal_code: cp }, promo: PROMO_ACTIVE };
+    const res = await fetch(`${API_BASE}/create_checkout`, { method: "POST", body: JSON.stringify(payload) });
     const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || "Error iniciando pago");
-    }
-
+    if (data.url) window.location.href = data.url;
+    else throw new Error(data.error || "Error iniciando pago");
   } catch (err) {
     console.error(err);
     toast("Error: " + err.message);
@@ -321,7 +277,6 @@ window.handleShipModeChange = (mode) => {
     shippingState.label = (mode === "pickup") ? "Gratis" : (mode==="tj"?"$200 Local":"Cotizar");
     updateCartUI();
 };
-// Update UI Simplified
 function updateCartUI() {
     const c = $("cartItems");
     let total = 0, q = 0;
@@ -335,3 +290,6 @@ function updateCartUI() {
     $("subTotal").innerText = money(total);
     $("grandTotal").innerText = money(total + shippingState.cost);
 }
+
+// INICIAR
+document.addEventListener('DOMContentLoaded', init);
