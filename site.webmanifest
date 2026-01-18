@@ -2,7 +2,7 @@
   "id": "/",
   "name": "SCORE Store · Merch Off-Road",
   "short_name": "SCORE Store",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
