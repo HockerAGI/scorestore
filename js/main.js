@@ -2,10 +2,11 @@
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
 const API_BASE =
-  (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  location.hostname === "localhost" || location.hostname === "127.0.0.1"
     ? "/api"
     : "/.netlify/functions";
 
@@ -23,9 +24,7 @@ let supabase = null;
 
 const $ = (id) => document.getElementById(id);
 const money = (n) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
-    Number(n || 0)
-  );
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
 // --- SAMSUNG FIX & CLEAN URL ---
 const cleanUrl = (url) => {
@@ -250,7 +249,7 @@ window.openCatalog = (sectionId, titleFallback) => {
         })
         .join("");
 
-      const sellPrice = p.baseMXN;
+      const sellPrice = Number(p.baseMXN || 0);
       const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
 
       const priceHtml = PROMO_ACTIVE
@@ -418,6 +417,7 @@ window.removeFromCart = (idx) => {
   cart.splice(idx, 1);
   saveCart();
   updateCartUI();
+  recalcShippingIfNeeded();
 };
 
 window.emptyCart = (silent) => {
@@ -425,6 +425,7 @@ window.emptyCart = (silent) => {
     cart = [];
     saveCart();
     updateCartUI();
+    recalcShippingIfNeeded();
   }
 };
 
@@ -457,6 +458,14 @@ function handleShipModeChange(mode) {
   }
 
   updateCartUI();
+  recalcShippingIfNeeded();
+}
+
+function recalcShippingIfNeeded() {
+  // Solo recalcula si el modo depende de cotización (MX/US) y hay CP.
+  const cp = $("cp")?.value?.trim() || "";
+  if (shippingState.mode === "mx" && cp.length === 5) quoteShipping(cp, "MX");
+  if (shippingState.mode === "us" && cp.length >= 5) quoteShipping(cp, "US");
 }
 
 async function quoteShipping(zip, country) {
@@ -464,7 +473,7 @@ async function quoteShipping(zip, country) {
   if (shipTotal) shipTotal.innerText = "Cotizando...";
 
   try {
-    const qty = cart.reduce((acc, i) => acc + i.qty, 0);
+    const qty = cart.reduce((acc, i) => acc + Number(i.qty || 0), 0) || 1;
 
     const res = await fetch(`${API_BASE}/quote_shipping`, {
       method: "POST",
@@ -493,31 +502,83 @@ function updateCartUI() {
   const c = $("cartItems");
   if (!c) return;
 
-  let total = 0,
-    q = 0;
+  const safeText = (v) =>
+    String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
-  c.innerHTML = cart
+  let total = 0;
+  let q = 0;
+
+  // Qty controls (global, pero “seguros”)
+  window.incQty = (idx) => {
+    const item = cart[idx];
+    if (!item) return;
+    item.qty = Math.min(99, Number(item.qty || 1) + 1);
+    saveCart();
+    updateCartUI();
+    recalcShippingIfNeeded();
+  };
+
+  window.decQty = (idx) => {
+    const item = cart[idx];
+    if (!item) return;
+    const next = Number(item.qty || 1) - 1;
+    if (next <= 0) cart.splice(idx, 1);
+    else item.qty = next;
+
+    saveCart();
+    updateCartUI();
+    recalcShippingIfNeeded();
+  };
+
+  const html = cart
     .map((i, idx) => {
-      const p = catalogData.products.find((x) => String(x.id) == String(i.id));
+      const p = catalogData.products.find((x) => String(x.id) === String(i.id));
       if (!p) return "";
 
-      const st = Number(p.baseMXN || 0) * Number(i.qty || 0);
-      total += st;
-      q += Number(i.qty || 0);
+      const unit = Number(p.baseMXN || 0);
+      const qty = Math.max(1, Number(i.qty || 1));
+      const line = unit * qty;
+
+      total += line;
+      q += qty;
+
+      const img = cleanUrl(p.img || (p.images && p.images[0]) || "/assets/logo-score.webp");
+      const name = safeText(p.name || "Producto");
+      const size = safeText(i.size || "Unitalla");
+
+      const fakeOldUnit = Math.round(unit * FAKE_MARKUP_FACTOR);
+      const discountRow = PROMO_ACTIVE
+        ? `<div class="cMeta"><span style="text-decoration:line-through;color:#999;">${money(fakeOldUnit)}</span> <b style="color:#111;">${money(unit)}</b> · 80% OFF</div>`
+        : `<div class="cMeta">Unit: ${money(unit)}</div>`;
 
       return `
         <div class="cartItem">
-          <div>
-            <b>${p.name}</b><br>${i.size}
+          <img class="cartThumb" src="${img}" alt="${name}" loading="lazy">
+          <div class="cInfo">
+            <div class="cName">${name}</div>
+            <div class="cMeta">Talla: <b>${size}</b></div>
+            ${discountRow}
+            <div class="qtyRow">
+              <button type="button" class="qtyBtn" onclick="decQty(${idx})" aria-label="Menos">−</button>
+              <div class="qtyVal">${qty}</div>
+              <button type="button" class="qtyBtn" onclick="incQty(${idx})" aria-label="Más">+</button>
+            </div>
           </div>
-          <div>
-            ${money(st)}
-            <button type="button" onclick="removeFromCart(${idx})">x</button>
+          <div style="text-align:right;">
+            <div class="cPrice">${money(line)}</div>
+            <button type="button" class="linkDanger" onclick="removeFromCart(${idx})">Quitar</button>
           </div>
         </div>
       `;
     })
     .join("");
+
+  c.innerHTML = html;
 
   const emptyEl = $("cartEmpty");
   if (emptyEl) emptyEl.style.display = q > 0 ? "none" : "block";
