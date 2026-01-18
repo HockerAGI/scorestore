@@ -41,10 +41,19 @@
     .social-row { display: flex; gap: 15px; margin-top: 15px; }
     .social-link { color: #999; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; }
     .social-link:hover { color: #fff; }
+
+    /* Mejora mínima accesibilidad */
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   </style>
 </head>
 
 <body>
+  <noscript>
+    <div style="padding:12px; background:#111; color:#fff; font-family:Inter, sans-serif; text-align:center;">
+      Esta tienda requiere JavaScript para funcionar correctamente.
+    </div>
+  </noscript>
+
   <div id="splash-screen">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -66,11 +75,12 @@
       </a>
       <div class="navRight">
         <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
             <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
             <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
           </svg>
+          <span class="sr-only">Cantidad en carrito</span>
           <span id="cartCount" class="cartCount">0</span>
         </button>
       </div>
@@ -181,7 +191,20 @@
     <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
-  <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);">
+  <!-- ✅ Drawer del carrito (ANTES NO EXISTÍA). main.js puede llenarlo o reemplazar contenido sin romper nada. -->
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="dHead">
+      <h3 class="dTitle">MI PEDIDO</h3>
+      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dBody" style="padding:18px;">
+      <div id="cartRoot">
+        <!-- main.js debe renderizar aquí el carrito. -->
+      </div>
+    </div>
+  </aside>
+
+  <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">INFORMACIÓN LEGAL</h3>
       <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
@@ -211,9 +234,9 @@
     </div>
   </aside>
 
-  <div class="toast" id="toast">Mensaje</div>
+  <div class="toast" id="toast" role="status" aria-live="polite">Mensaje</div>
 
-  <section class="cookieBanner" id="cookieBanner">
+  <section class="cookieBanner" id="cookieBanner" aria-live="polite">
     <div class="cookieInner">
       <div class="cookieText"><strong>Cookies:</strong> Usamos tecnología esencial para el carrito.</div>
       <div class="cookieActions">
