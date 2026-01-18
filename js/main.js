@@ -13,8 +13,8 @@ const API_BASE =
 const CART_KEY = "score_cart_prod_v5";
 
 // CONFIGURACIÓN OBLIGATORIA: 80% OFF
-let PROMO_ACTIVE = true; // Forzado a TRUE para respetar el diseño
-let FAKE_MARKUP_FACTOR = 1.6; // Factor para crear el "precio anterior" y mostrar el 80% OFF real
+let PROMO_ACTIVE = true; // Default ON (solo se apaga si DB lo dice explícitamente)
+let FAKE_MARKUP_FACTOR = 1.6; // Precio anterior “inflado” para UX de promo
 
 let cart = [];
 let catalogData = { products: [], sections: [] };
@@ -23,6 +23,7 @@ let selectedSizeByProduct = {};
 let supabase = null;
 
 const $ = (id) => document.getElementById(id);
+
 const money = (n) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
@@ -32,6 +33,19 @@ const cleanUrl = (url) => {
   return encodeURI(String(url).trim());
 };
 
+// --- SAFE TEXT (para evitar inyección en innerHTML en nombres/productos) ---
+const safeText = (v) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+// --- FLAGS internos ---
+let _splashInitialized = false;
+
+// --- INIT ---
 async function init() {
   // 1. Inicializar Supabase si está disponible
   if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -59,13 +73,21 @@ async function init() {
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
     if (typeof fbq === "function") fbq("track", "Purchase", { currency: "MXN", value: 0.0 });
+
+    // vaciar carrito silencioso
     emptyCart(true);
+
+    // limpiar query
     window.history.replaceState({}, document.title, "/");
   }
 }
 
 // --- SPLASH SCREEN: ARRANCANDO MOTORES (REGLA #2) ---
 function initSplash() {
+  // blindaje por si se llama 2 veces (SW reload/Android)
+  if (_splashInitialized) return;
+  _splashInitialized = true;
+
   const splash = $("splash-screen");
   if (splash) {
     // Animación suave
@@ -84,6 +106,9 @@ function initSplash() {
 }
 
 function initScrollReveal() {
+  const els = document.querySelectorAll(".scroll-reveal");
+  if (!els.length) return;
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((e) => {
@@ -95,7 +120,8 @@ function initScrollReveal() {
     },
     { threshold: 0.1 }
   );
-  document.querySelectorAll(".scroll-reveal").forEach((el) => observer.observe(el));
+
+  els.forEach((el) => observer.observe(el));
 }
 
 // --- DATA LAYER ---
@@ -121,7 +147,7 @@ async function loadSiteConfig() {
   const h1 = $("hero-title");
   if (h1 && config.hero_title) h1.innerHTML = config.hero_title;
 
-  // Si la DB dice explícitamente que NO hay promo, la quitamos. Si no, se queda activa (default).
+  // Si DB dice explícitamente que NO hay promo, la quitamos.
   if (config.promo_active === false) {
     PROMO_ACTIVE = false;
     const bar = $("promo-bar");
@@ -191,17 +217,23 @@ async function loadCatalogFromDB() {
 }
 
 async function loadCatalogLocal() {
-  const res = await fetch("/data/catalog.json", { cache: "no-store" });
-  catalogData = await res.json();
+  try {
+    const res = await fetch("/data/catalog.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("catalog.json missing");
+    catalogData = await res.json();
+  } catch (e) {
+    console.warn("No local catalog available:", e);
+    catalogData = { products: [], sections: [] };
+  }
 }
 
-// --- LOGIC UI ---
+// --- CART STORAGE ---
 function loadCart() {
   const saved = localStorage.getItem(CART_KEY);
   if (saved) {
     try {
       cart = JSON.parse(saved) || [];
-    } catch (e) {
+    } catch {
       cart = [];
     }
   }
@@ -210,26 +242,32 @@ function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
+// --- UI: OPEN CATALOG ---
 window.openCatalog = (sectionId, titleFallback) => {
-  const items = catalogData.products.filter(
+  const items = (catalogData.products || []).filter(
     (p) =>
       p.sectionId === sectionId ||
       (p.name && String(p.name).toUpperCase().includes(sectionId.replace("_", " ")))
   );
 
   const titleEl = $("catTitle");
-  const sectionInfo = catalogData.sections.find((s) => s.id === sectionId);
+  const sectionInfo = (catalogData.sections || []).find((s) => s.id === sectionId);
 
   if (titleEl) {
     if (sectionInfo && sectionInfo.logo) {
-      titleEl.innerHTML = `<img src="${cleanUrl(sectionInfo.logo)}" style="height:80px;width:auto;">`;
+      titleEl.innerHTML = `<img src="${cleanUrl(sectionInfo.logo)}" style="height:80px;width:auto;" alt="${safeText(sectionInfo.title || "Colección")}">`;
     } else {
       titleEl.innerText = titleFallback || "COLECCIÓN";
     }
   }
 
   const container = $("catContent");
-  if (!container) return;
+  if (!container) {
+    // Si el modal todavía no está cargado, no reventamos.
+    console.warn("catContent no existe (modal no cargado aún).");
+    return;
+  }
+
   container.innerHTML = "";
 
   if (items.length === 0) {
@@ -265,11 +303,11 @@ window.openCatalog = (sectionId, titleFallback) => {
           ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ""}
           <div class="prod-slider">
             <div class="prod-slide">
-              <img src="${safeImg}" class="prodImg" loading="lazy" alt="${String(p.name || "Producto")}">
+              <img src="${safeImg}" class="prodImg" loading="lazy" alt="${safeText(p.name || "Producto")}">
             </div>
           </div>
         </div>
-        <div class="prodName">${p.name}</div>
+        <div class="prodName">${safeText(p.name)}</div>
         ${priceHtml}
         <div class="sizeRow">${sizesHtml}</div>
         <button class="btn-add" data-add="${p.id}">AGREGAR</button>
@@ -283,6 +321,7 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
+// --- LISTENERS ---
 function setupListeners() {
   const catContent = $("catContent");
   if (catContent) {
@@ -308,6 +347,7 @@ function setupListeners() {
     });
   }
 
+  // radios: shipMode
   document.getElementsByName("shipMode").forEach((r) => {
     r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
   });
@@ -319,12 +359,16 @@ function setupListeners() {
       const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       e.target.value = val;
 
+      // No cotizamos si no hay items
+      if (!cart.length) return;
+
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
       else if (shippingState.mode === "us" && val.length >= 5) quoteShipping(val, "US");
     });
   }
 }
 
+// --- CHECKOUT ---
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Carrito vacío");
@@ -337,6 +381,7 @@ window.checkout = async () => {
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Faltan datos de envío");
     if (mode === "mx" && cp.length < 5) return toast("CP inválido");
+    if (mode === "us" && cp.length < 5) return toast("ZIP inválido");
   }
 
   if (btn) {
@@ -398,6 +443,19 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
+// Legal modal helper (si existe)
+window.openLegal = window.openLegal || function (key) {
+  const modal = $("legalModal");
+  if (!modal) return;
+  modal.classList.add("active");
+  $("overlay")?.classList.add("active");
+  document.body.classList.add("modalOpen");
+
+  modal.querySelectorAll("[data-legal-block]").forEach((b) => (b.style.display = "none"));
+  const block = modal.querySelector(`[data-legal-block="${key}"]`);
+  if (block) block.style.display = "block";
+};
+
 window.addToCart = (id, size) => {
   const existing = cart.find((i) => i.id === id && i.size === size);
   if (existing) existing.qty++;
@@ -437,6 +495,29 @@ window.toast = (m) => {
   setTimeout(() => t.classList.remove("show"), 3000);
 };
 
+// Qty controls (definidas una sola vez)
+window.incQty = (idx) => {
+  const item = cart[idx];
+  if (!item) return;
+  item.qty = Math.min(99, Number(item.qty || 1) + 1);
+  saveCart();
+  updateCartUI();
+  recalcShippingIfNeeded();
+};
+
+window.decQty = (idx) => {
+  const item = cart[idx];
+  if (!item) return;
+  const next = Number(item.qty || 1) - 1;
+  if (next <= 0) cart.splice(idx, 1);
+  else item.qty = next;
+
+  saveCart();
+  updateCartUI();
+  recalcShippingIfNeeded();
+};
+
+// --- SHIPPING ---
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
 
@@ -462,7 +543,9 @@ function handleShipModeChange(mode) {
 }
 
 function recalcShippingIfNeeded() {
-  // Solo recalcula si el modo depende de cotización (MX/US) y hay CP.
+  // No cotizamos sin items
+  if (!cart.length) return;
+
   const cp = $("cp")?.value?.trim() || "";
   if (shippingState.mode === "mx" && cp.length === 5) quoteShipping(cp, "MX");
   if (shippingState.mode === "us" && cp.length >= 5) quoteShipping(cp, "US");
@@ -498,46 +581,20 @@ async function quoteShipping(zip, country) {
   updateCartUI();
 }
 
+// --- RENDER CART ---
 function updateCartUI() {
   const c = $("cartItems");
-  if (!c) return;
-
-  const safeText = (v) =>
-    String(v ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  if (!c) {
+    // Si el drawer HTML se carga desde otro archivo y aún no está, no tronamos.
+    return;
+  }
 
   let total = 0;
   let q = 0;
 
-  // Qty controls (global, pero “seguros”)
-  window.incQty = (idx) => {
-    const item = cart[idx];
-    if (!item) return;
-    item.qty = Math.min(99, Number(item.qty || 1) + 1);
-    saveCart();
-    updateCartUI();
-    recalcShippingIfNeeded();
-  };
-
-  window.decQty = (idx) => {
-    const item = cart[idx];
-    if (!item) return;
-    const next = Number(item.qty || 1) - 1;
-    if (next <= 0) cart.splice(idx, 1);
-    else item.qty = next;
-
-    saveCart();
-    updateCartUI();
-    recalcShippingIfNeeded();
-  };
-
   const html = cart
     .map((i, idx) => {
-      const p = catalogData.products.find((x) => String(x.id) === String(i.id));
+      const p = (catalogData.products || []).find((x) => String(x.id) === String(i.id));
       if (!p) return "";
 
       const unit = Number(p.baseMXN || 0);
