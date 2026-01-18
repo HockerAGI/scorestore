@@ -1,14 +1,16 @@
 {
   "name": "score-store-official",
   "version": "2.1.0",
-  "description": "Tienda Oficial SCORE - Powered by Unico OS",
+  "description": "Tienda Oficial SCORE International",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
-    "build": "echo 'Build success'"
+    "build": "echo 'Build complete'"
   },
   "dependencies": {
-    "stripe": "^14.0.0",
+    "stripe": "^14.10.0",
     "@supabase/supabase-js": "^2.39.0"
-  }
+  },
+  "author": "BAJATEX S. de R.L. de C.V.",
+  "license": "UNLICENSED"
 }
