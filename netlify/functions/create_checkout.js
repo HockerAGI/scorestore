@@ -13,6 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
 };
 
@@ -25,7 +26,6 @@ const TJ_FLAT = 200;     // MXN
 function safeJsonParse(str) {
   try { return JSON.parse(str || "{}"); } catch { return {}; }
 }
-
 function toInt(n, def = 0) {
   const x = Number(n);
   return Number.isFinite(x) ? x : def;
@@ -33,8 +33,9 @@ function toInt(n, def = 0) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
-  if (event.httpMethod !== "POST")
+  if (event.httpMethod !== "POST") {
     return { statusCode: 405, headers, body: JSON.stringify({ error: "Method Not Allowed" }) };
+  }
 
   try {
     const body = safeJsonParse(event.body);
@@ -83,7 +84,6 @@ exports.handler = async (event) => {
       const unit_amount = Math.round(Number(product.price || 0) * 100);
       if (!unit_amount || unit_amount < 1) throw new Error(`Precio inválido: ${product.name}`);
 
-      // Nota: Stripe images idealmente https. Si tu storage es https, perfecto.
       const img = product.image_url ? [product.image_url] : [];
 
       return {
@@ -101,7 +101,7 @@ exports.handler = async (event) => {
     });
 
     // 4) Shipping
-    const mode = (body.mode || "pickup").toString();
+    const mode = (body.mode || "pickup").toString().toLowerCase(); // pickup | tj | mx | us
     const customer = body.customer || {};
     const postal_code = (customer.postal_code || "").toString().trim();
     const address = (customer.address || "").toString().trim();
@@ -110,16 +110,12 @@ exports.handler = async (event) => {
     let shipping_options = [];
     let shipping_address_collection = undefined;
 
-    // En pickup no pedimos dirección.
-    if (mode !== "pickup") {
-      // Permitimos MX + US (regla #5)
-      shipping_address_collection = { allowed_countries: ["MX", "US"] };
+    // audit/debug
+    let shipCostMXN = 0;
+    let shipLabel = "Gratis (Pickup)";
 
-      // Determinar costo shipping:
-      // - TJ fijo 200
-      // - MX/US: usar body.shipping.cost si viene; si no, fallback según país
-      let shipCostMXN = 0;
-      let shipLabel = "";
+    if (mode !== "pickup") {
+      shipping_address_collection = { allowed_countries: ["MX", "US"] };
 
       if (mode === "tj") {
         shipCostMXN = TJ_FLAT;
@@ -127,18 +123,20 @@ exports.handler = async (event) => {
       } else if (mode === "mx") {
         const quoted = body.shipping && body.shipping.cost != null ? Number(body.shipping.cost) : NaN;
         shipCostMXN = Number.isFinite(quoted) && quoted > 0 ? quoted : FALLBACK_MX;
-        shipLabel = body.shipping?.label || (Number.isFinite(quoted) ? "Envío Nacional" : "Envío Nacional (Estándar)");
+        shipLabel =
+          body.shipping?.label ||
+          (Number.isFinite(quoted) ? "Envío Nacional" : "Envío Nacional (Estándar)");
       } else if (mode === "us") {
         const quoted = body.shipping && body.shipping.cost != null ? Number(body.shipping.cost) : NaN;
         shipCostMXN = Number.isFinite(quoted) && quoted > 0 ? quoted : FALLBACK_US;
-        shipLabel = body.shipping?.label || (Number.isFinite(quoted) ? "Envío USA" : "Envío USA (Estándar)");
+        shipLabel =
+          body.shipping?.label ||
+          (Number.isFinite(quoted) ? "Envío USA" : "Envío USA (Estándar)");
       } else {
-        // Modo desconocido -> fallback MX para no romper
         shipCostMXN = FALLBACK_MX;
         shipLabel = "Envío (Estándar)";
       }
 
-      // Stripe: shipping_rate_data en MXN (centavos)
       shipping_options.push({
         shipping_rate_data: {
           type: "fixed_amount",
@@ -147,7 +145,6 @@ exports.handler = async (event) => {
         },
       });
 
-      // Validación mínima de datos cuando hay envío
       if (!cname || !address || !postal_code) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: "Faltan datos de envío" }) };
       }
@@ -172,6 +169,8 @@ exports.handler = async (event) => {
         customer_address: address ? address.slice(0, 500) : "",
         customer_postal_code: postal_code ? postal_code.slice(0, 20) : "",
         promo_active: body.promo ? "true" : "false",
+        shipping_cost_mxn: String(shipCostMXN || 0),
+        shipping_label: shipLabel ? shipLabel.slice(0, 120) : "",
       },
     });
 
