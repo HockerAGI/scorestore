@@ -24,7 +24,7 @@
     Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# Redirección para que '/api' funcione igual en local y producción
+# REDIRECCIÓN CRÍTICA: Permite usar /api/ en el frontend
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
