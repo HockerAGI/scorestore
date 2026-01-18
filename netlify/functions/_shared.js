@@ -1,10 +1,17 @@
-const catalogData = require("../../data/catalog.json");
+const { createClient } = require('@supabase/supabase-js');
 
-/* CONFIGURACIÓN DE ORIGEN (FÁBRICA ÚNICO) */
+// --- CREDENCIALES REALES (CONFIGURACIÓN HÍBRIDA) ---
+// Usa variables de entorno si existen, si no, usa tus claves reales directas.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
+
+// --- CONFIGURACIÓN ENVIA.COM ---
+// NOTA: Necesitas poner tu API KEY de Envia en Netlify (Environment Variables) como ENVIA_API_KEY
+// Si no la tienes aún, el sistema usará los precios "Fallback" automáticos.
 const FACTORY_ORIGIN = {
   name: "Score Store / Unico Uniformes",
   company: "BAJATEX S DE RL DE CV",
-  email: "ventas.unicotextil@gmail.com",
+  email: "ventas.unicotexti@gmail.com",
   phone: "6642368701",
   street: "Palermo",
   number: "6106",
@@ -19,46 +26,32 @@ const FACTORY_ORIGIN = {
 const FALLBACK_MX_PRICE = 250;
 const FALLBACK_US_PRICE = 800; // ~$40 USD
 
-/* HELPERS */
+/* --- FUNCIONES ÚTILES --- */
+
 const jsonResponse = (status, body) => ({
   statusCode: status,
-  headers: { 
-    "Content-Type": "application/json", 
-    "Access-Control-Allow-Origin": "*" 
-  },
+  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
   body: JSON.stringify(body)
 });
 
-const safeJsonParse = (str) => {
-  try { return JSON.parse(str); } catch { return {}; }
-};
+const safeJsonParse = (str) => { try { return JSON.parse(str); } catch { return {}; } };
+const digitsOnly = (str) => (str || "").replace(/[^0-9]/g, "");
 
-const digitsOnly = (str) => (str || "").replace(/\D/g, "");
+// INICIALIZAR SUPABASE
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* CATALOG */
-const loadCatalog = async () => catalogData;
+// FUNCIÓN: Obtener productos reales desde tu Admin App
+async function getProductsFromDB() {
+  const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
+  if (!org) return [];
+  const { data: products } = await supabase.from('products').select('*').eq('org_id', org.id);
+  return products || [];
+}
 
-const productMapFromCatalog = (catalog) => {
-  const map = {};
-  if(catalog.products) catalog.products.forEach(p => map[p.id] = p);
-  return map;
-};
+/* --- LÓGICA DE ENVÍOS (ENVIA.COM) --- */
 
-const validateCartItems = (items) => {
-  if (!Array.isArray(items) || items.length === 0) {
-    return { ok: false, error: "El carrito está vacío" };
-  }
-  const clean = items.map(i => ({
-    id: String(i.id),
-    qty: Math.max(1, parseInt(i.qty) || 1),
-    size: String(i.size || "Unitalla")
-  }));
-  return { ok: true, items: clean };
-};
-
-/* ENVIA: COTIZAR (Quote) */
 async function getEnviaQuote(zip, qty, countryCode = "MX") {
-  if (!process.env.ENVIA_API_KEY) return null;
+  if (!process.env.ENVIA_API_KEY) return null; // Si no hay API Key, retorna null para usar Fallback
 
   try {
     const res = await fetch("https://api.envia.com/ship/rate/", {
@@ -75,7 +68,7 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
           content: "Ropa Deportiva SCORE",
           amount: 1,
           type: "box",
-          weight: qty * 0.6,
+          weight: qty * 0.6, // 600g por prenda promedio
           dimensions: { length: 30, width: 25, height: 10 + (qty * 2) },
           declared_value: 400 * qty
         }]
@@ -85,9 +78,10 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
     const data = await res.json();
     
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      // Tomamos la opción más barata
       const best = data.data.sort((a,b) => a.total_price - b.total_price)[0];
       return {
-        mxn: Math.ceil(best.total_price * 1.05), // +5% margen
+        mxn: Math.ceil(best.total_price * 1.05), // +5% margen de seguridad
         carrier: best.carrier,
         days: best.delivery_estimate
       };
@@ -99,14 +93,10 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
   }
 }
 
-/* ENVIA: GENERAR GUÍA REAL (Label) */
 async function createEnviaLabel(customer, itemsQty) {
   if (!process.env.ENVIA_API_KEY) return null;
 
   try {
-    const addressLine = customer.address.line1 || "";
-    const addressLine2 = customer.address.line2 || "";
-    
     const payload = {
       origin: {
         company: FACTORY_ORIGIN.company,
@@ -125,9 +115,9 @@ async function createEnviaLabel(customer, itemsQty) {
         name: customer.name,
         email: customer.email || "cliente@scorestore.com",
         phone: customer.phone || "0000000000",
-        street: addressLine,
+        street: customer.address.line1 || "",
         number: "", 
-        district: addressLine2,
+        district: customer.address.line2 || "",
         city: customer.address.city,
         state: customer.address.state,
         country: customer.address.country, 
@@ -162,11 +152,8 @@ async function createEnviaLabel(customer, itemsQty) {
         labelUrl: result.data[0].label,
         carrier: result.data[0].carrier
       };
-    } else {
-      console.error("❌ Error Envia API:", JSON.stringify(result));
-      return null;
     }
-
+    return null;
   } catch (e) {
     console.error("Create Label Error:", e);
     return null;
@@ -174,7 +161,13 @@ async function createEnviaLabel(customer, itemsQty) {
 }
 
 module.exports = {
-  jsonResponse, safeJsonParse, loadCatalog, productMapFromCatalog, 
-  validateCartItems, getEnviaQuote, createEnviaLabel, digitsOnly,
-  FALLBACK_MX_PRICE, FALLBACK_US_PRICE
+  jsonResponse,
+  safeJsonParse,
+  getProductsFromDB,
+  getEnviaQuote,
+  createEnviaLabel,
+  digitsOnly,
+  FALLBACK_MX_PRICE,
+  FALLBACK_US_PRICE,
+  supabase // Exportamos el cliente para uso interno si se requiere
 };
