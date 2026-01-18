@@ -1,17 +1,18 @@
 /* SCORE STORE LOGIC — CONNECTED TO UNICO OS v4.0 */
 
-// --- CREDENCIALES REALES DE SUPABASE (Inyectadas) ---
+// --- TUS CREDENCIALES REALES ---
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api" : "/.netlify/functions";
 
-const CART_KEY = "score_cart_prod_v4"; // Actualizado a v4 para limpiar caché vieja
+const CART_KEY = "score_cart_prod_v4";
 let PROMO_ACTIVE = false;
 let FAKE_MARKUP_FACTOR = 1.0; 
 
 let cart = [];
+// Estructura de respaldo inicial
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
@@ -23,30 +24,28 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 /* ================= INIT ================= */
 
 async function init() {
-  // Inicializar Supabase con tus claves reales
   if (window.supabase) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("✅ Conexión a Único OS establecida");
-  } else {
-    console.error("❌ Error Crítico: Supabase SDK no cargó. Revisa index.html");
+    console.log("✅ Sistema Online");
   }
 
   initSplash();
   loadCart();
   
-  // Carga de Datos (Nube)
+  // ESTRATEGIA HÍBRIDA: Intenta Nube -> Si falla, usa Local (JSON)
   try {
+    console.log("☁️ Intentando cargar desde Único OS...");
     await loadCatalogFromDB();
     await loadSiteConfig();
   } catch (e) {
-    console.error("⚠️ Error conectando a Nube, revisa tu internet.", e);
+    console.error("⚠️ Error en Nube, activando respaldo local...", e);
+    await loadCatalogLocal(); // <--- ESTO SALVA TU TIENDA SI FALLA SUPABASE
   }
 
   setupListeners();
   updateCartUI();
   initScrollReveal();
 
-  // Verificar pagos exitosos
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
@@ -55,14 +54,11 @@ async function init() {
   }
 }
 
-// Inicializar Splash Screen y Service Worker (PWA)
 function initSplash() {
   const splash = $("splash-screen");
   if (splash) setTimeout(() => { splash.classList.add("hidden"); }, 2000);
-  
-  // Registro PWA
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(() => console.log('App lista para instalar'));
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
   }
 }
 
@@ -78,7 +74,7 @@ function initScrollReveal() {
   document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
 }
 
-/* ================= DATA LAYER (NUBE) ================= */
+/* ================= DATA LAYER ================= */
 
 async function loadSiteConfig() {
   if (!supabase) return;
@@ -88,11 +84,9 @@ async function loadSiteConfig() {
   const { data: config } = await supabase.from('site_settings').select('*').eq('org_id', org.id).single();
   
   if (config) {
-    // 1. Título
     const h1 = $("hero-title");
     if(h1 && config.hero_title) h1.innerHTML = config.hero_title;
 
-    // 2. Promo Bar
     if (config.promo_active) {
       PROMO_ACTIVE = true;
       FAKE_MARKUP_FACTOR = 1.3;
@@ -103,7 +97,6 @@ async function loadSiteConfig() {
       }
     }
 
-    // 3. Pixel Injection
     if (config.pixel_id) {
       !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
       n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -119,14 +112,16 @@ async function loadSiteConfig() {
 async function loadCatalogFromDB() {
   if (!supabase) throw new Error("No client");
   const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
-  
+  if(!org) throw new Error("Organización no encontrada");
+
   const { data: products } = await supabase
       .from('products')
       .select('*')
       .eq('org_id', org.id)
       .eq('active', true);
 
-  // Mapear DB a Frontend
+  if(!products || products.length === 0) throw new Error("Sin productos en DB");
+
   catalogData.products = products.map(p => ({
     id: p.id,
     name: p.name,
@@ -137,8 +132,8 @@ async function loadCatalogFromDB() {
     sizes: ["S","M","L","XL","2XL"],
     sku: p.sku
   }));
-
-  // Secciones estáticas
+  
+  // Secciones estáticas (Preservamos la estructura visual)
   catalogData.sections = [
     { "id": "BAJA_1000", "title": "BAJA 1000", "logo": "/assets/logo-baja1000.webp" },
     { "id": "BAJA_500", "title": "BAJA 500", "logo": "/assets/logo-baja500.webp" },
@@ -147,7 +142,15 @@ async function loadCatalogFromDB() {
   ];
 }
 
-/* ================= CART & LOGIC ================= */
+// RESPALDO DE EMERGENCIA (Carga el archivo local si falla Supabase)
+async function loadCatalogLocal() {
+  const res = await fetch("/data/catalog.json");
+  const data = await res.json();
+  catalogData = data;
+  console.log("📂 Usando catálogo local de respaldo.");
+}
+
+/* ================= CART & UI LOGIC (PRESERVADO) ================= */
 function loadCart() { const saved = localStorage.getItem(CART_KEY); if (saved) try { cart = JSON.parse(saved); } catch (e) {} }
 function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 
@@ -256,7 +259,7 @@ window.checkout = async () => {
   }
 };
 
-/* UTILS */
+/* UTILS - Preservando animaciones y lógica visual original */
 window.openModal = (id) => { $(id)?.classList.add("active"); $("overlay")?.classList.add("active"); };
 window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); };
 window.addToCart = (id, size) => {
@@ -291,5 +294,4 @@ function updateCartUI() {
     $("grandTotal").innerText = money(total + shippingState.cost);
 }
 
-// INICIAR
 document.addEventListener('DOMContentLoaded', init);
