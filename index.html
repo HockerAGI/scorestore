@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial</title>
-  
+
   <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
-  
+
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://scorestore.netlify.app/" />
   <meta property="og:title" content="SCORE Store | 80% OFF Inauguración" />
@@ -18,7 +18,7 @@
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  
+
   <link rel="stylesheet" href="/css/styles.css?v=2.2">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,11 +26,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="preload" href="/assets/hero.webp" as="image">
-  
+
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- ⚠️ PIXEL SE INYECTA DESDE ADMIN APP (site_settings) -->
+
   <style>
     .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
     .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
@@ -150,6 +151,7 @@
           <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener" class="social-link">YouTube</a>
         </div>
       </div>
+
       <div class="fCol">
         <h4>ATENCIÓN A CLIENTES</h4>
         <div class="footerLinks">
@@ -158,6 +160,7 @@
           <button type="button" onclick="openLegal('billing')">Facturación</button>
         </div>
       </div>
+
       <div class="fCol">
         <h4>LEGAL</h4>
         <div class="footerLinks">
@@ -166,6 +169,7 @@
           <a href="/legal.html" class="link-muted" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a>
         </div>
       </div>
+
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText"><strong>Showroom / Fábrica:</strong><br>Palermo 6106, Interior JK<br>Col. Anexa Roma, Tijuana, B.C.<br>CP 22614</p>
@@ -220,7 +224,23 @@
   </section>
 
   <script src="/js/main.js?v=2.2" defer></script>
-  
+
+  <script>
+    // Fallback ultra-light por si alguien clickea antes de que main.js cargue.
+    // No cambia el comportamiento si main.js ya definió las funciones.
+    window.openDrawer = window.openDrawer || function () {
+      var d = document.getElementById("drawer");
+      var o = document.getElementById("overlay");
+      if (d) d.classList.add("active");
+      if (o) o.classList.add("active");
+      document.body.classList.add("modalOpen");
+    };
+    window.closeAll = window.closeAll || function () {
+      document.querySelectorAll(".active").forEach(function (e) { e.classList.remove("active"); });
+      document.body.classList.remove("modalOpen");
+    };
+  </script>
+
   <script>
     (function () {
       const KEY = "score_cookie_consent";
@@ -231,12 +251,17 @@
     })();
 
     if ("serviceWorker" in navigator) {
+      const RELOAD_KEY = "sw_reload_once_v21";
       navigator.serviceWorker.register("/sw.js?v=21").then(reg => {
         reg.onupdatefound = () => {
           const installingWorker = reg.installing;
           installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              window.location.reload();
+            if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+              // Evitar loops de recarga en algunos Android
+              if (!sessionStorage.getItem(RELOAD_KEY)) {
+                sessionStorage.setItem(RELOAD_KEY, "1");
+                window.location.reload();
+              }
             }
           };
         };
