@@ -1,9 +1,22 @@
+/**
+ * _shared.js — FINAL MASTER (Netlify Functions)
+ * - Supabase shared client (hybrid env/fallback)
+ * - Envia.com quote + label (optional, fallback-safe)
+ * - CORS + utils
+ */
+
 const { createClient } = require("@supabase/supabase-js");
 
-// --- CREDENCIALES (HÍBRIDO: ENV o fallback real) ---
+// --- CREDENCIALES (HÍBRIDO: ENV preferido + fallback real) ---
+// Nota: En Netlify Functions es común usar SUPABASE_URL / SUPABASE_ANON_KEY,
+// pero conservamos NEXT_PUBLIC_* por compatibilidad con tu repo Admin (Next.js).
 const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+
 const SUPABASE_KEY =
+  process.env.SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
@@ -11,7 +24,7 @@ const SUPABASE_KEY =
 const FACTORY_ORIGIN = {
   name: "Score Store / Unico Uniformes",
   company: "BAJATEX S DE RL DE CV",
-  email: "ventas.unicotextil@gmail.com", // ✅ corregido
+  email: "ventas.unicotextil@gmail.com",
   phone: "6642368701",
   street: "Palermo",
   number: "6106",
@@ -28,11 +41,14 @@ const FALLBACK_MX_PRICE = 250;
 const FALLBACK_US_PRICE = 800;
 
 // --- CORS / RESPUESTAS ---
+// Nota: dejamos Allow-Origin "*" porque tu frontend es estático y no usas cookies.
+// Si algún día usas credentials, se ajusta.
 const defaultHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
 };
 
 const jsonResponse = (status, body) => ({
@@ -63,23 +79,38 @@ function normalizeQty(qty) {
   return Math.max(1, n);
 }
 
-// INICIALIZAR SUPABASE
+function normalizeCountryCode(countryCode) {
+  const c = String(countryCode || "MX").trim().toUpperCase();
+  return c === "US" ? "US" : "MX";
+}
+
+function normalizeZip(zip) {
+  const z = String(zip || "").trim();
+  // Permitimos ZIP US con guion, pero exigimos mínimo 5 chars útiles.
+  // (No removemos guion para no romper ZIP+4; Envia acepta postal_code string.)
+  return z.length >= 5 ? z : "";
+}
+
+// INICIALIZAR SUPABASE (shared)
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // (Opcional) si la usas en otros functions
-async function getProductsFromDB() {
-  const { data: org } = await supabase
+async function getProductsFromDB({ includeInactive = false } = {}) {
+  const { data: org, error: orgErr } = await supabase
     .from("organizations")
     .select("id")
     .eq("slug", "score-store")
     .single();
 
-  if (!org?.id) return [];
+  if (orgErr || !org?.id) return [];
 
-  const { data: products } = await supabase
-    .from("products")
-    .select("*")
-    .eq("org_id", org.id);
+  let q = supabase.from("products").select("*").eq("org_id", org.id);
+
+  // Default: solo activos (para evitar que el store publique borradores)
+  if (!includeInactive) q = q.eq("active", true);
+
+  const { data: products, error: prodErr } = await q;
+  if (prodErr) return [];
 
   return products || [];
 }
@@ -87,13 +118,14 @@ async function getProductsFromDB() {
 /* --- ENVIA.COM --- */
 
 async function getEnviaQuote(zip, qty, countryCode = "MX") {
+  // Si no hay API Key, el sistema debe caer a fallback en la function que llama.
   if (!process.env.ENVIA_API_KEY) return null;
 
-  const safeZip = String(zip || "").trim();
-  const safeCountry = String(countryCode || "MX").trim().toUpperCase() === "US" ? "US" : "MX";
+  const safeCountry = normalizeCountryCode(countryCode);
+  const safeZip = normalizeZip(zip);
   const safeQty = normalizeQty(qty);
 
-  if (!safeZip || safeZip.length < 5) return null;
+  if (!safeZip) return null;
 
   try {
     const res = await fetch("https://api.envia.com/ship/rate/", {
@@ -127,14 +159,14 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
         .slice()
         .sort((a, b) => toNumber(a.total_price, 9e15) - toNumber(b.total_price, 9e15))[0];
 
-      const total = toNumber(best.total_price, 0);
+      const total = toNumber(best?.total_price, 0);
 
       if (total > 0) {
         // mxn = PESOS MXN con +5% de margen de seguridad
         return {
           mxn: Math.ceil(total * 1.05),
-          carrier: best.carrier || "Envío",
-          days: best.delivery_estimate || "N/A",
+          carrier: best?.carrier || "Envío",
+          days: best?.delivery_estimate || "N/A",
         };
       }
     }
@@ -147,11 +179,8 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
 }
 
 function normalizeCustomerAddress(customer) {
-  // Stripe suele mandar customer_details.address con:
-  // line1, line2, city, state, country, postal_code
   const c = customer || {};
   const a = c.address || {};
-
   const addr = typeof a === "object" && a ? a : {};
 
   return {
@@ -174,7 +203,10 @@ async function createEnviaLabel(customer, itemsQty) {
   const c = normalizeCustomerAddress(customer);
 
   // Si no hay CP, no generamos guía
-  if (!c.postal_code || c.postal_code.length < 5) return null;
+  const safeZip = normalizeZip(c.postal_code);
+  if (!safeZip) return null;
+
+  const safeCountry = normalizeCountryCode(c.country);
 
   try {
     const payload = {
@@ -201,8 +233,8 @@ async function createEnviaLabel(customer, itemsQty) {
         district: c.line2 || "",
         city: c.city || "",
         state: c.state || "",
-        country: c.country || "MX",
-        postal_code: c.postal_code || "",
+        country: safeCountry,
+        postal_code: safeZip,
       },
       packages: [
         {
