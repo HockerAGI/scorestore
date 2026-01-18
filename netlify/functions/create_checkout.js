@@ -1,5 +1,12 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { jsonResponse, safeJsonParse, loadCatalog, productMapFromCatalog, validateCartItems, getEnviaQuote, digitsOnly, FALLBACK_US_PRICE, FALLBACK_MX_PRICE } = require("./_shared");
+const { createClient } = require('@supabase/supabase-js');
+const { jsonResponse, safeJsonParse, digitsOnly } = require("./_shared");
+
+// Conexión Servidor-Servidor
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL, 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, {});
@@ -7,75 +14,39 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
-    const catalog = await loadCatalog();
-    const map = productMapFromCatalog(catalog);
-    const SITE_URL = process.env.URL || "http://localhost:8888";
+    const cartItems = body.items || [];
+    
+    // 1. Obtener ID de la Organización
+    const { data: org } = await supabase.from('organizations').select('id').eq('slug', 'score-store').single();
+    
+    // 2. Obtener Productos Reales de la DB
+    const { data: dbProducts } = await supabase.from('products').select('*').eq('org_id', org.id);
 
-    const cartCheck = validateCartItems(body.items);
-    if (!cartCheck.ok) return jsonResponse(400, { error: cartCheck.error });
-
-    const line_items = cartCheck.items.map(i => {
-      const p = map[i.id];
-      if (!p) throw new Error(`Producto no encontrado ID: ${i.id}`);
+    // 3. Construir Line Items verificados
+    const line_items = cartItems.map(item => {
+      // Buscar producto en DB por ID. Nota: item.id viene del frontend.
+      const product = dbProducts.find(p => p.id === item.id);
       
-      const imgUrl = p.img.startsWith("http") ? p.img : `${SITE_URL}${p.img}`;
-      const isPromo = body.promo === true;
-      const finalPrice = isPromo ? Math.round(p.baseMXN * 0.20) : p.baseMXN;
-
+      if (!product) throw new Error(`Producto ID ${item.id} no encontrado o agotado.`);
+      
       return {
         price_data: {
           currency: "mxn",
           product_data: {
-            name: p.name,
-            description: `Talla: ${i.size} ${isPromo ? '(Promo Inauguración)' : ''}`,
-            images: [imgUrl]
+            name: product.name,
+            description: `Talla: ${item.size}`,
+            images: product.image_url ? [product.image_url] : []
           },
-          unit_amount: Math.round(finalPrice * 100)
+          unit_amount: Math.round(product.price * 100) // Precio viene de la DB, no del cliente
         },
-        quantity: i.qty
+        quantity: item.qty
       };
     });
 
-    const mode = body.mode || "pickup";
-    const rawZip = body.customer?.postal_code || "";
+    // Envío (Lógica simple preservada, se puede conectar a Envia después)
     let shipping_options = [];
-    let shipping_address_collection = undefined;
-
-    if (mode !== "pickup") {
-      shipping_address_collection = { allowed_countries: ["MX", "US"] };
-      
-      if (mode === "tj") {
-        shipping_options.push({
-          shipping_rate_data: { 
-            type: 'fixed_amount', 
-            fixed_amount: { amount: 20000, currency: 'mxn' }, 
-            display_name: 'Local Tijuana (Express / Uber)' 
-          }
-        });
-      } else {
-        // MX o US
-        const qty = cartCheck.items.reduce((s, i) => s + i.qty, 0);
-        const countryCode = (mode === "us") ? "US" : "MX";
-        const quote = await getEnviaQuote(rawZip, qty, countryCode);
-        
-        let cost, label;
-        if (quote) {
-          cost = quote.mxn;
-          label = `Envío ${countryCode} (${quote.carrier})`;
-        } else {
-          cost = (countryCode === "US") ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-          label = (countryCode === "US") ? "Envío USA Estándar" : "Envío Nacional Estándar";
-        }
-
-        shipping_options.push({
-          shipping_rate_data: { 
-            type: 'fixed_amount', 
-            fixed_amount: { amount: cost * 100, currency: 'mxn' }, 
-            display_name: label,
-            delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 7 } }
-          }
-        });
-      }
+    if (body.mode === 'tj') {
+        shipping_options.push({ shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: 20000, currency: 'mxn' }, display_name: 'Local Tijuana' } });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -83,17 +54,14 @@ exports.handler = async (event) => {
       mode: "payment",
       line_items,
       shipping_options,
-      shipping_address_collection,
-      phone_number_collection: { enabled: true },
-      success_url: `${SITE_URL}/?status=success`,
-      cancel_url: `${SITE_URL}/?status=cancel`,
-      metadata: { score_mode: mode, customer_zip: rawZip }
+      success_url: `${process.env.URL}/?status=success`,
+      cancel_url: `${process.env.URL}/?status=cancel`,
     });
 
     return jsonResponse(200, { url: session.url });
 
   } catch (err) {
     console.error(err);
-    return jsonResponse(500, { error: "Error al procesar el pago." });
+    return jsonResponse(500, { error: err.message });
   }
 };
