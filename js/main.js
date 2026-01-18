@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — UNIFIED v2.0 (SAMSUNG FIX + ADMIN APP) */
+/* SCORE STORE LOGIC — UNIFIED v2.1 (BLINDADO) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -17,7 +17,7 @@ let supabase = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- SAMSUNG FIX ---
+// --- SAMSUNG FIX: LIMPIEZA DE URLS ---
 const cleanUrl = (url) => {
   if (!url) return "";
   return encodeURI(url.trim());
@@ -50,9 +50,25 @@ async function init() {
   }
 }
 
+// --- FUNCIÓN SPLASH BLINDADA (CORREGIDA) ---
 function initSplash() {
   const splash = $("splash-screen");
-  if (splash) setTimeout(() => { splash.classList.add("hidden"); }, 2000);
+  
+  // 1. Intento normal (Animación suave)
+  if (splash) {
+    setTimeout(() => { 
+      splash.classList.add("hidden"); 
+    }, 2000);
+  }
+
+  // 2. SEGURIDAD OBLIGATORIA:
+  // Si la DB falla o el internet es lento, esto fuerza la entrada a los 4.5s.
+  setTimeout(() => {
+    if (splash && !splash.classList.contains("hidden")) {
+      console.warn("⚠️ Splash forzado a cerrar por tiempo de espera.");
+      splash.classList.add("hidden");
+    }
+  }, 4500);
 }
 
 function initScrollReveal() {
