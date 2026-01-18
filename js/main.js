@@ -17,7 +17,7 @@ let supabase = null;
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- SAMSUNG FIX: LIMPIEZA DE URLS ---
+// --- SAMSUNG FIX ---
 const cleanUrl = (url) => {
   if (!url) return "";
   return encodeURI(url.trim());
@@ -50,22 +50,16 @@ async function init() {
   }
 }
 
-// --- FUNCIÓN SPLASH BLINDADA (CORREGIDA) ---
+// --- SPLASH BLINDADO ---
 function initSplash() {
   const splash = $("splash-screen");
-  
-  // 1. Intento normal (Animación suave)
   if (splash) {
-    setTimeout(() => { 
-      splash.classList.add("hidden"); 
-    }, 2000);
+    setTimeout(() => { splash.classList.add("hidden"); }, 2000);
   }
-
-  // 2. SEGURIDAD OBLIGATORIA:
-  // Si la DB falla o el internet es lento, esto fuerza la entrada a los 4.5s.
+  // SEGURIDAD:
   setTimeout(() => {
     if (splash && !splash.classList.contains("hidden")) {
-      console.warn("⚠️ Splash forzado a cerrar por tiempo de espera.");
+      console.warn("⚠️ Splash forzado.");
       splash.classList.add("hidden");
     }
   }, 4500);
