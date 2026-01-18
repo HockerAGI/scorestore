@@ -2,32 +2,37 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/css/styles.css?v=2.1" />
+
+  <link rel="stylesheet" href="/css/styles.css?v=2.2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
+
+  <!-- Stripe + Supabase (misma base que la tienda; no rompe nada) -->
+  <script src="https://js.stripe.com/v3" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <header class="topbar">
     <div class="container topbarInner">
       <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
+
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
+
       <div style="width:40px;">
         <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.8);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
-            <span id="cartCount" class="cartCount">0</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
+            <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
+            <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
+          </svg>
+          <span id="cartCount" class="cartCount">0</span>
         </button>
-      </div> 
+      </div>
     </div>
   </header>
 
@@ -38,6 +43,7 @@
     <section id="privacidad" class="legalCard">
       <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
       <p class="p"><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), nombre comercial BAJATEX, operando bajo la marca Único Uniformes y proyectos derivados como SCORE Store, con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.</p>
+
       <h3 style="font-size:18px;margin:10px 0;">Datos Personales que se Recaban:</h3>
       <ul class="ul">
         <li>Nombre completo, teléfono y correo electrónico.</li>
@@ -45,23 +51,27 @@
         <li>Dirección de envío.</li>
         <li>Información relacionada con pedidos y pagos (No recabamos datos sensibles).</li>
       </ul>
+
       <h3 style="font-size:18px;margin:10px 0;">Finalidades del Tratamiento:</h3>
       <ul class="ul">
         <li><strong>Primarias:</strong> Atender solicitudes, procesar pedidos, entregas y facturación.</li>
         <li><strong>Secundarias:</strong> Envío de promociones y análisis de mercado.</li>
       </ul>
-      <p class="p">Usted puede ejercer sus derechos ARCO enviando una solicitud a: <strong>contacto.hocker@gmail.com</strong></p>
+
+      <p class="p">Usted puede ejercer sus derechos ARCO enviando una solicitud a: <strong>ventas.unicotextil@gmail.com</strong></p>
     </section>
 
     <section id="terminos" class="legalCard">
       <h2 class="h2">2. TÉRMINOS Y CONDICIONES DE USO Y VENTA</h2>
       <p class="p">Al acceder y utilizar este sitio, usted acepta los presentes términos. El usuario declara ser mayor de edad y contar con capacidad legal.</p>
+
       <h3 style="font-size:18px;margin:10px 0;">Precios y Pagos:</h3>
       <ul class="ul">
         <li>Los precios están expresados en pesos mexicanos (MXN).</li>
         <li>No incluyen IVA, salvo indicación expresa.</li>
         <li>Los pedidos se procesan una vez confirmado el pago.</li>
       </ul>
+
       <h3 style="font-size:18px;margin:10px 0;">Productos Personalizados:</h3>
       <p class="p">Los productos con bordado o fabricación especial <strong>NO APLICAN A CAMBIOS NI DEVOLUCIONES</strong>, salvo defecto de fabricación comprobable.</p>
     </section>
@@ -71,7 +81,7 @@
       <ul class="ul">
         <li><strong>Cobertura:</strong> República Mexicana y USA (Sujeto a Aduanas).</li>
         <li><strong>Tiempos:</strong> 3 a 7 días hábiles (Estándar). Local Tijuana 1-2 días.</li>
-        <li><strong>Responsabilidad:</strong> Una vez entregado a paquetería, nuestra responsabilidad se limita a gestionar el reclamo.</li>
+        <li><strong>Responsabilidad:</strong> Una vez entregado a paquetería, nuestra responsabilidad se limita a gestionar el reclamo con la paquetería.</li>
       </ul>
     </section>
 
@@ -83,6 +93,7 @@
     <section id="facturacion" class="legalCard">
       <h2 class="h2">5. FACTURACIÓN</h2>
       <p class="p">La factura CFDI deberá solicitarse dentro del mes fiscal correspondiente al pago, proporcionando datos fiscales completos. No se realizan refacturaciones fuera de plazo.</p>
+      <p class="p">Solicitudes: <strong>ventas.unicotextil@gmail.com</strong></p>
     </section>
 
     <section id="contacto" class="legalCard">
@@ -103,37 +114,67 @@
     </div>
   </footer>
 
-  <div id="overlay" class="page-overlay" onclick="closeAll()"></div>
+  <!-- Overlay + Drawer (mismos IDs que la tienda, para que main.js funcione igual) -->
+  <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
+
   <aside id="drawer" class="drawer">
-    <div class="dHead"><h3 class="dTitle">TU PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody"><div id="cartItems"></div><div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Vacío</div></div>
+    <div class="dHead">
+      <h3 class="dTitle">TU PEDIDO</h3>
+      <button class="closeBtn" onclick="closeAll()">✕</button>
+    </div>
+
+    <div class="dBody">
+      <div id="cartItems"></div>
+      <div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Tu carrito está vacío.</div>
+    </div>
+
     <div class="dFoot">
-      <div style="text-align:right; margin-bottom:10px;"><button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR</button></div>
+      <div style="text-align:right; margin-bottom:10px;">
+        <button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR CARRITO</button>
+      </div>
+
       <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="tj"><div><span>Local Express</span><small style="color:#555;display:block;">$200 (Solo Tijuana)</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div><span>Nacional MX</span><small style="color:#555;display:block;">Cotizar Envia.com</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us"><div><span>USA International</span><small style="color:#555;display:block;">Envíos a EEUU</small></div></label>
+        <label class="radio-option">
+          <input type="radio" name="shipMode" value="pickup" checked>
+          <div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div>
+        </label>
+
+        <label class="radio-option">
+          <input type="radio" name="shipMode" value="tj">
+          <div><span>Local Express</span><small style="color:#555;display:block;">$200 (Solo Tijuana)</small></div>
+        </label>
+
+        <label class="radio-option">
+          <input type="radio" name="shipMode" value="mx">
+          <div><span>Nacional (México)</span><small style="color:#555;display:block;">Cotizar Envia.com</small></div>
+        </label>
+
+        <label class="radio-option">
+          <input type="radio" name="shipMode" value="us">
+          <div><span>USA International</span><small style="color:#555;display:block;">Envíos a Estados Unidos</small></div>
+        </label>
       </div>
+
       <div id="shipForm" style="display:none; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
+        <p style="margin-bottom:8px; font-weight:bold; color:#333; font-size:13px;">Datos de Envío:</p>
         <input id="cp" type="tel" placeholder="Código Postal / ZIP" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="addr" type="text" placeholder="Dirección Completa" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="name" type="text" placeholder="Nombre Receptor" class="inputField" style="width:100%;">
+        <input id="addr" type="text" placeholder="Calle, Número y Colonia" class="inputField" style="width:100%; margin-bottom:8px;">
+        <input id="name" type="text" placeholder="Nombre Completo de quien recibe" class="inputField" style="width:100%;">
       </div>
+
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
+
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
+      <p style="text-align:center; font-size:11px; color:#999; margin-top:8px;">Pagos seguros vía Stripe · Envíos por Envia.com</p>
     </div>
   </aside>
-  
-  <div id="modalCatalog" class="modal"><div id="catContent"></div></div>
+
   <div class="toast" id="toast">Mensaje</div>
 
-  <script src="/js/main.js?v=2.1" defer></script>
-  <script>
-    function openDrawer(){ document.getElementById('drawer').classList.add('active'); document.getElementById('overlay').classList.add('active'); }
-    function closeAll(){ document.querySelectorAll('.active').forEach(e=>e.classList.remove('active')); }
-  </script>
+  <!-- IMPORTANTE: No redefinir openDrawer/closeAll aquí.
+       main.js ya trae estas funciones y listeners, y además inyecta Pixel desde DB. -->
+  <script src="/js/main.js?v=2.2" defer></script>
 </body>
 </html>
