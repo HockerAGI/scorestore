@@ -1,13 +1,14 @@
 {
   "name": "score-store-official",
-  "version": "2.0.0",
-  "description": "Tienda Oficial SCORE International",
+  "version": "2.1.0",
+  "description": "Tienda Oficial SCORE International - Powered by Unico OS",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
     "build": "echo 'Build success'"
   },
   "dependencies": {
-    "stripe": "^14.0.0"
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.39.0"
   }
 }
