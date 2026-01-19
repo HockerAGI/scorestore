@@ -4,15 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial</title>
-
+  
   <meta name="description" content="Sitio Oficial de Merchandise SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
-
+  
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://scorestore.netlify.app/" />
   <meta property="og:title" content="SCORE Store | 80% OFF Inauguración" />
   <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes. ¡Aprovecha la promoción!" />
   <meta property="og:image" content="/assets/hero.webp" />
+  <meta property="fb:pages" content="1496305187347575" />
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
@@ -30,13 +31,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* Estilos rápidos para el cupón (se integra con tu CSS actual) */
-    .promo-row { display: flex; gap: 8px; margin-bottom: 15px; }
-    .promo-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Inter', sans-serif; text-transform: uppercase; }
-    .promo-btn { background: #333; color: #fff; border: none; padding: 0 16px; border-radius: 8px; cursor: pointer; font-family: 'Teko', sans-serif; font-size: 16px; transition: .2s; }
-    .promo-btn:hover { background: #000; }
-    .discount-line { color: #2ecc71; font-weight: bold; }
-    
     .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
     .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
     .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; }
@@ -190,15 +184,6 @@
     <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
-  <div id="modalCatalog" class="modal" aria-hidden="true">
-    <div class="dHead">
-      <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
-      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
-    </div>
-    <div class="dBody" id="catContent">
-      </div>
-  </div>
-
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">MI PEDIDO</h3>
@@ -214,7 +199,6 @@
     </div>
 
     <div class="dFoot" id="cartFooter">
-      
       <div class="shipSelector">
         <label class="radio-option">
           <input type="radio" name="shipMode" value="pickup" checked>
@@ -249,9 +233,16 @@
       <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
       <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
-      <p style="text-align:center; font-size:11px; color:#999; margin-top:8px;">Pagos seguros vía Stripe · Envíos por Envia.com</p>
     </div>
   </aside>
+
+  <div id="modalCatalog" class="modal" aria-hidden="true">
+    <div class="dHead">
+      <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
+      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dBody" id="catContent"></div>
+  </div>
 
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead">
@@ -298,12 +289,10 @@
   <script src="/js/main.js?v=2.3" defer></script>
 
   <script>
-    // Fallback de seguridad
     window.openDrawer = window.openDrawer || function () { document.getElementById("drawer")?.classList.add("active"); document.getElementById("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); };
     window.closeAll = window.closeAll || function () { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
     function scrollToId(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
-
-    // Cookies logic
+    
     (function () {
       const KEY = "score_cookie_consent";
       const banner = document.getElementById("cookieBanner");
@@ -312,7 +301,6 @@
       document.getElementById("cookieReject").onclick = () => { localStorage.setItem(KEY, "essential"); banner.style.display = "none"; };
     })();
 
-    // SW
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js?v=21").catch(console.warn);
     }
