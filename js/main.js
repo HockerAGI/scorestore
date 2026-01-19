@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER v2.2.2 (BLINDADO: Anti-Stuck Splash) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.2.3 (FIX: Supabase Variable Conflict) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -13,27 +13,27 @@ const API_BASE =
 const CART_KEY = "score_cart_prod_v5";
 
 // CONFIGURACIÓN OBLIGATORIA: 80% OFF
-let PROMO_ACTIVE = true; // Default ON (solo se apaga si DB lo dice explícitamente)
-let FAKE_MARKUP_FACTOR = 1.6; // Precio anterior “inflado” para UX de promo
+let PROMO_ACTIVE = true;
+let FAKE_MARKUP_FACTOR = 1.6;
 
 let cart = [];
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
-let supabase = null;
+
+// --- FIX CRÍTICO: Renombramos la variable para evitar choque con window.supabase ---
+let db = null; 
 
 const $ = (id) => document.getElementById(id);
 
 const money = (n) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-// --- SAMSUNG FIX & CLEAN URL ---
 const cleanUrl = (url) => {
   if (!url) return "";
   return encodeURI(String(url).trim());
 };
 
-// --- SAFE TEXT (para evitar inyección en innerHTML en nombres/productos) ---
 const safeText = (v) =>
   String(v ?? "")
     .replace(/&/g, "&amp;")
@@ -42,7 +42,6 @@ const safeText = (v) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-// --- FLAGS internos ---
 let _splashInitialized = false;
 let _listenersBound = false;
 
@@ -50,25 +49,24 @@ let _listenersBound = false;
 async function init() {
   console.log("🚀 Iniciando Score Store...");
 
-  // 1. Inicializar Supabase si está disponible
+  // 1. Inicializar Supabase (usando la variable 'db' para no chocar)
   if (window.supabase) {
       try {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       } catch (err) {
           console.error("Error iniciando Supabase Client:", err);
       }
   }
 
-  // 2. Ejecutar Animación "Arrancando Motores" (BLINDADO)
-  // Lo llamamos aquí, pero también tenemos un backup global al final del archivo.
+  // 2. Ejecutar Animación
   initSplash();
 
   loadCart();
 
   try {
-    // 3. Cargar catálogo (DB o Local)
+    // 3. Cargar catálogo
     await loadCatalogFromDB();
-    // 4. Cargar configuraciones extra (Pixel, Textos)
+    // 4. Cargar config
     await loadSiteConfig();
   } catch (e) {
     console.warn("Offline mode / Fallback active:", e);
@@ -76,34 +74,26 @@ async function init() {
   }
 
   // 5. Listeners + UI
-  setupListeners(); // robusto aunque drawer/modal exista después
+  setupListeners();
   updateCartUI();
   initScrollReveal();
 
-  // 6. Query actions (PWA shortcuts / status)
+  // 6. Query actions
   handleQueryActions();
 }
 
-// --- QUERY ACTIONS (PWA shortcuts + success) ---
 function handleQueryActions() {
   const params = new URLSearchParams(window.location.search);
 
-  // Payment success
   if (params.get("status") === "success") {
     toast("¡Pago exitoso! Gracias por tu compra.");
     if (typeof fbq === "function") fbq("track", "Purchase", { currency: "MXN", value: 0.0 });
-
-    // vaciar carrito silencioso
     emptyCart(true);
-
-    // limpiar query SIN cambiar ruta (importante para legal.html)
     clearQueryPreservingPath();
     return;
   }
 
-  // PWA Shortcut: openCart=1
   if (params.get("openCart") === "1") {
-    // Esperar un tick por si el drawer se inyecta después
     setTimeout(() => {
       if ($("drawer")) openDrawer();
     }, 0);
@@ -111,8 +101,6 @@ function handleQueryActions() {
     return;
   }
 
-  // Optional: abrir legal por query (útil si lo quieres)
-  // /?openLegal=privacy|terms|shipping|returns|billing
   const openLegalKey = params.get("openLegal");
   if (openLegalKey) {
     setTimeout(() => {
@@ -127,27 +115,23 @@ function clearQueryPreservingPath() {
   window.history.replaceState({}, document.title, path);
 }
 
-// --- SPLASH SCREEN: ARRANCANDO MOTORES (REGLA #2) ---
+// --- SPLASH SCREEN ---
 function initSplash() {
-  // blindaje por si se llama 2 veces (SW reload/Android)
   if (_splashInitialized) return;
   _splashInitialized = true;
 
   const splash = $("splash-screen") || document.querySelector('.splash');
   
   if (splash) {
-    // Animación suave
     setTimeout(() => {
       splash.classList.add("hidden");
     }, 2200);
-  } else {
-      console.warn("Splash element not found in DOM.");
   }
 
-  // FAIL-SAFE OBLIGATORIO: 4.5s (NO TOCAR)
+  // FAIL-SAFE OBLIGATORIO: 4.5s
   setTimeout(() => {
     if (splash && !splash.classList.contains("hidden")) {
-      console.warn("⚠️ Splash forzado a cerrar por time-out (4.5s).");
+      console.warn("⚠️ Splash forzado a cerrar por time-out.");
       splash.classList.add("hidden");
     }
   }, 4500);
@@ -174,9 +158,9 @@ function initScrollReveal() {
 
 // --- DATA LAYER ---
 async function loadSiteConfig() {
-  if (!supabase) return;
+  if (!db) return; // Usamos db en lugar de supabase
 
-  const { data: org, error: orgErr } = await supabase
+  const { data: org, error: orgErr } = await db
     .from("organizations")
     .select("id")
     .eq("slug", "score-store")
@@ -184,7 +168,7 @@ async function loadSiteConfig() {
 
   if (orgErr || !org?.id) return;
 
-  const { data: config } = await supabase
+  const { data: config } = await db
     .from("site_settings")
     .select("*")
     .eq("org_id", org.id)
@@ -195,14 +179,12 @@ async function loadSiteConfig() {
   const h1 = $("hero-title");
   if (h1 && config.hero_title) h1.innerHTML = config.hero_title;
 
-  // Si DB dice explícitamente que NO hay promo, la quitamos.
   if (config.promo_active === false) {
     PROMO_ACTIVE = false;
     const bar = $("promo-bar");
     if (bar) bar.style.display = "none";
   }
 
-  // Inyección dinámica de Pixel (REGLA #4) — sin duplicar
   if (config.pixel_id && typeof window.fbq !== "function") {
     !(function (f, b, e, v, n, t, s) {
       if (f.fbq) return;
@@ -227,9 +209,9 @@ async function loadSiteConfig() {
 }
 
 async function loadCatalogFromDB() {
-  if (!supabase) throw new Error("No client");
+  if (!db) throw new Error("No client"); // Usamos db
 
-  const { data: org, error: orgErr } = await supabase
+  const { data: org, error: orgErr } = await db
     .from("organizations")
     .select("id")
     .eq("slug", "score-store")
@@ -237,7 +219,7 @@ async function loadCatalogFromDB() {
 
   if (orgErr || !org?.id) throw new Error("Org not found");
 
-  const { data: products, error: prodErr } = await supabase
+  const { data: products, error: prodErr } = await db
     .from("products")
     .select("*")
     .eq("org_id", org.id)
@@ -368,14 +350,12 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
-// --- LISTENERS (robusto para HTML que aparece después) ---
+// --- LISTENERS ---
 function setupListeners() {
   if (_listenersBound) return;
   _listenersBound = true;
 
-  // Delegación para catálogo (si el contenedor existe ahora o después)
   document.addEventListener("click", (e) => {
-    // Sizes inside catalog
     const btnSize = e.target.closest && e.target.closest("[data-size]");
     if (btnSize) {
       const pid = btnSize.dataset.pid;
@@ -388,7 +368,6 @@ function setupListeners() {
       return;
     }
 
-    // Add button inside catalog
     const btnAdd = e.target.closest && e.target.closest("[data-add]");
     if (btnAdd) {
       const pid = btnAdd.dataset.add;
@@ -398,7 +377,6 @@ function setupListeners() {
     }
   });
 
-  // Shipping mode radios (pueden no existir aún)
   const bindShipMode = () => {
     const radios = document.getElementsByName("shipMode");
     if (!radios || !radios.length) return false;
@@ -410,7 +388,6 @@ function setupListeners() {
     return true;
   };
 
-  // CP input
   const bindCp = () => {
     const cpInput = $("cp");
     if (!cpInput || cpInput._boundCp) return false;
@@ -419,10 +396,7 @@ function setupListeners() {
     cpInput.addEventListener("input", (ev) => {
       const val = ev.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       ev.target.value = val;
-
-      // No cotizamos si no hay items
       if (!cart.length) return;
-
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
       else if (shippingState.mode === "us" && val.length >= 5) quoteShipping(val, "US");
     });
@@ -430,19 +404,10 @@ function setupListeners() {
     return true;
   };
 
-  // Intento inmediato y luego un par de reintentos ligeros por si el drawer se inyecta después
   bindShipMode();
   bindCp();
-  setTimeout(() => {
-    bindShipMode();
-    bindCp();
-    updateCartUI();
-  }, 250);
-  setTimeout(() => {
-    bindShipMode();
-    bindCp();
-    updateCartUI();
-  }, 900);
+  setTimeout(() => { bindShipMode(); bindCp(); updateCartUI(); }, 250);
+  setTimeout(() => { bindShipMode(); bindCp(); updateCartUI(); }, 900);
 }
 
 // --- CHECKOUT ---
@@ -522,15 +487,12 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
-// Legal modal helper (si existe)
 window.openLegal = window.openLegal || function (key) {
   const modal = $("legalModal");
   if (!modal) return;
-
   modal.classList.add("active");
   $("overlay")?.classList.add("active");
   document.body.classList.add("modalOpen");
-
   modal.querySelectorAll("[data-legal-block]").forEach((b) => (b.style.display = "none"));
   const block = modal.querySelector(`[data-legal-block="${key}"]`);
   if (block) block.style.display = "block";
@@ -575,7 +537,6 @@ window.toast = (m) => {
   setTimeout(() => t.classList.remove("show"), 3000);
 };
 
-// Qty controls
 window.incQty = (idx) => {
   const item = cart[idx];
   if (!item) return;
@@ -591,7 +552,6 @@ window.decQty = (idx) => {
   const next = Number(item.qty || 1) - 1;
   if (next <= 0) cart.splice(idx, 1);
   else item.qty = next;
-
   saveCart();
   updateCartUI();
   recalcShippingIfNeeded();
@@ -600,7 +560,6 @@ window.decQty = (idx) => {
 // --- SHIPPING ---
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
-
   const form = $("shipForm");
   if (form) form.style.display = mode === "pickup" ? "none" : "block";
 
@@ -617,20 +576,16 @@ function handleShipModeChange(mode) {
     shippingState.cost = 0;
     shippingState.label = "Ingresa ZIP...";
   } else {
-    // modo raro -> tratar como MX para no romper UI
     shippingState.cost = 0;
     shippingState.label = "Ingresa CP...";
     shippingState.mode = "mx";
   }
-
   updateCartUI();
   recalcShippingIfNeeded();
 }
 
 function recalcShippingIfNeeded() {
-  // No cotizamos sin items
   if (!cart.length) return;
-
   const cp = $("cp")?.value?.trim() || "";
   if (shippingState.mode === "mx" && cp.length === 5) quoteShipping(cp, "MX");
   if (shippingState.mode === "us" && cp.length >= 5) quoteShipping(cp, "US");
@@ -642,15 +597,12 @@ async function quoteShipping(zip, country) {
 
   try {
     const qty = cart.reduce((acc, i) => acc + Number(i.qty || 0), 0) || 1;
-
     const res = await fetch(`${API_BASE}/quote_shipping`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ zip, items: qty, country }),
     });
-
     const data = await res.json().catch(() => ({}));
-
     if (data.ok && data.cost) {
       shippingState.cost = Number(data.cost) || 0;
       shippingState.label = data.label || "Cotización";
@@ -662,17 +614,13 @@ async function quoteShipping(zip, country) {
     shippingState.cost = country === "US" ? 800 : 250;
     shippingState.label = "Estándar";
   }
-
   updateCartUI();
 }
 
 // --- RENDER CART ---
 function updateCartUI() {
   const c = $("cartItems");
-  if (!c) {
-    // Si el drawer HTML se carga desde otro archivo y aún no está, no tronamos.
-    return;
-  }
+  if (!c) return;
 
   let total = 0;
   let q = 0;
@@ -738,31 +686,27 @@ function updateCartUI() {
   if (shipTotal) shipTotal.innerText = shippingState.label || "—";
 }
 
-// --- ARRANQUE PROTEGIDO (REGLA DE ORO) ---
-// Envolvemos init() para que SIEMPRE se quite el splash, aunque haya errores
+// --- ARRANQUE PROTEGIDO ---
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         await init();
     } catch (err) {
         console.error("🔥 Error crítico iniciando app:", err);
     } finally {
-        // GARANTÍA ABSOLUTA: Quitamos el splash aunque init falle
+        // Garantía de quitar Splash
         const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
         if (splash) {
-            console.log("🛡️ Safety: Forzando cierre de splash screen.");
             splash.classList.add("hidden");
-            // Eliminar del DOM poco después para ahorrar memoria
             setTimeout(() => splash.remove(), 1000);
         }
     }
 });
 
-// --- GLOBAL FAILSAFE (LA OPCIÓN NUCLEAR) ---
-// Si todo lo anterior falla (ej. error de sintaxis previo), esto se ejecuta sí o sí.
+// --- GLOBAL FAILSAFE ---
 setTimeout(() => {
     const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
     if (splash && !splash.classList.contains("hidden")) {
-        console.warn("☢️ NUCLEAR: Splash eliminado por timeout global (anti-stuck).");
+        console.warn("☢️ NUCLEAR: Splash eliminado por timeout global.");
         splash.style.opacity = "0";
         splash.style.pointerEvents = "none";
         setTimeout(() => splash.remove(), 500);
