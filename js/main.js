@@ -1,17 +1,11 @@
-/* SCORE STORE LOGIC — FINAL MASTER v3.1 (Full Features) */
+/* SCORE STORE LOGIC — FINAL MASTER v4.0 (Visibility First) */
 
-// CREDENCIALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
-
-// Detectar entorno para API (Netlify Functions)
-const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") 
-  ? "/api" 
-  : "/.netlify/functions";
-
+const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
 const CART_KEY = "score_cart_prod_v6";
 
-// CONFIGURACIÓN VISUAL
+// CONFIGURACIÓN
 let PROMO_ACTIVE = true;
 let FAKE_MARKUP_FACTOR = 1.6;
 
@@ -23,100 +17,80 @@ let selectedSizeByProduct = {};
 let activeDiscount = 0;
 let db = null; 
 
-// UTILIDADES
+// UTILS
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 const cleanUrl = (url) => url ? encodeURI(String(url).trim()) : "";
 const safeText = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 let _splashInitialized = false;
-let _listenersBound = false;
 
-// --- INICIO ---
+// --- INIT ---
 async function init() {
-  console.log("🚀 Iniciando Score Store v3.1...");
+  console.log("🚀 Starting Score Store v4.0...");
 
   if (window.supabase) {
       try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } 
-      catch (err) { console.error("Error iniciando DB:", err); }
+      catch (err) { console.error("DB Init Error:", err); }
   }
 
-  initSplash();
-  loadCart();
-
-  try {
-    // 1. Cargar el JSON Local COMPLETO (para tener imágenes, sliders y estructura original)
-    const localRes = await fetch("/data/catalog.json");
-    if(!localRes.ok) throw new Error("Fallo catalog.json");
-    const localJson = await localRes.json();
-    
-    // Asignamos estructura base
-    catalogData.sections = localJson.sections || [];
-    let localProducts = localJson.products || [];
-
-    // 2. Intentar enriquecer con datos Reales de Supabase (Precio, Stock, Activo)
-    if (db) {
-        try {
-            const { data: dbProducts } = await db
-                .from("products")
-                .select("id, sku, price, stock, active, name, category");
-            
-            if (dbProducts && dbProducts.length > 0) {
-                localProducts = localProducts.map(localP => {
-                    const match = dbProducts.find(dbp => 
-                        (dbp.sku && localP.sku && dbp.sku === localP.sku) || 
-                        (dbp.name === localP.name)
-                    );
-
-                    if (match) {
-                        return {
-                            ...localP,
-                            baseMXN: Number(match.price), // Precio Real
-                            active: match.active,        // Estado Real
-                            db_id: match.id              // ID Real para checkout
-                        };
-                    }
-                    return localP;
-                }).filter(p => p.active !== false); // Ocultar inactivos en DB
-            }
-        } catch (dbErr) {
-            console.warn("⚠️ No se pudo conectar a DB, usando precios locales:", dbErr);
-        }
-    }
-
-    catalogData.products = localProducts;
-    await loadSiteConfig();
-
-  } catch (e) {
-    console.error("Error crítico cargando catálogo:", e);
-  }
-
+  // 1. Cargar JSON local INMEDIATAMENTE (sin esperar DB)
+  await loadCatalogLocal(); 
+  
+  // 2. Setup inicial con datos locales
   setupListeners();
   updateCartUI();
   initScrollReveal();
-  handleQueryActions();
+  
+  // 3. Quitar splash
+  initSplash();
+
+  // 4. Enriquecer con datos de DB en segundo plano (Precios, Stock)
+  enrichWithDB();
+  loadSiteConfig();
 }
 
-// --- RENDERIZADO DEL CATÁLOGO (CON SLIDER) ---
+async function loadCatalogLocal() {
+  try {
+    const res = await fetch("/data/catalog.json");
+    if (!res.ok) throw new Error("Missing catalog.json");
+    const json = await res.json();
+    catalogData.products = json.products || [];
+    catalogData.sections = json.sections || [];
+  } catch (e) {
+    console.error("Local catalog error:", e);
+  }
+}
+
+async function enrichWithDB() {
+    if (!db) return;
+    try {
+        const { data: dbProducts } = await db.from("products").select("id, sku, price, active, name");
+        if (dbProducts && dbProducts.length > 0) {
+            catalogData.products = catalogData.products.map(localP => {
+                const match = dbProducts.find(dbp => (dbp.sku && localP.sku && dbp.sku === localP.sku) || (dbp.name === localP.name));
+                if (match) {
+                    return { ...localP, baseMXN: Number(match.price), active: match.active, db_id: match.id };
+                }
+                return localP;
+            }).filter(p => p.active !== false);
+            // Actualizar UI con nuevos precios si el catálogo estaba abierto
+            const openCat = $("modalCatalog").classList.contains("active");
+            if(openCat) { /* Opcional: refrescar modal */ }
+        }
+    } catch (err) { console.warn("DB Enrich failed:", err); }
+}
+
+// --- RENDERIZADO DEL CATÁLOGO ---
 window.openCatalog = (sectionId, titleFallback) => {
   const items = (catalogData.products || []).filter(
     (p) => p.sectionId === sectionId || (p.name && String(p.name).toUpperCase().includes(sectionId.replace("_", " ")))
   );
 
-  const titleEl = $("catTitle");
-  const sectionInfo = (catalogData.sections || []).find((s) => s.id === sectionId);
-
-  if (titleEl) {
-    if (sectionInfo && sectionInfo.logo) {
-      titleEl.innerHTML = `<img src="${cleanUrl(sectionInfo.logo)}" style="height:80px;width:auto;" alt="${safeText(sectionInfo.title)}">`;
-    } else {
-      titleEl.innerText = titleFallback || "COLECCIÓN";
-    }
-  }
+  if($("catTitle")) $("catTitle").innerHTML = titleFallback;
 
   const container = $("catContent");
   if (!container) return;
-
   container.innerHTML = "";
 
   if (!items.length) {
@@ -129,20 +103,13 @@ window.openCatalog = (sectionId, titleFallback) => {
       const sizes = p.sizes || ["Unitalla"];
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
-      // Generar botones de talla
       const sizesHtml = sizes.map((sz) => {
           const active = selectedSizeByProduct[p.id] === sz ? "active" : "";
           return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
       }).join("");
 
-      // Generar SLIDER de imágenes (Respetando el array original)
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
-      
-      const slidesHtml = imageList.map(imgSrc => `
-        <div class="prod-slide">
-            <img src="${cleanUrl(imgSrc)}" class="prodImg" loading="lazy" alt="${safeText(p.name)}">
-        </div>
-      `).join("");
+      const slidesHtml = imageList.map(imgSrc => `<div class="prod-slide"><img src="${cleanUrl(imgSrc)}" class="prodImg" loading="lazy"></div>`).join("");
 
       const sellPrice = Number(p.baseMXN || 0);
       const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
@@ -155,9 +122,7 @@ window.openCatalog = (sectionId, titleFallback) => {
       el.innerHTML = `
         <div class="metallic-frame">
           ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ""}
-          <div class="prod-slider">
-             ${slidesHtml}
-          </div>
+          <div class="prod-slider">${slidesHtml}</div>
         </div>
         <div class="prodName">${safeText(p.name)}</div>
         ${priceHtml}
@@ -171,7 +136,7 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
-// --- LOGICA DE CARRITO Y PAGO (REAL) ---
+// --- CHECKOUT ---
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Carrito vacío");
@@ -208,16 +173,11 @@ window.checkout = async () => {
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     });
 
     const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-      return;
-    }
+    if (data.url) { window.location.href = data.url; return; }
     throw new Error(data.error || "Error al iniciar pago");
 
   } catch (err) {
@@ -345,7 +305,20 @@ window.openDrawer = () => { $("drawer")?.classList.add("active"); $("overlay")?.
 window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
 window.openLegal = (key) => { const m = $("legalModal"); if(!m)return; m.classList.add("active"); $("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); m.querySelectorAll(".legalBlock").forEach(b => b.style.display = "none"); const k = m.querySelector(`[data-legal-block="${key}"]`); if(k) k.style.display="block"; };
 function handleQueryActions() { const p = new URLSearchParams(window.location.search); if (p.get("status")==="success") { toast("Pago exitoso"); emptyCart(true); window.history.replaceState({},"",window.location.pathname); } if (p.get("openCart")==="1") { setTimeout(()=>openDrawer(),500); window.history.replaceState({},"",window.location.pathname); } }
-function initSplash() { if(_splashInitialized)return; _splashInitialized=true; const s=$("splash-screen"); if(s) setTimeout(()=>s.classList.add("hidden"),2200); setTimeout(()=>{if(s&&!s.classList.contains("hidden"))s.classList.add("hidden")},4500); }
+
+// --- ANIMATION CONTROLLER ---
+function initSplash() { 
+  if(_splashInitialized)return; 
+  _splashInitialized=true; 
+  const s=$("splash-screen"); 
+  if(s) setTimeout(()=>s.classList.add("hidden"),2200); 
+}
+function initScrollReveal() {
+  const els = document.querySelectorAll(".scroll-reveal");
+  if (!els.length) return;
+  // Trigger inmediato para asegurar visibilidad
+  els.forEach(el => el.classList.add("visible"));
+}
 
 document.addEventListener("DOMContentLoaded", init);
 setTimeout(() => { const s=document.getElementById("splash-screen"); if(s&&!s.classList.contains("hidden")){ s.style.opacity="0"; setTimeout(()=>s.remove(),500); }}, 5000);
