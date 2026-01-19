@@ -1,4 +1,4 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v21 (FIXED + CONSISTENTE) */
+/* sw.js - VERSIÓN DE PRODUCCIÓN v25 (FIXED + CONSISTENTE) */
 const CACHE_NAME = "score-store-v21";
 
 const ASSETS = [
