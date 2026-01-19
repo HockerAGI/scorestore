@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — HYBRID MASTER v3.0 (Real DB + Original Sliders) */
+/* SCORE STORE LOGIC — FINAL MASTER v3.1 (Full Features) */
 
 // CREDENCIALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -34,7 +34,7 @@ let _listenersBound = false;
 
 // --- INICIO ---
 async function init() {
-  console.log("🚀 Iniciando Score Store Híbrida...");
+  console.log("🚀 Iniciando Score Store v3.1...");
 
   if (window.supabase) {
       try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } 
@@ -59,22 +59,16 @@ async function init() {
         try {
             const { data: dbProducts } = await db
                 .from("products")
-                .select("sku, price, stock, active, name, category");
+                .select("id, sku, price, stock, active, name, category");
             
             if (dbProducts && dbProducts.length > 0) {
-                // FUSIÓN INTELIGENTE:
-                // Si el producto existe en DB (por SKU), usamos precio real de DB.
-                // Si no, usamos el del JSON.
-                // Mantenemos las IMÁGENES (array) del JSON para que funcione el slider.
-                
                 localProducts = localProducts.map(localP => {
                     const match = dbProducts.find(dbp => 
                         (dbp.sku && localP.sku && dbp.sku === localP.sku) || 
-                        (dbp.name === localP.name) // Fallback por nombre
+                        (dbp.name === localP.name)
                     );
 
                     if (match) {
-                        // Sobreescribir con datos reales de negocio
                         return {
                             ...localP,
                             baseMXN: Number(match.price), // Precio Real
@@ -142,7 +136,6 @@ window.openCatalog = (sectionId, titleFallback) => {
       }).join("");
 
       // Generar SLIDER de imágenes (Respetando el array original)
-      // Si p.images existe (del JSON), lo usamos. Si no, usamos p.img.
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
       
       const slidesHtml = imageList.map(imgSrc => `
@@ -163,7 +156,8 @@ window.openCatalog = (sectionId, titleFallback) => {
         <div class="metallic-frame">
           ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ""}
           <div class="prod-slider">
-             ${slidesHtml} </div>
+             ${slidesHtml}
+          </div>
         </div>
         <div class="prodName">${safeText(p.name)}</div>
         ${priceHtml}
@@ -195,16 +189,15 @@ window.checkout = async () => {
   if (btn) { btn.disabled = true; btn.innerText = "Procesando..."; }
 
   try {
-    // Preparar items para Stripe (backend validará precios de DB usando SKU o ID)
     const payload = {
       items: cart.map(i => {
           const p = catalogData.products.find(x => x.id === i.id);
           return {
-              id: p.db_id || p.id, // Preferir ID de DB si existe (fusión)
+              id: p.db_id || p.id,
               sku: p.sku,
               qty: i.qty,
               size: i.size,
-              price_data_fallback: p.baseMXN // Por si no está en DB (fallback)
+              price_data_fallback: p.baseMXN
           };
       }),
       mode,
@@ -232,9 +225,6 @@ window.checkout = async () => {
     if (btn) { btn.disabled = false; btn.innerText = "PAGAR AHORA"; }
   }
 };
-
-/* --- RESTO DE FUNCIONES (UI, CART, SHIPPING) IDÉNTICAS PERO NECESARIAS --- */
-// (Incluyo el resto compactado para que copies y pegues un solo archivo funcional)
 
 window.addToCart = (id, size) => {
   const existing = cart.find(i => String(i.id) === String(id) && i.size === size);
@@ -285,7 +275,7 @@ function updateCartUI() {
     const line = unit * i.qty;
     total += line; q += i.qty;
     const fake = Math.round(unit * FAKE_MARKUP_FACTOR);
-    const img = p.images ? p.images[0] : p.img; // Usar primera imagen para thumb
+    const img = p.images ? p.images[0] : p.img;
     return `<div class="cartItem">
         <img class="cartThumb" src="${cleanUrl(img)}" loading="lazy">
         <div class="cInfo"><div class="cName">${safeText(p.name)}</div><div class="cMeta">Talla: ${i.size}</div>
