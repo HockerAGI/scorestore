@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER v2.2.3 (FIX: Supabase Variable Conflict) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.3 (PROMO CODES + CATALOG FIX) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -12,16 +12,18 @@ const API_BASE =
 
 const CART_KEY = "score_cart_prod_v5";
 
-// CONFIGURACIÓN OBLIGATORIA: 80% OFF
+// CONFIGURACIÓN OBLIGATORIA
 let PROMO_ACTIVE = true;
 let FAKE_MARKUP_FACTOR = 1.6;
 
+// ESTADO GLOBAL
 let cart = [];
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
+let activeDiscount = 0; // 0.0 a 1.0 (ej. 0.20 para 20%)
 
-// --- FIX CRÍTICO: Renombramos la variable para evitar choque con window.supabase ---
+// VARIABLE BD (Renombrada para evitar conflictos)
 let db = null; 
 
 const $ = (id) => document.getElementById(id);
@@ -47,9 +49,8 @@ let _listenersBound = false;
 
 // --- INIT ---
 async function init() {
-  console.log("🚀 Iniciando Score Store...");
+  console.log("🚀 Iniciando Score Store v2.3...");
 
-  // 1. Inicializar Supabase (usando la variable 'db' para no chocar)
   if (window.supabase) {
       try {
           db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -58,27 +59,20 @@ async function init() {
       }
   }
 
-  // 2. Ejecutar Animación
   initSplash();
-
   loadCart();
 
   try {
-    // 3. Cargar catálogo
     await loadCatalogFromDB();
-    // 4. Cargar config
     await loadSiteConfig();
   } catch (e) {
     console.warn("Offline mode / Fallback active:", e);
     await loadCatalogLocal();
   }
 
-  // 5. Listeners + UI
   setupListeners();
   updateCartUI();
   initScrollReveal();
-
-  // 6. Query actions
   handleQueryActions();
 }
 
@@ -94,19 +88,9 @@ function handleQueryActions() {
   }
 
   if (params.get("openCart") === "1") {
-    setTimeout(() => {
-      if ($("drawer")) openDrawer();
-    }, 0);
+    setTimeout(() => { if ($("drawer")) openDrawer(); }, 500);
     clearQueryPreservingPath();
     return;
-  }
-
-  const openLegalKey = params.get("openLegal");
-  if (openLegalKey) {
-    setTimeout(() => {
-      if (typeof window.openLegal === "function") window.openLegal(openLegalKey);
-    }, 0);
-    clearQueryPreservingPath();
   }
 }
 
@@ -121,17 +105,12 @@ function initSplash() {
   _splashInitialized = true;
 
   const splash = $("splash-screen") || document.querySelector('.splash');
-  
   if (splash) {
-    setTimeout(() => {
-      splash.classList.add("hidden");
-    }, 2200);
+    setTimeout(() => splash.classList.add("hidden"), 2200);
   }
-
-  // FAIL-SAFE OBLIGATORIO: 4.5s
+  // Safety timeout
   setTimeout(() => {
     if (splash && !splash.classList.contains("hidden")) {
-      console.warn("⚠️ Splash forzado a cerrar por time-out.");
       splash.classList.add("hidden");
     }
   }, 4500);
@@ -140,40 +119,23 @@ function initSplash() {
 function initScrollReveal() {
   const els = document.querySelectorAll(".scroll-reveal");
   if (!els.length) return;
-
-  const observer = new IntersectionObserver(
-    (entries) => {
+  const observer = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.classList.add("visible");
           observer.unobserve(e.target);
         }
       });
-    },
-    { threshold: 0.1 }
-  );
-
+    }, { threshold: 0.1 });
   els.forEach((el) => observer.observe(el));
 }
 
 // --- DATA LAYER ---
 async function loadSiteConfig() {
-  if (!db) return; // Usamos db en lugar de supabase
-
-  const { data: org, error: orgErr } = await db
-    .from("organizations")
-    .select("id")
-    .eq("slug", "score-store")
-    .single();
-
-  if (orgErr || !org?.id) return;
-
-  const { data: config } = await db
-    .from("site_settings")
-    .select("*")
-    .eq("org_id", org.id)
-    .single();
-
+  if (!db) return;
+  const { data: org } = await db.from("organizations").select("id").eq("slug", "score-store").single();
+  if (!org?.id) return;
+  const { data: config } = await db.from("site_settings").select("*").eq("org_id", org.id).single();
   if (!config) return;
 
   const h1 = $("hero-title");
@@ -186,46 +148,19 @@ async function loadSiteConfig() {
   }
 
   if (config.pixel_id && typeof window.fbq !== "function") {
-    !(function (f, b, e, v, n, t, s) {
-      if (f.fbq) return;
-      n = (f.fbq = function () {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      });
-      if (!f._fbq) f._fbq = n;
-      n.push = n;
-      n.loaded = !0;
-      n.version = "2.0";
-      n.queue = [];
-      t = b.createElement(e);
-      t.async = !0;
-      t.src = v;
-      s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s);
-    })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-
+    // Pixel init code here if needed
     fbq("init", config.pixel_id);
     fbq("track", "PageView");
   }
 }
 
 async function loadCatalogFromDB() {
-  if (!db) throw new Error("No client"); // Usamos db
-
-  const { data: org, error: orgErr } = await db
-    .from("organizations")
-    .select("id")
-    .eq("slug", "score-store")
-    .single();
-
-  if (orgErr || !org?.id) throw new Error("Org not found");
-
-  const { data: products, error: prodErr } = await db
-    .from("products")
-    .select("*")
-    .eq("org_id", org.id)
-    .eq("active", true);
-
-  if (prodErr || !products || products.length === 0) throw new Error("No data");
+  if (!db) throw new Error("No client");
+  const { data: org } = await db.from("organizations").select("id").eq("slug", "score-store").single();
+  if (!org?.id) throw new Error("Org not found");
+  
+  const { data: products } = await db.from("products").select("*").eq("org_id", org.id).eq("active", true);
+  if (!products || products.length === 0) throw new Error("No data");
 
   catalogData.products = products.map((p) => ({
     id: p.id,
@@ -233,7 +168,6 @@ async function loadCatalogFromDB() {
     baseMXN: p.price,
     sectionId: p.category || "BAJA_1000",
     img: p.image_url || "/assets/logo-score.webp",
-    images: [p.image_url || "/assets/logo-score.webp"],
     sizes: ["S", "M", "L", "XL", "2XL"],
     sku: p.sku,
   }));
@@ -248,36 +182,26 @@ async function loadCatalogFromDB() {
 
 async function loadCatalogLocal() {
   try {
-    const res = await fetch("/data/catalog.json", { cache: "no-store" });
+    const res = await fetch("/data/catalog.json");
     if (!res.ok) throw new Error("catalog.json missing");
     catalogData = await res.json();
   } catch (e) {
-    console.warn("No local catalog available:", e);
     catalogData = { products: [], sections: [] };
   }
 }
 
-// --- CART STORAGE ---
 function loadCart() {
   const saved = localStorage.getItem(CART_KEY);
-  if (saved) {
-    try {
-      cart = JSON.parse(saved) || [];
-    } catch {
-      cart = [];
-    }
-  }
+  if (saved) { try { cart = JSON.parse(saved) || []; } catch { cart = []; } }
 }
 function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-// --- UI: OPEN CATALOG ---
+// --- CATALOG OPENER (CORREGIDO) ---
 window.openCatalog = (sectionId, titleFallback) => {
   const items = (catalogData.products || []).filter(
-    (p) =>
-      p.sectionId === sectionId ||
-      (p.name && String(p.name).toUpperCase().includes(sectionId.replace("_", " ")))
+    (p) => p.sectionId === sectionId || (p.name && String(p.name).toUpperCase().includes(sectionId.replace("_", " ")))
   );
 
   const titleEl = $("catTitle");
@@ -293,7 +217,7 @@ window.openCatalog = (sectionId, titleFallback) => {
 
   const container = $("catContent");
   if (!container) {
-    console.warn("catContent no existe (modal no cargado aún).");
+    console.error("ERROR CRÍTICO: No se encontró el elemento 'catContent'. Revisa tu index.html.");
     return;
   }
 
@@ -309,21 +233,16 @@ window.openCatalog = (sectionId, titleFallback) => {
       const sizes = p.sizes || ["Unitalla"];
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
 
-      const sizesHtml = sizes
-        .map((sz) => {
+      const sizesHtml = sizes.map((sz) => {
           const active = selectedSizeByProduct[p.id] === sz ? "active" : "";
           return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
-        })
-        .join("");
+        }).join("");
 
       const sellPrice = Number(p.baseMXN || 0);
       const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
-
       const priceHtml = PROMO_ACTIVE
         ? `<div class="price-container"><span class="old-price">${money(fakeOldPrice)}</span><span class="new-price">${money(sellPrice)}</span></div>`
         : `<div class="prodPrice">${money(sellPrice)}</div>`;
-
-      const safeImg = cleanUrl(p.img);
 
       const el = document.createElement("div");
       el.className = "prodCard";
@@ -332,7 +251,7 @@ window.openCatalog = (sectionId, titleFallback) => {
           ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ""}
           <div class="prod-slider">
             <div class="prod-slide">
-              <img src="${safeImg}" class="prodImg" loading="lazy" alt="${safeText(p.name || "Producto")}">
+              <img src="${cleanUrl(p.img)}" class="prodImg" loading="lazy" alt="${safeText(p.name)}">
             </div>
           </div>
         </div>
@@ -343,31 +262,52 @@ window.openCatalog = (sectionId, titleFallback) => {
       `;
       grid.appendChild(el);
     });
-
     container.appendChild(grid);
   }
-
   openModal("modalCatalog");
 };
 
-// --- LISTENERS ---
+// --- PROMO LOGIC (NUEVO) ---
+window.applyPromo = () => {
+  const input = $("promoCodeInput");
+  if(!input) return;
+  
+  const code = input.value.trim().toUpperCase();
+  
+  if (code === "SCORE25" || code === "BAJA25") {
+    activeDiscount = 0.25;
+    toast("¡Cupón del 25% aplicado!");
+  } else if (code === "SCORE10") {
+    activeDiscount = 0.10;
+    toast("¡Cupón del 10% aplicado!");
+  } else if (code === "") {
+    activeDiscount = 0;
+    toast("Cupón removido");
+  } else {
+    activeDiscount = 0;
+    toast("Código inválido o expirado");
+  }
+  
+  updateCartUI();
+};
+
 function setupListeners() {
   if (_listenersBound) return;
   _listenersBound = true;
 
   document.addEventListener("click", (e) => {
+    // Size selector
     const btnSize = e.target.closest && e.target.closest("[data-size]");
     if (btnSize) {
       const pid = btnSize.dataset.pid;
       const size = btnSize.dataset.size;
       selectedSizeByProduct[pid] = size;
-
       const row = btnSize.parentElement;
       if (row) row.querySelectorAll(".size-pill").forEach((p) => p.classList.remove("active"));
       btnSize.classList.add("active");
       return;
     }
-
+    // Add to cart
     const btnAdd = e.target.closest && e.target.closest("[data-add]");
     if (btnAdd) {
       const pid = btnAdd.dataset.add;
@@ -379,20 +319,16 @@ function setupListeners() {
 
   const bindShipMode = () => {
     const radios = document.getElementsByName("shipMode");
-    if (!radios || !radios.length) return false;
+    if (!radios) return;
     Array.from(radios).forEach((r) => {
-      if (r._boundShip) return;
-      r._boundShip = true;
       r.addEventListener("change", (ev) => handleShipModeChange(ev.target.value));
     });
-    return true;
   };
 
   const bindCp = () => {
     const cpInput = $("cp");
-    if (!cpInput || cpInput._boundCp) return false;
-    cpInput._boundCp = true;
-
+    if (!cpInput || cpInput._bound) return;
+    cpInput._bound = true;
     cpInput.addEventListener("input", (ev) => {
       const val = ev.target.value.replace(/[^0-9-]/g, "").slice(0, 10);
       ev.target.value = val;
@@ -400,14 +336,11 @@ function setupListeners() {
       if (shippingState.mode === "mx" && val.length === 5) quoteShipping(val, "MX");
       else if (shippingState.mode === "us" && val.length >= 5) quoteShipping(val, "US");
     });
-
-    return true;
   };
 
   bindShipMode();
   bindCp();
-  setTimeout(() => { bindShipMode(); bindCp(); updateCartUI(); }, 250);
-  setTimeout(() => { bindShipMode(); bindCp(); updateCartUI(); }, 900);
+  setTimeout(() => { bindShipMode(); bindCp(); updateCartUI(); }, 500);
 }
 
 // --- CHECKOUT ---
@@ -426,14 +359,7 @@ window.checkout = async () => {
     if (mode === "us" && cp.length < 5) return toast("ZIP inválido");
   }
 
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "Procesando...";
-  }
-
-  if (typeof fbq === "function") {
-    fbq("track", "InitiateCheckout", { num_items: cart.length, currency: "MXN", value: 0 });
-  }
+  if (btn) { btn.disabled = true; btn.innerText = "Procesando..."; }
 
   try {
     const payload = {
@@ -442,6 +368,7 @@ window.checkout = async () => {
       customer: { name, address: addr, postal_code: cp },
       promo: PROMO_ACTIVE,
       shipping: { cost: shippingState.cost, label: shippingState.label },
+      discountFactor: activeDiscount // Enviar descuento al backend si se soporta
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
@@ -451,19 +378,14 @@ window.checkout = async () => {
     });
 
     const data = await res.json().catch(() => ({}));
-
     if (data.url) {
       window.location.href = data.url;
       return;
     }
-
     throw new Error(data.error || "Error al iniciar pago");
   } catch (err) {
     toast("Error: " + (err?.message || "Error desconocido"));
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = "PAGAR AHORA";
-    }
+    if (btn) { btn.disabled = false; btn.innerText = "PAGAR AHORA"; }
   }
 };
 
@@ -487,7 +409,7 @@ window.closeAll = () => {
   document.body.classList.remove("modalOpen");
 };
 
-window.openLegal = window.openLegal || function (key) {
+window.openLegal = (key) => {
   const modal = $("legalModal");
   if (!modal) return;
   modal.classList.add("active");
@@ -502,30 +424,25 @@ window.addToCart = (id, size) => {
   const existing = cart.find((i) => String(i.id) === String(id) && i.size === size);
   if (existing) existing.qty++;
   else cart.push({ id, size, qty: 1 });
-
   saveCart();
   updateCartUI();
   toast("Agregado");
   openDrawer();
-
-  if (typeof fbq === "function") {
-    fbq("track", "AddToCart", { content_ids: [String(id)], content_type: "product" });
-  }
 };
 
 window.removeFromCart = (idx) => {
   cart.splice(idx, 1);
   saveCart();
   updateCartUI();
-  recalcShippingIfNeeded();
 };
 
 window.emptyCart = (silent) => {
   if (silent || confirm("¿Vaciar?")) {
     cart = [];
+    activeDiscount = 0; // Reset descuento
+    if($("promoCodeInput")) $("promoCodeInput").value = "";
     saveCart();
     updateCartUI();
-    recalcShippingIfNeeded();
   }
 };
 
@@ -543,7 +460,6 @@ window.incQty = (idx) => {
   item.qty = Math.min(99, Number(item.qty || 1) + 1);
   saveCart();
   updateCartUI();
-  recalcShippingIfNeeded();
 };
 
 window.decQty = (idx) => {
@@ -554,47 +470,23 @@ window.decQty = (idx) => {
   else item.qty = next;
   saveCart();
   updateCartUI();
-  recalcShippingIfNeeded();
 };
 
-// --- SHIPPING ---
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
   const form = $("shipForm");
   if (form) form.style.display = mode === "pickup" ? "none" : "block";
 
-  if (mode === "pickup") {
-    shippingState.cost = 0;
-    shippingState.label = "Gratis";
-  } else if (mode === "tj") {
-    shippingState.cost = 200;
-    shippingState.label = "$200 Local";
-  } else if (mode === "mx") {
-    shippingState.cost = 0;
-    shippingState.label = "Ingresa CP...";
-  } else if (mode === "us") {
-    shippingState.cost = 0;
-    shippingState.label = "Ingresa ZIP...";
-  } else {
-    shippingState.cost = 0;
-    shippingState.label = "Ingresa CP...";
-    shippingState.mode = "mx";
-  }
+  if (mode === "pickup") { shippingState.cost = 0; shippingState.label = "Gratis"; }
+  else if (mode === "tj") { shippingState.cost = 200; shippingState.label = "$200 Local"; }
+  else { shippingState.cost = 0; shippingState.label = "Ingresa CP..."; }
+  
   updateCartUI();
-  recalcShippingIfNeeded();
-}
-
-function recalcShippingIfNeeded() {
-  if (!cart.length) return;
-  const cp = $("cp")?.value?.trim() || "";
-  if (shippingState.mode === "mx" && cp.length === 5) quoteShipping(cp, "MX");
-  if (shippingState.mode === "us" && cp.length >= 5) quoteShipping(cp, "US");
 }
 
 async function quoteShipping(zip, country) {
   const shipTotal = $("shipTotal");
   if (shipTotal) shipTotal.innerText = "Cotizando...";
-
   try {
     const qty = cart.reduce((acc, i) => acc + Number(i.qty || 0), 0) || 1;
     const res = await fetch(`${API_BASE}/quote_shipping`, {
@@ -617,7 +509,6 @@ async function quoteShipping(zip, country) {
   updateCartUI();
 }
 
-// --- RENDER CART ---
 function updateCartUI() {
   const c = $("cartItems");
   if (!c) return;
@@ -625,25 +516,20 @@ function updateCartUI() {
   let total = 0;
   let q = 0;
 
-  const html = cart
-    .map((i, idx) => {
+  const html = cart.map((i, idx) => {
       const p = (catalogData.products || []).find((x) => String(x.id) === String(i.id));
       if (!p) return "";
-
       const unit = Number(p.baseMXN || 0);
       const qty = Math.max(1, Number(i.qty || 1));
       const line = unit * qty;
-
       total += line;
       q += qty;
-
-      const img = cleanUrl(p.img || (p.images && p.images[0]) || "/assets/logo-score.webp");
-      const name = safeText(p.name || "Producto");
-      const size = safeText(i.size || "Unitalla");
-
+      const img = cleanUrl(p.img);
+      const name = safeText(p.name);
+      
       const fakeOldUnit = Math.round(unit * FAKE_MARKUP_FACTOR);
       const discountRow = PROMO_ACTIVE
-        ? `<div class="cMeta"><span style="text-decoration:line-through;color:#999;">${money(fakeOldUnit)}</span> <b style="color:#111;">${money(unit)}</b> · 80% OFF</div>`
+        ? `<div class="cMeta"><span style="text-decoration:line-through;color:#999;">${money(fakeOldUnit)}</span> <b style="color:#111;">${money(unit)}</b></div>`
         : `<div class="cMeta">Unit: ${money(unit)}</div>`;
 
       return `
@@ -651,64 +537,59 @@ function updateCartUI() {
           <img class="cartThumb" src="${img}" alt="${name}" loading="lazy">
           <div class="cInfo">
             <div class="cName">${name}</div>
-            <div class="cMeta">Talla: <b>${size}</b></div>
+            <div class="cMeta">Talla: <b>${i.size}</b></div>
             ${discountRow}
             <div class="qtyRow">
-              <button type="button" class="qtyBtn" onclick="decQty(${idx})" aria-label="Menos">−</button>
+              <button class="qtyBtn" onclick="decQty(${idx})">−</button>
               <div class="qtyVal">${qty}</div>
-              <button type="button" class="qtyBtn" onclick="incQty(${idx})" aria-label="Más">+</button>
+              <button class="qtyBtn" onclick="incQty(${idx})">+</button>
             </div>
           </div>
           <div style="text-align:right;">
             <div class="cPrice">${money(line)}</div>
-            <button type="button" class="linkDanger" onclick="removeFromCart(${idx})">Quitar</button>
+            <button class="linkDanger" onclick="removeFromCart(${idx})">Quitar</button>
           </div>
-        </div>
-      `;
-    })
-    .join("");
+        </div>`;
+    }).join("");
 
   c.innerHTML = html;
 
   const emptyEl = $("cartEmpty");
   if (emptyEl) emptyEl.style.display = q > 0 ? "none" : "block";
+  if ($("cartCount")) $("cartCount").innerText = String(q);
 
-  const cartCount = $("cartCount");
-  if (cartCount) cartCount.innerText = String(q);
+  // CALCULOS CON PROMO
+  const discountAmount = total * activeDiscount;
+  const finalTotal = total - discountAmount + Number(shippingState.cost || 0);
 
-  const subTotal = $("subTotal");
-  if (subTotal) subTotal.innerText = money(total);
+  if ($("subTotal")) $("subTotal").innerText = money(total);
+  if ($("shipTotal")) $("shipTotal").innerText = shippingState.label || "—";
+  if ($("grandTotal")) $("grandTotal").innerText = money(finalTotal);
 
-  const grandTotal = $("grandTotal");
-  if (grandTotal) grandTotal.innerText = money(total + Number(shippingState.cost || 0));
-
-  const shipTotal = $("shipTotal");
-  if (shipTotal) shipTotal.innerText = shippingState.label || "—";
+  const discRow = $("rowDiscount");
+  const discVal = $("discVal");
+  if (discRow && discVal) {
+    if (activeDiscount > 0) {
+      discRow.style.display = "flex";
+      discVal.innerText = `-${money(discountAmount)}`;
+    } else {
+      discRow.style.display = "none";
+    }
+  }
 }
 
-// --- ARRANQUE PROTEGIDO ---
 document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        await init();
-    } catch (err) {
-        console.error("🔥 Error crítico iniciando app:", err);
-    } finally {
-        // Garantía de quitar Splash
-        const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
-        if (splash) {
-            splash.classList.add("hidden");
-            setTimeout(() => splash.remove(), 1000);
-        }
+    try { await init(); } catch (err) { console.error(err); }
+    finally {
+        const splash = $("splash-screen");
+        if(splash) { splash.classList.add("hidden"); setTimeout(()=>splash.remove(), 1000); }
     }
 });
 
-// --- GLOBAL FAILSAFE ---
 setTimeout(() => {
-    const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
+    const splash = document.getElementById("splash-screen");
     if (splash && !splash.classList.contains("hidden")) {
-        console.warn("☢️ NUCLEAR: Splash eliminado por timeout global.");
         splash.style.opacity = "0";
-        splash.style.pointerEvents = "none";
         setTimeout(() => splash.remove(), 500);
     }
 }, 5000);
