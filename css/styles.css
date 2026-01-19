@@ -64,15 +64,31 @@ body.modalOpen{overflow:hidden;}
 .scroll-reveal.visible{opacity:1;transform:translateY(0);}
 
 /* ---------------------------
-   Splash (Arrancando Motores)
+   Splash (Arrancando Motores) - FIX BLINDADO
 --------------------------- */
-#splash-screen{
+#splash-screen, .splash {
   position:fixed; inset:0; z-index:9999;
   background-color:#000;
   display:flex; align-items:center; justify-content:center;
-  transition:opacity .6s ease-out, visibility .6s;
+  transition:opacity 0.6s ease-out, visibility 0.6s;
+  opacity: 1;
+  visibility: visible;
 }
-#splash-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+
+/* CLASE GLOBAL DE OCULTAMIENTO (CRÍTICA - NO BORRAR) */
+.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Compatibilidad extra por si el JS usa selectores específicos */
+#splash-screen.hidden, .splash.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
 
 .splash-content{text-align:center;width:min(300px,80%);}
 .splash-logo{
