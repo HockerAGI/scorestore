@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL MASTER v2.2.1 (UNIFIED: PWA shortcuts + Legal + robust DOM) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.2.2 (BLINDADO: Anti-Stuck Splash) */
 
 // CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
@@ -48,10 +48,19 @@ let _listenersBound = false;
 
 // --- INIT ---
 async function init() {
+  console.log("🚀 Iniciando Score Store...");
+
   // 1. Inicializar Supabase si está disponible
-  if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (window.supabase) {
+      try {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      } catch (err) {
+          console.error("Error iniciando Supabase Client:", err);
+      }
+  }
 
   // 2. Ejecutar Animación "Arrancando Motores" (BLINDADO)
+  // Lo llamamos aquí, pero también tenemos un backup global al final del archivo.
   initSplash();
 
   loadCart();
@@ -124,12 +133,15 @@ function initSplash() {
   if (_splashInitialized) return;
   _splashInitialized = true;
 
-  const splash = $("splash-screen");
+  const splash = $("splash-screen") || document.querySelector('.splash');
+  
   if (splash) {
     // Animación suave
     setTimeout(() => {
       splash.classList.add("hidden");
     }, 2200);
+  } else {
+      console.warn("Splash element not found in DOM.");
   }
 
   // FAIL-SAFE OBLIGATORIO: 4.5s (NO TOCAR)
@@ -726,4 +738,33 @@ function updateCartUI() {
   if (shipTotal) shipTotal.innerText = shippingState.label || "—";
 }
 
-document.addEventListener("DOMContentLoaded", init);
+// --- ARRANQUE PROTEGIDO (REGLA DE ORO) ---
+// Envolvemos init() para que SIEMPRE se quite el splash, aunque haya errores
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        await init();
+    } catch (err) {
+        console.error("🔥 Error crítico iniciando app:", err);
+    } finally {
+        // GARANTÍA ABSOLUTA: Quitamos el splash aunque init falle
+        const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
+        if (splash) {
+            console.log("🛡️ Safety: Forzando cierre de splash screen.");
+            splash.classList.add("hidden");
+            // Eliminar del DOM poco después para ahorrar memoria
+            setTimeout(() => splash.remove(), 1000);
+        }
+    }
+});
+
+// --- GLOBAL FAILSAFE (LA OPCIÓN NUCLEAR) ---
+// Si todo lo anterior falla (ej. error de sintaxis previo), esto se ejecuta sí o sí.
+setTimeout(() => {
+    const splash = document.getElementById("splash-screen") || document.querySelector(".splash");
+    if (splash && !splash.classList.contains("hidden")) {
+        console.warn("☢️ NUCLEAR: Splash eliminado por timeout global (anti-stuck).");
+        splash.style.opacity = "0";
+        splash.style.pointerEvents = "none";
+        setTimeout(() => splash.remove(), 500);
+    }
+}, 5000);
