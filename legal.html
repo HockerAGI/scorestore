@@ -11,18 +11,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Opcional (no rompe nada): si Stripe/Supabase ya están cacheados, ok.
-       main.js solo usa Supabase si window.supabase existe. -->
   <script src="https://js.stripe.com/v3" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* mini ajuste para que el header se vea igual que tienda */
+    /* Ajuste visual para el botón de regreso */
     .btnGhost { text-decoration:none; }
   </style>
 </head>
 
 <body>
+  <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
+
   <header class="topbar">
     <div class="container topbarInner">
       <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
@@ -128,66 +128,63 @@
     </div>
   </footer>
 
-  <!-- Overlay + Drawer (IDs EXACTOS para que main.js funcione igual) -->
-  <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
-
-  <aside id="drawer" class="drawer" aria-hidden="true">
+  <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
-      <h3 class="dTitle">TU PEDIDO</h3>
-      <button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button>
+      <h3 class="dTitle">MI PEDIDO</h3>
+      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
     </div>
-
+    
     <div class="dBody">
-      <div id="cartItems"></div>
-      <div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Tu carrito está vacío.</div>
-    </div>
-
-    <div class="dFoot">
-      <div style="text-align:right; margin-bottom:10px;">
-        <button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR CARRITO</button>
+      <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
+        <p style="color:#999; margin-bottom:20px;">Tu carrito está vacío.</p>
+        <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
       </div>
 
+      <div id="cartItems"></div>
+    </div>
+
+    <div class="dFoot" id="cartFooter">
       <div class="shipSelector">
         <label class="radio-option">
           <input type="radio" name="shipMode" value="pickup" checked>
-          <div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div>
+          <div>Recoger en Fábrica (Tijuana) - Gratis</div>
         </label>
-
-        <label class="radio-option">
-          <input type="radio" name="shipMode" value="tj">
-          <div><span>Local Express</span><small style="color:#555;display:block;">$200 (Solo Tijuana)</small></div>
-        </label>
-
         <label class="radio-option">
           <input type="radio" name="shipMode" value="mx">
-          <div><span>Nacional (México)</span><small style="color:#555;display:block;">Cotizar Envia.com</small></div>
+          <div>Envío Nacional (MX)</div>
         </label>
-
         <label class="radio-option">
           <input type="radio" name="shipMode" value="us">
-          <div><span>USA International</span><small style="color:#555;display:block;">Envíos a Estados Unidos</small></div>
+          <div>Envío USA</div>
         </label>
       </div>
 
-      <div id="shipForm" style="display:none; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
-        <p style="margin-bottom:8px; font-weight:bold; color:#333; font-size:13px;">Datos de Envío:</p>
-        <input id="cp" type="tel" placeholder="Código Postal / ZIP" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="addr" type="text" placeholder="Calle, Número y Colonia" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="name" type="text" placeholder="Nombre Completo de quien recibe" class="inputField" style="width:100%;">
+      <div id="shipForm" style="display:none; margin-bottom:15px;">
+        <input id="cp" class="inputField" type="text" placeholder="Código Postal / ZIP" maxlength="10">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <input id="name" class="inputField" type="text" placeholder="Nombre completo">
+          <input id="addr" class="inputField" type="text" placeholder="Dirección y Teléfono">
+        </div>
       </div>
 
-      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
-      <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
+      <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
+      <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
+      <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
-      <p style="text-align:center; font-size:11px; color:#999; margin-top:8px;">Pagos seguros vía Stripe · Envíos por Envia.com</p>
+      <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
     </div>
   </aside>
 
+  <div id="modalCatalog" class="modal" aria-hidden="true" style="display:none;">
+    <div class="dHead">
+      <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
+      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dBody" id="catContent"></div>
+  </div>
+
   <div class="toast" id="toast">Mensaje</div>
 
-  <!-- IMPORTANTE: No redefinir openDrawer/closeAll aquí. -->
   <script src="/js/main.js?v=2.2" defer></script>
 </body>
 </html>
