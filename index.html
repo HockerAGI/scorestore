@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
+
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
 
@@ -17,17 +18,7 @@
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    /* Cookie banner simple */
-    .cookieBanner{position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:980px;margin:0 auto;background:rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);border-left:6px solid #E10600;border-radius:16px;padding:14px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.55);backdrop-filter:blur(10px);}
-    .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-    .cookieText{color:#fff;font-family:'Inter',sans-serif;font-size:13px;flex:1;}
-    .cookieBtn{border-radius:999px;padding:8px 16px;cursor:pointer;font-family:'Teko',sans-serif;text-transform:uppercase;font-size:16px;background:#E10600;color:#fff;border:none;transition:0.2s;}
-    .cookieBtn:hover{transform:scale(1.05);}
-    .cookieBtn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.3);margin-right:10px;}
-  </style>
-
-  <!-- CONFIG ÚNICA (aquí pegas tus keys reales) -->
+  <!-- CONFIG ÚNICA (aquí pegas tus keys) -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
@@ -38,7 +29,7 @@
 </head>
 
 <body>
-  <!-- Splash -->
+  <!-- Splash (Racing) -->
   <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -52,7 +43,7 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
   <!-- Promo bar -->
-  <div class="promo-bar" id="promo-bar" role="status" aria-live="polite">
+  <div class="promo-bar" id="promo-bar">
     <span>⚡ <span class="promo-highlight blink-text" id="promo-text">🔥 EDICIÓN LIMITADA · COMPRA HOY</span> ⚡</span>
   </div>
 
@@ -86,7 +77,7 @@
         <div class="tagline"><span class="tag-pill">LANZAMIENTO OFICIAL 2026</span></div>
 
         <h1 class="hero-title" id="hero-title">
-          <span class="neon-text">DROP</span> OFICIAL
+          <span class="neon-text">GEAR</span> OFICIAL
         </h1>
 
         <div class="logos-row">
@@ -101,7 +92,7 @@
 
         <div class="ctaRow">
           <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER COLECCIONES</button>
-          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
+          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
     </section>
@@ -134,7 +125,7 @@
 
         <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-texture"></div>
-          <span class="badge" style="background:#333;">CLÁSICOS</span>
+          <span class="badge alt">CLÁSICOS</span>
           <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
@@ -199,13 +190,13 @@
   <!-- Drawer Carrito -->
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
-      <h3 class="dTitle">MI CARRITO</h3>
+      <h3 class="dTitle">MI PEDIDO</h3>
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
 
     <div class="dBody">
       <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
-        <p style="color:#666;">Tu carrito está vacío.</p>
+        <p style="color:#777;">Tu carrito está vacío.</p>
         <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
       </div>
       <div id="cartItems"></div>
@@ -241,7 +232,7 @@
       </div>
 
       <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:#17a34a;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
+      <div class="sumRow" id="rowDiscount" style="display:none; color:#12a150;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
       <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
@@ -287,6 +278,17 @@
   <!-- Toast -->
   <div class="toast" id="toast">Mensaje</div>
 
+  <!-- Cookies -->
+  <section class="cookieBanner" id="cookieBanner">
+    <div class="cookieInner">
+      <div class="cookieText">Usamos cookies esenciales para operar la tienda y mejorar tu experiencia.</div>
+      <div class="cookieActions">
+        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
+        <button class="cookieBtn primary" id="cookieAccept">Aceptar</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Bottom App Nav (solo móvil) -->
   <nav class="appNav" id="appNav" aria-label="Navegación">
     <button class="appNavBtn" onclick="scrollToTop()"><span class="dot"></span>Inicio</button>
@@ -306,17 +308,6 @@
     </div>
   </div>
 
-  <!-- Cookies -->
-  <section class="cookieBanner" id="cookieBanner">
-    <div class="cookieInner">
-      <div class="cookieText">Usamos cookies esenciales para operar la tienda y mejorar tu experiencia.</div>
-      <div class="cookieActions">
-        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
-        <button class="cookieBtn primary" id="cookieAccept">Aceptar</button>
-      </div>
-    </div>
-  </section>
-
   <!-- Scripts -->
   <script src="/js/main.js?v=4.2" defer></script>
 
@@ -332,7 +323,7 @@
 
     // SW register
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=25").catch(console.warn);
+      navigator.serviceWorker.register("/sw.js?v=26").catch(console.warn);
     }
   </script>
 </body>
