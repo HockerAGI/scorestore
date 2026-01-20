@@ -5,17 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
   <meta name="theme-color" content="#E10600" />
+  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
+  
   <link rel="stylesheet" href="/css/styles.css?v=4.0">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>.cookieBanner{position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:980px;margin:0 auto;background:rgba(0,0,0,0.92);border:1px solid rgba(255,255,255,0.14);border-left:6px solid #E10600;border-radius:16px;padding:14px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.55);}.cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}.cookieText{color:#fff;font-family:'Inter',sans-serif;font-size:13px;flex:1;}.cookieBtn{border-radius:999px;padding:8px 16px;cursor:pointer;font-family:'Teko',sans-serif;text-transform:uppercase;font-size:16px;background:#E10600;color:#fff;border:none;}.cookieBtn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.3);margin-right:10px;}</style>
+
+  <style>
+    /* Critical CSS para evitar Layout Shift */
+    .cookieBanner{position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:980px;margin:0 auto;background:rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);border-left:6px solid #E10600;border-radius:16px;padding:14px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.55);backdrop-filter:blur(10px);}
+    .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+    .cookieText{color:#fff;font-family:'Inter',sans-serif;font-size:13px;flex:1;}
+    .cookieBtn{border-radius:999px;padding:8px 16px;cursor:pointer;font-family:'Teko',sans-serif;text-transform:uppercase;font-size:16px;background:#E10600;color:#fff;border:none;transition:0.2s;}
+    .cookieBtn:hover{transform:scale(1.05);}
+    .cookieBtn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.3);margin-right:10px;}
+  </style>
 </head>
 <body>
   <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">INICIANDO MOTORES...</div></div></div>
+  
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
+  
   <div class="promo-bar slide-in-top" id="promo-bar"><span>⚠️ <span class="promo-highlight blink-text">GRAN APERTURA:</span> 80% DE DESCUENTO EN TODA LA TIENDA ⚠️</span></div>
 
   <header class="topbar">
@@ -104,7 +119,8 @@
 
   <div class="toast" id="toast">Mensaje</div>
   <section class="cookieBanner" id="cookieBanner"><div class="cookieInner"><div class="cookieText">Usamos cookies esenciales.</div><div class="cookieActions"><button class="cookieBtn ghost" id="cookieReject">Cerrar</button><button class="cookieBtn primary" id="cookieAccept">Aceptar</button></div></div></section>
+  
   <script src="/js/main.js?v=4.1" defer></script>
-  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="block";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"};document.getElementById("cookieReject").onclick=()=>{localStorage.setItem(k,"essential");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=21").catch(console.warn);</script>
+  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="block";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"};document.getElementById("cookieReject").onclick=()=>{localStorage.setItem(k,"essential");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=25").catch(console.warn);</script>
 </body>
 </html>
