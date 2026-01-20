@@ -8,8 +8,11 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
 
+  <!-- ✅ Activa SAFE MODE de animaciones (scroll-reveal) -->
+  <script>document.documentElement.classList.add('js');</script>
+
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.3" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.4" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,7 +146,7 @@
     </section>
   </main>
 
-  <!-- Footer (negro, como pediste) -->
+  <!-- Footer -->
   <footer class="footer scroll-reveal">
     <div class="container footerInner">
       <div class="fCol">
@@ -240,7 +243,7 @@
     </div>
   </aside>
 
-  <!-- Drawer Legal (mini) -->
+  <!-- Drawer Legal -->
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">LEGAL</h3>
@@ -252,22 +255,18 @@
         <h4>ENVÍOS</h4>
         <p>Nacional y USA. El costo se calcula automáticamente al ingresar CP/ZIP (si Envia está configurado).</p>
       </div>
-
       <div class="legalBlock" data-legal-block="returns" style="display:none;">
         <h4>DEVOLUCIONES</h4>
         <p>Aplican solo por defecto de fábrica comprobable. Productos personalizados no aplican a cambios/devoluciones.</p>
       </div>
-
       <div class="legalBlock" data-legal-block="terms" style="display:none;">
         <h4>TÉRMINOS</h4>
         <p>Uso del sitio y condiciones de compra. Ver documento completo en Legal.</p>
       </div>
-
       <div class="legalBlock" data-legal-block="privacy" style="display:none;">
         <h4>PRIVACIDAD</h4>
         <p>Tratamiento de datos conforme al aviso integral publicado en Legal.</p>
       </div>
-
       <div class="legalBlock" data-legal-block="billing" style="display:none;">
         <h4>FACTURACIÓN</h4>
         <p>Solicitar dentro del mes fiscal del pago a: <strong>ventas.unicotextil@gmail.com</strong></p>
@@ -289,7 +288,7 @@
     </div>
   </section>
 
-  <!-- Bottom App Nav (solo móvil) -->
+  <!-- Bottom App Nav -->
   <nav class="appNav" id="appNav" aria-label="Navegación">
     <button class="appNavBtn" onclick="scrollToTop()"><span class="dot"></span>Inicio</button>
     <button class="appNavBtn" onclick="scrollToCollections()">Colecciones</button>
@@ -309,10 +308,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/js/main.js?v=4.3" defer></script>
+  <script src="/js/main.js?v=4.4" defer></script>
 
   <script>
-    // Cookie consent (simple)
     (function(){
       const k="score_cookie_consent";
       const b=document.getElementById("cookieBanner");
@@ -321,7 +319,6 @@
       document.getElementById("cookieReject").onclick=()=>{localStorage.setItem(k,"essential");b.style.display="none"};
     })();
 
-    // SW register
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js?v=26").catch(console.warn);
     }
