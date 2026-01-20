@@ -1,9 +1,9 @@
-/* SCORE STORE ENGINE v5.0 (MOBILE OPTIMIZED) */
+/* SCORE STORE ENGINE v6.0 (SLIDER FIXED + INTEGRATIONS) */
 
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
-const CART_KEY = "score_cart_v5";
+const CART_KEY = "score_cart_v6";
 
 let cart = [];
 let catalogData = { products: [] };
@@ -20,9 +20,9 @@ async function init() {
   
   await loadCatalogLocal();
   loadCart();
+  updateCartUI();
   setupListeners();
   
-  // Animación de entrada
   setTimeout(() => {
     const splash = $("splash-screen");
     if(splash) { splash.style.opacity = 0; setTimeout(() => splash.remove(), 500); }
@@ -48,10 +48,10 @@ async function enrichWithDB() {
         return match ? { ...local, baseMXN: match.price, db_id: match.id } : local;
       });
     }
-  } catch (e) { console.warn(e); }
+  } catch (e) { console.warn("DB Sync Error:", e); }
 }
 
-// UI LOGIC
+/* --- LOGICA CATALOGO CON SLIDER (RESTAURADA) --- */
 window.openCatalog = (sectionId, title) => {
   const items = catalogData.products.filter(p => p.sectionId === sectionId);
   $("catTitle").innerText = title;
@@ -62,24 +62,42 @@ window.openCatalog = (sectionId, title) => {
     container.innerHTML = "<div style='text-align:center;padding:40px;color:#999'>Próximamente</div>";
   } else {
     const grid = document.createElement("div"); grid.className = "catGrid";
+    
     items.forEach(p => {
-      // Talla por defecto
+      // Talla Default
       if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = (p.sizes||["UNITALLA"])[0];
       
       const price = p.baseMXN || 0;
       const el = document.createElement("div"); el.className = "prodCard";
       
-      // Construir tallas
+      // GENERAR SLIDER IMÁGENES
+      let slidesHtml = "";
+      if (p.images && p.images.length > 0) {
+        slidesHtml = p.images.map(img => `
+          <div class="prod-slide">
+            <img src="${img}" class="prodImg" loading="lazy">
+          </div>
+        `).join("");
+      } else {
+        slidesHtml = `<div class="prod-slide"><img src="${p.img}" class="prodImg" loading="lazy"></div>`;
+      }
+
+      // Tallas
       const sizesHtml = (p.sizes||["UNITALLA"]).map(s => 
         `<div class="size-pill ${selectedSizeByProduct[p.id]===s?'active':''}" 
               onclick="selectSize('${p.id}','${s}', this)">${s}</div>`
       ).join("");
 
       el.innerHTML = `
-        <div class="metallic-frame"><img src="${p.img}" class="prodImg" loading="lazy"></div>
+        <div class="metallic-frame">
+          <div class="prod-slider">
+            ${slidesHtml}
+          </div>
+          ${(p.images && p.images.length > 1) ? '<div class="slider-hint">Desliza ▶</div>' : ''}
+        </div>
         <div class="prodName">${p.name}</div>
         <div class="prodPrice">${money(price)}</div>
-        <div style="display:flex;flex-wrap:wrap;justify-content:center;margin:5px 0;">${sizesHtml}</div>
+        <div class="sizeRow">${sizesHtml}</div>
         <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR</button>
       `;
       grid.appendChild(el);
@@ -92,7 +110,6 @@ window.openCatalog = (sectionId, title) => {
 
 window.selectSize = (pid, size, el) => {
   selectedSizeByProduct[pid] = size;
-  // Visual update logic simple
   el.parentElement.querySelectorAll(".size-pill").forEach(x => x.classList.remove("active"));
   el.classList.add("active");
 };
@@ -104,25 +121,22 @@ window.addToCart = (id) => {
   else cart.push({ id, size, qty: 1 });
   saveCart();
   updateCartUI();
-  // Feedback visual rápido
+  // Feedback
   const btn = event.target;
-  const originalText = btn.innerText;
-  btn.innerText = "¡LISTO!";
-  btn.style.background = "#000";
-  setTimeout(() => { btn.innerText = originalText; btn.style.background = "var(--score-red)"; }, 1000);
+  const original = btn.innerText;
+  btn.innerText = "✓";
+  btn.style.background = "#333";
+  setTimeout(() => { btn.innerText = original; btn.style.background = ""; }, 1000);
 };
 
 function updateCartUI() {
   const count = cart.reduce((acc, i) => acc + i.qty, 0);
-  
-  // Actualizar ambos contadores (Desktop y Mobile)
   if($("cartCountDesktop")) $("cartCountDesktop").innerText = count;
   if($("cartCountMobile")) {
     $("cartCountMobile").innerText = count;
     $("cartCountMobile").style.display = count > 0 ? "flex" : "none";
   }
 
-  // Render items cart
   const container = $("cartItems");
   if(!container) return;
   
@@ -168,25 +182,22 @@ function updateCartUI() {
 window.modQty = (idx, delta) => {
   cart[idx].qty += delta;
   if (cart[idx].qty <= 0) cart.splice(idx, 1);
-  saveCart();
-  updateCartUI();
+  saveCart(); updateCartUI();
 };
 window.remItem = (idx) => { cart.splice(idx, 1); saveCart(); updateCartUI(); };
 
-window.openDrawer = () => {
-  $("drawer").classList.add("active");
-  $("overlay").classList.add("active");
-};
-
-window.closeAll = () => {
-  document.querySelectorAll(".active").forEach(el => el.classList.remove("active"));
+window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); };
+window.closeAll = () => { document.querySelectorAll(".active").forEach(el => el.classList.remove("active")); };
+window.openLegal = (t) => { 
+  $("legalModal").classList.add("active"); $("overlay").classList.add("active");
+  document.querySelectorAll(".legalBlock").forEach(b => b.style.display="none");
+  const blk = document.querySelector(`[data-legal-block="${t}"]`);
+  if(blk) blk.style.display="block";
 };
 
 window.checkout = async () => {
   const btn = $("checkoutBtn");
-  btn.innerText = "PROCESANDO...";
-  btn.disabled = true;
-  
+  btn.innerText = "PROCESANDO..."; btn.disabled = true;
   try {
     const payload = {
       items: cart.map(i => {
@@ -194,28 +205,27 @@ window.checkout = async () => {
         return { id: p.db_id || p.id, sku: p.sku, qty: i.qty, size: i.size };
       }),
       mode: shippingState.mode,
-      customer: { 
-        name: $("name")?.value || "Cliente", 
-        postal_code: $("cp")?.value || "00000" 
-      },
+      customer: { name: $("name")?.value || "Cliente", postal_code: $("cp")?.value || "00000" },
       discountFactor: activeDiscount
     };
-
     const res = await fetch(`${API_BASE}/create_checkout`, {
       method: "POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)
     });
     const json = await res.json();
     if(json.url) window.location.href = json.url;
     else throw new Error("Error iniciando pago");
-    
   } catch(e) {
-    alert("Error: " + e.message);
-    btn.innerText = "PAGAR AHORA";
-    btn.disabled = false;
+    alert("Error: " + e.message); btn.innerText = "PAGAR AHORA"; btn.disabled = false;
   }
 };
 
-// Utils
+window.applyPromo = () => {
+  const code = $("promoCodeInput").value.trim().toUpperCase();
+  if (code === "SCORE10") { activeDiscount = 0.10; alert("10% Aplicado"); }
+  else { activeDiscount = 0; alert("Cupón inválido"); }
+  updateCartUI();
+};
+
 function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 function loadCart() { const s = localStorage.getItem(CART_KEY); if(s) cart = JSON.parse(s); }
 function setupListeners() {
