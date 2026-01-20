@@ -8,8 +8,14 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
 
+  <!-- ✅ FAIL-SAFE: marca que JS está activo (para scroll-reveal seguro) -->
+  <script>document.documentElement.classList.add('js');</script>
+
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="stylesheet" href="/css/styles.css?v=4.2" />
+
+  <!-- ✅ Preload logo principal (splash/hero/header) -->
+  <link rel="preload" as="image" href="/assets/logo-score.webp" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,6 +32,14 @@
       supabaseAnonKey: "PASTE_SUPABASE_ANON_KEY_HERE"
     };
   </script>
+
+  <!-- ✅ Fallback si JS está deshabilitado: que no se oculte nada -->
+  <noscript>
+    <style>
+      #splash-screen{ display:none !important; }
+      .scroll-reveal{ opacity: 1 !important; transform:none !important; }
+    </style>
+  </noscript>
 </head>
 
 <body>
