@@ -6,7 +6,7 @@
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=4.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=5.0" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +15,21 @@
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '4249947775334413');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  /></noscript>
   <style>
     .btnGhost { text-decoration:none; }
   </style>
@@ -25,24 +40,15 @@
 
   <header class="topbar">
     <div class="container topbarInner">
-      <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
+      <a class="btnGhost" href="/" style="color:#fff; border-color:rgba(255,255,255,0.3);">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.8);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
-            <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
-            <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
-          </svg>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
-      </div>
+      <div style="width:40px;"></div>
     </div>
   </header>
 
   <main class="legal">
-    <h1 class="h1" style="color:#000;">INFORMACIÓN LEGAL Y COMERCIAL</h1>
-    <p class="p muted">Última actualización: Enero 2026</p>
+    <h1 class="h1" style="color:#fff;">INFORMACIÓN LEGAL Y COMERCIAL</h1>
+    <p class="p muted" style="color:#999;">Última actualización: Enero 2026</p>
 
     <section id="privacidad" class="legalCard">
       <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
@@ -121,42 +127,6 @@
     </div>
   </footer>
 
-  <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button type="button" class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody">
-      <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
-        <p style="color:#999; margin-bottom:20px;">Tu carrito está vacío.</p>
-        <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
-      </div>
-      <div id="cartItems"></div>
-    </div>
-    <div class="dFoot" id="cartFooter">
-      <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div>Recoger en Fábrica (Tijuana) - Gratis</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div>Envío Nacional (MX)</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us"><div>Envío USA</div></label>
-      </div>
-      <div id="shipForm" style="display:none; margin-bottom:15px;">
-        <input id="cp" class="inputField" type="text" placeholder="Código Postal / ZIP" maxlength="10">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-          <input id="name" class="inputField" type="text" placeholder="Nombre completo">
-          <input id="addr" class="inputField" type="text" placeholder="Dirección y Teléfono">
-        </div>
-      </div>
-      <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
-      <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
-      <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
-    </div>
-  </aside>
-
-  <div id="modalCatalog" class="modal" aria-hidden="true" style="display:none;">
-    <div class="dHead"><h3 class="dTitle" id="catTitle">COLECCIÓN</h3><button type="button" class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" id="catContent"></div>
-  </div>
-
-  <div class="toast" id="toast">Mensaje</div>
-
-  <script src="/js/main.js?v=4.1" defer></script>
+  <script src="/js/main.js?v=5.0" defer></script>
 </body>
 </html>
