@@ -8,14 +8,8 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
 
-  <!-- ✅ FAIL-SAFE: marca que JS está activo (para scroll-reveal seguro) -->
-  <script>document.documentElement.classList.add('js');</script>
-
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.2" />
-
-  <!-- ✅ Preload logo principal (splash/hero/header) -->
-  <link rel="preload" as="image" href="/assets/logo-score.webp" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.3" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,14 +26,6 @@
       supabaseAnonKey: "PASTE_SUPABASE_ANON_KEY_HERE"
     };
   </script>
-
-  <!-- ✅ Fallback si JS está deshabilitado: que no se oculte nada -->
-  <noscript>
-    <style>
-      #splash-screen{ display:none !important; }
-      .scroll-reveal{ opacity: 1 !important; transform:none !important; }
-    </style>
-  </noscript>
 </head>
 
 <body>
@@ -48,20 +34,20 @@
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
-      <div class="splash-text">CALENTANDO MOTOR...</div>
-      <div class="splash-sub">Cargando catálogo oficial · Checkout seguro</div>
+      <div class="splash-text">ARRANCANDO MOTORES…</div>
+      <div class="splash-sub">Sin humo · Catálogo oficial · Checkout seguro</div>
     </div>
   </div>
 
   <!-- Overlay -->
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <!-- Promo bar -->
+  <!-- Promo bar (HOOK) -->
   <div class="promo-bar" id="promo-bar">
-    <span>⚡ <span class="promo-highlight blink-text" id="promo-text">🔥 EDICIÓN LIMITADA · COMPRA HOY</span> ⚡</span>
+    <span>⚡ <span class="promo-highlight blink-text" id="promo-text">⚡ HOY: ENVÍO + DROP LIMITADO · ENTRA AL PIT-LANE</span> ⚡</span>
   </div>
 
-  <!-- Header -->
+  <!-- Header (Light Glass) -->
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
@@ -157,7 +143,7 @@
     </section>
   </main>
 
-  <!-- Footer -->
+  <!-- Footer (negro, como pediste) -->
   <footer class="footer scroll-reveal">
     <div class="container footerInner">
       <div class="fCol">
@@ -323,7 +309,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/js/main.js?v=4.2" defer></script>
+  <script src="/js/main.js?v=4.3" defer></script>
 
   <script>
     // Cookie consent (simple)
