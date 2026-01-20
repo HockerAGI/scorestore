@@ -1,10 +1,9 @@
-/* SCORE STORE ENGINE v7.0 (REAL + SLIDER) */
+/* SCORE STORE ENGINE v8.0 (UNIFIED + SLIDER + INTEGRATIONS) */
 
-// CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
-const CART_KEY = "score_cart_v7";
+const CART_KEY = "score_cart_v8";
 
 let cart = [];
 let catalogData = { products: [] };
