@@ -4,22 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   
-  <title>SCORE | Tienda Oficial - Único Uniformes</title>
-  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
-  <meta name="theme-color" content="#000000" />
+  <title>SCORE | Tienda Oficial - Fabricado por Único</title>
+  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes.">
+  <meta name="theme-color" content="#E10600" />
 
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=5.0">
-  
   <link rel="manifest" href="/site.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SCORE Store">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
   <link rel="preload" as="image" href="/assets/hero.webp">
 
+  <link rel="stylesheet" href="/css/styles.css?v=6.0">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -43,11 +42,10 @@
   src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
   <style>
-    /* Critical CSS Inline */
-    .cookieBanner{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:5000;background:rgba(20,20,20,0.95);border:1px solid #333;border-left:4px solid #E10600;border-radius:12px;padding:14px;display:none;backdrop-filter:blur(10px);}
-    .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;}
-    .cookieText{color:#fff;font-size:12px;}
-    .cookieBtn{border-radius:50px;padding:6px 14px;font-size:12px;font-weight:700;background:#E10600;color:#fff;border:none;cursor:pointer;}
+    /* Critical CSS */
+    .cookieBanner{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:5000;background:rgba(18,18,18,0.95);border-left:4px solid #E10600;border-radius:12px;padding:16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 10px 40px rgba(0,0,0,0.6);backdrop-filter:blur(5px);}
+    .cookieText{color:#fff;font-size:13px;margin-right:10px;}
+    .cookieBtn{background:#E10600;color:#fff;border:none;padding:8px 20px;border-radius:50px;font-family:'Teko';font-size:16px;cursor:pointer;}
   </style>
 </head>
 <body>
@@ -59,11 +57,11 @@
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE" class="brandLogo" width="114" height="50">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" width="114" height="50">
       </a>
       <div class="navRight desktop-only">
         <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
           <span id="cartCountDesktop" class="cartCount">0</span>
         </button>
       </div>
@@ -74,26 +72,29 @@
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div><div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">TEMPORADA 2026</span></div>
-        <h1 class="hero-title" id="hero-title">80% OFF<br><span class="thin-text">EN TODO</span></h1>
+        <div class="tagline"><span class="tag-pill">TIENDA OFICIAL</span></div>
+        <h1 class="hero-title" id="hero-title">OFICIAL<br><span>SCORE STORE</span></h1>
         <div class="logos-row">
             <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" width="229" height="100">
+            <img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal" width="111" height="100">
         </div>
-        <div class="ctaRow"><button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">COMPRAR AHORA</button></div>
+        <div class="marketing-copy"><strong>SCORE INTERNATIONAL MERCHANDISE</strong><br>Fabricado por <strong>Único Uniformes</strong>.</div>
+        <div class="ctaRow"><button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER COLECCIONES</button></div>
       </div>
     </section>
 
     <section class="section scroll-reveal" id="collections">
-      <div class="sectionHead"><h2>COLECCIONES</h2></div>
+      <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2></div>
       <div class="grid app-grid">
-        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')"><div class="card-texture"></div><span class="badge">TOP</span><img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" width="200" height="124"><div class="card-btn">VER</div></div>
-        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')"><div class="card-texture"></div><img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" width="200" height="125"><div class="card-btn">VER</div></div>
-        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')"><div class="card-texture"></div><img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy" width="200" height="155"><div class="card-btn">VER</div></div>
-        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE')"><div class="card-texture"></div><img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy" width="200" height="127"><div class="card-btn">VER</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')"><div class="card-texture"></div><span class="badge">MÁS VENDIDO</span><img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" width="200" height="124"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')"><div class="card-texture"></div><img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" width="200" height="125"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')"><div class="card-texture"></div><img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy" width="200" height="155"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')"><div class="card-texture"></div><span class="badge" style="background:#333;">CLÁSICOS</span><img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy" width="200" height="127"><div class="card-btn">VER PRODUCTOS</div></div>
       </div>
     </section>
 
     <section class="partners scroll-reveal">
+      <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
           <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" width="150" height="57">
           <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy" width="150" height="51">
@@ -104,24 +105,20 @@
   </main>
 
   <footer class="footer scroll-reveal">
-    <div class="container">
-      <div class="footerBrandName">BAJATEX</div>
-      <p class="fText" style="opacity: 0.6;">Operado por Único Uniformes.<br>Tijuana, B.C.</p>
+    <div class="container footerInner">
+      <div class="fCol"><div class="footerBrandName">BAJATEX</div><p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p></div>
       
-      <div style="margin: 20px 0; display: flex; justify-content: center; gap: 20px;">
-        <a href="https://www.facebook.com/uniforme.unico/" target="_blank" aria-label="Facebook">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-        </a>
-        <a href="https://www.instagram.com/uniformes.unico" target="_blank" aria-label="Instagram">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-        </a>
-        <a href="https://unicouniformes.com/" target="_blank" aria-label="Web Oficial">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-        </a>
+      <div class="social-row" style="grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+        <a href="https://www.facebook.com/uniforme.unico/" target="_blank" aria-label="Facebook"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+        <a href="https://www.instagram.com/uniformes.unico" target="_blank" aria-label="Instagram"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+        <a href="https://unicouniformes.com/" target="_blank" aria-label="Web"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></a>
       </div>
 
-      <div class="footerLinks"><button onclick="openLegal('terms')">Términos</button> • <button onclick="openLegal('privacy')">Privacidad</button> • <a href="/legal.html">Legal</a></div>
+      <div class="fCol"><h4>ATENCIÓN A CLIENTES</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button><button onclick="openLegal('billing')">Facturación</button></div></div>
+      <div class="fCol"><h4>LEGAL</h4><div class="footerLinks"><button onclick="openLegal('terms')">Términos</button><button onclick="openLegal('privacy')">Privacidad</button></div></div>
+      <div class="fCol"><h4>CONTACTO</h4><p class="fText">ventas.unicotextil@gmail.com</p></div>
     </div>
+    <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
   <nav class="mobile-nav">
@@ -142,11 +139,11 @@
     </button>
   </nav>
 
-  <div id="modalCatalog" class="modal" aria-hidden="true"><div class="dHead"><h3 class="dTitle" id="catTitle">PRODUCTOS</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div><div class="dBody" id="catContent"></div></div>
+  <div id="modalCatalog" class="modal" aria-hidden="true"><div class="dHead"><h3 class="dTitle" id="catTitle">COLECCIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div><div class="dBody" id="catContent"></div></div>
   
   <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
-    <div class="dBody"><div id="cartEmpty" style="text-align:center; padding:40px 20px;"><p style="color:#999;">Tu carrito está vacío.</p><button class="btn secondary" onclick="closeAll()">Seguir Comprando</button></div><div id="cartItems"></div></div>
+    <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dBody"><div id="cartEmpty" style="text-align:center; padding:40px 20px;"><p style="color:#666;">Tu carrito está vacío.</p><button class="btn secondary" style="color:#333; border-color:#999;" onclick="closeAll()">Seguir Comprando</button></div><div id="cartItems"></div></div>
     <div class="dFoot" id="cartFooter">
       <div class="shipSelector">
         <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div>Recoger en Fábrica (Tijuana) - Gratis</div></label>
@@ -161,31 +158,11 @@
   </aside>
 
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
-    <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
-    <div class="dBody" style="padding:20px; color:#222;">
-      <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div>
-      <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div>
-      <div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex S. de R.L. de C.V.</p></div>
-      <div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Sus datos están protegidos.</p></div>
-      <div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>Solicitar a: ventas.unicotextil@gmail.com</p></div>
-    </div>
+    <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dBody" style="padding:20px; color:#222;"><div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div><div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div><div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex.</p></div><div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div><div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>ventas.unicotextil@gmail.com</p></div></div>
   </aside>
 
-  <div class="toast" id="toast">Mensaje</div>
-  <section class="cookieBanner" id="cookieBanner"><div class="cookieInner"><div class="cookieText">Usamos cookies para mejorar tu experiencia.</div><button class="cookieBtn" id="cookieAccept">OK</button></div></section>
-  
-  <script src="/js/main.js?v=5.0" defer></script>
-  
-  <script>
-    (function(){
-      const k="score_cookie_consent",b=document.getElementById("cookieBanner");
-      if(!localStorage.getItem(k))b.style.display="block";
-      document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"};
-    })();
-    
-    if("serviceWorker"in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=5.0").catch(console.warn);
-    }
-  </script>
+  <script src="/js/main.js?v=6.0" defer></script>
+  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="flex";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=6.0").catch(console.warn);</script>
 </body>
 </html>
