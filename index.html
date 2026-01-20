@@ -7,17 +7,22 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
   
-  <link rel="stylesheet" href="/css/styles.css?v=4.0">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+
+  <link rel="preload" as="image" href="/assets/hero.webp">
+
+  <link rel="stylesheet" href="/css/styles.css?v=4.1">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://js.stripe.com/v3" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
   <style>
-    /* Critical CSS para evitar Layout Shift */
+    /* Critical CSS Inline */
     .cookieBanner{position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:980px;margin:0 auto;background:rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);border-left:6px solid #E10600;border-radius:16px;padding:14px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.55);backdrop-filter:blur(10px);}
     .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
     .cookieText{color:#fff;font-family:'Inter',sans-serif;font-size:13px;flex:1;}
@@ -27,7 +32,7 @@
   </style>
 </head>
 <body>
-  <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">INICIANDO MOTORES...</div></div></div>
+  <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="66"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">INICIANDO MOTORES...</div></div></div>
   
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
@@ -35,7 +40,9 @@
 
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio"><img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo"></a>
+      <a href="/" class="brand" aria-label="Inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" width="114" height="50">
+      </a>
       <div class="navRight">
         <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
@@ -51,7 +58,10 @@
       <div class="heroContent">
         <div class="tagline"><span class="tag-pill">INAUGURACIÓN OFICIAL 2026</span></div>
         <h1 class="hero-title" id="hero-title"><span class="neon-text">80% OFF</span> EN TODO</h1>
-        <div class="logos-row"><img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo"><img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal"></div>
+        <div class="logos-row">
+            <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" width="229" height="100">
+            <img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal" width="111" height="100">
+        </div>
         <div class="marketing-copy"><strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.</div>
         <div class="ctaRow"><button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER OFERTAS</button><button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button></div>
       </div>
@@ -60,16 +70,21 @@
     <section class="section scroll-reveal" id="collections">
       <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2><p>APROVECHA PRECIOS DE INAUGURACIÓN</p></div>
       <div class="grid">
-        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')"><div class="card-texture"></div><span class="badge">MÁS VENDIDO</span><img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy"><div class="card-btn">VER PRODUCTOS</div></div>
-        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')"><div class="card-texture"></div><img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy"><div class="card-btn">VER PRODUCTOS</div></div>
-        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')"><div class="card-texture"></div><img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy"><div class="card-btn">VER PRODUCTOS</div></div>
-        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')"><div class="card-texture"></div><span class="badge" style="background:#333;">CLÁSICOS</span><img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')"><div class="card-texture"></div><span class="badge">MÁS VENDIDO</span><img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" width="200" height="124"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')"><div class="card-texture"></div><img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" width="200" height="125"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')"><div class="card-texture"></div><img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy" width="200" height="155"><div class="card-btn">VER PRODUCTOS</div></div>
+        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')"><div class="card-texture"></div><span class="badge" style="background:#333;">CLÁSICOS</span><img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy" width="200" height="127"><div class="card-btn">VER PRODUCTOS</div></div>
       </div>
     </section>
 
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
-      <div class="partnersGrid"><img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy"><img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy"><img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy"><img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy"></div>
+      <div class="partnersGrid">
+          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" width="150" height="57">
+          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy" width="150" height="51">
+          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" width="150" height="38">
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy" width="150" height="44">
+      </div>
     </section>
   </main>
 
@@ -83,10 +98,10 @@
     <div class="copy">SCORE Store © 2026 · Operado por BAJATEX S. de R.L. de C.V.</div>
   </footer>
 
-  <div id="modalCatalog" class="modal" aria-hidden="true"><div class="dHead"><h3 class="dTitle" id="catTitle">COLECCIÓN</h3><button class="closeBtn" onclick="closeAll()">✕</button></div><div class="dBody" id="catContent"></div></div>
+  <div id="modalCatalog" class="modal" aria-hidden="true"><div class="dHead"><h3 class="dTitle" id="catTitle">COLECCIÓN</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div><div class="dBody" id="catContent"></div></div>
   
   <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
     <div class="dBody"><div id="cartEmpty" style="text-align:center; padding:40px 20px;"><p style="color:#999;">Tu carrito está vacío.</p><button class="btn secondary" onclick="closeAll()">Seguir Comprando</button></div><div id="cartItems"></div></div>
     <div class="dFoot" id="cartFooter">
       <div class="shipSelector">
@@ -107,7 +122,7 @@
   </aside>
 
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
-    <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
+    <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
     <div class="dBody" style="padding:30px; color:#222;">
       <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Nacional y USA.</p></div>
       <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo defecto fábrica.</p></div>
