@@ -1,12 +1,29 @@
 [build]
-  publish = "."
+  command = "npm install"
   functions = "netlify/functions"
+  publish = "."
 
 [functions]
   node_bundler = "esbuild"
 
 [build.environment]
   NODE_VERSION = "18"
+
+# --- REDIRECCIONES ---
+
+# Permite llamar a la API como /api/nombre_funcion en lugar de /.netlify/functions/...
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Redirección SPA (Manejo de rutas y errores 404 enviando al index)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# --- HEADERS DE SEGURIDAD Y CACHÉ (Optimizados para Producción) ---
 
 [[headers]]
   for = "/*"
@@ -50,8 +67,3 @@
   for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
