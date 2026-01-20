@@ -8,16 +8,17 @@
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
 
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.2" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    /* Cookie banner simple */
     .cookieBanner{position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:980px;margin:0 auto;background:rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);border-left:6px solid #E10600;border-radius:16px;padding:14px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.55);backdrop-filter:blur(10px);}
     .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
     .cookieText{color:#fff;font-family:'Inter',sans-serif;font-size:13px;flex:1;}
@@ -26,7 +27,7 @@
     .cookieBtn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.3);margin-right:10px;}
   </style>
 
-  <!-- CONFIG ÚNICA (aquí pegas tus keys) -->
+  <!-- CONFIG ÚNICA (aquí pegas tus keys reales) -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
@@ -38,11 +39,12 @@
 
 <body>
   <!-- Splash -->
-  <div id="splash-screen">
+  <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
-      <div class="splash-text">INICIANDO MOTORES...</div>
+      <div class="splash-text">CALENTANDO MOTOR...</div>
+      <div class="splash-sub">Cargando catálogo oficial · Checkout seguro</div>
     </div>
   </div>
 
@@ -50,8 +52,8 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
   <!-- Promo bar -->
-  <div class="promo-bar slide-in-top" id="promo-bar">
-    <span>⚠️ <span class="promo-highlight blink-text" id="promo-text">OFERTAS ACTIVAS</span> ⚠️</span>
+  <div class="promo-bar" id="promo-bar" role="status" aria-live="polite">
+    <span>⚡ <span class="promo-highlight blink-text" id="promo-text">🔥 EDICIÓN LIMITADA · COMPRA HOY</span> ⚡</span>
   </div>
 
   <!-- Header -->
@@ -84,7 +86,7 @@
         <div class="tagline"><span class="tag-pill">LANZAMIENTO OFICIAL 2026</span></div>
 
         <h1 class="hero-title" id="hero-title">
-          <span class="neon-text">OFERTAS</span> OFICIALES
+          <span class="neon-text">DROP</span> OFICIAL
         </h1>
 
         <div class="logos-row">
@@ -98,8 +100,8 @@
         </div>
 
         <div class="ctaRow">
-          <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER OFERTAS</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER COLECCIONES</button>
+          <button class="btn secondary" onclick="openDrawer()">MI CARRITO</button>
         </div>
       </div>
     </section>
@@ -197,13 +199,13 @@
   <!-- Drawer Carrito -->
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
-      <h3 class="dTitle">MI PEDIDO</h3>
+      <h3 class="dTitle">MI CARRITO</h3>
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
 
     <div class="dBody">
       <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
-        <p style="color:#999;">Tu carrito está vacío.</p>
+        <p style="color:#666;">Tu carrito está vacío.</p>
         <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
       </div>
       <div id="cartItems"></div>
@@ -239,7 +241,7 @@
       </div>
 
       <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:#2ecc71;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
+      <div class="sumRow" id="rowDiscount" style="display:none; color:#17a34a;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
       <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
@@ -254,7 +256,7 @@
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
 
-    <div class="dBody" style="padding:30px; color:#222;">
+    <div class="dBody" style="padding:30px; color:#111;">
       <div class="legalBlock" data-legal-block="shipping" style="display:none;">
         <h4>ENVÍOS</h4>
         <p>Nacional y USA. El costo se calcula automáticamente al ingresar CP/ZIP (si Envia está configurado).</p>
@@ -285,6 +287,25 @@
   <!-- Toast -->
   <div class="toast" id="toast">Mensaje</div>
 
+  <!-- Bottom App Nav (solo móvil) -->
+  <nav class="appNav" id="appNav" aria-label="Navegación">
+    <button class="appNavBtn" onclick="scrollToTop()"><span class="dot"></span>Inicio</button>
+    <button class="appNavBtn" onclick="scrollToCollections()">Colecciones</button>
+    <button class="appNavBtn hot" onclick="openDrawer()">Carrito</button>
+    <button class="appNavBtn" onclick="openLegal('shipping')">Envíos</button>
+  </nav>
+
+  <!-- PWA Install Prompt -->
+  <div class="pwaPrompt" id="pwaPrompt" style="display:none;">
+    <div class="pwaPromptInner">
+      <div>
+        <strong>Instala la app</strong>
+        <div style="font-size:12px; opacity:.75;">Compra más rápido · Acceso directo</div>
+      </div>
+      <button class="pwaBtn" id="pwaInstallBtn">Instalar</button>
+    </div>
+  </div>
+
   <!-- Cookies -->
   <section class="cookieBanner" id="cookieBanner">
     <div class="cookieInner">
@@ -297,7 +318,7 @@
   </section>
 
   <!-- Scripts -->
-  <script src="/js/main.js?v=4.1" defer></script>
+  <script src="/js/main.js?v=4.2" defer></script>
 
   <script>
     // Cookie consent (simple)
