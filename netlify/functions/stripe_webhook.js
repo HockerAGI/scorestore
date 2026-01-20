@@ -1,8 +1,5 @@
 /**
- * stripe_webhook.js — FINAL MASTER (CORREGIDO)
- * - Verifica firma Stripe correctamente
- * - Upsert idempotente de orden en Supabase
- * - Generación automática de guía en Envia.com
+ * stripe_webhook.js — FINAL MASTER (PRODUCCIÓN)
  */
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -15,13 +12,12 @@ const json = (statusCode, body) => ({
   body: JSON.stringify(body),
 });
 
-// IMPORTANTE: Se necesita la Service Role Key para escribir en la tabla 'orders' sin restricciones RLS
-// Si no está definida, intenta usar la Anon Key (puede fallar si tus políticas son estrictas)
+// IMPORTANTE: En producción en Netlify debes agregar la variable SUPABASE_SERVICE_ROLE_KEY
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn("⚠️ ADVERTENCIA: SUPABASE_SERVICE_ROLE_KEY no está definida. El webhook podría fallar al guardar la orden.");
+  console.warn("⚠️ ADVERTENCIA: Usando ANON KEY. Si RLS está activo, la orden no se guardará.");
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -48,7 +44,6 @@ exports.handler = async (event) => {
     return json(400, { error: "Missing Signature" });
   }
 
-  // Manejo correcto del buffer para Stripe
   const payload = event.isBase64Encoded ? Buffer.from(event.body || "", "base64") : event.body;
 
   let stripeEvent;
@@ -59,7 +54,6 @@ exports.handler = async (event) => {
     return json(400, { error: `Webhook Error: ${err.message}` });
   }
 
-  // Solo procesamos checkout completado
   if (stripeEvent.type !== "checkout.session.completed") {
     return json(200, { received: true });
   }
@@ -77,10 +71,8 @@ exports.handler = async (event) => {
     const total = toMoneyFromCents(session.amount_total);
     const shipping_cost = toMoneyFromCents(session.total_details?.amount_shipping || 0);
     
-    // Dirección prioritaria: Shipping > Customer
     const address = shipping && shipping.address ? shipping.address : customer.address || null;
 
-    // Recuperar items
     let items = [];
     try {
       const li = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
@@ -95,14 +87,14 @@ exports.handler = async (event) => {
       console.warn("⚠️ No se pudieron leer line_items:", e.message);
     }
 
-    // Guardar en Supabase (Upsert)
+    // Upsert Order
     const basePayload = {
       org_id,
       stripe_session_id,
       customer_email,
       total,
       currency,
-      status: "paid", // Default inicial
+      status: "paid",
       shipping_mode: mode,
       shipping_cost,
       address_json: address ? address : null,
@@ -117,16 +109,12 @@ exports.handler = async (event) => {
 
     if (upsertErr) {
       console.error("❌ Error guardando orden en Supabase:", upsertErr);
-      // Retornamos 200 para que Stripe no reintente infinitamente si es error de lógica nuestra
       return json(200, { received: true, warning: "supabase_upsert_failed" });
     }
 
-    console.log(`✅ Orden guardada: ID interna ${upserted?.id || "?"}`);
-
-    // Generar guía Envia.com (Solo MX/US y si no existe ya)
+    // Generar guía automática
     if ((mode === "mx" || mode === "us") && !upserted?.tracking_number) {
-      const postal = address?.postal_code;
-      if (postal) {
+      if (address?.postal_code) {
         const itemsQty = items.reduce((acc, x) => acc + Number(x.quantity || 0), 0) || 1;
         const shipment = await createEnviaLabel(
           {
@@ -150,7 +138,7 @@ exports.handler = async (event) => {
             })
             .eq("stripe_session_id", stripe_session_id);
         } else {
-          console.error("⚠️ Envia.com no retornó guía.");
+          console.error("⚠️ Envia.com no retornó guía (Posible falta de fondos o API Key).");
         }
       }
     }
