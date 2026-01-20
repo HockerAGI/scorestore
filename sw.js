@@ -1,13 +1,13 @@
-/* sw.js - SCORE STORE v5.0 (MOBILE APP VERSION) */
-const CACHE_NAME = "score-store-v5-mobile";
+/* sw.js - SCORE STORE v8.0 (FINAL PRODUCTION) */
+const CACHE_NAME = "score-store-v8-final";
 
 // Assets críticos que la App necesita para funcionar offline o cargar rápido
 const ASSETS = [
   "/",
   "/index.html",
   "/legal.html",
-  "/css/styles.css", // El SW interceptará esto aunque tenga ?v=5.0 si usamos ignoreSearch
-  "/js/main.js",
+  "/css/styles.css?v=8.0", // Versión forzada para asegurar diseño correcto
+  "/js/main.js?v=8.0",     // Versión forzada para asegurar slider e integraciones
   "/data/catalog.json",
   "/assets/logo-score.webp",
   "/assets/icons/icon-192.png",
@@ -15,12 +15,12 @@ const ASSETS = [
   "/site.webmanifest"
 ];
 
-// INSTALACIÓN: Guardar assets en caché
+// 1. INSTALACIÓN: Guardar assets nuevos
 self.addEventListener("install", (e) => {
-  self.skipWaiting(); // Forzar activación inmediata
+  self.skipWaiting(); // Forzar activación inmediata (Toma el control ya)
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Intentar cachear uno por uno para que si falla uno, no rompa todo
+      // Usamos Promise.allSettled para robustez: si falta una imagen, no rompe todo el SW
       return Promise.allSettled(
         ASSETS.map(url => {
           return fetch(url).then(res => {
@@ -32,35 +32,36 @@ self.addEventListener("install", (e) => {
   );
 });
 
-// ACTIVACIÓN: Borrar cachés viejos (v25, v4, etc)
+// 2. ACTIVACIÓN: Limpieza profunda de cachés viejos (v5, v6, v7...)
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
-  self.clients.claim(); // Tomar control de inmediato
+  self.clients.claim(); // Reclamar control de pestañas abiertas
 });
 
-// INTERCEPTAR PETICIONES (Estrategia Híbrida)
+// 3. INTERCEPTOR DE RED (Estrategia Híbrida Inteligente)
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   const url = new URL(req.url);
 
-  // 1. Backend y APIs externas: SIEMPRE RED (No cachear)
+  // A. Backend y APIs externas: SIEMPRE RED (Nunca cachear ventas, pagos o pixel)
   if (
     url.hostname.includes("supabase.co") ||
     url.hostname.includes("stripe.com") ||
     url.pathname.includes("/.netlify/") ||
     url.pathname.includes("/api/") ||
-    url.hostname.includes("facebook.com") || // No cachear pixel
-    url.hostname.includes("google-analytics.com")
+    url.hostname.includes("facebook.com") ||
+    url.hostname.includes("google-analytics.com") ||
+    req.method !== "GET"
   ) {
-    return; // Ir directo a red
+    return; // Ir directo a la red sin tocar caché
   }
 
-  // 2. Navegación HTML y Datos JSON: Network First (Prioridad a contenido fresco)
-  // Si hay internet, baja lo nuevo. Si no, usa caché.
+  // B. Navegación HTML y Datos JSON: Network First (Prioridad a contenido fresco)
+  // Intentamos bajar lo nuevo. Si no hay internet, mostramos lo guardado.
   if (req.mode === "navigate" || url.pathname.includes(".json") || url.pathname.endsWith(".html")) {
     e.respondWith(
       fetch(req)
@@ -74,16 +75,5 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // 3. Imágenes, CSS, JS: Cache First (Velocidad máxima)
-  // Busca en caché ignorando parámetros de búsqueda (ej: ?v=5.0)
-  e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((cached) => {
-      return cached || fetch(req).then((res) => {
-        // Si no estaba en caché, guárdalo para la próxima
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, clone));
-        return res;
-      });
-    })
-  );
-});
+  // C. Imágenes, CSS, JS: Cache First (Velocidad máxima)
+  // Busca
