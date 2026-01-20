@@ -1,102 +1,121 @@
-/* SCORE STORE - HYBRID ENGINE v3.0 (Design Integrity + DB Power) */
+/* SCORE STORE LOGIC — FINAL MASTER v2.5 (Hybrid Design/Real Backend) */
 
-// CREDENCIALES
+// === 1. CONFIGURACIÓN Y CREDENCIALES ===
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
-const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
+
+// Detectar entorno para la API de Netlify
+const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") 
+  ? "/api" 
+  : "/.netlify/functions";
+
 const CART_KEY = "score_cart_prod_v7";
+let PROMO_ACTIVE = true; 
+let FAKE_MARKUP_FACTOR = 1.6; // Para mostrar el "precio anterior" tachado
 
-// CONFIGURACIÓN (Controlado por Admin en el futuro, fallback aquí)
-let PROMO_ACTIVE = true;
-let FAKE_MARKUP_FACTOR = 1.6;
-
-// ESTADO GLOBAL
+// Estado Global
 let cart = [];
 let catalogData = { products: [], sections: [] };
 let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
 let selectedSizeByProduct = {};
-let activeDiscount = 0;
-let db = null; 
+let activeDiscount = 0; // Porcentaje (0.10, 0.25)
+let db = null; // Cliente Supabase
 
-// UTILS
+// Utils
 const $ = (id) => document.getElementById(id);
 const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 const cleanUrl = (url) => url ? encodeURI(String(url).trim()) : "";
 const safeText = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 let _splashInitialized = false;
-let _listenersBound = false;
 
-// --- INICIO ---
+// === 2. INICIALIZACIÓN (Híbrida) ===
 async function init() {
-  console.log("🚀 Iniciando Score Store...");
+  console.log("🚀 Score Store Iniciando...");
 
-  // 1. Instanciar Supabase
+  // A) Conectar Supabase (si es posible)
   if (window.supabase) {
       try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } 
       catch (err) { console.error("Error DB:", err); }
   }
 
-  // 2. Cargar datos locales (Prioridad Visual)
-  await loadCatalogLocal(); // Carga catalog.json
-  
-  // 3. UI Inmediata
+  // B) Cargar Carrito guardado
+  loadCart();
+
+  // C) Cargar Catálogo LOCAL (Para tener imágenes y slider original YA)
+  try {
+    await loadCatalogLocal(); 
+  } catch(e) { console.error("Error cargando JSON local:", e); }
+
+  // D) Configurar UI inicial
   setupListeners();
   updateCartUI();
   initScrollReveal();
-  initSplash(); // Quita el splash
-
-  // 4. Enriquecer con datos de DB (Segundo plano)
-  if (db) {
-      await enrichWithDB();
-      await loadSiteConfig();
-  }
   
+  // E) Quitar Splash (Una vez que el HTML básico está listo)
+  initSplash();
+
+  // F) ENRIQUECER con datos reales (Precios/Stock de Supabase) en segundo plano
+  // Esto asegura que el cobro sea real, aunque las fotos vengan del JSON.
+  if (db) await enrichWithDB();
+  
+  // G) Cargar configuraciones del sitio (Admin App)
+  if (db) await loadSiteConfig();
+
+  // H) Checar URL params (Success de pago, etc)
   handleQueryActions();
 }
 
 // Carga el JSON local (Tu diseño original depende de esto para imágenes/sliders)
 async function loadCatalogLocal() {
-  try {
-    const res = await fetch("/data/catalog.json");
-    if (!res.ok) throw new Error("Fallo catalog.json");
-    const json = await res.json();
-    catalogData = json;
-  } catch (e) { console.error(e); }
+  const res = await fetch("/data/catalog.json");
+  if (!res.ok) throw new Error("Missing catalog.json");
+  const json = await res.json();
+  catalogData.products = json.products || [];
+  catalogData.sections = json.sections || [];
 }
 
-// Sobrescribe precios/stock con datos reales de Supabase
+// Sobrescribe precios locales con los de la Base de Datos (Seguridad)
 async function enrichWithDB() {
     try {
-        const { data: dbProducts } = await db.from("products").select("id, sku, price, active, name, stock");
+        const { data: dbProducts } = await db
+            .from("products")
+            .select("id, sku, price, active, name, stock");
+        
         if (dbProducts && dbProducts.length > 0) {
             catalogData.products = catalogData.products.map(localP => {
-                // Match por SKU o Nombre
-                const match = dbProducts.find(dbp => (dbp.sku && localP.sku && dbp.sku === localP.sku) || (dbp.name === localP.name));
+                // Buscamos coincidencia por SKU (ideal) o Nombre
+                const match = dbProducts.find(dbp => 
+                    (dbp.sku && localP.sku && dbp.sku === localP.sku) || 
+                    (dbp.name === localP.name)
+                );
                 if (match) {
                     return {
-                        ...localP, // Conserva imágenes del JSON
-                        baseMXN: Number(match.price), // Precio Real DB
-                        active: match.active,
-                        db_id: match.id // ID Real DB
+                        ...localP, // Mantiene imágenes y descripción del JSON
+                        baseMXN: Number(match.price), // Precio Real de DB
+                        active: match.active, // Estado Real
+                        db_id: match.id, // ID Real para Stripe
+                        stock: match.stock
                     };
                 }
                 return localP;
-            }).filter(p => p.active !== false); // Ocultar inactivos
+            }).filter(p => p.active !== false); // Ocultar si en DB dice false
             
-            // Si el catálogo está abierto, refrescar precios
-            if($("modalCatalog").classList.contains("active")) { /* Podríamos re-renderizar */ }
+            // Refrescar UI si el usuario ya tenía el catálogo abierto
+            if($("modalCatalog").classList.contains("active")) {
+               // Podríamos forzar un re-render aquí si fuera necesario
+            }
         }
-    } catch (err) { console.warn("DB Sync Error:", err); }
+    } catch (err) { console.warn("No se pudieron cargar precios reales:", err); }
 }
 
-// --- RENDERIZADO DEL CATÁLOGO (Respetando Sliders) ---
+// === 3. RENDERIZADO DEL CATÁLOGO (Con Slider Original) ===
 window.openCatalog = (sectionId, titleFallback) => {
   const items = (catalogData.products || []).filter(
     (p) => p.sectionId === sectionId || (p.name && String(p.name).toUpperCase().includes(sectionId.replace("_", " ")))
   );
 
-  if($("catTitle")) $("catTitle").innerText = titleFallback;
+  if($("catTitle")) $("catTitle").innerHTML = titleFallback;
   const container = $("catContent");
   if (!container) return;
   container.innerHTML = "";
@@ -116,7 +135,7 @@ window.openCatalog = (sectionId, titleFallback) => {
           return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
       }).join("");
 
-      // SLIDER: Usamos el array 'images' del JSON para que funcione el slider
+      // SLIDER: Usamos el array "images" del JSON local
       const imageList = (p.images && p.images.length > 0) ? p.images : [p.img];
       const slidesHtml = imageList.map(imgSrc => `
         <div class="prod-slide">
@@ -124,18 +143,22 @@ window.openCatalog = (sectionId, titleFallback) => {
         </div>
       `).join("");
 
+      // Precios
       const sellPrice = Number(p.baseMXN || 0);
       const fakeOldPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
       const priceHtml = PROMO_ACTIVE
         ? `<div class="price-container"><span class="old-price">${money(fakeOldPrice)}</span><span class="new-price">${money(sellPrice)}</span></div>`
         : `<div class="prodPrice">${money(sellPrice)}</div>`;
 
+      // Tarjeta
       const el = document.createElement("div");
       el.className = "prodCard";
       el.innerHTML = `
         <div class="metallic-frame">
           ${PROMO_ACTIVE ? '<div class="promo-badge">80% OFF</div>' : ""}
-          <div class="prod-slider">${slidesHtml}</div>
+          <div class="prod-slider">
+             ${slidesHtml}
+          </div>
         </div>
         <div class="prodName">${safeText(p.name)}</div>
         ${priceHtml}
@@ -149,26 +172,32 @@ window.openCatalog = (sectionId, titleFallback) => {
   openModal("modalCatalog");
 };
 
-// --- CARRITO Y CHECKOUT REAL ---
+// === 4. PROCESO DE COMPRA (Real y Seguro) ===
 window.checkout = async () => {
   const btn = $("checkoutBtn");
   if (cart.length === 0) return toast("Carrito vacío");
+
   const mode = shippingState.mode;
   const name = $("name")?.value.trim() || "";
   const addr = $("addr")?.value.trim() || "";
   const cp = $("cp")?.value.trim() || "";
 
+  // Validaciones
   if (mode !== "pickup") {
     if (!name || !addr || !cp) return toast("Faltan datos de envío");
+    if ((mode === "mx" || mode === "us") && cp.length < 5) return toast("CP inválido");
   }
+
   if (btn) { btn.disabled = true; btn.innerText = "Procesando..."; }
 
   try {
+    // Enviamos items al backend. El backend verificará precio con Supabase.
+    // Enviamos 'price_data_fallback' solo por si falla la DB, pero idealmente el backend usa la DB.
     const payload = {
       items: cart.map(i => {
           const p = catalogData.products.find(x => x.id === i.id);
           return {
-              id: p.db_id || p.id, // Preferir ID de DB
+              id: p.db_id || p.id,
               sku: p.sku,
               qty: i.qty,
               size: i.size,
@@ -183,17 +212,25 @@ window.checkout = async () => {
     };
 
     const res = await fetch(`${API_BASE}/create_checkout`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
+
     const data = await res.json();
-    if (data.url) { window.location.href = data.url; return; }
+    if (data.url) {
+      window.location.href = data.url; // Redirigir a Stripe
+      return;
+    }
     throw new Error(data.error || "Error al iniciar pago");
+
   } catch (err) {
     toast("Error: " + (err.message));
     if (btn) { btn.disabled = false; btn.innerText = "PAGAR AHORA"; }
   }
 };
 
+// === 5. CARRITO Y CUPONES ===
 window.applyPromo = () => {
     const code = $("promoCodeInput")?.value.trim().toUpperCase();
     if (code === "SCORE25" || code === "BAJA25") { activeDiscount = 0.25; toast("¡25% OFF Aplicado!"); }
@@ -203,6 +240,64 @@ window.applyPromo = () => {
     updateCartUI();
 };
 
+function updateCartUI() {
+  const c = $("cartItems"); if (!c) return;
+  let total = 0, q = 0;
+  
+  const html = cart.map((i, idx) => {
+    const p = catalogData.products.find(x => String(x.id) === String(i.id));
+    if (!p) return "";
+    const unit = Number(p.baseMXN || 0);
+    const line = unit * i.qty;
+    total += line; q += i.qty;
+    
+    const fake = Math.round(unit * FAKE_MARKUP_FACTOR);
+    // Usamos la primera imagen del array local
+    const img = (p.images && p.images.length) ? p.images[0] : p.img;
+    
+    return `<div class="cartItem">
+        <img class="cartThumb" src="${cleanUrl(img)}" loading="lazy">
+        <div class="cInfo">
+          <div class="cName">${safeText(p.name)}</div>
+          <div class="cMeta">Talla: ${i.size}</div>
+          <div class="cMeta">${PROMO_ACTIVE ? `<del>$${fake}</del> ` : ""}<b>${money(unit)}</b></div>
+          <div class="qtyRow">
+            <button class="qtyBtn" onclick="decQty(${idx})">-</button>
+            <div class="qtyVal">${i.qty}</div>
+            <button class="qtyBtn" onclick="incQty(${idx})">+</button>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cPrice">${money(line)}</div>
+          <button class="linkDanger" onclick="removeFromCart(${idx})">Quitar</button>
+        </div>
+      </div>`;
+  }).join("");
+  
+  c.innerHTML = html;
+  $("cartEmpty").style.display = q > 0 ? "none" : "block";
+  if($("cartCount")) $("cartCount").innerText = q;
+
+  // Cálculos finales
+  const discountAmount = total * activeDiscount;
+  const finalTotal = total - discountAmount + Number(shippingState.cost || 0);
+
+  if($("subTotal")) $("subTotal").innerText = money(total);
+  if($("shipTotal")) $("shipTotal").innerText = shippingState.label;
+  if($("grandTotal")) $("grandTotal").innerText = money(finalTotal);
+  
+  const dr = $("rowDiscount");
+  if(dr) { 
+      if(activeDiscount > 0) { 
+          dr.style.display="flex"; 
+          $("discVal").innerText = `-${money(discountAmount)}`; 
+      } else { 
+          dr.style.display="none"; 
+      } 
+  }
+}
+
+// === 6. INTERACCIÓN Y HELPERS ===
 window.addToCart = (id, size) => {
   const existing = cart.find(i => String(i.id) === String(id) && i.size === size);
   if (existing) existing.qty++; else cart.push({ id, size, qty: 1 });
@@ -215,44 +310,19 @@ window.decQty = (idx) => { cart[idx].qty--; if(cart[idx].qty <= 0) cart.splice(i
 function loadCart() { const s = localStorage.getItem(CART_KEY); if (s) { try { cart = JSON.parse(s) || []; } catch { cart = []; } } }
 function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
 
-function updateCartUI() {
-  const c = $("cartItems"); if (!c) return;
-  let total = 0, q = 0;
-  const html = cart.map((i, idx) => {
-    const p = catalogData.products.find(x => String(x.id) === String(i.id));
-    if (!p) return "";
-    const unit = Number(p.baseMXN || 0);
-    const line = unit * i.qty;
-    total += line; q += i.qty;
-    const fake = Math.round(unit * FAKE_MARKUP_FACTOR);
-    const img = (p.images && p.images.length) ? p.images[0] : p.img;
-    return `<div class="cartItem">
-        <img class="cartThumb" src="${cleanUrl(img)}" loading="lazy">
-        <div class="cInfo"><div class="cName">${safeText(p.name)}</div><div class="cMeta">Talla: ${i.size}</div>
-        <div class="cMeta">${PROMO_ACTIVE ? `<del>$${fake}</del> ` : ""}<b>${money(unit)}</b></div>
-        <div class="qtyRow"><button class="qtyBtn" onclick="decQty(${idx})">-</button><div class="qtyVal">${i.qty}</div><button class="qtyBtn" onclick="incQty(${idx})">+</button></div></div>
-        <div style="text-align:right;"><div class="cPrice">${money(line)}</div><button class="linkDanger" onclick="removeFromCart(${idx})">Quitar</button></div></div>`;
-  }).join("");
-  c.innerHTML = html;
-  $("cartEmpty").style.display = q > 0 ? "none" : "block";
-  if($("cartCount")) $("cartCount").innerText = q;
+window.toast = (m) => { const t = $("toast"); if (!t) return; t.innerText = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3000); };
+window.openModal = (id) => { $(id)?.classList.add("active"); $("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); };
+window.openDrawer = () => { $("drawer")?.classList.add("active"); $("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); };
+window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); document.body.classList.remove("modalOpen"); };
+window.openLegal = (key) => { const m = $("legalModal"); if(!m)return; m.classList.add("active"); $("overlay")?.classList.add("active"); document.body.classList.add("modalOpen"); m.querySelectorAll(".legalBlock").forEach(b => b.style.display = "none"); const k = m.querySelector(`[data-legal-block="${key}"]`); if(k) k.style.display="block"; };
 
-  const discountAmount = total * activeDiscount;
-  const finalTotal = total - discountAmount + Number(shippingState.cost || 0);
-  if($("subTotal")) $("subTotal").innerText = money(total);
-  if($("shipTotal")) $("shipTotal").innerText = shippingState.label;
-  if($("grandTotal")) $("grandTotal").innerText = money(finalTotal);
-  
-  const dr = $("rowDiscount");
-  if(dr) { if(activeDiscount > 0) { dr.style.display="flex"; $("discVal").innerText = `-${money(discountAmount)}`; } else { dr.style.display="none"; } }
-}
-
+// Manejo de Envíos
 function handleShipModeChange(mode) {
   shippingState.mode = mode;
   $("shipForm").style.display = mode === "pickup" ? "none" : "block";
   if (mode === "pickup") { shippingState.cost = 0; shippingState.label = "Gratis"; }
   else if (mode === "tj") { shippingState.cost = 200; shippingState.label = "Local Express"; }
-  else { shippingState.cost = 0; shippingState.label = "Cotizar..."; }
+  else { shippingState.cost = 0; shippingState.label = "Ingresa CP..."; }
   updateCartUI();
 }
 
