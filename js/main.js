@@ -1,4 +1,7 @@
-/* SCORE STORE — HYBRID ENGINE v4.2 (LIGHT + RACING + STOREFRONT MODAL + PWA + SUPABASE + UNICO OS) */
+/* SCORE STORE — HYBRID ENGINE v4.3
+   (LIGHT + RACING + STOREFRONT MODAL + PWA + SUPABASE + UNICO OS)
+   Operado por BAJATEX / ÚNICO UNIFORMES
+*/
 
 (function () {
   const CFG = window.__SCORE__ || {};
@@ -11,12 +14,15 @@
       ? "/api"
       : "/.netlify/functions";
 
-  const CART_KEY = "score_cart_prod_v10";
+  const CART_KEY = "score_cart_prod_v11";
 
-  // Config / flags
+  // Config / flags (can be overwritten by site_settings)
   let PROMO_ACTIVE = true;
-  let PROMO_TEXT = "🔥 EDICIÓN LIMITADA · COMPRA HOY";
+  let PROMO_TEXT = "⚡ HOY: ENVÍO + DROP LIMITADO · ENTRA AL PIT-LANE";
   let FAKE_MARKUP_FACTOR = 1.0;
+
+  // Unico OS org context
+  let ORG_ID = null;
 
   // State
   let cart = [];
@@ -29,8 +35,12 @@
   let _listenersBound = false;
 
   const $ = (id) => document.getElementById(id);
+
   const money = (n) =>
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+    new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(Number(n || 0));
 
   const cleanUrl = (url) => (url ? encodeURI(String(url)) : "");
   const safeText = (v) =>
@@ -39,7 +49,7 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-  /* ---------------- Splash (FIX: always hides) ---------------- */
+  /* ---------------- Splash (RACING) — always hides even on JS errors ---------------- */
   function hideSplash() {
     const s = $("splash-screen");
     if (!s) return;
@@ -50,8 +60,10 @@
       } catch {}
     }, 900);
   }
+
+  // Best-effort: hide on load AND as a hard fallback
   window.addEventListener("load", () => setTimeout(hideSplash, 250));
-  setTimeout(hideSplash, 2300);
+  setTimeout(hideSplash, 2600);
 
   /* ---------------- App Nav helpers ---------------- */
   window.scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -94,34 +106,27 @@
       console.warn("Supabase SDK not loaded or missing config (window.__SCORE__).");
     }
 
+    // Always load local catalog first so UI can render even if DB fails
     await loadCatalogLocal();
     loadCart();
 
     setupListeners();
     updateCartUI();
+    initScrollReveal();
 
-    initScrollReveal(); // FIX: uses 'revealed' class
-
-    // Background: enrich with DB + config
+    // Unico OS enrichment + settings (public mode works due to your public policies)
     if (db) {
-      await enrichWithDB();
-      await loadSiteConfig();
-      // if promo text came from DB, apply
-      const pt = $("promo-text");
-      if (pt) pt.textContent = PROMO_TEXT;
-    } else {
-      // apply default promo text
-      const pt = $("promo-text");
-      if (pt) pt.textContent = PROMO_TEXT;
+      await loadOrgId();          // resolves ORG_ID from ORG_SLUG
+      await loadSiteConfig();     // promo/hero text, etc
+      await enrichWithDB();       // sync prices/images/active from DB by org
     }
 
-    // Hide promo bar if config says so (or if element missing)
-    if (!PROMO_ACTIVE) {
-      const pb = $("promo-bar");
-      if (pb) pb.style.display = "none";
-    }
-
+    // apply promo state
+    applyPromoBar();
     handleQueryActions();
+
+    // Done
+    hideSplash();
   }
 
   async function loadCatalogLocal() {
@@ -130,17 +135,41 @@
       if (!res.ok) throw new Error("catalog.json missing");
       const json = await res.json();
       catalogData = json || { products: [], sections: [] };
+      if (!Array.isArray(catalogData.products)) catalogData.products = [];
     } catch (e) {
       console.error("Error catalog:", e);
       catalogData = { products: [], sections: [] };
     }
   }
 
+  async function loadOrgId() {
+    try {
+      const { data: org, error } = await db
+        .from("organizations")
+        .select("id, slug")
+        .eq("slug", ORG_SLUG)
+        .maybeSingle();
+
+      if (!error && org?.id) {
+        ORG_ID = org.id;
+      } else {
+        console.warn("ORG not found for slug:", ORG_SLUG, error?.message);
+      }
+    } catch (e) {
+      console.warn("loadOrgId failed:", e);
+    }
+  }
+
   async function enrichWithDB() {
     try {
+      if (!ORG_ID) return;
+
       const { data: dbProducts, error } = await db
         .from("products")
-        .select("id, sku, price, active, name, image_url");
+        .select("id, org_id, sku, price, active, name, image_url, deleted_at")
+        .eq("org_id", ORG_ID)
+        .is("deleted_at", null)
+        .eq("active", true);
 
       if (error) {
         console.warn("DB products fetch error:", error.message);
@@ -155,21 +184,29 @@
         if (p.name) byName.set(String(p.name), p);
       });
 
+      // Merge DB pricing/images into local catalog
       catalogData.products = (catalogData.products || [])
         .map((localP) => {
           const skuKey = localP.sku ? String(localP.sku) : null;
           const nameKey = localP.name ? String(localP.name) : null;
 
-          const match = (skuKey && bySku.get(skuKey)) || (nameKey && byName.get(nameKey)) || null;
+          const match =
+            (skuKey && bySku.get(skuKey)) ||
+            (nameKey && byName.get(nameKey)) ||
+            null;
+
           if (match) {
             return {
               ...localP,
-              baseMXN: Number(match.price),
+              baseMXN: Number(match.price ?? localP.baseMXN ?? localP.price ?? 0),
               active: match.active,
               db_id: match.id,
               image_url: match.image_url || localP.image_url,
+              org_id: match.org_id,
             };
           }
+          // If product not in DB, keep it (useful while you migrate),
+          // but do not force-hide it.
           return localP;
         })
         .filter((p) => p.active !== false);
@@ -180,28 +217,22 @@
 
   async function loadSiteConfig() {
     try {
-      const { data: org, error: orgErr } = await db
-        .from("organizations")
-        .select("id")
-        .eq("slug", ORG_SLUG)
-        .single();
+      if (!ORG_ID) return;
 
-      if (orgErr || !org?.id) return;
-
-      const { data: config } = await db
+      const { data: config, error } = await db
         .from("site_settings")
         .select("*")
-        .eq("org_id", org.id)
-        .single();
+        .eq("org_id", ORG_ID)
+        .maybeSingle();
 
+      if (error) {
+        console.warn("Site config load error:", error.message);
+        return;
+      }
       if (!config) return;
 
-      if (config.promo_active === false) {
-        PROMO_ACTIVE = false;
-      }
-      if (config.promo_text) {
-        PROMO_TEXT = String(config.promo_text);
-      }
+      if (config.promo_active === false) PROMO_ACTIVE = false;
+      if (config.promo_text) PROMO_TEXT = String(config.promo_text);
 
       if (config.fake_markup_factor && Number(config.fake_markup_factor) > 1) {
         FAKE_MARKUP_FACTOR = Number(config.fake_markup_factor);
@@ -215,7 +246,15 @@
     }
   }
 
-  /* ---------------- Catalog: Storefront modal (grid + search + sort + skeleton) ---------------- */
+  function applyPromoBar() {
+    const pb = $("promo-bar");
+    const pt = $("promo-text");
+    if (pt) pt.textContent = PROMO_TEXT;
+
+    if (!PROMO_ACTIVE && pb) pb.style.display = "none";
+  }
+
+  /* ---------------- Catalog: Storefront modal ---------------- */
   let _currentCatalogItems = [];
   let _currentCatalogTitle = "COLECCIÓN";
   let _currentCatalogSection = "";
@@ -243,10 +282,11 @@
 
     setTimeout(() => {
       if (!items.length) {
-        container.innerHTML = `<div style="text-align:center;padding:50px;color:#555;">
-          <div style="font-weight:900;margin-bottom:6px;">Próximamente…</div>
-          <div style="opacity:.8">Esta colección se está preparando.</div>
-        </div>`;
+        container.innerHTML = `
+          <div style="text-align:center;padding:50px;color:#555;">
+            <div style="font-weight:900;margin-bottom:6px;">Drop en preparación…</div>
+            <div style="opacity:.85">Esta colección se publica en breve.</div>
+          </div>`;
         return;
       }
       container.innerHTML = renderStorefront(items);
@@ -272,7 +312,7 @@
     return `
       <div class="storeFrontTop">
         <div class="storeHint">
-          <strong style="color:rgba(0,0,0,.85)">Cargando catálogo…</strong><br>
+          <strong style="color:rgba(0,0,0,.85)">Cargando pit inventory…</strong><br>
           Tallas y disponibilidad al momento.
         </div>
         <div class="storeTools">
@@ -289,7 +329,7 @@
       <div class="storeFrontTop">
         <div class="storeHint">
           <strong style="color:rgba(0,0,0,.85)">Elige tu producto</strong><br>
-          Tip: toca “Carrito” para pagar en 1 minuto.
+          Tip: toca “Carrito” y paga en 1 minuto.
         </div>
 
         <div class="storeTools">
@@ -424,7 +464,6 @@
 
     saveCart();
     updateCartUI();
-
     showCartPop(p?.name || "Agregado");
   };
 
@@ -450,13 +489,17 @@
   }
 
   window.removeFromCart = (pid, size) => {
-    cart = cart.filter((x) => !(String(x.id) === String(pid) && String(x.size || "") === String(size || "")));
+    cart = cart.filter(
+      (x) => !(String(x.id) === String(pid) && String(x.size || "") === String(size || ""))
+    );
     saveCart();
     updateCartUI();
   };
 
   window.changeQty = (pid, size, delta) => {
-    const it = cart.find((x) => String(x.id) === String(pid) && String(x.size || "") === String(size || ""));
+    const it = cart.find(
+      (x) => String(x.id) === String(pid) && String(x.size || "") === String(size || "")
+    );
     if (!it) return;
     it.qty = Math.max(1, Math.min(99, Number(it.qty || 1) + Number(delta || 0)));
     saveCart();
@@ -535,7 +578,6 @@
       })
       .join("");
 
-    // totals
     const sub = computeSubtotal();
     const disc = computeDiscount(sub);
     const grand = computeGrandTotal();
@@ -662,15 +704,18 @@
     const payload = {
       items,
       discountFactor,
+      orgSlug: ORG_SLUG,
+      orgId: ORG_ID,
       mode: shippingState.mode,
       shipping: { cost: shippingState.cost, label: shippingState.label },
-      customer: shippingState.mode === "pickup"
-        ? null
-        : {
-            zip: String($("cp")?.value || ""),
-            name: String($("name")?.value || ""),
-            address: String($("addr")?.value || ""),
-          },
+      customer:
+        shippingState.mode === "pickup"
+          ? null
+          : {
+              zip: String($("cp")?.value || ""),
+              name: String($("name")?.value || ""),
+              address: String($("addr")?.value || ""),
+            },
     };
 
     const btn = $("checkoutBtn");
@@ -734,7 +779,10 @@
     if (!el) return;
     el.classList.remove("open");
     el.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("noScroll");
+
+    // Only unlock scroll if no other modal/drawer is open
+    const anyOpen = document.querySelector(".modal.open, .drawer.open");
+    if (!anyOpen) document.body.classList.remove("noScroll");
   }
 
   /* ---------------- Toast ---------------- */
@@ -746,12 +794,11 @@
     setTimeout(() => t.classList.remove("show"), 2600);
   }
 
-  /* ---------------- Scroll reveal (FIXED: 'revealed') ---------------- */
+  /* ---------------- Scroll reveal (class 'revealed') ---------------- */
   function initScrollReveal() {
     const els = document.querySelectorAll(".scroll-reveal");
     if (!els.length) return;
 
-    // fallback: reveal all if IntersectionObserver unsupported
     if (!("IntersectionObserver" in window)) {
       els.forEach((el) => el.classList.add("revealed"));
       return;
@@ -805,6 +852,11 @@
         }, 700);
       });
     }
+
+    // Close modals on ESC
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") window.closeAll();
+    });
   }
 
   /* ---------------- Utils ---------------- */
@@ -817,6 +869,11 @@
       .replace(/\r/g, "");
   }
 
-  // Boot
-  document.addEventListener("DOMContentLoaded", init);
+  // Boot (guarded)
+  document.addEventListener("DOMContentLoaded", () => {
+    Promise.resolve(init()).catch((e) => {
+      console.error("Init fatal:", e);
+      hideSplash();
+    });
+  });
 })();
