@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes.">
+  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
   <meta name="theme-color" content="#E10600" />
 
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
@@ -13,11 +13,12 @@
   <link rel="manifest" href="/site.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SCORE Store">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
   <link rel="preload" as="image" href="/assets/hero.webp">
 
-  <link rel="stylesheet" href="/css/styles.css?v=6.0">
+  <link rel="stylesheet" href="/css/styles.css?v=7.0">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,15 +43,15 @@
   src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
   <style>
-    /* Critical CSS */
+    /* Critical CSS Inline */
     .cookieBanner{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:5000;background:rgba(18,18,18,0.95);border-left:4px solid #E10600;border-radius:12px;padding:16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 10px 40px rgba(0,0,0,0.6);backdrop-filter:blur(5px);}
-    .cookieText{color:#fff;font-size:13px;margin-right:10px;}
-    .cookieBtn{background:#E10600;color:#fff;border:none;padding:8px 20px;border-radius:50px;font-family:'Teko';font-size:16px;cursor:pointer;}
+    .cookieText{color:#fff;font-size:13px;margin-right:10px;font-family: 'Inter', sans-serif;}
+    .cookieBtn{background:#E10600;color:#fff;border:none;padding:8px 20px;border-radius:50px;font-family:'Teko', sans-serif;font-size:16px;cursor:pointer;}
   </style>
 </head>
 <body>
   
-  <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="66"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">CARGANDO...</div></div></div>
+  <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="66"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">INICIANDO MOTORES...</div></div></div>
   
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
@@ -159,10 +160,18 @@
 
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:20px; color:#222;"><div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div><div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div><div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex.</p></div><div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div><div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>ventas.unicotextil@gmail.com</p></div></div>
+    <div class="dBody" style="padding:20px; color:#222;">
+      <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div>
+      <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div>
+      <div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex.</p></div>
+      <div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div>
+      <div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>ventas.unicotextil@gmail.com</p></div>
+    </div>
   </aside>
 
-  <script src="/js/main.js?v=6.0" defer></script>
-  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="flex";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=6.0").catch(console.warn);</script>
+  <div class="toast" id="toast">Mensaje</div>
+  
+  <script src="/js/main.js?v=7.0" defer></script>
+  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="flex";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=7.0").catch(console.warn);</script>
 </body>
 </html>
