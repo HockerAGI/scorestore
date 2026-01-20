@@ -1,10 +1,32 @@
 /**
- * stripe_webhook.js — FINAL MASTER (PRODUCCIÓN)
+ * stripe_webhook.js — FINAL MASTER (Con Telegram Notification)
  */
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require("@supabase/supabase-js");
 const { createEnviaLabel } = require("./_shared");
+
+// --- TELEGRAM CONFIG ---
+const TELEGRAM_BOT_TOKEN = "7893882322:AAFFjrL0cfLl0AOAHMiNwbwrjX4E-1c58Bk";
+const TELEGRAM_CHAT_ID = "8554886422"; // ID Personal de @unicouniformes
+
+// Función para enviar mensaje a Telegram
+async function sendTelegramNotification(message) {
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (error) {
+    console.error("Error enviando Telegram:", error);
+  }
+}
 
 const json = (statusCode, body) => ({
   statusCode,
@@ -12,7 +34,6 @@ const json = (statusCode, body) => ({
   body: JSON.stringify(body),
 });
 
-// IMPORTANTE: En producción en Netlify debes agregar la variable SUPABASE_SERVICE_ROLE_KEY
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
@@ -23,14 +44,12 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function toMoneyFromCents(amountCents) {
-  const n = Number(amountCents || 0);
-  return Number.isFinite(n) ? n / 100 : 0;
+  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(amountCents || 0) / 100);
 }
 
 async function getScoreOrgId() {
-  const { data, error } = await supabase.from("organizations").select("id").eq("slug", "score-store").single();
-  if (error || !data?.id) return null;
-  return data.id;
+  const { data } = await supabase.from("organizations").select("id").eq("slug", "score-store").single();
+  return data?.id;
 }
 
 exports.handler = async (event) => {
@@ -39,18 +58,12 @@ exports.handler = async (event) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
 
-  if (!sig || !webhookSecret) {
-    console.error("Webhook Error: Falta firma o secreto.");
-    return json(400, { error: "Missing Signature" });
-  }
-
-  const payload = event.isBase64Encoded ? Buffer.from(event.body || "", "base64") : event.body;
+  if (!sig || !webhookSecret) return json(400, { error: "Missing Signature" });
 
   let stripeEvent;
   try {
-    stripeEvent = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+    stripeEvent = stripe.webhooks.constructEvent(event.isBase64Encoded ? Buffer.from(event.body, "base64") : event.body, sig, webhookSecret);
   } catch (err) {
-    console.error("Webhook Signature Error:", err.message);
     return json(400, { error: `Webhook Error: ${err.message}` });
   }
 
@@ -66,68 +79,73 @@ exports.handler = async (event) => {
     
     const customer = session.customer_details || {};
     const shipping = session.shipping_details || null;
-    const customer_email = customer.email || null;
-    const currency = String(session.currency || "mxn").toUpperCase();
-    const total = toMoneyFromCents(session.amount_total);
-    const shipping_cost = toMoneyFromCents(session.total_details?.amount_shipping || 0);
+    const customer_email = customer.email || "No email";
+    const customer_name = customer.name || "Cliente";
+    
+    const totalFormatted = toMoneyFromCents(session.amount_total);
+    const shipping_cost = (session.total_details?.amount_shipping || 0) / 100;
     
     const address = shipping && shipping.address ? shipping.address : customer.address || null;
 
+    // Obtener items
+    let itemsListText = "";
     let items = [];
     try {
       const li = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
-      items = (li.data || []).map((x) => ({
-        description: x.description || null,
-        quantity: Number(x.quantity || 0),
-        amount_total: toMoneyFromCents(x.amount_total),
-        currency,
-        price: x.price ? { id: x.price.id, unit_amount: toMoneyFromCents(x.price.unit_amount), product: x.price.product || null } : null,
-      }));
+      items = (li.data || []).map((x) => {
+        itemsListText += `• ${x.quantity}x ${x.description}\n`;
+        return {
+          description: x.description,
+          quantity: x.quantity,
+          amount: x.amount_total / 100,
+          currency: "mxn"
+        };
+      });
     } catch (e) {
-      console.warn("⚠️ No se pudieron leer line_items:", e.message);
+      console.warn("Error items:", e.message);
     }
 
-    // Upsert Order
-    const basePayload = {
-      org_id,
-      stripe_session_id,
-      customer_email,
-      total,
-      currency,
-      status: "paid",
-      shipping_mode: mode,
-      shipping_cost,
-      address_json: address ? address : null,
-      items_json: items && items.length ? items : null,
-    };
-
-    const { data: upserted, error: upsertErr } = await supabase
+    // Upsert Order en Supabase
+    const { data: upserted } = await supabase
       .from("orders")
-      .upsert(basePayload, { onConflict: "stripe_session_id" })
+      .upsert({
+        org_id,
+        stripe_session_id,
+        customer_email,
+        total: session.amount_total / 100,
+        currency: "mxn",
+        status: "paid",
+        shipping_mode: mode,
+        shipping_cost,
+        address_json: address,
+        items_json: items,
+      }, { onConflict: "stripe_session_id" })
       .select("*")
       .single();
 
-    if (upsertErr) {
-      console.error("❌ Error guardando orden en Supabase:", upsertErr);
-      return json(200, { received: true, warning: "supabase_upsert_failed" });
-    }
+    // Mensaje Telegram Base
+    let telegramMsg = `<b>💰 ¡NUEVA VENTA CONFIRMADA!</b>\n\n`;
+    telegramMsg += `👤 <b>Cliente:</b> ${customer_name}\n`;
+    telegramMsg += `📧 <b>Email:</b> ${customer_email}\n`;
+    telegramMsg += `💵 <b>Total:</b> ${totalFormatted}\n`;
+    telegramMsg += `🚚 <b>Envío:</b> ${mode === 'pickup' ? 'Recoger en Fábrica' : 'Paquetería'}\n\n`;
+    telegramMsg += `<b>📦 Productos:</b>\n${itemsListText}`;
 
     // Generar guía automática
-    if ((mode === "mx" || mode === "us") && !upserted?.tracking_number) {
+    if ((mode === "mx" || mode === "us") && upserted && !upserted.tracking_number) {
       if (address?.postal_code) {
-        const itemsQty = items.reduce((acc, x) => acc + Number(x.quantity || 0), 0) || 1;
-        const shipment = await createEnviaLabel(
-          {
-            name: shipping?.name || customer?.name || "Cliente",
-            email: customer_email || "cliente@scorestore.com",
-            phone: customer?.phone || "0000000000",
+        const itemsQty = items.reduce((acc, x) => acc + x.quantity, 0) || 1;
+        const shipment = await createEnviaLabel({
+            name: customer_name,
+            email: customer_email,
+            phone: customer.phone || "0000000000",
             address: address, 
-          },
-          itemsQty
+          }, itemsQty
         );
 
         if (shipment) {
-          console.log(`🚚 Guía generada: ${shipment.tracking}`);
+          telegramMsg += `\n✅ <b>Guía Generada:</b> ${shipment.tracking}\ncarriers: ${shipment.carrier}`;
+          
           await supabase
             .from("orders")
             .update({
@@ -138,15 +156,21 @@ exports.handler = async (event) => {
             })
             .eq("stripe_session_id", stripe_session_id);
         } else {
-          console.error("⚠️ Envia.com no retornó guía (Posible falta de fondos o API Key).");
+          telegramMsg += `\n⚠️ <b>Error Guía:</b> No se pudo generar automáticamente.`;
         }
       }
+    } else if (mode === "pickup") {
+      telegramMsg += `\n📍 <b>Instrucción:</b> El cliente pasará a recoger a la fábrica.`;
     }
+
+    // Enviar notificación final
+    await sendTelegramNotification(telegramMsg);
 
     return json(200, { received: true });
 
   } catch (err) {
-    console.error("Webhook Handler Error:", err);
+    console.error("Webhook Error:", err);
+    await sendTelegramNotification(`❌ <b>ERROR WEBHOOK:</b> ${err.message}`);
     return json(200, { received: true, error: err.message });
   }
 };
