@@ -8,7 +8,6 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# --- HEADERS DE SEGURIDAD ---
 [[headers]]
   for = "/*"
   [headers.values]
@@ -19,7 +18,6 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
 
-# --- FUNCTIONS CORS & CACHE ---
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
@@ -28,7 +26,6 @@
     Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# --- PWA & ASSETS ---
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -54,7 +51,6 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# --- REDIRECTS ---
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
