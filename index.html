@@ -6,73 +6,81 @@
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
 
   <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
+  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes." />
 
-  <!-- ✅ Activa SAFE MODE de animaciones (scroll-reveal) -->
+  <!-- ✅ SAFE MODE animaciones (scroll-reveal) -->
   <script>document.documentElement.classList.add('js');</script>
 
+  <!-- Preload de assets críticos (para que “sí cargue” el look premium) -->
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
+  <link rel="preload" href="/assets/logo-score.webp" as="image" />
+
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=5.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.5" />
 
-  <!-- Performance: preconnect + preload assets clave (si alguno no existe, no rompe) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="image" href="/assets/hero.webp">
-  <link rel="preload" as="image" href="/assets/fondo-pagina-score.webp">
-  <link rel="preload" as="image" href="/assets/logo-score.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+  <!-- SDKs -->
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- CONFIG ÚNICA (aquí pegas tus keys) -->
+  <!-- CONFIG ÚNICA (pega aquí tus keys reales) -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
       supabaseUrl: "PASTE_SUPABASE_URL_HERE",
       supabaseAnonKey: "PASTE_SUPABASE_ANON_KEY_HERE"
+      // Único OS puede inyectar más flags aquí sin romper el front:
+      // unicoOs: { node: "bajatex-prod", env: "prod" }
     };
   </script>
 </head>
 
 <body>
-  <!-- Splash (Premium Racing) -->
+  <!-- Splash (Racing) -->
   <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
+      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" />
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
       <div class="splash-text">ARRANCANDO MOTORES…</div>
-      <div class="splash-sub">Catálogo oficial · Checkout seguro · Drop limitado</div>
+      <div class="splash-sub">Drop oficial · Tallas reales · Checkout seguro</div>
     </div>
   </div>
 
   <!-- Overlay -->
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <!-- Promo bar (HOOK) -->
+  <!-- Promo bar (HOOK marketing) -->
   <div class="promo-bar" id="promo-bar">
     <span>
-      <span class="promo-highlight blink-text" id="promo-text">
-        🔥 DROP LIMITADO HOY · ENTRA AL PIT-LANE
-      </span>
+      <span class="promo-highlight blink-text" id="promo-text">PIT-LANE ABIERTO · DROP LIMITADO · COMPRA ANTES DE QUE SE AGOTE</span>
     </span>
   </div>
 
-  <!-- Header (Glass Premium) -->
-  <header class="topbar">
+  <!-- Header (premium / racing) -->
+  <header class="topbar" role="banner">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" />
       </a>
 
       <div class="navRight">
+        <!-- CTA rápido (no rompe móvil, si no lo quieres luego lo quitamos) -->
+        <button type="button" class="btnGhost" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})" aria-label="Ver colecciones">
+          COLECCIONES
+        </button>
+
         <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M6 6h15l-1.5 9h-12z"></path>
             <path d="M6 6l-2-3H1"></path>
-            <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
-            <path d="M18 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+            <path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+            <path d="M18 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
           </svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
@@ -81,36 +89,38 @@
   </header>
 
   <!-- Main -->
-  <main class="wrap">
-    <!-- HERO -->
-    <section class="hero scroll-reveal" id="top">
-      <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
+  <main class="wrap" role="main">
+    <!-- HERO (respeta estructura/IDs/clases) -->
+    <section class="hero scroll-reveal" id="top" aria-label="Hero">
+      <div class="heroBg" aria-hidden="true"></div>
+      <div class="heroOverlay" aria-hidden="true"></div>
 
       <div class="heroContent">
         <div class="tagline">
-          <span class="tag-pill">TIENDA OFICIAL · LANZAMIENTO 2026</span>
+          <span class="tag-pill">LANZAMIENTO OFICIAL 2026 · EDICIÓN LIMITADA</span>
         </div>
 
+        <!-- ✅ ID hero-title para que Supabase lo pueda sobre-escribir desde site_settings -->
         <h1 class="hero-title" id="hero-title">
           <span class="neon-text">GEAR</span> OFICIAL
         </h1>
 
-        <div class="logos-row">
-          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo">
-          <img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal">
+        <div class="logos-row" aria-label="Sello oficial">
+          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" loading="eager" />
+          <img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal" loading="lazy" />
         </div>
 
         <div class="marketing-copy">
-          <strong>MERCHANDISE OFICIAL DE SCORE INTERNATIONAL</strong><br>
-          Fabricado por <strong>Único Uniformes</strong> · Operado por <strong>BAJATEX</strong>
+          <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br />
+          Hecho por <strong>Único Uniformes</strong> · Calidad de paddock · Entrega con tracking.
         </div>
 
         <div class="ctaRow">
-          <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">
+          <button class="btn primary pulse-btn" type="button"
+            onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">
             VER COLECCIONES
           </button>
-          <button class="btn secondary" onclick="openDrawer()">
+          <button class="btn secondary" type="button" onclick="openDrawer()">
             MI PEDIDO
           </button>
         </div>
@@ -118,64 +128,64 @@
     </section>
 
     <!-- COLECCIONES -->
-    <section class="section scroll-reveal" id="collections">
+    <section class="section scroll-reveal" id="collections" aria-label="Colecciones">
       <div class="sectionHead">
         <h2>COLECCIONES <span>OFICIALES</span></h2>
-        <p>Ediciones limitadas · Calidad premium · Hecho para racing</p>
+        <p>Ediciones limitadas · Fabricación BAJATEX / ÚNICO · Stock real (Supabase)</p>
       </div>
 
-      <div class="grid">
-        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-          <div class="card-texture"></div>
-          <span class="badge">OFICIAL</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy">
+      <div class="grid" role="list">
+        <div class="champItem" role="listitem" onclick="openCatalog('BAJA_1000','BAJA 1000')" aria-label="Baja 1000">
+          <div class="card-texture" aria-hidden="true"></div>
+          <span class="badge">TIENDA OFICIAL</span>
+          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" />
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
 
-        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
-          <div class="card-texture"></div>
-          <span class="badge">OFICIAL</span>
-          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy">
+        <div class="champItem" role="listitem" onclick="openCatalog('BAJA_500','BAJA 500')" aria-label="Baja 500">
+          <div class="card-texture" aria-hidden="true"></div>
+          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" />
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
 
-        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-          <div class="card-texture"></div>
-          <span class="badge alt">NUEVO</span>
-          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
+        <div class="champItem" role="listitem" onclick="openCatalog('BAJA_400','BAJA 400')" aria-label="Baja 400">
+          <div class="card-texture" aria-hidden="true"></div>
+          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy" />
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
 
-        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
-          <div class="card-texture"></div>
+        <div class="champItem" role="listitem" onclick="openCatalog('SF_250','SAN FELIPE 250')" aria-label="San Felipe 250">
+          <div class="card-texture" aria-hidden="true"></div>
           <span class="badge alt">CLÁSICOS</span>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" loading="lazy">
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" loading="lazy" />
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
       </div>
     </section>
 
     <!-- PARTNERS -->
-    <section class="partners scroll-reveal">
+    <section class="partners scroll-reveal" aria-label="Patrocinadores">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" loading="lazy">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" />
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy" />
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" />
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" loading="lazy" />
       </div>
     </section>
   </main>
 
   <!-- Footer -->
-  <footer class="footer scroll-reveal">
+  <footer class="footer scroll-reveal" role="contentinfo">
     <div class="container footerInner">
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
         <p class="fText">
-          Operador oficial de merchandise SCORE International.<br>
-          Fabricado por <strong>Único Uniformes</strong>.
+          Operador oficial de merchandise SCORE International.<br />
+          Por <strong>Único Uniformes</strong>.
         </p>
+        <!-- Opcional: WhatsApp / contacto (si luego lo conectas) -->
+        <a class="whatsapp-btn" href="https://wa.me/" target="_blank" rel="noopener">Soporte por WhatsApp</a>
       </div>
 
       <div class="fCol">
@@ -192,13 +202,17 @@
         <div class="footerLinks">
           <button type="button" onclick="openLegal('terms')">Términos y Condiciones</button>
           <button type="button" onclick="openLegal('privacy')">Aviso de Privacidad</button>
-          <a href="/legal.html" style="font-size:12px; opacity:0.8;">Ver Legal Completo</a>
+          <a href="/legal.html">Ver Legal Completo</a>
         </div>
       </div>
 
       <div class="fCol">
         <h4>CONTACTO</h4>
         <p class="fText">ventas.unicotextil@gmail.com</p>
+        <div class="social-row">
+          <a class="social-link" href="#" target="_blank" rel="noopener">Instagram</a>
+          <a class="social-link" href="#" target="_blank" rel="noopener">Facebook</a>
+        </div>
       </div>
     </div>
 
@@ -209,7 +223,7 @@
   <div id="modalCatalog" class="modal" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
-      <button class="closeBtn" onclick="closeAll()">✕</button>
+      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
     </div>
     <div class="dBody" id="catContent"></div>
   </div>
@@ -218,13 +232,13 @@
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">MI PEDIDO</h3>
-      <button class="closeBtn" onclick="closeAll()">✕</button>
+      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
     </div>
 
     <div class="dBody">
       <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
         <p style="color:#777;">Tu carrito está vacío.</p>
-        <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
+        <button class="btn secondary" type="button" onclick="closeAll()">Seguir Comprando</button>
       </div>
       <div id="cartItems"></div>
     </div>
@@ -232,30 +246,32 @@
     <div class="dFoot" id="cartFooter">
       <div class="shipSelector">
         <label class="radio-option">
-          <input type="radio" name="shipMode" value="pickup" checked>
+          <input type="radio" name="shipMode" value="pickup" checked />
           <div>Recoger en Fábrica (Tijuana) - Gratis</div>
         </label>
+
         <label class="radio-option">
-          <input type="radio" name="shipMode" value="mx">
+          <input type="radio" name="shipMode" value="mx" />
           <div>Envío Nacional (MX)</div>
         </label>
+
         <label class="radio-option">
-          <input type="radio" name="shipMode" value="us">
+          <input type="radio" name="shipMode" value="us" />
           <div>Envío USA</div>
         </label>
       </div>
 
       <div id="shipForm" style="display:none; margin-bottom:15px;">
-        <input id="cp" class="inputField" type="text" placeholder="Código Postal / ZIP" maxlength="10">
+        <input id="cp" class="inputField" type="text" placeholder="Código Postal / ZIP" maxlength="10" />
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-          <input id="name" class="inputField" type="text" placeholder="Nombre completo">
-          <input id="addr" class="inputField" type="text" placeholder="Dirección y Teléfono">
+          <input id="name" class="inputField" type="text" placeholder="Nombre completo" />
+          <input id="addr" class="inputField" type="text" placeholder="Dirección y Teléfono" />
         </div>
       </div>
 
       <div class="promo-row">
-        <input type="text" id="promoCodeInput" class="promo-input" placeholder="CÓDIGO DE CUPÓN">
-        <button class="promo-btn" onclick="applyPromo()">APLICAR</button>
+        <input type="text" id="promoCodeInput" class="promo-input" placeholder="CÓDIGO DE CUPÓN" />
+        <button class="promo-btn" type="button" onclick="applyPromo()">APLICAR</button>
       </div>
 
       <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
@@ -263,7 +279,8 @@
       <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
-      <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
+      <button id="checkoutBtn" class="btn primary full" type="button" onclick="checkout()">PAGAR AHORA</button>
+      <button class="linkDanger" type="button" onclick="emptyCart()">Vaciar carrito</button>
     </div>
   </aside>
 
@@ -271,7 +288,7 @@
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">LEGAL</h3>
-      <button class="closeBtn" onclick="closeAll()">✕</button>
+      <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">✕</button>
     </div>
 
     <div class="dBody" style="padding:30px; color:#111;">
@@ -306,49 +323,25 @@
     <div class="cookieInner">
       <div class="cookieText">Usamos cookies esenciales para operar la tienda y mejorar tu experiencia.</div>
       <div class="cookieActions">
-        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
-        <button class="cookieBtn primary" id="cookieAccept">Aceptar</button>
+        <button class="cookieBtn ghost" id="cookieReject" type="button">Cerrar</button>
+        <button class="cookieBtn primary" id="cookieAccept" type="button">Aceptar</button>
       </div>
     </div>
   </section>
 
-  <!-- Bottom App Nav (Premium) -->
-  <nav class="appNav" id="appNav" aria-label="Navegación">
-    <button class="appNavBtn" onclick="scrollToTop()" aria-label="Inicio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 10.5 12 3l9 7.5"></path>
-        <path d="M5 10v10h14V10"></path>
-      </svg>
-      <span>Inicio</span>
+  <!-- Bottom App Nav (más pro: icon + label) -->
+  <nav class="appNav" id="appNav" aria-label="Navegación rápida">
+    <button class="appNavBtn" type="button" onclick="scrollToTop()" aria-label="Inicio">
+      <span class="dot" aria-hidden="true"></span>Inicio
     </button>
-
-    <button class="appNavBtn" onclick="scrollToCollections()" aria-label="Colecciones">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 7h16"></path>
-        <path d="M4 12h16"></path>
-        <path d="M4 17h16"></path>
-      </svg>
-      <span>Colecciones</span>
+    <button class="appNavBtn" type="button" onclick="scrollToCollections()" aria-label="Colecciones">
+      Colecciones
     </button>
-
-    <button class="appNavBtn hot" onclick="openDrawer()" aria-label="Carrito">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M6 6h15l-1.5 9h-12z"></path>
-        <path d="M6 6l-2-3H1"></path>
-        <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
-        <path d="M18 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
-      </svg>
-      <span>Carrito</span>
+    <button class="appNavBtn hot" type="button" onclick="openDrawer()" aria-label="Carrito">
+      Carrito
     </button>
-
-    <button class="appNavBtn" onclick="openLegal('shipping')" aria-label="Envíos">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 7h13v10H3z"></path>
-        <path d="M16 10h4l1 2v5h-5z"></path>
-        <path d="M7 19a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
-        <path d="M18 19a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
-      </svg>
-      <span>Envíos</span>
+    <button class="appNavBtn" type="button" onclick="openLegal('shipping')" aria-label="Envíos">
+      Envíos
     </button>
   </nav>
 
@@ -359,12 +352,12 @@
         <strong>Instala la app</strong>
         <div style="font-size:12px; opacity:.75;">Compra más rápido · Acceso directo</div>
       </div>
-      <button class="pwaBtn" id="pwaInstallBtn">Instalar</button>
+      <button class="pwaBtn" id="pwaInstallBtn" type="button">Instalar</button>
     </div>
   </div>
 
   <!-- Scripts -->
-  <script src="/js/main.js?v=4.4" defer></script>
+  <script src="/js/main.js?v=4.5" defer></script>
 
   <script>
     (function(){
