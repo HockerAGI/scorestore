@@ -7,11 +7,11 @@
   <meta name="robots" content="noindex" />
 
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.2" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,21 +24,17 @@
       supabaseAnonKey: "PASTE_SUPABASE_ANON_KEY_HERE"
     };
   </script>
-
-  <style>
-    .btnGhost { text-decoration:none; }
-  </style>
 </head>
 
 <body>
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <header class="topbar">
+  <header class="topbar topbar--legal">
     <div class="container topbarInner">
-      <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
+      <a class="btnGhost" href="/">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
       <div style="width:40px;">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.8);">
+        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.92);">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
             <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
@@ -51,7 +47,7 @@
   </header>
 
   <main class="legal">
-    <h1 class="h1" style="color:#000;">INFORMACIÓN LEGAL Y COMERCIAL</h1>
+    <h1 class="h1">INFORMACIÓN LEGAL Y COMERCIAL</h1>
     <p class="p muted">Última actualización: Enero 2026</p>
 
     <section id="privacidad" class="legalCard">
@@ -63,7 +59,7 @@
         con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.
       </p>
 
-      <h3 style="font-size:18px;margin:10px 0;">Datos Personales que se Recaban:</h3>
+      <h3 class="h3">Datos Personales que se Recaban:</h3>
       <ul class="ul">
         <li>Nombre completo, teléfono y correo electrónico.</li>
         <li>Empresa o razón social, RFC y datos fiscales (para facturación).</li>
@@ -71,7 +67,7 @@
         <li>Información relacionada con pedidos y pagos (no se recaban datos sensibles).</li>
       </ul>
 
-      <h3 style="font-size:18px;margin:10px 0;">Finalidades del Tratamiento:</h3>
+      <h3 class="h3">Finalidades del Tratamiento:</h3>
       <ul class="ul">
         <li><strong>Primarias:</strong> Procesar pedidos, entregas, atención y facturación.</li>
         <li><strong>Secundarias:</strong> Promociones, seguimiento y análisis comercial.</li>
@@ -84,13 +80,13 @@
       <h2 class="h2">2. TÉRMINOS Y CONDICIONES DE USO Y VENTA</h2>
       <p class="p">Al acceder y utilizar este sitio, usted acepta los presentes términos. El usuario declara ser mayor de edad y contar con capacidad legal.</p>
 
-      <h3 style="font-size:18px;margin:10px 0;">Precios y Pagos:</h3>
+      <h3 class="h3">Precios y Pagos:</h3>
       <ul class="ul">
         <li>Los precios están expresados en pesos mexicanos (MXN).</li>
         <li>El pedido se procesa una vez confirmado el pago.</li>
       </ul>
 
-      <h3 style="font-size:18px;margin:10px 0;">Productos Personalizados:</h3>
+      <h3 class="h3">Productos Personalizados:</h3>
       <p class="p"><strong>NO APLICAN A CAMBIOS NI DEVOLUCIONES</strong>, salvo defecto de fabricación comprobable.</p>
     </section>
 
@@ -129,7 +125,7 @@
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer footer--legal">
     <div class="footer__bottom">
       <small>© 2026 SCORE Store · Operado por BAJATEX</small>
     </div>
@@ -144,7 +140,7 @@
 
     <div class="dBody">
       <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
-        <p style="color:#999; margin-bottom:20px;">Tu carrito está vacío.</p>
+        <p style="color:#777; margin-bottom:20px;">Tu carrito está vacío.</p>
         <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
       </div>
       <div id="cartItems"></div>
@@ -171,7 +167,7 @@
       </div>
 
       <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:#2ecc71;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
+      <div class="sumRow" id="rowDiscount" style="display:none; color:#12a150;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
       <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
 
@@ -181,6 +177,6 @@
 
   <div class="toast" id="toast">Mensaje</div>
 
-  <script src="/js/main.js?v=4.1" defer></script>
+  <script src="/js/main.js?v=4.2" defer></script>
 </body>
 </html>
