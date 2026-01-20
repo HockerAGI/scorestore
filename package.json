@@ -8,8 +8,10 @@
     "build": "echo 'Build ready'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "stripe": "^14.10.0"
+    "@supabase/supabase-js": "^2.39.3",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1",
+    "stripe": "^14.14.0"
   },
   "engines": {
     "node": ">=18"
