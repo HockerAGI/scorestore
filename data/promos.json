@@ -1,21 +1,24 @@
 {
   "rules": [
     {
+      "code": "SCORE25",
+      "type": "percent",
+      "value": 0.25,
+      "description": "25% OFF por Inauguración",
+      "active": true
+    },
+    {
+      "code": "BAJA25",
+      "type": "percent",
+      "value": 0.25,
+      "description": "25% OFF Cupón Baja",
+      "active": true
+    },
+    {
       "code": "SCORE10",
       "type": "percent",
-      "value": 0.1,
-      "active": true
-    },
-    {
-      "code": "BAJA200",
-      "type": "fixed_mxn",
-      "value": 200,
-      "active": true
-    },
-    {
-      "code": "ENVIOFREE",
-      "type": "free_shipping",
-      "value": 0,
+      "value": 0.10,
+      "description": "10% OFF Fans",
       "active": true
     }
   ]
