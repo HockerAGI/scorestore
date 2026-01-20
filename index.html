@@ -12,10 +12,15 @@
   <script>document.documentElement.classList.add('js');</script>
 
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.4" />
+  <link rel="stylesheet" href="/css/styles.css?v=5.0" />
 
+  <!-- Performance: preconnect + preload assets clave (si alguno no existe, no rompe) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="image" href="/assets/hero.webp">
+  <link rel="preload" as="image" href="/assets/fondo-pagina-score.webp">
+  <link rel="preload" as="image" href="/assets/logo-score.webp">
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <script src="https://js.stripe.com/v3" async></script>
@@ -32,13 +37,13 @@
 </head>
 
 <body>
-  <!-- Splash (Racing) -->
+  <!-- Splash (Premium Racing) -->
   <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
       <div class="splash-text">ARRANCANDO MOTORES…</div>
-      <div class="splash-sub">Sin humo · Catálogo oficial · Checkout seguro</div>
+      <div class="splash-sub">Catálogo oficial · Checkout seguro · Drop limitado</div>
     </div>
   </div>
 
@@ -47,10 +52,14 @@
 
   <!-- Promo bar (HOOK) -->
   <div class="promo-bar" id="promo-bar">
-    <span>⚡ <span class="promo-highlight blink-text" id="promo-text">⚡ HOY: ENVÍO + DROP LIMITADO · ENTRA AL PIT-LANE</span> ⚡</span>
+    <span>
+      <span class="promo-highlight blink-text" id="promo-text">
+        🔥 DROP LIMITADO HOY · ENTRA AL PIT-LANE
+      </span>
+    </span>
   </div>
 
-  <!-- Header (Light Glass) -->
+  <!-- Header (Glass Premium) -->
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
@@ -59,10 +68,11 @@
 
       <div class="navRight">
         <button type="button" class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
-            <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
-            <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z"></path>
+            <path d="M6 6l-2-3H1"></path>
+            <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+            <path d="M18 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
           </svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
@@ -72,12 +82,15 @@
 
   <!-- Main -->
   <main class="wrap">
+    <!-- HERO -->
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
 
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">LANZAMIENTO OFICIAL 2026</span></div>
+        <div class="tagline">
+          <span class="tag-pill">TIENDA OFICIAL · LANZAMIENTO 2026</span>
+        </div>
 
         <h1 class="hero-title" id="hero-title">
           <span class="neon-text">GEAR</span> OFICIAL
@@ -89,39 +102,46 @@
         </div>
 
         <div class="marketing-copy">
-          <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>
-          Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.
+          <strong>MERCHANDISE OFICIAL DE SCORE INTERNATIONAL</strong><br>
+          Fabricado por <strong>Único Uniformes</strong> · Operado por <strong>BAJATEX</strong>
         </div>
 
         <div class="ctaRow">
-          <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER COLECCIONES</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+          <button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">
+            VER COLECCIONES
+          </button>
+          <button class="btn secondary" onclick="openDrawer()">
+            MI PEDIDO
+          </button>
         </div>
       </div>
     </section>
 
+    <!-- COLECCIONES -->
     <section class="section scroll-reveal" id="collections">
       <div class="sectionHead">
         <h2>COLECCIONES <span>OFICIALES</span></h2>
-        <p>EDICIONES LIMITADAS · BAJATEX / ÚNICO</p>
+        <p>Ediciones limitadas · Calidad premium · Hecho para racing</p>
       </div>
 
       <div class="grid">
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-texture"></div>
-          <span class="badge">TIENDA OFICIAL</span>
+          <span class="badge">OFICIAL</span>
           <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-texture"></div>
+          <span class="badge">OFICIAL</span>
           <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
 
         <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-texture"></div>
+          <span class="badge alt">NUEVO</span>
           <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
@@ -129,12 +149,13 @@
         <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-texture"></div>
           <span class="badge alt">CLÁSICOS</span>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy">
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
       </div>
     </section>
 
+    <!-- PARTNERS -->
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
@@ -151,7 +172,10 @@
     <div class="container footerInner">
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
+        <p class="fText">
+          Operador oficial de merchandise SCORE International.<br>
+          Fabricado por <strong>Único Uniformes</strong>.
+        </p>
       </div>
 
       <div class="fCol">
@@ -168,7 +192,7 @@
         <div class="footerLinks">
           <button type="button" onclick="openLegal('terms')">Términos y Condiciones</button>
           <button type="button" onclick="openLegal('privacy')">Aviso de Privacidad</button>
-          <a href="/legal.html" style="font-size:12px; opacity:0.7;">Ver Legal Completo</a>
+          <a href="/legal.html" style="font-size:12px; opacity:0.8;">Ver Legal Completo</a>
         </div>
       </div>
 
@@ -288,12 +312,44 @@
     </div>
   </section>
 
-  <!-- Bottom App Nav -->
+  <!-- Bottom App Nav (Premium) -->
   <nav class="appNav" id="appNav" aria-label="Navegación">
-    <button class="appNavBtn" onclick="scrollToTop()"><span class="dot"></span>Inicio</button>
-    <button class="appNavBtn" onclick="scrollToCollections()">Colecciones</button>
-    <button class="appNavBtn hot" onclick="openDrawer()">Carrito</button>
-    <button class="appNavBtn" onclick="openLegal('shipping')">Envíos</button>
+    <button class="appNavBtn" onclick="scrollToTop()" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 10.5 12 3l9 7.5"></path>
+        <path d="M5 10v10h14V10"></path>
+      </svg>
+      <span>Inicio</span>
+    </button>
+
+    <button class="appNavBtn" onclick="scrollToCollections()" aria-label="Colecciones">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 7h16"></path>
+        <path d="M4 12h16"></path>
+        <path d="M4 17h16"></path>
+      </svg>
+      <span>Colecciones</span>
+    </button>
+
+    <button class="appNavBtn hot" onclick="openDrawer()" aria-label="Carrito">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 6h15l-1.5 9h-12z"></path>
+        <path d="M6 6l-2-3H1"></path>
+        <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+        <path d="M18 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+      </svg>
+      <span>Carrito</span>
+    </button>
+
+    <button class="appNavBtn" onclick="openLegal('shipping')" aria-label="Envíos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 7h13v10H3z"></path>
+        <path d="M16 10h4l1 2v5h-5z"></path>
+        <path d="M7 19a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+        <path d="M18 19a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
+      </svg>
+      <span>Envíos</span>
+    </button>
   </nav>
 
   <!-- PWA Install Prompt -->
