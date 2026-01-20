@@ -1,9 +1,10 @@
-/* SCORE STORE ENGINE v6.0 (SLIDER FIXED + INTEGRATIONS) */
+/* SCORE STORE ENGINE v7.0 (REAL + SLIDER) */
 
+// CREDENCIALES REALES
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "/api" : "/.netlify/functions";
-const CART_KEY = "score_cart_v6";
+const CART_KEY = "score_cart_v7";
 
 let cart = [];
 let catalogData = { products: [] };
@@ -48,7 +49,7 @@ async function enrichWithDB() {
         return match ? { ...local, baseMXN: match.price, db_id: match.id } : local;
       });
     }
-  } catch (e) { console.warn("DB Sync Error:", e); }
+  } catch (e) { console.warn("DB Sync:", e); }
 }
 
 /* --- LOGICA CATALOGO CON SLIDER (RESTAURADA) --- */
@@ -121,7 +122,6 @@ window.addToCart = (id) => {
   else cart.push({ id, size, qty: 1 });
   saveCart();
   updateCartUI();
-  // Feedback
   const btn = event.target;
   const original = btn.innerText;
   btn.innerText = "✓";
