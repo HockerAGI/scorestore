@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
-  <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes.">
+  <meta name="description" content="Tienda Oficial de SCORE International. 80% OFF por Inauguración. Fabricado por Único Uniformes.">
   <meta name="theme-color" content="#E10600" />
 
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
@@ -13,12 +13,11 @@
   <link rel="manifest" href="/site.webmanifest">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SCORE Store">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
   <link rel="preload" as="image" href="/assets/hero.webp">
 
-  <link rel="stylesheet" href="/css/styles.css?v=7.0">
+  <link rel="stylesheet" href="/css/styles.css?v=8.0">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,10 +42,11 @@
   src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
   <style>
-    /* Critical CSS Inline */
-    .cookieBanner{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:5000;background:rgba(18,18,18,0.95);border-left:4px solid #E10600;border-radius:12px;padding:16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 10px 40px rgba(0,0,0,0.6);backdrop-filter:blur(5px);}
-    .cookieText{color:#fff;font-size:13px;margin-right:10px;font-family: 'Inter', sans-serif;}
-    .cookieBtn{background:#E10600;color:#fff;border:none;padding:8px 20px;border-radius:50px;font-family:'Teko', sans-serif;font-size:16px;cursor:pointer;}
+    /* Critical CSS */
+    .cookieBanner{position:fixed;left:16px;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:5000;background:rgba(0,0,0,0.95);border-left:4px solid #E10600;border-radius:12px;padding:14px;display:none;backdrop-filter:blur(10px);}
+    .cookieInner{display:flex;gap:12px;align-items:center;justify-content:space-between;}
+    .cookieText{color:#fff;font-size:12px;}
+    .cookieBtn{border-radius:50px;padding:6px 14px;font-size:12px;font-weight:700;background:#E10600;color:#fff;border:none;}
   </style>
 </head>
 <body>
@@ -54,6 +54,8 @@
   <div id="splash-screen"><div class="splash-content"><img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="66"><div class="rpm-bar-container"><div class="rpm-bar"></div></div><div class="splash-text">INICIANDO MOTORES...</div></div></div>
   
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
+
+  <div class="promo-bar slide-in-top" id="promo-bar"><span>⚠️ <span class="promo-highlight blink-text">GRAN APERTURA:</span> 80% DE DESCUENTO EN TODA LA TIENDA ⚠️</span></div>
   
   <header class="topbar">
     <div class="container topbarInner">
@@ -73,19 +75,19 @@
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div><div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">TIENDA OFICIAL</span></div>
-        <h1 class="hero-title" id="hero-title">OFICIAL<br><span>SCORE STORE</span></h1>
+        <div class="tagline"><span class="tag-pill">INAUGURACIÓN OFICIAL 2026</span></div>
+        <h1 class="hero-title" id="hero-title"><span class="neon-text">80% OFF</span> EN TODO</h1>
         <div class="logos-row">
             <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" width="229" height="100">
             <img src="/assets/logo-world-desert.webp" alt="World Desert" class="hero-desert-seal" width="111" height="100">
         </div>
-        <div class="marketing-copy"><strong>SCORE INTERNATIONAL MERCHANDISE</strong><br>Fabricado por <strong>Único Uniformes</strong>.</div>
-        <div class="ctaRow"><button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER COLECCIONES</button></div>
+        <div class="marketing-copy"><strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>Fabricado por <strong>Único Uniformes</strong>, Patrocinador Oficial.</div>
+        <div class="ctaRow"><button class="btn primary pulse-btn" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER OFERTAS</button></div>
       </div>
     </section>
 
     <section class="section scroll-reveal" id="collections">
-      <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2></div>
+      <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2><p>APROVECHA PRECIOS DE INAUGURACIÓN</p></div>
       <div class="grid app-grid">
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')"><div class="card-texture"></div><span class="badge">MÁS VENDIDO</span><img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" width="200" height="124"><div class="card-btn">VER PRODUCTOS</div></div>
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')"><div class="card-texture"></div><img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" width="200" height="125"><div class="card-btn">VER PRODUCTOS</div></div>
@@ -160,18 +162,10 @@
 
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);" aria-hidden="true">
     <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:20px; color:#222;">
-      <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div>
-      <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div>
-      <div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex.</p></div>
-      <div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div>
-      <div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>ventas.unicotextil@gmail.com</p></div>
-    </div>
+    <div class="dBody" style="padding:20px; color:#222;"><div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Enviamos a todo México y USA. Tiempos de entrega: 3-7 días.</p></div><div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos de fábrica. Notificar en 5 días.</p></div><div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>Operado por Bajatex.</p></div><div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div><div class="legalBlock" data-legal-block="billing" style="display:none;"><h4>FACTURACIÓN</h4><p>ventas.unicotextil@gmail.com</p></div></div>
   </aside>
 
-  <div class="toast" id="toast">Mensaje</div>
-  
-  <script src="/js/main.js?v=7.0" defer></script>
-  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="flex";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=7.0").catch(console.warn);</script>
+  <script src="/js/main.js?v=8.0" defer></script>
+  <script>(function(){const k="score_cookie_consent",b=document.getElementById("cookieBanner");if(!localStorage.getItem(k))b.style.display="flex";document.getElementById("cookieAccept").onclick=()=>{localStorage.setItem(k,"all");b.style.display="none"}})();if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js?v=8.0").catch(console.warn);</script>
 </body>
 </html>
