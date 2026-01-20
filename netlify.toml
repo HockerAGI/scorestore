@@ -8,33 +8,27 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# ----------------------------
-# Security headers (site-wide)
-# ----------------------------
+# --- HEADERS DE SEGURIDAD ---
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy = "geolocation=(), camera=(), microphone=()"
 
-# ------------------------------------
-# Functions: CORS + no-cache (critical)
-# ------------------------------------
+# --- FUNCTIONS CORS & CACHE ---
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Cache-Control = "no-store"
+    Cache-Control = "no-store, no-cache, must-revalidate"
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
     Access-Control-Allow-Methods = "POST, OPTIONS"
 
-# ----------------------------------------
-# PWA: evitar cache tóxico en Android/SW
-# (sw.js se versiona por query param pero
-# es mejor dejarlo súper controlado)
-# ----------------------------------------
+# --- PWA & ASSETS ---
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -45,10 +39,6 @@
   [headers.values]
     Cache-Control = "no-store"
 
-# ----------------------------------------------------
-# Assets estáticos: cache largo (si tus filenames cambian)
-# Si NO usas filenames con hash, comenta este bloque.
-# ----------------------------------------------------
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -64,9 +54,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# ----------------------------
-# Redirects
-# ----------------------------
+# --- REDIRECTS ---
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
