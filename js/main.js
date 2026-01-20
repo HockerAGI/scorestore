@@ -1,4 +1,4 @@
-/* SCORE STORE - HYBRID ENGINE v4.1 */
+/* SCORE STORE - HYBRID ENGINE v4.1 (STABLE) */
 
 const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
@@ -20,12 +20,15 @@ const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currenc
 const cleanUrl = (url) => url ? encodeURI(String(url).trim()) : "";
 const safeText = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 let _splashInitialized = false;
+let _listenersBound = false;
 
 async function init() {
-  // Conectar DB
+  // Conectar DB con seguridad
   if (window.supabase) {
       try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } 
-      catch (err) { console.error("Error DB:", err); }
+      catch (err) { console.error("Error DB Init:", err); }
+  } else {
+      console.warn("Supabase SDK not loaded");
   }
 
   // 1. Cargar datos locales (Prioridad Visual Inmediata)
@@ -54,7 +57,7 @@ async function loadCatalogLocal() {
     if (!res.ok) throw new Error("JSON missing");
     const json = await res.json();
     catalogData = json;
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error("Error catalog:", e); }
 }
 
 async function enrichWithDB() {
@@ -62,6 +65,7 @@ async function enrichWithDB() {
         const { data: dbProducts } = await db.from("products").select("id, sku, price, active, name");
         if (dbProducts && dbProducts.length > 0) {
             catalogData.products = catalogData.products.map(localP => {
+                // Intenta match por SKU o Nombre
                 const match = dbProducts.find(dbp => (dbp.sku && localP.sku && dbp.sku === localP.sku) || (dbp.name === localP.name));
                 if (match) {
                     return { ...localP, baseMXN: Number(match.price), active: match.active, db_id: match.id };
@@ -69,7 +73,7 @@ async function enrichWithDB() {
                 return localP;
             }).filter(p => p.active !== false);
         }
-    } catch (err) {}
+    } catch (err) { console.warn("DB enrich failed:", err); }
 }
 
 window.openCatalog = (sectionId, titleFallback) => {
@@ -136,7 +140,8 @@ window.checkout = async () => {
     const payload = {
       items: cart.map(i => {
           const p = catalogData.products.find(x => x.id === i.id);
-          return { id: p.db_id || p.id, sku: p.sku, qty: i.qty, size: i.size, price_data_fallback: p.baseMXN };
+          // Fallback seguro: usa id local si no hay db_id
+          return { id: p.db_id || p.id, sku: p.sku, qty: i.qty, size: i.size };
       }),
       mode,
       customer: { name: $("name").value, address: $("addr").value, postal_code: $("cp").value },
