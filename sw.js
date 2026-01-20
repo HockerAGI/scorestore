@@ -1,5 +1,5 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v25 (FIXED + CONSISTENTE) */
-const CACHE_NAME = "score-store-v21";
+/* sw.js - VERSIÓN DE PRODUCCIÓN v25 (SINCRONIZADA) */
+const CACHE_NAME = "score-store-v25";
 
 const ASSETS = [
   "/",
@@ -13,15 +13,16 @@ const ASSETS = [
   "/site.webmanifest"
 ];
 
-// helper: agrega assets sin romper instalación si alguno falla
+// Helper: cachear lo que se pueda, sin romper si falta algún asset opcional
 async function safePrecache(cache, urls) {
   await Promise.allSettled(
     urls.map(async (url) => {
       try {
-        await cache.add(url);
+        const req = new Request(url, { cache: 'reload' });
+        const res = await fetch(req);
+        if (res.ok) await cache.put(req, res);
       } catch (e) {
-        // no rompas install por un asset faltante
-        // (ej: legal.html no existe aún, o icon missing)
+        console.warn(`[SW] Skip asset: ${url}`);
       }
     })
   );
@@ -30,9 +31,7 @@ async function safePrecache(cache, urls) {
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      await safePrecache(cache, ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => safePrecache(cache, ASSETS))
   );
 });
 
@@ -47,27 +46,26 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  const url = req.url || "";
+  const url = new URL(req.url);
 
-  // Ignorar backend / proveedores: datos frescos SIEMPRE
+  // 1. Ignorar llamadas a Backend / API externas (siempre red)
   if (
-    url.includes("supabase.co") ||
-    url.includes("stripe.com") ||
-    url.includes("/.netlify/functions") ||
-    url.includes("/api/")
+    url.hostname.includes("supabase.co") ||
+    url.hostname.includes("stripe.com") ||
+    url.pathname.includes("/.netlify/functions") ||
+    url.pathname.includes("/api/")
   ) {
     return;
   }
 
+  // 2. Solo GET
   if (req.method !== "GET") return;
 
-  const isHTML =
-    req.destination === "document" ||
-    (req.headers.get("accept") || "").includes("text/html");
+  const isHTML = req.headers.get("accept")?.includes("text/html");
+  const isData = url.pathname.includes("/data/");
 
-  const isData = url.includes("/data/");
-
-  // Network First para HTML y data JSON (catálogo fresco)
+  // 3. Estrategia Network First (para HTML y JSON de productos)
+  // Queremos que el catálogo siempre esté fresco.
   if (isHTML || isData) {
     e.respondWith(
       fetch(req)
@@ -77,16 +75,17 @@ self.addEventListener("fetch", (e) => {
           return res;
         })
         .catch(async () => {
+          // Si falla la red, usar caché
           const cached = await caches.match(req);
           if (cached) return cached;
-          // fallback navegación offline al home si existe
-          return caches.match("/index.html");
+          // Fallback offline a index.html si es navegación
+          if (isHTML) return caches.match("/index.html");
         })
     );
     return;
   }
 
-  // Cache First para assets
+  // 4. Estrategia Cache First (Imágenes, CSS, JS estático)
   e.respondWith(
     caches.match(req).then((cached) => cached || fetch(req))
   );
