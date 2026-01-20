@@ -1,5 +1,5 @@
 /* =========================================================
-   SCORE STORE — STYLESHEET v4.2 (LIGHT + RACING + PWA + APP NAV)
+   SCORE STORE — STYLESHEET v4.3 (LIGHT + RACING + PWA + APP NAV)
    Operado por BAJATEX / ÚNICO UNIFORMES
    ========================================================= */
 
@@ -408,6 +408,7 @@ body.noScroll { overflow: hidden; }
   width: 140px;
   margin: 0 auto 14px;
   transition: transform .25s ease;
+  will-change: transform;
 }
 
 .champItem:hover .float-logo{
@@ -464,27 +465,54 @@ body.noScroll { overflow: hidden; }
   filter: saturate(1.05);
 }
 
-/* ---------- SCROLL REVEAL (FIX) ---------- */
+/* =========================================================
+   ✅ SCROLL REVEAL — SAFE MODE
+   - Si JS NO corre: se ve todo (NO rompe página)
+   - Si JS corre: anima con revealed
+   Requiere: <html class="js"> (lo agrega tu index en <head>)
+   ========================================================= */
 .scroll-reveal{
-  opacity: 0;
-  transform: translateY(22px);
+  opacity: 1;
+  transform: none;
   transition: opacity .6s ease, transform .6s ease;
 }
 
-.scroll-reveal.revealed{
+html.js .scroll-reveal{
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+html.js .scroll-reveal.revealed{
   opacity: 1;
   transform: none;
 }
 
-/* ---------- FOOTER ---------- */
+/* ---------- FOOTER (NEGRO + MÁS RACING/PREMIUM) ---------- */
 .footer{
+  position: relative;
   background: #0b0b0b;
   color:#fff;
-  padding: 60px 0 20px;
+  padding: 70px 0 22px;
   border-top: 1px solid rgba(255,255,255,.10);
+  overflow: hidden;
+}
+
+/* racing stripe / glow */
+.footer::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 15% 40%, rgba(225,6,0,.22), transparent 55%),
+    radial-gradient(circle at 85% 40%, rgba(0,48,135,.18), transparent 60%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 6px, rgba(255,255,255,0) 6px 16px);
+  opacity: .55;
+  pointer-events:none;
+  mix-blend-mode: screen;
 }
 
 .footerInner{
+  position: relative;
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 40px;
@@ -494,15 +522,17 @@ body.noScroll { overflow: hidden; }
   font-family: "Teko", sans-serif;
   font-size: 34px;
   margin-bottom: 10px;
+  letter-spacing: 1px;
 }
 
-.fText{ opacity: .85; line-height: 1.35; }
+.fText{ opacity: .86; line-height: 1.35; }
+
 .footerLinks button,
 .footerLinks a{
   background:none;
   border:none;
   color:#fff;
-  opacity: .72;
+  opacity: .74;
   cursor:pointer;
   font-size: 14px;
   margin-bottom: 6px;
@@ -511,9 +541,10 @@ body.noScroll { overflow: hidden; }
 .footerLinks a:hover{ opacity: 1; }
 
 .copy{
+  position: relative;
   text-align:center;
   font-size: 12px;
-  opacity: .55;
+  opacity: .60;
   margin-top: 30px;
 }
 
@@ -691,6 +722,7 @@ body.noScroll { overflow: hidden; }
   object-fit: contain;
   filter: drop-shadow(0 18px 22px rgba(0,0,0,.12));
   transition: transform .18s ease;
+  will-change: transform;
 }
 
 .pCard:hover .pImg{ transform: scale(1.02); }
