@@ -1,18 +1,18 @@
-// netlify/functions/create_checkout.js
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { jsonResponse, safeJsonParse, supabaseAdmin, FALLBACK_MX_PRICE, FALLBACK_US_PRICE } = require("./_shared");
+const { 
+  jsonResponse, 
+  safeJsonParse, 
+  getEnviaQuote, 
+  FALLBACK_MX_PRICE, 
+  FALLBACK_US_PRICE, 
+  normalizeQty,
+  PROMO_RULES 
+} = require("./_shared");
 
-const TJ_FLAT = 200;
+const TJ_FLAT = 0; 
 
-function baseUrl() {
-  return process.env.URL || process.env.DEPLOY_PRIME_URL || "http://localhost:8888";
-}
-
-function toCents(mxn) {
-  const n = Number(mxn || 0);
-  const safe = Number.isFinite(n) ? n : 0;
-  return Math.max(0, Math.round(safe * 100));
-}
+function baseUrl() { return process.env.URL || "https://scorestore.netlify.app"; }
+function toCents(mxn) { return Math.max(0, Math.round((Number(mxn) || 0) * 100)); }
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
@@ -20,89 +20,84 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
-    const cartItems = Array.isArray(body.items) ? body.items : [];
-    const discountFactor = Math.min(0.9, Math.max(0, Number(body.discountFactor || 0))); // 0..0.9
-    const mode = String(body.mode || "pickup").toLowerCase();
-
+    const cartItems = Array.isArray(body.cart) ? body.cart : [];
+    const shippingMode = String(body.shippingMode || "pickup").toLowerCase();
+    const shippingData = body.shippingData || {};
+    const promoCode = String(body.promoCode || "").toUpperCase();
+    
     if (!cartItems.length) return jsonResponse(400, { error: "Carrito vacío" });
-    if (!supabaseAdmin) return jsonResponse(500, { error: "Supabase no configurado en Functions" });
+    
+    // 1. VALIDAR PROMOCIÓN
+    let discountMultiplier = 1;
+    let discountLabel = "";
+    
+    if (promoCode && PROMO_RULES[promoCode]) {
+        const rule = PROMO_RULES[promoCode];
+        discountMultiplier = 1 - rule.value; 
+        discountLabel = ` (${rule.label})`;
+    }
 
-    // Org
-    const { data: org, error: orgErr } = await supabaseAdmin
-      .from("organizations")
-      .select("id")
-      .eq("slug", "score-store")
-      .single();
-
-    if (orgErr || !org?.id) return jsonResponse(500, { error: "Tienda no configurada (org missing)" });
-
-    // Productos DB (IDs deben ser UUID si usas DB IDs; si usas SKU, ajustamos)
-    const ids = cartItems.map(i => String(i.id));
-    const { data: products, error: pErr } = await supabaseAdmin
-      .from("products")
-      .select("id, sku, name, price, active, image_url")
-      .in("id", ids)
-      .eq("active", true);
-
-    if (pErr) return jsonResponse(500, { error: pErr.message });
-    if (!products || !products.length) return jsonResponse(400, { error: "Productos no disponibles" });
-
+    // 2. ITEMS
     const line_items = cartItems.map((item) => {
-      const dbProd = products.find(p => String(p.id) === String(item.id));
-      if (!dbProd) return null;
-
-      const basePrice = Number(dbProd.price || 0);
-      const finalPrice = basePrice * (1 - discountFactor);
-      const unit_amount = toCents(finalPrice);
-
-      const cleanName = String(dbProd.name || "Producto");
-      const pct = discountFactor > 0 ? ` (${Math.round(discountFactor * 100)}% OFF)` : "";
-
+      const basePrice = Number(item.price);
+      const finalPrice = basePrice * discountMultiplier;
+      
       return {
         price_data: {
           currency: "mxn",
           product_data: {
-            name: `${cleanName}${pct}`,
-            description: `Talla: ${String(item.size || "Unitalla")} | SKU: ${String(dbProd.sku || "").trim()}`,
-            images: dbProd.image_url ? [`${baseUrl()}${dbProd.image_url}`] : [],
-            metadata: { product_id: dbProd.id }
+            name: `${item.name}${discountLabel}`,
+            description: `Talla: ${item.selectedSize} | SKU: ${item.sku || 'N/A'}`,
+            images: [`${baseUrl()}${item.img}`],
+            metadata: { id: item.id, size: item.selectedSize }
           },
-          unit_amount,
+          unit_amount: toCents(finalPrice),
         },
-        quantity: Math.max(1, Number(item.qty || 1))
+        quantity: normalizeQty(item.quantity)
       };
-    }).filter(Boolean);
+    });
 
-    if (!line_items.length) return jsonResponse(400, { error: "Carrito inválido" });
-
-    // Shipping
+    // 3. ENVÍO
     let shipping_options = [];
-    if (mode !== "pickup") {
-      let cost = FALLBACK_MX_PRICE;
-      let label = "Envío Nacional (MX)";
+    const totalQty = cartItems.reduce((acc, i) => acc + normalizeQty(i.quantity), 0);
 
-      if (mode === "tj") {
-        cost = TJ_FLAT;
-        label = "Local Express (Tijuana)";
-      } else if (mode === "us") {
-        cost = Number(body.shipping?.cost || FALLBACK_US_PRICE);
-        label = "Envío Internacional (USA)";
-      } else {
-        cost = Number(body.shipping?.cost || FALLBACK_MX_PRICE);
-        label = "Envío Nacional (MX)";
-      }
+    if (shippingMode === "pickup") {
+        shipping_options = [];
+    } else {
+        let rateAmount = 0;
+        let rateLabel = "";
+        let minDays = 3; let maxDays = 5;
 
-      cost = Math.max(0, cost);
+        if (shippingMode === "tj") {
+            rateAmount = TJ_FLAT; rateLabel = "Entrega Local Tijuana"; minDays = 1; maxDays = 2;
+        } else if (shippingData.cp) {
+            const countryCode = shippingMode === 'us' ? 'US' : 'MX';
+            const quote = await getEnviaQuote(shippingData.cp, totalQty, countryCode);
+            
+            if (quote) {
+                rateAmount = quote.mxn;
+                rateLabel = `Envío ${quote.carrier} (Calculado)`;
+                if(quote.days && typeof quote.days === 'string') {
+                    const d = quote.days.match(/\d+/);
+                    if(d) maxDays = parseInt(d[0]) + 2;
+                }
+            } else {
+                rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+                rateLabel = shippingMode === 'us' ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)";
+            }
+        } else {
+            rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+            rateLabel = "Envío Estándar";
+        }
 
-      if (cost > 0) {
         shipping_options = [{
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: toCents(cost), currency: "mxn" },
-            display_name: label,
-          }
+            shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: toCents(rateAmount), currency: "mxn" },
+                display_name: rateLabel,
+                delivery_estimate: { minimum: { unit: "business_day", value: minDays }, maximum: { unit: "business_day", value: maxDays } },
+            },
         }];
-      }
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -110,19 +105,20 @@ exports.handler = async (event) => {
       mode: "payment",
       line_items,
       shipping_options,
-      shipping_address_collection: mode === "pickup" ? undefined : { allowed_countries: ["MX", "US"] },
-      success_url: `${baseUrl()}/?status=success`,
-      cancel_url: `${baseUrl()}/?status=cancel`,
+      shipping_address_collection: shippingMode !== "pickup" ? { allowed_countries: ["MX", "US"] } : undefined,
+      success_url: `${baseUrl()}/index.html?status=success`,
+      cancel_url: `${baseUrl()}/index.html?status=cancel`,
       metadata: {
-        org_id: org.id,
-        score_mode: mode,
-        discount_applied: String(discountFactor),
+        order_type: "score_store_v6",
+        shipping_mode: shippingMode,
+        promo_used: promoCode || "NONE",
       }
     });
 
-    return jsonResponse(200, { url: session.url });
+    return jsonResponse(200, { id: session.id, url: session.url });
+
   } catch (err) {
     console.error("Checkout Error:", err);
-    return jsonResponse(500, { error: err?.message || "Checkout failed" });
+    return jsonResponse(500, { error: err.message || "Error procesando el pago" });
   }
 };
