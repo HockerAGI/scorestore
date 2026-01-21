@@ -7,6 +7,7 @@
   
   <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://unicouniformes.com/" />
@@ -21,7 +22,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=12.0">
+  <link rel="stylesheet" href="/css/styles.css?v=13.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,9 +31,27 @@
 
   <script src="https://js.stripe.com/v3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
   
   <style>
-    /* Estilos Críticos Inline para evitar FOUC */
+    /* Estilos Críticos Inline */
     .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
     .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
     .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; }
@@ -54,7 +73,7 @@
 </head>
 
 <body>
-  <!-- Splash Screen -->
+  <!-- Splash Screen (Racing) -->
   <div id="splash-screen">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -65,8 +84,8 @@
 
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
-  <div class="promo-bar slide-in-top" id="promo-bar" style="display:none;">
-    <span id="promo-text">⚠️ CARGANDO OFERTAS...</span>
+  <div class="promo-bar slide-in-top" id="promo-bar">
+    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
   </div>
 
   <header class="topbar">
@@ -213,7 +232,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=12.0" defer></script>
+  <script src="/js/main.js?v=13.0" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
@@ -232,7 +251,7 @@
     })();
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=12.0").then(reg => {
+      navigator.serviceWorker.register("/sw.js?v=13.0").then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           w.onstatechange = () => {
