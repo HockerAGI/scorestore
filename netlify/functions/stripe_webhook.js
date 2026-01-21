@@ -1,88 +1,99 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const axios = require('axios');
-const { supabaseAdmin, createEnviaLabel, jsonResponse } = require('./_shared');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const axios = require("axios"); // Necesario para Telegram
+const { createEnviaLabel, supabaseAdmin } = require("./_shared");
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// Configuración Telegram desde Variables de Entorno
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+const json = (statusCode, body) => ({
+  statusCode,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return jsonResponse(405, { error: 'Method Not Allowed' });
+  if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
 
-  const sig = event.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const sig = event.headers["stripe-signature"];
+
   let stripeEvent;
-
   try {
-    stripeEvent = stripe.webhooks.constructEvent(event.body, sig, endpointSecret);
+    stripeEvent = stripe.webhooks.constructEvent(event.body, sig, webhookSecret);
   } catch (err) {
-    return jsonResponse(400, { error: `Webhook Error: ${err.message}` });
+    console.error("Webhook Signature Error:", err.message);
+    return json(400, { error: `Webhook Error: ${err.message}` });
   }
 
-  if (stripeEvent.type === 'checkout.session.completed') {
+  if (stripeEvent.type === "checkout.session.completed") {
     const session = stripeEvent.data.object;
-    const meta = session.metadata || {};
+    const mode = session.metadata?.score_mode; // pickup, tj, mx, us
+    const shippingDetails = session.shipping_details;
+    const customerDetails = session.customer_details;
     
-    const customerName = session.customer_details?.name || 'Cliente';
-    const customerEmail = session.customer_details?.email || '';
-    const shippingMode = meta.shipping_mode || 'pickup';
+    console.log(`💰 Pago confirmado: ${session.id}`);
+
+    // 1. Generar Guía (Solo si es envío)
+    let trackingInfo = "N/A - Recoger en Tienda";
+    let carrierName = "Local";
     
-    let trackingInfo = null;
-    let shippingLabel = null;
+    if (mode === "mx" || mode === "us") {
+      if (shippingDetails) {
+        const customerData = {
+          name: shippingDetails.name,
+          email: customerDetails?.email || "cliente@scorestore.com",
+          phone: customerDetails?.phone || shippingDetails.phone || "0000000000",
+          address: shippingDetails.address
+        };
 
-    if (shippingMode !== 'pickup' && session.shipping_details) {
-        const enviaResult = await createEnviaLabel({
-            name: customerName,
-            email: customerEmail,
-            address: session.shipping_details.address,
-            phone: session.customer_details.phone
-        }, 1);
-
-        if (enviaResult) {
-            trackingInfo = enviaResult.tracking;
-            shippingLabel = enviaResult.labelUrl;
+        const shipment = await createEnviaLabel(customerData, 2); // 2 items promedio
+        if (shipment) {
+          trackingInfo = shipment.tracking;
+          carrierName = shipment.carrier;
+          console.log(`✅ GUÍA CREADA: ${trackingInfo}`);
         }
+      }
     }
 
-    const orderData = {
-        stripe_session_id: session.id,
-        created_at: new Date().toISOString(),
-        customer_email: customerEmail,
-        customer_name: customerName,
-        amount_total: session.amount_total / 100,
-        currency: session.currency,
-        status: 'paid',
-        shipping_mode: shippingMode,
-        shipping_address: session.shipping_details,
-        tracking_number: trackingInfo,
-        label_url: shippingLabel
-    };
-
+    // 2. Guardar en Supabase (Opcional, pero recomendado)
     if (supabaseAdmin) {
-        await supabaseAdmin.from('orders').insert([orderData]);
+        const { error } = await supabaseAdmin.from('orders').insert([{
+            stripe_id: session.id,
+            total: session.amount_total / 100,
+            status: 'paid',
+            tracking: trackingInfo,
+            shipping_mode: mode
+        }]);
+        if(error) console.error("Error guardando en Supabase:", error);
     }
 
+    // 3. Notificar a Telegram
     if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
-        let msg = `🏁 *NUEVA ORDEN SCORE* 🏁\n\n`;
+        const amount = (session.amount_total / 100).toFixed(2);
+        const currency = session.currency.toUpperCase();
+        const customerName = customerDetails?.name || "Cliente";
+        
+        let msg = `🏁 *NUEVA VENTA - SCORE STORE* 🏁\n\n`;
         msg += `👤 *Cliente:* ${customerName}\n`;
-        msg += `💰 *Total:* $${orderData.amount_total} ${orderData.currency.toUpperCase()}\n`;
-        msg += `🚚 *Modo:* ${shippingMode.toUpperCase()}\n`;
+        msg += `💰 *Monto:* $${amount} ${currency}\n`;
+        msg += `🚚 *Envío:* ${mode.toUpperCase()} (${carrierName})\n`;
         
-        if (trackingInfo) {
-            msg += `📦 *Tracking:* \`${trackingInfo}\`\n`;
-            msg += `📄 *Etiqueta:* [Ver PDF](${shippingLabel})\n`;
+        if (trackingInfo !== "N/A - Recoger en Tienda") {
+            msg += `📦 *Guía:* \`${trackingInfo}\`\n`;
         }
-        
+
         try {
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                 chat_id: TELEGRAM_CHAT_ID,
                 text: msg,
-                parse_mode: 'Markdown'
+                parse_mode: "Markdown"
             });
         } catch (e) {
-            console.error('Telegram Error:', e.message);
+            console.error("Telegram Error:", e.message);
         }
     }
   }
 
-  return jsonResponse(200, { received: true });
+  return json(200, { received: true });
 };
