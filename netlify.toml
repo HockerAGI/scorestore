@@ -9,21 +9,15 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# --- REDIRECCIONES ---
-
-# Permite llamar a la API como /api/nombre_funcion en lugar de /.netlify/functions/...
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Redirección SPA (Manejo de rutas y errores 404 enviando al index)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# --- HEADERS DE SEGURIDAD Y CACHÉ (Optimizados para Producción) ---
 
 [[headers]]
   for = "/*"
@@ -34,24 +28,6 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
-
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-store"
-
-[[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Cache-Control = "no-store"
 
 [[headers]]
   for = "/assets/*"
@@ -67,3 +43,8 @@
   for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store"
