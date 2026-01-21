@@ -9,26 +9,28 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
-  <!-- Assets Reales -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://unicouniformes.com/" />
+  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
+  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes." />
+  <meta property="og:image" content="/assets/hero.webp" />
+  <meta property="fb:pages" content="1496305187347575" />
+
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
   
-  <!-- CSS v16.0 -->
-  <link rel="stylesheet" href="/css/styles.css?v=16.0">
-  
-  <!-- Fuentes -->
+  <link rel="stylesheet" href="/css/styles.css?v=15.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="preload" href="/assets/hero.webp" as="image">
 
-  <!-- SDKs -->
   <script src="https://js.stripe.com/v3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Pixel Meta -->
+  <!-- Pixel Meta (Integrado) -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -65,7 +67,7 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
   <div class="promo-bar slide-in-top" id="promo-bar">
-    <span id="promo-text">⚠️ LIQUIDACIÓN POR LANZAMIENTO - 80% OFF EN TODO</span>
+    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
   </div>
 
   <header class="topbar">
@@ -83,7 +85,7 @@
   </header>
 
   <main class="wrap">
-    <!-- Hero (Modificado con 80% OFF y Único) -->
+    <!-- Hero con 80% OFF -->
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
@@ -135,7 +137,7 @@
       </div>
     </section>
 
-    <!-- Partners (Corregido para móvil) -->
+    <!-- Partners (Logos corregidos en CSS) -->
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
@@ -189,7 +191,7 @@
         <input id="name" type="text" placeholder="Nombre Receptor" class="inputField" style="width:100%;">
       </div>
 
-      <!-- Campo Cupón Agregado -->
+      <!-- Cupón -->
       <div class="promo-row" style="display:flex; gap:10px; margin-bottom:15px;">
         <input type="text" id="promoCodeInput" placeholder="CÓDIGO DE CUPÓN" class="inputField" style="flex:1;">
         <button onclick="applyPromo()" class="btn secondary" style="color:#333; border-color:#ddd; padding:0 15px; font-size:14px;">APLICAR</button>
@@ -228,7 +230,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=16.0" defer></script>
+  <script src="/js/main.js?v=15.0" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
@@ -247,7 +249,7 @@
     })();
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=16.0").then(reg => {
+      navigator.serviceWorker.register("/sw.js?v=15.0").then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           w.onstatechange = () => {
