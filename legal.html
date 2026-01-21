@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex" />
 
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=4.2" />
+  <link rel="stylesheet" href="/css/styles.css?v=7.0" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,12 +16,12 @@
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- CONFIG ÚNICA (MISMAS KEYS QUE INDEX) -->
+  <!-- CONFIG ÚNICA (Credenciales Reales) -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
-      supabaseUrl: "PASTE_SUPABASE_URL_HERE",
-      supabaseAnonKey: "PASTE_SUPABASE_ANON_KEY_HERE"
+      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
     };
   </script>
 </head>
@@ -29,7 +29,7 @@
 <body>
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
 
-  <header class="topbar topbar--legal">
+  <header class="topbar">
     <div class="container topbarInner">
       <a class="btnGhost" href="/">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
@@ -126,12 +126,12 @@
   </main>
 
   <footer class="footer footer--legal">
-    <div class="footer__bottom">
+    <div class="copy">
       <small>© 2026 SCORE Store · Operado por BAJATEX</small>
     </div>
   </footer>
 
-  <!-- Drawer carrito reutilizado -->
+  <!-- Drawer carrito reutilizado (Funcionalidad v6.0) -->
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="dHead">
       <h3 class="dTitle">MI PEDIDO</h3>
@@ -148,9 +148,9 @@
 
     <div class="dFoot" id="cartFooter">
       <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div>Recoger en Fábrica (Tijuana) - Gratis</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div>Envío Nacional (MX)</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us"><div>Envío USA</div></label>
+        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked onchange="updateShipping()"><div>Recoger en Fábrica (Tijuana) - Gratis</div></label>
+        <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateShipping()"><div>Envío Nacional (MX)</div></label>
+        <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateShipping()"><div>Envío USA</div></label>
       </div>
 
       <div id="shipForm" style="display:none; margin-bottom:15px;">
@@ -177,6 +177,7 @@
 
   <div class="toast" id="toast">Mensaje</div>
 
-  <script src="/js/main.js?v=4.2" defer></script>
+  <!-- Sincronizado con JS v7.0 -->
+  <script src="/js/main.js?v=7.0" defer></script>
 </body>
 </html>
