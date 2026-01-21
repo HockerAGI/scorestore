@@ -1,6 +1,7 @@
 /* sw.js - VERSIÓN DE PRODUCCIÓN v25 (SINCRONIZADA) */
 const CACHE_NAME = "score-store-v25";
 
+// Lista crítica de assets para precarga
 const ASSETS = [
   "/",
   "/index.html",
@@ -9,7 +10,6 @@ const ASSETS = [
   "/js/main.js",
   "/data/catalog.json",
   "/assets/logo-score.webp",
-  "/assets/icons/icon-192.png",
   "/site.webmanifest"
 ];
 
@@ -56,6 +56,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
+  // Solo GET requests
   if (req.method !== "GET") return;
 
   const accept = req.headers.get("accept") || "";
@@ -74,7 +75,7 @@ self.addEventListener("fetch", (e) => {
         .catch(async () => {
           const cached = await caches.match(req);
           if (cached) return cached;
-          if (isHTML) return caches.match("/index.html");
+          if (isHTML) return caches.match("/index.html"); // Fallback offline
         })
     );
     return;
