@@ -1,183 +1,221 @@
-<!doctype html>
-<html lang="es-MX">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Información Legal · SCORE Store</title>
-  <meta name="robots" content="noindex" />
+/* =========================================
+   SCORE STORE v8.0 - RETAIL CLEAN
+   ========================================= */
 
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=7.0" />
+:root {
+  --primary-red: #E10600;
+  --primary-dark: #111111;
+  --text-dark: #1a1a1a;
+  --text-light: #666666;
+  --bg-light: #f9f9f9;
+  --white: #ffffff;
+  --border-color: #e5e5e5;
+  --font-main: 'Inter', sans-serif;
+  --font-display: 'Teko', sans-serif;
+  --header-height: 70px;
+}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  <script src="https://js.stripe.com/v3" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  line-height: 1.5;
+}
 
-  <!-- CONFIG ÚNICA (Credenciales Reales) -->
-  <script>
-    window.__SCORE__ = {
-      orgSlug: "score-store",
-      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
-    };
-  </script>
-</head>
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; transition: 0.2s; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; }
 
-<body>
-  <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
+/* UTILS */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; font-weight: 600; border-radius: 4px; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px; font-size: 14px; }
+.btn-primary { background-color: var(--primary-red); color: white; }
+.btn-primary:hover { background-color: #b30500; }
+.btn-full { width: 100%; }
 
-  <header class="topbar">
-    <div class="container topbarInner">
-      <a class="btnGhost" href="/">← Volver a la Tienda</a>
-      <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito" style="transform:scale(0.92);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path>
-            <path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path>
-            <path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path>
-          </svg>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
-      </div>
-    </div>
-  </header>
+/* ANNOUNCEMENT BAR */
+.announcement-bar {
+  background-color: var(--primary-dark);
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
 
-  <main class="legal">
-    <h1 class="h1">INFORMACIÓN LEGAL Y COMERCIAL</h1>
-    <p class="p muted">Última actualización: Enero 2026</p>
+/* HEADER */
+.header {
+  background: var(--white);
+  height: var(--header-height);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
 
-    <section id="privacidad" class="legalCard">
-      <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
-      <p class="p">
-        <strong>Responsable:</strong>
-        BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), nombre comercial BAJATEX,
-        operando bajo la marca Único Uniformes y proyectos derivados como SCORE Store,
-        con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.
-      </p>
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
 
-      <h3 class="h3">Datos Personales que se Recaban:</h3>
-      <ul class="ul">
-        <li>Nombre completo, teléfono y correo electrónico.</li>
-        <li>Empresa o razón social, RFC y datos fiscales (para facturación).</li>
-        <li>Dirección de envío.</li>
-        <li>Información relacionada con pedidos y pagos (no se recaban datos sensibles).</li>
-      </ul>
+.header-left { display: flex; align-items: center; gap: 15px; }
+.logo-img { height: 40px; }
 
-      <h3 class="h3">Finalidades del Tratamiento:</h3>
-      <ul class="ul">
-        <li><strong>Primarias:</strong> Procesar pedidos, entregas, atención y facturación.</li>
-        <li><strong>Secundarias:</strong> Promociones, seguimiento y análisis comercial.</li>
-      </ul>
+.desktop-nav { display: none; gap: 30px; }
+.desktop-nav a { font-weight: 600; font-size: 14px; text-transform: uppercase; color: var(--text-dark); }
+.desktop-nav a:hover { color: var(--primary-red); }
 
-      <p class="p">Derechos ARCO: enviar solicitud a <strong>ventas.unicotextil@gmail.com</strong></p>
-    </section>
+.header-right { display: flex; align-items: center; gap: 20px; }
+.icon-btn { font-size: 20px; color: var(--text-dark); position: relative; }
+.cart-badge {
+  position: absolute; top: -5px; right: -8px;
+  background: var(--primary-red); color: white;
+  font-size: 10px; width: 18px; height: 18px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: bold;
+}
 
-    <section id="terminos" class="legalCard">
-      <h2 class="h2">2. TÉRMINOS Y CONDICIONES DE USO Y VENTA</h2>
-      <p class="p">Al acceder y utilizar este sitio, usted acepta los presentes términos. El usuario declara ser mayor de edad y contar con capacidad legal.</p>
+@media(min-width: 768px) {
+  .desktop-nav { display: flex; }
+  .mobile-menu-btn { display: none; }
+}
 
-      <h3 class="h3">Precios y Pagos:</h3>
-      <ul class="ul">
-        <li>Los precios están expresados en pesos mexicanos (MXN).</li>
-        <li>El pedido se procesa una vez confirmado el pago.</li>
-      </ul>
+/* MOBILE MENU */
+.mobile-menu-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+  opacity: 0; visibility: hidden; transition: 0.3s;
+}
+.mobile-menu-overlay.active { opacity: 1; visibility: visible; }
+.mobile-menu-content {
+  background: white; width: 80%; max-width: 300px; height: 100%;
+  padding: 20px; transform: translateX(-100%); transition: 0.3s;
+}
+.mobile-menu-overlay.active .mobile-menu-content { transform: translateX(0); }
+.mobile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-weight: bold; font-size: 18px; }
+.mobile-links a { display: block; padding: 15px 0; border-bottom: 1px solid var(--border-color); font-weight: 600; }
 
-      <h3 class="h3">Productos Personalizados:</h3>
-      <p class="p"><strong>NO APLICAN A CAMBIOS NI DEVOLUCIONES</strong>, salvo defecto de fabricación comprobable.</p>
-    </section>
+/* HERO */
+.hero {
+  position: relative;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background-color: #000;
+}
+.hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 100%); }
+.hero-content { position: relative; z-index: 2; color: white; max-width: 600px; }
+.hero-subtitle { color: var(--primary-red); font-weight: 700; letter-spacing: 2px; font-size: 14px; display: block; margin-bottom: 10px; }
+.hero-title { font-family: var(--font-display); font-size: 64px; line-height: 0.9; margin-bottom: 20px; text-transform: uppercase; }
+.hero-text { font-size: 18px; margin-bottom: 30px; color: #ddd; max-width: 400px; }
 
-    <section id="envios" class="legalCard">
-      <h2 class="h2">3. POLÍTICA DE ENVÍOS</h2>
-      <ul class="ul">
-        <li><strong>Cobertura:</strong> República Mexicana y USA (sujeto a aduanas).</li>
-        <li><strong>Tiempos:</strong> 3 a 7 días hábiles (estándar). Local Tijuana 1–2 días (si aplica).</li>
-        <li><strong>Responsabilidad:</strong> una vez entregado a paquetería, se gestiona el reclamo con la paquetería.</li>
-      </ul>
-    </section>
+/* MAIN CATALOG */
+.main-content { padding: 60px 20px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+.section-header h2 { font-family: var(--font-display); font-size: 36px; text-transform: uppercase; color: var(--primary-dark); }
+.form-select { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; min-width: 200px; }
 
-    <section id="devoluciones" class="legalCard">
-      <h2 class="h2">4. DEVOLUCIONES Y GARANTÍAS</h2>
-      <p class="p">
-        Aplicable únicamente a defectos de fabricación comprobables en productos de línea.
-        El cliente deberá notificar dentro de los 5 días hábiles posteriores a la recepción al correo:
-        <strong>ventas.unicotextil@gmail.com</strong>
-      </p>
-    </section>
+/* PRODUCTS GRID */
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
 
-    <section id="facturacion" class="legalCard">
-      <h2 class="h2">5. FACTURACIÓN</h2>
-      <p class="p">La factura CFDI deberá solicitarse dentro del mes fiscal correspondiente al pago, proporcionando datos fiscales completos. No se realizan refacturaciones fuera de plazo.</p>
-      <p class="p">Solicitudes: <strong>ventas.unicotextil@gmail.com</strong></p>
-    </section>
+.product-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid transparent;
+}
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: var(--border-color); }
 
-    <section id="contacto" class="legalCard">
-      <h2 class="h2">DATOS DE CONTACTO OFICIALES</h2>
-      <p class="p">
-        <strong>BAJATEX, S. de R.L. de C.V.</strong><br>
-        📍 Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br>
-        📩 ventas.unicotextil@gmail.com<br>
-        🌐 unicouniformes.com
-      </p>
-    </section>
-  </main>
+.p-image-container { position: relative; background: #f4f4f4; aspect-ratio: 1/1; overflow: hidden; }
+.p-image { width: 100%; height: 100%; object-fit: contain; padding: 20px; transition: transform 0.3s; }
+.product-card:hover .p-image { transform: scale(1.05); }
+.p-badge { position: absolute; top: 10px; left: 10px; background: white; padding: 4px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-  <footer class="footer footer--legal">
-    <div class="copy">
-      <small>© 2026 SCORE Store · Operado por BAJATEX</small>
-    </div>
-  </footer>
+.p-info { padding: 20px; }
+.p-category { font-size: 11px; color: var(--text-light); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 5px; }
+.p-title { font-size: 16px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; line-height: 1.3; }
+.p-price { font-size: 18px; color: var(--primary-red); font-weight: 700; margin-bottom: 15px; }
 
-  <!-- Drawer carrito reutilizado (Funcionalidad v6.0) -->
-  <aside class="drawer" id="drawer" aria-hidden="true">
-    <div class="dHead">
-      <h3 class="dTitle">MI PEDIDO</h3>
-      <button type="button" class="closeBtn" onclick="closeAll()">✕</button>
-    </div>
+.p-actions { display: flex; flex-direction: column; gap: 10px; }
+.size-selector { display: flex; gap: 5px; flex-wrap: wrap; }
+.size-btn { border: 1px solid var(--border-color); background: white; padding: 5px 10px; font-size: 12px; border-radius: 4px; transition: 0.2s; }
+.size-btn:hover { border-color: var(--text-dark); }
+.size-btn.selected { background: var(--primary-dark); color: white; border-color: var(--primary-dark); }
 
-    <div class="dBody">
-      <div id="cartEmpty" style="text-align:center; padding:40px 20px;">
-        <p style="color:#777; margin-bottom:20px;">Tu carrito está vacío.</p>
-        <button class="btn secondary" onclick="closeAll()">Seguir Comprando</button>
-      </div>
-      <div id="cartItems"></div>
-    </div>
+/* CART SIDEBAR */
+.cart-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+  opacity: 0; visibility: hidden; transition: 0.3s;
+}
+.cart-overlay.open { opacity: 1; visibility: visible; }
 
-    <div class="dFoot" id="cartFooter">
-      <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked onchange="updateShipping()"><div>Recoger en Fábrica (Tijuana) - Gratis</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateShipping()"><div>Envío Nacional (MX)</div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateShipping()"><div>Envío USA</div></label>
-      </div>
+.cart-sidebar {
+  position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px;
+  background: white; z-index: 1001; transform: translateX(100%); transition: 0.3s;
+  display: flex; flex-direction: column;
+}
+.cart-overlay.open .cart-sidebar { transform: translateX(0); }
 
-      <div id="shipForm" style="display:none; margin-bottom:15px;">
-        <input id="cp" class="inputField" type="text" placeholder="Código Postal / ZIP" maxlength="10">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-          <input id="name" class="inputField" type="text" placeholder="Nombre completo">
-          <input id="addr" class="inputField" type="text" placeholder="Dirección y Teléfono">
-        </div>
-      </div>
+.cart-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.cart-header h3 { font-size: 18px; font-weight: 700; }
+.close-cart { font-size: 20px; color: var(--text-light); }
 
-      <div class="promo-row">
-        <input type="text" id="promoCodeInput" class="promo-input" placeholder="CÓDIGO DE CUPÓN">
-        <button class="promo-btn" onclick="applyPromo()">APLICAR</button>
-      </div>
+.cart-body { flex: 1; overflow-y: auto; padding: 20px; background: #f9f9f9; }
+.cart-item { display: flex; gap: 15px; background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); position: relative; }
+.cart-item-img { width: 70px; height: 70px; object-fit: contain; background: #f4f4f4; border-radius: 4px; }
+.cart-item-details h4 { font-size: 14px; margin-bottom: 5px; }
+.cart-item-meta { font-size: 12px; color: var(--text-light); }
+.cart-qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.qty-btn { width: 24px; height: 24px; border: 1px solid var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.cart-remove { position: absolute; top: 10px; right: 10px; color: #999; font-size: 12px; }
 
-      <div class="sumRow"><span>Subtotal:</span> <strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:#12a150;"><span>Descuento:</span> <strong id="discVal">-$0.00</strong></div>
-      <div class="sumRow"><span>Envío:</span> <strong id="shipTotal">Gratis</strong></div>
-      <div class="sumRow total"><span>Total:</span> <strong id="grandTotal">$0.00</strong></div>
+.cart-footer { padding: 25px; background: white; border-top: 1px solid var(--border-color); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
 
-      <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
-    </div>
-  </aside>
+/* Shipping & Totals */
+.shipping-options { margin-bottom: 20px; background: #f4f4f4; padding: 15px; border-radius: 8px; }
+.shipping-options h4 { font-size: 13px; text-transform: uppercase; margin-bottom: 10px; color: var(--text-light); }
+.radio-option { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
+.radio-option strong { color: var(--primary-red); }
 
-  <div class="toast" id="toast">Mensaje</div>
+.shipping-form { margin-bottom: 20px; }
+.form-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; }
 
-  <!-- Sincronizado con JS v7.0 -->
-  <script src="/js/main.js?v=7.0" defer></script>
-</body>
-</html>
+.coupon-section { display: flex; gap: 10px; margin-bottom: 20px; }
+.coupon-section input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
+.coupon-section button { padding: 0 15px; background: #333; color: white; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+.cart-totals .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-light); }
+.cart-totals .total { font-size: 18px; font-weight: 700; color: var(--text-dark); border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; }
+
+/* FOOTER */
+.footer { background: #111; color: white; padding: 60px 0 20px; margin-top: auto; }
+.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px; }
+.footer-logo { height: 40px; margin-bottom: 20px; filter: brightness(0) invert(1); }
+.footer p { color: #999; font-size: 14px; }
+.footer-links h4, .footer-social h4 { font-size: 16px; margin-bottom: 20px; color: white; }
+.footer-links a { display: block; color: #999; margin-bottom: 10px; font-size: 14px; }
+.footer-links a:hover { color: white; }
+.social-icons a { font-size: 20px; color: white; margin-right: 15px; }
+.footer-bottom { text-align: center; padding-top: 20px; border-top: 1px solid #333; color: #555; font-size: 12px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.toast.active { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* Loader */
+.loader-container { grid-column: 1/-1; text-align: center; padding: 50px; }
+.spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-red); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+@media(max-width: 768px) {
+  .hero-title { font-size: 42px; }
+  .section-header { flex-direction: column; align-items: flex-start; }
+  .form-select { width: 100%; }
+}
