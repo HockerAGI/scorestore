@@ -9,30 +9,26 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://unicouniformes.com/" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes." />
-  <meta property="og:image" content="/assets/hero.webp" />
-  <meta property="fb:pages" content="1496305187347575" />
-
+  <!-- Assets Reales -->
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <link rel="stylesheet" href="/css/styles.css?v=13.0">
+  
+  <!-- CSS v16.0 -->
+  <link rel="stylesheet" href="/css/styles.css?v=16.0">
+  
+  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="preload" href="/assets/hero.webp" as="image">
 
+  <!-- SDKs -->
   <script src="https://js.stripe.com/v3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Meta Pixel Code -->
+  
+  <!-- Pixel Meta -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -45,22 +41,6 @@
     fbq('init', '4249947775334413');
     fbq('track', 'PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
-  /></noscript>
-  <!-- End Meta Pixel Code -->
-  
-  <style>
-    /* Estilos Críticos Inline */
-    .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
-    .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-    .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; }
-    .cookieBtn { border-radius: 999px; padding: 8px 16px; cursor: pointer; font-family: 'Teko', sans-serif; text-transform: uppercase; font-size: 16px; background: #E10600; color: #fff; border: none; }
-    .cookieBtn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.3); margin-right: 10px; }
-    .social-row { display: flex; gap: 15px; margin-top: 15px; }
-    .social-link { color: #999; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; }
-    .social-link:hover { color: #fff; }
-  </style>
 
   <!-- CONFIG ÚNICA -->
   <script>
@@ -73,7 +53,7 @@
 </head>
 
 <body>
-  <!-- Splash Screen (Racing) -->
+  <!-- Splash Screen -->
   <div id="splash-screen">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -85,7 +65,7 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
   <div class="promo-bar slide-in-top" id="promo-bar">
-    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
+    <span id="promo-text">⚠️ LIQUIDACIÓN POR LANZAMIENTO - 80% OFF EN TODO</span>
   </div>
 
   <header class="topbar">
@@ -103,21 +83,24 @@
   </header>
 
   <main class="wrap">
-    <!-- Hero -->
+    <!-- Hero (Modificado con 80% OFF y Único) -->
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">TIENDA OFICIAL 2026</span></div>
-        <h1 class="hero-title" id="hero-title">SCORE STORE</h1>
+        <div class="tagline"><span class="tag-pill">LANZAMIENTO OFICIAL 2026</span></div>
+        <h1 class="hero-title" id="hero-title">80% OFF <span class="neon-text">LAUNCH</span></h1>
+        
         <div class="logos-row">
           <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo">
           <img src="/assets/logo-world-desert.webp" alt="WDC" class="hero-desert-seal">
         </div>
+
         <div class="marketing-copy">
           <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>
-          Fabricado por <strong>Único Uniformes</strong>.
+          Patrocinador Oficial: <strong>Único Uniformes</strong>.
         </div>
+
         <div class="ctaRow">
           <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
           <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
@@ -152,7 +135,7 @@
       </div>
     </section>
 
-    <!-- Partners -->
+    <!-- Partners (Corregido para móvil) -->
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
@@ -192,24 +175,36 @@
     <div class="dBody"><div id="cartItems"></div><div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Vacío</div></div>
     <div class="dFoot">
       <div style="text-align:right; margin-bottom:10px;"><button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR</button></div>
+      
       <div class="shipSelector">
         <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div></label>
         <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div><span>Nacional MX</span><small style="color:#555;display:block;">$250 Envío</small></div></label>
         <label class="radio-option"><input type="radio" name="shipMode" value="us"><div><span>USA International</span><small style="color:#555;display:block;">$800 Envío</small></div></label>
       </div>
+
       <div id="shipForm" style="display:none; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
         <p style="margin-bottom:8px; font-weight:bold; color:#333; font-size:13px;">Datos de Envío:</p>
         <input id="cp" type="tel" placeholder="Código Postal / ZIP" class="inputField" style="width:100%; margin-bottom:8px;">
         <input id="addr" type="text" placeholder="Dirección Completa" class="inputField" style="width:100%; margin-bottom:8px;">
         <input id="name" type="text" placeholder="Nombre Receptor" class="inputField" style="width:100%;">
       </div>
+
+      <!-- Campo Cupón Agregado -->
+      <div class="promo-row" style="display:flex; gap:10px; margin-bottom:15px;">
+        <input type="text" id="promoCodeInput" placeholder="CÓDIGO DE CUPÓN" class="inputField" style="flex:1;">
+        <button onclick="applyPromo()" class="btn secondary" style="color:#333; border-color:#ddd; padding:0 15px; font-size:14px;">APLICAR</button>
+      </div>
+
       <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
+      <div class="sumRow" id="rowDiscount" style="display:none; color:#E10600;"><span>Descuento</span><strong id="discVal">-$0.00</strong></div>
       <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
       <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
+
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
     </div>
   </aside>
 
+  <!-- Legal Modal -->
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);">
     <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div class="dBody" style="padding:30px; font-size:14px;">
@@ -222,6 +217,7 @@
 
   <div class="toast" id="toast">Mensaje</div>
 
+  <!-- Cookies -->
   <section class="cookieBanner" id="cookieBanner">
     <div class="cookieInner">
       <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
@@ -232,7 +228,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=13.0" defer></script>
+  <script src="/js/main.js?v=16.0" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
@@ -251,7 +247,7 @@
     })();
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=13.0").then(reg => {
+      navigator.serviceWorker.register("/sw.js?v=16.0").then(reg => {
         reg.onupdatefound = () => {
           const w = reg.installing;
           w.onstatechange = () => {
