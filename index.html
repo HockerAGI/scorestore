@@ -7,31 +7,28 @@
 
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Tienda Oficial de SCORE International. Merchandise oficial de Baja 1000, Baja 500 y más. Fabricado por Único Uniformes." />
-
-  <!-- VERIFICACIÓN FACEBOOK -->
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
-  <!-- ✅ SAFE MODE animaciones -->
+  <!-- ✅ SAFE MODE -->
   <script>document.documentElement.classList.add('js');</script>
 
   <!-- Preload Assets -->
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
   <link rel="preload" href="/assets/hero.webp" as="image" />
-  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
   <link rel="preload" href="/assets/logo-score.webp" as="image" />
 
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=7.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=7.1" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- SDKs -->
-  <script src="https://js.stripe.com/v3" async></script>
+  <!-- SDKs (Sin async para evitar race conditions) -->
+  <script src="https://js.stripe.com/v3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- CONFIG ÚNICA: Credenciales Reales -->
+  <!-- CONFIG ÚNICA -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
@@ -353,7 +350,7 @@
     </div>
   </div>
 
-  <script src="/js/main.js?v=7.0"></script>
+  <script src="/js/main.js?v=7.1" defer></script>
   
   <script>
      // Cookie Logic inline
