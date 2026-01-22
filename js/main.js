@@ -1,10 +1,9 @@
-/* SCORE STORE LOGIC — v2.2.8 (INDEX-ALIGNED + RACING + UNICO TUNED)
-   - Splash HARDSTOP: jamás se queda pegado
-   - Overlay: #overlay (match exacto index + CSS)
-   - Promo: sin cupones, click abre carrito, swap anim
-   - Catálogo modal: header con LOGO OFICIAL (no texto) + grid CSS (.pCard/.catGrid/.quickView)
-   - Carrito: mantiene tu HTML + speed bar + micro-animaciones
-   - UI: iconos verdes (SVG), Hero sin H1, Partners oficiales, Footer Único/BAJATEX
+/* SCORE STORE LOGIC — v2.3.0 (INDEX-ALIGNED + IMAGE-EXISTS + CSS-MATCHED)
+   - Respeta catalog.json (NO se modifica)
+   - Detecta imágenes existentes (HEAD/GET same-origin) y filtra las faltantes
+   - No deja “cuadros vacíos”: usa fallback CSS (.pMedia.noImg + .pFallback)
+   - Modal header usa clases CSS reales: catHeaderBlock / catHeaderLeft / catMeta / catCount
+   - QuickView: thumbs solo de imágenes existentes
 */
 
 (function () {
@@ -54,7 +53,72 @@
   };
   window.toast = toast;
 
-  // ---- SPLASH HARDSTOP (NO depende de CSS) ----
+  // ---- IMAGES: EXISTS CACHE ----
+  const existsCache = new Map(); // url -> boolean
+  const inflight = new Map();    // url -> Promise<boolean>
+
+  const normalizeUrl = (u) => {
+    const s = String(u || "").trim();
+    if (!s) return "";
+    // evita query duplicado, pero respeta si lo trae
+    return s;
+  };
+
+  async function urlExists(url) {
+    const u = normalizeUrl(url);
+    if (!u) return false;
+
+    if (existsCache.has(u)) return existsCache.get(u);
+    if (inflight.has(u)) return inflight.get(u);
+
+    const p = (async () => {
+      try {
+        // mismo origen: intentamos HEAD primero, si falla => GET (algunos host bloquean HEAD)
+        let r = await fetch(u, { method: "HEAD", cache: "no-store" }).catch(() => null);
+        if (!r || !r.ok) {
+          r = await fetch(u, { method: "GET", cache: "no-store" }).catch(() => null);
+        }
+        const ok = !!(r && r.ok);
+        existsCache.set(u, ok);
+        return ok;
+      } catch {
+        existsCache.set(u, false);
+        return false;
+      } finally {
+        inflight.delete(u);
+      }
+    })();
+
+    inflight.set(u, p);
+    return p;
+  }
+
+  async function filterExisting(urls) {
+    const list = (Array.isArray(urls) ? urls : []).map(normalizeUrl).filter(Boolean);
+    if (!list.length) return [];
+    const checks = await Promise.all(list.map((u) => urlExists(u)));
+    return list.filter((_, i) => checks[i]);
+  }
+
+  async function pickMainImage(product) {
+    const candidates = []
+      .concat(product?.img ? [product.img] : [])
+      .concat(Array.isArray(product?.images) ? product.images : []);
+    const existing = await filterExisting(candidates);
+    return existing[0] || "";
+  }
+
+  async function getGalleryImages(product) {
+    const candidates = []
+      .concat(Array.isArray(product?.images) ? product.images : [])
+      .concat(product?.img ? [product.img] : []);
+    const existing = await filterExisting(candidates);
+    // dedupe manteniendo orden
+    const seen = new Set();
+    return existing.filter((u) => (seen.has(u) ? false : (seen.add(u), true)));
+  }
+
+  // ---- SPLASH HARDSTOP ----
   function killSplash(reason) {
     const splash = $("splash-screen");
     if (!splash) return;
@@ -67,11 +131,7 @@
       splash.style.display = "none";
       try { splash.remove(); } catch {}
     }, 420);
-
-    // console.log("[SCORE] Splash OFF:", reason);
   }
-
-  // HARDSTOP global
   setTimeout(() => killSplash("hard-timeout"), 2500);
 
   // ---- UI OPEN/CLOSE ----
@@ -90,15 +150,12 @@
   window.closeAll = closeAll;
   window.openDrawer = () => open("drawer");
 
-  // ---- UI TUNES (idempotentes, no rompen si ya está) ----
-
-  // 1) Icono carrito: si ya hay SVG (index nuevo), no toca nada.
+  // ---- UI TUNES (idempotentes) ----
   function injectCartIcon() {
     const btn = document.querySelector(".cartBtn");
     if (!btn) return;
-    if (btn.querySelector("svg")) return; // ya viene en el index
+    if (btn.querySelector("svg")) return;
 
-    // limpia emoji si existía en versiones viejas
     try {
       btn.childNodes.forEach((n) => {
         if (n && n.nodeType === 3 && /🛒/.test(n.textContent)) {
@@ -122,27 +179,22 @@
     btn.style.gap = "10px";
   }
 
-  // 2) Hero: elimina H1 si existiera + refuerza copy (no pisa si tu index ya trae lo correcto)
   function tuneHeroCopy() {
     const h1 = document.querySelector(".hero-title");
     if (h1) h1.remove();
 
     const copy = document.querySelector(".marketing-copy");
     if (!copy) return;
-
-    // Si ya contiene logo-unico, no vuelvas a reescribir (evita parpadeos)
     if (copy.innerHTML && copy.innerHTML.includes("logo-unico.webp")) return;
 
     copy.innerHTML = `
       <strong>MERCANCÍA OFICIAL</strong> · Fabricado por
-      <img src="/assets/logo-unico.webp" alt="Único Uniformes"
-        style="display:inline-block;height:22px;vertical-align:middle;margin:0 6px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));"
-        loading="lazy" />
+      <img src="/assets/logo-unico.webp" class="inlineLogo" alt="Único Uniformes" loading="lazy" />
       <strong>PATROCINADOR OFICIAL</strong>
+      <br><span class="muted">Hecho en Tijuana · Stock limitado · Envío MX/USA</span>
     `;
   }
 
-  // 3) Partners: set oficial + logos (sin tarjeta; el look lo hace el CSS)
   function tunePartners() {
     const h3 = document.querySelector(".partners h3");
     if (h3) h3.textContent = "PARTNERS OFICIALES";
@@ -151,32 +203,34 @@
     if (!grid) return;
 
     const logos = [
-      { src: "/assets/logo-unico.webp", alt: "Único Uniformes" },
-      { src: "/assets/logo-score.webp", alt: "SCORE International" },
-      { src: "/assets/logo-bfgodrich.webp", alt: "BFGoodrich" },
-      { src: "/assets/logo-rzr.webp", alt: "RZR" },
-      { src: "/assets/logo-ford.webp", alt: "Ford" },
+      { src: "/assets/logo-unico.webp", alt: "Único Uniformes", wide: false },
+      { src: "/assets/logo-score.webp", alt: "SCORE International", wide: false },
+      { src: "/assets/logo-bfgodrich.webp", alt: "BFGoodrich", wide: true },
+      { src: "/assets/logo-rzr.webp", alt: "RZR", wide: true },
+      { src: "/assets/logo-ford.webp", alt: "Ford", wide: true },
     ];
 
-    // si ya están, no re-renderices
     if (grid.querySelectorAll("img.pLogo").length >= 4) return;
 
     grid.innerHTML = logos
-      .map((l) => `<img class="pLogo" src="${l.src}" alt="${escapeHtml(l.alt)}" loading="lazy">`)
+      .map(
+        (l) =>
+          `<img class="pLogo ${l.wide ? "wide" : ""}" src="${l.src}" alt="${escapeHtml(
+            l.alt
+          )}" loading="lazy">`
+      )
       .join("");
   }
 
-  // 4) Footer: marca pública Único + fiscal BAJATEX (soporta index viejo con <small> y nuevo sin <small>)
   function tuneFooter() {
     const brand = document.querySelector(".footerBrandName");
     if (brand) brand.textContent = "ÚNICO UNIFORMES";
 
-    // index nuevo: .copy es un div de texto (sin small)
     const copyDiv = document.querySelector(".copy");
     if (copyDiv) copyDiv.textContent = "© 2026 Único Uniformes · BAJATEX";
   }
 
-  // ---- QUICK VIEW (opcional, no rompe si no existe) ----
+  // ---- QUICK VIEW ----
   function ensureQuickView(root) {
     if (!root) return null;
     let qv = root.querySelector("#quickView");
@@ -225,14 +279,13 @@
     return qv;
   }
 
-  function openQuickView(p, root) {
+  async function openQuickView(p, root) {
     const qv = ensureQuickView(root);
     if (!qv) return;
 
     const title = p?.name || "Producto";
     const sku = p?.sku ? String(p.sku) : "";
     const price = money(Number(p?.baseMXN || 0));
-    const imgs = Array.isArray(p?.images) && p.images.length ? p.images : [p?.img].filter(Boolean);
 
     const mainImg = qv.querySelector("#qvMainImg");
     const thumbs = qv.querySelector("#qvThumbs");
@@ -252,6 +305,9 @@
         .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
         .join("");
     }
+
+    // solo imágenes existentes
+    const imgs = await getGalleryImages(p);
 
     const setMain = (src) => {
       if (mainImg) {
@@ -405,9 +461,18 @@
 
     empty.style.display = "block";
     empty.innerHTML = `
-      <div class="cartEmptyCard">
-        <div class="cecTitle">🏁 SIN PRODUCTOS</div>
-        <div class="cecText">Agrega artículos y prepara tu pedido. Envío MX/USA · Hecho en Tijuana.</div>
+      <div style="
+        padding:14px 12px;
+        border-radius:18px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(18,21,27,.28);
+        font-weight:900;
+        color: rgba(238,242,255,.82);
+      ">
+        <div style="letter-spacing:.12em; font-size:12px; color: rgba(238,242,255,.72);">🏁 SIN PRODUCTOS</div>
+        <div style="margin-top:6px; font-weight:800; color: rgba(238,242,255,.62); line-height:1.4;">
+          Agrega artículos y prepara tu pedido. Envío MX/USA · Hecho en Tijuana.
+        </div>
       </div>
     `;
     list.innerHTML = "";
@@ -578,16 +643,14 @@
     clearInterval(window.__promoTimer);
     window.__promoTimer = setInterval(swap, 3800);
 
-    // click abre carrito
     bar.addEventListener("click", () => open("drawer"));
   }
 
-  // ---- CATALOG MODAL (LOGO MANDA) ----
-  window.openCatalog = (sectionId) => {
+  // ---- CATALOG MODAL (LOGO MANDA + IMAGES EXISTS) ----
+  window.openCatalog = async (sectionId) => {
     const section = (catalogData.sections || []).find((s) => s.id === sectionId);
     const title = section?.title || "COLECCIÓN";
 
-    // El header del modal arriba queda vacío (logo manda)
     if ($("catTitle")) $("catTitle").textContent = "";
 
     const items = (catalogData.products || []).filter((p) => p.sectionId === sectionId);
@@ -601,14 +664,48 @@
        sectionId === "BAJA_400"  ? "/assets/logo-baja400.webp"  :
        sectionId === "SF_250"    ? "/assets/logo-sf250.webp"    : "");
 
+    // abre modal rápido con skeleton simple (sin romper diseño)
     root.innerHTML = `
       <div class="catHeaderBlock">
-        ${logoSrc ? `<img class="catLogo" src="${escapeHtml(logoSrc)}" alt="${escapeHtml(title)}" style="height:56px;">` : ""}
-        <div class="catHeaderText">
-          <div class="catTitleText">COLECCIÓN OFICIAL</div>
-          <div class="catSubText">${escapeHtml(title)}</div>
+        <div class="catHeaderLeft">
+          ${logoSrc ? `<img class="catLogo" src="${escapeHtml(logoSrc)}" alt="${escapeHtml(title)}" loading="lazy">` : ""}
+          <div class="catMeta">
+            <div class="catTitleText">COLECCIÓN OFICIAL</div>
+            <div class="catSubText">${escapeHtml(title)}</div>
+          </div>
         </div>
-        <div class="catBadge">${items.length} PRODUCTOS</div>
+        <div class="catCount">${items.length} PRODUCTOS</div>
+      </div>
+
+      <div style="padding:10px 4px; color: rgba(238,242,255,.62); font-weight:800;">
+        Cargando productos…
+      </div>
+    `;
+
+    open("modalCatalog");
+
+    // precarga existencia de imágenes (solo para los items de esta sección)
+    await Promise.all(
+      items.map(async (p) => {
+        // cachea existence en existsCache
+        const candidates = []
+          .concat(p?.img ? [p.img] : [])
+          .concat(Array.isArray(p?.images) ? p.images : []);
+        if (!candidates.length) return;
+        await filterExisting(candidates);
+      })
+    );
+
+    root.innerHTML = `
+      <div class="catHeaderBlock">
+        <div class="catHeaderLeft">
+          ${logoSrc ? `<img class="catLogo" src="${escapeHtml(logoSrc)}" alt="${escapeHtml(title)}" loading="lazy">` : ""}
+          <div class="catMeta">
+            <div class="catTitleText">COLECCIÓN OFICIAL</div>
+            <div class="catSubText">${escapeHtml(title)}</div>
+          </div>
+        </div>
+        <div class="catCount">${items.length} PRODUCTOS</div>
       </div>
 
       <div class="catItems">
@@ -619,33 +716,41 @@
     `;
 
     root.querySelectorAll("[data-qv]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-qv");
-        const p = findProduct(id);
-        if (!p) return;
-        openQuickView(p, root);
+        const prod = findProduct(id);
+        if (!prod) return;
+        await openQuickView(prod, root);
       });
     });
-
-    open("modalCatalog");
   };
 
   function renderProductCard(p) {
-    const img = p?.img || (p?.images && p.images[0]) || "";
-    const price = Number(p?.baseMXN || 0);
+    // usa cache de existsCache (ya precargada por sección)
+    const candidates = []
+      .concat(p?.img ? [p.img] : [])
+      .concat(Array.isArray(p?.images) ? p.images : []);
+    const main = candidates.map(normalizeUrl).find((u) => u && existsCache.get(u) === true) || "";
 
+    const price = Number(p?.baseMXN || 0);
     const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
     const sizeOpts = sizes
       .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
       .join("");
 
+    const hasImg = !!main;
+
     return `
       <div class="pCard">
-        <button class="pMedia" type="button" data-qv="${escapeHtml(p.id)}" aria-label="Vista rápida">
+        <button class="pMedia ${hasImg ? "" : "noImg"}" type="button" data-qv="${escapeHtml(p.id)}" aria-label="Vista rápida">
           ${
-            img
-              ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
-              : `<div class="productNoImg"></div>`
+            hasImg
+              ? `<img src="${escapeHtml(main)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
+              : `
+                <div class="pFallback">
+                  <strong>${escapeHtml(p.name || "Producto")}</strong>
+                </div>
+              `
           }
           <div class="pZoom">VER</div>
         </button>
@@ -663,7 +768,7 @@
               ${sizeOpts}
             </select>
 
-            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')" type="button">
+            <button class="btn primary" onclick="addToCart('${escapeHtml(p.id)}')" type="button">
               AGREGAR
             </button>
           </div>
@@ -702,7 +807,7 @@
         items: cart,
         mode,
         customer: { name, address: addr, postal_code: cp },
-        promoCode: "", // UI sin cupones (si luego quieres promos server-side, se reactiva)
+        promoCode: "",
       };
 
       const res = await fetch(`${API_BASE}/create_checkout`, {
@@ -755,7 +860,6 @@
   }
 
   async function loadPromos() {
-    // compat
     try {
       const res = await fetch("/data/promos.json", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
@@ -771,9 +875,29 @@
 
     if (!$("cartSpeedWrap")) {
       const wrap = document.createElement("div");
-      wrap.className = "cartSpeedWrap";
       wrap.id = "cartSpeedWrap";
-      wrap.innerHTML = `<div class="cartSpeedBar" id="cartSpeedBar"></div>`;
+      wrap.style.cssText = `
+        margin: 10px 0 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.10);
+        border: 1px solid rgba(255,255,255,.12);
+        overflow: hidden;
+      `;
+
+      const bar = document.createElement("div");
+      bar.className = "cartSpeedBar";
+      bar.id = "cartSpeedBar";
+      bar.style.cssText = `
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background:
+          repeating-linear-gradient(45deg, rgba(0,0,0,.18) 0 10px, rgba(255,255,255,.16) 10px 20px),
+          linear-gradient(90deg, rgba(225,6,0,.95), rgba(255,211,77,.9));
+        transition: width .25s ease;
+      `;
+      wrap.appendChild(bar);
 
       const hrs = drawerBody.querySelectorAll("hr");
       if (hrs && hrs.length) drawerBody.insertBefore(wrap, hrs[0]);
@@ -788,7 +912,6 @@
     } catch (e) {
       console.error("[SCORE] init failed:", e);
 
-      // fallback sections con LOGOS reales (tus assets)
       catalogData.sections = [
         { id: "BAJA_1000", title: "BAJA 1000", logo: "/assets/logo-baja1000.webp" },
         { id: "BAJA_500", title: "BAJA 500", logo: "/assets/logo-baja500.webp" },
@@ -805,7 +928,6 @@
     setupShippingUI();
     setupPromoBar();
 
-    // UI tunes
     injectCartIcon();
     tuneHeroCopy();
     tunePartners();
