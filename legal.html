@@ -2,84 +2,94 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
-  <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="/css/styles.css?v=HYBRID_FINAL" />
+  <link rel="stylesheet" href="/css/styles.css?v=ORIGINAL_FIXED" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    .legalWrap{ width:min(900px, calc(100% - 32px)); margin:0 auto; padding: 40px 0 80px; }
-    .legalTitle{ font-family: Teko, sans-serif; font-size: 48px; margin-bottom: 5px; color: var(--text); }
-    .legalSub{ font-weight: 700; color: var(--muted); margin-bottom: 30px; }
-    .legalCard{ background: #fff; border-radius: 20px; padding: 30px; margin-bottom: 24px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid var(--border-light); }
-    .legalH2{ font-family: Teko; font-size: 32px; color: var(--red); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .legalP, .legalList li{ line-height: 1.6; color: var(--text); font-size: 15px; margin-bottom: 10px; }
-    .legalNote{ background: #f9f9f9; padding: 15px; border-left: 4px solid var(--red); border-radius: 4px; font-size: 14px; }
-  </style>
 </head>
 <body>
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" style="font-weight:700; font-size:14px; padding:8px 16px; border:1px solid #eee; border-radius:99px;">← Volver a la Tienda</a>
+      <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;"></div>
+      <div style="width:40px;"></div> 
     </div>
   </header>
 
-  <main class="legalWrap">
-    <h1 class="legalTitle">INFORMACIÓN LEGAL</h1>
-    <p class="legalSub">Última actualización: Enero 2026</p>
+  <main class="legal">
+    <h1 class="h1" style="color:#fff;">INFORMACIÓN LEGAL Y COMERCIAL</h1>
+    <p class="p muted" style="color:#ccc">Última actualización: Enero 2026</p>
 
-    <section class="legalCard">
-      <h2 class="legalH2">1. RESPONSABLE Y DATOS FISCALES</h2>
-      <p class="legalP">
-        De conformidad con las leyes mexicanas, se informa que la operación de venta de mercancía oficial en este sitio es responsabilidad de:
-      </p>
-      <div class="legalNote">
-        <strong>RAZÓN SOCIAL:</strong> BAJATEX, S. de R.L. de C.V.<br>
-        <strong>RFC:</strong> BAJ220613P51<br>
-        <strong>DOMICILIO FISCAL:</strong> Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.<br>
-        <strong>NOMBRE COMERCIAL:</strong> ÚNICO UNIFORMES / SCORE STORE
-      </div>
+    <section id="privacidad" class="legalCard">
+      <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
+      <p class="p"><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V. (RFC BAJ220613P51), nombre comercial BAJATEX, operando bajo la marca Único Uniformes y proyectos derivados como SCORE Store, con domicilio en Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.</p>
+      
+      <h3 style="font-size:18px;margin:10px 0;">Datos Personales que se Recaban:</h3>
+      <ul class="ul">
+        <li>Nombre completo, teléfono y correo electrónico.</li>
+        <li>Empresa o razón social, RFC y datos fiscales.</li>
+        <li>Dirección de envío.</li>
+        <li>Información relacionada con pedidos y pagos (No recabamos datos sensibles).</li>
+      </ul>
+
+      <h3 style="font-size:18px;margin:10px 0;">Finalidades del Tratamiento:</h3>
+      <ul class="ul">
+        <li><strong>Primarias:</strong> Atender solicitudes, procesar pedidos, entregas y facturación.</li>
+        <li><strong>Secundarias:</strong> Envío de promociones y análisis de mercado.</li>
+      </ul>
+      <p class="p">Usted puede ejercer sus derechos ARCO enviando una solicitud a: <strong>contacto.hocker@gmail.com</strong></p>
     </section>
 
-    <section class="legalCard">
-      <h2 class="legalH2">2. FACTURACIÓN (CFDI)</h2>
-      <p class="legalP">
-        Para solicitar tu factura, debes enviar tus datos fiscales completos al correo <strong>ventas.unicotextil@gmail.com</strong> dentro del mismo mes en que realizaste tu compra.
-      </p>
-      <p class="legalP">Requisitos obligatorios:</p>
-      <ul class="legalList">
-        <li>Constancia de Situación Fiscal (PDF actualizado).</li>
-        <li>Uso de CFDI.</li>
-        <li>Número de pedido o comprobante de pago.</li>
+    <section id="terminos" class="legalCard">
+      <h2 class="h2">2. TÉRMINOS Y CONDICIONES DE USO Y VENTA</h2>
+      <p class="p">Al acceder y utilizar este sitio, usted acepta los presentes términos. El usuario declara ser mayor de edad y contar con capacidad legal.</p>
+      
+      <h3 style="font-size:18px;margin:10px 0;">Precios y Pagos:</h3>
+      <ul class="ul">
+        <li>Los precios están expresados en pesos mexicanos (MXN).</li>
+        <li>No incluyen IVA, salvo indicación expresa.</li>
+        <li>Los pedidos se procesan una vez confirmado el pago.</li>
+      </ul>
+
+      <h3 style="font-size:18px;margin:10px 0;">Productos Personalizados:</h3>
+      <p class="p">Los productos con bordado o fabricación especial <strong>NO APLICAN A CAMBIOS NI DEVOLUCIONES</strong>, salvo defecto de fabricación comprobable.</p>
+    </section>
+
+    <section id="envios" class="legalCard">
+      <h2 class="h2">3. POLÍTICA DE ENVÍOS</h2>
+      <ul class="ul">
+        <li><strong>Cobertura:</strong> República Mexicana.</li>
+        <li><strong>Tiempos:</strong> 3 a 7 días hábiles (Estándar). Local Tijuana 1-2 días.</li>
+        <li><strong>Responsabilidad:</strong> Una vez entregado a paquetería, nuestra responsabilidad se limita a gestionar el reclamo.</li>
       </ul>
     </section>
 
-    <section class="legalCard">
-      <h2 class="legalH2">3. ENVÍOS Y DEVOLUCIONES</h2>
-      <p class="legalP">
-        <strong>Envíos:</strong> Los tiempos de entrega son estimados (3-7 días hábiles nacional). Envíos locales en Tijuana se procesan en 24-48 horas.
-      </p>
-      <p class="legalP">
-        <strong>Devoluciones:</strong> Solo se aceptan cambios por defectos de fabricación comprobables notificados dentro de los primeros 5 días naturales tras la recepción. No aplica en productos personalizados o usados.
-      </p>
+    <section id="devoluciones" class="legalCard">
+      <h2 class="h2">4. DEVOLUCIONES Y GARANTÍAS</h2>
+      <p class="p">Aplicable únicamente a defectos de fabricación comprobables en productos de línea. El cliente deberá notificar dentro de los 5 días hábiles posteriores a la recepción al correo: <strong>ventas.unicotextil@gmail.com</strong></p>
     </section>
 
-    <section class="legalCard">
-      <h2 class="legalH2">CONTACTO OFICIAL</h2>
-      <p class="legalP">
-        Cualquier duda sobre tu pedido, contáctanos directamente:<br>
-        📩 <strong>ventas.unicotextil@gmail.com</strong><br>
-        📞 WhatsApp: 664 236 8701
+    <section id="facturacion" class="legalCard">
+      <h2 class="h2">5. FACTURACIÓN</h2>
+      <p class="p">La factura CFDI deberá solicitarse dentro del mes fiscal correspondiente al pago, proporcionando datos fiscales completos. No se realizan refacturaciones fuera de plazo.</p>
+    </section>
+
+    <section id="contacto" class="legalCard">
+      <h2 class="h2">DATOS DE CONTACTO OFICIALES</h2>
+      <p class="p">
+        <strong>BAJATEX, S. de R.L. de C.V.</strong><br>
+        📍 Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.<br>
+        📩 ventas.unicotextil@gmail.com<br>
+        📞 WhatsApp: 664 236 8701<br>
+        🌐 unicouniformes.com
       </p>
     </section>
   </main>
 
-  <footer class="footer" style="margin-top:0;">
-    <div style="text-align:center; padding:20px; opacity:.5; font-size:12px;">
-      © 2026 BAJATEX S. DE R.L. DE C.V.
+  <footer class="footer">
+    <div class="footer__bottom">
+      <small>© 2026 SCORE Store · Operado por BAJATEX</small>
     </div>
   </footer>
 </body>
