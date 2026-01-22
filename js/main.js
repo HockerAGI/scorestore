@@ -1,13 +1,11 @@
-/* SCORE STORE LOGIC — UNIFICADO (ÚNICO OS + Stripe + Envia) v2.2.0 */
+/* SCORE STORE LOGIC — UNIFICADO (ÚNICO OS + Stripe + Envia) v2.2.1 */
 (function () {
   "use strict";
 
   // --- CONFIG (from index.html) ---
   const CFG = window.__SCORE__ || {};
   const ORG_SLUG = CFG.orgSlug || "score-store";
-  const SUPABASE_URL = CFG.supabaseUrl || "";
-  const SUPABASE_KEY = CFG.supabaseAnonKey || "";
-  const STRIPE_PUBLISHABLE_KEY = CFG.stripePublishableKey || "pk_live_"; // fallback public key
+  const STRIPE_PUBLISHABLE_KEY = CFG.stripePublishableKey || "pk_live_";
   const META_PIXEL_ID = CFG.metaPixelId || null;
 
   // API base: /api for netlify dev, /.netlify/functions in production
@@ -27,7 +25,9 @@
   // --- DOM HELPERS ---
   const $ = (id) => document.getElementById(id);
   const money = (n) =>
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+      Number(n || 0)
+    );
 
   const toast = (msg) => {
     const el = $("toast");
@@ -38,39 +38,91 @@
   };
   window.toast = toast; // backward compatibility
 
+  // --- URL / IMAGE SANITIZERS ---
+  function safeUrl(u) {
+    // encodes spaces and unsafe chars without breaking existing %xx
+    try {
+      if (!u) return "";
+      const trimmed = String(u).trim();
+      // Replace plain spaces (common bug in assets) -> %20
+      const spaced = trimmed.replace(/ /g, "%20");
+      return spaced;
+    } catch {
+      return String(u || "");
+    }
+  }
+
+  function imgOnErrorFallback(el) {
+    // Fallback chain:
+    // 1) try lowercase pathname (Netlify case-sensitive issues)
+    // 2) try encoded spaces
+    // 3) give up (hide)
+    try {
+      const src = el.getAttribute("data-src-original") || el.src || "";
+      if (!src) return;
+
+      // mark original once
+      if (!el.getAttribute("data-src-original")) el.setAttribute("data-src-original", src);
+
+      // attempt step counter
+      const step = Number(el.getAttribute("data-fallback-step") || "0");
+
+      if (step === 0) {
+        el.setAttribute("data-fallback-step", "1");
+        const url = new URL(src, location.origin);
+        el.src = safeUrl(url.pathname.toLowerCase() + url.search);
+        return;
+      }
+
+      if (step === 1) {
+        el.setAttribute("data-fallback-step", "2");
+        el.src = safeUrl(src);
+        return;
+      }
+
+      // final: hide broken images cleanly
+      el.style.display = "none";
+    } catch {
+      el.style.display = "none";
+    }
+  }
+
   // --- UI OPEN/CLOSE ---
   const open = (id) => {
     $(id)?.classList.add("active");
     $("overlay")?.classList.add("active");
   };
+
   const closeAll = () => {
     document.querySelectorAll(".active").forEach((e) => e.classList.remove("active"));
   };
   window.closeAll = closeAll;
-
   window.openDrawer = () => open("drawer");
-  window.openCatalog = (sectionId) => {
+
+  // NOTE: Your HTML calls openCatalog(sectionId, title)
+  // We accept both signatures safely.
+  window.openCatalog = (sectionId, forcedTitle) => {
     const section = catalogData.sections.find((s) => s.id === sectionId);
-    const title = section?.title || "COLECCIÓN";
+    const title = String(forcedTitle || section?.title || "COLECCIÓN").trim();
+
     if ($("catTitle")) $("catTitle").textContent = title;
+
     const items = catalogData.products.filter((p) => p.sectionId === sectionId);
 
     const root = $("catContent");
     if (!root) return;
 
     root.innerHTML = `
-      <div class="catTop">
-        <div class="catHeader">
-          ${section?.logo ? `<img src="${section.logo}" class="catLogo" alt="${title}">` : ""}
-          <div>
-            <div class="catTitle">${title}</div>
-            ${section?.badge ? `<div class="catBadge">${section.badge}</div>` : ""}
-          </div>
+      <div class="catHead">
+        ${section?.logo ? `<img src="${safeUrl(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" onerror="this.onerror=null;this.style.display='none';">` : ""}
+        <div class="catMeta">
+          <div class="catKicker">${escapeHtml(section?.badge || "TIENDA OFICIAL")}</div>
+          <div class="catTitleBig">${escapeHtml(title)}</div>
+          <div class="catCount">${items.length} productos</div>
         </div>
-        <div class="catCount">${items.length} productos</div>
       </div>
 
-      <div class="grid">
+      <div class="catGrid">
         ${items.map((p) => renderProductCard(p)).join("")}
       </div>
     `;
@@ -80,32 +132,48 @@
 
   // --- CATALOG RENDER ---
   function renderProductCard(p) {
-    const sizeOpts = (p.sizes || []).map((s) => `<option value="${s}">${s}</option>`).join("");
-    const img = p.img || (p.images && p.images[0]) || "";
+    const img = safeUrl(p.img || (p.images && p.images[0]) || "");
     const price = Number(p.baseMXN || 0);
 
+    const sizeOpts = (p.sizes || [])
+      .map((s) => `<option value="${escapeHtml(String(s))}">${escapeHtml(String(s))}</option>`)
+      .join("");
+
     return `
-      <article class="pCard" data-pid="${p.id}">
+      <article class="pCard" data-pid="${escapeHtml(p.id)}">
         <div class="pMedia">
-          <img src="${img}" alt="${escapeHtml(p.name)}" loading="lazy"/>
+          <img
+            src="${img}"
+            alt="${escapeHtml(p.name)}"
+            loading="lazy"
+            onerror="window.__imgFallback && window.__imgFallback(this)"
+          />
+          <div class="pTag">${escapeHtml(p.subSection || "OFICIAL")}</div>
         </div>
+
         <div class="pBody">
           <div class="pName">${escapeHtml(p.name)}</div>
-          <div class="pMeta">
-            <span class="pSku">${escapeHtml(p.sku || "")}</span>
-            <span class="pPrice">${money(price)}</span>
+          <div class="pRow">
+            <div class="pSku">${escapeHtml(p.sku || "")}</div>
+            <div class="pPrice">${money(price)}</div>
           </div>
 
           <div class="pActions">
-            <select class="pSize" id="size_${p.id}" aria-label="Talla">
+            <select id="size_${escapeHtml(p.id)}" class="pSelect" aria-label="Selecciona talla">
               ${sizeOpts}
             </select>
-            <button class="btn small primary" onclick="addToCart('${p.id}')">AGREGAR</button>
+
+            <button class="btn mini primary" onclick="addToCart('${escapeHtml(p.id)}')">
+              AGREGAR
+            </button>
           </div>
         </div>
       </article>
     `;
   }
+
+  // Make fallback accessible to inline onerror handlers
+  window.__imgFallback = imgOnErrorFallback;
 
   // --- CART ---
   function loadCart() {
@@ -117,6 +185,7 @@
       cart = [];
     }
   }
+
   function saveCart() {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
@@ -160,49 +229,6 @@
     toast("Carrito vacío");
   };
 
-  function updateCartUI() {
-    const list = $("cartItems");
-    const empty = $("cartEmpty");
-    const count = $("cartCount");
-
-    if (count) count.textContent = String(cart.reduce((acc, i) => acc + i.qty, 0));
-
-    if (!list || !empty) return;
-
-    if (!cart.length) {
-      list.innerHTML = "";
-      empty.style.display = "block";
-    } else {
-      empty.style.display = "none";
-      list.innerHTML = cart
-        .map((item, idx) => {
-          const p = findProduct(item.id);
-          const img = p?.img || p?.images?.[0] || "";
-          const name = p?.name || item.id;
-          const price = Number(p?.baseMXN || 0);
-
-          return `
-            <div class="cRow">
-              <img class="cImg" src="${img}" alt="${escapeHtml(name)}"/>
-              <div class="cInfo">
-                <div class="cName">${escapeHtml(name)}</div>
-                <div class="cSub">Talla: <b>${escapeHtml(item.size)}</b> · ${money(price)}</div>
-                <div class="cQty">
-                  <button class="qtyBtn" onclick="decQty(${idx})">−</button>
-                  <span>${item.qty}</span>
-                  <button class="qtyBtn" onclick="incQty(${idx})">+</button>
-                </div>
-              </div>
-              <button class="cDel" onclick="removeFromCart(${idx})" aria-label="Eliminar">✕</button>
-            </div>
-          `;
-        })
-        .join("");
-    }
-
-    updateTotals();
-  }
-
   window.incQty = (idx) => {
     if (!cart[idx]) return;
     cart[idx].qty += 1;
@@ -218,6 +244,58 @@
     updateCartUI();
   };
 
+  function updateCartUI() {
+    const list = $("cartItems");
+    const empty = $("cartEmpty");
+    const count = $("cartCount");
+
+    if (count) count.textContent = String(cart.reduce((acc, i) => acc + i.qty, 0));
+    if (!list || !empty) return;
+
+    if (!cart.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+
+      list.innerHTML = cart
+        .map((item, idx) => {
+          const p = findProduct(item.id);
+          const img = safeUrl(p?.img || p?.images?.[0] || "");
+          const name = p?.name || item.id;
+          const price = Number(p?.baseMXN || 0);
+
+          return `
+            <div class="cartItem">
+              <img
+                class="cartThumb"
+                src="${img}"
+                alt="${escapeHtml(name)}"
+                loading="lazy"
+                onerror="window.__imgFallback && window.__imgFallback(this)"
+              />
+
+              <div class="cartInfo">
+                <div class="cartName">${escapeHtml(name)}</div>
+                <div class="cartMeta">Talla: <b>${escapeHtml(item.size)}</b> · ${money(price)}</div>
+
+                <div class="qtyRow">
+                  <button class="qtyBtn" onclick="decQty(${idx})" aria-label="Menos">−</button>
+                  <div class="qtyNum">${item.qty}</div>
+                  <button class="qtyBtn" onclick="incQty(${idx})" aria-label="Más">+</button>
+                </div>
+              </div>
+
+              <button class="removeBtn" onclick="removeFromCart(${idx})" aria-label="Quitar">✕</button>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    updateTotals();
+  }
+
   function subTotal() {
     return cart.reduce((acc, item) => {
       const p = findProduct(item.id);
@@ -232,7 +310,9 @@
     const total = sub + ship;
 
     $("subTotal") && ($("subTotal").textContent = money(sub));
-    $("shipTotal") && ($("shipTotal").textContent = shippingState.mode === "pickup" ? "Gratis" : money(ship));
+    $("shipTotal") &&
+      ($("shipTotal").textContent =
+        shippingState.mode === "pickup" ? "Gratis" : money(ship));
     $("grandTotal") && ($("grandTotal").textContent = money(total));
   }
 // --- SHIPPING MODE + QUOTE ---
@@ -254,13 +334,18 @@
       if (shipForm) shipForm.style.display = "block";
 
       // default fallback while quoting
-      shippingState.cost = mode === "us" ? 800 : 250;
-      shippingState.label = mode === "us" ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)";
+      shippingState.cost = mode === "us" ? 800 : mode === "tj" ? 200 : 250;
+      shippingState.label =
+        mode === "tj"
+          ? "Local Express Tijuana"
+          : mode === "us"
+          ? "Envío USA (Estándar)"
+          : "Envío Nacional (Estándar)";
       updateTotals();
 
       // auto-quote if zip already present
       const zip = $("cp")?.value?.trim();
-      if (zip && zip.length >= 5) quoteShipping(zip);
+      if ((mode === "mx" || mode === "us") && zip && zip.length >= 5) quoteShipping(zip);
     };
 
     radios.forEach((r) => {
@@ -276,7 +361,9 @@
     if (cp) {
       cp.addEventListener("input", () => {
         const val = cp.value.trim();
-        if (shippingState.mode !== "pickup" && val.length >= 5) quoteShipping(val);
+        if ((shippingState.mode === "mx" || shippingState.mode === "us") && val.length >= 5) {
+          quoteShipping(val);
+        }
       });
     }
   }
@@ -290,7 +377,11 @@
       const res = await fetch(`${API_BASE}/quote_shipping`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ zip, country: mode === "us" ? "US" : "MX", items: qty }),
+        body: JSON.stringify({
+          zip,
+          country: mode === "us" ? "US" : "MX",
+          items: qty,
+        }),
       });
       const data = await res.json();
 
@@ -300,35 +391,61 @@
         updateTotals();
         return;
       }
-    } catch {}
+    } catch {
+      // keep fallback silently
+    }
   }
 
-  // --- PROMO BAR (optional) ---
+  // --- PROMO BAR (marketing + real coupon UX) ---
   function setupPromoBar() {
     const bar = $("promo-bar");
+    const text = $("promo-text");
     if (!bar) return;
 
-    // Click to apply a coupon code (real backend enforcement)
-    bar.addEventListener("click", async () => {
-      const code = prompt("Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):", promoCode || "");
+    const randomHooks = [
+      "HOY: HASTA 80% OFF · STOCK LIMITADO",
+      "OFERTAS FLASH · SI TE GUSTÓ, AGÁRRALO YA",
+      "EDICIÓN LIMITADA · ENVÍO MX/USA",
+      "HECHO EN TIJUANA · OFICIAL SCORE",
+    ];
+
+    // rotate copy (simple, efectivo, sin palabras raras)
+    let i = 0;
+    setInterval(() => {
+      if (!text) return;
+      if (promoCode) return; // if coupon is active, don't override
+      text.textContent = randomHooks[i % randomHooks.length];
+      i++;
+    }, 4200);
+
+    // Click to apply a coupon code
+    bar.addEventListener("click", () => {
+      const code = prompt(
+        "Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):",
+        promoCode || ""
+      );
       if (code === null) return;
 
       promoCode = String(code || "").trim().toUpperCase();
+
       if (!promoCode) {
-        $("promo-text") && ($("promo-text").textContent = "Cupón removido");
+        if (text) text.textContent = "Cupón removido · Vuelve a tocar para aplicar uno";
         toast("Cupón removido");
         return;
       }
 
       // Validate against promos.json (frontend hint only; backend enforces too)
-      const rule = promoRules.find((r) => String(r.code).toUpperCase() === promoCode && r.active);
+      const rule = promoRules.find(
+        (r) => String(r.code).toUpperCase() === promoCode && r.active
+      );
+
       if (!rule) {
         toast("Cupón inválido");
         promoCode = "";
         return;
       }
 
-      $("promo-text") && ($("promo-text").textContent = `✅ CUPÓN ACTIVO: ${promoCode} — ${rule.description || ""}`.trim());
+      if (text) text.textContent = `✅ CUPÓN ACTIVO: ${promoCode} — ${rule.description || ""}`.trim();
       toast("Cupón aplicado");
       updateTotals();
     });
@@ -340,7 +457,6 @@
     if (!cart.length) return toast("Carrito vacío");
 
     const mode = shippingState.mode;
-
     const name = $("name")?.value?.trim() || "";
     const addr = $("addr")?.value?.trim() || "";
     const cp = $("cp")?.value?.trim() || "";
@@ -357,7 +473,9 @@
 
     // Pixel: InitiateCheckout
     if (typeof fbq === "function") {
-      fbq("track", "InitiateCheckout", { num_items: cart.reduce((a, i) => a + i.qty, 0) });
+      fbq("track", "InitiateCheckout", {
+        num_items: cart.reduce((a, i) => a + i.qty, 0),
+      });
     }
 
     try {
@@ -374,12 +492,14 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
 
       if (data?.url) {
         location.href = data.url;
         return;
       }
+
       throw new Error(data?.error || "Checkout failed");
     } catch (err) {
       toast("Error: " + (err?.message || "Checkout"));
@@ -398,26 +518,35 @@
     if (!status) return;
 
     if (status === "success") {
-      // Clear cart after successful payment
       cart = [];
       saveCart();
       updateCartUI();
       toast("✅ Pago confirmado. Gracias.");
 
-      // Pixel: Purchase (value is unknown client-side; keep minimal)
+      // Pixel: Purchase (client-side minimal)
       if (typeof fbq === "function") fbq("track", "Purchase");
     } else if (status === "cancel") {
       toast("Pago cancelado");
     }
 
-    // Clean URL
     history.replaceState({}, document.title, location.pathname + location.hash);
   }
 
   // --- LOADERS ---
   async function loadCatalog() {
     const res = await fetch("/data/catalog.json", { cache: "no-store" });
-    catalogData = await res.json();
+    const data = await res.json();
+
+    // sanitize product image urls (spaces, etc.)
+    if (Array.isArray(data?.products)) {
+      data.products = data.products.map((p) => {
+        const img = safeUrl(p.img || "");
+        const images = Array.isArray(p.images) ? p.images.map((x) => safeUrl(x)) : [];
+        return { ...p, img, images };
+      });
+    }
+
+    catalogData = data;
   }
 
   async function loadPromos() {
@@ -450,7 +579,6 @@
     try {
       await Promise.all([loadCatalog(), loadPromos()]);
     } catch {
-      // fallback hard sections if catalog fails
       catalogData.sections = [
         { id: "BAJA_1000", title: "BAJA 1000", logo: "/assets/logo-baja1000.webp" },
         { id: "BAJA_500", title: "BAJA 500", logo: "/assets/logo-baja500.webp" },
