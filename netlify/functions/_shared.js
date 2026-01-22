@@ -16,13 +16,8 @@ const FACTORY_ORIGIN = {
   reference: "Interior JK",
 };
 
-// PRECIOS FIJOS (FALLBACKS) - ACTUALIZADOS
-const FALLBACK_MX_PRICE = 250; // $250 MXN Nacional
-const FALLBACK_US_PRICE = 800; // $800 MXN USA
-
-// Credenciales
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Clientes BD
@@ -45,7 +40,18 @@ const safeJsonParse = (str) => { try { return JSON.parse(str || "{}"); } catch {
 function normalizeQty(qty) { const n = parseInt(qty, 10); return Number.isFinite(n) && n > 0 ? n : 1; }
 function normalizeZip(zip) { const z = String(zip || "").trim(); return z.length >= 5 ? z : ""; }
 
-// LOGISTICA REAL (Envia.com)
+// PRECIOS FIJOS (FALLBACKS) - CONFIRMADOS
+const FALLBACK_MX_PRICE = 250;
+const FALLBACK_US_PRICE = 800;
+
+// REGLAS DE PROMOCIÓN
+const PROMO_RULES = {
+    "SCORE25": { value: 0.25, label: "25% OFF" },
+    "BAJA25": { value: 0.25, label: "25% OFF" },
+    "SCORE10": { value: 0.10, label: "10% OFF" }
+};
+
+// Cotización Envia.com
 async function getEnviaQuote(zip, qty, countryCode = "MX") {
   if (!process.env.ENVIA_API_KEY) return null;
   const safeZip = normalizeZip(zip);
@@ -67,7 +73,7 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
     const list = data?.data || [];
     if (!list.length) return null;
     const best = list.sort((a, b) => a.total_price - b.total_price)[0];
-    // Margen operativo +5%
+    // Margen +5%
     return { mxn: Math.ceil(best.total_price * 1.05), carrier: best.carrier, days: best.delivery_estimate };
   } catch (e) { return null; }
 }
@@ -100,8 +106,6 @@ async function createEnviaLabel(customer, itemsQty) {
 }
 
 module.exports = {
-  jsonResponse, safeJsonParse, supabase, supabaseAdmin, 
-  getEnviaQuote, createEnviaLabel,
-  FALLBACK_MX_PRICE, FALLBACK_US_PRICE, 
-  normalizeQty, normalizeZip
+  jsonResponse, safeJsonParse, supabase, supabaseAdmin, FACTORY_ORIGIN,
+  FALLBACK_MX_PRICE, FALLBACK_US_PRICE, PROMO_RULES, getEnviaQuote, createEnviaLabel, normalizeQty, normalizeZip
 };
