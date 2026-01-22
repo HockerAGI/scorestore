@@ -5,270 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
-  <meta name="theme-color" content="#E10600" />
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_FIX" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="/css/styles.css?v=FINAL_3.0" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Legal layout */
-    .legalWrap{
-      width:min(980px, calc(100% - 32px));
-      margin:0 auto;
-      padding: 26px 0 54px;
-    }
-    .legalTitle{
-      font-family: Teko, Inter, sans-serif;
-      font-size: clamp(36px, 5vw, 56px);
-      letter-spacing:.06em;
-      margin: 0 0 6px;
-    }
-    .legalSub{
-      margin:0 0 18px;
-      color: rgba(238,242,255,.72);
-      font-weight:800;
-    }
-    .legalNav{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin: 14px 0 18px;
-    }
-    .legalNav a{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(18,21,27,.25);
-      font-weight:900;
-      letter-spacing:.06em;
-      font-size:12px;
-      opacity:.95;
-    }
-    .legalCard{
-      border-radius: 24px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(18,21,27,.30);
-      box-shadow: 0 10px 28px rgba(0,0,0,.38);
-      padding: 18px 16px;
-      margin: 12px 0;
-      overflow:hidden;
-      position:relative;
-    }
-    .legalCard::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      opacity:.12;
-      background: repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 10px, transparent 10px 20px);
-      mix-blend-mode: overlay;
-      pointer-events:none;
-    }
-    .legalH2{
-      margin:0 0 10px;
-      font-family: Teko, Inter, sans-serif;
-      font-size: 30px;
-      letter-spacing:.06em;
-    }
-    .legalH3{
-      margin:14px 0 8px;
-      font-size:16px;
-      font-weight:900;
-      letter-spacing:.02em;
-      color: rgba(255,255,255,.92);
-    }
-    .legalP{
-      margin:0 0 10px;
-      color: rgba(238,242,255,.82);
-      line-height:1.55;
-      font-weight:600;
-      position:relative;
-      z-index:1;
-    }
-    .legalList{
-      margin: 0 0 10px 18px;
-      color: rgba(238,242,255,.82);
-      line-height:1.55;
-      font-weight:600;
-      position:relative;
-      z-index:1;
-    }
-    .legalNote{
-      margin: 10px 0 0;
-      padding:12px 12px;
-      border-radius: 18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(10,12,16,.35);
-      color: rgba(238,242,255,.78);
-      font-weight:700;
-      position:relative;
-      z-index:1;
-    }
-    .btnGhost{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      padding:10px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(18,21,27,.35);
-      font-weight:900;
-      letter-spacing:.02em;
-      color: rgba(255,255,255,.92);
-      cursor:pointer;
-    }
+    /* Estilos específicos para Legal (heredando root) */
+    .legalWrap{ width:min(900px, calc(100% - 32px)); margin:0 auto; padding: 40px 0 80px; }
+    .legalTitle{ font-family: Teko, sans-serif; font-size: 48px; margin-bottom: 5px; color: var(--text); }
+    .legalSub{ font-weight: 700; color: var(--muted); margin-bottom: 30px; }
+    .legalCard{ background: #fff; border-radius: 20px; padding: 30px; margin-bottom: 24px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid var(--border-light); }
+    .legalH2{ font-family: Teko; font-size: 32px; color: var(--red); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .legalP, .legalList li{ line-height: 1.6; color: var(--text); font-size: 15px; margin-bottom: 10px; }
+    .legalNote{ background: #f9f9f9; padding: 15px; border-left: 4px solid var(--red); border-radius: 4px; font-size: 14px; }
   </style>
 </head>
 
 <body>
   <header class="topbar">
     <div class="container topbarInner">
-      <a class="btnGhost" href="/">← Volver a la Tienda</a>
+      <a href="/" style="font-weight:700; font-size:14px; padding:8px 16px; border:1px solid #eee; border-radius:99px;">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
       <div style="width:40px;"></div>
     </div>
   </header>
 
   <main class="legalWrap">
-    <h1 class="legalTitle">INFORMACIÓN LEGAL Y COMERCIAL</h1>
+    <h1 class="legalTitle">INFORMACIÓN LEGAL</h1>
     <p class="legalSub">Última actualización: Enero 2026</p>
 
-    <nav class="legalNav" aria-label="Navegación legal">
-      <a href="#privacidad">Privacidad</a>
-      <a href="#terminos">Términos</a>
-      <a href="#pagos">Pagos</a>
-      <a href="#envios">Envíos</a>
-      <a href="#devoluciones">Devoluciones</a>
-      <a href="#facturacion">Facturación</a>
-      <a href="#propiedad">Propiedad intelectual</a>
-      <a href="#contacto">Contacto</a>
-    </nav>
-
-    <section id="privacidad" class="legalCard">
-      <h2 class="legalH2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
+    <section class="legalCard">
+      <h2 class="legalH2">1. RESPONSABLE Y DATOS FISCALES</h2>
       <p class="legalP">
-        <strong>Responsable del tratamiento de datos personales:</strong>
-        <br>
-        <strong>BAJATEX, S. de R.L. de C.V.</strong> (en lo sucesivo, “BAJATEX”),
-        operadora de la tienda en línea “SCORE Store”.
+        De conformidad con las leyes mexicanas, se informa que la operación de venta de mercancía oficial en este sitio es responsabilidad de:
       </p>
       <div class="legalNote">
-        <strong>Nota:</strong> BAJATEX no almacena datos completos de tu tarjeta.
+        <strong>RAZÓN SOCIAL:</strong> BAJATEX, S. de R.L. de C.V.<br>
+        <strong>RFC:</strong> BAJ220613P51<br>
+        <strong>DOMICILIO FISCAL:</strong> Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México.<br>
+        <strong>NOMBRE COMERCIAL:</strong> ÚNICO UNIFORMES / SCORE STORE
       </div>
     </section>
 
-    <section id="terminos" class="legalCard">
-        <h2 class="legalH2">2. TÉRMINOS Y CONDICIONES</h2>
-        <p class="legalP">Al navegar aceptas estos términos.</p>
-    </section>
-
-    <section id="pagos" class="legalCard">
-        <h2 class="legalH2">3. PAGOS</h2>
-        <p class="legalP">Procesados por proveedores seguros.</p>
-    </section>
-
-    <section id="envios" class="legalCard">
-        <h2 class="legalH2">4. ENVÍOS</h2>
-        <p class="legalP">Envíos nacionales e internacionales.</p>
-    </section>
-
-    <section id="devoluciones" class="legalCard">
-        <h2 class="legalH2">5. DEVOLUCIONES</h2>
-        <p class="legalP">Sujeto a políticas de higiene y estado del producto.</p>
-    </section>
-
-    <section id="facturacion" class="legalCard">
-      <h2 class="legalH2">6. FACTURACIÓN (MÉXICO)</h2>
-
+    <section class="legalCard">
+      <h2 class="legalH2">2. FACTURACIÓN (CFDI)</h2>
       <p class="legalP">
-        Si requieres factura, solicítala proporcionando tus datos fiscales completos.
-        La facturación se realiza conforme a la normativa fiscal aplicable.
+        Para solicitar tu factura, debes enviar tus datos fiscales completos al correo <strong>ventas.unicotextil@gmail.com</strong> dentro del mismo mes en que realizaste tu compra.
       </p>
-
-      <h3 class="legalH3">6.1 Requisitos</h3>
+      <p class="legalP">Requisitos obligatorios:</p>
       <ul class="legalList">
-        <li>RFC, razón social, régimen fiscal, uso CFDI, código postal y correo fiscal.</li>
-        <li>Datos del pedido (fecha, monto, identificador del pago o folio).</li>
+        <li>Constancia de Situación Fiscal (PDF actualizado).</li>
+        <li>Uso de CFDI.</li>
+        <li>Número de pedido o comprobante de pago.</li>
       </ul>
+    </section>
 
-      <h3 class="legalH3">6.2 Plazo</h3>
+    <section class="legalCard">
+      <h2 class="legalH2">3. ENVÍOS Y DEVOLUCIONES</h2>
       <p class="legalP">
-        Para una atención ágil, solicita tu factura dentro del mismo mes de tu compra.
+        <strong>Envíos:</strong> Los tiempos de entrega son estimados (3-7 días hábiles nacional). Envíos locales en Tijuana se procesan en 24-48 horas.
       </p>
-
-      <div class="legalNote">
-        <strong>Correo para facturación:</strong> ventas.unicotextil@gmail.com
-      </div>
-    </section>
-
-    <section id="propiedad" class="legalCard">
-      <h2 class="legalH2">7. PROPIEDAD INTELECTUAL</h2>
-      <p class="legalP">Marcas registradas por sus respectivos dueños.</p>
+      <p class="legalP">
+        <strong>Devoluciones:</strong> Solo se aceptan cambios por defectos de fabricación comprobables notificados dentro de los primeros 5 días naturales tras la recepción. No aplica en productos personalizados o usados.
+      </p>
     </section>
 
     <section class="legalCard">
-      <h2 class="legalH2">8. LIMITACIÓN DE RESPONSABILIDAD</h2>
-      <p class="legalP">Esfuerzos razonables para operación continua.</p>
-    </section>
-
-    <section class="legalCard">
-      <h2 class="legalH2">9. JURISDICCIÓN</h2>
-      <p class="legalP">Leyes aplicables en México.</p>
-    </section>
-
-    <section id="contacto" class="legalCard">
-      <h2 class="legalH2">10. CONTACTO</h2>
-
-      <p class="legalP"><strong>Atención al cliente / pedidos:</strong> ventas.unicotextil@gmail.com</p>
-      <p class="legalP"><strong>WhatsApp:</strong> <a href="https://wa.me/526642368701" target="_blank" rel="noopener">+52 664 236 8701</a></p>
-
-      <div class="legalNote">
-        Para ayudarte más rápido, incluye: nombre, número de pedido (si lo tienes), producto y fotos (si aplica).
-      </div>
+      <h2 class="legalH2">CONTACTO OFICIAL</h2>
+      <p class="legalP">
+        Cualquier duda sobre tu pedido, contáctanos directamente:<br>
+        📩 <strong>ventas.unicotextil@gmail.com</strong><br>
+        📞 WhatsApp: 664 236 8701
+      </p>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="container footerInner">
-      <div class="fCol">
-        <div class="footerBrandName">SCORE STORE</div>
-        <p class="fText">
-          Merchandise oficial de SCORE International. Fabricado y operado por Único Uniformes en Tijuana.
-        </p>
-        <a class="whatsapp-btn" href="https://wa.me/526642368701" target="_blank" rel="noopener">💬 WhatsApp</a>
-      </div>
-
-      <div class="fCol">
-        <h4>TIENDA</h4>
-        <div class="footerLinks">
-          <a href="/#collections">Colecciones</a>
-          <a href="/?openCart=1">Carrito</a>
-        </div>
-      </div>
-
-      <div class="fCol">
-        <h4>LEGAL</h4>
-        <div class="footerLinks">
-          <a href="#privacidad">Privacidad</a>
-          <a href="#terminos">Términos</a>
-          <a href="#envios">Envíos</a>
-          <a href="#devoluciones">Devoluciones</a>
-          <a href="#facturacion">Facturación</a>
-        </div>
-      </div>
-
-      <div class="fCol">
-        <h4>REDES</h4>
-        <div class="social-row">
-          <a class="social-link" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
-          <a class="social-link" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook</a>
-        </div>
-      </div>
+  <footer class="footer" style="margin-top:0;">
+    <div style="text-align:center; padding:20px; opacity:.5; font-size:12px;">
+      © 2026 BAJATEX S. DE R.L. DE C.V.
     </div>
-    <div class="copy"><small>© 2026 SCORE Store · Operado por BAJATEX</small></div>
   </footer>
 </body>
 </html>
