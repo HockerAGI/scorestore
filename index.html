@@ -7,29 +7,41 @@
 
   <meta name="description" content="Mercancía oficial SCORE International. Fabricado por Único Uniformes en Tijuana." />
   <meta name="theme-color" content="#E10600" />
+  
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
-  <!-- Open Graph -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  /></noscript>
   <meta property="og:title" content="SCORE Store · Tienda Oficial" />
   <meta property="og:description" content="Mercancía oficial SCORE International. Fabricado por Único Uniformes." />
   <meta property="og:image" content="/assets/hero.webp" />
   <meta property="og:type" content="website" />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Teko:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css?v=2026_A" />
 
-  <!-- Preload -->
   <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high">
   <link rel="preload" as="image" href="/assets/logo-score.webp" fetchpriority="high">
 </head>
 
 <body>
 
-<!-- SPLASH -->
 <div id="splash-screen" aria-label="Cargando">
   <div class="splash-content">
     <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE">
@@ -38,13 +50,11 @@
   </div>
 </div>
 
-<!-- PROMO BAR -->
 <div class="promo-bar" id="promo-bar" role="button" tabindex="0" aria-label="Abrir carrito">
   <strong class="promo-highlight">DESCUENTO POR TIEMPO LIMITADO</strong>
   <span id="promo-text">ADQUIERE TU FAVORITO · HASTA 80% DE DESCUENTO</span>
 </div>
 
-<!-- TOPBAR -->
 <header class="topbar">
   <div class="container topbarInner">
     <img src="/assets/logo-score.webp" class="brandLogo" alt="SCORE Store">
@@ -62,12 +72,10 @@
   </div>
 </header>
 
-<!-- OVERLAY -->
 <div id="overlay" class="page-overlay" onclick="closeAll()" aria-hidden="true"></div>
 
 <main class="wrap">
 
-  <!-- HERO -->
   <section class="hero">
     <div class="heroBg"></div>
     <div class="heroOverlay"></div>
@@ -98,7 +106,6 @@
     </div>
   </section>
 
-  <!-- COLECCIONES -->
   <section class="section" id="collections">
     <div class="sectionHead">
       <div>
@@ -108,7 +115,6 @@
     </div>
 
     <div class="grid">
-      <!-- BAJA 1000 -->
       <button class="champItem" type="button" onclick="openCatalog('BAJA_1000')" aria-label="Abrir Baja 1000">
         <div class="card-texture" aria-hidden="true"></div>
         <div class="champInner">
@@ -122,7 +128,6 @@
         </div>
       </button>
 
-      <!-- BAJA 500 -->
       <button class="champItem" type="button" onclick="openCatalog('BAJA_500')" aria-label="Abrir Baja 500">
         <div class="card-texture" aria-hidden="true"></div>
         <div class="champInner">
@@ -136,7 +141,6 @@
         </div>
       </button>
 
-      <!-- BAJA 400 -->
       <button class="champItem" type="button" onclick="openCatalog('BAJA_400')" aria-label="Abrir Baja 400">
         <div class="card-texture" aria-hidden="true"></div>
         <div class="champInner">
@@ -150,7 +154,6 @@
         </div>
       </button>
 
-      <!-- SF 250 -->
       <button class="champItem" type="button" onclick="openCatalog('SF_250')" aria-label="Abrir San Felipe 250">
         <div class="card-texture" aria-hidden="true"></div>
         <div class="champInner">
@@ -166,7 +169,6 @@
     </div>
   </section>
 
-  <!-- PARTNERS -->
   <section class="partners">
     <h3>PARTNERS OFICIALES</h3>
     <div class="partnersGrid">
@@ -180,7 +182,6 @@
 
 </main>
 
-<!-- MODAL CATÁLOGO -->
 <section id="modalCatalog" class="modal" aria-hidden="true">
   <div class="dHead">
     <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
@@ -191,7 +192,6 @@
   </div>
 </section>
 
-<!-- DRAWER CARRITO -->
 <aside id="drawer" class="drawer" aria-hidden="true">
   <div class="dHead">
     <h3 class="dTitle">MI PEDIDO</h3>
@@ -199,8 +199,6 @@
   </div>
 
   <div class="dBody">
-    <!-- speed bar injected por JS -->
-
     <div id="cartEmpty"></div>
     <div id="cartItems"></div>
 
@@ -260,14 +258,12 @@
   </div>
 </aside>
 
-<!-- TOAST -->
 <div class="toast" id="toast" aria-live="polite"></div>
 
-<!-- CONFIG (solo público) -->
 <script>
   window.__SCORE__ = {
     orgSlug: "score-store",
-    stripePublishableKey: "pk_live_XXXXXXXXXXXXXXXX",
+    stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
     metaPixelId: "4249947775334413"
   };
 </script>
