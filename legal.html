@@ -2,44 +2,455 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
-  <!-- Usa el mismo CSS -->
+  <meta name="theme-color" content="#E10600" />
   <link rel="stylesheet" href="/css/styles.css?v=FINAL_FIX" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Legal layout (small, isolated, safe) */
+    .legalWrap{
+      width:min(980px, calc(100% - 32px));
+      margin:0 auto;
+      padding: 26px 0 54px;
+    }
+    .legalTitle{
+      font-family: Teko, Inter, sans-serif;
+      font-size: clamp(36px, 5vw, 56px);
+      letter-spacing:.06em;
+      margin: 0 0 6px;
+    }
+    .legalSub{
+      margin:0 0 18px;
+      color: rgba(238,242,255,.72);
+      font-weight:800;
+    }
+    .legalNav{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin: 14px 0 18px;
+    }
+    .legalNav a{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(18,21,27,.25);
+      font-weight:900;
+      letter-spacing:.06em;
+      font-size:12px;
+      opacity:.95;
+    }
+    .legalCard{
+      border-radius: 24px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(18,21,27,.30);
+      box-shadow: 0 10px 28px rgba(0,0,0,.38);
+      padding: 18px 16px;
+      margin: 12px 0;
+      overflow:hidden;
+      position:relative;
+    }
+    .legalCard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.12;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 10px, transparent 10px 20px);
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    .legalH2{
+      margin:0 0 10px;
+      font-family: Teko, Inter, sans-serif;
+      font-size: 30px;
+      letter-spacing:.06em;
+    }
+    .legalH3{
+      margin:14px 0 8px;
+      font-size:16px;
+      font-weight:900;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.92);
+    }
+    .legalP{
+      margin:0 0 10px;
+      color: rgba(238,242,255,.82);
+      line-height:1.55;
+      font-weight:600;
+      position:relative;
+      z-index:1;
+    }
+    .legalList{
+      margin: 0 0 10px 18px;
+      color: rgba(238,242,255,.82);
+      line-height:1.55;
+      font-weight:600;
+      position:relative;
+      z-index:1;
+    }
+    .legalNote{
+      margin: 10px 0 0;
+      padding:12px 12px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,16,.35);
+      color: rgba(238,242,255,.78);
+      font-weight:700;
+      position:relative;
+      z-index:1;
+    }
+    .btnGhost{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(18,21,27,.35);
+      font-weight:900;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+    }
+  </style>
 </head>
+
 <body>
   <header class="topbar">
     <div class="container topbarInner">
-      <a class="btnGhost" href="/" style="color:#000; border-color:#ddd;">← Volver a la Tienda</a>
+      <a class="btnGhost" href="/">← Volver a la Tienda</a>
       <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;"></div> 
+      <div style="width:40px;"></div>
     </div>
   </header>
 
-  <main class="legal">
-    <h1 class="h1" style="color:#fff;">INFORMACIÓN LEGAL Y COMERCIAL</h1>
-    <p class="p muted" style="color:#ccc">Última actualización: Enero 2026</p>
+  <main class="legalWrap">
+    <h1 class="legalTitle">INFORMACIÓN LEGAL Y COMERCIAL</h1>
+    <p class="legalSub">Última actualización: Enero 2026</p>
 
+    <nav class="legalNav" aria-label="Navegación legal">
+      <a href="#privacidad">Privacidad</a>
+      <a href="#terminos">Términos</a>
+      <a href="#pagos">Pagos</a>
+      <a href="#envios">Envíos</a>
+      <a href="#devoluciones">Devoluciones</a>
+      <a href="#facturacion">Facturación</a>
+      <a href="#propiedad">Propiedad intelectual</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <!-- 1) PRIVACIDAD -->
     <section id="privacidad" class="legalCard">
-      <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
-      <p class="p"><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V.</p>
-      <h3 style="font-size:18px;margin:10px 0; color:#111;">Datos Personales:</h3>
-      <ul class="ul">
-        <li>Nombre, teléfono, correo, dirección.</li>
-        <li>Datos fiscales (si aplica factura).</li>
+      <h2 class="legalH2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
+
+      <p class="legalP">
+        <strong>Responsable del tratamiento de datos personales:</strong>
+        <br>
+        <strong>BAJATEX, S. de R.L. de C.V.</strong> (en lo sucesivo, “BAJATEX”),
+        operadora de la tienda en línea “SCORE Store” para la venta de mercancía oficial.
+      </p>
+
+      <h3 class="legalH3">1.1 Datos personales que recabamos</h3>
+      <ul class="legalList">
+        <li>Identificación y contacto: nombre, teléfono, correo electrónico.</li>
+        <li>Entrega: domicilio, ciudad, estado, país, código postal y referencias.</li>
+        <li>Compra: productos seleccionados, tallas, cantidades, historial de pedidos.</li>
+        <li>Facturación (si la solicitas): RFC, razón social, régimen fiscal, uso CFDI, domicilio fiscal y correo fiscal.</li>
+      </ul>
+
+      <h3 class="legalH3">1.2 Finalidades del tratamiento</h3>
+      <ul class="legalList">
+        <li>Procesar tu compra, cobrar el pedido y emitir confirmaciones.</li>
+        <li>Gestionar el envío, entrega, devoluciones y atención al cliente.</li>
+        <li>Generar comprobantes y documentación de la operación (incluida facturación si aplica).</li>
+        <li>Prevención de fraude y seguridad del sitio, pagos y entregas.</li>
+        <li>Comunicarte avisos relacionados con tu pedido (estatus, incidencias, cambios de dirección).</li>
+      </ul>
+
+      <h3 class="legalH3">1.3 Transferencias</h3>
+      <p class="legalP">
+        Para operar la tienda, BAJATEX puede compartir datos estrictamente necesarios con:
+        (a) procesadores de pago (por ejemplo, Stripe), (b) servicios de mensajería/paquetería
+        (por ejemplo, Envia.com y transportistas), y (c) servicios de infraestructura tecnológica.
+        Estas transferencias se realizan para cumplir con tu compra y no para fines ajenos.
+      </p>
+
+      <h3 class="legalH3">1.4 Derechos ARCO</h3>
+      <p class="legalP">
+        Puedes solicitar acceso, rectificación, cancelación u oposición de tus datos personales, así como limitar su uso,
+        enviando tu solicitud al correo indicado en la sección <a href="#contacto">Contacto</a>.
+        Te responderemos en tiempos razonables conforme a la normativa aplicable.
+      </p>
+
+      <h3 class="legalH3">1.5 Cookies y medición</h3>
+      <p class="legalP">
+        Este sitio puede usar cookies o tecnologías similares para mejorar la experiencia,
+        recordar preferencias y medir rendimiento de campañas. Puedes limitar cookies desde tu navegador.
+      </p>
+
+      <div class="legalNote">
+        <strong>Nota:</strong> BAJATEX no almacena datos completos de tu tarjeta. Los pagos se procesan por el proveedor de pago.
+      </div>
+    </section>
+
+    <!-- 2) TERMINOS -->
+    <section id="terminos" class="legalCard">
+      <h2 class="legalH2">2. TÉRMINOS Y CONDICIONES DE COMPRA</h2>
+
+      <p class="legalP">
+        Al navegar o comprar en SCORE Store, aceptas estos términos. Si no estás de acuerdo,
+        por favor no uses el sitio para comprar.
+      </p>
+
+      <h3 class="legalH3">2.1 Operación y alcance</h3>
+      <p class="legalP">
+        SCORE Store es una tienda en línea operada por BAJATEX para la venta de mercancía oficial
+        relacionada con eventos y colecciones de SCORE International. Los productos, colecciones y disponibilidad
+        pueden cambiar sin previo aviso.
+      </p>
+
+      <h3 class="legalH3">2.2 Precios, moneda y disponibilidad</h3>
+      <ul class="legalList">
+        <li>Los precios se muestran en <strong>MXN</strong>, salvo que se indique lo contrario.</li>
+        <li>La disponibilidad está sujeta a existencias. Si un producto se agota, te lo informaremos.</li>
+        <li>Las imágenes son ilustrativas. El color y detalles pueden variar ligeramente por pantalla o producción.</li>
+      </ul>
+
+      <h3 class="legalH3">2.3 Confirmación de pedido</h3>
+      <p class="legalP">
+        Tu compra se considera confirmada cuando el pago es aprobado por el procesador de pago
+        y recibes confirmación de “pago exitoso”. BAJATEX puede cancelar pedidos en caso de fraude,
+        errores evidentes de precio o imposibilidad de entrega; en ese caso, se gestionará el reembolso correspondiente.
+      </p>
+
+      <h3 class="legalH3">2.4 Cupones y promociones</h3>
+      <ul class="legalList">
+        <li>Los cupones pueden tener vigencia, condiciones y límites de uso.</li>
+        <li>Si una promoción aplica a envío gratis o descuento, se reflejará en el total cobrado.</li>
+        <li>BAJATEX puede desactivar promociones en caso de abuso, fraude o error de configuración.</li>
+      </ul>
+
+      <div class="legalNote">
+        <strong>Importante:</strong> En lanzamientos o ediciones limitadas, el inventario puede agotarse rápido.
+        Si tu pedido no puede surtirse por falta real de existencias, te contactaremos con opciones.
+      </div>
+    </section>
+
+    <!-- 3) PAGOS -->
+    <section id="pagos" class="legalCard">
+      <h2 class="legalH2">3. PAGOS</h2>
+
+      <p class="legalP">
+        Los pagos se procesan mediante proveedores externos. BAJATEX no almacena información completa de tarjetas.
+      </p>
+
+      <h3 class="legalH3">3.1 Métodos disponibles</h3>
+      <ul class="legalList">
+        <li>Tarjeta (crédito/débito) según disponibilidad del proveedor.</li>
+        <li>OXXO (cuando el proveedor lo habilite y sea compatible con el pedido).</li>
+      </ul>
+
+      <h3 class="legalH3">3.2 Prevención de fraude</h3>
+      <p class="legalP">
+        Por seguridad, algunos pedidos pueden requerir validaciones adicionales (por ejemplo, confirmar datos de entrega).
+        Si no es posible validar, el pedido puede ser cancelado y reembolsado.
+      </p>
+    </section>
+
+    <!-- 4) ENVIOS -->
+    <section id="envios" class="legalCard">
+      <h2 class="legalH2">4. ENVÍOS Y ENTREGAS</h2>
+
+      <h3 class="legalH3">4.1 Opciones de entrega</h3>
+      <ul class="legalList">
+        <li><strong>Recoger en fábrica (Tijuana):</strong> sin costo, sujeto a confirmación y horario.</li>
+        <li><strong>Entrega local Tijuana:</strong> tarifa fija (cuando esté disponible en el checkout).</li>
+        <li><strong>Envío Nacional (México):</strong> costo calculado o estimado según zona y cantidad.</li>
+        <li><strong>Envío a USA:</strong> disponible en zonas seleccionadas, costo estimado según destino.</li>
+      </ul>
+
+      <h3 class="legalH3">4.2 Tiempos de entrega</h3>
+      <p class="legalP">
+        Los tiempos son estimados y dependen del destino, operación del transportista, clima,
+        incidencias o temporadas de alta demanda. BAJATEX no controla los tiempos del transportista,
+        pero sí te apoya con seguimiento.
+      </p>
+
+      <h3 class="legalH3">4.3 Dirección y recepción</h3>
+      <ul class="legalList">
+        <li>Verifica que tu dirección y código postal estén correctos antes de pagar.</li>
+        <li>Si el transportista marca intento de entrega y no hay quien reciba, pueden aplicarse reintentos o devoluciones.</li>
+        <li>Si el paquete se pierde por dirección incorrecta proporcionada por el cliente, el costo puede no ser reembolsable.</li>
+      </ul>
+
+      <div class="legalNote">
+        <strong>Recomendación:</strong> Al recibir, revisa el empaque. Si está abierto o dañado, toma fotos y repórtalo el mismo día.
+      </div>
+    </section>
+
+    <!-- 5) DEVOLUCIONES -->
+    <section id="devoluciones" class="legalCard">
+      <h2 class="legalH2">5. CAMBIOS, DEVOLUCIONES Y GARANTÍAS</h2>
+
+      <h3 class="legalH3">5.1 Cambios por talla</h3>
+      <p class="legalP">
+        Si necesitas cambio de talla, se podrá gestionar según existencias. Para iniciar el proceso,
+        contáctanos dentro de los <strong>7 días naturales</strong> posteriores a la entrega.
+        El producto debe estar sin uso, con etiquetas y en condiciones originales.
+      </p>
+
+      <h3 class="legalH3">5.2 Devoluciones</h3>
+      <ul class="legalList">
+        <li>Se aceptan devoluciones por defectos de fabricación o error de surtido atribuible a BAJATEX.</li>
+        <li>Para devoluciones por gusto personal (no me gustó / ya no lo quiero), se revisará caso por caso y puede aplicar costo de logística.</li>
+        <li>No se aceptan devoluciones de productos usados, lavados o sin etiquetas.</li>
+      </ul>
+
+      <h3 class="legalH3">5.3 Reporte de incidencias</h3>
+      <p class="legalP">
+        Si tu pedido llega incompleto, equivocado o con daño visible, repórtalo dentro de las primeras
+        <strong>24 horas</strong> posteriores a la entrega, adjuntando fotos claras del empaque y producto.
+      </p>
+
+      <h3 class="legalH3">5.4 Reembolsos</h3>
+      <p class="legalP">
+        Los reembolsos se procesan por el mismo medio de pago, una vez aprobado el caso.
+        El tiempo de reflejo depende del banco o del método usado.
+      </p>
+    </section>
+
+    <!-- 6) FACTURACION -->
+    <section id="facturacion" class="legalCard">
+      <h2 class="legalH2">6. FACTURACIÓN (MÉXICO)</h2>
+
+      <p class="legalP">
+        Si requieres factura, solicítala proporcionando tus datos fiscales completos.
+        La facturación se realiza conforme a la normativa fiscal aplicable.
+      </p>
+
+      <h3 class="legalH3">6.1 Requisitos</h3>
+      <ul class="legalList">
+        <li>RFC, razón social, régimen fiscal, uso CFDI, código postal y correo fiscal.</li>
+        <li>Datos del pedido (fecha, monto, identificador del pago o folio).</li>
+      </ul>
+
+      <h3 class="legalH3">6.2 Plazo</h3>
+      <p class="legalP">
+        Para una atención ágil, solicita tu factura dentro del mismo mes de tu compra.
+        BAJATEX hará lo posible por atender solicitudes posteriores, pero puede haber limitaciones por cierre fiscal.
+      </p>
+
+      <div class="legalNote">
+        <strong>Correo para facturación:</strong> ventas.unicotextil@gmail.com
+      </div>
+    </section>
+
+    <!-- 7) PROPIEDAD -->
+    <section id="propiedad" class="legalCard">
+      <h2 class="legalH2">7. PROPIEDAD INTELECTUAL Y USO DEL SITIO</h2>
+
+      <p class="legalP">
+        Las marcas, logotipos, diseños, imágenes, textos y materiales mostrados en este sitio
+        son propiedad de sus respectivos titulares y están protegidos. Queda prohibido copiar,
+        reproducir, modificar o usar con fines comerciales sin autorización.
+      </p>
+
+      <h3 class="legalH3">7.1 Uso permitido</h3>
+      <ul class="legalList">
+        <li>Consultar información de productos y comprar para uso personal.</li>
+        <li>Compartir enlaces del sitio sin alterar el contenido.</li>
+      </ul>
+
+      <h3 class="legalH3">7.2 Uso no permitido</h3>
+      <ul class="legalList">
+        <li>Reventa no autorizada, clonación de contenido, scraping o extracción masiva de datos.</li>
+        <li>Uso de marcas o imágenes para anuncios, perfiles o tiendas ajenas sin permiso.</li>
+        <li>Intentos de vulnerar seguridad, pagos o integridad del sitio.</li>
       </ul>
     </section>
 
-    <!-- ... (Resto de secciones se mantienen igual, solo asegúrate de usar la clase legalCard) ... -->
-    <section id="envios" class="legalCard">
-        <h2 class="h2">3. ENVÍOS</h2>
-        <p class="p">Envíos nacionales vía Envia.com (3-5 días hábiles). Envíos a USA disponibles.</p>
+    <!-- 8) LIMITES -->
+    <section class="legalCard">
+      <h2 class="legalH2">8. LIMITACIÓN DE RESPONSABILIDAD</h2>
+
+      <p class="legalP">
+        BAJATEX realiza esfuerzos razonables para mantener el sitio disponible y correcto,
+        pero no garantiza operación ininterrumpida o libre de errores. En caso de fallas técnicas,
+        se intentará restablecer el servicio lo antes posible.
+      </p>
+      <p class="legalP">
+        BAJATEX no es responsable por retrasos atribuibles a transportistas, eventos de fuerza mayor,
+        clima, cierres de carreteras, o situaciones fuera de control razonable.
+      </p>
+    </section>
+
+    <!-- 9) JURISDICCION -->
+    <section class="legalCard">
+      <h2 class="legalH2">9. LEY APLICABLE Y JURISDICCIÓN</h2>
+      <p class="legalP">
+        Estos términos se rigen por las leyes aplicables en México. Cualquier controversia relacionada
+        con compras o uso del sitio será atendida conforme a los mecanismos legales correspondientes.
+      </p>
+    </section>
+
+    <!-- 10) CONTACTO -->
+    <section id="contacto" class="legalCard">
+      <h2 class="legalH2">10. CONTACTO</h2>
+
+      <p class="legalP"><strong>Atención al cliente / pedidos:</strong> ventas.unicotextil@gmail.com</p>
+      <p class="legalP"><strong>WhatsApp:</strong> <a href="https://wa.me/526642368701" target="_blank" rel="noopener">+52 664 236 8701</a></p>
+
+      <div class="legalNote">
+        Para ayudarte más rápido, incluye: nombre, número de pedido (si lo tienes), producto y fotos (si aplica).
+      </div>
     </section>
   </main>
 
   <footer class="footer">
+    <div class="container footerInner">
+      <div class="fCol">
+        <div class="footerBrandName">SCORE STORE</div>
+        <p class="fText">
+          Merchandise oficial de SCORE International. Fabricado y operado por Único Uniformes en Tijuana.
+        </p>
+        <a class="whatsapp-btn" href="https://wa.me/526642368701" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+
+      <div class="fCol">
+        <h4>TIENDA</h4>
+        <div class="footerLinks">
+          <a href="/#collections">Colecciones</a>
+          <a href="/?openCart=1">Carrito</a>
+        </div>
+      </div>
+
+      <div class="fCol">
+        <h4>LEGAL</h4>
+        <div class="footerLinks">
+          <a href="#privacidad">Privacidad</a>
+          <a href="#terminos">Términos</a>
+          <a href="#envios">Envíos</a>
+          <a href="#devoluciones">Devoluciones</a>
+          <a href="#facturacion">Facturación</a>
+        </div>
+      </div>
+
+      <div class="fCol">
+        <h4>REDES</h4>
+        <div class="social-row">
+          <a class="social-link" href="#" target="_blank" rel="noopener">Instagram</a>
+          <a class="social-link" href="#" target="_blank" rel="noopener">Facebook</a>
+        </div>
+      </div>
+    </div>
     <div class="copy"><small>© 2026 SCORE Store · Operado por BAJATEX</small></div>
   </footer>
 </body>
