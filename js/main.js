@@ -1,6 +1,8 @@
-/* SCORE STORE LOGIC — FIX INTRO HARDSTOP v2.2.3
+/* SCORE STORE LOGIC — FIX INTRO HARDSTOP v2.2.4 (ALIGNED)
    - Splash se oculta SIEMPRE (aunque falle todo)
-   - Logs claros para detectar por qué no carga tienda
+   - Alineado a CSS racing pre-dark (pCard / pMedia / pBody / pActions / pSize)
+   - no-scroll aplica en html + body
+   - promoPop + swap (compat)
 */
 (function () {
   "use strict";
@@ -19,6 +21,7 @@
   let promoRules = [];
   let promoCode = "";
   let cart = [];
+
   const shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica TJ)" };
 
   const $ = (id) => document.getElementById(id);
@@ -51,38 +54,55 @@
     const splash = $("splash-screen");
     if (!splash) return;
 
-    // Mata visualmente aunque tu CSS no tenga .hide
     splash.style.opacity = "0";
     splash.style.pointerEvents = "none";
     splash.style.transition = "opacity 350ms ease";
+
     setTimeout(() => {
       splash.style.display = "none";
       splash.remove();
     }, 420);
 
-    // debug
     console.log("[SCORE] Splash OFF:", reason);
   }
 
-  // HARDSTOP global: pase lo que pase, se oculta en 2500ms
+  // HARDSTOP global
   setTimeout(() => killSplash("hard-timeout"), 2500);
 
   // ---- UI OPEN/CLOSE ----
+  const overlayEl = () => $("overlay") || document.querySelector(".page-overlay");
+
+  const setNoScroll = (on) => {
+    document.documentElement.classList.toggle("no-scroll", on);
+    document.body.classList.toggle("no-scroll", on);
+  };
+
   const open = (id) => {
     $(id)?.classList.add("active");
-    $("overlay")?.classList.add("active");
-    document.documentElement.classList.add("no-scroll");
+    overlayEl()?.classList.add("active");
+    setNoScroll(true);
   };
 
   const closeAll = () => {
-    ["modalCatalog", "drawer", "overlay"].forEach((id) => $(id)?.classList.remove("active"));
-    document.documentElement.classList.remove("no-scroll");
+    ["modalCatalog", "drawer"].forEach((id) => $(id)?.classList.remove("active"));
+    overlayEl()?.classList.remove("active");
+    setNoScroll(false);
   };
   window.closeAll = closeAll;
 
   window.openDrawer = () => open("drawer");
 
-  // Compat: acepta openCatalog('BAJA_1000','BAJA 1000')
+  // Cierra overlay click
+  document.addEventListener("click", (e) => {
+    const ov = overlayEl();
+    if (ov && e.target === ov) closeAll();
+  });
+
+  function findProduct(id) {
+    return catalogData.products.find((p) => p.id === id);
+  }
+
+  // ---------- CATALOGO (ALINEADO A CSS racing) ----------
   window.openCatalog = (sectionId /*, titleHint */) => {
     const section = catalogData.sections.find((s) => s.id === sectionId);
     const title = section?.title || "COLECCIÓN";
@@ -93,29 +113,32 @@
     const root = $("catContent");
     if (!root) return;
 
+    const badge = section?.badge ? `<span class="catBadge">${escapeHtml(section.badge)}</span>` : "";
+    const logo = section?.logo
+      ? `<img src="${section.logo}" class="catLogo" alt="${escapeHtml(title)}" />`
+      : "";
+
     root.innerHTML = `
-      <div class="catHeaderBlock">
-        ${
-          section?.logo
-            ? `<img src="${section.logo}" class="catLogo" alt="${escapeHtml(title)}" />`
-            : ""
-        }
-        <div class="catHeaderText">
-          <div class="catTitleText">${escapeHtml(title)}</div>
-          ${section?.badge ? `<div class="catBadge">${escapeHtml(section.badge)}</div>` : ""}
-          <div class="catSubText">${items.length} productos</div>
+      <div class="catTop">
+        <div class="catHeader">
+          ${logo}
+          <div class="catHeaderText">
+            <div class="catTitle">${escapeHtml(title)}</div>
+            ${badge}
+          </div>
         </div>
+        <div class="catCount">${items.length} PRODUCTOS</div>
       </div>
 
-      <div class="catItems">
-        ${items.map((p) => renderProductCard(p)).join("")}
+      <div class="grid catGrid">
+        ${items.map((p) => renderProductCardAligned(p)).join("")}
       </div>
     `;
 
     open("modalCatalog");
   };
 
-  function renderProductCard(p) {
+  function renderProductCardAligned(p) {
     const img = p.img || (p.images && p.images[0]) || "";
     const price = Number(p.baseMXN || 0);
 
@@ -123,27 +146,34 @@
       .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
       .join("");
 
+    const zoomLabel = (p.subSection || "VER").toUpperCase();
+
     return `
-      <div class="productCard">
-        <div class="productMedia">
+      <div class="pCard">
+        <button class="pMedia" type="button" onclick="quickView('${escapeHtml(p.id)}')" aria-label="Ver producto">
           ${
             img
               ? `<img src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" />`
-              : `<div class="productNoImg"></div>`
+              : `<div style="aspect-ratio:4/3; background:rgba(255,255,255,.06)"></div>`
           }
-        </div>
+          <div class="pZoom">${escapeHtml(zoomLabel)}</div>
+        </button>
 
-        <div class="productInfo">
-          <div class="productName">${escapeHtml(p.name)}</div>
-          ${p.sku ? `<div class="productSku">${escapeHtml(p.sku)}</div>` : ""}
-          <div class="productPrice">${money(price)}</div>
+        <div class="pBody">
+          <div class="pName">${escapeHtml(p.name)}</div>
+          ${p.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : ""}
 
-          <div class="productActions">
-            <select class="inputField" id="size_${escapeHtml(p.id)}" aria-label="Talla">
+          <div class="pMeta">
+            <div class="pSku">${escapeHtml(p.subSection || "")}</div>
+            <div class="pPrice">${money(price)}</div>
+          </div>
+
+          <div class="pActions">
+            <select class="pSize" id="size_${escapeHtml(p.id)}" aria-label="Talla">
               ${sizeOpts}
             </select>
 
-            <button class="btn primary" onclick="addToCart('${escapeHtml(p.id)}')">
+            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')">
               AGREGAR
             </button>
           </div>
@@ -152,6 +182,77 @@
     `;
   }
 
+  // Quick view (si tu HTML lo trae). Si no existe, abre el modal normal.
+  window.quickView = (id) => {
+    const qv = $("quickView");
+    const p = findProduct(id);
+    if (!p) return;
+
+    // Si no existe quickView en tu HTML, solo abre el catálogo (no rompe)
+    if (!qv) return;
+
+    const imgs = Array.isArray(p.images) && p.images.length ? p.images : [p.img].filter(Boolean);
+    const mainImg = imgs[0] || "";
+
+    qv.classList.add("active");
+    qv.innerHTML = `
+      <div class="qvInner">
+        <button class="qvClose" onclick="closeQuickView()" aria-label="Cerrar">×</button>
+
+        <div class="qvMedia">
+          ${mainImg ? `<img id="qvMain" src="${mainImg}" alt="${escapeHtml(p.name)}">` : ""}
+          <div class="qvThumbs">
+            ${imgs
+              .map(
+                (src, i) => `
+                <button class="qvThumb ${i === 0 ? "active" : ""}" onclick="setQvImg('${escapeHtml(
+                  src
+                )}', this)" aria-label="Imagen ${i + 1}">
+                  <img src="${src}" alt="">
+                </button>
+              `
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <div class="qvInfo">
+          <h3 class="qvTitle">${escapeHtml(p.name)}</h3>
+          <div class="qvRow">
+            <div class="qvSku">${escapeHtml(p.sku || "")}</div>
+            <div class="qvPrice">${money(p.baseMXN || 0)}</div>
+          </div>
+
+          <div class="qvLabel">TALLA</div>
+          <select class="inputField" id="size_${escapeHtml(p.id)}">
+            ${(p.sizes || []).map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}
+          </select>
+
+          <button class="btn primary full" style="margin-top:12px" onclick="addToCart('${escapeHtml(p.id)}')">
+            AGREGAR AL CARRITO
+          </button>
+
+          <div class="qvNote">Producto oficial · Hecho en Tijuana · Listo para competir 🏁</div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.setQvImg = (src, btn) => {
+    const img = $("qvMain");
+    if (img) img.src = src;
+    document.querySelectorAll(".qvThumb").forEach((b) => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+  };
+
+  window.closeQuickView = () => {
+    const qv = $("quickView");
+    if (!qv) return;
+    qv.classList.remove("active");
+    qv.innerHTML = "";
+  };
+
+  // ---------- CART ----------
   function loadCart() {
     try {
       const raw = localStorage.getItem(CART_KEY);
@@ -164,10 +265,6 @@
 
   function saveCart() {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  }
-
-  function findProduct(id) {
-    return catalogData.products.find((p) => p.id === id);
   }
 
   window.addToCart = (id) => {
@@ -288,7 +385,8 @@
 
     updateTotals();
   }
-function setupShippingUI() {
+// ---------- SHIPPING ----------
+  function setupShippingUI() {
     const radios = document.querySelectorAll('input[name="shipMode"]');
     const shipForm = $("shipForm");
 
@@ -305,9 +403,15 @@ function setupShippingUI() {
 
       if (shipForm) shipForm.style.display = "block";
 
+      // valores base (si tu API devuelve algo, lo sobreescribe)
       shippingState.cost = mode === "us" ? 800 : mode === "tj" ? 200 : 250;
       shippingState.label =
-        mode === "us" ? "Envío USA (Estándar)" : mode === "tj" ? "Local Express Tijuana" : "Envío Nacional (Estándar)";
+        mode === "us"
+          ? "Envío USA (Estándar)"
+          : mode === "tj"
+          ? "Local Express Tijuana"
+          : "Envío Nacional (Estándar)";
+
       updateTotals();
 
       const zip = $("cp")?.value?.trim();
@@ -354,36 +458,45 @@ function setupShippingUI() {
     } catch {}
   }
 
+  // ---------- PROMO BAR (RACING) ----------
   function setupPromoBar() {
     const bar = $("promo-bar");
     const text = $("promo-text");
     if (!bar || !text) return;
 
+    // Mensajes racing (sin el “solo hoy” repetitivo)
     const msgs = [
-      "🏁 80% DE DESCUENTO · SOLO HOY",
-      "🔥 EDICIÓN LIMITADA · SE ACABA RÁPIDO",
-      "⚡ ENVÍOS MX / USA · HECHO EN TIJUANA",
-      "🎟️ CUPONES: SCORE25 · BAJA200 · ENVIOFREE",
+      "🏁 GRID ABIERTO · MERCH OFICIAL SCORE",
+      "🔥 DROP LIMITADO · CUANDO SE VA, SE VA",
+      "⚡ MX + USA · HECHO EN TIJUANA",
+      "🎟️ CUPONES · SCORE25 · BAJA200 · ENVIOFREE",
     ];
 
     let i = 0;
-    const animateSwap = () => {
+
+    const pulseSwap = () => {
       i = (i + 1) % msgs.length;
-      text.classList.remove("promoPop");
+
+      // compat: activa ambas clases (swap + promoPop)
+      text.classList.remove("swap", "promoPop");
       void text.offsetWidth;
       text.textContent = msgs[i];
-      text.classList.add("promoPop");
+      text.classList.add("swap", "promoPop");
     };
 
     text.textContent = msgs[0];
-    text.classList.add("promoPop");
-    window.__promoTimer = setInterval(animateSwap, 3600);
+    text.classList.add("swap", "promoPop");
+    window.__promoTimer = setInterval(pulseSwap, 3600);
 
     bar.addEventListener("click", () => {
-      const code = prompt("Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):", promoCode || "");
+      const code = prompt(
+        "Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):",
+        promoCode || ""
+      );
       if (code === null) return;
 
       promoCode = String(code || "").trim().toUpperCase();
+
       if (!promoCode) {
         text.textContent = "Cupón removido";
         toast("Cupón removido");
@@ -391,7 +504,9 @@ function setupShippingUI() {
         return;
       }
 
-      const rule = promoRules.find((r) => String(r.code).toUpperCase() === promoCode && r.active);
+      const rule = promoRules.find(
+        (r) => String(r.code).toUpperCase() === promoCode && r.active
+      );
       if (!rule) {
         toast("Cupón inválido");
         promoCode = "";
@@ -399,12 +514,13 @@ function setupShippingUI() {
       }
 
       text.textContent = `✅ CUPÓN ACTIVO: ${promoCode} — ${rule.description || ""}`.trim();
-      text.classList.add("promoPop");
+      text.classList.add("swap", "promoPop");
       toast("Cupón aplicado");
       updateTotals();
     });
   }
 
+  // ---------- CHECKOUT ----------
   window.checkout = async () => {
     const btn = $("checkoutBtn");
     if (!cart.length) return toast("Carrito vacío");
@@ -514,9 +630,7 @@ function setupShippingUI() {
         { id: "SF_250", title: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp", badge: "CLÁSICOS" },
       ];
 
-      // IMPORTANTE: mata splash incluso con error
       killSplash("fallback");
-
       toast("⚠️ No cargó el catálogo. Revisa /data/catalog.json");
     }
 
@@ -531,7 +645,6 @@ function setupShippingUI() {
     }
   }
 
-  // Asegura que corra aunque el script cargue antes del DOM
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
