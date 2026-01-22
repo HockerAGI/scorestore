@@ -486,8 +486,8 @@
 
     const msgs = [
       "📻 “80% OFF en toda la mercancía",
-      "🏁 Stock limitado · cae rápido",
-      "⚡ MX/USA: Cotiza tu envio · hecho en Tijuana",
+      "🏁 Stock limitado · ¡Que esperas!",
+      "⚡ MX/USA: Cotiza tu envio · en tiempo real" ,
       "🎟️ CUPONES: SCORE25 · BAJA200 · ENVIOFREE",
       "🛞 Agrega al carrito y asegura talla",
     ];
