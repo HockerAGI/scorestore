@@ -1,6 +1,11 @@
-/* SCORE STORE — styles.css v2.6.2 (RACING THEME + INDEX-ALIGNED)
-   - FIXES: overlay id, pZoom backdrop-filter, android perf
-   - UI: topbar blanca + iconos verdes, hero card, partners no-card, product vertical contain
+/* SCORE STORE — styles.css FINAL 2026
+   - Topbar blanca/transparente + iconos verdes
+   - Hero card flotante con margen lateral chico
+   - Fondo más visible (overlay mínimo)
+   - Textura +15%
+   - Overlay compatible (#overlay)
+   - Catálogo: imágenes verticales sin recorte
+   - Partners sin tarjeta
 */
 
 :root{
@@ -18,6 +23,8 @@
   --yellow:#ffd34d;
   --cyan:#51d6ff;
 
+  --green:#19b36b;
+
   --shadow: 0 18px 55px rgba(0,0,0,.55);
   --shadow2: 0 10px 28px rgba(0,0,0,.42);
   --r:18px;
@@ -31,10 +38,11 @@ html,body{height:100%}
 html{scroll-behavior:smooth}
 body{
   margin:0;
+  /* ✅ Fondo más visible: capa oscura mínima */
   background:
-    radial-gradient(1200px 700px at 20% -10%, rgba(225,6,0,.22), transparent 55%),
-    radial-gradient(900px 600px at 90% 10%, rgba(81,214,255,.12), transparent 55%),
-    linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.70)),
+    radial-gradient(1200px 700px at 20% -10%, rgba(225,6,0,.18), transparent 55%),
+    radial-gradient(900px 600px at 90% 10%, rgba(81,214,255,.10), transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.22)),
     url("/assets/fondo-pagina-score.webp");
   background-size: auto, auto, auto, cover;
   background-position: center, center, center, center top;
@@ -44,7 +52,6 @@ body{
   overflow-x:hidden;
 }
 
-/* compat: main.js puede poner no-scroll en html y/o body */
 body.no-scroll, html.no-scroll{overflow:hidden}
 
 a{color:inherit; text-decoration:none}
@@ -56,13 +63,13 @@ button{font-family:inherit}
 }
 .wrap{padding-bottom:60px}
 
-/* ---------- SUBTLE RACING TEXTURE ---------- */
+/* ---------- SUBTLE RACING TEXTURE (+15%) ---------- */
 .wrap::before{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
-  opacity:.12;
+  opacity:.138; /* ✅ 0.12 * 1.15 */
   background-image:
     url("/assets/baja1000-texture.webp"),
     linear-gradient(135deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px),
@@ -71,10 +78,10 @@ button{font-family:inherit}
   background-position: center top, center, center;
   background-repeat:no-repeat, repeat, repeat;
   mix-blend-mode: overlay;
-  will-change: opacity; /* ✅ perf Android */
+  will-change: opacity;
 }
 
-/* ---------- PROMO BAR (RACING) ---------- */
+/* ---------- PROMO BAR ---------- */
 .promo-bar{
   position:sticky;
   top:0;
@@ -115,18 +122,12 @@ button{font-family:inherit}
   transform:translateY(-50%);
   box-shadow:0 0 0 6px rgba(255,211,77,.18);
 }
-
-/* compat: main.js usa promoPop y/o swap */
 #promo-text.swap,
-#promo-text.promoPop{
-  animation: promoSwap .55s ease;
-}
+#promo-text.promoPop{ animation: promoSwap .55s ease; }
 @keyframes promoSwap{
   0%{transform:translateY(10px) skewX(-8deg); opacity:.15}
   100%{transform:translateY(0) skewX(0); opacity:1}
 }
-
-/* racing sweep */
 .promo-bar::after{
   content:"";
   position:absolute;
@@ -143,8 +144,6 @@ button{font-family:inherit}
   0%{transform:translateX(-40%) rotate(18deg)}
   100%{transform:translateX(260%) rotate(18deg)}
 }
-
-/* util: slide-in-top (tu index lo usa) */
 .slide-in-top{animation: slideInTop .55s ease both}
 @keyframes slideInTop{
   0%{transform: translateY(-18px); opacity:0}
@@ -164,7 +163,7 @@ button{font-family:inherit}
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:14px 0;
+  padding:12px 0;
 }
 .brandLogo{
   height:46px;
@@ -183,6 +182,9 @@ button{font-family:inherit}
   cursor:pointer;
   transition: transform .18s ease, background .18s ease, border-color .18s ease;
   box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
 }
 .cartBtn:hover{
   transform: translateY(-1px);
@@ -190,12 +192,11 @@ button{font-family:inherit}
   border-color: rgba(0,0,0,.18);
 }
 
-/* ✅ Iconos verdes (si usas svg/span.icon) */
-.cartBtn .icon, .cartBtn svg, .icon{
-  color:#19b36b;
+/* ✅ Iconos verdes (carrito + cualquier svg/.icon global) */
+.icon, .icon svg, svg.icon, .cartBtn svg{
+  color: var(--green);
   fill: currentColor;
 }
-
 .cartCount{
   position:absolute;
   top:-8px;
@@ -213,9 +214,8 @@ button{font-family:inherit}
   border:2px solid rgba(255,255,255,.85);
 }
 
-/* ---------- OVERLAY (main.js usa #overlay) ---------- */
-#overlay,
-.page-overlay{
+/* ---------- OVERLAY (match main.js: #overlay) ---------- */
+.page-overlay, #overlay{
   position:fixed;
   inset:0;
   background: rgba(0,0,0,.62);
@@ -225,56 +225,56 @@ button{font-family:inherit}
   pointer-events:none;
   transition: opacity .22s ease;
 }
-#overlay.active,
-.page-overlay.active{
+.page-overlay.active, #overlay.active{
   opacity:1;
   pointer-events:auto;
 }
 
-/* ---------- HERO (CARD FLOTANTE) ---------- */
+/* ---------- HERO ---------- */
 .hero{
   position:relative;
   border-bottom:1px solid rgba(255,255,255,.08);
   overflow:hidden;
-  padding: 0 6px 18px; /* ✅ */
+  padding: 0 6px 18px; /* ✅ margen lateral chico para ver fondo */
 }
 .heroBg{
   position:absolute;
   inset:0;
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(225,6,0,.30), transparent 60%),
-    radial-gradient(900px 600px at 80% 20%, rgba(81,214,255,.12), transparent 60%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(225,6,0,.26), transparent 60%),
+    radial-gradient(900px 600px at 80% 20%, rgba(81,214,255,.10), transparent 60%),
     url("/assets/hero.webp");
   background-size: cover;
   background-position:center;
-  filter:saturate(1.1) contrast(1.05);
+  filter:saturate(1.06) contrast(1.04);
   transform: scale(1.02);
 }
 .heroOverlay{
   position:absolute;
   inset:0;
-  background: linear-gradient(180deg, rgba(7,8,10,.25), rgba(7,8,10,.92) 65%, rgba(7,8,10,1));
+  /* ✅ overlay mínimo para que se vea más el fondo */
+  background: linear-gradient(180deg, rgba(7,8,10,.10), rgba(7,8,10,.70) 65%, rgba(7,8,10,.88));
 }
 .heroContent{
   position:relative;
-  width:min(var(--container), calc(100% - 32px));
-  margin: 18px auto 0;
-  padding: 34px 18px 28px;
-  border-radius: var(--r2);
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(12,14,18,.58);
-  box-shadow: 0 18px 55px rgba(0,0,0,.38);
+  width:min(var(--container), calc(100% - 20px)); /* ✅ más cerca de los lados */
+  margin: 14px auto 0;
+  padding: 26px 16px 22px;
   display:flex;
   flex-direction:column;
   gap:16px;
 }
 
-/* pills (tu index los usa) */
-.tagline{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+/* Card flotante */
+.heroCard{
+  border-radius: var(--r2);
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(12,14,18,.50);
+  box-shadow: 0 18px 55px rgba(0,0,0,.34);
 }
+
+/* pills */
+.tagline{display:flex; gap:10px; flex-wrap:wrap}
 .tag-pill{
   display:inline-flex;
   align-items:center;
@@ -284,7 +284,7 @@ button{font-family:inherit}
   letter-spacing:.14em;
   font-size:11px;
   border:1px solid rgba(255,255,255,.14);
-  background: rgba(18,21,27,.30);
+  background: rgba(18,21,27,.26);
   text-transform:uppercase;
 }
 .tag-pill.secondary{
@@ -296,16 +296,16 @@ button{font-family:inherit}
   border-color: rgba(225,6,0,.28);
 }
 
-.logos-row{display:flex; align-items:center; gap:16px; justify-content:center;} /* ✅ */
+.logos-row{display:flex; align-items:center; justify-content:center; gap:18px}
 .hero-main-logo{
-  height:74px; /* ✅ */
+  height:74px; /* ✅ más grande */
   width:auto;
   filter: drop-shadow(0 14px 30px rgba(0,0,0,.6));
 }
 .hero-desert-seal{
-  height:64px; /* ✅ */
+  height:64px; /* ✅ más grande */
   width:auto;
-  opacity:.92;
+  opacity:.94;
   filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
   animation: sealPulse 3.2s ease-in-out infinite;
 }
@@ -314,26 +314,24 @@ button{font-family:inherit}
   50%{transform: translateY(-2px) rotate(.6deg)}
 }
 
-/* blindaje visual del H1 */
-.hero-title{display:none;}
-
-.neon-text{
-  color: var(--red2);
-  text-shadow: 0 10px 35px rgba(225,6,0,.35), 0 0 26px rgba(255,42,26,.22);
-}
 .marketing-copy{
-  max-width: 720px;
   margin:0;
-  font-size:16px;
+  font-size:15px;
   color: var(--muted);
   line-height:1.45;
+  text-align:center;
 }
-.ctaRow{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-top:10px;
+.inlineLogo{
+  height:22px;
+  width:auto;
+  display:inline-block;
+  vertical-align:middle;
+  margin: 0 6px;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
 }
+.muted{color: var(--muted2); font-weight:800}
+
+.ctaRow{display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; justify-content:center}
 .btn{
   display:inline-flex;
   align-items:center;
@@ -342,7 +340,7 @@ button{font-family:inherit}
   padding:12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(18,21,27,.55);
+  background: rgba(18,21,27,.45);
   color: var(--text);
   cursor:pointer;
   transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
@@ -356,7 +354,7 @@ button{font-family:inherit}
   background: linear-gradient(180deg, rgba(255,42,26,.95), rgba(225,6,0,.92));
   border-color: rgba(255,255,255,.18);
 }
-.btn.secondary{background: rgba(18,21,27,.35)}
+.btn.secondary{background: rgba(18,21,27,.26)}
 .btn.full{width:100%}
 .btn.small{padding:10px 14px; font-size:13px}
 .pulse-btn{animation: pulseRacing 1.8s ease-in-out infinite}
@@ -393,7 +391,7 @@ button{font-family:inherit}
   font-size:12px;
 }
 
-/* ---------- COLLECTION GRID CARDS ---------- */
+/* ---------- COLLECTION GRID ---------- */
 .grid{display:grid; grid-template-columns: repeat(4, 1fr); gap:14px}
 @media (max-width: 980px){ .grid{grid-template-columns: repeat(2, 1fr);} }
 @media (max-width: 520px){ .grid{grid-template-columns: 1fr;} }
@@ -403,13 +401,17 @@ button{font-family:inherit}
   border-radius: var(--r2);
   background:
     radial-gradient(520px 220px at 20% 10%, rgba(225,6,0,.18), transparent 60%),
-    linear-gradient(180deg, rgba(18,21,27,.92), rgba(14,16,20,.86));
+    linear-gradient(180deg, rgba(18,21,27,.86), rgba(14,16,20,.78));
   border:1px solid rgba(255,255,255,.10);
   overflow:hidden;
-  min-height: 150px;
+  min-height: 170px;
   cursor:pointer;
   box-shadow: var(--shadow);
   transition: transform .18s ease, border-color .18s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px 14px;
 }
 .champItem:hover{transform: translateY(-3px); border-color: rgba(255,255,255,.18)}
 
@@ -422,9 +424,11 @@ button{font-family:inherit}
   background-size: 900px auto, auto;
   background-position: center top, center;
   background-repeat:no-repeat, repeat;
-  opacity:.16;
+  opacity:.18;
   mix-blend-mode: overlay;
+  pointer-events:none;
 }
+
 .badge{
   position:absolute;
   top:12px;
@@ -438,18 +442,29 @@ button{font-family:inherit}
   color: rgba(255,211,77,.95);
   letter-spacing:.08em;
 }
-.float-logo{
-  position:absolute;
-  right:12px;
-  bottom:12px;
-  width: 92px;
-  opacity:.95;
-  filter: drop-shadow(0 12px 20px rgba(0,0,0,.55));
+
+/* ✅ Logo centrado y más grande como título */
+.champLogoWrap{
+  position:relative;
+  z-index:1;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
+.champLogoTitle{
+  width:min(210px, 78%);
+  height:auto;
+  opacity:.98;
+  filter: drop-shadow(0 14px 26px rgba(0,0,0,.55));
+  transform: translateZ(0);
+}
+
 .card-btn{
   position:absolute;
-  left:14px;
+  left:50%;
   bottom:14px;
+  transform: translateX(-50%);
   padding:10px 12px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
@@ -463,20 +478,20 @@ button{font-family:inherit}
 .partners{
   width:min(var(--container), calc(100% - 32px));
   margin:0 auto;
-  padding: 20px 0 36px;
+  padding: 18px 0 36px;
 }
 .partners h3{
   margin:0 0 14px;
   text-align:center;
   font-weight:900;
-  letter-spacing:.08em;
+  letter-spacing:.10em;
   color: rgba(255,255,255,.92);
 }
 .partnersGrid{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:26px;
+  gap:28px;
   flex-wrap:wrap;
   padding: 6px 0 0;
   border:0;
@@ -489,6 +504,7 @@ button{font-family:inherit}
   opacity:.98;
   filter: drop-shadow(0 12px 20px rgba(0,0,0,.45));
 }
+.pLogo.wide{ height:54px; }
 
 /* ---------- MODAL ---------- */
 .modal{
@@ -550,24 +566,10 @@ button{font-family:inherit}
   border:1px solid rgba(255,255,255,.10);
   background: rgba(18,21,27,.30);
 }
-.catLogo{height:42px; width:auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.55))}
+.catLogo{height:52px; width:auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.55))}
 .catHeaderText{display:flex; flex-direction:column; gap:4px}
 .catTitleText{font-weight:900; letter-spacing:.06em}
 .catSubText{font-weight:900; color: var(--muted2); font-size:12px; letter-spacing:.10em}
-.catBadge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:.10em;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 10px, transparent 10px 20px),
-    rgba(225,6,0,.12);
-}
 
 /* grid del catálogo */
 .catItems{margin-top:10px}
@@ -575,7 +577,7 @@ button{font-family:inherit}
 @media (max-width: 980px){ .catGrid{grid-template-columns: repeat(2, 1fr)} }
 @media (max-width: 520px){ .catGrid{grid-template-columns: 1fr} }
 
-/* cards producto (alineado a JS) */
+/* cards producto */
 .pCard{
   border-radius: var(--r2);
   border:1px solid rgba(255,255,255,.10);
@@ -589,7 +591,7 @@ button{font-family:inherit}
 .pCard:hover{transform: translateY(-3px); border-color: rgba(255,255,255,.18)}
 .pMedia{position:relative; display:block; border:0; padding:0; background:transparent; cursor:pointer}
 
-/* ✅ productos verticales sin recorte */
+/* ✅ Vertical + sin recorte */
 .pMedia img{
   width:100%;
   aspect-ratio: 3 / 4;
@@ -597,7 +599,6 @@ button{font-family:inherit}
   background: rgba(0,0,0,.18);
   filter: contrast(1.02) saturate(1.03);
 }
-
 .pZoom{
   position:absolute;
   right:12px;
@@ -610,9 +611,8 @@ button{font-family:inherit}
   color:white;
   background: rgba(0,0,0,.45);
   border:1px solid rgba(255,255,255,.14);
-  backdrop-filter: blur(6px); /* ✅ FIX */
+  backdrop-filter: blur(6px); /* ✅ bugfix */
 }
-
 .pBody{padding: 12px}
 .pName{font-weight:900; letter-spacing:.02em}
 .pMeta{margin-top:8px; display:flex; align-items:center; justify-content:space-between; gap:10px}
@@ -629,7 +629,7 @@ button{font-family:inherit}
   outline:none;
 }
 
-/* ---------- QUICK VIEW (opcional, lo inyecta JS) ---------- */
+/* quick view */
 .quickView{
   display:none;
   margin-bottom:14px;
@@ -654,17 +654,14 @@ button{font-family:inherit}
   font-size:22px;
   font-weight:900;
 }
-
-/* ✅ sin recorte en quick view también */
 .qvMedia img{
   width:100%;
   border-radius: 18px;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3/4;
   object-fit: contain;
   background: rgba(0,0,0,.18);
   border:1px solid rgba(255,255,255,.10);
 }
-
 .qvThumbs{margin-top:10px; display:flex; gap:10px; overflow:auto; padding-bottom:6px}
 .qvThumb{
   border:1px solid rgba(255,255,255,.12);
@@ -678,24 +675,8 @@ button{font-family:inherit}
 }
 .qvThumb.active{border-color: rgba(255,255,255,.22); opacity:1}
 .qvThumb img{width:100%; height:54px; object-fit:cover}
-.qvInfo{padding:4px 2px}
-.qvTitle{font-family: Teko, Inter, sans-serif; font-size:34px; letter-spacing:.04em; margin:0 0 10px}
-.qvRow{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
-.qvSku{color: var(--muted2); font-weight:900; font-size:12px; letter-spacing:.10em}
-.qvPrice{font-weight:900; font-size:18px}
-.qvLabel{font-weight:900; letter-spacing:.10em; font-size:12px; color: var(--muted2)}
 
-.inputField{
-  width:100%;
-  padding:12px 14px;
-  border-radius: 16px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(10,12,16,.35);
-  color: var(--text);
-  outline:none;
-}
-
-/* ---------- DRAWER (CART) ---------- */
+/* ---------- DRAWER ---------- */
 .drawer{
   position:fixed;
   top:0; right:0;
@@ -715,8 +696,6 @@ button{font-family:inherit}
 }
 .drawer.active{transform: translateX(0); opacity:1; pointer-events:auto}
 .drawer .dHead{position:sticky; top:0; z-index:2}
-
-/* racing header line */
 .drawer .dHead::after{
   content:"";
   position:absolute;
@@ -727,27 +706,7 @@ button{font-family:inherit}
   opacity:.9;
 }
 
-/* cart speed bar (opcional, JS lo agrega) */
-.cartSpeedWrap{
-  margin: 10px 0 6px;
-  width:100%;
-  height:10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
-  overflow:hidden;
-}
-.cartSpeedBar{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  background:
-    repeating-linear-gradient(45deg, rgba(0,0,0,.15) 0 10px, rgba(255,255,255,.16) 10px 20px),
-    linear-gradient(90deg, rgba(225,6,0,.95), rgba(255,211,77,.9));
-  transition: width .35s ease;
-}
-
-/* ---------- CART ITEMS ---------- */
+/* cart items */
 #cartItems{display:flex; flex-direction:column; gap:12px}
 #cartEmpty{color: var(--muted2); font-weight:900; padding:6px 2px}
 
@@ -802,7 +761,7 @@ button{font-family:inherit}
 }
 .btnGhost:hover{transform: translateY(-1px); background: rgba(255,42,26,.14); border-color: rgba(255,255,255,.22)}
 
-/* ---------- SHIPPING SELECTOR / SUMMARY ---------- */
+/* shipping */
 .shipSelector{display:flex; flex-direction:column; gap:10px}
 .radio-option{
   display:flex;
@@ -834,11 +793,9 @@ button{font-family:inherit}
     rgba(225,6,0,.12);
   border-color: rgba(225,6,0,.22);
 }
-.muted{color: var(--muted2); font-weight:800}
 .flash{animation: flash .45s ease}
 @keyframes flash{0%{transform: scale(.98); opacity:.65}100%{transform: scale(1); opacity:1}}
 
-/* linkDanger (tu index lo usa) */
 .linkDanger{
   display:inline-flex;
   justify-content:center;
@@ -854,7 +811,7 @@ button{font-family:inherit}
 }
 .linkDanger:hover{background: rgba(225,6,0,.16)}
 
-/* ---------- TOAST ---------- */
+/* toast */
 .toast{
   position:fixed;
   left:50%;
@@ -877,7 +834,7 @@ button{font-family:inherit}
   transition: all .18s ease;
 }
 
-/* ---------- FOOTER ---------- */
+/* footer */
 .footer{
   margin-top: 32px;
   border-top:1px solid rgba(255,255,255,.10);
@@ -938,7 +895,7 @@ button{font-family:inherit}
   font-weight:800;
 }
 
-/* ---------- SPLASH (INTRO) ---------- */
+/* splash */
 #splash-screen{
   position:fixed;
   inset:0;
@@ -1002,9 +959,8 @@ button{font-family:inherit}
 }
 .splash-text{margin:14px 0 0; font-weight:900; letter-spacing:.12em; font-size:12px; color: rgba(255,255,255,.92)}
 
-/* ---------- SCROLL REVEAL ---------- */
+/* scroll reveal */
 .scroll-reveal{opacity:0; transform: translateY(10px); animation: reveal .65s ease forwards}
 @keyframes reveal{to{opacity:1; transform: translateY(0)}}
 
-/* ---------- SMALL FIXES ---------- */
 hr{border-color: rgba(255,255,255,.10)}
