@@ -1,30 +1,20 @@
-/* SCORE STORE LOGIC — HYBRID PREMIUM vFINAL
-   - Lógica: API First + Fallback Seguro
-   - Seguridad: Splash Blindado (4.5s)
-*/
-
+/* SCORE STORE LOGIC — FIXED SLIDER & GLASS MODAL v2026 */
 (function () {
   "use strict";
 
-  const CFG = window.__SCORE__ || {};
-  const API_BASE = (location.hostname === "localhost") ? "/api" : "/.netlify/functions";
-  const CART_KEY = "score_cart_hybrid_v1";
-
-  // LOGICA COMERCIAL (Rescatada)
+  const API_BASE = "/.netlify/functions";
+  const CART_KEY = "score_cart_fixed";
   const PROMO_ACTIVE = true;
-  const FAKE_MARKUP_FACTOR = 4.5;
-  const FALLBACK_COST_MX = 250;
-  const FALLBACK_COST_US = 800;
+  const FAKE_MARKUP_FACTOR = 4.5; // 80% OFF Psychology
 
   let cart = [];
-  let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica TJ)" };
-  let catalogData = { products: [] };
+  let shippingState = { mode: "pickup", cost: 0, label: "Gratis" };
+  let catalogData = { products: [], sections: [] };
 
   const $ = (id) => document.getElementById(id);
   const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
   const cleanUrl = (u) => u ? encodeURI(u.trim()) : "";
 
-  // --- SPLASH DE SEGURIDAD (Rescatado del archivo viejo) ---
   function hideSplash() {
     const s = $("splash-screen");
     if (s && !s.classList.contains("hide")) {
@@ -34,183 +24,165 @@
   }
 
   async function init() {
-    // SECURITY FALLBACK: Si falla la carga, abrir tienda en 4.5s (Del main.txt viejo)
-    setTimeout(hideSplash, 4500);
-
+    setTimeout(hideSplash, 4000); // Safety
     await loadCatalog();
     loadCart();
     setupUI();
     updateCartUI();
-    
-    if(typeof fbq === 'function') fbq('track', 'ViewContent');
     hideSplash();
   }
 
-  // --- DATA ---
   async function loadCatalog() {
     try {
       const res = await fetch("/data/catalog.json");
       catalogData = await res.json();
-    } catch {
-      console.warn("Fallback local catalog");
-      catalogData.products = [];
-    }
+      
+      // Asegurar logos de secciones (Path Corregido)
+      if(!catalogData.sections) {
+         catalogData.sections = [
+            {id: "BAJA_1000", logo: "/assets/logo-baja1000.webp"},
+            {id: "BAJA_500", logo: "/assets/logo-baja500.webp"},
+            {id: "BAJA_400", logo: "/assets/logo-baja400.webp"},
+            {id: "SF_250", logo: "/assets/logo-sf250.webp"}
+         ];
+      }
+    } catch { catalogData = { products: [], sections: [] }; }
   }
 
-  // --- RENDER ---
+  // --- CATALOGO (CON SLIDER & LOGOS) ---
   window.openCatalog = (sectionId) => {
     const items = catalogData.products.filter(p => p.sectionId === sectionId);
-    if($("catTitle")) $("catTitle").innerText = "COLECCIÓN OFICIAL";
+    const sectionInfo = catalogData.sections.find(s => s.id === sectionId);
+    
+    // 1. LOGO EN VEZ DE TEXTO EN EL HEADER
+    const titleEl = $("catTitle");
+    if(sectionInfo && sectionInfo.logo) {
+       titleEl.innerHTML = `<img src="${sectionInfo.logo}" class="modal-logo" alt="${sectionId}">`;
+    } else {
+       titleEl.innerText = "COLECCIÓN";
+    }
+
     const container = $("catContent");
-    if(!container) return;
+    container.innerHTML = "";
     
     if(!items.length) {
-      container.innerHTML = `<div style="text-align:center;padding:40px;opacity:.6;">Agotado temporalmente.</div>`;
+      container.innerHTML = `<div style="text-align:center;padding:50px;">Agotado.</div>`;
     } else {
       const grid = document.createElement("div");
-      grid.className = "grid";
+      grid.className = "grid"; 
       
       items.forEach(p => {
+        // Precios
         const price = Number(p.baseMXN || 0);
         const fake = Math.round(price * FAKE_MARKUP_FACTOR);
-        const priceHtml = PROMO_ACTIVE 
-          ? `<div class="pPriceRow"><span class="pOldPrice">${money(fake)}</span><span class="pNewPrice">${money(price)}</span></div>`
-          : `<div class="pNewPrice">${money(price)}</div>`;
+        const priceHtml = `<div class="p-prices"><span class="p-old">${money(fake)}</span><span class="p-new">${money(price)}</span></div>`;
 
-        const img = p.img || (p.images && p.images[0]) || "";
-        const sizes = p.sizes || ["Unitalla"];
+        // 2. SLIDER DE IMÁGENES (Lógica recuperada)
+        // Soporta p.images (array) o p.img (string)
+        let images = [];
+        if(p.images && Array.isArray(p.images)) images = p.images;
+        else if(p.img) images = [p.img];
+        else images = ["/assets/logo-score.webp"];
+
+        const slides = images.map(src => 
+            `<div class="prod-slide"><img src="${cleanUrl(src)}" class="prod-img" loading="lazy"></div>`
+        ).join("");
         
+        const dots = images.length > 1 ? 
+            `<div class="slider-dots">${images.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join("")}</div>` : '';
+
+        const sizes = p.sizes || ["Unitalla"];
+
         const card = document.createElement("div");
-        card.className = "pCard";
+        card.className = "prodCard";
         card.innerHTML = `
-          <div class="pMedia">
-            ${PROMO_ACTIVE ? '<div class="promo-badge-card">-80%</div>' : ''}
-            <img src="${cleanUrl(img)}" loading="lazy" alt="${p.name}">
+          <div class="prod-slider-container">
+            <div class="promo-badge" style="position:absolute;top:0;right:0;background:#E10600;color:#fff;padding:4px 8px;font-weight:bold;z-index:5;">-80%</div>
+            <div class="prod-slider">${slides}</div>
+            ${dots}
           </div>
-          <div class="pBody">
-            <div class="pName">${p.name}</div>
+          <div class="p-info">
+            <div style="font-weight:800;color:#111;margin-bottom:5px;">${p.name}</div>
             ${priceHtml}
-            <select class="pSize" id="size_${p.id}">${sizes.map(s => `<option value="${s}">${s}</option>`).join("")}</select>
-            <button class="btn primary full small" onclick="addToCart('${p.id}')">AGREGAR</button>
-          </div>`;
+            <div class="p-actions">
+              <select class="p-size" id="size_${p.id}">${sizes.map(s => `<option value="${s}">${s}</option>`).join("")}</select>
+              <button class="p-add" onclick="addToCart('${p.id}')">AGREGAR</button>
+            </div>
+          </div>
+        `;
         grid.appendChild(card);
       });
-      container.innerHTML = ""; container.appendChild(grid);
+      container.appendChild(grid);
     }
-    $("modalCatalog").classList.add("active"); $("overlay").classList.add("active");
+    
+    $("modalCatalog").classList.add("active");
+    $("overlay").classList.add("active");
   };
 
-  // --- CART ---
   window.addToCart = (id) => {
     const p = catalogData.products.find(x => x.id === id);
     if(!p) return;
     const size = $(`size_${id}`) ? $(`size_${id}`).value : "Unitalla";
     const item = cart.find(i => i.id === id && i.size === size);
-    if(item) item.qty++; else cart.push({ id, size, qty:1, price: Number(p.baseMXN), name: p.name, img: p.img });
+    if(item) item.qty++;
+    else cart.push({ id, size, qty:1, price: Number(p.baseMXN), name: p.name, img: p.img });
     
     saveCart(); updateCartUI();
-    
-    const btn = document.querySelector(".cartBtn");
-    btn.classList.add("cart-rev"); // Vibración
-    setTimeout(() => btn.classList.remove("cart-rev"), 400);
-    
-    if(typeof fbq === 'function') fbq('track', 'AddToCart');
-    $("modalCatalog").classList.remove("active"); $("overlay").classList.remove("active");
-    window.toast("🏁 Agregado a Pits");
+    window.toast("Agregado al Carrito");
+    window.openDrawer();
   };
 
   window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); updateCartUI(); };
-  window.emptyCart = () => { if(confirm("¿Vaciar?")) { cart=[]; saveCart(); updateCartUI(); } };
 
-  // --- SHIPPING LOGIC (API FIRST + FALLBACK) ---
+  // --- UI & SHIPPING ---
   function setupUI() {
     document.querySelectorAll('input[name="shipMode"]').forEach(r => {
       r.addEventListener("change", (e) => {
         const m = e.target.value;
         shippingState.mode = m;
         const form = $("shipForm");
-        const cp = $("cp");
-        form.style.display = "none"; shippingState.cost = 0;
-
-        if (m === "pickup") shippingState.label = "Gratis (Fábrica)";
-        else if (m === "tj") { shippingState.cost = 200; shippingState.label = "Local Express"; form.style.display = "block"; }
-        else {
-          shippingState.label = "Calculando..."; form.style.display = "block";
-          if (cp && cp.value.length >= 5) quoteShipping(cp.value, m);
-          else { 
-             // FALLBACK VISUAL
-             shippingState.cost = (m === 'mx') ? FALLBACK_COST_MX : FALLBACK_COST_US; 
-             shippingState.label = "Estándar (Pendiente CP)"; 
-          }
-        }
+        form.style.display = (m === "pickup") ? "none" : "block";
+        
+        // Fallback Costos
+        if(m === "pickup") shippingState.cost = 0;
+        else if(m === "tj") shippingState.cost = 200;
+        else shippingState.cost = (m === 'mx') ? 250 : 800; 
+        
         updateCartUI();
       });
     });
-    
-    const cp = $("cp");
-    if(cp) cp.addEventListener("blur", () => {
-      const m = shippingState.mode;
-      if ((m === 'mx' || m === 'us') && cp.value.length >= 5) quoteShipping(cp.value, m);
-    });
-  }
-
-  async function quoteShipping(zip, mode) {
-    if(!cart.length) return;
-    $("shipTotal").innerHTML = '<span class="start-lights">Cotizando</span>';
-    try {
-      const res = await fetch(`${API_BASE}/quote_shipping`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ zip, country: (mode === 'us') ? 'US' : 'MX', items: cart.reduce((a, b) => a + b.qty, 0) })
-      });
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-      if (data.success && data.cost) { shippingState.cost = Number(data.cost); shippingState.label = data.label || "Express"; }
-      else throw new Error("No quotes");
-    } catch (e) {
-      // FALLBACK SEGURO (Del archivo viejo)
-      console.warn("Using shipping fallback");
-      shippingState.cost = (mode === 'mx') ? FALLBACK_COST_MX : FALLBACK_COST_US;
-      shippingState.label = "Envío Estándar";
-    }
-    updateCartUI();
   }
 
   function updateCartUI() {
-    const el = $("cartItems"); if(!el) return;
+    const el = $("cartItems");
+    if(!el) return;
+    
+    if(!cart.length) $("cartEmpty").style.display = "block";
+    else $("cartEmpty").style.display = "none";
+
     let sub = 0, qty = 0;
-    if(!cart.length) { el.innerHTML = `<div style="text-align:center;padding:20px;color:#999;">Vacío</div>`; $("cartEmpty").style.display = "block"; }
-    else {
-      $("cartEmpty").style.display = "none";
-      el.innerHTML = cart.map((i, idx) => {
+    el.innerHTML = cart.map((i, idx) => {
         sub += i.price * i.qty; qty += i.qty;
-        return `<div class="cartItem"><div style="width:50px;"><img src="${cleanUrl(i.img)}" style="width:100%;aspect-ratio:1;object-fit:contain;"></div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">${i.name}</div><div style="font-size:11px;opacity:.7;">${i.size}</div><div>${money(i.price)} x ${i.qty}</div></div><button class="btnGhost" onclick="removeFromCart(${idx})">✕</button></div>`;
-      }).join("");
-    }
-    $("cartCount").innerText = qty; $("subTotal").innerText = money(sub);
-    $("shipTotal").innerText = shippingState.label; $("grandTotal").innerText = money(sub + shippingState.cost);
+        return `
+          <div class="cart-item">
+             <img src="${cleanUrl(i.img)}" class="cart-thumb">
+             <div style="flex:1;">
+               <div style="font-weight:700;font-size:14px;">${i.name}</div>
+               <div style="font-size:12px;color:#aaa;">${i.size}</div>
+               <div style="color:#E10600;font-weight:bold;">${money(i.price)} x ${i.qty}</div>
+             </div>
+             <div onclick="removeFromCart(${idx})" style="cursor:pointer;padding:10px;">✕</div>
+          </div>
+        `;
+    }).join("");
+    
+    $("cartCount").innerText = qty;
+    $("grandTotal").innerText = money(sub + shippingState.cost);
   }
 
-  window.checkout = async () => {
-    if(!cart.length) return window.toast("Carrito vacío");
-    const btn = $("checkoutBtn");
-    if(shippingState.mode !== 'pickup' && (!$("name").value || !$("addr").value || !$("cp").value)) return window.toast("Faltan datos");
-    
-    btn.innerText = "INICIANDO CARRERA"; btn.classList.add("start-lights"); btn.disabled = true;
-    if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
-    
-    try {
-      const res = await fetch(`${API_BASE}/create_checkout`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cart, mode: shippingState.mode, promoCode: "LANZAMIENTO80", customer: { name: $("name").value, address: $("addr").value, postal_code: $("cp").value } })
-      });
-      const data = await res.json();
-      if(data.url) location.href = data.url; else throw new Error(data.error);
-    } catch (e) { window.toast("Error, intenta de nuevo"); btn.innerText = "PAGAR AHORA"; btn.classList.remove("start-lights"); btn.disabled = false; }
-  };
-
-  window.toast = (msg) => { const t = $("toast"); t.innerText = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 3000); };
-  window.closeAll = () => { document.querySelectorAll(".modal, .drawer, .page-overlay").forEach(e => e.classList.remove("active")); };
+  window.toast = (msg) => { const t=$("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 3000); };
   window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); };
+  window.closeAll = () => { document.querySelectorAll(".modal, .drawer, .page-overlay").forEach(e => e.classList.remove("active")); };
   function loadCart() { const s = localStorage.getItem(CART_KEY); if(s) try{cart=JSON.parse(s)}catch{} }
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
