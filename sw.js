@@ -1,5 +1,5 @@
 /* sw.js - VERSIÓN DE PRODUCCIÓN v25 (SINCRONIZADA) */
-const CACHE_NAME = "score-store-v25";
+const CACHE_NAME = "score-store-v26";
 
 // Lista crítica de assets para precarga
 const ASSETS = [
@@ -9,6 +9,7 @@ const ASSETS = [
   "/css/styles.css",
   "/js/main.js",
   "/data/catalog.json",
+  "/data/promos.json",
   "/assets/logo-score.webp",
   "/site.webmanifest"
 ];
@@ -18,69 +19,60 @@ async function safePrecache(cache, urls) {
   await Promise.allSettled(
     urls.map(async (url) => {
       try {
-        const req = new Request(url, { cache: "reload" });
-        const res = await fetch(req);
-        if (res.ok) await cache.put(req, res);
-      } catch {
-        // asset opcional puede fallar, no rompas instalación
-      }
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.ok) await cache.put(url, res);
+      } catch {}
     })
   );
 }
 
-self.addEventListener("install", (e) => {
+self.addEventListener("install", (event) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE_NAME).then((cache) => safePrecache(cache, ASSETS)));
-});
-
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => safePrecache(cache, ASSETS))
   );
-  self.clients.claim();
 });
 
-self.addEventListener("fetch", (e) => {
-  const req = e.request;
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)));
+      await self.clients.claim();
+    })()
+  );
+});
+
+// network-first for html, cache-first for others
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
   const url = new URL(req.url);
 
-  // Backend/external siempre red
-  if (
-    url.hostname.includes("supabase.co") ||
-    url.hostname.includes("stripe.com") ||
-    url.pathname.includes("/.netlify/functions") ||
-    url.pathname.includes("/api/")
-  ) {
-    return;
-  }
+  if (url.origin !== location.origin) return;
 
-  // Solo GET requests
-  if (req.method !== "GET") return;
-
-  const accept = req.headers.get("accept") || "";
-  const isHTML = accept.includes("text/html");
-  const isData = url.pathname.includes("/data/");
-
-  // Network-first para HTML y data
-  if (isHTML || isData) {
-    e.respondWith(
+  if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
+    event.respondWith(
       fetch(req)
         .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put("/index.html", copy));
           return res;
         })
-        .catch(async () => {
-          const cached = await caches.match(req);
-          if (cached) return cached;
-          if (isHTML) return caches.match("/index.html"); // Fallback offline
-        })
+        .catch(() => caches.match("/index.html"))
     );
     return;
   }
 
-  // Cache-first para assets
-  e.respondWith(caches.match(req).then((cached) => cached || fetch(req)));
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => cached);
+    })
+  );
 });
