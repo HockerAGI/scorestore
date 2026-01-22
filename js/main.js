@@ -1,956 +1,189 @@
-/* SCORE STORE LOGIC — v2.3.0 (INDEX-ALIGNED + IMAGE-EXISTS + CSS-MATCHED)
-   - Respeta catalog.json (NO se modifica)
-   - Detecta imágenes existentes (HEAD/GET same-origin) y filtra las faltantes
-   - No deja “cuadros vacíos”: usa fallback CSS (.pMedia.noImg + .pFallback)
-   - Modal header usa clases CSS reales: catHeaderBlock / catHeaderLeft / catMeta / catCount
-   - QuickView: thumbs solo de imágenes existentes
-*/
-
+/* SCORE STORE LOGIC — FINAL RACING PRO v4.0 */
 (function () {
   "use strict";
-
   const CFG = window.__SCORE__ || {};
-  const ORG_SLUG = CFG.orgSlug || "score-store";
+  const API_BASE = (location.hostname === "localhost") ? "/api" : "/.netlify/functions";
+  const CART_KEY = "score_cart_prod_final";
+  
+  // LOGICA COMERCIAL
+  const PROMO_ACTIVE = true;
+  const FAKE_MARKUP_FACTOR = 4.5;
+  const FALLBACK_COST_MX = 250;
+  const FALLBACK_COST_US = 800;
 
-  const API_BASE =
-    location.hostname === "localhost" || location.hostname === "127.0.0.1"
-      ? "/api"
-      : "/.netlify/functions";
-
-  const CART_KEY = "score_cart_prod_v5";
-
-  let catalogData = { site: { currency: "MXN" }, sections: [], products: [] };
-  let promoRules = []; // compat (no UI)
-  let promoCode = "";  // compat (no UI)
   let cart = [];
-
-  const shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica TJ)" };
-
+  let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica TJ)" };
+  let catalogData = { products: [] };
   const $ = (id) => document.getElementById(id);
-
-  const money = (n) =>
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
-      Number(n || 0)
-    );
-
-  const escapeHtml = (str) =>
-    String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
-  const toast = (msg) => {
-    const el = $("toast");
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add("show");
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
-  };
-  window.toast = toast;
-
-  // ---- IMAGES: EXISTS CACHE ----
-  const existsCache = new Map(); // url -> boolean
-  const inflight = new Map();    // url -> Promise<boolean>
-
-  const normalizeUrl = (u) => {
-    const s = String(u || "").trim();
-    if (!s) return "";
-    // evita query duplicado, pero respeta si lo trae
-    return s;
-  };
-
-  async function urlExists(url) {
-    const u = normalizeUrl(url);
-    if (!u) return false;
-
-    if (existsCache.has(u)) return existsCache.get(u);
-    if (inflight.has(u)) return inflight.get(u);
-
-    const p = (async () => {
-      try {
-        // mismo origen: intentamos HEAD primero, si falla => GET (algunos host bloquean HEAD)
-        let r = await fetch(u, { method: "HEAD", cache: "no-store" }).catch(() => null);
-        if (!r || !r.ok) {
-          r = await fetch(u, { method: "GET", cache: "no-store" }).catch(() => null);
-        }
-        const ok = !!(r && r.ok);
-        existsCache.set(u, ok);
-        return ok;
-      } catch {
-        existsCache.set(u, false);
-        return false;
-      } finally {
-        inflight.delete(u);
-      }
-    })();
-
-    inflight.set(u, p);
-    return p;
-  }
-
-  async function filterExisting(urls) {
-    const list = (Array.isArray(urls) ? urls : []).map(normalizeUrl).filter(Boolean);
-    if (!list.length) return [];
-    const checks = await Promise.all(list.map((u) => urlExists(u)));
-    return list.filter((_, i) => checks[i]);
-  }
-
-  async function pickMainImage(product) {
-    const candidates = []
-      .concat(product?.img ? [product.img] : [])
-      .concat(Array.isArray(product?.images) ? product.images : []);
-    const existing = await filterExisting(candidates);
-    return existing[0] || "";
-  }
-
-  async function getGalleryImages(product) {
-    const candidates = []
-      .concat(Array.isArray(product?.images) ? product.images : [])
-      .concat(product?.img ? [product.img] : []);
-    const existing = await filterExisting(candidates);
-    // dedupe manteniendo orden
-    const seen = new Set();
-    return existing.filter((u) => (seen.has(u) ? false : (seen.add(u), true)));
-  }
-
-  // ---- SPLASH HARDSTOP ----
-  function killSplash(reason) {
-    const splash = $("splash-screen");
-    if (!splash) return;
-
-    splash.style.transition = "opacity 350ms ease";
-    splash.style.opacity = "0";
-    splash.style.pointerEvents = "none";
-
-    setTimeout(() => {
-      splash.style.display = "none";
-      try { splash.remove(); } catch {}
-    }, 420);
-  }
-  setTimeout(() => killSplash("hard-timeout"), 2500);
-
-  // ---- UI OPEN/CLOSE ----
-  const open = (id) => {
-    $(id)?.classList.add("active");
-    $("overlay")?.classList.add("active");
-    document.documentElement.classList.add("no-scroll");
-    document.body?.classList.add("no-scroll");
-  };
-
-  const closeAll = () => {
-    ["modalCatalog", "drawer", "overlay"].forEach((id) => $(id)?.classList.remove("active"));
-    document.documentElement.classList.remove("no-scroll");
-    document.body?.classList.remove("no-scroll");
-  };
-  window.closeAll = closeAll;
-  window.openDrawer = () => open("drawer");
-
-  // ---- UI TUNES (idempotentes) ----
-  function injectCartIcon() {
-    const btn = document.querySelector(".cartBtn");
-    if (!btn) return;
-    if (btn.querySelector("svg")) return;
-
-    try {
-      btn.childNodes.forEach((n) => {
-        if (n && n.nodeType === 3 && /🛒/.test(n.textContent)) {
-          n.textContent = n.textContent.replace(/🛒/g, "").trim();
-        }
-      });
-    } catch {}
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("width", "20");
-    svg.setAttribute("height", "20");
-    svg.classList.add("icon");
-    svg.innerHTML = `
-      <path d="M6.5 6h14l-1.2 7.2a2 2 0 0 1-2 1.7H9.2a2 2 0 0 1-2-1.6L5.5 3H2"
-        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="9" cy="20" r="1.6" fill="currentColor"/>
-      <circle cx="17" cy="20" r="1.6" fill="currentColor"/>
-    `;
-    btn.prepend(svg);
-    btn.style.gap = "10px";
-  }
-
-  function tuneHeroCopy() {
-    const h1 = document.querySelector(".hero-title");
-    if (h1) h1.remove();
-
-    const copy = document.querySelector(".marketing-copy");
-    if (!copy) return;
-    if (copy.innerHTML && copy.innerHTML.includes("logo-unico.webp")) return;
-
-    copy.innerHTML = `
-      <strong>MERCANCÍA OFICIAL</strong> · Fabricado por
-      <img src="/assets/logo-unico.webp" class="inlineLogo" alt="Único Uniformes" loading="lazy" />
-      <strong>PATROCINADOR OFICIAL</strong>
-      <br><span class="muted">Hecho en Tijuana · Stock limitado · Envío MX/USA</span>
-    `;
-  }
-
-  function tunePartners() {
-    const h3 = document.querySelector(".partners h3");
-    if (h3) h3.textContent = "PARTNERS OFICIALES";
-
-    const grid = document.querySelector(".partnersGrid");
-    if (!grid) return;
-
-    const logos = [
-      { src: "/assets/logo-unico.webp", alt: "Único Uniformes", wide: false },
-      { src: "/assets/logo-score.webp", alt: "SCORE International", wide: false },
-      { src: "/assets/logo-bfgodrich.webp", alt: "BFGoodrich", wide: true },
-      { src: "/assets/logo-rzr.webp", alt: "RZR", wide: true },
-      { src: "/assets/logo-ford.webp", alt: "Ford", wide: true },
-    ];
-
-    if (grid.querySelectorAll("img.pLogo").length >= 4) return;
-
-    grid.innerHTML = logos
-      .map(
-        (l) =>
-          `<img class="pLogo ${l.wide ? "wide" : ""}" src="${l.src}" alt="${escapeHtml(
-            l.alt
-          )}" loading="lazy">`
-      )
-      .join("");
-  }
-
-  function tuneFooter() {
-    const brand = document.querySelector(".footerBrandName");
-    if (brand) brand.textContent = "ÚNICO UNIFORMES";
-
-    const copyDiv = document.querySelector(".copy");
-    if (copyDiv) copyDiv.textContent = "© 2026 Único Uniformes · BAJATEX";
-  }
-
-  // ---- QUICK VIEW ----
-  function ensureQuickView(root) {
-    if (!root) return null;
-    let qv = root.querySelector("#quickView");
-    if (qv) return qv;
-
-    qv = document.createElement("div");
-    qv.id = "quickView";
-    qv.className = "quickView";
-    qv.innerHTML = `
-      <div class="qvInner">
-        <button class="qvClose" type="button" aria-label="Cerrar">×</button>
-
-        <div class="qvMedia">
-          <img id="qvMainImg" src="" alt="Vista rápida" />
-          <div class="qvThumbs" id="qvThumbs"></div>
-        </div>
-
-        <div class="qvInfo">
-          <h4 class="qvTitle" id="qvTitle">Producto</h4>
-
-          <div class="qvRow">
-            <div class="qvSku" id="qvSku"></div>
-            <div class="qvPrice" id="qvPrice"></div>
-          </div>
-
-          <div class="qvLabel">Talla</div>
-          <select class="inputField" id="qvSize"></select>
-
-          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn primary" id="qvAddBtn" type="button">AGREGAR AL CARRITO</button>
-            <button class="btn secondary" id="qvGoCartBtn" type="button">VER CARRITO</button>
-          </div>
-
-          <div class="qvNote" id="qvNote">Hecho en Tijuana · Oficial</div>
-        </div>
-      </div>
-    `;
-    root.prepend(qv);
-
-    qv.querySelector(".qvClose")?.addEventListener("click", () => qv.classList.remove("active"));
-    qv.querySelector("#qvGoCartBtn")?.addEventListener("click", () => {
-      qv.classList.remove("active");
-      open("drawer");
-    });
-
-    return qv;
-  }
-
-  async function openQuickView(p, root) {
-    const qv = ensureQuickView(root);
-    if (!qv) return;
-
-    const title = p?.name || "Producto";
-    const sku = p?.sku ? String(p.sku) : "";
-    const price = money(Number(p?.baseMXN || 0));
-
-    const mainImg = qv.querySelector("#qvMainImg");
-    const thumbs = qv.querySelector("#qvThumbs");
-    const tEl = qv.querySelector("#qvTitle");
-    const skuEl = qv.querySelector("#qvSku");
-    const priceEl = qv.querySelector("#qvPrice");
-    const sizeSel = qv.querySelector("#qvSize");
-    const addBtn = qv.querySelector("#qvAddBtn");
-
-    if (tEl) tEl.textContent = title;
-    if (skuEl) skuEl.textContent = sku ? `SKU · ${sku}` : "";
-    if (priceEl) priceEl.textContent = price;
-
-    const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
-    if (sizeSel) {
-      sizeSel.innerHTML = sizes
-        .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
-        .join("");
-    }
-
-    // solo imágenes existentes
-    const imgs = await getGalleryImages(p);
-
-    const setMain = (src) => {
-      if (mainImg) {
-        mainImg.src = src || "";
-        mainImg.alt = title;
-      }
-    };
-
-    if (thumbs) {
-      thumbs.innerHTML = (imgs || [])
-        .map((src, i) => {
-          const safe = escapeHtml(src || "");
-          return `
-            <button class="qvThumb ${i === 0 ? "active" : ""}" type="button" data-src="${safe}">
-              <img src="${safe}" alt="${escapeHtml(title)} ${i + 1}" loading="lazy" />
-            </button>
-          `;
-        })
-        .join("");
-
-      thumbs.querySelectorAll(".qvThumb").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          thumbs.querySelectorAll(".qvThumb").forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          setMain(btn.getAttribute("data-src") || "");
-        });
-      });
-    }
-
-    setMain((imgs && imgs[0]) || "");
-
-    if (addBtn) {
-      addBtn.onclick = () => {
-        const size = String(sizeSel?.value || (sizes?.[0] || "")).trim();
-        if (!size) return toast("Selecciona talla");
-        addToCart(p.id, size);
-        qv.classList.remove("active");
-      };
-    }
-
-    qv.classList.add("active");
-  }
-
-  // ---- CART STORAGE ----
-  function loadCart() {
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      cart = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(cart)) cart = [];
-    } catch {
-      cart = [];
-    }
-  }
-
-  function saveCart() {
-    try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch {}
-  }
-
-  function findProduct(id) {
-    return (catalogData.products || []).find((p) => p.id === id);
-  }
-
-  function addToCart(id, forcedSize) {
-    const p = findProduct(id);
-    if (!p) return toast("Producto no encontrado");
-
-    const sizeEl = $("size_" + id);
-    const size = String(forcedSize || sizeEl?.value || (p.sizes?.[0] || "")).trim();
-    if (!size) return toast("Selecciona talla");
-
-    const existing = cart.find((i) => i.id === id && i.size === size);
-    if (existing) existing.qty += 1;
-    else cart.push({ id, size, qty: 1 });
-
-    saveCart();
-    updateCartUI();
-    bumpCartBtn();
-    toast("Agregado ✅");
-
-    if (typeof fbq === "function") {
-      fbq("track", "AddToCart", { content_ids: [id], content_type: "product" });
-    }
-  }
-
-  window.addToCart = (id) => addToCart(id);
-
-  window.removeFromCart = (idx) => {
-    cart.splice(idx, 1);
-    saveCart();
-    updateCartUI();
-  };
-
-  window.emptyCart = () => {
-    cart = [];
-    saveCart();
-    updateCartUI();
-    toast("Carrito vacío");
-  };
-
-  window.incQty = (idx) => {
-    if (!cart[idx]) return;
-    cart[idx].qty += 1;
-    saveCart();
-    updateCartUI();
-  };
-
-  window.decQty = (idx) => {
-    if (!cart[idx]) return;
-    cart[idx].qty -= 1;
-    if (cart[idx].qty <= 0) cart.splice(idx, 1);
-    saveCart();
-    updateCartUI();
-  };
-
-  function subTotal() {
-    return cart.reduce((acc, item) => {
-      const p = findProduct(item.id);
-      const price = Number(p?.baseMXN || 0);
-      return acc + price * item.qty;
-    }, 0);
-  }
-
-  function updateTotals() {
-    const sub = subTotal();
-    const ship = shippingState.mode === "pickup" ? 0 : Number(shippingState.cost || 0);
-    const total = sub + ship;
-
-    if ($("subTotal")) $("subTotal").textContent = money(sub);
-    if ($("shipTotal"))
-      $("shipTotal").textContent = shippingState.mode === "pickup" ? "Gratis" : money(ship);
-    if ($("grandTotal")) $("grandTotal").textContent = money(total);
-
-    const bar = $("cartSpeedBar");
-    if (bar) {
-      const pct = clamp((sub / 6000) * 100, 0, 100);
-      bar.style.width = pct.toFixed(0) + "%";
-    }
-  }
-
-  function bumpCartBtn() {
-    const btn = document.querySelector(".cartBtn");
-    if (!btn) return;
-    btn.style.transform = "translateY(-1px) scale(1.03)";
-    setTimeout(() => { btn.style.transform = ""; }, 180);
-  }
-
-  function renderEmptyCart() {
-    const empty = $("cartEmpty");
-    const list = $("cartItems");
-    if (!empty || !list) return;
-
-    empty.style.display = "block";
-    empty.innerHTML = `
-      <div style="
-        padding:14px 12px;
-        border-radius:18px;
-        border:1px solid rgba(255,255,255,.12);
-        background: rgba(18,21,27,.28);
-        font-weight:900;
-        color: rgba(238,242,255,.82);
-      ">
-        <div style="letter-spacing:.12em; font-size:12px; color: rgba(238,242,255,.72);">🏁 SIN PRODUCTOS</div>
-        <div style="margin-top:6px; font-weight:800; color: rgba(238,242,255,.62); line-height:1.4;">
-          Agrega artículos y prepara tu pedido. Envío MX/USA · Hecho en Tijuana.
-        </div>
-      </div>
-    `;
-    list.innerHTML = "";
-  }
-
-  function updateCartUI() {
-    const list = $("cartItems");
-    const empty = $("cartEmpty");
-    const count = $("cartCount");
-
-    const qtyTotal = cart.reduce((acc, i) => acc + i.qty, 0);
-    if (count) count.textContent = String(qtyTotal);
-
-    if (!list || !empty) return;
-
-    if (!cart.length) {
-      renderEmptyCart();
-      updateTotals();
-      return;
-    }
-
-    empty.style.display = "none";
-
-    list.innerHTML = cart
-      .map((item, idx) => {
-        const p = findProduct(item.id);
-        const img = p?.img || p?.images?.[0] || "";
-        const name = p?.name || item.id;
-        const price = Number(p?.baseMXN || 0);
-        const line = price * item.qty;
-
-        return `
-          <div class="cartItem">
-            <div class="cartItemLeft">
-              ${img ? `<img class="cartImg" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy">` : ``}
-            </div>
-
-            <div class="cartItemMid">
-              <div class="cartTitle">${escapeHtml(name)}</div>
-              <div class="cartMeta">Talla: <b>${escapeHtml(item.size)}</b> · ${money(price)}</div>
-
-              <div class="cartQtyRow">
-                <button class="btnGhost" onclick="decQty(${idx})" aria-label="Bajar">−</button>
-                <div class="cartQtyNum">${item.qty}</div>
-                <button class="btnGhost" onclick="incQty(${idx})" aria-label="Subir">+</button>
-
-                <div style="margin-left:auto; font-weight:900;">${money(line)}</div>
-              </div>
-            </div>
-
-            <div class="cartItemRight">
-              <button class="btnGhost" onclick="removeFromCart(${idx})" aria-label="Quitar">✕</button>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    updateTotals();
-  }
-
-  // ---- SHIPPING UI ----
-  function setupShippingUI() {
-    const radios = document.querySelectorAll('input[name="shipMode"]');
-    const shipForm = $("shipForm");
-
-    const applyMode = (mode) => {
-      shippingState.mode = mode;
-
-      if (mode === "pickup") {
-        shippingState.cost = 0;
-        shippingState.label = "Gratis (Fábrica TJ)";
-        if (shipForm) shipForm.style.display = "none";
-        updateTotals();
-        return;
-      }
-
-      if (shipForm) shipForm.style.display = "block";
-
-      shippingState.cost = mode === "us" ? 800 : mode === "tj" ? 200 : 250;
-      shippingState.label =
-        mode === "us"
-          ? "Envío USA (Estándar)"
-          : mode === "tj"
-          ? "Local Express Tijuana"
-          : "Envío Nacional (Estándar)";
-
-      updateTotals();
-
-      const zip = $("cp")?.value?.trim();
-      if ((mode === "mx" || mode === "us") && zip && zip.length >= 5 && cart.length) {
-        quoteShipping(zip);
-      }
-    };
-
-    radios.forEach((r) => r.addEventListener("change", () => applyMode(String(r.value))));
-    const checked = Array.from(radios).find((r) => r.checked);
-    applyMode(checked ? String(checked.value) : "pickup");
-
-    const cp = $("cp");
-    if (cp) {
-      cp.addEventListener("input", () => {
-        const val = cp.value.trim();
-        if ((shippingState.mode === "mx" || shippingState.mode === "us") && val.length >= 5 && cart.length) {
-          quoteShipping(val);
-        }
-      });
-    }
-  }
-
-  async function quoteShipping(zip) {
-    const mode = shippingState.mode;
-    if (mode !== "mx" && mode !== "us") return;
-    if (!cart.length) return;
-
-    try {
-      const qty = cart.reduce((acc, i) => acc + i.qty, 0);
-
-      const res = await fetch(`${API_BASE}/quote_shipping`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          zip,
-          country: mode === "us" ? "US" : "MX",
-          items: qty,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (data?.ok) {
-        shippingState.cost = Number(data.cost || 0);
-        shippingState.label = String(data.label || "");
-        updateTotals();
-        $("shipTotal")?.classList.add("flash");
-        setTimeout(() => $("shipTotal")?.classList.remove("flash"), 520);
-      }
-    } catch {
-      // silencio
-    }
-  }
-
-  // ---- PROMO BAR (SIN CUPONES) ----
-  function setupPromoBar() {
-    const bar = $("promo-bar");
-    const text = $("promo-text");
-    if (!bar || !text) return;
-
-    const msgs = [
-      "⏳ DESCUENTO POR TIEMPO LIMITADO · HASTA 80% OFF",
-      "🔥 ADQUIERE TU FAVORITO HOY · STOCK LIMITADO",
-      "🇲🇽🇺🇸 ENVÍO MX/USA · HECHO EN TIJUANA",
-      "🏁 MERCANCÍA OFICIAL · CALIDAD ÚNICO",
-      "⚡ ASEGURA TU TALLA · COMPRA RÁPIDO",
-    ];
-
-    let i = 0;
-
-    const swap = () => {
-      i = (i + 1) % msgs.length;
-      text.classList.remove("promoPop", "swap");
-      void text.offsetWidth;
-      text.textContent = msgs[i];
-      text.classList.add("promoPop");
-    };
-
-    text.textContent = msgs[0];
-    text.classList.add("promoPop");
-    clearInterval(window.__promoTimer);
-    window.__promoTimer = setInterval(swap, 3800);
-
-    bar.addEventListener("click", () => open("drawer"));
-  }
-
-  // ---- CATALOG MODAL (LOGO MANDA + IMAGES EXISTS) ----
-  window.openCatalog = async (sectionId) => {
-    const section = (catalogData.sections || []).find((s) => s.id === sectionId);
-    const title = section?.title || "COLECCIÓN";
-
-    if ($("catTitle")) $("catTitle").textContent = "";
-
-    const items = (catalogData.products || []).filter((p) => p.sectionId === sectionId);
-    const root = $("catContent");
-    if (!root) return;
-
-    const logoSrc =
-      section?.logo ||
-      (sectionId === "BAJA_1000" ? "/assets/logo-baja1000.webp" :
-       sectionId === "BAJA_500"  ? "/assets/logo-baja500.webp"  :
-       sectionId === "BAJA_400"  ? "/assets/logo-baja400.webp"  :
-       sectionId === "SF_250"    ? "/assets/logo-sf250.webp"    : "");
-
-    // abre modal rápido con skeleton simple (sin romper diseño)
-    root.innerHTML = `
-      <div class="catHeaderBlock">
-        <div class="catHeaderLeft">
-          ${logoSrc ? `<img class="catLogo" src="${escapeHtml(logoSrc)}" alt="${escapeHtml(title)}" loading="lazy">` : ""}
-          <div class="catMeta">
-            <div class="catTitleText">COLECCIÓN OFICIAL</div>
-            <div class="catSubText">${escapeHtml(title)}</div>
-          </div>
-        </div>
-        <div class="catCount">${items.length} PRODUCTOS</div>
-      </div>
-
-      <div style="padding:10px 4px; color: rgba(238,242,255,.62); font-weight:800;">
-        Cargando productos…
-      </div>
-    `;
-
-    open("modalCatalog");
-
-    // precarga existencia de imágenes (solo para los items de esta sección)
-    await Promise.all(
-      items.map(async (p) => {
-        // cachea existence en existsCache
-        const candidates = []
-          .concat(p?.img ? [p.img] : [])
-          .concat(Array.isArray(p?.images) ? p.images : []);
-        if (!candidates.length) return;
-        await filterExisting(candidates);
-      })
-    );
-
-    root.innerHTML = `
-      <div class="catHeaderBlock">
-        <div class="catHeaderLeft">
-          ${logoSrc ? `<img class="catLogo" src="${escapeHtml(logoSrc)}" alt="${escapeHtml(title)}" loading="lazy">` : ""}
-          <div class="catMeta">
-            <div class="catTitleText">COLECCIÓN OFICIAL</div>
-            <div class="catSubText">${escapeHtml(title)}</div>
-          </div>
-        </div>
-        <div class="catCount">${items.length} PRODUCTOS</div>
-      </div>
-
-      <div class="catItems">
-        <div class="grid catGrid">
-          ${items.map((p) => renderProductCard(p)).join("")}
-        </div>
-      </div>
-    `;
-
-    root.querySelectorAll("[data-qv]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-qv");
-        const prod = findProduct(id);
-        if (!prod) return;
-        await openQuickView(prod, root);
-      });
-    });
-  };
-
-  function renderProductCard(p) {
-    // usa cache de existsCache (ya precargada por sección)
-    const candidates = []
-      .concat(p?.img ? [p.img] : [])
-      .concat(Array.isArray(p?.images) ? p.images : []);
-    const main = candidates.map(normalizeUrl).find((u) => u && existsCache.get(u) === true) || "";
-
-    const price = Number(p?.baseMXN || 0);
-    const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
-    const sizeOpts = sizes
-      .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
-      .join("");
-
-    const hasImg = !!main;
-
-    return `
-      <div class="pCard">
-        <button class="pMedia ${hasImg ? "" : "noImg"}" type="button" data-qv="${escapeHtml(p.id)}" aria-label="Vista rápida">
-          ${
-            hasImg
-              ? `<img src="${escapeHtml(main)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
-              : `
-                <div class="pFallback">
-                  <strong>${escapeHtml(p.name || "Producto")}</strong>
-                </div>
-              `
-          }
-          <div class="pZoom">VER</div>
-        </button>
-
-        <div class="pBody">
-          <div class="pName">${escapeHtml(p.name)}</div>
-
-          <div class="pMeta">
-            ${p?.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : `<div class="pSku">OFICIAL</div>`}
-            <div class="pPrice">${money(price)}</div>
-          </div>
-
-          <div class="pActions">
-            <select class="pSize" id="size_${escapeHtml(p.id)}" aria-label="Talla">
-              ${sizeOpts}
-            </select>
-
-            <button class="btn primary" onclick="addToCart('${escapeHtml(p.id)}')" type="button">
-              AGREGAR
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ---- CHECKOUT ----
-  window.checkout = async () => {
-    const btn = $("checkoutBtn");
-    if (!cart.length) return toast("Carrito vacío");
-
-    const mode = shippingState.mode;
-    const name = $("name")?.value?.trim() || "";
-    const addr = $("addr")?.value?.trim() || "";
-    const cp = $("cp")?.value?.trim() || "";
-
-    if (mode !== "pickup") {
-      if (!name || !addr || !cp) return toast("Faltan datos de envío");
-      if (cp.length < 5) return toast("CP/ZIP inválido");
-    }
-
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "PROCESANDO...";
-    }
-
-    if (typeof fbq === "function") {
-      fbq("track", "InitiateCheckout", { num_items: cart.reduce((a, i) => a + i.qty, 0) });
-    }
-
-    try {
-      const payload = {
-        orgSlug: ORG_SLUG,
-        items: cart,
-        mode,
-        customer: { name, address: addr, postal_code: cp },
-        promoCode: "",
-      };
-
-      const res = await fetch(`${API_BASE}/create_checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (data?.url) {
-        location.href = data.url;
-        return;
-      }
-      throw new Error(data?.error || "Checkout failed");
-    } catch (err) {
-      console.error("[SCORE] checkout error:", err);
-      toast("Error: " + (err?.message || "Checkout"));
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "PAGAR AHORA";
-      }
-    }
-  };
-
-  // ---- URL status ----
-  function handleQueryActions() {
-    const p = new URLSearchParams(location.search);
-    const status = p.get("status");
-    if (!status) return;
-
-    if (status === "success") {
-      cart = [];
-      saveCart();
-      updateCartUI();
-      toast("✅ Pago confirmado. Gracias.");
-      if (typeof fbq === "function") fbq("track", "Purchase");
-    } else if (status === "cancel") {
-      toast("Pago cancelado");
-    }
-
-    history.replaceState({}, document.title, location.pathname + location.hash);
-  }
-
-  // ---- LOAD DATA ----
-  async function loadCatalog() {
-    const res = await fetch("/data/catalog.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("catalog.json no disponible");
-    catalogData = await res.json();
-    if (!Array.isArray(catalogData?.products)) throw new Error("Catálogo inválido");
-  }
-
-  async function loadPromos() {
-    try {
-      const res = await fetch("/data/promos.json", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      promoRules = Array.isArray(data?.rules) ? data.rules : [];
-    } catch {
-      promoRules = [];
-    }
-  }
-
-  function injectCartSpeedBar() {
-    const drawerBody = document.querySelector("#drawer .dBody");
-    if (!drawerBody) return;
-
-    if (!$("cartSpeedWrap")) {
-      const wrap = document.createElement("div");
-      wrap.id = "cartSpeedWrap";
-      wrap.style.cssText = `
-        margin: 10px 0 12px;
-        height: 12px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.10);
-        border: 1px solid rgba(255,255,255,.12);
-        overflow: hidden;
-      `;
-
-      const bar = document.createElement("div");
-      bar.className = "cartSpeedBar";
-      bar.id = "cartSpeedBar";
-      bar.style.cssText = `
-        height: 100%;
-        width: 0%;
-        border-radius: 999px;
-        background:
-          repeating-linear-gradient(45deg, rgba(0,0,0,.18) 0 10px, rgba(255,255,255,.16) 10px 20px),
-          linear-gradient(90deg, rgba(225,6,0,.95), rgba(255,211,77,.9));
-        transition: width .25s ease;
-      `;
-      wrap.appendChild(bar);
-
-      const hrs = drawerBody.querySelectorAll("hr");
-      if (hrs && hrs.length) drawerBody.insertBefore(wrap, hrs[0]);
-      else drawerBody.prepend(wrap);
+  const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+  const cleanUrl = (u) => u ? encodeURI(u.trim()) : "";
+
+  function hideSplash() {
+    const s = $("splash-screen");
+    if (s && !s.classList.contains("hide")) {
+      s.classList.add("hide");
+      setTimeout(() => { try { s.remove(); } catch {} }, 600);
     }
   }
 
   async function init() {
-    try {
-      await Promise.all([loadCatalog(), loadPromos()]);
-      killSplash("loaded");
-    } catch (e) {
-      console.error("[SCORE] init failed:", e);
-
-      catalogData.sections = [
-        { id: "BAJA_1000", title: "BAJA 1000", logo: "/assets/logo-baja1000.webp" },
-        { id: "BAJA_500", title: "BAJA 500", logo: "/assets/logo-baja500.webp" },
-        { id: "BAJA_400", title: "BAJA 400", logo: "/assets/logo-baja400.webp" },
-        { id: "SF_250", title: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp" },
-      ];
-
-      killSplash("fallback");
-      toast("⚠️ No cargó el catálogo. Revisa /data/catalog.json");
-    }
-
+    setTimeout(hideSplash, 4500); // Safety timeout
+    await loadCatalog();
     loadCart();
-    injectCartSpeedBar();
-    setupShippingUI();
-    setupPromoBar();
-
-    injectCartIcon();
-    tuneHeroCopy();
-    tunePartners();
-    tuneFooter();
-
+    setupUI();
     updateCartUI();
-    handleQueryActions();
+    hideSplash();
+  }
 
-    $("overlay")?.addEventListener("click", closeAll);
+  async function loadCatalog() {
+    try {
+      const res = await fetch("/data/catalog.json");
+      catalogData = await res.json();
+    } catch { catalogData = { products: [] }; }
+  }
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAll();
-    });
-
-    // SW (opcional)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+  window.openCatalog = (sectionId) => {
+    const items = catalogData.products.filter(p => p.sectionId === sectionId);
+    if($("catTitle")) $("catTitle").innerText = "COLECCIÓN OFICIAL";
+    const container = $("catContent");
+    if(!container) return;
+    
+    if(!items.length) container.innerHTML = `<div style="text-align:center;padding:40px;">Agotado.</div>`;
+    else {
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      items.forEach(p => {
+        const price = Number(p.baseMXN || 0);
+        const fake = Math.round(price * FAKE_MARKUP_FACTOR);
+        const priceHtml = PROMO_ACTIVE 
+          ? `<div class="pPriceRow"><span class="pOldPrice">${money(fake)}</span><span class="pNewPrice">${money(price)}</span></div>`
+          : `<div class="pNewPrice">${money(price)}</div>`;
+        const img = p.img || (p.images && p.images[0]) || "";
+        const sizes = p.sizes || ["Unitalla"];
+        
+        const card = document.createElement("div");
+        card.className = "pCard";
+        card.innerHTML = `
+          <div class="pMedia">
+            ${PROMO_ACTIVE ? '<div class="promo-badge-card">-80%</div>' : ''}
+            <img src="${cleanUrl(img)}" loading="lazy" alt="${p.name}">
+          </div>
+          <div class="pBody">
+            <div class="pName">${p.name}</div>
+            ${priceHtml}
+            <select class="pSize" id="size_${p.id}">${sizes.map(s => `<option value="${s}">${s}</option>`).join("")}</select>
+            <button class="btn primary full small" onclick="addToCart('${p.id}')">AGREGAR</button>
+          </div>`;
+        grid.appendChild(card);
+      });
+      container.innerHTML = ""; container.appendChild(grid);
     }
+    $("modalCatalog").classList.add("active"); $("overlay").classList.add("active");
+  };
+
+  window.addToCart = (id) => {
+    const p = catalogData.products.find(x => x.id === id);
+    if(!p) return;
+    const size = $(`size_${id}`) ? $(`size_${id}`).value : "Unitalla";
+    const item = cart.find(i => i.id === id && i.size === size);
+    if(item) item.qty++; else cart.push({ id, size, qty:1, price: Number(p.baseMXN), name: p.name, img: p.img });
+    
+    saveCart(); updateCartUI();
+    
+    // RACING VIBRATION
+    const btn = document.querySelector(".cartBtn");
+    btn.classList.add("cart-rev");
+    setTimeout(() => btn.classList.remove("cart-rev"), 400);
+    
+    if(typeof fbq === 'function') fbq('track', 'AddToCart');
+    $("modalCatalog").classList.remove("active"); $("overlay").classList.remove("active");
+    window.toast("🏁 Agregado a Pits");
+  };
+
+  window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); updateCartUI(); };
+  window.emptyCart = () => { if(confirm("¿Vaciar?")) { cart=[]; saveCart(); updateCartUI(); } };
+
+  function setupUI() {
+    document.querySelectorAll('input[name="shipMode"]').forEach(r => {
+      r.addEventListener("change", (e) => {
+        const m = e.target.value;
+        shippingState.mode = m;
+        const form = $("shipForm");
+        const cp = $("cp");
+        form.style.display = "none"; shippingState.cost = 0;
+
+        if (m === "pickup") shippingState.label = "Gratis (Fábrica)";
+        else if (m === "tj") { shippingState.cost = 200; shippingState.label = "Local Express"; form.style.display = "block"; }
+        else {
+          shippingState.label = "Calculando..."; form.style.display = "block";
+          if (cp && cp.value.length >= 5) quoteShipping(cp.value, m);
+          else { shippingState.cost = (m === 'mx') ? FALLBACK_COST_MX : FALLBACK_COST_US; shippingState.label = "Estándar (Pendiente CP)"; }
+        }
+        updateCartUI();
+      });
+    });
+    const cp = $("cp");
+    if(cp) cp.addEventListener("blur", () => {
+      const m = shippingState.mode;
+      if ((m === 'mx' || m === 'us') && cp.value.length >= 5) quoteShipping(cp.value, m);
+    });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
+  async function quoteShipping(zip, mode) {
+    if(!cart.length) return;
+    $("shipTotal").innerHTML = '<span class="start-lights">Cotizando</span>';
+    try {
+      const res = await fetch(`${API_BASE}/quote_shipping`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zip, country: (mode === 'us') ? 'US' : 'MX', items: cart.reduce((a, b) => a + b.qty, 0) })
+      });
+      if (!res.ok) throw new Error("API Error");
+      const data = await res.json();
+      if (data.success && data.cost) { shippingState.cost = Number(data.cost); shippingState.label = data.label || "Express"; }
+      else throw new Error("No quotes");
+    } catch (e) {
+      shippingState.cost = (mode === 'mx') ? FALLBACK_COST_MX : FALLBACK_COST_US;
+      shippingState.label = "Envío Estándar";
+    }
+    updateCartUI();
   }
+
+  function updateCartUI() {
+    const el = $("cartItems"); if(!el) return;
+    let sub = 0, qty = 0;
+    if(!cart.length) { el.innerHTML = `<div style="text-align:center;padding:20px;color:#999;">Vacío</div>`; $("cartEmpty").style.display = "block"; }
+    else {
+      $("cartEmpty").style.display = "none";
+      el.innerHTML = cart.map((i, idx) => {
+        sub += i.price * i.qty; qty += i.qty;
+        return `<div class="cartItem"><div style="width:50px;"><img src="${cleanUrl(i.img)}" style="width:100%;aspect-ratio:1;object-fit:contain;"></div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">${i.name}</div><div style="font-size:11px;opacity:.7;">${i.size}</div><div>${money(i.price)} x ${i.qty}</div></div><button class="btnGhost" onclick="removeFromCart(${idx})">✕</button></div>`;
+      }).join("");
+    }
+    $("cartCount").innerText = qty; $("subTotal").innerText = money(sub);
+    $("shipTotal").innerText = shippingState.label; $("grandTotal").innerText = money(sub + shippingState.cost);
+  }
+
+  window.checkout = async () => {
+    if(!cart.length) return window.toast("Carrito vacío");
+    const btn = $("checkoutBtn");
+    if(shippingState.mode !== 'pickup' && (!$("name").value || !$("addr").value || !$("cp").value)) return window.toast("Faltan datos");
+    
+    btn.innerText = "INICIANDO CARRERA"; btn.classList.add("start-lights"); btn.disabled = true;
+    if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
+    try {
+      const res = await fetch(`${API_BASE}/create_checkout`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart, mode: shippingState.mode, promoCode: "LANZAMIENTO80", customer: { name: $("name").value, address: $("addr").value, postal_code: $("cp").value } })
+      });
+      const data = await res.json();
+      if(data.url) location.href = data.url; else throw new Error(data.error);
+    } catch (e) { window.toast("Error, intenta de nuevo"); btn.innerText = "PAGAR AHORA"; btn.classList.remove("start-lights"); btn.disabled = false; }
+  };
+
+  window.toast = (msg) => { const t = $("toast"); t.innerText = msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 3000); };
+  window.closeAll = () => { document.querySelectorAll(".modal, .drawer, .page-overlay").forEach(e => e.classList.remove("active")); };
+  window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); };
+  function loadCart() { const s = localStorage.getItem(CART_KEY); if(s) try{cart=JSON.parse(s)}catch{} }
+  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+  document.addEventListener("DOMContentLoaded", init);
 })();
