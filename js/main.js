@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL RACING PRO v4.0 */
+/* SCORE STORE LOGIC — RACING PRO v4.0 */
 (function () {
   "use strict";
   const CFG = window.__SCORE__ || {};
