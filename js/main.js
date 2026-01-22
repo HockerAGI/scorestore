@@ -1,6 +1,6 @@
-/* SCORE STORE LOGIC — v2.2.5 (INDEX-ALIGNED + RACING ANIMATIONS)
+/* SCORE STORE LOGIC — v2.2.6 (INDEX-ALIGNED + RACING ANIMATIONS)
    - Splash HARDSTOP: jamás se queda pegado
-   - Catálogo en modal: markup alineado al CSS (.pCard/.catGrid/.quickView)
+   - Catálogo en modal: markup alineado al CSS (.pCard/.catGrid/.quickView/.catHeaderBlock)
    - Carrito: mantiene tu HTML pero mejora UI (speed bar + micro-animaciones)
    - Promo: “Pit Radio” (racing themed), sin la animación antigua
 */
@@ -56,13 +56,16 @@
     const splash = $("splash-screen");
     if (!splash) return;
 
-    // Apaga visual aunque tu CSS cambie
+    // apaga visual aunque el CSS cambie
+    splash.style.transition = "opacity 350ms ease";
     splash.style.opacity = "0";
     splash.style.pointerEvents = "none";
-    splash.style.transition = "opacity 350ms ease";
+
     setTimeout(() => {
       splash.style.display = "none";
-      splash.remove();
+      try {
+        splash.remove();
+      } catch {}
     }, 420);
 
     console.log("[SCORE] Splash OFF:", reason);
@@ -99,12 +102,15 @@
     qv.innerHTML = `
       <div class="qvInner">
         <button class="qvClose" type="button" aria-label="Cerrar">×</button>
+
         <div class="qvMedia">
           <img id="qvMainImg" src="" alt="Vista rápida" />
           <div class="qvThumbs" id="qvThumbs"></div>
         </div>
+
         <div class="qvInfo">
           <h4 class="qvTitle" id="qvTitle">Producto</h4>
+
           <div class="qvRow">
             <div class="qvSku" id="qvSku"></div>
             <div class="qvPrice" id="qvPrice"></div>
@@ -138,7 +144,7 @@
 
   function openQuickView(p, root) {
     const qv = ensureQuickView(root);
-    if (!qv) return;
+    if (!qv) return; // no rompe
 
     const title = p?.name || "Producto";
     const sku = p?.sku ? String(p.sku) : "";
@@ -159,7 +165,9 @@
 
     const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
     if (sizeSel) {
-      sizeSel.innerHTML = sizes.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+      sizeSel.innerHTML = sizes
+        .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+        .join("");
     }
 
     const setMain = (src) => {
@@ -222,7 +230,7 @@
   }
 
   function findProduct(id) {
-    return catalogData.products.find((p) => p.id === id);
+    return (catalogData.products || []).find((p) => p.id === id);
   }
 
   // AddToCart centralizado (para quickView + cards)
@@ -300,7 +308,7 @@
     // speed bar (si existe)
     const bar = $("cartSpeedBar");
     if (bar) {
-      const pct = clamp((sub / 6000) * 100, 0, 100); // “meta” visual (no afecta cobro)
+      const pct = clamp((sub / 6000) * 100, 0, 100); // meta visual
       bar.style.width = pct.toFixed(0) + "%";
     }
   }
@@ -319,7 +327,6 @@
     const list = $("cartItems");
     if (!empty || !list) return;
 
-    // Si tu HTML tiene el div con texto, lo convertimos en card estilo racing
     empty.style.display = "block";
     empty.innerHTML = `
       <div class="cartEmptyCard">
@@ -420,7 +427,9 @@
       updateTotals();
 
       const zip = $("cp")?.value?.trim();
-      if ((mode === "mx" || mode === "us") && zip && zip.length >= 5) quoteShipping(zip);
+      if ((mode === "mx" || mode === "us") && zip && zip.length >= 5 && cart.length) {
+        quoteShipping(zip);
+      }
     };
 
     radios.forEach((r) => r.addEventListener("change", () => applyMode(String(r.value))));
@@ -431,7 +440,7 @@
     if (cp) {
       cp.addEventListener("input", () => {
         const val = cp.value.trim();
-        if ((shippingState.mode === "mx" || shippingState.mode === "us") && val.length >= 5) {
+        if ((shippingState.mode === "mx" || shippingState.mode === "us") && val.length >= 5 && cart.length) {
           quoteShipping(val);
         }
       });
@@ -441,6 +450,7 @@
   async function quoteShipping(zip) {
     const mode = shippingState.mode;
     if (mode !== "mx" && mode !== "us") return;
+    if (!cart.length) return;
 
     try {
       const qty = cart.reduce((acc, i) => acc + i.qty, 0);
@@ -463,7 +473,7 @@
         $("shipTotal")?.classList.add("flash");
         setTimeout(() => $("shipTotal")?.classList.remove("flash"), 520);
       }
-    } catch (e) {
+    } catch {
       // silencio
     }
   }
@@ -475,21 +485,20 @@
     if (!bar || !text) return;
 
     const msgs = [
-      "📻 PIT RADIO: “Box box… entra por el 80% OFF”",
-      "🏁 HOT LAP: stock limitado · cae rápido",
-      "⚡ MX/USA: envío cotizable · hecho en Tijuana",
+      "📻 “80% OFF en toda la mercancía",
+      "🏁 Stock limitado · cae rápido",
+      "⚡ MX/USA: Cotiza tu envio · hecho en Tijuana",
       "🎟️ CUPONES: SCORE25 · BAJA200 · ENVIOFREE",
-      "🛞 Grip check: agrega al carrito y asegura talla",
+      "🛞 Agrega al carrito y asegura talla",
     ];
 
     let i = 0;
 
     const swap = () => {
       i = (i + 1) % msgs.length;
-      // compat con tu CSS: .promoPop o .swap
       text.classList.remove("promoPop");
       text.classList.remove("swap");
-      void text.offsetWidth;
+      void text.offsetWidth; // reflow
       text.textContent = msgs[i];
       text.classList.add("promoPop");
     };
@@ -513,7 +522,9 @@
         return;
       }
 
-      const rule = promoRules.find((r) => String(r.code).toUpperCase() === promoCode && r.active);
+      const rule = promoRules.find(
+        (r) => String(r.code || "").toUpperCase() === promoCode && !!r.active
+      );
       if (!rule) {
         toast("Cupón inválido");
         promoCode = "";
@@ -529,33 +540,33 @@
 
   // ---- CATALOG MODAL ----
   window.openCatalog = (sectionId /*, titleHint */) => {
-    const section = catalogData.sections.find((s) => s.id === sectionId);
+    const section = (catalogData.sections || []).find((s) => s.id === sectionId);
     const title = section?.title || "COLECCIÓN";
 
     if ($("catTitle")) $("catTitle").textContent = title;
 
-    const items = catalogData.products.filter((p) => p.sectionId === sectionId);
+    const items = (catalogData.products || []).filter((p) => p.sectionId === sectionId);
     const root = $("catContent");
     if (!root) return;
 
     root.innerHTML = `
-      <div class="catTop">
-        <div class="catHeader">
-          ${
-            section?.logo
-              ? `<img src="${escapeHtml(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" />`
-              : ""
-          }
-          <div class="catHeaderText">
-            <div class="catTitle">${escapeHtml(title)}</div>
-            ${section?.badge ? `<div class="catBadge">${escapeHtml(section.badge)}</div>` : ""}
-          </div>
+      <div class="catHeaderBlock">
+        ${
+          section?.logo
+            ? `<img src="${escapeHtml(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" />`
+            : ""
+        }
+        <div class="catHeaderText">
+          <div class="catTitleText">${escapeHtml(title)}</div>
+          <div class="catSubText">${escapeHtml(section?.subtitle || `${items.length} productos`)}</div>
+          ${section?.badge ? `<div class="catBadge">${escapeHtml(section.badge)}</div>` : ""}
         </div>
-        <div class="catCount">${items.length} productos</div>
       </div>
 
-      <div class="grid catGrid">
-        ${items.map((p) => renderProductCard(p)).join("")}
+      <div class="catItems">
+        <div class="grid catGrid">
+          ${items.map((p) => renderProductCard(p)).join("")}
+        </div>
       </div>
     `;
 
@@ -573,10 +584,11 @@
   };
 
   function renderProductCard(p) {
-    const img = p.img || (p.images && p.images[0]) || "";
-    const price = Number(p.baseMXN || 0);
+    const img = p?.img || (p?.images && p.images[0]) || "";
+    const price = Number(p?.baseMXN || 0);
 
-    const sizeOpts = (p.sizes || [])
+    const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
+    const sizeOpts = sizes
       .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
       .join("");
 
@@ -595,7 +607,11 @@
           <div class="pName">${escapeHtml(p.name)}</div>
 
           <div class="pMeta">
-            ${p.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : `<div class="pSku">OFICIAL</div>`}
+            ${
+              p?.sku
+                ? `<div class="pSku">${escapeHtml(p.sku)}</div>`
+                : `<div class="pSku">OFICIAL</div>`
+            }
             <div class="pPrice">${money(price)}</div>
           </div>
 
@@ -604,7 +620,7 @@
               ${sizeOpts}
             </select>
 
-            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')">
+            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')" type="button">
               AGREGAR
             </button>
           </div>
@@ -702,14 +718,13 @@
     try {
       const res = await fetch("/data/promos.json", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      promoRules = Array.isArray(data.rules) ? data.rules : [];
+      promoRules = Array.isArray(data?.rules) ? data.rules : [];
     } catch {
       promoRules = [];
     }
   }
 
   function injectCartSpeedBar() {
-    // No rompe si no lo quieres: solo se inyecta si NO existe
     const drawerBody = document.querySelector("#drawer .dBody");
     if (!drawerBody) return;
 
@@ -718,7 +733,7 @@
       wrap.className = "cartSpeedWrap";
       wrap.id = "cartSpeedWrap";
       wrap.innerHTML = `<div class="cartSpeedBar" id="cartSpeedBar"></div>`;
-      // lo ponemos arriba de los totales (antes del primer hr grande, si existe)
+
       const hrs = drawerBody.querySelectorAll("hr");
       if (hrs && hrs.length) drawerBody.insertBefore(wrap, hrs[0]);
       else drawerBody.prepend(wrap);
@@ -742,9 +757,7 @@
         { id: "SF_250", title: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp", badge: "CLÁSICOS" },
       ];
 
-      // IMPORTANTE: mata splash incluso con error
       killSplash("fallback");
-
       toast("⚠️ No cargó el catálogo. Revisa /data/catalog.json");
     }
 
@@ -755,7 +768,10 @@
     updateCartUI();
     handleQueryActions();
 
-    // click fuera para cerrar
+    // overlay click = close
+    $("overlay")?.addEventListener("click", closeAll);
+
+    // escape = close
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
