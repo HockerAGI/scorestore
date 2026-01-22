@@ -45,7 +45,7 @@
   <!-- Promo Bar -->
   <div class="promo-bar slide-in-top" id="promo-bar">
     <span class="promo-highlight">🔥 EDICIÓN LIMITADA</span>
-    ENVÍOS MX / USA · FABRICADO EN TIJUANA
+    <span id="promo-text">ENVÍOS MX / USA · FABRICADO EN TIJUANA</span>
   </div>
 
   <!-- Header -->
@@ -106,7 +106,7 @@
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-<div class="card-texture"></div>
+          <div class="card-texture"></div>
           <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
@@ -229,8 +229,18 @@
     </div>
     <div class="copy"><small>© 2026 SCORE Store · Operado por BAJATEX</small></div>
   </footer>
+<!-- CONFIG ÚNICA (debe ir ANTES del Pixel para que lo lea) -->
+  <script>
+    window.__SCORE__ = {
+      orgSlug: "score-store",
+      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+      stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+      metaPixelId: "4249947775334413"
+    };
+  </script>
 
-  <!-- Meta Pixel Code -->
+  <!-- Meta Pixel Code (init desde CONFIG, con fallback) -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -240,19 +250,10 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
 
-  <!-- CONFIG ÚNICA -->
-  <script>
-    window.__SCORE__ = {
-      orgSlug: "score-store",
-      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
-      stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
-      metaPixelId: "4249947775334413"
-    };
+    var __PIXEL__ = (window.__SCORE__ && window.__SCORE__.metaPixelId) ? window.__SCORE__.metaPixelId : '4249947775334413';
+    fbq('init', __PIXEL__);
+    fbq('track', 'PageView');
   </script>
 
   <!-- JS -->
