@@ -1,8 +1,8 @@
-/* SCORE STORE LOGIC — FIX INTRO HARDSTOP v2.2.4 (ALIGNED)
-   - Splash se oculta SIEMPRE (aunque falle todo)
-   - Alineado a CSS racing pre-dark (pCard / pMedia / pBody / pActions / pSize)
-   - no-scroll aplica en html + body
-   - promoPop + swap (compat)
+/* SCORE STORE LOGIC — v2.2.5 (INDEX-ALIGNED + RACING ANIMATIONS)
+   - Splash HARDSTOP: jamás se queda pegado
+   - Catálogo en modal: markup alineado al CSS (.pCard/.catGrid/.quickView)
+   - Carrito: mantiene tu HTML pero mejora UI (speed bar + micro-animaciones)
+   - Promo: “Pit Radio” (racing themed), sin la animación antigua
 */
 (function () {
   "use strict";
@@ -39,6 +39,8 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
 
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
   const toast = (msg) => {
     const el = $("toast");
     if (!el) return;
@@ -54,10 +56,10 @@
     const splash = $("splash-screen");
     if (!splash) return;
 
+    // Apaga visual aunque tu CSS cambie
     splash.style.opacity = "0";
     splash.style.pointerEvents = "none";
     splash.style.transition = "opacity 350ms ease";
-
     setTimeout(() => {
       splash.style.display = "none";
       splash.remove();
@@ -70,189 +72,139 @@
   setTimeout(() => killSplash("hard-timeout"), 2500);
 
   // ---- UI OPEN/CLOSE ----
-  const overlayEl = () => $("overlay") || document.querySelector(".page-overlay");
-
-  const setNoScroll = (on) => {
-    document.documentElement.classList.toggle("no-scroll", on);
-    document.body.classList.toggle("no-scroll", on);
-  };
-
   const open = (id) => {
     $(id)?.classList.add("active");
-    overlayEl()?.classList.add("active");
-    setNoScroll(true);
+    $("overlay")?.classList.add("active");
+    document.documentElement.classList.add("no-scroll");
+    document.body?.classList.add("no-scroll");
   };
 
   const closeAll = () => {
-    ["modalCatalog", "drawer"].forEach((id) => $(id)?.classList.remove("active"));
-    overlayEl()?.classList.remove("active");
-    setNoScroll(false);
+    ["modalCatalog", "drawer", "overlay"].forEach((id) => $(id)?.classList.remove("active"));
+    document.documentElement.classList.remove("no-scroll");
+    document.body?.classList.remove("no-scroll");
   };
   window.closeAll = closeAll;
-
   window.openDrawer = () => open("drawer");
 
-  // Cierra overlay click
-  document.addEventListener("click", (e) => {
-    const ov = overlayEl();
-    if (ov && e.target === ov) closeAll();
-  });
+  // ---- quickView (opcional, no rompe si no existe el HTML) ----
+  function ensureQuickView(root) {
+    if (!root) return null;
+    let qv = root.querySelector("#quickView");
+    if (qv) return qv;
 
-  function findProduct(id) {
-    return catalogData.products.find((p) => p.id === id);
-  }
-
-  // ---------- CATALOGO (ALINEADO A CSS racing) ----------
-  window.openCatalog = (sectionId /*, titleHint */) => {
-    const section = catalogData.sections.find((s) => s.id === sectionId);
-    const title = section?.title || "COLECCIÓN";
-
-    if ($("catTitle")) $("catTitle").textContent = title;
-
-    const items = catalogData.products.filter((p) => p.sectionId === sectionId);
-    const root = $("catContent");
-    if (!root) return;
-
-    const badge = section?.badge ? `<span class="catBadge">${escapeHtml(section.badge)}</span>` : "";
-    const logo = section?.logo
-      ? `<img src="${section.logo}" class="catLogo" alt="${escapeHtml(title)}" />`
-      : "";
-
-    root.innerHTML = `
-      <div class="catTop">
-        <div class="catHeader">
-          ${logo}
-          <div class="catHeaderText">
-            <div class="catTitle">${escapeHtml(title)}</div>
-            ${badge}
-          </div>
-        </div>
-        <div class="catCount">${items.length} PRODUCTOS</div>
-      </div>
-
-      <div class="grid catGrid">
-        ${items.map((p) => renderProductCardAligned(p)).join("")}
-      </div>
-    `;
-
-    open("modalCatalog");
-  };
-
-  function renderProductCardAligned(p) {
-    const img = p.img || (p.images && p.images[0]) || "";
-    const price = Number(p.baseMXN || 0);
-
-    const sizeOpts = (p.sizes || [])
-      .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
-      .join("");
-
-    const zoomLabel = (p.subSection || "VER").toUpperCase();
-
-    return `
-      <div class="pCard">
-        <button class="pMedia" type="button" onclick="quickView('${escapeHtml(p.id)}')" aria-label="Ver producto">
-          ${
-            img
-              ? `<img src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" />`
-              : `<div style="aspect-ratio:4/3; background:rgba(255,255,255,.06)"></div>`
-          }
-          <div class="pZoom">${escapeHtml(zoomLabel)}</div>
-        </button>
-
-        <div class="pBody">
-          <div class="pName">${escapeHtml(p.name)}</div>
-          ${p.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : ""}
-
-          <div class="pMeta">
-            <div class="pSku">${escapeHtml(p.subSection || "")}</div>
-            <div class="pPrice">${money(price)}</div>
-          </div>
-
-          <div class="pActions">
-            <select class="pSize" id="size_${escapeHtml(p.id)}" aria-label="Talla">
-              ${sizeOpts}
-            </select>
-
-            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')">
-              AGREGAR
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // Quick view (si tu HTML lo trae). Si no existe, abre el modal normal.
-  window.quickView = (id) => {
-    const qv = $("quickView");
-    const p = findProduct(id);
-    if (!p) return;
-
-    // Si no existe quickView en tu HTML, solo abre el catálogo (no rompe)
-    if (!qv) return;
-
-    const imgs = Array.isArray(p.images) && p.images.length ? p.images : [p.img].filter(Boolean);
-    const mainImg = imgs[0] || "";
-
-    qv.classList.add("active");
+    qv = document.createElement("div");
+    qv.id = "quickView";
+    qv.className = "quickView";
     qv.innerHTML = `
       <div class="qvInner">
-        <button class="qvClose" onclick="closeQuickView()" aria-label="Cerrar">×</button>
-
+        <button class="qvClose" type="button" aria-label="Cerrar">×</button>
         <div class="qvMedia">
-          ${mainImg ? `<img id="qvMain" src="${mainImg}" alt="${escapeHtml(p.name)}">` : ""}
-          <div class="qvThumbs">
-            ${imgs
-              .map(
-                (src, i) => `
-                <button class="qvThumb ${i === 0 ? "active" : ""}" onclick="setQvImg('${escapeHtml(
-                  src
-                )}', this)" aria-label="Imagen ${i + 1}">
-                  <img src="${src}" alt="">
-                </button>
-              `
-              )
-              .join("")}
-          </div>
+          <img id="qvMainImg" src="" alt="Vista rápida" />
+          <div class="qvThumbs" id="qvThumbs"></div>
         </div>
-
         <div class="qvInfo">
-          <h3 class="qvTitle">${escapeHtml(p.name)}</h3>
+          <h4 class="qvTitle" id="qvTitle">Producto</h4>
           <div class="qvRow">
-            <div class="qvSku">${escapeHtml(p.sku || "")}</div>
-            <div class="qvPrice">${money(p.baseMXN || 0)}</div>
+            <div class="qvSku" id="qvSku"></div>
+            <div class="qvPrice" id="qvPrice"></div>
           </div>
 
-          <div class="qvLabel">TALLA</div>
-          <select class="inputField" id="size_${escapeHtml(p.id)}">
-            ${(p.sizes || []).map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}
-          </select>
+          <div class="qvLabel">Talla</div>
+          <select class="inputField" id="qvSize"></select>
 
-          <button class="btn primary full" style="margin-top:12px" onclick="addToCart('${escapeHtml(p.id)}')">
-            AGREGAR AL CARRITO
-          </button>
+          <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn primary" id="qvAddBtn" type="button">AGREGAR AL CARRITO</button>
+            <button class="btn secondary" id="qvGoCartBtn" type="button">VER CARRITO</button>
+          </div>
 
-          <div class="qvNote">Producto oficial · Hecho en Tijuana · Listo para competir 🏁</div>
+          <div class="qvNote" id="qvNote">Hecho en Tijuana · Oficial SCORE</div>
         </div>
       </div>
     `;
-  };
+    root.prepend(qv);
 
-  window.setQvImg = (src, btn) => {
-    const img = $("qvMain");
-    if (img) img.src = src;
-    document.querySelectorAll(".qvThumb").forEach((b) => b.classList.remove("active"));
-    if (btn) btn.classList.add("active");
-  };
+    qv.querySelector(".qvClose")?.addEventListener("click", () => {
+      qv.classList.remove("active");
+    });
 
-  window.closeQuickView = () => {
-    const qv = $("quickView");
+    qv.querySelector("#qvGoCartBtn")?.addEventListener("click", () => {
+      qv.classList.remove("active");
+      open("drawer");
+    });
+
+    return qv;
+  }
+
+  function openQuickView(p, root) {
+    const qv = ensureQuickView(root);
     if (!qv) return;
-    qv.classList.remove("active");
-    qv.innerHTML = "";
-  };
 
-  // ---------- CART ----------
+    const title = p?.name || "Producto";
+    const sku = p?.sku ? String(p.sku) : "";
+    const price = money(Number(p?.baseMXN || 0));
+    const imgs = Array.isArray(p?.images) && p.images.length ? p.images : [p?.img].filter(Boolean);
+
+    const mainImg = qv.querySelector("#qvMainImg");
+    const thumbs = qv.querySelector("#qvThumbs");
+    const tEl = qv.querySelector("#qvTitle");
+    const skuEl = qv.querySelector("#qvSku");
+    const priceEl = qv.querySelector("#qvPrice");
+    const sizeSel = qv.querySelector("#qvSize");
+    const addBtn = qv.querySelector("#qvAddBtn");
+
+    if (tEl) tEl.textContent = title;
+    if (skuEl) skuEl.textContent = sku ? `SKU · ${sku}` : "";
+    if (priceEl) priceEl.textContent = price;
+
+    const sizes = Array.isArray(p?.sizes) ? p.sizes : [];
+    if (sizeSel) {
+      sizeSel.innerHTML = sizes.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+    }
+
+    const setMain = (src) => {
+      if (mainImg) {
+        mainImg.src = src || "";
+        mainImg.alt = title;
+      }
+    };
+
+    if (thumbs) {
+      thumbs.innerHTML = (imgs || [])
+        .map((src, i) => {
+          const safe = escapeHtml(src || "");
+          return `
+            <button class="qvThumb ${i === 0 ? "active" : ""}" type="button" data-src="${safe}">
+              <img src="${safe}" alt="${escapeHtml(title)} ${i + 1}" loading="lazy" />
+            </button>
+          `;
+        })
+        .join("");
+
+      thumbs.querySelectorAll(".qvThumb").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          thumbs.querySelectorAll(".qvThumb").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          setMain(btn.getAttribute("data-src") || "");
+        });
+      });
+    }
+
+    setMain((imgs && imgs[0]) || "");
+
+    if (addBtn) {
+      addBtn.onclick = () => {
+        const size = String(sizeSel?.value || (sizes?.[0] || "")).trim();
+        if (!size) return toast("Selecciona talla");
+        addToCart(p.id, size);
+        qv.classList.remove("active");
+      };
+    }
+
+    qv.classList.add("active");
+  }
+
+  // ---- CART STORAGE ----
   function loadCart() {
     try {
       const raw = localStorage.getItem(CART_KEY);
@@ -264,15 +216,22 @@
   }
 
   function saveCart() {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch {}
   }
 
-  window.addToCart = (id) => {
+  function findProduct(id) {
+    return catalogData.products.find((p) => p.id === id);
+  }
+
+  // AddToCart centralizado (para quickView + cards)
+  function addToCart(id, forcedSize) {
     const p = findProduct(id);
     if (!p) return toast("Producto no encontrado");
 
     const sizeEl = $("size_" + id);
-    const size = String(sizeEl?.value || (p.sizes?.[0] || "")).trim();
+    const size = String(forcedSize || sizeEl?.value || (p.sizes?.[0] || "")).trim();
     if (!size) return toast("Selecciona talla");
 
     const existing = cart.find((i) => i.id === id && i.size === size);
@@ -281,12 +240,15 @@
 
     saveCart();
     updateCartUI();
+    bumpCartBtn();
     toast("Agregado ✅");
 
     if (typeof fbq === "function") {
       fbq("track", "AddToCart", { content_ids: [id], content_type: "product" });
     }
-  };
+  }
+
+  window.addToCart = (id) => addToCart(id);
 
   window.removeFromCart = (idx) => {
     cart.splice(idx, 1);
@@ -316,6 +278,7 @@
     updateCartUI();
   };
 
+  // ---- TOTALS ----
   function subTotal() {
     return cart.reduce((acc, item) => {
       const p = findProduct(item.id);
@@ -333,6 +296,38 @@
     if ($("shipTotal"))
       $("shipTotal").textContent = shippingState.mode === "pickup" ? "Gratis" : money(ship);
     if ($("grandTotal")) $("grandTotal").textContent = money(total);
+
+    // speed bar (si existe)
+    const bar = $("cartSpeedBar");
+    if (bar) {
+      const pct = clamp((sub / 6000) * 100, 0, 100); // “meta” visual (no afecta cobro)
+      bar.style.width = pct.toFixed(0) + "%";
+    }
+  }
+
+  function bumpCartBtn() {
+    const btn = document.querySelector(".cartBtn");
+    if (!btn) return;
+    btn.style.transform = "translateY(-1px) scale(1.03)";
+    setTimeout(() => {
+      btn.style.transform = "";
+    }, 180);
+  }
+
+  function renderEmptyCart() {
+    const empty = $("cartEmpty");
+    const list = $("cartItems");
+    if (!empty || !list) return;
+
+    // Si tu HTML tiene el div con texto, lo convertimos en card estilo racing
+    empty.style.display = "block";
+    empty.innerHTML = `
+      <div class="cartEmptyCard">
+        <div class="cecTitle">🏁 SIN PRODUCTOS</div>
+        <div class="cecText">Agrega artículos y prepara tu pedido. Envío MX/USA · Hecho en Tijuana.</div>
+      </div>
+    `;
+    list.innerHTML = "";
   }
 
   function updateCartUI() {
@@ -346,46 +341,56 @@
     if (!list || !empty) return;
 
     if (!cart.length) {
-      list.innerHTML = "";
-      empty.style.display = "block";
-    } else {
-      empty.style.display = "none";
-      list.innerHTML = cart
-        .map((item, idx) => {
-          const p = findProduct(item.id);
-          const img = p?.img || p?.images?.[0] || "";
-          const name = p?.name || item.id;
-          const price = Number(p?.baseMXN || 0);
+      renderEmptyCart();
+      updateTotals();
+      return;
+    }
 
-          return `
-            <div class="cartItem">
-              <div class="cartItemLeft">
-                ${img ? `<img class="cartImg" src="${img}" alt="${escapeHtml(name)}">` : ""}
-              </div>
+    empty.style.display = "none";
 
-              <div class="cartItemMid">
-                <div class="cartTitle">${escapeHtml(name)}</div>
-                <div class="cartMeta">Talla: <b>${escapeHtml(item.size)}</b> · ${money(price)}</div>
+    list.innerHTML = cart
+      .map((item, idx) => {
+        const p = findProduct(item.id);
+        const img = p?.img || p?.images?.[0] || "";
+        const name = p?.name || item.id;
+        const price = Number(p?.baseMXN || 0);
+        const line = price * item.qty;
 
-                <div class="cartQtyRow">
-                  <button class="btnGhost" onclick="decQty(${idx})">−</button>
-                  <div class="cartQtyNum">${item.qty}</div>
-                  <button class="btnGhost" onclick="incQty(${idx})">+</button>
-                </div>
-              </div>
+        return `
+          <div class="cartItem">
+            <div class="cartItemLeft">
+              ${
+                img
+                  ? `<img class="cartImg" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy">`
+                  : ``
+              }
+            </div>
 
-              <div class="cartItemRight">
-                <button class="btnGhost" onclick="removeFromCart(${idx})">✕</button>
+            <div class="cartItemMid">
+              <div class="cartTitle">${escapeHtml(name)}</div>
+              <div class="cartMeta">Talla: <b>${escapeHtml(item.size)}</b> · ${money(price)}</div>
+
+              <div class="cartQtyRow">
+                <button class="btnGhost" onclick="decQty(${idx})" aria-label="Bajar">−</button>
+                <div class="cartQtyNum">${item.qty}</div>
+                <button class="btnGhost" onclick="incQty(${idx})" aria-label="Subir">+</button>
+
+                <div style="margin-left:auto; font-weight:900;">${money(line)}</div>
               </div>
             </div>
-          `;
-        })
-        .join("");
-    }
+
+            <div class="cartItemRight">
+              <button class="btnGhost" onclick="removeFromCart(${idx})" aria-label="Quitar">✕</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
 
     updateTotals();
   }
-// ---------- SHIPPING ----------
+
+  // ---- SHIPPING UI ----
   function setupShippingUI() {
     const radios = document.querySelectorAll('input[name="shipMode"]');
     const shipForm = $("shipForm");
@@ -403,7 +408,7 @@
 
       if (shipForm) shipForm.style.display = "block";
 
-      // valores base (si tu API devuelve algo, lo sobreescribe)
+      // base fallback
       shippingState.cost = mode === "us" ? 800 : mode === "tj" ? 200 : 250;
       shippingState.label =
         mode === "us"
@@ -439,6 +444,7 @@
 
     try {
       const qty = cart.reduce((acc, i) => acc + i.qty, 0);
+
       const res = await fetch(`${API_BASE}/quote_shipping`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -449,64 +455,65 @@
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (data?.ok) {
         shippingState.cost = Number(data.cost || 0);
         shippingState.label = String(data.label || "");
         updateTotals();
+        $("shipTotal")?.classList.add("flash");
+        setTimeout(() => $("shipTotal")?.classList.remove("flash"), 520);
       }
-    } catch {}
+    } catch (e) {
+      // silencio
+    }
   }
 
-  // ---------- PROMO BAR (RACING) ----------
+  // ---- PROMO (“Pit Radio”) ----
   function setupPromoBar() {
     const bar = $("promo-bar");
     const text = $("promo-text");
     if (!bar || !text) return;
 
-    // Mensajes racing (sin el “solo hoy” repetitivo)
     const msgs = [
-      "🏁 GRID ABIERTO · MERCH OFICIAL SCORE",
-      "🔥 DROP LIMITADO · CUANDO SE VA, SE VA",
-      "⚡ MX + USA · HECHO EN TIJUANA",
-      "🎟️ CUPONES · SCORE25 · BAJA200 · ENVIOFREE",
+      "📻 PIT RADIO: “Box box… entra por el 80% OFF”",
+      "🏁 HOT LAP: stock limitado · cae rápido",
+      "⚡ MX/USA: envío cotizable · hecho en Tijuana",
+      "🎟️ CUPONES: SCORE25 · BAJA200 · ENVIOFREE",
+      "🛞 Grip check: agrega al carrito y asegura talla",
     ];
 
     let i = 0;
 
-    const pulseSwap = () => {
+    const swap = () => {
       i = (i + 1) % msgs.length;
-
-      // compat: activa ambas clases (swap + promoPop)
-      text.classList.remove("swap", "promoPop");
+      // compat con tu CSS: .promoPop o .swap
+      text.classList.remove("promoPop");
+      text.classList.remove("swap");
       void text.offsetWidth;
       text.textContent = msgs[i];
-      text.classList.add("swap", "promoPop");
+      text.classList.add("promoPop");
     };
 
     text.textContent = msgs[0];
-    text.classList.add("swap", "promoPop");
-    window.__promoTimer = setInterval(pulseSwap, 3600);
+    text.classList.add("promoPop");
+    clearInterval(window.__promoTimer);
+    window.__promoTimer = setInterval(swap, 3800);
 
     bar.addEventListener("click", () => {
-      const code = prompt(
-        "Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):",
-        promoCode || ""
-      );
+      const code = prompt("Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):", promoCode || "");
       if (code === null) return;
 
       promoCode = String(code || "").trim().toUpperCase();
 
       if (!promoCode) {
-        text.textContent = "Cupón removido";
+        text.textContent = "📻 PIT RADIO: cupón removido";
+        text.classList.add("promoPop");
         toast("Cupón removido");
         updateTotals();
         return;
       }
 
-      const rule = promoRules.find(
-        (r) => String(r.code).toUpperCase() === promoCode && r.active
-      );
+      const rule = promoRules.find((r) => String(r.code).toUpperCase() === promoCode && r.active);
       if (!rule) {
         toast("Cupón inválido");
         promoCode = "";
@@ -514,13 +521,99 @@
       }
 
       text.textContent = `✅ CUPÓN ACTIVO: ${promoCode} — ${rule.description || ""}`.trim();
-      text.classList.add("swap", "promoPop");
+      text.classList.add("promoPop");
       toast("Cupón aplicado");
       updateTotals();
     });
   }
 
-  // ---------- CHECKOUT ----------
+  // ---- CATALOG MODAL ----
+  window.openCatalog = (sectionId /*, titleHint */) => {
+    const section = catalogData.sections.find((s) => s.id === sectionId);
+    const title = section?.title || "COLECCIÓN";
+
+    if ($("catTitle")) $("catTitle").textContent = title;
+
+    const items = catalogData.products.filter((p) => p.sectionId === sectionId);
+    const root = $("catContent");
+    if (!root) return;
+
+    root.innerHTML = `
+      <div class="catTop">
+        <div class="catHeader">
+          ${
+            section?.logo
+              ? `<img src="${escapeHtml(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" />`
+              : ""
+          }
+          <div class="catHeaderText">
+            <div class="catTitle">${escapeHtml(title)}</div>
+            ${section?.badge ? `<div class="catBadge">${escapeHtml(section.badge)}</div>` : ""}
+          </div>
+        </div>
+        <div class="catCount">${items.length} productos</div>
+      </div>
+
+      <div class="grid catGrid">
+        ${items.map((p) => renderProductCard(p)).join("")}
+      </div>
+    `;
+
+    // bind quickView on media
+    root.querySelectorAll("[data-qv]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-qv");
+        const p = findProduct(id);
+        if (!p) return;
+        openQuickView(p, root);
+      });
+    });
+
+    open("modalCatalog");
+  };
+
+  function renderProductCard(p) {
+    const img = p.img || (p.images && p.images[0]) || "";
+    const price = Number(p.baseMXN || 0);
+
+    const sizeOpts = (p.sizes || [])
+      .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+      .join("");
+
+    return `
+      <div class="pCard">
+        <button class="pMedia" type="button" data-qv="${escapeHtml(p.id)}" aria-label="Vista rápida">
+          ${
+            img
+              ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
+              : `<div class="productNoImg"></div>`
+          }
+          <div class="pZoom">VER</div>
+        </button>
+
+        <div class="pBody">
+          <div class="pName">${escapeHtml(p.name)}</div>
+
+          <div class="pMeta">
+            ${p.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : `<div class="pSku">OFICIAL</div>`}
+            <div class="pPrice">${money(price)}</div>
+          </div>
+
+          <div class="pActions">
+            <select class="pSize" id="size_${escapeHtml(p.id)}" aria-label="Talla">
+              ${sizeOpts}
+            </select>
+
+            <button class="btn primary small" onclick="addToCart('${escapeHtml(p.id)}')">
+              AGREGAR
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- CHECKOUT ----
   window.checkout = async () => {
     const btn = $("checkoutBtn");
     if (!cart.length) return toast("Carrito vacío");
@@ -559,7 +652,7 @@
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (data?.url) {
         location.href = data.url;
         return;
@@ -575,6 +668,7 @@
     }
   };
 
+  // ---- URL status ----
   function handleQueryActions() {
     const p = new URLSearchParams(location.search);
     const status = p.get("status");
@@ -593,6 +687,7 @@
     history.replaceState({}, document.title, location.pathname + location.hash);
   }
 
+  // ---- LOAD DATA ----
   async function loadCatalog() {
     console.log("[SCORE] loading catalog...");
     const res = await fetch("/data/catalog.json", { cache: "no-store" });
@@ -606,10 +701,27 @@
   async function loadPromos() {
     try {
       const res = await fetch("/data/promos.json", { cache: "no-store" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       promoRules = Array.isArray(data.rules) ? data.rules : [];
     } catch {
       promoRules = [];
+    }
+  }
+
+  function injectCartSpeedBar() {
+    // No rompe si no lo quieres: solo se inyecta si NO existe
+    const drawerBody = document.querySelector("#drawer .dBody");
+    if (!drawerBody) return;
+
+    if (!$("cartSpeedWrap")) {
+      const wrap = document.createElement("div");
+      wrap.className = "cartSpeedWrap";
+      wrap.id = "cartSpeedWrap";
+      wrap.innerHTML = `<div class="cartSpeedBar" id="cartSpeedBar"></div>`;
+      // lo ponemos arriba de los totales (antes del primer hr grande, si existe)
+      const hrs = drawerBody.querySelectorAll("hr");
+      if (hrs && hrs.length) drawerBody.insertBefore(wrap, hrs[0]);
+      else drawerBody.prepend(wrap);
     }
   }
 
@@ -630,21 +742,30 @@
         { id: "SF_250", title: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp", badge: "CLÁSICOS" },
       ];
 
+      // IMPORTANTE: mata splash incluso con error
       killSplash("fallback");
+
       toast("⚠️ No cargó el catálogo. Revisa /data/catalog.json");
     }
 
     loadCart();
+    injectCartSpeedBar();
     setupShippingUI();
     setupPromoBar();
     updateCartUI();
     handleQueryActions();
+
+    // click fuera para cerrar
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAll();
+    });
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
   }
 
+  // Asegura que corra aunque el script cargue antes del DOM
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
