@@ -1,8 +1,9 @@
-/* SCORE STORE LOGIC — v2.2.6 (INDEX-ALIGNED + RACING ANIMATIONS)
+/* SCORE STORE LOGIC — v2.2.7 (INDEX-ALIGNED + RACING + BRAND TUNED)
    - Splash HARDSTOP: jamás se queda pegado
-   - Catálogo en modal: markup alineado al CSS (.pCard/.catGrid/.quickView/.catHeaderBlock)
-   - Carrito: mantiene tu HTML pero mejora UI (speed bar + micro-animaciones)
-   - Promo: “Pit Radio” (racing themed), sin la animación antigua
+   - Catálogo modal: markup alineado al CSS (.pCard/.catGrid/.quickView/.catHeaderBlock)
+   - Carrito: mantiene tu HTML + speed bar + micro-animaciones
+   - Promo: sin cupones (click abre carrito)
+   - UI: icono carrito SVG verde + Hero/Partners/Footer tuneados (Único)
 */
 (function () {
   "use strict";
@@ -18,8 +19,8 @@
   const CART_KEY = "score_cart_prod_v5";
 
   let catalogData = { site: { currency: "MXN" }, sections: [], products: [] };
-  let promoRules = [];
-  let promoCode = "";
+  let promoRules = []; // se conserva por compat, pero NO se usa en v2.2.7
+  let promoCode = "";  // se conserva por compat, pero NO se usa en v2.2.7
   let cart = [];
 
   const shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica TJ)" };
@@ -56,7 +57,6 @@
     const splash = $("splash-screen");
     if (!splash) return;
 
-    // apaga visual aunque el CSS cambie
     splash.style.transition = "opacity 350ms ease";
     splash.style.opacity = "0";
     splash.style.pointerEvents = "none";
@@ -89,6 +89,90 @@
   };
   window.closeAll = closeAll;
   window.openDrawer = () => open("drawer");
+
+  // ---- UI TUNES (v2.2.7) ----
+
+  // 1) Inyecta SVG verde al botón carrito (reemplaza emoji fijo)
+  function injectCartIcon() {
+    const btn = document.querySelector(".cartBtn");
+    if (!btn) return;
+
+    // si ya hay svg, no repitas
+    if (btn.querySelector("svg")) return;
+
+    // quita emoji 🛒 si existe como texto
+    try {
+      btn.childNodes.forEach((n) => {
+        if (n && n.nodeType === 3 && /🛒/.test(n.textContent)) {
+          n.textContent = n.textContent.replace(/🛒/g, "").trim();
+        }
+      });
+    } catch {}
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "20");
+    svg.setAttribute("height", "20");
+    svg.classList.add("icon");
+    svg.innerHTML = `
+      <path d="M6.5 6h14l-1.2 7.2a2 2 0 0 1-2 1.7H9.2a2 2 0 0 1-2-1.6L5.5 3H2"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="9" cy="20" r="1.6" fill="currentColor"/>
+      <circle cx="17" cy="20" r="1.6" fill="currentColor"/>
+    `;
+    btn.prepend(svg);
+    btn.style.gap = "10px";
+  }
+
+  // 2) Hero: quita H1 si existe y mete copy con logo Único inline
+  function tuneHeroCopy() {
+    const h1 = document.querySelector(".hero-title");
+    if (h1) h1.remove();
+
+    const copy = document.querySelector(".marketing-copy");
+    if (!copy) return;
+
+    const unicoLogo = "/assets/logo-unico.webp";
+    copy.innerHTML = `
+      <strong>MERCANCÍA OFICIAL</strong> · Fabricado por
+      <img src="${unicoLogo}" alt="Único Uniformes"
+        style="display:inline-block;height:22px;vertical-align:middle;margin:0 6px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));"
+        loading="lazy" />
+      <strong>PATROCINADOR OFICIAL</strong>.
+      <br />
+      <span class="muted">Ofertas especiales por temporada · Hecho en Tijuana · Stock limitado.</span>
+    `;
+  }
+
+  // 3) Partners: título + logos (sin fondo extra, lo controla CSS PATCH)
+  function tunePartners() {
+    const h3 = document.querySelector(".partners h3");
+    if (h3) h3.textContent = "PARTNERS OFICIALES";
+
+    const grid = document.querySelector(".partnersGrid");
+    if (!grid) return;
+
+    const logos = [
+      { src: "/assets/logo-unico.webp", alt: "Único Uniformes" },
+      { src: "/assets/logo-score.webp", alt: "SCORE International" },
+      { src: "/assets/logo-ford.webp", alt: "Ford" },
+      { src: "/assets/logo-bfgodrich.webp", alt: "BFGoodrich" },
+      { src: "/assets/logo-rzr.webp", alt: "RZR" },
+    ];
+
+    grid.innerHTML = logos
+      .map((l) => `<img class="pLogo" src="${l.src}" alt="${escapeHtml(l.alt)}" loading="lazy">`)
+      .join("");
+  }
+
+  // 4) Footer: renombra marca y copy fiscal
+  function tuneFooter() {
+    const brand = document.querySelector(".footerBrandName");
+    if (brand) brand.textContent = "UNICO UNIFORMES";
+
+    const copy = document.querySelector(".copy small");
+    if (copy) copy.textContent = "© 2026 SCORE Store · Operado por BAJATEX (Único Uniformes)";
+  }
 
   // ---- quickView (opcional, no rompe si no existe el HTML) ----
   function ensureQuickView(root) {
@@ -144,7 +228,7 @@
 
   function openQuickView(p, root) {
     const qv = ensureQuickView(root);
-    if (!qv) return; // no rompe
+    if (!qv) return;
 
     const title = p?.name || "Producto";
     const sku = p?.sku ? String(p.sku) : "";
@@ -233,7 +317,6 @@
     return (catalogData.products || []).find((p) => p.id === id);
   }
 
-  // AddToCart centralizado (para quickView + cards)
   function addToCart(id, forcedSize) {
     const p = findProduct(id);
     if (!p) return toast("Producto no encontrado");
@@ -286,7 +369,6 @@
     updateCartUI();
   };
 
-  // ---- TOTALS ----
   function subTotal() {
     return cart.reduce((acc, item) => {
       const p = findProduct(item.id);
@@ -305,10 +387,9 @@
       $("shipTotal").textContent = shippingState.mode === "pickup" ? "Gratis" : money(ship);
     if ($("grandTotal")) $("grandTotal").textContent = money(total);
 
-    // speed bar (si existe)
     const bar = $("cartSpeedBar");
     if (bar) {
-      const pct = clamp((sub / 6000) * 100, 0, 100); // meta visual
+      const pct = clamp((sub / 6000) * 100, 0, 100);
       bar.style.width = pct.toFixed(0) + "%";
     }
   }
@@ -415,7 +496,6 @@
 
       if (shipForm) shipForm.style.display = "block";
 
-      // base fallback
       shippingState.cost = mode === "us" ? 800 : mode === "tj" ? 200 : 250;
       shippingState.label =
         mode === "us"
@@ -478,27 +558,26 @@
     }
   }
 
-  // ---- PROMO (“Pit Radio”) ----
+  // ---- PROMO BAR (SIN CUPONES) ----
   function setupPromoBar() {
     const bar = $("promo-bar");
     const text = $("promo-text");
     if (!bar || !text) return;
 
     const msgs = [
-      "📻 “80% OFF en toda la mercancía",
-      "🏁 Stock limitado · ¡Que esperas!",
-      "⚡ MX/USA: Cotiza tu envio · en tiempo real" ,
-      "🎟️ CUPONES: SCORE25 · BAJA200 · ENVIOFREE",
-      "🛞 Agrega al carrito y asegura talla",
+      "⏳ DESCUENTO POR TIEMPO LIMITADO · ¡Hasta 80% OFF!",
+      "🔥 ADQUIERE TU FAVORITO HOY · Stock limitado",
+      "🇲🇽🇺🇸 ENVÍO MX/USA · Hecho en Tijuana",
+      "🏁 Merch oficial para fans, crews y pilotos",
+      "⚡ Compra rápido · Asegura tu talla",
     ];
 
     let i = 0;
 
     const swap = () => {
       i = (i + 1) % msgs.length;
-      text.classList.remove("promoPop");
-      text.classList.remove("swap");
-      void text.offsetWidth; // reflow
+      text.classList.remove("promoPop", "swap");
+      void text.offsetWidth;
       text.textContent = msgs[i];
       text.classList.add("promoPop");
     };
@@ -506,71 +585,41 @@
     text.textContent = msgs[0];
     text.classList.add("promoPop");
     clearInterval(window.__promoTimer);
-    window.__promoTimer = setInterval(swap, 3800);
+    window.__promoTimer = setInterval(swap, 3600);
 
-    bar.addEventListener("click", () => {
-      const code = prompt("Ingresa tu cupón (ej: SCORE25, BAJA200, ENVIOFREE):", promoCode || "");
-      if (code === null) return;
-
-      promoCode = String(code || "").trim().toUpperCase();
-
-      if (!promoCode) {
-        text.textContent = "📻 PIT RADIO: cupón removido";
-        text.classList.add("promoPop");
-        toast("Cupón removido");
-        updateTotals();
-        return;
-      }
-
-      const rule = promoRules.find(
-        (r) => String(r.code || "").toUpperCase() === promoCode && !!r.active
-      );
-      if (!rule) {
-        toast("Cupón inválido");
-        promoCode = "";
-        return;
-      }
-
-      text.textContent = `✅ CUPÓN ACTIVO: ${promoCode} — ${rule.description || ""}`.trim();
-      text.classList.add("promoPop");
-      toast("Cupón aplicado");
-      updateTotals();
-    });
+    // click = abre carrito (sin prompts / sin cupones)
+    bar.addEventListener("click", () => open("drawer"));
   }
 
-  // ---- CATALOG MODAL ----
-  window.openCatalog = (sectionId /*, titleHint */) => {
+  // ---- CATALOG MODAL (logo manda) ----
+  window.openCatalog = (sectionId) => {
     const section = (catalogData.sections || []).find((s) => s.id === sectionId);
     const title = section?.title || "COLECCIÓN";
 
-    if ($("catTitle")) $("catTitle").textContent = title;
+    // El logo manda: el texto del header superior lo vaciamos
+    if ($("catTitle")) $("catTitle").textContent = "";
 
     const items = (catalogData.products || []).filter((p) => p.sectionId === sectionId);
     const root = $("catContent");
     if (!root) return;
 
     root.innerHTML = `
-      <div class="catHeaderBlock">
-        ${
-          section?.logo
-            ? `<img src="${escapeHtml(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" />`
-            : ""
-        }
-        <div class="catHeaderText">
-          <div class="catTitleText">${escapeHtml(title)}</div>
-          <div class="catSubText">${escapeHtml(section?.subtitle || `${items.length} productos`)}</div>
-          ${section?.badge ? `<div class="catBadge">${escapeHtml(section.badge)}</div>` : ""}
+      <div class="catTop">
+        <div class="catHeader" style="justify-content:center; width:100%;">
+          ${
+            section?.logo
+              ? `<img src="${escapeHtml(section.logo)}" class="catLogo" alt="${escapeHtml(title)}" style="height:56px;" />`
+              : `<div class="catTitle">${escapeHtml(title)}</div>`
+          }
         </div>
+        <div class="catCount">${items.length} productos</div>
       </div>
 
-      <div class="catItems">
-        <div class="grid catGrid">
-          ${items.map((p) => renderProductCard(p)).join("")}
-        </div>
+      <div class="grid catGrid">
+        ${items.map((p) => renderProductCard(p)).join("")}
       </div>
     `;
 
-    // bind quickView on media
     root.querySelectorAll("[data-qv]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-qv");
@@ -607,11 +656,7 @@
           <div class="pName">${escapeHtml(p.name)}</div>
 
           <div class="pMeta">
-            ${
-              p?.sku
-                ? `<div class="pSku">${escapeHtml(p.sku)}</div>`
-                : `<div class="pSku">OFICIAL</div>`
-            }
+            ${p?.sku ? `<div class="pSku">${escapeHtml(p.sku)}</div>` : `<div class="pSku">OFICIAL</div>`}
             <div class="pPrice">${money(price)}</div>
           </div>
 
@@ -659,7 +704,7 @@
         items: cart,
         mode,
         customer: { name, address: addr, postal_code: cp },
-        promoCode: promoCode || "",
+        promoCode: "", // v2.2.7: promo deshabilitado en UI (si luego quieres reglas server-side, lo reactivamos)
       };
 
       const res = await fetch(`${API_BASE}/create_checkout`, {
@@ -715,6 +760,7 @@
   }
 
   async function loadPromos() {
+    // se conserva por compat (si luego lo reactivas server-side)
     try {
       const res = await fetch("/data/promos.json", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
@@ -749,7 +795,6 @@
     } catch (e) {
       console.error("[SCORE] init failed:", e);
 
-      // fallback sections (para que NO se quede muerto)
       catalogData.sections = [
         { id: "BAJA_1000", title: "BAJA 1000", logo: "/assets/logo-baja1000.webp", badge: "TIENDA OFICIAL" },
         { id: "BAJA_500", title: "BAJA 500", logo: "/assets/logo-baja500.webp", badge: "EDICIÓN OFICIAL" },
@@ -765,13 +810,18 @@
     injectCartSpeedBar();
     setupShippingUI();
     setupPromoBar();
+
+    // ✅ Orden pro (no choca con nada)
+    injectCartIcon();
+    tuneHeroCopy();
+    tunePartners();
+    tuneFooter();
+
     updateCartUI();
     handleQueryActions();
 
-    // overlay click = close
     $("overlay")?.addEventListener("click", closeAll);
 
-    // escape = close
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
@@ -781,7 +831,6 @@
     }
   }
 
-  // Asegura que corra aunque el script cargue antes del DOM
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
