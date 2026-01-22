@@ -1,4 +1,12 @@
-const { jsonResponse, safeJsonParse, getEnviaQuote, FALLBACK_MX_PRICE, FALLBACK_US_PRICE, normalizeQty } = require("./_shared");
+const {
+  jsonResponse,
+  safeJsonParse,
+  getEnviaQuote,
+  FALLBACK_MX_PRICE,
+  FALLBACK_US_PRICE,
+  normalizeQty,
+  digitsOnly,
+} = require("./_shared");
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
@@ -6,28 +14,25 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
+
     const country = String(body.country || "MX").toUpperCase();
-    const zip = String(body.zip || "");
-    
+
+    const rawZip = String(body.zip || body.postal_code || "").trim();
+    const zip = country === "MX" ? digitsOnly(rawZip) : rawZip;
+
     let qty = 1;
     if (Array.isArray(body.items)) {
-        qty = body.items.reduce((acc, item) => acc + normalizeQty(item.quantity || item.qty), 0);
+      qty = body.items.reduce((acc, item) => acc + normalizeQty(item.quantity || item.qty), 0);
     } else {
-        qty = normalizeQty(body.items || body.qty);
+      qty = normalizeQty(body.items || body.qty || 1);
     }
 
-    if (!zip || zip.trim().length < 5) {
-      return jsonResponse(400, { error: "Código postal inválido" });
-    }
+    if (!zip || zip.length < 5) return jsonResponse(400, { error: "Código postal inválido" });
 
     const quote = await getEnviaQuote(zip, qty, country);
 
     if (quote) {
-      return jsonResponse(200, {
-        ok: true,
-        cost: quote.mxn,
-        label: `${quote.carrier} (${quote.days} días)`,
-      });
+      return jsonResponse(200, { ok: true, cost: quote.mxn, label: `${quote.carrier} (${quote.days} días)` });
     }
 
     const isUS = country === "US";
