@@ -8,35 +8,44 @@
   <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://unicouniformes.com/" />
+  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
+  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes." />
+  <meta property="og:image" content="/assets/hero.webp" />
 
-  <!-- Assets -->
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  
-  <!-- CSS & Fonts -->
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_FIX">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="/css/styles.css?v=20.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="preload" href="/assets/hero.webp" as="image">
 
-  <!-- SDKs -->
   <script src="https://js.stripe.com/v3"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Meta Pixel -->
+  
+  <!-- Pixel Meta -->
   <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413'); fbq('track', 'PageView');
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView');
   </script>
 
-  <!-- Config Global -->
+  <!-- CONFIG ÚNICA -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
@@ -46,8 +55,8 @@
   </script>
 </head>
 
-<body class="noScroll">
-  <!-- Splash (Safety Timeout en JS) -->
+<body>
+  <!-- Splash Screen -->
   <div id="splash-screen">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -59,7 +68,7 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
   <div class="promo-bar slide-in-top" id="promo-bar">
-    <span id="promo-text">⚠️ LIQUIDACIÓN LANZAMIENTO - 80% OFF EN TODO</span>
+    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
   </div>
 
   <header class="topbar">
@@ -77,7 +86,7 @@
   </header>
 
   <main class="wrap">
-    <!-- HERO (80% OFF) -->
+    <!-- Hero con 80% OFF -->
     <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
@@ -102,7 +111,7 @@
       </div>
     </section>
 
-    <!-- COLECCIONES -->
+    <!-- Colecciones -->
     <section class="section scroll-reveal" id="collections">
       <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2><p>SELECCIONA TU CATEGORÍA</p></div>
       <div class="grid">
@@ -129,7 +138,7 @@
       </div>
     </section>
 
-    <!-- PARTNERS -->
+    <!-- Partners (Logos corregidos en CSS) -->
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
@@ -147,6 +156,10 @@
         <div class="footerBrandName">BAJATEX</div>
         <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
         <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
+        <div class="social-row">
+          <a href="#" class="social-link">Facebook</a>
+          <a href="#" class="social-link">Instagram</a>
+        </div>
       </div>
       <div class="fCol"><h4>ATENCIÓN</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button></div></div>
       <div class="fCol"><h4>LEGAL</h4><div class="footerLinks"><button onclick="openLegal('terms')">Términos</button><button onclick="openLegal('privacy')">Privacidad</button></div></div>
@@ -154,13 +167,13 @@
     <div class="copy">SCORE Store © 2026 · Powered by Único OS</div>
   </footer>
 
-  <!-- MODAL CATÁLOGO -->
+  <!-- Modal Catálogo -->
   <div id="modalCatalog" class="modal">
     <div class="dHead"><div id="catTitle" class="dTitle logo-header">PRODUCTOS</div><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div id="catContent" class="dBody"></div>
   </div>
 
-  <!-- DRAWER CARRITO -->
+  <!-- Drawer Carrito -->
   <aside id="drawer" class="drawer">
     <div class="dHead"><h3 class="dTitle">TU PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div class="dBody"><div id="cartItems"></div><div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Vacío</div></div>
@@ -188,7 +201,7 @@
     </div>
   </aside>
 
-  <!-- DRAWER LEGAL -->
+  <!-- Legal Modal -->
   <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);">
     <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
     <div class="dBody" style="padding:30px; font-size:14px;">
@@ -201,7 +214,7 @@
 
   <div class="toast" id="toast">Mensaje</div>
 
-  <!-- COOKIES -->
+  <!-- Cookies -->
   <section class="cookieBanner" id="cookieBanner">
     <div class="cookieInner">
       <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
@@ -212,7 +225,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=FINAL_FIX" defer></script>
+  <script src="/js/main.js?v=20.0" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
@@ -231,7 +244,14 @@
     })();
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=FINAL").catch(console.warn);
+      navigator.serviceWorker.register("/sw.js?v=20.0").then(reg => {
+        reg.onupdatefound = () => {
+          const w = reg.installing;
+          w.onstatechange = () => {
+            if (w.state === 'installed' && navigator.serviceWorker.controller) window.location.reload();
+          };
+        };
+      }).catch(console.warn);
     }
   </script>
 </body>
