@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Preload LCP image (Hero) -->
+  <!-- Preload LCP image (Hero) ✅ ALINEADO A styles.css v2.6.1 -->
   <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="/assets/logo-score.webp" fetchpriority="high" />
 
@@ -47,7 +47,7 @@
   </div>
 
   <!-- Promo Bar -->
-  <div class="promo-bar slide-in-top" id="promo-bar">
+  <div class="promo-bar" id="promo-bar">
     <span class="promo-highlight">🔥 HASTA 80% OFF</span>
     <span id="promo-text">STOCK LIMITADO · ENVÍO MX/USA · HECHO EN TIJUANA</span>
   </div>
@@ -138,7 +138,8 @@
       </div>
     </section>
   </main>
-<!-- Modal Catalog -->
+
+  <!-- Modal Catalog -->
   <div id="modalCatalog" class="modal">
     <div class="dHead">
       <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
@@ -245,7 +246,12 @@
       supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
       supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
       stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
-      metaPixelId: "4249947775334413"
+      metaPixelId: "4249947775334413",
+
+      /* ✅ Telegram (solo config; el envío real va en función serverless) */
+      telegramEnabled: false,
+      telegramChatId: "",
+      telegramBotToken: ""
     };
   </script>
 
