@@ -5,24 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial — Único Uniformes</title>
   <meta name="theme-color" content="#ffffff" />
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
+  <meta name="description" content="Merchandise Oficial SCORE International. 80% OFF Lanzamiento. Fabricado por Único Uniformes." />
 
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://unicouniformes.com/" />
   <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes." />
   <meta property="og:image" content="/assets/hero.webp" />
-  <meta property="fb:pages" content="1496305187347575" />
-
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_3.0" />
+  <link rel="stylesheet" href="/css/styles.css?v=FINAL_PRO" />
 
   <script>
     !function(f,b,e,v,n,t,s)
@@ -36,9 +33,7 @@
     fbq('init', '4249947775334413');
     fbq('track', 'PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
-  /></noscript>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" /></noscript>
 </head>
 
 <body>
@@ -46,7 +41,7 @@
     <div class="splash-content">
       <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE">
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
-      <p class="splash-text">CARGANDO TIENDA OFICIAL</p>
+      <p class="splash-text">CALENTANDO MOTORES...</p>
     </div>
   </div>
 
@@ -86,7 +81,7 @@
           <span class="mark-footer">Calidad Premium · Envío MX/USA · Stock Limitado</span>
         </div>
         <div class="ctaRow">
-          <a href="#collections" class="btn primary hero-btn">VER COLECCIONES 2026</a>
+          <a href="#collections" class="btn primary hero-btn pulse-btn">VER COLECCIONES 2026</a>
         </div>
       </div>
     </section>
@@ -121,7 +116,9 @@
     <div class="dHead"><h3 class="dTitle">MI PEDIDO</h3><button class="closeBtn" onclick="closeAll()">×</button></div>
     <div class="dBody">
       <div id="cartEmpty"></div><div id="cartItems"></div>
-      <hr style="border-color:rgba(0,0,0,.1); margin:20px 0;">
+      
+      <div class="checkered-strip" style="margin:20px 0; border-radius:4px;"></div>
+      
       <div class="shipSelector">
         <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div>Recoger en fábrica <b>GRATIS</b></div></label>
         <label class="radio-option"><input type="radio" name="shipMode" value="tj"><div>Local Tijuana <b>Express</b></div></label>
@@ -138,9 +135,10 @@
     </div>
   </aside>
 
+  <div class="toast" id="toast"></div>
   <section class="cookieBanner" id="cookieBanner">
     <div class="cookieInner">
-      <div class="cookieText">Usamos cookies para mejorar tu experiencia y medir el rendimiento.</div>
+      <div class="cookieText">Usamos cookies para mejorar tu experiencia de compra.</div>
       <div class="cookieActions">
         <button class="cookieBtn ghost" id="cookieReject">Solo esenciales</button>
         <button class="cookieBtn primary" id="cookieAccept">ACEPTAR</button>
@@ -148,9 +146,8 @@
     </div>
   </section>
 
-  <div class="toast" id="toast"></div>
-
   <footer class="footer">
+    <div class="checkered-strip" style="position:absolute; top:0; left:0; width:100%;"></div>
     <div class="container" style="display:grid; grid-template-columns:1fr auto; gap:30px; padding-bottom:40px;">
       <div>
         <img src="/assets/logo-unico.webp" style="height:40px; margin-bottom:15px; filter:brightness(0) invert(1);" alt="Único Uniformes">
@@ -159,8 +156,8 @@
       <div style="text-align:right;">
         <h4 style="margin:0 0 15px; font-family:Teko; font-size:22px;">SÍGUENOS</h4>
         <div style="display:flex; gap:15px; justify-content:flex-end; margin-bottom:20px;">
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" style="font-weight:700;">Instagram</a>
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" style="font-weight:700;">Facebook</a>
         </div>
         <a href="/legal.html" style="font-size:13px; opacity:.5; text-decoration:underline;">Información Legal</a>
       </div>
@@ -171,19 +168,18 @@
   </footer>
 
   <script>
-    window.__SCORE__ = { orgSlug: "score-store", stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh", metaPixelId: "4249947775334413" };
-    
-    // Cookie Logic Inline
+    window.__SCORE__ = { 
+      orgSlug: "score-store", 
+      stripePublishableKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+      metaPixelId: "4249947775334413"
+    };
     (function(){
       const k="score_cookie_v2",b=document.getElementById("cookieBanner");
-      if(!localStorage.getItem(k)&&b) setTimeout(()=>b.style.display="block",2500);
+      if(!localStorage.getItem(k)&&b) setTimeout(()=>b.style.display="block",3000);
       document.getElementById("cookieAccept")?.addEventListener("click",()=>{localStorage.setItem(k,"all");b.style.display="none";if(window.fbq)fbq('track','CookieConsent')});
       document.getElementById("cookieReject")?.addEventListener("click",()=>{localStorage.setItem(k,"essential");b.style.display="none"});
     })();
-
-    // Splash Safety Inline
-    setTimeout(()=>{const s=document.getElementById("splash-screen");if(s&&!s.classList.contains("hide"))s.classList.add("hide")},4500);
   </script>
-  <script src="/js/main.js?v=FINAL_3.0" defer></script>
+  <script src="/js/main.js?v=FINAL_PRO" defer></script>
 </body>
 </html>
