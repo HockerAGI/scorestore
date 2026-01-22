@@ -26,7 +26,6 @@
     src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
   <meta property="og:title" content="SCORE Store · Tienda Oficial" />
-  <meta property="og:description" content="Mercancía oficial SCORE International. Fabricado por Único Uniformes." />
   <meta property="og:image" content="/assets/hero.webp" />
   <meta property="og:type" content="website" />
 
@@ -34,15 +33,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Teko:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/styles.css?v=2026_A" />
-
-  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high">
-  <link rel="preload" as="image" href="/assets/logo-score.webp" fetchpriority="high">
+  <link rel="stylesheet" href="/css/styles.css?v=PREMIUM_2026" />
 </head>
 
 <body>
 
-<div id="splash-screen" aria-label="Cargando">
+<div id="splash-screen">
   <div class="splash-content">
     <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE">
     <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
@@ -50,14 +46,15 @@
   </div>
 </div>
 
-<div class="promo-bar" id="promo-bar" role="button" tabindex="0" aria-label="Abrir carrito">
-  <strong class="promo-highlight">DESCUENTO POR TIEMPO LIMITADO</strong>
-  <span id="promo-text">ADQUIERE TU FAVORITO · HASTA 80% DE DESCUENTO</span>
+<div class="promo-bar" id="promo-bar" role="button" tabindex="0">
+  <strong class="promo-highlight">¡DESCUENTO POR TIEMPO LIMITADO!</strong>
+  <span id="promo-text">ADQUIERE TU FAVORITO HOY · HASTA 80% OFF</span>
 </div>
 
 <header class="topbar">
   <div class="container topbarInner">
     <img src="/assets/logo-score.webp" class="brandLogo" alt="SCORE Store">
+    
     <div class="navRight">
       <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
         <svg class="icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -72,99 +69,60 @@
   </div>
 </header>
 
-<div id="overlay" class="page-overlay" onclick="closeAll()" aria-hidden="true"></div>
+<div id="overlay" class="page-overlay" onclick="closeAll()"></div>
 
 <main class="wrap">
 
   <section class="hero">
     <div class="heroBg"></div>
-    <div class="heroOverlay"></div>
+    <div class="heroOverlay" style="background: linear-gradient(180deg, rgba(7,8,10,.05), rgba(7,8,10,.6));"></div>
 
     <div class="heroContent heroCard">
-      <div class="tagline">
-        <span class="tag-pill">TIENDA OFICIAL 2026</span>
-        <span class="tag-pill danger">HASTA 80% OFF</span>
-      </div>
-
       <div class="logos-row">
-        <img src="/assets/logo-score.webp" class="hero-main-logo" alt="SCORE">
-        <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="World Desert">
+        <img src="/assets/logo-score.webp" class="hero-main-logo" alt="SCORE International">
+        <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="World Desert Championship">
       </div>
 
       <p class="marketing-copy">
-        <strong>MERCANCÍA OFICIAL</strong> · Fabricado por
-        <img src="/assets/logo-unico.webp" class="inlineLogo" alt="Único Uniformes" loading="lazy">
-        <strong>PATROCINADOR OFICIAL</strong>
+        MERCANCÍA OFICIAL · FABRICADO POR
+        <img src="/assets/logo-unico.webp" class="inlineLogo" alt="Único Uniformes">
+        PATROCINADOR OFICIAL
         <br>
-        <span class="muted">Hecho en Tijuana · Stock limitado · Envío MX/USA</span>
+        <span class="muted" style="font-size:13px; font-weight:700;">CALIDAD PREMIUM · ENVÍO MX/USA · STOCK LIMITADO</span>
       </p>
 
       <div class="ctaRow">
-        <a href="#collections" class="btn primary pulse-btn">VER COLECCIONES</a>
-        <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
+        <a href="#collections" class="btn primary">VER COLECCIONES</a>
       </div>
     </div>
   </section>
 
   <section class="section" id="collections">
     <div class="sectionHead">
-      <div>
-        <h2>COLECCIONES <span>OFICIALES</span></h2>
-        <p>SELECCIONA TU CATEGORÍA</p>
-      </div>
+      <h2>COLECCIONES <span>OFICIALES</span></h2>
     </div>
 
     <div class="grid">
-      <button class="champItem" type="button" onclick="openCatalog('BAJA_1000')" aria-label="Abrir Baja 1000">
-        <div class="card-texture" aria-hidden="true"></div>
-        <div class="champInner">
-          <div class="champLeft">
-            <img src="/assets/logo-baja1000.webp" class="champLogoTitle" alt="Baja 1000">
-            <div class="badge">TIENDA OFICIAL</div>
-          </div>
-          <div class="champRight">
-            <div class="card-btn-side">VER PRODUCTOS</div>
-          </div>
-        </div>
+      <button class="champItem" onclick="openCatalog('BAJA_1000')">
+        <div class="card-texture"></div>
+        <img src="/assets/logo-baja1000.webp" class="champLogoTitle" alt="Baja 1000">
+        <div class="badge">TIENDA OFICIAL</div>
       </button>
 
-      <button class="champItem" type="button" onclick="openCatalog('BAJA_500')" aria-label="Abrir Baja 500">
-        <div class="card-texture" aria-hidden="true"></div>
-        <div class="champInner">
-          <div class="champLeft">
-            <img src="/assets/logo-baja500.webp" class="champLogoTitle" alt="Baja 500">
-            <div class="badge">EDICIÓN OFICIAL</div>
-          </div>
-          <div class="champRight">
-            <div class="card-btn-side">VER PRODUCTOS</div>
-          </div>
-        </div>
+      <button class="champItem" onclick="openCatalog('BAJA_500')">
+        <div class="card-texture"></div>
+        <img src="/assets/logo-baja500.webp" class="champLogoTitle" alt="Baja 500">
+        <div class="badge">EDICIÓN LIMITADA</div>
       </button>
 
-      <button class="champItem" type="button" onclick="openCatalog('BAJA_400')" aria-label="Abrir Baja 400">
-        <div class="card-texture" aria-hidden="true"></div>
-        <div class="champInner">
-          <div class="champLeft">
-            <img src="/assets/logo-baja400.webp" class="champLogoTitle" alt="Baja 400">
-            <div class="badge">EDICIÓN ESPECIAL</div>
-          </div>
-          <div class="champRight">
-            <div class="card-btn-side">VER PRODUCTOS</div>
-          </div>
-        </div>
+      <button class="champItem" onclick="openCatalog('BAJA_400')">
+        <div class="card-texture"></div>
+        <img src="/assets/logo-baja400.webp" class="champLogoTitle" alt="Baja 400">
       </button>
 
-      <button class="champItem" type="button" onclick="openCatalog('SF_250')" aria-label="Abrir San Felipe 250">
-        <div class="card-texture" aria-hidden="true"></div>
-        <div class="champInner">
-          <div class="champLeft">
-            <img src="/assets/logo-sf250.webp" class="champLogoTitle" alt="San Felipe 250">
-            <div class="badge">CLÁSICOS</div>
-          </div>
-          <div class="champRight">
-            <div class="card-btn-side">VER PRODUCTOS</div>
-          </div>
-        </div>
+      <button class="champItem" onclick="openCatalog('SF_250')">
+        <div class="card-texture"></div>
+        <img src="/assets/logo-sf250.webp" class="champLogoTitle" alt="San Felipe 250">
       </button>
     </div>
   </section>
@@ -172,54 +130,49 @@
   <section class="partners">
     <h3>PARTNERS OFICIALES</h3>
     <div class="partnersGrid">
-      <img src="/assets/logo-unico.webp" class="pLogo" alt="Único">
-      <img src="/assets/logo-score.webp" class="pLogo" alt="SCORE">
       <img src="/assets/logo-bfgodrich.webp" class="pLogo wide" alt="BFGoodrich">
-      <img src="/assets/logo-rzr.webp" class="pLogo wide" alt="RZR">
+      <img src="/assets/logo-rzr.webp" class="pLogo wide" alt="Polaris RZR">
       <img src="/assets/logo-ford.webp" class="pLogo wide" alt="Ford">
+      <img src="/assets/logo-unico.webp" class="pLogo tall" alt="Único Uniformes">
     </div>
   </section>
 
 </main>
 
-<section id="modalCatalog" class="modal" aria-hidden="true">
+<section id="modalCatalog" class="modal">
   <div class="dHead">
     <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
-    <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">×</button>
+    <button class="closeBtn" onclick="closeAll()">×</button>
   </div>
   <div class="dBody">
     <div id="catContent"></div>
   </div>
 </section>
 
-<aside id="drawer" class="drawer" aria-hidden="true">
+<aside id="drawer" class="drawer">
   <div class="dHead">
     <h3 class="dTitle">MI PEDIDO</h3>
-    <button class="closeBtn" type="button" onclick="closeAll()" aria-label="Cerrar">×</button>
+    <button class="closeBtn" onclick="closeAll()">×</button>
   </div>
-
   <div class="dBody">
     <div id="cartEmpty"></div>
     <div id="cartItems"></div>
-
-    <hr>
+    
+    <hr style="border-color:rgba(255,255,255,.1); margin:20px 0;">
 
     <div class="shipSelector">
       <label class="radio-option">
         <input type="radio" name="shipMode" value="pickup" checked>
         <div>Recoger en fábrica <b>GRATIS</b></div>
       </label>
-
       <label class="radio-option">
         <input type="radio" name="shipMode" value="tj">
         <div>Local Tijuana <b>Express</b></div>
       </label>
-
       <label class="radio-option">
         <input type="radio" name="shipMode" value="mx">
         <div>Envío Nacional <b>MX</b></div>
       </label>
-
       <label class="radio-option">
         <input type="radio" name="shipMode" value="us">
         <div>Envío USA <b>US</b></div>
@@ -227,38 +180,42 @@
     </div>
 
     <div id="shipForm" style="display:none; margin-top:12px;">
-      <input class="inputField" id="name" placeholder="Nombre completo" autocomplete="name" />
-      <input class="inputField" id="addr" placeholder="Dirección (calle, número, colonia)" autocomplete="street-address" />
-      <input class="inputField" id="cp" placeholder="CP / ZIP" inputmode="numeric" autocomplete="postal-code" />
+      <input class="inputField" id="name" placeholder="Nombre completo" autocomplete="name" style="width:100%; padding:12px; margin-bottom:8px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:white;">
+      <input class="inputField" id="addr" placeholder="Dirección completa" autocomplete="street-address" style="width:100%; padding:12px; margin-bottom:8px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:white;">
+      <input class="inputField" id="cp" placeholder="CP / ZIP" inputmode="numeric" style="width:100%; padding:12px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:white;">
     </div>
 
-    <hr>
-
-    <div class="sumRow">
-      <span>Subtotal</span>
-      <b id="subTotal">$0</b>
-    </div>
-
-    <div class="sumRow">
-      <span>Envío</span>
-      <b id="shipTotal">Gratis</b>
-    </div>
-
-    <div class="sumRow total">
+    <div class="sumRow" style="display:flex; justify-content:space-between; margin-top:20px;">
       <span>Total</span>
-      <b id="grandTotal">$0</b>
+      <b id="grandTotal" style="font-size:20px;">$0.00</b>
     </div>
 
-    <div style="display:flex; gap:10px; margin-top:12px;">
-      <button class="btn secondary full" type="button" onclick="emptyCart()">VACIAR</button>
-      <button class="btn primary full" id="checkoutBtn" type="button" onclick="checkout()">PAGAR AHORA</button>
-    </div>
-
-    <button class="linkDanger" type="button" onclick="closeAll()">SEGUIR COMPRANDO</button>
+    <button class="btn primary" style="width:100%; margin-top:20px;" onclick="checkout()" id="checkoutBtn">PAGAR AHORA</button>
   </div>
 </aside>
 
-<div class="toast" id="toast" aria-live="polite"></div>
+<div class="toast" id="toast"></div>
+
+<footer class="footer">
+  <div class="container" style="padding-bottom:40px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    <div>
+      <h4 style="margin:0 0 10px; font-family:Teko; font-size:24px;">ÚNICO UNIFORMES</h4>
+      <p style="color:rgba(255,255,255,.5); font-size:13px; margin:0;">
+        Merchandise oficial SCORE International.<br>Fabricado en Tijuana.
+      </p>
+    </div>
+    <div style="text-align:right;">
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a href="https://www.instagram.com/uniformes.unico" target="_blank">Instagram</a>
+        <a href="https://www.facebook.com/uniforme.unico/" target="_blank">Facebook</a>
+      </div>
+      <p style="margin-top:10px;"><a href="/legal.html" style="font-size:12px; color:rgba(255,255,255,.4);">Legal y Privacidad</a></p>
+    </div>
+  </div>
+  <div style="text-align:center; padding:15px; border-top:1px solid rgba(255,255,255,.05); font-size:12px; color:rgba(255,255,255,.3);">
+    © 2026 BAJATEX S. DE R.L. DE C.V.
+  </div>
+</footer>
 
 <script>
   window.__SCORE__ = {
@@ -268,6 +225,6 @@
   };
 </script>
 
-<script src="/js/main.js?v=2026_A" defer></script>
+<script src="/js/main.js?v=PREMIUM_2026" defer></script>
 </body>
 </html>
