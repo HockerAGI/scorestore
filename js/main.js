@@ -5,27 +5,23 @@
 
   // --- CONFIGURACIÓN ---
   const CFG = window.__SCORE__ || {};
-  const SUPABASE_URL = CFG.supabaseUrl;
-  const SUPABASE_KEY = CFG.supabaseAnonKey;
+  const SUPABASE_URL = CFG.supabaseUrl || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+  const SUPABASE_KEY = CFG.supabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
   const API_BASE = "/.netlify/functions";
   const CART_KEY = "score_cart_final_v2";
 
-  // --- FLAGS COMERCIALES ---
   const PROMO_ACTIVE = true;
   const FAKE_MARKUP_FACTOR = 5; 
 
-  // --- ESTADO ---
   let cart = [];
   let catalogData = { products: [], sections: [] };
   let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
   let supabase = null;
 
-  // --- HELPERS ---
   const $ = (id) => document.getElementById(id);
   const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
   const cleanUrl = (u) => u ? encodeURI(u.trim()) : "";
 
-  // --- 1. SPLASH SCREEN BLINDADO ---
   function hideSplash() {
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
@@ -35,8 +31,7 @@
   }
 
   async function init() {
-    // Seguridad: Si falla algo, abre la tienda a los 4.5s
-    setTimeout(hideSplash, 4500);
+    setTimeout(hideSplash, 4500); // Splash Blindado
 
     if (window.supabase) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -51,7 +46,6 @@
     hideSplash();
   }
 
-  // --- 2. GESTIÓN DE DATOS ---
   async function loadCatalog() {
     try {
       const res = await fetch("/data/catalog.json");
@@ -62,7 +56,6 @@
     }
   }
 
-  // --- 3. CATÁLOGO & SLIDER INTELIGENTE ---
   window.openCatalog = (sectionId, title) => {
     const items = catalogData.products.filter(p => p.sectionId === sectionId);
     if($("catTitle")) $("catTitle").innerText = title || "PRODUCTOS";
@@ -82,8 +75,6 @@
             card.className = "prodCard"; 
 
             const defSize = (p.sizes && p.sizes[0]) ? p.sizes[0] : "Unitalla";
-            
-            // Precios
             const sellPrice = Number(p.baseMXN);
             const listPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
             
@@ -93,8 +84,7 @@
                      <span style="color:#E10600; font-weight:bold;">${money(sellPrice)}</span>
                 </div>`;
 
-            // DETECCIÓN DE IMÁGENES:
-            // Usamos 'onerror' en la etiqueta IMG para eliminar el slide si la imagen no existe.
+            // DETECCIÓN DE IMÁGENES: elimina el slide si falla la carga
             const images = p.images && p.images.length ? p.images : [p.img];
             const slidesHtml = images.map(src => 
                 `<div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
@@ -102,7 +92,6 @@
                  </div>`
             ).join("");
 
-            // Tallas
             const sizesHtml = (p.sizes || ["Unitalla"]).map((s,i) => 
                 `<button class="size-pill ${i===0?'active':''}" onclick="selectSize(this, '${p.id}', '${s}')">${s}</button>`
             ).join("");
@@ -127,7 +116,6 @@
         container.appendChild(grid);
     }
     
-    // Abrir Modal
     const modal = $("modalCatalog");
     const overlay = $("overlay");
     if(modal) modal.classList.add("active");
@@ -141,7 +129,6 @@
       btn.closest('.prodCard').dataset.selSize = size;
   };
 
-  /* --- CART & CHECKOUT --- */
   window.addToCart = (pid) => {
       const p = catalogData.products.find(x => x.id === pid);
       if(!p) return;
@@ -169,14 +156,12 @@
   window.emptyCart = () => { if(confirm("¿Vaciar carrito?")) { cart=[]; saveCart(); updateCartUI(); } };
 
   function setupUI() {
-      // Envios
       document.querySelectorAll('input[name="shipMode"]').forEach(r => {
           r.addEventListener("change", () => {
               const form = $("shipForm");
               if(r.value === 'pickup') {
                   shippingState.cost = 0; shippingState.label = "Gratis"; form.style.display = "none";
               } else {
-                  // Costos Fijos de Respaldo
                   shippingState.cost = (r.value === 'mx') ? 250 : 800;
                   shippingState.label = (r.value === 'mx') ? "Envío Nacional" : "Envío USA";
                   form.style.display = "block";
