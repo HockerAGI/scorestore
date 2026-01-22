@@ -1,21 +1,76 @@
-{
-  "name": "score-store-official",
-  "version": "2.2.0",
-  "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes). Integrado a Único OS (Supabase) + Stripe + Envia + Pixel.",
-  "main": "index.html",
-  "scripts": {
-    "start": "netlify dev",
-    "build": "echo 'Build ready'"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.3",
-    "axios": "^1.6.7",
-    "dotenv": "^16.4.1",
-    "stripe": "^14.14.0"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "author": "BAJATEX S. de R.L. de C.V.",
-  "license": "UNLICENSED"
-}
+[build]
+  command = "npm install"
+  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Local dev compatibility
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# IMPORTANT: don't swallow real static files
+[[redirects]]
+  from = "/legal.html"
+  to = "/legal.html"
+  status = 200
+
+[[redirects]]
+  from = "/site.webmanifest"
+  to = "/site.webmanifest"
+  status = 200
+
+# SPA fallback (must stay last)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy = "geolocation=(), camera=(), microphone=()"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature, stripe-signature"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store"
