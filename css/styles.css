@@ -1,11 +1,10 @@
 /* SCORE STORE — styles.css FINAL PREMIUM WHITE 2026
-   - Fondo General: BLANCO (#fff) + Textura sutil oscura
+   - Fondo General: BLANCO (#fff) + Textura sutil
    - Topbar: Cristal Blanco
-   - Iconos: Verde Esmeralda
-   - Hero: Card flotante con IMAGEN y gradientes ricos internos. Texto blanco.
-   - Copy Único: Bloque profesional estructurado.
-   - Catálogos: Cards con gradientes vibrantes y textura sobre fondo blanco.
+   - Iconos: Verde Esmeralda (#009B4D)
+   - Hero: Card flotante con IMAGEN interna y gradientes ricos.
    - Carrito: Efecto "Deep Glass" blanco notable.
+   - Extras: Banner Cookies Glass.
 */
 
 :root{
@@ -23,7 +22,6 @@
   --red:#E10600;
   --red2:#ff2a1a;
   --yellow:#ffd34d;
-  --cyan:#51d6ff;
   --green:#009B4D; /* Verde solicitado */
 
   /* Sombras suaves para fondo blanco */
@@ -40,7 +38,6 @@ html{scroll-behavior:smooth}
 body{
   margin:0;
   background-color: var(--bg);
-  /* Gradientes muy sutiles sobre blanco para dar profundidad */
   background-image:
     radial-gradient(at 20% 0%, rgba(225,6,0,.05), transparent 70%),
     radial-gradient(at 80% 20%, rgba(81,214,255,.05), transparent 70%);
@@ -61,11 +58,11 @@ button{font-family:inherit}
 /* Textura de fondo (Invertida para que se note en blanco) */
 .wrap::before{
   content:""; position:fixed; inset:0; pointer-events:none;
-  opacity:.07; /* Muy sutil */
+  opacity:.07;
   background-image: url("/assets/baja1000-texture.webp");
   background-repeat: repeat;
   background-size: 300px auto;
-  filter: invert(1); /* Textura oscura */
+  filter: invert(1);
   mix-blend-mode: multiply;
 }
 
@@ -85,7 +82,7 @@ button{font-family:inherit}
 /* ---------- TOPBAR (Cristal Blanco) ---------- */
 .topbar{
   position:sticky; top:40px; z-index:40;
-  background: rgba(255,255,255,.88); /* Blanco translúcido */
+  background: rgba(255,255,255,.88);
   backdrop-filter: blur(20px) saturate(150%);
   border-bottom: 1px solid rgba(255,255,255,.5);
   box-shadow: 0 8px 24px rgba(0,0,0,.06);
@@ -98,7 +95,7 @@ button{font-family:inherit}
   border:1px solid var(--border-light);
   color:var(--text);
   padding:8px 16px;
-  border-radius:99px;
+  border-radius:999px;
   cursor:pointer;
   transition:all .2s ease;
   display:inline-flex; align-items:center; gap:10px;
@@ -119,10 +116,9 @@ button{font-family:inherit}
   border: 2px solid white;
 }
 
-/* ---------- HERO PRO (Con Imagen y Estructura) ---------- */
+/* ---------- HERO PRO (Card Flotante con Imagen) ---------- */
 .hero{ padding: 10px 12px 30px; position:relative; z-index:1; }
 
-/* La Card Flotante contiene la IMAGEN de fondo ahora */
 .heroContent{
   position:relative;
   width: min(var(--container), 100%);
@@ -132,19 +128,18 @@ button{font-family:inherit}
   overflow: hidden;
   box-shadow: var(--shadow-premium);
   text-align: center;
-  color: var(--text-inverse); /* Texto blanco dentro del hero */
+  color: var(--text-inverse);
   
-  /* ✅ FONDO IMAGEN + GRADIENTES RICOS DENTRO DE LA CARD */
+  /* FONDO IMAGEN + GRADIENTES RICOS DENTRO DE LA CARD */
   background:
-    linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.6) 50%, rgba(0,0,0,.85) 100%), /* Overlay dramático */
+    linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.6) 50%, rgba(0,0,0,.85) 100%),
     radial-gradient(at 20% 10%, rgba(225,6,0,.5), transparent 60%),
     radial-gradient(at 80% 30%, rgba(81,214,255,.3), transparent 60%),
     url("/assets/hero.webp");
   background-size: cover;
   background-position: center;
-  border: 1px solid rgba(255,255,255,.15); /* Borde sutil brillante */
+  border: 1px solid rgba(255,255,255,.15);
 }
-/* Textura interna sutil */
 .heroContent::before{
   content:""; position:absolute; inset:0;
   background: url("/assets/baja1000-texture.webp");
@@ -155,7 +150,7 @@ button{font-family:inherit}
 .hero-main-logo{ height:90px; width:auto; filter: drop-shadow(0 12px 24px rgba(0,0,0,.7)); }
 .hero-desert-seal{ height:80px; width:auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,.6)); }
 
-/* BLOQUE DE MARKETING PRO */
+/* BLOQUE DE MARCA */
 .marketing-block{
   display:flex; flex-direction:column; align-items:center; gap:8px;
   margin-bottom: 24px; position:relative; z-index:2;
@@ -168,7 +163,7 @@ button{font-family:inherit}
   display:flex; align-items:center; gap:12px;
   margin: 6px 0;
   padding: 10px 24px;
-  background: rgba(255,255,255,.1); /* Placa de vidrio sutil */
+  background: rgba(255,255,255,.1);
   backdrop-filter: blur(10px);
   border-radius: 99px;
   border: 1px solid rgba(255,255,255,.2);
@@ -186,7 +181,7 @@ button{font-family:inherit}
 }
 .btn.primary.hero-btn:hover{ transform: translateY(-3px); box-shadow: 0 18px 40px rgba(225,6,0,.6); }
 
-/* ---------- CATÁLOGOS (Vibrantes sobre Blanco) ---------- */
+/* ---------- CATÁLOGOS ---------- */
 .section{ padding: 50px 0; }
 .sectionHead h2{ color: var(--text); font-family: Teko, sans-serif; font-size:52px; margin:0; line-height:1; text-transform:uppercase; }
 .sectionHead p{ color: var(--muted); font-weight:700; letter-spacing:.05em; }
@@ -195,7 +190,6 @@ button{font-family:inherit}
 @media (max-width: 900px){ .grid{grid-template-columns: repeat(2, 1fr);} }
 @media (max-width: 500px){ .grid{grid-template-columns: 1fr;} }
 
-/* Cards con gradientes ricos que resaltan en blanco */
 .champItem{
   position:relative; min-height: 220px;
   border-radius: 30px; overflow:hidden; cursor:pointer;
@@ -206,7 +200,6 @@ button{font-family:inherit}
 }
 .champItem:hover{ transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-premium); }
 
-/* Gradientes Específicos */
 .c-b1000{ background: linear-gradient(135deg, #E10600, #8a0400); }
 .c-b500{ background: linear-gradient(135deg, #004e92, #000428); }
 .c-b400{ background: linear-gradient(135deg, #FF8008, #FFC837); }
@@ -217,11 +210,7 @@ button{font-family:inherit}
   background-image: url("/assets/baja1000-texture.webp");
   background-size: cover; opacity: .15; mix-blend-mode: overlay;
 }
-.champLogoTitle{
-  width: 80%; height: auto;
-  filter: drop-shadow(0 15px 25px rgba(0,0,0,.5));
-  position:relative; z-index:2;
-}
+.champLogoTitle{ width: 80%; height: auto; filter: drop-shadow(0 15px 25px rgba(0,0,0,.5)); position:relative; z-index:2; }
 .badge{
   position:absolute; top:16px; left:16px;
   background: rgba(255,255,255,.9); color: var(--text);
@@ -229,7 +218,7 @@ button{font-family:inherit}
   box-shadow: 0 4px 10px rgba(0,0,0,.1); z-index: 5;
 }
 
-/* ---------- PARTNERS (Limpios) ---------- */
+/* ---------- PARTNERS ---------- */
 .partners h3{ color: var(--muted); font-family: Teko; font-size:32px; text-align:center; }
 .partnersGrid{ display:flex; align-items:center; justify-content:center; gap: 40px; flex-wrap: wrap; padding: 20px 0; }
 .pLogo{ height: 55px; width: auto; filter: grayscale(100%) opacity(.6); transition: all .2s; }
@@ -239,57 +228,67 @@ button{font-family:inherit}
 /* ---------- DRAWER CARRITO (Glass Notable) ---------- */
 .drawer{
   position:fixed; top:0; right:0; width:min(440px,95vw); height:100vh; z-index:80;
-  /* EFECTO GLASS NOTABLE BLANCO */
   background: rgba(255,255,255,.80);
   backdrop-filter: blur(30px) saturate(180%);
   border-left: 1px solid rgba(255,255,255,.8);
   box-shadow: -20px 0 50px rgba(0,0,0,.15);
-  
   transform:translateX(105%); transition:transform .35s cubic-bezier(0.23, 1, 0.32, 1);
   display:flex; flex-direction:column;
 }
 .drawer.active{ transform:translateX(0); }
 .dHead{
   padding: 20px 24px;
-  background: rgba(255,255,255,.4); /* Capa extra para el header */
+  background: rgba(255,255,255,.4);
   border-bottom: 1px solid var(--border-light);
   display:flex; justify-content:space-between; align-items:center;
 }
 .dTitle{ font-family:Teko; font-size:32px; margin:0; color: var(--text); }
-.closeBtn{
-  background: rgba(0,0,0,.05); border:none; color:var(--text); width:40px; height:40px;
-  border-radius:12px; font-size:24px; cursor:pointer; transition:all .2s;
-}
-.closeBtn:hover{ background: rgba(0,0,0,.1); }
-
+.closeBtn{ background: rgba(0,0,0,.05); border:none; color:var(--text); width:40px; height:40px; border-radius:12px; font-size:24px; cursor:pointer; }
 .dBody{ padding: 24px; overflow-y:auto; flex:1; }
 
-/* Items del Carrito en Glass */
-.cartItem{
-  background: rgba(255,255,255,.6);
-  border: 1px solid rgba(255,255,255,.8);
-  box-shadow: 0 4px 15px rgba(0,0,0,.05);
-  color: var(--text);
-  margin-bottom: 12px;
-}
-.btnGhost{ border-color: var(--border-light); color: var(--text); }
+.cartItem{ background: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.8); color: var(--text); margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,.05); border-radius:12px; padding:10px; display:flex; gap:10px; }
+.cartItemLeft{ width:60px; height:60px; } .cartImg{ width:100%; height:100%; object-fit:contain; }
+.cartItemMid{ flex:1; } .cartTitle{ font-weight:800; font-size:13px; } .cartMeta{ font-size:12px; opacity:.7; }
+.cartQtyRow{ display:flex; gap:10px; margin-top:6px; align-items:center; }
+.btnGhost{ border: 1px solid var(--border-light); color: var(--text); background:transparent; border-radius:99px; cursor:pointer; padding:4px 8px; font-weight:800; }
 .btnGhost:hover{ background: rgba(0,0,0,.05); }
-hr{ border-color: var(--border-light); }
-
-/* Shipping & Totals en Glass */
-.radio-option, .sumRow, #shipForm input{
-  background: rgba(255,255,255,.5) !important;
-  border: 1px solid rgba(255,255,255,.8) !important;
-  color: var(--text) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.03);
-}
-.sumRow.total{ background: rgba(225,6,0,.08) !important; border-color: rgba(225,6,0,.2) !important; color: var(--red) !important; }
 
 /* ---------- FOOTER ---------- */
-.footer{ background: #111317; color: white; padding-top: 50px; border:none; }
-.footer a{ opacity:.7; transition:.2s; } .footer a:hover{ opacity:1; }
+.footer{ background: #111317; color: white; padding-top: 50px; border:none; margin-top:60px; }
+.footer a{ opacity:.7; transition:.2s; color:white; text-decoration:none; } .footer a:hover{ opacity:1; }
+.social-link { padding:8px 16px; border-radius:99px; background:rgba(255,255,255,.1); font-weight:700; font-size:13px; }
 
-/* UTILIDADES & OTROS */
+/* ---------- SPLASH & EXTRAS ---------- */
+#splash-screen{ position:fixed; inset:0; z-index:9999; background:#fff; display:flex; align-items:center; justify-content:center; transition:opacity .5s; }
+#splash-screen.hide{ opacity:0; pointer-events:none; }
+.splash-content{ text-align:center; width:300px; }
+.splash-logo{ width:120px; margin-bottom:20px; }
+.rpm-bar-container{ width:100%; height:6px; background:#eee; border-radius:99px; overflow:hidden; }
+.rpm-bar{ width:50%; height:100%; background:var(--red); animation:rpm 1s infinite alternate; }
+@keyframes rpm{ from{transform:translateX(-50%)} to{transform:translateX(150%)} }
+.splash-text{ margin-top:15px; font-weight:800; font-size:12px; letter-spacing:2px; color:#999; }
+
+/* BANNER COOKIES GLASS */
+.cookieBanner {
+  position: fixed; bottom: 20px; left: 20px; right: 20px; z-index: 9000;
+  max-width: 600px; margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  display: none; animation: slideUp .5s ease;
+}
+@keyframes slideUp { from { transform: translateY(100px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.cookieInner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.cookieText { font-size: 13px; color: var(--text); font-weight: 600; flex: 1; }
+.cookieActions { display: flex; gap: 10px; }
+.cookieBtn { padding: 10px 18px; border-radius: 99px; font-size: 12px; font-weight: 800; cursor: pointer; border: none; }
+.cookieBtn.primary { background: var(--green); color: white; box-shadow: 0 4px 10px rgba(0,155,77,0.3); }
+.cookieBtn.ghost { background: transparent; border: 1px solid rgba(0,0,0,0.1); color: var(--muted); }
+
+/* UTILS */
 .btn{ padding:14px 24px; border-radius:99px; font-weight:800; text-transform:uppercase; cursor:pointer; border:none; transition:all .2s; }
 .btn.primary{ background: linear-gradient(180deg, #ff2a1a, #E10600); color:white; box-shadow: 0 8px 20px rgba(225,6,0,.3); }
 .btn.primary:hover{ box-shadow: 0 12px 30px rgba(225,6,0,.4); transform:translateY(-2px); }
@@ -297,5 +296,7 @@ hr{ border-color: var(--border-light); }
 .page-overlay.active{ opacity:1; pointer-events:auto; }
 .modal{ position:fixed; inset:30px; z-index:70; background:var(--bg); border-radius:30px; box-shadow:var(--shadow-premium); opacity:0; pointer-events:none; transition:all .3s; display:flex; flex-direction:column; border:1px solid var(--border-light);}
 .modal.active{ opacity:1; pointer-events:auto; transform:translateY(0) scale(1); }
-/* ... (Estilos de producto pCard adaptados a claro) ... */
-.pCard{ background: var(--card); border:1px solid var(--border-light); box-shadow:var(--shadow-card); color:var(--text); }
+.pCard{ background: var(--card); border:1px solid var(--border-light); box-shadow:var(--shadow-card); color:var(--text); border-radius:18px; overflow:hidden; }
+.pMedia img{ width:100%; aspect-ratio:3/4; object-fit:contain; }
+.pBody{ padding:12px; } .pName{ font-weight:800; } .pPrice{ font-weight:900; color:var(--red); }
+.pSize{ width:100%; padding:8px; margin:8px 0; border-radius:8px; border:1px solid #ddd; }
