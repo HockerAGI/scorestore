@@ -17,8 +17,22 @@
     {
       "code": "SCORE10",
       "type": "percent",
-      "value": 0.10,
+      "value": 0.1,
       "description": "10% OFF Fans",
+      "active": true
+    },
+    {
+      "code": "BAJA200",
+      "type": "fixed_mxn",
+      "value": 200,
+      "description": "$200 MXN OFF",
+      "active": true
+    },
+    {
+      "code": "ENVIOFREE",
+      "type": "free_shipping",
+      "value": 0,
+      "description": "Envío Gratis",
       "active": true
     }
   ]
