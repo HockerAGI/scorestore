@@ -1,10 +1,7 @@
-/* SCORE STORE — styles.css v2.6.1 (RACING THEME + ASSET-ALIGNED)
-   - Respeta diseño v2.6.0 (pre-dark “nuevo”)
-   - Reincorpora assets del CSS antiguo:
-     /assets/fondo-pagina-score.webp
-     /assets/hero.webp
-     /assets/baja1000-texture.webp
-   - Compat con main.js: promoPop + swap, splash hide + hidden
+/* SCORE STORE — styles.css v2.6.2 (RACING THEME + INDEX-ALIGNED)
+   - Alineado al index actual (tag-pill, linkDanger, slide-in-top)
+   - Assets: /assets/fondo-pagina-score.webp /assets/hero.webp /assets/baja1000-texture.webp
+   - Compat main.js: promoPop + swap, splash hide + hidden, modalCatalog + drawer + overlay
 */
 
 :root{
@@ -32,9 +29,9 @@
 
 *{box-sizing:border-box}
 html,body{height:100%}
+html{scroll-behavior:smooth}
 body{
   margin:0;
-  /* ✅ Usa el fondo “oficial” del CSS antiguo */
   background:
     radial-gradient(1200px 700px at 20% -10%, rgba(225,6,0,.22), transparent 55%),
     radial-gradient(900px 600px at 90% 10%, rgba(81,214,255,.12), transparent 55%),
@@ -48,7 +45,7 @@ body{
   overflow-x:hidden;
 }
 
-/* compat: el main.js a veces pone la clase en html, a veces en body */
+/* compat: main.js puede poner no-scroll en html y/o body */
 body.no-scroll, html.no-scroll{overflow:hidden}
 
 a{color:inherit; text-decoration:none}
@@ -60,14 +57,13 @@ button{font-family:inherit}
 }
 .wrap{padding-bottom:60px}
 
-/* ---------- SUBTLE RACING TEXTURE (ALINEADO A ASSET ANTIGUO) ---------- */
+/* ---------- SUBTLE RACING TEXTURE ---------- */
 .wrap::before{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
   opacity:.12;
-  /* ✅ Integra la textura del CSS antiguo */
   background-image:
     url("/assets/baja1000-texture.webp"),
     linear-gradient(135deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px),
@@ -90,11 +86,7 @@ button{font-family:inherit}
   padding:10px 14px;
   background:
     linear-gradient(90deg, rgba(225,6,0,.95), rgba(255,42,26,.85)),
-    repeating-linear-gradient(
-      45deg,
-      rgba(0,0,0,.22) 0 10px,
-      rgba(255,255,255,.08) 10px 20px
-    );
+    repeating-linear-gradient(45deg, rgba(0,0,0,.22) 0 10px, rgba(255,255,255,.08) 10px 20px);
   border-bottom:1px solid rgba(255,255,255,.12);
   box-shadow: 0 10px 22px rgba(0,0,0,.32);
   cursor:pointer;
@@ -102,12 +94,12 @@ button{font-family:inherit}
   overflow:hidden;
 }
 .promo-highlight{
-  font-weight:800;
-  letter-spacing:.02em;
+  font-weight:900;
+  letter-spacing:.03em;
   text-shadow: 0 8px 20px rgba(0,0,0,.35);
 }
 #promo-text{
-  font-weight:700;
+  font-weight:800;
   opacity:.95;
   position:relative;
   padding-left:14px;
@@ -124,14 +116,14 @@ button{font-family:inherit}
   box-shadow:0 0 0 6px rgba(255,211,77,.18);
 }
 
-/* ✅ compat: tu main.js usa promoPop, y el css viejo usa swap */
+/* compat: main.js usa promoPop y/o swap */
 #promo-text.swap,
 #promo-text.promoPop{
   animation: promoSwap .55s ease;
 }
 @keyframes promoSwap{
-  0%{transform:translateY(8px); opacity:.2}
-  100%{transform:translateY(0); opacity:1}
+  0%{transform:translateY(10px) skewX(-8deg); opacity:.15}
+  100%{transform:translateY(0) skewX(0); opacity:1}
 }
 
 /* racing sweep */
@@ -150,6 +142,13 @@ button{font-family:inherit}
 @keyframes sweep{
   0%{transform:translateX(-40%) rotate(18deg)}
   100%{transform:translateX(260%) rotate(18deg)}
+}
+
+/* util: slide-in-top (tu index lo usa) */
+.slide-in-top{animation: slideInTop .55s ease both}
+@keyframes slideInTop{
+  0%{transform: translateY(-18px); opacity:.0}
+  100%{transform: translateY(0); opacity:1}
 }
 
 /* ---------- TOPBAR ---------- */
@@ -235,7 +234,6 @@ button{font-family:inherit}
   background:
     radial-gradient(1200px 600px at 20% 10%, rgba(225,6,0,.30), transparent 60%),
     radial-gradient(900px 600px at 80% 20%, rgba(81,214,255,.12), transparent 60%),
-    /* ✅ Usa el hero del CSS antiguo */
     url("/assets/hero.webp");
   background-size: cover;
   background-position:center;
@@ -245,8 +243,7 @@ button{font-family:inherit}
 .heroOverlay{
   position:absolute;
   inset:0;
-  background:
-    linear-gradient(180deg, rgba(7,8,10,.25), rgba(7,8,10,.92) 65%, rgba(7,8,10,1));
+  background: linear-gradient(180deg, rgba(7,8,10,.25), rgba(7,8,10,.92) 65%, rgba(7,8,10,1));
 }
 .heroContent{
   position:relative;
@@ -257,11 +254,35 @@ button{font-family:inherit}
   flex-direction:column;
   gap:18px;
 }
-.logos-row{
+
+/* pills (tu index los usa) */
+.tagline{
   display:flex;
-  align-items:center;
-  gap:16px;
+  gap:10px;
+  flex-wrap:wrap;
 }
+.tag-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:999px;
+  font-weight:900;
+  letter-spacing:.14em;
+  font-size:11px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(18,21,27,.30);
+  text-transform:uppercase;
+}
+.tag-pill.secondary{
+  background: rgba(81,214,255,.10);
+  border-color: rgba(81,214,255,.22);
+}
+.tag-pill.danger{
+  background: rgba(225,6,0,.14);
+  border-color: rgba(225,6,0,.28);
+}
+
+.logos-row{display:flex; align-items:center; gap:16px}
 .hero-main-logo{
   height:56px;
   width:auto;
@@ -288,17 +309,7 @@ button{font-family:inherit}
 }
 .neon-text{
   color: var(--red2);
-  text-shadow:
-    0 0 0 rgba(0,0,0,0),
-    0 10px 35px rgba(225,6,0,.35),
-    0 0 26px rgba(255,42,26,.22);
-}
-.tagline{
-  font-weight:900;
-  letter-spacing:.12em;
-  font-size:12px;
-  color: rgba(255,255,255,.9);
-  opacity:.95;
+  text-shadow: 0 10px 35px rgba(225,6,0,.35), 0 0 26px rgba(255,42,26,.22);
 }
 .marketing-copy{
   max-width: 720px;
@@ -326,16 +337,16 @@ button{font-family:inherit}
   cursor:pointer;
   transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
   box-shadow: var(--shadow2);
-  font-weight:800;
+  font-weight:900;
+  letter-spacing:.02em;
 }
 .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22)}
 .btn:active{transform: translateY(0)}
 .btn.primary{
-  background:
-    linear-gradient(180deg, rgba(255,42,26,.95), rgba(225,6,0,.92));
+  background: linear-gradient(180deg, rgba(255,42,26,.95), rgba(225,6,0,.92));
   border-color: rgba(255,255,255,.18);
 }
-.btn.secondary{ background: rgba(18,21,27,.35); }
+.btn.secondary{background: rgba(18,21,27,.35)}
 .btn.full{width:100%}
 .btn.small{padding:10px 14px; font-size:13px}
 .pulse-btn{animation: pulseRacing 1.8s ease-in-out infinite}
@@ -343,7 +354,6 @@ button{font-family:inherit}
   0%,100%{box-shadow: 0 10px 26px rgba(225,6,0,.22)}
   50%{box-shadow: 0 18px 40px rgba(225,6,0,.35)}
 }
-
 /* ---------- SECTIONS ---------- */
 .section{
   width:min(var(--container), calc(100% - 32px));
@@ -367,17 +377,13 @@ button{font-family:inherit}
 .sectionHead p{
   margin:0;
   color: var(--muted2);
-  font-weight:700;
+  font-weight:800;
   letter-spacing:.08em;
   font-size:12px;
 }
 
 /* ---------- COLLECTION GRID CARDS ---------- */
-.grid{
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:14px;
-}
+.grid{display:grid; grid-template-columns: repeat(4, 1fr); gap:14px}
 @media (max-width: 980px){ .grid{grid-template-columns: repeat(2, 1fr);} }
 @media (max-width: 520px){ .grid{grid-template-columns: 1fr;} }
 
@@ -394,21 +400,14 @@ button{font-family:inherit}
   box-shadow: var(--shadow);
   transition: transform .18s ease, border-color .18s ease;
 }
-.champItem:hover{
-  transform: translateY(-3px);
-  border-color: rgba(255,255,255,.18);
-}
+.champItem:hover{transform: translateY(-3px); border-color: rgba(255,255,255,.18)}
+
 .card-texture{
   position:absolute;
   inset:0;
-  /* ✅ mezcla patrón + textura (no satura) */
   background:
     url("/assets/baja1000-texture.webp"),
-    repeating-linear-gradient(
-      45deg,
-      rgba(255,255,255,.06) 0 10px,
-      transparent 10px 20px
-    );
+    repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px);
   background-size: 900px auto, auto;
   background-position: center top, center;
   background-repeat:no-repeat, repeat;
@@ -448,6 +447,7 @@ button{font-family:inherit}
   letter-spacing:.06em;
   font-size:12px;
 }
+
 /* ---------- PARTNERS ---------- */
 .partners{
   width:min(var(--container), calc(100% - 32px));
@@ -495,20 +495,17 @@ button{font-family:inherit}
   pointer-events:none;
   overflow:hidden;
 }
-.modal.active{
-  opacity:1;
-  transform: translateY(0);
-  pointer-events:auto;
-}
+.modal.active{opacity:1; transform: translateY(0); pointer-events:auto}
+
 .dHead{
+  position:relative;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
   padding: 14px 14px;
   border-bottom:1px solid rgba(255,255,255,.10);
-  background:
-    linear-gradient(180deg, rgba(18,21,27,.65), rgba(14,16,20,.35));
+  background: linear-gradient(180deg, rgba(18,21,27,.65), rgba(14,16,20,.35));
 }
 .dTitle{
   margin:0;
@@ -532,26 +529,21 @@ button{font-family:inherit}
   overflow:auto;
 }
 
-/* ---------- CATALOG TOP ---------- */
-.catTop{
+/* header dentro del modal (renderizado por JS) */
+.catHeaderBlock{
   display:flex;
   align-items:center;
-  justify-content:space-between;
   gap:12px;
   margin-bottom:12px;
+  padding:12px;
+  border-radius: var(--r2);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(18,21,27,.30);
 }
-.catHeader{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.catLogo{
-  height:42px;
-  width:auto;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,.55));
-}
+.catLogo{height:42px; width:auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,.55))}
 .catHeaderText{display:flex; flex-direction:column; gap:4px}
-.catTitle{ font-weight:900; letter-spacing:.06em; }
+.catTitleText{font-weight:900; letter-spacing:.06em}
+.catSubText{font-weight:900; color: var(--muted2); font-size:12px; letter-spacing:.10em}
 .catBadge{
   display:inline-flex;
   align-items:center;
@@ -566,18 +558,14 @@ button{font-family:inherit}
     repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 10px, transparent 10px 20px),
     rgba(225,6,0,.12);
 }
-.catCount{
-  font-weight:900;
-  color: var(--muted2);
-  font-size:12px;
-  letter-spacing:.10em;
-}
 
-/* ---------- PRODUCT GRID ---------- */
+/* grid del catálogo */
+.catItems{margin-top:10px}
 .catGrid{grid-template-columns: repeat(3, 1fr)}
 @media (max-width: 980px){ .catGrid{grid-template-columns: repeat(2, 1fr)} }
 @media (max-width: 520px){ .catGrid{grid-template-columns: 1fr} }
 
+/* cards producto (alineado a JS) */
 .pCard{
   border-radius: var(--r2);
   border:1px solid rgba(255,255,255,.10);
@@ -589,20 +577,8 @@ button{font-family:inherit}
   transition: transform .18s ease, border-color .18s ease;
 }
 .pCard:hover{transform: translateY(-3px); border-color: rgba(255,255,255,.18)}
-.pMedia{
-  position:relative;
-  display:block;
-  border:0;
-  padding:0;
-  background:transparent;
-  cursor:pointer;
-}
-.pMedia img{
-  width:100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  filter: contrast(1.05) saturate(1.05);
-}
+.pMedia{position:relative; display:block; border:0; padding:0; background:transparent; cursor:pointer}
+.pMedia img{width:100%; aspect-ratio: 4 / 3; object-fit: cover; filter: contrast(1.05) saturate(1.05)}
 .pZoom{
   position:absolute;
   right:12px;
@@ -618,22 +594,11 @@ button{font-family:inherit}
   backdrop-filter: blur(6px);
 }
 .pBody{padding: 12px}
-.pName{ font-weight:900; letter-spacing:.02em; }
-.pMeta{
-  margin-top:8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.pSku{ font-size:12px; color: var(--muted2); font-weight:800; }
-.pPrice{ font-weight:900; color: rgba(255,255,255,.95); }
-.pActions{
-  margin-top:10px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+.pName{font-weight:900; letter-spacing:.02em}
+.pMeta{margin-top:8px; display:flex; align-items:center; justify-content:space-between; gap:10px}
+.pSku{font-size:12px; color: var(--muted2); font-weight:800}
+.pPrice{font-weight:900; color: rgba(255,255,255,.95)}
+.pActions{margin-top:10px; display:flex; align-items:center; gap:10px}
 .pSize{
   flex:1;
   padding:10px 12px;
@@ -644,7 +609,7 @@ button{font-family:inherit}
   outline:none;
 }
 
-/* ---------- QUICK VIEW ---------- */
+/* ---------- QUICK VIEW (opcional, lo inyecta JS) ---------- */
 .quickView{
   display:none;
   margin-bottom:14px;
@@ -656,23 +621,12 @@ button{font-family:inherit}
   box-shadow: var(--shadow);
 }
 .quickView.active{display:block; animation: qvIn .22s ease}
-@keyframes qvIn{
-  0%{opacity:.2; transform: translateY(10px)}
-  100%{opacity:1; transform: translateY(0)}
-}
-.qvInner{
-  display:grid;
-  grid-template-columns: 1.05fr .95fr;
-  gap:12px;
-  padding:12px;
-  position:relative;
-}
+@keyframes qvIn{0%{opacity:.2; transform: translateY(10px)} 100%{opacity:1; transform: translateY(0)}}
+.qvInner{display:grid; grid-template-columns: 1.05fr .95fr; gap:12px; padding:12px; position:relative}
 @media (max-width: 860px){ .qvInner{grid-template-columns: 1fr} }
 .qvClose{
-  position:absolute;
-  top:10px; right:10px;
-  width:42px;height:42px;
-  border-radius: 14px;
+  position:absolute; top:10px; right:10px;
+  width:42px;height:42px; border-radius: 14px;
   border:1px solid rgba(255,255,255,.14);
   background: rgba(10,12,16,.35);
   color:var(--text);
@@ -687,13 +641,7 @@ button{font-family:inherit}
   object-fit: cover;
   border:1px solid rgba(255,255,255,.10);
 }
-.qvThumbs{
-  margin-top:10px;
-  display:flex;
-  gap:10px;
-  overflow:auto;
-  padding-bottom:6px;
-}
+.qvThumbs{margin-top:10px; display:flex; gap:10px; overflow:auto; padding-bottom:6px}
 .qvThumb{
   border:1px solid rgba(255,255,255,.12);
   background: rgba(10,12,16,.28);
@@ -707,22 +655,12 @@ button{font-family:inherit}
 .qvThumb.active{border-color: rgba(255,255,255,.22); opacity:1}
 .qvThumb img{width:100%; height:54px; object-fit:cover}
 .qvInfo{padding:4px 2px}
-.qvTitle{
-  font-family: Teko, Inter, sans-serif;
-  font-size:34px;
-  letter-spacing:.04em;
-  margin:0 0 10px;
-}
-.qvRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
+.qvTitle{font-family: Teko, Inter, sans-serif; font-size:34px; letter-spacing:.04em; margin:0 0 10px}
+.qvRow{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
 .qvSku{color: var(--muted2); font-weight:900; font-size:12px; letter-spacing:.10em}
 .qvPrice{font-weight:900; font-size:18px}
 .qvLabel{font-weight:900; letter-spacing:.10em; font-size:12px; color: var(--muted2)}
+
 .inputField{
   width:100%;
   padding:12px 14px;
@@ -732,9 +670,8 @@ button{font-family:inherit}
   color: var(--text);
   outline:none;
 }
-.qvNote{margin-top:10px; color: var(--muted2); font-weight:800}
 
-/* ---------- DRAWER (CART) — MEJORADO SIN CAMBIAR ESTRUCTURA ---------- */
+/* ---------- DRAWER (CART) ---------- */
 .drawer{
   position:fixed;
   top:0; right:0;
@@ -752,29 +689,23 @@ button{font-family:inherit}
   transition: transform .22s ease, opacity .22s ease;
   overflow:hidden;
 }
-.drawer.active{
-  transform: translateX(0);
-  opacity:1;
-  pointer-events:auto;
-}
-.drawer .dHead{ position:sticky; top:0; z-index:2; }
+.drawer.active{transform: translateX(0); opacity:1; pointer-events:auto}
+.drawer .dHead{position:sticky; top:0; z-index:2}
 
 /* racing header line */
 .drawer .dHead::after{
   content:"";
   position:absolute;
-  left:0;
-  bottom:0;
+  left:0; bottom:0;
   width:100%;
   height:3px;
-  background:
-    linear-gradient(90deg, var(--red), rgba(255,211,77,.9), var(--cyan), transparent);
+  background: linear-gradient(90deg, var(--red), rgba(255,211,77,.9), var(--cyan), transparent);
   opacity:.9;
 }
 
-/* speed bar (opcional, si existe en HTML) */
+/* cart speed bar (opcional, JS lo agrega) */
 .cartSpeedWrap{
-  margin: 10px 0 0;
+  margin: 10px 0 6px;
   width:100%;
   height:10px;
   border-radius:999px;
@@ -792,25 +723,10 @@ button{font-family:inherit}
   transition: width .35s ease;
 }
 
-/* ---------- CART ITEMS (COMPAT: tu main usa .cartItem) ---------- */
+/* ---------- CART ITEMS (tu HTML usa .cartItem) ---------- */
 #cartItems{display:flex; flex-direction:column; gap:12px}
-#cartEmpty{display:none}
+#cartEmpty{color: var(--muted2); font-weight:900; padding:6px 2px}
 
-.cartEmptyCard{
-  padding:14px;
-  border-radius: var(--r2);
-  border:1px dashed rgba(255,255,255,.18);
-  background: rgba(18,21,27,.30);
-}
-.cecTitle{
-  font-weight:900;
-  letter-spacing:.12em;
-  font-size:12px;
-  color: rgba(255,211,77,.95);
-}
-.cecText{margin-top:8px; color: var(--muted2); font-weight:800}
-
-/* ✅ Soporta tu HTML actual del carrito */
 .cartItem{
   display:grid;
   grid-template-columns: 92px 1fr 42px;
@@ -830,8 +746,7 @@ button{font-family:inherit}
   position:absolute;
   inset:0;
   opacity:.14;
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 10px, transparent 10px 20px);
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 10px, transparent 10px 20px);
   mix-blend-mode: overlay;
   pointer-events:none;
 }
@@ -843,30 +758,13 @@ button{font-family:inherit}
   background: rgba(0,0,0,.25);
   align-self:start;
 }
-.cartImg{
-  width:100%;
-  height:72px;
-  object-fit:cover;
-  filter: contrast(1.05) saturate(1.05);
-}
-.cartItemMid{ position:relative; z-index:1; }
-.cartTitle{ font-weight:900; line-height:1.2; }
-.cartMeta{ margin-top:6px; color: var(--muted2); font-weight:800; font-size:12px; }
-.cartQtyRow{
-  margin-top:10px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.cartQtyNum{ min-width:22px; text-align:center; font-weight:900; }
-
-.cartItemRight{
-  position:relative;
-  z-index:1;
-  display:flex;
-  justify-content:flex-end;
-  align-items:flex-start;
-}
+.cartImg{width:100%; height:72px; object-fit:cover; filter: contrast(1.05) saturate(1.05)}
+.cartItemMid{position:relative; z-index:1}
+.cartTitle{font-weight:900; line-height:1.2}
+.cartMeta{margin-top:6px; color: var(--muted2); font-weight:800; font-size:12px}
+.cartQtyRow{margin-top:10px; display:flex; align-items:center; gap:10px}
+.cartQtyNum{min-width:22px; text-align:center; font-weight:900}
+.cartItemRight{position:relative; z-index:1; display:flex; justify-content:flex-end; align-items:flex-start}
 
 .btnGhost{
   border:1px solid rgba(255,255,255,.14);
@@ -878,10 +776,10 @@ button{font-family:inherit}
   font-weight:900;
   transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
-.btnGhost:hover{ transform: translateY(-1px); background: rgba(255,42,26,.14); border-color: rgba(255,255,255,.22); }
+.btnGhost:hover{transform: translateY(-1px); background: rgba(255,42,26,.14); border-color: rgba(255,255,255,.22)}
 
 /* ---------- SHIPPING SELECTOR / SUMMARY ---------- */
-.shipSelector{ display:flex; flex-direction:column; gap:10px; }
+.shipSelector{display:flex; flex-direction:column; gap:10px}
 .radio-option{
   display:flex;
   gap:10px;
@@ -892,7 +790,7 @@ button{font-family:inherit}
   background: rgba(18,21,27,.30);
 }
 .radio-option input{margin-top:4px; accent-color: var(--red)}
-.radio-option div{ font-weight:800; color: rgba(255,255,255,.92); }
+.radio-option div{font-weight:900; color: rgba(255,255,255,.92)}
 .radio-option b{color: rgba(255,211,77,.95)}
 
 .sumRow{
@@ -914,10 +812,23 @@ button{font-family:inherit}
 }
 .muted{color: var(--muted2); font-weight:800}
 .flash{animation: flash .45s ease}
-@keyframes flash{
-  0%{transform: scale(.98); opacity:.65}
-  100%{transform: scale(1); opacity:1}
+@keyframes flash{0%{transform: scale(.98); opacity:.65}100%{transform: scale(1); opacity:1}}
+
+/* linkDanger (tu index lo usa) */
+.linkDanger{
+  display:inline-flex;
+  justify-content:center;
+  width:100%;
+  padding:10px 12px;
+  border-radius: 999px;
+  border:1px solid rgba(255,42,26,.24);
+  background: rgba(225,6,0,.10);
+  color: rgba(255,255,255,.92);
+  font-weight:900;
+  letter-spacing:.04em;
+  cursor:pointer;
 }
+.linkDanger:hover{background: rgba(225,6,0,.16)}
 
 /* ---------- TOAST ---------- */
 .toast{
@@ -942,7 +853,7 @@ button{font-family:inherit}
   transition: all .18s ease;
 }
 
-/* ---------- FOOTER (PRO) ---------- */
+/* ---------- FOOTER ---------- */
 .footer{
   margin-top: 32px;
   border-top:1px solid rgba(255,255,255,.10);
@@ -956,7 +867,7 @@ button{font-family:inherit}
   gap:16px;
   padding: 26px 0;
 }
-@media (max-width: 980px){ .footerInner{grid-template-columns: 1fr 1fr; } }
+@media (max-width: 980px){ .footerInner{grid-template-columns: 1fr 1fr;} }
 @media (max-width: 540px){ .footerInner{grid-template-columns: 1fr;} }
 
 .fCol h4{
@@ -971,19 +882,9 @@ button{font-family:inherit}
   letter-spacing:.08em;
   margin-bottom:8px;
 }
-.fText{
-  margin:0;
-  color: var(--muted2);
-  font-weight:800;
-  line-height:1.5;
-}
+.fText{margin:0; color: var(--muted2); font-weight:800; line-height:1.5}
 .footerLinks{display:flex; flex-direction:column; gap:10px; margin-top:6px}
-.footerLinks a{
-  color: rgba(255,255,255,.88);
-  font-weight:900;
-  opacity:.9;
-  transition: opacity .15s ease, transform .15s ease;
-}
+.footerLinks a{color: rgba(255,255,255,.88); font-weight:900; opacity:.9; transition: opacity .15s ease, transform .15s ease}
 .footerLinks a:hover{opacity:1; transform: translateX(2px)}
 .social-row{display:flex; gap:10px; flex-wrap:wrap}
 .social-link{
@@ -1002,8 +903,7 @@ button{font-family:inherit}
   padding:12px 14px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
-  background:
-    linear-gradient(180deg, rgba(255,211,77,.18), rgba(18,21,27,.25));
+  background: linear-gradient(180deg, rgba(255,211,77,.18), rgba(18,21,27,.25));
   font-weight:900;
 }
 .copy{
@@ -1027,15 +927,10 @@ button{font-family:inherit}
   align-items:center;
   justify-content:center;
 }
-/* ✅ compat con CSS viejo (.hidden) y nuevo (.hide) */
 #splash-screen.hide,
-#splash-screen.hidden{
-  animation: splashOut .85s ease forwards;
-}
-@keyframes splashOut{
-  0%{opacity:1}
-  100%{opacity:0; transform: translateY(-8px)}
-}
+#splash-screen.hidden{animation: splashOut .85s ease forwards}
+@keyframes splashOut{0%{opacity:1}100%{opacity:0; transform: translateY(-8px)}}
+
 .splash-content{
   width:min(420px, 88vw);
   text-align:center;
@@ -1058,12 +953,7 @@ button{font-family:inherit}
   animation: sweep 2.4s linear infinite;
   opacity:.45;
 }
-.splash-logo{
-  height:64px;
-  width:auto;
-  margin:0 auto 16px;
-  filter: drop-shadow(0 14px 30px rgba(0,0,0,.6));
-}
+.splash-logo{height:64px; width:auto; margin:0 auto 16px; filter: drop-shadow(0 14px 30px rgba(0,0,0,.6))}
 .rpm-bar-container{
   width:100%;
   height:12px;
@@ -1086,23 +976,11 @@ button{font-family:inherit}
   50%{transform: translateX(110%)}
   100%{transform: translateX(-20%)}
 }
-.splash-text{
-  margin:14px 0 0;
-  font-weight:900;
-  letter-spacing:.12em;
-  font-size:12px;
-  color: rgba(255,255,255,.92);
-}
+.splash-text{margin:14px 0 0; font-weight:900; letter-spacing:.12em; font-size:12px; color: rgba(255,255,255,.92)}
 
-/* ---------- SCROLL REVEAL (light) ---------- */
-.scroll-reveal{
-  opacity:0;
-  transform: translateY(10px);
-  animation: reveal .65s ease forwards;
-}
-@keyframes reveal{
-  to{opacity:1; transform: translateY(0)}
-}
+/* ---------- SCROLL REVEAL ---------- */
+.scroll-reveal{opacity:0; transform: translateY(10px); animation: reveal .65s ease forwards}
+@keyframes reveal{to{opacity:1; transform: translateY(0)}}
 
 /* ---------- SMALL FIXES ---------- */
 hr{border-color: rgba(255,255,255,.10)}
