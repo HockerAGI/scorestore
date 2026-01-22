@@ -2,12 +2,34 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Información Legal · SCORE Store</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_FIX" />
+  <meta name="theme-color" content="#E10600" />
+
+  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="/css/styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView'); // Trackear visita a legales
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" /></noscript>
 </head>
+
 <body>
   <header class="topbar">
     <div class="container topbarInner">
@@ -23,22 +45,79 @@
 
     <section id="privacidad" class="legalCard">
       <h2 class="h2">1. AVISO DE PRIVACIDAD INTEGRAL</h2>
-      <p class="p"><strong>Responsable:</strong> BAJATEX, S. de R.L. de C.V.</p>
-      <h3 style="font-size:18px;margin:10px 0; color:#111;">Datos Personales:</h3>
+      <p class="p">
+        De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares, se informa que el responsable de la operación de este sitio es:
+      </p>
+      <div style="background:#f9f9f9; padding:15px; border-left:4px solid #E10600; margin:15px 0;">
+        <p class="p" style="margin:0; font-weight:bold; color:#000;">BAJATEX, S. de R.L. de C.V.</p>
+        <p class="p" style="margin:0; font-size:14px; color:#555;">RFC: BAJ220613P51</p>
+        <p class="p" style="margin:0; font-size:14px; color:#555;">Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, B.C., México.</p>
+      </div>
+      <h3 style="font-size:18px; margin:10px 0; color:#111;">Finalidad de Datos:</h3>
       <ul class="ul">
-        <li>Nombre, teléfono, correo, dirección.</li>
-        <li>Datos fiscales (si aplica factura).</li>
+        <li>Procesamiento de pedidos, pagos y facturación.</li>
+        <li>Envío de mercancía a domicilio (Nacional e Internacional).</li>
+        <li>Atención al cliente y notificaciones sobre el estatus de compra.</li>
+      </ul>
+    </section>
+
+    <section id="terminos" class="legalCard">
+      <h2 class="h2">2. TÉRMINOS Y CONDICIONES</h2>
+      <p class="p">Al realizar una compra en SCORE Store, usted acepta los siguientes términos:</p>
+      <ul class="ul">
+        <li><strong>Precios:</strong> Todos los precios están en Pesos Mexicanos (MXN) e incluyen IVA.</li>
+        <li><strong>Disponibilidad:</strong> El stock es limitado. En caso de agotarse un producto pagado, se ofrecerá reembolso o cambio.</li>
+        <li><strong>Pagos:</strong> Procesados de forma segura vía Stripe. No almacenamos datos sensibles de tarjetas.</li>
       </ul>
     </section>
 
     <section id="envios" class="legalCard">
-        <h2 class="h2">3. ENVÍOS</h2>
-        <p class="p">Envíos nacionales vía Envia.com (3-5 días hábiles). Envíos a USA disponibles.</p>
+      <h2 class="h2">3. POLÍTICA DE ENVÍOS</h2>
+      <p class="p">Los pedidos se procesan en un lapso de 24 a 48 horas hábiles.</p>
+      <ul class="ul">
+        <li><strong>Nacional (MX):</strong> Envío estándar (3-7 días hábiles) operado por paqueterías certificadas (Envia.com).</li>
+        <li><strong>Internacional (USA):</strong> Envíos a Estados Unidos disponibles (5-10 días hábiles).</li>
+        <li><strong>Local (Tijuana):</strong> Opción de entrega Express o Recolección en Fábrica (sin costo).</li>
+      </ul>
+    </section>
+
+    <section id="devoluciones" class="legalCard">
+      <h2 class="h2">4. CAMBIOS Y DEVOLUCIONES</h2>
+      <p class="p">
+        Debido a la naturaleza de los productos (Ropa y Accesorios), solo se aceptan cambios por <strong>defecto de fabricación</strong> comprobable.
+      </p>
+      <ul class="ul">
+        <li>El cliente dispone de 5 días naturales tras recibir el paquete para reportar cualquier incidencia.</li>
+        <li>El producto debe estar nuevo, sin uso y con sus etiquetas originales.</li>
+        <li>No se realizan reembolsos en efectivo por cambio de opinión.</li>
+      </ul>
+    </section>
+
+    <section id="facturacion" class="legalCard">
+      <h2 class="h2">5. FACTURACIÓN (CFDI)</h2>
+      <p class="p">
+        Si requiere factura, deberá solicitarla dentro del <strong>mismo mes fiscal</strong> de su compra enviando su Constancia de Situación Fiscal actualizada y número de pedido a:
+      </p>
+      <p class="p" style="font-weight:bold; color:#E10600; text-align:center; font-size:18px;">
+        ✉️ ventas.unicotextil@gmail.com
+      </p>
+    </section>
+
+    <section id="contacto" class="legalCard">
+      <h2 class="h2">CONTACTO OFICIAL</h2>
+      <p class="p">Para cualquier duda o aclaración sobre su pedido:</p>
+      <p class="p">
+        <strong>Atención al Cliente:</strong><br>
+        📞 WhatsApp: <a href="https://wa.me/526642368701" style="color:#E10600; text-decoration:none;">+52 664 236 8701</a><br>
+        📧 Correo: ventas.unicotextil@gmail.com
+      </p>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="copy"><small>© 2026 SCORE Store · Operado por BAJATEX</small></div>
+    <div class="copy" style="color:#666;">
+      <small>© 2026 SCORE Store · Operado por BAJATEX S. de R.L. de C.V.</small>
+    </div>
   </footer>
 </body>
 </html>
