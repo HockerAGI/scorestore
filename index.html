@@ -4,16 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE | Tienda Oficial - Fabricado por Único</title>
-  
+
   <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
-  
+
   <meta property="og:title" content="SCORE Store | Tienda Oficial" />
   <meta property="og:description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
   <meta property="og:image" content="https://scorestore.netlify.app/assets/og-score.webp" />
   <meta property="og:url" content="https://scorestore.netlify.app" />
   <meta property="og:type" content="website" />
-  
+
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="SCORE Store | Tienda Oficial" />
   <meta name="twitter:description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
@@ -22,10 +22,14 @@
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Preload LCP image (Hero) -->
+  <link rel="preload" as="image" href="/assets/hero.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="/assets/logo-score.webp" fetchpriority="high" />
 
   <link rel="stylesheet" href="/css/styles.css?v=FINAL_FIX" />
 </head>
@@ -44,8 +48,8 @@
 
   <!-- Promo Bar -->
   <div class="promo-bar slide-in-top" id="promo-bar">
-    <span class="promo-highlight">🔥 EDICIÓN LIMITADA</span>
-    <span id="promo-text">ENVÍOS MX / USA · FABRICADO EN TIJUANA</span>
+    <span class="promo-highlight">🔥 HASTA 80% OFF</span>
+    <span id="promo-text">STOCK LIMITADO · ENVÍO MX/USA · HECHO EN TIJUANA</span>
   </div>
 
   <!-- Header -->
@@ -66,26 +70,32 @@
 
   <main class="wrap">
     <!-- Hero -->
-    <section class="hero scroll-reveal">
+    <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="logos-row">
-          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" />
-          <img src="/assets/sello-desierto.webp" alt="Desert Certified" class="hero-desert-seal" />
+        <div class="tagline">
+          <span class="tag-pill">TIENDA OFICIAL 2026</span>
+          <span class="tag-pill secondary">EDICIÓN LIMITADA</span>
+          <span class="tag-pill danger">HASTA 80% OFF</span>
         </div>
 
-        <h1 class="hero-title">TIENDA OFICIAL <span class="neon-text">SCORE</span></h1>
+        <div class="logos-row">
+          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" fetchpriority="high" />
+          <img src="/assets/logo-world-desert.webp" alt="World Desert Certified" class="hero-desert-seal" loading="lazy" />
+        </div>
 
-        <div class="tagline">FABRICADO POR ÚNICO UNIFORMES</div>
+        <h1 class="hero-title">SCORE STORE</h1>
 
         <p class="marketing-copy">
-          Merch oficial para fans, crews y pilotos. Ediciones especiales de
+          <strong>Ofertas especiales por temporada.</strong> Merch oficial para fans, crews y pilotos:
           <strong>Baja 1000</strong>, <strong>Baja 500</strong>, <strong>Baja 400</strong> y <strong>San Felipe 250</strong>.
+          <br />
+          <span class="muted">Fabricado y operado por Único Uniformes (Tijuana).</span>
         </p>
 
         <div class="ctaRow">
-          <a href="#collections" class="btn primary pulse-btn">VER COLECCIONES</a>
+          <a href="#collections" class="btn primary pulse-btn">VER OFERTAS</a>
           <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
         </div>
       </div>
@@ -128,9 +138,8 @@
       </div>
     </section>
   </main>
-
-  <!-- Modal Catalog -->
-  <div class="modal" id="modalCatalog">
+<!-- Modal Catalog -->
+  <div id="modalCatalog" class="modal">
     <div class="dHead">
       <h3 class="dTitle" id="catTitle">COLECCIÓN</h3>
       <button class="closeBtn" onclick="closeAll()">×</button>
@@ -186,7 +195,6 @@
       <div class="sumRow total"><span>Total</span><strong id="grandTotal">$0</strong></div>
 
       <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR AHORA</button>
-
       <button class="linkDanger" onclick="emptyCart()" style="margin-top:12px;">Vaciar carrito</button>
     </div>
   </aside>
@@ -229,7 +237,8 @@
     </div>
     <div class="copy"><small>© 2026 SCORE Store · Operado por BAJATEX</small></div>
   </footer>
-<!-- CONFIG ÚNICA (debe ir ANTES del Pixel para que lo lea) -->
+
+  <!-- CONFIG ÚNICA (debe ir ANTES del Pixel) -->
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
