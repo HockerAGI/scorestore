@@ -1,5 +1,5 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v27 (SINCRONIZADA) */
-const CACHE_NAME = "score-store-v26";
+/* sw.js - VERSIÓN DE PRODUCCIÓN v28 (SINCRONIZADA) */
+const CACHE_NAME = "score-store-v28";
 
 // Lista crítica de assets para precarga
 const ASSETS = [
