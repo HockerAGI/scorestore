@@ -1,7 +1,6 @@
 /* SCORE STORE — styles.css v2.6.2 (RACING THEME + INDEX-ALIGNED)
-   - Alineado al index actual (tag-pill, linkDanger, slide-in-top)
-   - Assets: /assets/fondo-pagina-score.webp /assets/hero.webp /assets/baja1000-texture.webp
-   - Compat main.js: promoPop + swap, splash hide + hidden, modalCatalog + drawer + overlay
+   - FIXES: overlay id, pZoom backdrop-filter, android perf
+   - UI: topbar blanca + iconos verdes, hero card, partners no-card, product vertical contain
 */
 
 :root{
@@ -72,6 +71,7 @@ button{font-family:inherit}
   background-position: center top, center, center;
   background-repeat:no-repeat, repeat, repeat;
   mix-blend-mode: overlay;
+  will-change: opacity; /* ✅ perf Android */
 }
 
 /* ---------- PROMO BAR (RACING) ---------- */
@@ -151,14 +151,14 @@ button{font-family:inherit}
   100%{transform: translateY(0); opacity:1}
 }
 
-/* ---------- TOPBAR ---------- */
+/* ---------- TOPBAR (BLANCA + TRANSPARENTE) ---------- */
 .topbar{
   position:sticky;
   top:52px;
   z-index:40;
-  backdrop-filter: blur(12px);
-  background: rgba(10,12,16,.56);
-  border-bottom: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,.72);
+  border-bottom: 1px solid rgba(0,0,0,.10);
 }
 .topbarInner{
   display:flex;
@@ -167,28 +167,35 @@ button{font-family:inherit}
   padding:14px 0;
 }
 .brandLogo{
-  height:44px;
+  height:46px;
   width:auto;
-  filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.22));
   transform: translateZ(0);
 }
 .navRight{display:flex; gap:10px; align-items:center}
 .cartBtn{
   position:relative;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(18,21,27,.55);
-  color:var(--text);
+  border:1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.78);
+  color:#0a0c10;
   padding:10px 14px;
   border-radius:999px;
   cursor:pointer;
   transition: transform .18s ease, background .18s ease, border-color .18s ease;
-  box-shadow: var(--shadow2);
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
 }
 .cartBtn:hover{
   transform: translateY(-1px);
-  background: rgba(18,21,27,.72);
-  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,0,0,.18);
 }
+
+/* ✅ Iconos verdes (si usas svg/span.icon) */
+.cartBtn .icon, .cartBtn svg, .icon{
+  color:#19b36b;
+  fill: currentColor;
+}
+
 .cartCount{
   position:absolute;
   top:-8px;
@@ -203,10 +210,11 @@ button{font-family:inherit}
   display:flex;
   align-items:center;
   justify-content:center;
-  border:2px solid rgba(10,12,16,.9);
+  border:2px solid rgba(255,255,255,.85);
 }
 
-/* ---------- OVERLAY ---------- */
+/* ---------- OVERLAY (main.js usa #overlay) ---------- */
+#overlay,
 .page-overlay{
   position:fixed;
   inset:0;
@@ -217,16 +225,18 @@ button{font-family:inherit}
   pointer-events:none;
   transition: opacity .22s ease;
 }
+#overlay.active,
 .page-overlay.active{
   opacity:1;
   pointer-events:auto;
 }
 
-/* ---------- HERO ---------- */
+/* ---------- HERO (CARD FLOTANTE) ---------- */
 .hero{
   position:relative;
   border-bottom:1px solid rgba(255,255,255,.08);
   overflow:hidden;
+  padding: 0 6px 18px; /* ✅ */
 }
 .heroBg{
   position:absolute;
@@ -248,11 +258,15 @@ button{font-family:inherit}
 .heroContent{
   position:relative;
   width:min(var(--container), calc(100% - 32px));
-  margin:0 auto;
-  padding: 56px 0 54px;
+  margin: 18px auto 0;
+  padding: 34px 18px 28px;
+  border-radius: var(--r2);
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(12,14,18,.58);
+  box-shadow: 0 18px 55px rgba(0,0,0,.38);
   display:flex;
   flex-direction:column;
-  gap:18px;
+  gap:16px;
 }
 
 /* pills (tu index los usa) */
@@ -282,14 +296,14 @@ button{font-family:inherit}
   border-color: rgba(225,6,0,.28);
 }
 
-.logos-row{display:flex; align-items:center; gap:16px}
+.logos-row{display:flex; align-items:center; gap:16px; justify-content:center;} /* ✅ */
 .hero-main-logo{
-  height:56px;
+  height:74px; /* ✅ */
   width:auto;
   filter: drop-shadow(0 14px 30px rgba(0,0,0,.6));
 }
 .hero-desert-seal{
-  height:52px;
+  height:64px; /* ✅ */
   width:auto;
   opacity:.92;
   filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
@@ -299,14 +313,10 @@ button{font-family:inherit}
   0%,100%{transform: translateY(0) rotate(-.5deg)}
   50%{transform: translateY(-2px) rotate(.6deg)}
 }
-.hero-title{
-  font-family: Teko, Inter, sans-serif;
-  font-size: clamp(42px, 6vw, 74px);
-  line-height:.95;
-  margin:0;
-  letter-spacing:.02em;
-  text-shadow: 0 22px 45px rgba(0,0,0,.65);
-}
+
+/* blindaje visual del H1 */
+.hero-title{display:none;}
+
 .neon-text{
   color: var(--red2);
   text-shadow: 0 10px 35px rgba(225,6,0,.35), 0 0 26px rgba(255,42,26,.22);
@@ -449,7 +459,7 @@ button{font-family:inherit}
   font-size:12px;
 }
 
-/* ---------- PARTNERS ---------- */
+/* ---------- PARTNERS (SIN TARJETA) ---------- */
 .partners{
   width:min(var(--container), calc(100% - 32px));
   margin:0 auto;
@@ -459,26 +469,25 @@ button{font-family:inherit}
   margin:0 0 14px;
   text-align:center;
   font-weight:900;
-  letter-spacing:.06em;
+  letter-spacing:.08em;
   color: rgba(255,255,255,.92);
 }
 .partnersGrid{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:22px;
+  gap:26px;
   flex-wrap:wrap;
-  padding: 14px;
-  border-radius: var(--r2);
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(18,21,27,.45);
-  box-shadow: var(--shadow2);
+  padding: 6px 0 0;
+  border:0;
+  background: transparent;
+  box-shadow:none;
 }
 .pLogo{
-  height:42px;
+  height:56px;
   width:auto;
-  opacity:.95;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,.5));
+  opacity:.98;
+  filter: drop-shadow(0 12px 20px rgba(0,0,0,.45));
 }
 
 /* ---------- MODAL ---------- */
@@ -579,7 +588,16 @@ button{font-family:inherit}
 }
 .pCard:hover{transform: translateY(-3px); border-color: rgba(255,255,255,.18)}
 .pMedia{position:relative; display:block; border:0; padding:0; background:transparent; cursor:pointer}
-.pMedia img{width:100%; aspect-ratio: 4 / 3; object-fit: cover; filter: contrast(1.05) saturate(1.05)}
+
+/* ✅ productos verticales sin recorte */
+.pMedia img{
+  width:100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: rgba(0,0,0,.18);
+  filter: contrast(1.02) saturate(1.03);
+}
+
 .pZoom{
   position:absolute;
   right:12px;
@@ -592,8 +610,9 @@ button{font-family:inherit}
   color:white;
   background: rgba(0,0,0,.45);
   border:1px solid rgba(255,255,255,.14);
-  backdrop-filter: blur(6px;
+  backdrop-filter: blur(6px); /* ✅ FIX */
 }
+
 .pBody{padding: 12px}
 .pName{font-weight:900; letter-spacing:.02em}
 .pMeta{margin-top:8px; display:flex; align-items:center; justify-content:space-between; gap:10px}
@@ -635,13 +654,17 @@ button{font-family:inherit}
   font-size:22px;
   font-weight:900;
 }
+
+/* ✅ sin recorte en quick view también */
 .qvMedia img{
   width:100%;
   border-radius: 18px;
-  aspect-ratio: 4/3;
-  object-fit: cover;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: rgba(0,0,0,.18);
   border:1px solid rgba(255,255,255,.10);
 }
+
 .qvThumbs{margin-top:10px; display:flex; gap:10px; overflow:auto; padding-bottom:6px}
 .qvThumb{
   border:1px solid rgba(255,255,255,.12);
@@ -724,7 +747,7 @@ button{font-family:inherit}
   transition: width .35s ease;
 }
 
-/* ---------- CART ITEMS (tu HTML usa .cartItem) ---------- */
+/* ---------- CART ITEMS ---------- */
 #cartItems{display:flex; flex-direction:column; gap:12px}
 #cartEmpty{color: var(--muted2); font-weight:900; padding:6px 2px}
 
