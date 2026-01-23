@@ -19,7 +19,7 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-dark);
   color: var(--text-white);
-  /* Textura de asfalto/carbono sutil */
+  /* Fondo con textura asfalto/carbono y viñeta */
   background-image: 
     radial-gradient(circle at center, rgba(30,30,30,0.5) 0%, rgba(0,0,0,1) 100%),
     url("/assets/fondo-pagina-score.webp");
@@ -39,6 +39,7 @@ body.modalOpen { overflow: hidden; }
   transition: opacity 0.8s ease-out, visibility 0.8s;
   overflow: hidden;
 }
+/* Efecto de líneas de escaneo (Scanlines) */
 #splash-screen::before {
   content: ""; position: absolute; inset: 0;
   background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.5) 3px);
