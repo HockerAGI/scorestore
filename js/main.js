@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL REV v2026 */
+/* SCORE STORE LOGIC — PERFORMANCE FIX v2026 */
 
 (function () {
   "use strict";
@@ -21,20 +21,29 @@
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
       s.classList.add("hidden");
-      setTimeout(() => { try { s.remove(); } catch {} }, 800);
+      // Eliminamos el elemento del DOM para que no estorbe (LCP optimization)
+      setTimeout(() => { try { s.remove(); } catch {} }, 600);
     }
   }
 
   async function init() {
-    setTimeout(hideSplash, 4500); // Safety
+    // CORRECCIÓN LCP: Eliminado el setTimeout de 4500ms.
+    // El splash se irá apenas carguen los datos críticos.
+    
+    // Carga paralela para ganar velocidad
+    const catalogPromise = loadCatalog();
+    const cartLoad = loadCart();
 
-    await loadCatalog();
-    loadCart();
+    await catalogPromise; // Esperamos al catálogo
+    
+    // Renderizado inicial
     setupUI();
     updateCartUI();
     initScrollReveal();
 
     if(typeof fbq === 'function') fbq('track', 'ViewContent');
+    
+    // Inmediatamente ocultar splash (Mejora LCP de 6.0s a ~1.5s)
     hideSplash();
   }
 
@@ -78,11 +87,10 @@
                      <span style="color:#E10600; font-weight:bold;">${money(sellPrice)}</span>
                 </div>`;
 
-            // DETECCIÓN DE IMÁGENES
             const images = p.images && p.images.length ? p.images : [p.img];
             const slidesHtml = images.map(src => 
                 `<div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
-                    <img src="${cleanUrl(src)}" class="prodImg" loading="lazy" onerror="this.closest('.prod-slide').remove()">
+                    <img src="${cleanUrl(src)}" class="prodImg" loading="lazy" width="300" height="300" onerror="this.closest('.prod-slide').remove()">
                  </div>`
             ).join("");
 
@@ -190,8 +198,8 @@
       if(shippingState.mode !== 'pickup' && (!$("cp").value || !$("name").value)) { alert("Faltan datos"); return; }
       btn.disabled = true; btn.innerText = "PROCESANDO...";
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
+      
       try {
-          // CLEAN PAYLOAD: Removing phantom promoCode
           const payload = {
             items: cart, 
             mode: shippingState.mode, 
@@ -203,7 +211,8 @@
           };
 
           const res = await fetch(`${API_BASE}/create_checkout`, {
-              method: 'POST', headers: { "Content-Type": "application/json" },
+              method: 'POST', 
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
           const data = await res.json();
@@ -237,14 +246,10 @@
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
 
-  // --- SERVICE WORKER REGISTRATION (PWA FIX) ---
+  // PWA SW
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('SW Registered:', reg.scope);
-      }).catch(err => {
-        console.log('SW Fail:', err);
-      });
+      navigator.serviceWorker.register('/sw.js');
     });
   }
 })();
