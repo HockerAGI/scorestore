@@ -26,7 +26,7 @@
   }
 
   async function init() {
-    setTimeout(hideSplash, 4500); // Safety
+    setTimeout(hideSplash, 4500); 
 
     await loadCatalog();
     loadCart();
@@ -78,7 +78,6 @@
                      <span style="color:#E10600; font-weight:bold;">${money(sellPrice)}</span>
                 </div>`;
 
-            // DETECCIÓN DE IMÁGENES: elimina el slide si falla la carga
             const images = p.images && p.images.length ? p.images : [p.img];
             const slidesHtml = images.map(src => 
                 `<div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
@@ -190,10 +189,24 @@
       if(shippingState.mode !== 'pickup' && (!$("cp").value || !$("name").value)) { alert("Faltan datos"); return; }
       btn.disabled = true; btn.innerText = "PROCESANDO...";
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
+      
       try {
+          // CORRECTION: Cleaned up payload, removed invalid hardcoded promoCode
+          const payload = {
+            items: cart, 
+            mode: shippingState.mode, 
+            // promoCode: "", // Removed invalid 'LANZAMIENTO80' to prevent logic confusion
+            customer: { 
+                name: $("name")?.value, 
+                address: $("addr")?.value, 
+                postal_code: $("cp")?.value 
+            }
+          };
+
           const res = await fetch(`${API_BASE}/create_checkout`, {
-              method: 'POST', headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: cart, mode: shippingState.mode, promoCode: "LANZAMIENTO80", customer: { name: $("name")?.value, address: $("addr")?.value, postal_code: $("cp")?.value } })
+              method: 'POST', 
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
           });
           const data = await res.json();
           if(data.url) location.href = data.url; else throw new Error(data.error);
