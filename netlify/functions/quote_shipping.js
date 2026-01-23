@@ -1,12 +1,4 @@
-const {
-  jsonResponse,
-  safeJsonParse,
-  getEnviaQuote,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE,
-  normalizeQty,
-  digitsOnly,
-} = require("./_shared");
+const { getEnviaQuote, jsonResponse, safeJsonParse, normalizeZip, normalizeQty } = require("./_shared");
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
@@ -14,34 +6,27 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
+    const zip = normalizeZip(body.zip);
+    const country = body.country || "MX";
+    
+    const items = Array.isArray(body.items) ? body.items : [];
+    const totalQty = items.reduce((acc, it) => acc + normalizeQty(it.qty), 0);
 
-    const country = String(body.country || "MX").toUpperCase();
+    if (!zip) return jsonResponse(400, { error: "Falta CP" });
 
-    const rawZip = String(body.zip || body.postal_code || "").trim();
-    const zip = country === "MX" ? digitsOnly(rawZip) : rawZip;
+    const quote = await getEnviaQuote(zip, totalQty, country);
 
-    let qty = 1;
-    if (Array.isArray(body.items)) {
-      qty = body.items.reduce((acc, item) => acc + normalizeQty(item.quantity || item.qty), 0);
-    } else {
-      qty = normalizeQty(body.items || body.qty || 1);
+    if (!quote) {
+      return jsonResponse(200, { ok: false, fallback: true });
     }
 
-    if (!zip || zip.length < 5) return jsonResponse(400, { error: "Código postal inválido" });
-
-    const quote = await getEnviaQuote(zip, qty, country);
-
-    if (quote) {
-      return jsonResponse(200, { ok: true, cost: quote.mxn, label: `${quote.carrier} (${quote.days} días)` });
-    }
-
-    const isUS = country === "US";
-    return jsonResponse(200, {
-      ok: true,
-      cost: isUS ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE,
-      label: isUS ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)",
+    return jsonResponse(200, { 
+      ok: true, 
+      cost: quote.mxn, 
+      label: `${quote.carrier} (${quote.days} días)` 
     });
-  } catch (error) {
-    return jsonResponse(200, { ok: true, cost: FALLBACK_MX_PRICE, label: "Envío Estándar" });
+
+  } catch (err) {
+    return jsonResponse(500, { error: "Server Error" });
   }
 };
