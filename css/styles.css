@@ -1,4 +1,4 @@
-/* SCORE STORE - DARK RACING ORIGINAL */
+/* SCORE STORE - PERFORMANCE OPTIMIZED v2026 */
 :root {
   --font-title: "Teko", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -20,6 +20,7 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-dark);
   color: var(--white);
+  /* Fondo general optimizado */
   background-image: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url("/assets/fondo-pagina-score.webp");
   background-attachment: fixed;
   background-size: cover;
@@ -29,7 +30,7 @@ body {
 }
 body.modalOpen { overflow: hidden; }
 
-/* SPLASH SCREEN (RPM Animation) */
+/* SPLASH SCREEN */
 #splash-screen {
   position: fixed; inset: 0; z-index: 9999;
   background-color: #000;
@@ -37,7 +38,6 @@ body.modalOpen { overflow: hidden; }
   transition: opacity 0.6s ease-out, visibility 0.6s;
 }
 #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
 .splash-content { text-align: center; width: min(300px, 80%); }
 .splash-logo {
   width: 150px; height: auto; margin-bottom: 30px;
@@ -64,13 +64,13 @@ body.modalOpen { overflow: hidden; }
 @keyframes logoPulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(225,6,0,0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(225,6,0,0.8)); } }
 @keyframes blinkText { from { opacity: 0.6; } to { opacity: 1; } }
 
-/* VISIBILIDAD CORREGIDA */
+/* SCROLL REVEAL */
 .scroll-reveal { opacity: 1; transform: translateY(0); transition: all 0.8s ease-out; }
 .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
 .slide-in-top { animation: slideDown 0.8s ease-out forwards; }
 @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
-/* UI */
+/* UI ELEMENTS */
 .promo-bar { position: fixed; top: 0; left: 0; width: 100%; height: var(--promo-h); background: #000; color: #fff; border-bottom: 2px solid var(--score-red); display: flex; align-items: center; justify-content: center; z-index: 2001; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 .topbar { position: fixed; top: var(--promo-h); left: 0; width: 100%; height: var(--header-h); z-index: 2000; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); }
 .topbarInner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
@@ -83,9 +83,22 @@ body.modalOpen { overflow: hidden; }
 .wrap { margin-top: calc(var(--header-h) + var(--promo-h)); min-height: 100vh; padding-bottom: 60px; }
 .container { width: min(1200px, 90%); margin: 0 auto; }
 
-/* HERO */
+/* HERO (OPTIMIZED LCP) */
 .hero { position: relative; height: 85vh; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: -20px; }
-.heroBg { position: absolute; inset: 0; background: url("/assets/hero.webp") center/cover no-repeat; filter: brightness(0.7); z-index: 1; transform: scale(1.1); animation: slowZoom 20s infinite alternate; }
+
+/* Nuevo estilo para .heroBg como <img> tag */
+.heroBg { 
+  position: absolute; 
+  inset: 0; 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; /* Clave para reemplazar background-size: cover */
+  filter: brightness(0.7); 
+  z-index: 1; 
+  transform: scale(1.1); 
+  animation: slowZoom 20s infinite alternate; 
+}
+
 .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, var(--bg-dark) 95%); z-index: 2; }
 .heroContent { position: relative; z-index: 3; text-align: center; width: 90%; max-width: 800px; }
 @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.2); } }
@@ -121,20 +134,19 @@ body.modalOpen { overflow: hidden; }
 .champItem:hover { transform: translateY(-10px); border-color: var(--score-red); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 .card-texture { position: absolute; inset: 0; background: url("/assets/baja1000-texture.webp"); opacity: 0.1; mix-blend-mode: overlay; transition: opacity 0.4s; }
 .champItem:hover .card-texture { opacity: 0.3; }
-.float-logo { width: 180px; z-index: 2; transition: transform 0.4s; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+.float-logo { width: 180px; height: auto; z-index: 2; transition: transform 0.4s; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
 .champItem:hover .float-logo { transform: scale(1.1) rotate(-5deg); }
 .badge { position: absolute; top: 20px; right: 20px; background: var(--score-red); color: white; padding: 5px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; z-index: 5; }
 .card-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.5); font-family: var(--font-title); font-size: 20px; letter-spacing: 1px; transition: color 0.3s; z-index: 5; }
 .champItem:hover .card-btn { color: white; text-shadow: 0 0 10px white; }
 
-/* PRODUCT CARD (Catalog) */
-/* CLS FIX: Reservar espacio para imágenes */
+/* CATALOG ITEMS & CLS FIX */
 .prodImg {
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1; 
   object-fit: contain;
-  background-color: #1a1a1a; /* Placeholder visual */
+  background-color: #1a1a1a;
 }
 
 .prodCard { background: #1e1e1e; border-radius: 12px; padding: 15px; border: 1px solid #333; }
@@ -149,7 +161,7 @@ body.modalOpen { overflow: hidden; }
 .partners { background: #000; padding: 60px 0; text-align: center; border-top: 1px solid #333; border-bottom: 1px solid #333; }
 .partners h3 { color: #444; margin-bottom: 40px; letter-spacing: 4px; font-size: 14px; }
 .partnersGrid { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; opacity: 0.6; }
-.pLogo { height: 40px; filter: grayscale(100%); transition: 0.3s; }
+.pLogo { height: 40px; width: auto; filter: grayscale(100%); transition: 0.3s; }
 .pLogo:hover { filter: grayscale(0); opacity: 1; }
 
 /* FOOTER */
@@ -198,7 +210,7 @@ body.modalOpen { overflow: hidden; }
 .radio-option span { font-weight: bold; font-size: 14px; }
 .radio-option small { font-size: 11px; }
 
-/* COOKIE & TOAST */
+/* TOAST & COOKIE */
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--neon-green); color: black; padding: 12px 25px; border-radius: 50px; font-weight: bold; z-index: 9999; transition: 0.4s; box-shadow: 0 10px 30px rgba(0,230,118,0.3); }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .cookieBanner { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 12px; z-index: 5000; box-shadow: 0 20px 50px rgba(0,0,0,0.8); max-width: 400px; }
