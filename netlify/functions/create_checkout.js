@@ -13,7 +13,7 @@ const {
 
 /**
  * create_checkout (Netlify Function)
- * FIXED: Auto-detects 'origin' to prevent "Not a valid URL" error in Stripe redirects.
+ * FIXED: Robust URL detection for Deploy Previews using 'Referer'.
  */
 
 function pickShippingMode(body) {
@@ -96,8 +96,6 @@ exports.handler = async (event) => {
     // --- DB VALIDATION (SMART HYBRID MODE) ---
     const orgSlug = String(body.orgSlug || "score-store").trim();
     const { ok: dbOk, products: dbProducts } = await getProductsFromDb({ orgSlug });
-
-    // Activa validación estricta SOLO si la BD responde y tiene productos.
     const useDbValidation = dbOk && dbProducts.length > 0;
 
     const line_items = cartItems.map((item) => {
@@ -106,7 +104,6 @@ exports.handler = async (event) => {
       let image = item.img;
 
       if (useDbValidation) {
-        // MODO ESTRICTO (BD)
         const p = dbProducts.find((x) => String(x.id) === String(item.id));
         if (!p) {
             console.error(`DB Mismatch: Product '${item.id}' not found in DB.`);
@@ -116,7 +113,6 @@ exports.handler = async (event) => {
         unit = Math.round(Number(p.price || 0) * 100);
         image = p.image_url || image;
       } else {
-        // MODO FALLBACK
         if (!unit) throw new Error(`Error de precio en producto: ${item.id}`);
       }
 
@@ -177,15 +173,22 @@ exports.handler = async (event) => {
       });
     }
 
-    // --- URL RESOLUTION FIX ---
-    // Detectamos el dominio real (headers.origin) o usamos variable de entorno, o fallback seguro.
-    // Esto evita que 'success_url' sea relativa y cause error en Stripe.
-    const origin = event.headers.origin || process.env.URL || "https://unicouniformes.com";
+    // --- URL RESOLUTION FIX (CRITICAL FOR PREVIEWS) ---
+    // Usamos headers.referer como fuente de verdad si headers.origin no está.
+    const headers = event.headers || {};
+    const rawOrigin = headers.origin || headers.Origin || headers.referer || headers.Referer || process.env.URL || "https://unicouniformes.com";
     
-    // Eliminamos slash final si existe para evitar dobles (ej: .com//?status)
-    const cleanOrigin = origin.replace(/\/$/, ""); 
-    const success = `${cleanOrigin}/?status=success`;
-    const cancel = `${cleanOrigin}/?status=cancel`;
+    let baseUrl = "";
+    try {
+        // Extraemos solo el dominio (ej: https://deploy-preview-123.netlify.app)
+        const u = new URL(rawOrigin);
+        baseUrl = u.origin;
+    } catch (e) {
+        baseUrl = "https://unicouniformes.com";
+    }
+
+    const success = `${baseUrl}/?status=success`;
+    const cancel = `${baseUrl}/?status=cancel`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
