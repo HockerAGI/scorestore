@@ -3,15 +3,10 @@ const axios = require("axios");
 
 const { jsonResponse, createEnviaLabel, supabaseAdmin, normalizeQty } = require("./_shared");
 
-/**
- * Stripe Webhook (Netlify Function)
- */
-
 function getSig(headers) {
   return headers["stripe-signature"] || headers["Stripe-Signature"] || headers["STRIPE-SIGNATURE"] || "";
 }
 
-// Sanitizar inputs para evitar que el bot de Telegram crashee por HTML inválido
 function escapeHtml(text) {
   if (!text) return "";
   return String(text)
@@ -26,16 +21,12 @@ async function notifyTelegram(text) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
-  try {
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    });
-  } catch (e) {
-    console.error("telegram notify error:", e?.response?.data || e.message);
-  }
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  await axios.post(
+    url,
+    { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true },
+    { timeout: 15000 }
+  );
 }
 
 exports.handler = async (event) => {
@@ -43,91 +34,72 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
   const sig = getSig(event.headers || {});
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const whsec = process.env.STRIPE_WEBHOOK_SECRET;
 
-  if (!secret) return jsonResponse(500, { error: "Missing STRIPE_WEBHOOK_SECRET" });
-
-  let stripeEvent;
-  try {
-    stripeEvent = stripe.webhooks.constructEvent(event.body, sig, secret);
-  } catch (err) {
-    console.error("webhook signature error:", err.message);
-    return jsonResponse(400, { error: "Invalid signature" });
-  }
+  if (!whsec) return jsonResponse(500, { error: "STRIPE_WEBHOOK_SECRET missing" });
 
   try {
+    const stripeEvent = stripe.webhooks.constructEvent(event.body, sig, whsec);
+
     if (stripeEvent.type !== "checkout.session.completed") {
-      return jsonResponse(200, { received: true });
+      return jsonResponse(200, { ok: true });
     }
 
     const session = stripeEvent.data.object;
-    const sessionId = session.id;
-    const total = session.amount_total ? session.amount_total / 100 : 0;
 
-    const mode = String(session.metadata?.shipping_mode || session.metadata?.score_mode || "pickup").toLowerCase();
-    const promoCode = String(session.metadata?.promo_code || "").trim();
-
-    // CUSTOMER DATA: Prioritize Shipping Details for Logistics
-    // Ahora que activamos phone_collection, session.customer_details.phone vendrá lleno.
-    const shipping = session.shipping_details || session.customer_details || {};
-    const addressSource = shipping.address || {};
+    const mode = String(session?.metadata?.shipping_mode || "pickup");
+    const promoCode = String(session?.metadata?.promo_code || "");
+    const total = Number(session.amount_total || 0) / 100;
 
     const customer = {
-      name: shipping.name || session.customer_details?.name || "",
-      email: session.customer_details?.email || "", 
-      phone: session.customer_details?.phone || "",
-      address: {
-        line1: addressSource.line1 || "",
-        line2: addressSource.line2 || "",
-        city: addressSource.city || "",
-        state: addressSource.state || "",
-        country: addressSource.country || "",
-        postal_code: addressSource.postal_code || "",
-      },
+      name: session?.customer_details?.name || "",
+      phone: session?.customer_details?.phone || "",
+      address: session?.customer_details?.address
+        ? `${session.customer_details.address.line1 || ""} ${session.customer_details.address.line2 || ""}, ${session.customer_details.address.city || ""}, ${session.customer_details.address.postal_code || ""}`
+        : "",
+      postal_code: session?.customer_details?.address?.postal_code || "",
+      country: session?.customer_details?.address?.country || "MX",
     };
 
-    // Pull line items
-    const li = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
-    const lineItems = (li.data || []).map((x) => ({
-      description: x.description || "",
-      quantity: x.quantity || 1,
-      amount_total: x.amount_total ? x.amount_total / 100 : null,
-      price_id: x.price?.id || null,
-    }));
-
-    const itemsQty = lineItems.reduce((acc, x) => acc + normalizeQty(x.quantity), 0);
-
-    // Label Generation
     let envia = null;
     let labelError = null;
-    
-    // Validar que tengamos datos suficientes
-    if ((mode === "mx" || mode === "us") && customer.address.postal_code) {
-      envia = await createEnviaLabel(customer, itemsQty);
-      if (!envia) {
-        labelError = "Error generando guía (Check Logs)";
-        console.warn("Label generation failed for session:", sessionId);
-      }
+
+    // Create Envia label only when shipping required
+    if (mode !== "pickup") {
+      const qty = normalizeQty(1);
+      const label = await createEnviaLabel({
+        zip: customer.postal_code,
+        country: customer.country,
+        qty,
+        customer,
+        items: [],
+      });
+
+      if (label.ok) envia = { tracking: label.tracking, raw: label.raw };
+      else labelError = label.error || "No se pudo generar guía Envia.";
     }
 
-    // Persist to Supabase
+    // Supabase write (optional)
     if (supabaseAdmin) {
-      await supabaseAdmin.from("orders").insert([
-        {
-          stripe_id: sessionId,
-          total_mxn: total,
-          status: "paid",
-          shipping_mode: mode,
-          promo_code: promoCode || null,
-          customer_json: customer,
-          items_json: lineItems,
-          tracking_number: envia?.tracking || null,
-          label_url: envia?.labelUrl || null,
-          carrier: envia?.carrier || null,
-          delivery_status: "created",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      try {
+        await supabaseAdmin.from("orders").insert([
+          {
+            provider: "stripe",
+            provider_id: session.id,
+            amount_mxn: total,
+            shipping_mode: mode,
+            promo_code: promoCode || null,
+            customer_name: customer.name || null,
+            customer_phone: customer.phone || null,
+            shipping_address: customer.address || null,
+            tracking_number: envia?.tracking || null,
+            delivery_status: mode === "pickup" ? "pickup" : "label_created",
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      } catch (e) {
+        console.error("Supabase order insert error:", e?.message || e);
+      }
     }
 
     const cleanName = escapeHtml(customer.name);
@@ -143,7 +115,7 @@ exports.handler = async (event) => {
       (cleanName ? `Cliente: ${cleanName}\n` : "") +
       (cleanPhone ? `Tel: ${cleanPhone}\n` : "") +
       (envia?.tracking ? `Tracking: <b>${envia.tracking}</b>\n` : "") +
-      (labelError ? `⚠️ <b>${labelError}</b>\n` : "");
+      (labelError ? `⚠️ <b>${escapeHtml(labelError)}</b>\n` : "");
 
     await notifyTelegram(msg);
 
