@@ -201,3 +201,82 @@ h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.
 .page-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px); } .page-overlay.active { opacity: 1; pointer-events: auto; }
 @media (max-width: 768px) { .hero { padding: 20px; min-height: 520px; } .hero-title { font-size: 42px; } .heroContent { padding: 20px; } .footerInner { grid-template-columns: 1fr; gap: 40px; } .partnersGrid { gap: 30px; } .modal { width: 94vw; max-height: 92vh; } .modal .dBody { padding: 18px; } .shipGrid { grid-template-columns: 1fr; } }
 .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); } .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; } .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; } .cookieBtn { border-radius: 999px; padding: 8px 16px; cursor: pointer; font-family: 'Teko', sans-serif; text-transform: uppercase; font-size: 16px; background: #E10600; color: #fff; border: none; } .cookieBtn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.3); margin-right: 10px; }
+/* ... (MANTÉN TODO TU CSS ANTERIOR IGUAL, SOLO AGREGA ESTO AL FINAL) ... */
+
+/* === LEGAL PAGE STYLES (ADDON) === */
+.legal {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.legalCard {
+  background: #ffffff; /* Fondo blanco para contraste con texto oscuro */
+  color: #111111;      /* Texto oscuro para legibilidad legal */
+  padding: 40px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Sombra para separar del fondo oscuro */
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.legalCard .h2 {
+  font-family: var(--font-title);
+  color: var(--score-red);
+  font-size: 36px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  line-height: 1;
+}
+
+.legalCard h3 {
+  font-family: var(--font-body);
+  font-weight: 800;
+  color: #000;
+  font-size: 18px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.legalCard .p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.legalCard .ul {
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.legalCard .ul li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #444;
+}
+
+/* Botón "Volver" en header blanco */
+.btnGhost {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  color: #111;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btnGhost:hover {
+  border-color: var(--score-red);
+  color: var(--score-red);
+  background: rgba(225,6,0,0.05);
+}
+
+/* Ajustes Responsive para Legal */
+@media (max-width: 768px) {
+  .legalCard { padding: 25px 20px; }
+  .legalCard .h2 { font-size: 32px; }
+}
