@@ -25,7 +25,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD">
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FINAL">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,11 +52,8 @@
     /* CONFIGURACIÓN PÚBLICA INTEGRADA */
     window.__SCORE__ = {
       orgSlug: "score-store",
-      // CLAVE PUBLICA STRIPE
       stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
-      // SUPABASE URL
       supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      // CLAVE ANON SUPABASE (CORREGIDA: Usando JWT estándar para evitar errores de conexión)
       supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
     };
   </script>
@@ -152,19 +149,68 @@
 
   <footer class="footer scroll-reveal">
     <div class="container footerInner">
+      
       <div class="fCol">
-        <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
-        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
-        <div class="social-row">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="social-link">Facebook</a>
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="social-link">Instagram</a>
-        </div>
+        <img src="/assets/logo-score.webp" alt="SCORE Store" style="width: 140px; margin-bottom: 25px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));">
+        <p>
+          <strong>SCORE STORE · TIENDA OFICIAL</strong><br>
+          Mercancía oficial de SCORE International Off-Road Racing.<br>
+          Fabricado y operado por <strong>Único Uniformes</strong>, patrocinador oficial.
+        </p>
+        <p style="font-size: 13px; color: #888; margin-top: 15px;">
+          SCORE International es la organización líder mundial en competencias off-road de larga distancia, creadora de eventos icónicos como Baja 1000 y Baja 500.
+        </p>
       </div>
-      <div class="fCol"><h4>ATENCIÓN</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button></div></div>
-      <div class="fCol"><h4>LEGAL</h4><div class="footerLinks"><button onclick="openLegal('terms')">Términos</button><button onclick="openLegal('privacy')">Privacidad</button></div></div>
+
+      <div class="fCol">
+        <h4>INFORMACIÓN COMERCIAL</h4>
+        <p>
+          <strong>Razón social:</strong> BAJATEX, S. de R.L. de C.V.<br>
+          <strong>Nombre comercial:</strong> Único Uniformes
+        </p>
+        <p>
+          Palermo 6106 Interior JK, Anexa Roma,<br>
+          22614 Tijuana, Baja California, México.
+        </p>
+        <p style="margin-top: 15px;">
+          📧 <a href="mailto:ventas.unicotextil@gmail.com" style="color:#fff;text-decoration:none; font-weight:bold;">ventas.unicotextil@gmail.com</a><br>
+          📱 <a href="https://wa.me/526642368701" target="_blank" style="color:#fff;text-decoration:none; font-weight:bold;">+52 664 236 8701</a>
+        </p>
+      </div>
+
+      <div class="fCol">
+        <h4>ENVÍOS Y FACTURACIÓN</h4>
+        <p>
+          📦 <strong>Envíos:</strong> Nacionales (MX) y Estados Unidos.<br>
+          Recolección directa disponible en fábrica (Tijuana).
+        </p>
+        <p>
+          📄 <strong>Facturación:</strong> Solicitar dentro del mes fiscal de la compra enviando Constancia Fiscal.
+        </p>
+        <p>
+          💳 <strong>Pagos:</strong> Procesados de forma segura mediante Stripe.
+        </p>
+      </div>
+
+      <div class="fCol">
+        <h4>ENLACES LEGALES</h4>
+        <div class="footerLinks">
+          <a href="/legal.html#privacidad">Aviso de Privacidad</a>
+          <a href="/legal.html#terminos">Términos y Condiciones</a>
+          <a href="/legal.html#legal">Información Legal y Comercial</a>
+          <a href="/legal.html#cambios">Cambios y Devoluciones</a>
+        </div>
+        <p style="margin-top: 25px; font-size: 12px; color: #555;">
+          Las marcas, logotipos y nombres de eventos son propiedad de SCORE International, LLC y se utilizan con autorización.
+        </p>
+      </div>
+
     </div>
-    <div class="copy">SCORE Store © 2026 · Powered by Único OS</div>
+
+    <div class="copy-row">
+      <div class="copy-text">© 2026 Único Uniformes · Operado por BAJATEX, S. de R.L. de C.V.</div>
+      <div class="copy-text">Mercancía oficial SCORE International · Hecho en Tijuana, México.</div>
+    </div>
   </footer>
 
   <div id="modalCatalog" class="modal">
