@@ -29,8 +29,8 @@
   }
 
   async function init() {
-    // Safety timer
-    const safetyTimer = setTimeout(() => { hideSplash(); }, 3500); 
+    // Safety timer 4s para intro
+    const safetyTimer = setTimeout(() => { hideSplash(); }, 4000); 
     try {
         await loadCatalog();
         loadCart();
@@ -41,8 +41,7 @@
     } catch (err) {
         console.error("Critical Init Error:", err);
     } finally {
-        clearTimeout(safetyTimer);
-        hideSplash(); 
+        // Dejamos que corra el timer de animación
     }
   }
 
