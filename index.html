@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#E10600" />
   
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://unicouniformes.com/" />
   <meta property="og:title" content="SCORE Store | Tienda Oficial" />
@@ -24,7 +25,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=ORIGINAL_OPTIMIZED">
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,11 +49,15 @@
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" /></noscript>
 
   <script>
+    /* CONFIGURACIÓN PÚBLICA INTEGRADA */
     window.__SCORE__ = {
       orgSlug: "score-store",
+      // CLAVE PUBLICA STRIPE
       stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+      // SUPABASE URL
       supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseKey: "sb_publishable_LCTE1og04w_Fd0WGhBTVyw_s_gFg_DB"
+      // CLAVE ANON SUPABASE (CORREGIDA: Usando JWT estándar para evitar errores de conexión)
+      supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
     };
   </script>
 </head>
@@ -216,7 +221,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=ORIGINAL_OPTIMIZED" defer></script>
+  <script src="/js/main.js?v=2026_PROD" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
