@@ -22,12 +22,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=ORIGINAL_INTEGRATED">
+  <link rel="stylesheet" href="/css/styles.css?v=FINAL_REV">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="preload" href="/assets/hero.webp" as="image">
-
+  
   <script src="https://js.stripe.com/v3" async></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -40,7 +39,7 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413'); 
+    fbq('init', '4249947775334413');
     fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" /></noscript>
@@ -48,9 +47,10 @@
   <script>
     window.__SCORE__ = {
       orgSlug: "score-store",
+      // SOLO Claves Públicas (Las secretas van en el servidor/Netlify)
       stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
       supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
+      supabaseKey: "sb_publishable_LCTE1og04w_Fd0WGhBTVyw_s_gFg_DB"
     };
   </script>
 </head>
@@ -67,7 +67,7 @@
   <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
   
   <div class="promo-bar slide-in-top" id="promo-bar">
-    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
+    <span id="promo-text">⚠️ 80% OFF EN TODOS LOS PRODUCTOS</span>
   </div>
 
   <header class="topbar">
@@ -77,7 +77,7 @@
       </a>
       <div class="navRight">
         <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00E676" stroke-width="2.5"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
       </div>
@@ -214,7 +214,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=20.0" defer></script>
+  <script src="/js/main.js?v=REV_2026" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
@@ -223,7 +223,6 @@
       document.querySelector(`[data-legal-block="${type}"]`).style.display='block';
       document.getElementById('legalModal').classList.add('active'); document.getElementById('overlay').classList.add('active');
     }
-    
     (function () {
       const KEY = "score_cookie_consent";
       const banner = document.getElementById("cookieBanner");
