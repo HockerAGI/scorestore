@@ -24,7 +24,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_REV">
+  <link rel="stylesheet" href="/css/styles.css?v=PERF_2026">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -59,7 +60,7 @@
 <body>
   <div id="splash-screen">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
+      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="150">
       <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
       <div class="splash-text">INICIANDO MOTORES...</div>
     </div>
@@ -74,7 +75,7 @@
   <header class="topbar">
     <div class="container topbarInner">
       <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
+        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo" width="50" height="50">
       </a>
       <div class="navRight">
         <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
@@ -87,18 +88,19 @@
 
   <main class="wrap">
     <section class="hero scroll-reveal" id="top">
-      <div class="heroBg"></div>
+      <img src="/assets/hero.webp" class="heroBg" alt="Baja Desert Racing" width="1920" height="1080" fetchpriority="high">
+      
       <div class="heroOverlay"></div>
       <div class="heroContent">
         <div class="tagline"><span class="tag-pill">TIENDA OFICIAL 2026</span></div>
         <h1 class="hero-title" id="hero-title">SCORE STORE</h1>
         <div class="logos-row">
-          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo">
-          <img src="/assets/logo-world-desert.webp" alt="WDC" class="hero-desert-seal">
+          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" width="100" height="100">
+          <img src="/assets/logo-world-desert.webp" alt="WDC" class="hero-desert-seal" width="100" height="100">
         </div>
         <div class="marketing-copy">
           <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>
-          Fabricado por <strong>Único Uniformes, patrocinador oficial</strong>.
+          Fabricado por <strong>Único Uniformes</strong>.
         </div>
         <div class="ctaRow">
           <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
@@ -112,22 +114,22 @@
       <div class="grid">
         <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
           <div class="card-texture"></div><span class="badge">MÁS VENDIDO</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy">
+          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy" width="200" height="120">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy">
+          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy" width="200" height="120">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
+          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy" width="200" height="120">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy">
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy" width="200" height="120">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
       </div>
@@ -136,10 +138,10 @@
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" width="100" height="50">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy" width="100" height="50">
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" width="100" height="50">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy" width="100" height="50">
       </div>
     </section>
   </main>
@@ -215,7 +217,7 @@
     </div>
   </section>
 
-  <script src="/js/main.js?v=REV_2026" defer></script>
+  <script src="/js/main.js?v=PERF_2026" defer></script>
   
   <script>
     function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
