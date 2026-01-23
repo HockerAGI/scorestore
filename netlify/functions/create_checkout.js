@@ -13,7 +13,7 @@ const {
 
 /**
  * create_checkout (Netlify Function)
- * FIXED: Implements "Hybrid Mode" & Shipping Address Collection.
+ * FIXED: Auto-detects 'origin' to prevent "Not a valid URL" error in Stripe redirects.
  */
 
 function pickShippingMode(body) {
@@ -109,7 +109,6 @@ exports.handler = async (event) => {
         // MODO ESTRICTO (BD)
         const p = dbProducts.find((x) => String(x.id) === String(item.id));
         if (!p) {
-            // Log interno, pero error genérico al usuario si se desea
             console.error(`DB Mismatch: Product '${item.id}' not found in DB.`);
             throw new Error(`Producto no disponible (Stock Error): ${item.id}`);
         }
@@ -117,8 +116,7 @@ exports.handler = async (event) => {
         unit = Math.round(Number(p.price || 0) * 100);
         image = p.image_url || image;
       } else {
-        // MODO FALLBACK (Confianza en Cliente)
-        // Útil si la BD está vacía o fallando.
+        // MODO FALLBACK
         if (!unit) throw new Error(`Error de precio en producto: ${item.id}`);
       }
 
@@ -179,8 +177,15 @@ exports.handler = async (event) => {
       });
     }
 
-    const success = `${process.env.URL || ""}/?status=success`;
-    const cancel = `${process.env.URL || ""}/?status=cancel`;
+    // --- URL RESOLUTION FIX ---
+    // Detectamos el dominio real (headers.origin) o usamos variable de entorno, o fallback seguro.
+    // Esto evita que 'success_url' sea relativa y cause error en Stripe.
+    const origin = event.headers.origin || process.env.URL || "https://unicouniformes.com";
+    
+    // Eliminamos slash final si existe para evitar dobles (ej: .com//?status)
+    const cleanOrigin = origin.replace(/\/$/, ""); 
+    const success = `${cleanOrigin}/?status=success`;
+    const cancel = `${cleanOrigin}/?status=cancel`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
