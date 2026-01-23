@@ -26,7 +26,7 @@
   }
 
   async function init() {
-    setTimeout(hideSplash, 4500); 
+    setTimeout(hideSplash, 4500); // Safety
 
     await loadCatalog();
     loadCart();
@@ -78,6 +78,7 @@
                      <span style="color:#E10600; font-weight:bold;">${money(sellPrice)}</span>
                 </div>`;
 
+            // DETECCIÓN DE IMÁGENES
             const images = p.images && p.images.length ? p.images : [p.img];
             const slidesHtml = images.map(src => 
                 `<div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
@@ -189,13 +190,11 @@
       if(shippingState.mode !== 'pickup' && (!$("cp").value || !$("name").value)) { alert("Faltan datos"); return; }
       btn.disabled = true; btn.innerText = "PROCESANDO...";
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
-      
       try {
-          // CORRECTION: Cleaned up payload, removed invalid hardcoded promoCode
+          // CLEAN PAYLOAD: Removing phantom promoCode
           const payload = {
             items: cart, 
             mode: shippingState.mode, 
-            // promoCode: "", // Removed invalid 'LANZAMIENTO80' to prevent logic confusion
             customer: { 
                 name: $("name")?.value, 
                 address: $("addr")?.value, 
@@ -204,8 +203,7 @@
           };
 
           const res = await fetch(`${API_BASE}/create_checkout`, {
-              method: 'POST', 
-              headers: { "Content-Type": "application/json" },
+              method: 'POST', headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
           const data = await res.json();
@@ -238,4 +236,15 @@
   function loadCart() { const s = localStorage.getItem(CART_KEY); if(s) try{cart=JSON.parse(s)}catch{} }
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
+
+  // --- SERVICE WORKER REGISTRATION (PWA FIX) ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        console.log('SW Registered:', reg.scope);
+      }).catch(err => {
+        console.log('SW Fail:', err);
+      });
+    });
+  }
 })();
