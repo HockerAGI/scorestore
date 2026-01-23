@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Tienda Oficial - Race Ready</title>
+  <title>SCORE | Tienda Oficial - Fabricado por Único</title>
   
   <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
+  
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
   <meta property="og:type" content="website" />
@@ -25,21 +26,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://js.stripe.com/v3" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script',
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413'); fbq('track', 'PageView');
+    fbq('init', '4249947775334413');
+    fbq('track', 'PageView');
   </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  /></noscript>
 
   <script>
     window.__SCORE__ = {
-      orgSlug: "score-store",
-      stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"
+      stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
+      supabaseAnon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
     };
   </script>
 </head>
@@ -173,7 +181,7 @@
           <input type="radio" name="shipMode" value="pickup" checked>
           <div class="rc-content">
             <span class="rc-title">Recoger en Fábrica</span>
-            <span class="rc-desc">Tijuana, B.C.</span>
+            <span class="rc-desc">Tijuana, B.C. (Anexa Roma)</span>
             <span class="rc-price">GRATIS</span>
           </div>
         </label>
@@ -214,7 +222,7 @@
 
   <div id="modalCatalog" class="modal">
     <div class="dHead">
-      <div id="catHeader" class="logo-header"></div> 
+      <div id="catTitle" class="logo-header">PRODUCTOS</div> 
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
     <div id="catContent" class="dBody"></div>
@@ -225,13 +233,17 @@
       <div class="fCol">
         <div class="footerBrandName">BAJATEX</div>
         <p class="fText">Operador oficial SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
+        <div style="margin-top:10px;">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" style="margin-right:10px; color:#fff;">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" style="margin-right:10px; color:#fff;">Instagram</a>
+        </div>
       </div>
       <div class="fCol">
         <h4>AYUDA</h4>
         <div class="footerLinks">
           <a href="/legal.html#shipping">Envíos</a>
           <a href="/legal.html#returns">Devoluciones</a>
-          <a href="https://wa.me/526642368701" target="_blank">Contacto WhatsApp</a>
+          <a href="https://linktr.ee/unicouniformes" target="_blank">Contacto Linktree</a>
         </div>
       </div>
       <div class="fCol">
