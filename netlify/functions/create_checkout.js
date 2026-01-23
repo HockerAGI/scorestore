@@ -13,7 +13,8 @@ const {
 
 /**
  * create_checkout (Netlify Function)
- * FIXED: Adds shipping_address_collection to ensure Stripe captures the destination for the label.
+ * FIXED: Implements "Hybrid Mode". 
+ * If DB is empty, it falls back to client-side data to prevent "Product not found" errors during initial setup.
  */
 
 function pickShippingMode(body) {
@@ -52,7 +53,7 @@ function applyDiscountToLineItems(lineItems, discount) {
   const type = discount.type;
   const value = discount.value;
   const subtotal = lineItems.reduce((acc, li) => acc + li.price_data.unit_amount * li.quantity, 0);
-  
+
   if (subtotal <= 0) return { lineItems, applied: null };
 
   if (type === "percent") {
@@ -95,24 +96,29 @@ exports.handler = async (event) => {
     const promoCodeRaw = String(body.promoCode || body.coupon || body.promo || "").trim().toUpperCase();
     const promoRule = promoCodeRaw && PROMO_RULES[promoCodeRaw] ? PROMO_RULES[promoCodeRaw] : null;
 
-    // --- DB VALIDATION ---
+    // --- DB VALIDATION (SMART HYBRID MODE) ---
     const orgSlug = String(body.orgSlug || "score-store").trim();
     const { ok: dbOk, products: dbProducts } = await getProductsFromDb({ orgSlug });
+
+    // Solo validamos estrictamente contra la BD si la conexión fue exitosa Y la tabla tiene productos.
+    // Esto evita el error "Producto no disponible" si el usuario aún no ha llenado su base de datos.
+    const useDbValidation = dbOk && dbProducts.length > 0;
 
     const line_items = cartItems.map((item) => {
       let name = item.name || "Producto SCORE";
       let unit = item.price != null ? Math.round(item.price * 100) : 0;
       let image = item.img;
 
-      if (dbOk) {
-        // Safe string comparison for ID
+      if (useDbValidation) {
+        // Modo Estricto: El producto DEBE existir en la BD
         const p = dbProducts.find((x) => String(x.id) === String(item.id));
-        if (!p) throw new Error(`Producto no disponible: ${item.id}`);
+        if (!p) throw new Error(`Producto no disponible (DB Mismatch): ${item.id}`);
         name = p.name;
         unit = Math.round(Number(p.price || 0) * 100);
         image = p.image_url || image;
       }
 
+      // Validación final de seguridad (incluso en modo fallback)
       if (!unit || unit < 50) throw new Error(`Precio inválido para producto: ${name}`);
 
       return {
@@ -132,17 +138,15 @@ exports.handler = async (event) => {
 
     const { lineItems: discountedItems, applied: promoApplied } = applyDiscountToLineItems(line_items, promoRule);
 
-    // --- SHIPPING OPTIONS & ADDRESS COLLECTION ---
+    // --- SHIPPING OPTIONS & ADDRESS ---
     const shipping_options = [];
     let shippingAddressCollection = undefined;
 
-    // Configuración de Stripe para pedir dirección según el modo
     if (mode === "mx") {
       shippingAddressCollection = { allowed_countries: ["MX"] };
     } else if (mode === "us") {
       shippingAddressCollection = { allowed_countries: ["US"] };
     }
-    // Si es pickup o tj (local), no forzamos shipping_address_collection, Stripe usará Billing Address.
 
     if (mode === "tj") {
       shipping_options.push({
@@ -183,7 +187,7 @@ exports.handler = async (event) => {
       payment_method_types: ["card", "oxxo"],
       line_items: discountedItems,
       shipping_options,
-      shipping_address_collection: shippingAddressCollection, // CRITICO: Pide la dirección en Stripe
+      shipping_address_collection: shippingAddressCollection,
       success_url: success,
       cancel_url: cancel,
       allow_promotion_codes: false, 
@@ -193,6 +197,7 @@ exports.handler = async (event) => {
         promo_type: promoApplied?.type || "",
         promo_value: promoApplied?.value != null ? String(promoApplied.value) : "",
         org_slug: orgSlug,
+        validation_mode: useDbValidation ? "strict_db" : "client_fallback"
       },
     });
 
