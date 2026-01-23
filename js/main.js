@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — PERFORMANCE FIX v2026 */
+/* SCORE STORE LOGIC — FINAL PWA & PERFORMANCE v2026 */
 
 (function () {
   "use strict";
@@ -21,30 +21,23 @@
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
       s.classList.add("hidden");
-      // Eliminamos el elemento del DOM para que no estorbe (LCP optimization)
+      // PERFORMANCE: Remover del DOM para liberar memoria y evitar bloqueos de renderizado
       setTimeout(() => { try { s.remove(); } catch {} }, 600);
     }
   }
 
   async function init() {
-    // CORRECCIÓN LCP: Eliminado el setTimeout de 4500ms.
-    // El splash se irá apenas carguen los datos críticos.
+    // PERFORMANCE FIX: Eliminado el setTimeout de 4500ms.
+    // La app inicia en cuanto cargan los datos.
     
-    // Carga paralela para ganar velocidad
-    const catalogPromise = loadCatalog();
-    const cartLoad = loadCart();
-
-    await catalogPromise; // Esperamos al catálogo
-    
-    // Renderizado inicial
+    await loadCatalog();
+    loadCart();
     setupUI();
     updateCartUI();
     initScrollReveal();
 
     if(typeof fbq === 'function') fbq('track', 'ViewContent');
-    
-    // Inmediatamente ocultar splash (Mejora LCP de 6.0s a ~1.5s)
-    hideSplash();
+    hideSplash(); // Se oculta inmediatamente al terminar la carga
   }
 
   async function loadCatalog() {
@@ -200,6 +193,7 @@
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
       
       try {
+          // PAYLOAD CORRECTO
           const payload = {
             items: cart, 
             mode: shippingState.mode, 
@@ -246,10 +240,14 @@
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
 
-  // PWA SW
+  // --- SERVICE WORKER REGISTRATION (PWA) ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        console.log('SW Registered:', reg.scope);
+      }).catch(err => {
+        console.log('SW Fail:', err);
+      });
     });
   }
 })();
