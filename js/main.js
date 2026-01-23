@@ -6,7 +6,6 @@
   const CFG = window.__SCORE__ || {};
   const API_BASE = "/.netlify/functions";
   const CART_KEY = "score_cart_final_v3";
-  const PROMO_ACTIVE = true;
   const FAKE_MARKUP_FACTOR = 5; 
 
   let cart = [];
@@ -21,14 +20,11 @@
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
       s.classList.add("hidden");
-      // Remover del DOM para liberar recursos (Performance)
       setTimeout(() => { try { s.remove(); } catch {} }, 800);
     }
   }
 
   async function init() {
-    // FIX: Eliminado el retraso de 4500ms. Carga inmediata.
-    
     await loadCatalog();
     loadCart();
     setupUI();
@@ -36,8 +32,6 @@
     initScrollReveal();
 
     if(typeof fbq === 'function') fbq('track', 'ViewContent');
-    
-    // Ocultar pantalla de carga inmediatamente
     hideSplash();
   }
 
@@ -189,7 +183,20 @@
   window.checkout = async () => {
       if(!cart.length) return;
       const btn = $("checkoutBtn");
-      if(shippingState.mode !== 'pickup' && (!$("cp").value || !$("name").value)) { alert("Faltan datos"); return; }
+      
+      // FIXED: Validación estricta de dirección
+      if(shippingState.mode !== 'pickup') {
+          const cp = $("cp").value.trim();
+          const name = $("name").value.trim();
+          const addr = $("addr").value.trim();
+          
+          if(!cp || !name || !addr) { 
+              alert("Por favor completa los datos de envío (CP, Dirección y Nombre) para calcular el costo.");
+              $("shipForm").scrollIntoView();
+              return; 
+          }
+      }
+
       btn.disabled = true; btn.innerText = "PROCESANDO...";
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
       
@@ -240,12 +247,10 @@
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
 
-  // --- SERVICE WORKER (PWA) REGISTRO ---
+  // --- SERVICE WORKER ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('SW ok:', reg.scope);
-      }).catch(err => console.log('SW fail:', err));
+      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW fail:', err));
     });
   }
 })();
