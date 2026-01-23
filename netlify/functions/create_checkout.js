@@ -13,7 +13,6 @@ const {
 
 /**
  * create_checkout (Netlify Function)
- * FIXED: Robust URL detection for Deploy Previews using 'Referer'.
  */
 
 function pickShippingMode(body) {
@@ -139,6 +138,7 @@ exports.handler = async (event) => {
     const shipping_options = [];
     let shippingAddressCollection = undefined;
 
+    // Definir opciones de dirección para Stripe
     if (mode === "mx") shippingAddressCollection = { allowed_countries: ["MX"] };
     else if (mode === "us") shippingAddressCollection = { allowed_countries: ["US"] };
 
@@ -147,7 +147,7 @@ exports.handler = async (event) => {
         shipping_rate_data: {
           type: "fixed_amount",
           fixed_amount: { amount: 20000, currency: "mxn" },
-          display_name: "Local Express Tijuana",
+          display_name: "Local Express Tijuana (Recolección)",
         },
       });
     }
@@ -157,9 +157,11 @@ exports.handler = async (event) => {
       const zip = mode === "mx" ? customer.postal_code.replace(/[^\d]/g, "") : customer.postal_code;
       const qty = cartItems.reduce((acc, it) => acc + normalizeQty(it.qty), 0);
 
+      // Usamos getEnviaQuote del shared, que ya unificó las dimensiones
       const quote = await getEnviaQuote(zip, qty, mode === "us" ? "US" : "MX");
-      const costMxn = quote ? quote.mxn : mode === "us" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-      const carrierLabel = quote ? `${quote.carrier} (${quote.days} días)` : mode === "us" ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)";
+      
+      const costMxn = quote ? quote.mxn : (mode === "us" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE);
+      const carrierLabel = quote ? `${quote.carrier} (${quote.days} días)` : (mode === "us" ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)");
 
       const isFreeShip = promoRule && promoRule.type === "free_shipping";
       const amount = isFreeShip ? 0 : Math.max(0, Math.round(costMxn * 100));
@@ -173,19 +175,14 @@ exports.handler = async (event) => {
       });
     }
 
-    // --- URL RESOLUTION FIX (CRITICAL FOR PREVIEWS) ---
-    // Usamos headers.referer como fuente de verdad si headers.origin no está.
+    // --- URL RESOLUTION ---
     const headers = event.headers || {};
     const rawOrigin = headers.origin || headers.Origin || headers.referer || headers.Referer || process.env.URL || "https://unicouniformes.com";
-    
-    let baseUrl = "";
+    let baseUrl = "https://unicouniformes.com";
     try {
-        // Extraemos solo el dominio (ej: https://deploy-preview-123.netlify.app)
         const u = new URL(rawOrigin);
         baseUrl = u.origin;
-    } catch (e) {
-        baseUrl = "https://unicouniformes.com";
-    }
+    } catch (e) {}
 
     const success = `${baseUrl}/?status=success`;
     const cancel = `${baseUrl}/?status=cancel`;
@@ -196,6 +193,8 @@ exports.handler = async (event) => {
       line_items: discountedItems,
       shipping_options,
       shipping_address_collection: shippingAddressCollection,
+      // CRITICAL FIX: Envia/FedEx REQUIRE phone number. Stripe must collect it.
+      phone_number_collection: { enabled: true }, 
       success_url: success,
       cancel_url: cancel,
       allow_promotion_codes: false,
