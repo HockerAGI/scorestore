@@ -1,4 +1,4 @@
-/* SCORE STORE - DARK RACING ORIGINAL */
+/* SCORE STORE - DARK RACING ORIGINAL v2026_PROD */
 :root {
   --font-title: "Teko", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -128,19 +128,6 @@ h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.
 .partnersGrid { display: flex; gap: 60px; justify-content: center; flex-wrap: wrap; align-items: center; }
 .pLogo { height: 50px; width: auto; filter: none; opacity: 1; transform: scale(1); transition: .3s; } .pLogo:hover { transform: scale(1.1); filter: brightness(1.2); }
 
-.footer { margin-top: 150px; background: #000; color: #fff; padding: 80px 0 40px; border-top: 6px solid var(--score-red); text-align: left; }
-.footerInner { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 50px; }
-.footerBrandName { font-family: var(--font-title); font-size: 42px; line-height: 1; color: #fff; margin-bottom: 20px; }
-.fText { font-size: 15px; color: #aaa; line-height: 1.6; margin-bottom: 10px; }
-.fCol h4 { font-family: var(--font-title); font-size: 26px; color: #fff; margin-bottom: 25px; letter-spacing: 1px; }
-.footerLinks button, .footerLinks a { display: block; background: none; border: none; color: #999; font-size: 16px; margin-bottom: 12px; cursor: pointer; padding: 0; text-align: left; text-decoration: none; transition: .2s; }
-.footerLinks button:hover, .footerLinks a:hover { color: var(--score-red); padding-left: 5px; }
-.copy { text-align: center; border-top: 1px solid #222; padding-top: 40px; margin-top: 60px; font-size: 13px; color: #666; text-transform: uppercase; }
-.whatsapp-btn { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--neon-green); font-weight: 700; text-decoration: none; }
-.social-row { display: flex; gap: 15px; margin-top: 15px; }
-.social-link { color: #999; text-decoration: none; font-size: 14px; transition: .3s; display: flex; align-items: center; gap: 6px; }
-.social-link:hover { color: #fff; }
-
 .modal { position: fixed; top: 50%; left: 50%; width: min(1100px, 94vw); max-height: 90vh; transform: translate(-50%, -45%); background: #f9f9f9; z-index: 2100; opacity: 0; pointer-events: none; border-radius: 16px; transition: .3s; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); } .modal.active { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
 .modal .dHead { padding: 14px 18px; background: var(--score-red); border-bottom: 1px solid #cc0000; display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto; min-height: 70px; }
 .modal .dTitle { margin: 0; display: flex; align-items: center; justify-content: center; height: auto; width: 100%; font-family: var(--font-title); font-size: 28px; color: #fff; letter-spacing: 1px; }
@@ -199,11 +186,81 @@ h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.
 
 .toast { position: fixed; top: 100px; right: 20px; background: var(--score-red); color: #fff; padding: 15px 30px; border-radius: 50px; font-weight: 900; z-index: 3000; box-shadow: 0 10px 30px rgba(225,6,0,0.3); transition: .3s; transform: translateX(150%); } .toast.show { transform: translateX(0); }
 .page-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px); } .page-overlay.active { opacity: 1; pointer-events: auto; }
-@media (max-width: 768px) { .hero { padding: 20px; min-height: 520px; } .hero-title { font-size: 42px; } .heroContent { padding: 20px; } .footerInner { grid-template-columns: 1fr; gap: 40px; } .partnersGrid { gap: 30px; } .modal { width: 94vw; max-height: 92vh; } .modal .dBody { padding: 18px; } .shipGrid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .hero { padding: 20px; min-height: 520px; } .hero-title { font-size: 42px; } .heroContent { padding: 20px; } .partnersGrid { gap: 30px; } .modal { width: 94vw; max-height: 92vh; } .modal .dBody { padding: 18px; } .shipGrid { grid-template-columns: 1fr; } }
 .cookieBanner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 5000; max-width: 980px; margin: 0 auto; background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.14); border-left: 6px solid #E10600; border-radius: 16px; padding: 14px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.55); } .cookieInner { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; } .cookieText { color:#fff; font-family: 'Inter', sans-serif; font-size: 13px; flex: 1; } .cookieBtn { border-radius: 999px; padding: 8px 16px; cursor: pointer; font-family: 'Teko', sans-serif; text-transform: uppercase; font-size: 16px; background: #E10600; color: #fff; border: none; } .cookieBtn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.3); margin-right: 10px; }
-/* ... (TUS ESTILOS ACTUALES ARRIBA) ... */
 
-/* === LEGAL PAGE STYLES (ADDON) === */
+/* === MEGA FOOTER PRO === */
+.footer {
+  margin-top: 120px;
+  background-color: #050505; /* Casi negro absoluto */
+  color: #b0b0b0;
+  padding: 80px 0 30px;
+  border-top: 8px solid var(--score-red);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.footerInner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.fCol h4 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  color: #fff;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-left: 3px solid var(--score-red);
+  padding-left: 10px;
+}
+
+.fCol p {
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.fCol strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.footerLinks a {
+  display: block;
+  color: #999;
+  text-decoration: none;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  border-bottom: 1px solid transparent;
+  width: fit-content;
+}
+
+.footerLinks a:hover {
+  color: #fff;
+  border-bottom-color: var(--score-red);
+  padding-left: 5px;
+}
+
+.copy-row {
+  border-top: 1px solid #222;
+  padding-top: 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.copy-text {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* === LEGAL PAGE TYPOGRAPHY === */
 .legal {
   max-width: 1000px;
   margin: 0 auto;
@@ -220,40 +277,40 @@ h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.
   border: 1px solid rgba(255,255,255,0.1);
 }
 
-.legalCard .h2 {
+.legal-doc-title {
   font-family: var(--font-title);
+  font-size: 42px;
   color: var(--score-red);
-  font-size: 36px;
+  margin-top: 40px;
   margin-bottom: 20px;
   border-bottom: 2px solid #eee;
   padding-bottom: 10px;
-  line-height: 1;
 }
 
-.legalCard h3 {
+.legal-section-title {
   font-family: var(--font-body);
-  font-weight: 800;
-  color: #000;
+  font-weight: 900;
   font-size: 18px;
-  margin-top: 20px;
+  color: #000;
+  margin-top: 25px;
   margin-bottom: 10px;
+  text-transform: uppercase;
 }
 
-.legalCard .p {
+.legal-text {
   font-size: 15px;
-  line-height: 1.6;
-  margin-bottom: 15px;
+  line-height: 1.7;
   color: #333;
+  margin-bottom: 15px;
+  text-align: justify;
 }
 
-.legalCard .ul {
+.legal-list {
   padding-left: 20px;
   margin-bottom: 20px;
 }
-
-.legalCard .ul li {
+.legal-list li {
   margin-bottom: 8px;
-  line-height: 1.5;
   color: #444;
 }
 
@@ -274,7 +331,10 @@ h2 { font-family: var(--font-title); font-size: 56px; margin: 0; line-height: 0.
   color: var(--score-red);
 }
 
-@media (max-width: 768px) {
+/* Ajustes Responsive */
+@media (max-width: 900px) {
+  .footerInner { grid-template-columns: 1fr; }
+  .fCol { border-bottom: 1px solid #222; padding-bottom: 20px; }
+  .fCol:last-child { border: none; }
   .legalCard { padding: 25px 20px; }
-  .legalCard .h2 { font-size: 32px; }
 }
