@@ -1,171 +1,43 @@
-/* SCORE STORE - RACING VFX PRO v2026 */
 :root {
   --font-title: "Teko", sans-serif;
   --font-body: "Inter", sans-serif;
   --score-red: #E10600;
-  --score-blue: #003087;
-  --bg-dark: #121212;
-  --white: #ffffff;
-  --header-h: 80px;
-  --promo-h: 40px;
-  --radius: 20px;
-  --shadow-pro: 0 15px 40px rgba(0,0,0,0.4);
+  --carbon: #111111;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-html { scroll-behavior: smooth; font-size: 16px; }
+/* === SPLASH SCREEN VFX === */
+#splash-screen { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s; }
+.splash-bg-vfx { position: absolute; inset: 0; opacity: 0.15; background-image: url('/assets/baja1000-texture.webp'); background-size: cover; filter: grayscale(1); }
+.splash-content { position: relative; z-index: 10; text-align: center; width: 300px; }
+.vfx-dashboard { width: 100%; transform: skewX(-15deg); margin-top: 30px; }
+.rpm-gauge { width: 100%; height: 12px; background: #222; border: 1px solid #333; overflow: hidden; }
+.rpm-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #555, var(--score-red)); box-shadow: 0 0 15px var(--score-red); animation: rev-up 3.5s forwards cubic-bezier(0.1, 0.9, 0.2, 1); }
+.splash-phrase { font-family: var(--font-title); color: #fff; letter-spacing: 2px; font-size: 16px; margin-top: 15px; opacity: 0; animation: fadeIn 1s 1.5s forwards; transform: skewX(15deg); }
 
-body {
-  font-family: var(--font-body);
-  background-color: var(--bg-dark);
-  color: var(--white);
-  background-image: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url("/assets/fondo-pagina-score.webp");
-  background-attachment: fixed;
-  background-size: cover;
-  background-position: center top;
-  overflow-x: hidden;
-  margin: 0;
-}
-body.modalOpen { overflow: hidden; }
+@keyframes rev-up { 0% { width: 0%; } 80% { width: 95%; } 100% { width: 100%; } }
+@keyframes fadeIn { to { opacity: 1; } }
 
-/* === [NUEVO] SPLASH SCREEN VFX (4s SEQUENCE) === */
-#splash-screen {
-  position: fixed; inset: 0; z-index: 9999;
-  background-color: #000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity 0.8s ease-out, visibility 0.8s;
-}
-#splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-.splash-bg-overlay {
-  position: absolute; inset: 0; opacity: 0.15;
-  background-image: linear-gradient(rgba(0,0,0,0.5), #000), url('/assets/baja1000-texture.webp');
-  background-size: cover; filter: grayscale(1);
-}
-.splash-content { position: relative; z-index: 10; text-align: center; width: 320px; }
-.splash-logo {
-  width: 180px; height: auto; margin-bottom: 30px;
-  filter: drop-shadow(0 0 15px rgba(225,6,0,0.6));
-}
-
-/* Tacometro VFX */
-.rpm-vfx-container {
-  width: 100%; height: 10px; background: #1a1a1a; border: 1px solid #333;
-  border-radius: 2px; overflow: hidden; margin-bottom: 20px;
-  transform: skewX(-15deg); box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-.rpm-vfx-bar {
-  height: 100%; width: 0%;
-  background: linear-gradient(90deg, #444, var(--score-red), #ff0000);
-  box-shadow: 0 0 20px var(--score-red);
-  animation: rpmRevVfx 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-.splash-phrase {
-  font-family: var(--font-title); font-size: 18px; color: #fff;
-  letter-spacing: 3px; text-transform: uppercase; margin-top: 10px;
-  opacity: 0; animation: fadeInVfx 1s 1s forwards;
-}
-.splash-status {
-  font-size: 10px; color: var(--score-red); font-weight: 800;
-  letter-spacing: 4px; margin-top: 25px; animation: blinkVfx 0.8s infinite;
-}
-
-@keyframes rpmRevVfx { 0% { width: 0%; } 20% { width: 15%; } 40% { width: 10%; } 100% { width: 100%; } }
-@keyframes fadeInVfx { to { opacity: 1; } }
-@keyframes blinkVfx { 50% { opacity: 0.1; } }
-
-/* UI PRO */
-.scroll-reveal { opacity: 1; transform: translateY(0); transition: 0.8s; }
-.topbar { position: fixed; top: var(--promo-h); left: 0; width: 100%; height: var(--header-h); background: rgba(255,255,255,0.98); border-bottom: 4px solid var(--score-red); z-index: 2000; box-shadow: 0 5px 25px rgba(0,0,0,0.15); }
-.promo-bar { position: fixed; top: 0; left: 0; width: 100%; height: var(--promo-h); background: #000; color: #fff; border-bottom: 2px solid var(--score-red); display: flex; align-items: center; justify-content: center; z-index: 2001; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-
-.container { width: min(1300px, 94vw); margin: 0 auto; }
-.topbarInner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
-.brandLogo { height: 50px; }
-.cartBtn { position: relative; background: #fff; border: 2px solid #eee; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: .3s; }
-.cartCount { position: absolute; top: -4px; right: -4px; background: var(--score-red); color: #fff; font-size: 11px; font-weight: 800; height: 20px; min-width: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
-/* === [COCKPIT] CARRITO DRAWER FIX === */
-.drawer { 
-  position: fixed; top: 0; right: 0; bottom: 0; width: min(500px, 100vw); 
-  display: flex; flex-direction: column; background: #fff; z-index: 2100;
-  transform: translateX(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -10px 0 50px rgba(0,0,0,0.5); border-left: 5px solid var(--score-red);
-}
+/* === CARRITO COCKPIT PRO === */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); display: flex; flex-direction: column; background: #fff; border-left: 6px solid var(--score-red); transform: translateX(101%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 3100; }
 .drawer.active { transform: translateX(0); }
-
-/* Partes fijas */
-.drawer .dHead { flex-shrink: 0; padding: 20px; border-bottom: 1px solid #eee; }
-.drawer .dTrust { flex-shrink: 0; background: #000; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; text-transform: uppercase; }
-.drawer .dFoot { flex-shrink: 0; border-top: 1px solid #eee; background: #fbfbfb; padding: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); }
-
-/* Parte con scroll */
+.drawer .dHead { flex-shrink: 0; border-bottom: 1px solid #eee; padding: 20px; }
+.drawer .dTrust { flex-shrink: 0; background: #000; color: #fff; padding: 8px 20px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; }
 .drawer .dBody { flex: 1; overflow-y: auto; padding: 20px; }
+.drawer .dFoot { flex-shrink: 0; border-top: 2px solid #eee; background: #fbfbfb; padding: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); }
 
-/* Item Carrito */
-.cartItem { display: grid; grid-template-columns: 80px 1fr auto; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 15px; align-items: center; color: #000; }
-.cartThumb { width: 80px; height: 100px; object-fit: contain; background: #f4f4f4; border-radius: 4px; padding: 5px; }
-.cInfo { display: flex; flex-direction: column; gap: 4px; }
-.cName { font-weight: 800; font-size: 14px; color: #000; line-height: 1.2; }
-.cMeta { font-size: 11px; color: #666; }
+/* Detalle de ítem en carrito */
+.cartItem { display: grid; grid-template-columns: 70px 1fr auto; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; color: #000; align-items: center; }
+.cartThumb { width: 70px; height: 90px; object-fit: contain; background: #f4f4f4; border-radius: 6px; }
+.qtyControl { display: flex; align-items: center; border: 2px solid #000; border-radius: 4px; margin-top: 8px; width: fit-content; }
+.qtyBtn { background: #000; color: #fff; border: none; width: 28px; height: 28px; cursor: pointer; font-weight: bold; }
+.qtyVal { width: 30px; text-align: center; font-size: 14px; font-weight: 900; }
 
-/* Cantidades */
-.qtyControl { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; margin-top: 8px; width: fit-content; background: #fff; }
-.qtyBtn { background: #f8f8f8; border: none; width: 30px; height: 30px; cursor: pointer; font-weight: bold; color: #000; }
-.qtyBtn:hover { background: #eee; }
-.qtyVal { width: 34px; text-align: center; font-size: 13px; font-weight: bold; }
-
-.cRight { text-align: right; }
-.cPrice { font-family: var(--font-title); font-size: 22px; color: var(--score-red); }
-.cart-remove { font-size: 10px; color: #999; text-decoration: underline; cursor: pointer; margin-top: 10px; }
-
-/* Envios UX */
-.label-pro { font-size: 11px; font-weight: 900; color: #999; margin-bottom: 10px; letter-spacing: 1px; }
-.radio-card-pro { display: block; cursor: pointer; margin-bottom: 8px; }
-.rc-content-pro { display: flex; justify-content: space-between; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; transition: 0.2s; }
-.radio-card-pro input { position: absolute; opacity: 0; }
-.radio-card-pro input:checked + .rc-content-pro { border-color: var(--score-red); background: #fff5f5; box-shadow: 0 4px 12px rgba(225,6,0,0.1); }
-.rc-title { font-size: 13px; font-weight: bold; color: #000; }
-.rc-price { font-weight: 900; color: var(--score-red); }
-
-.ship-form-pro { display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-.ship-form-pro.active { display: block; }
-.form-grid-pro { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
-.inputField { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 8px; color: #000; }
+.ship-form-vfx { display: none; margin: 15px 0; border-left: 3px solid var(--score-red); padding-left: 10px; }
+.ship-form-vfx.active { display: block; }
+.form-grid { display: grid; grid-template-columns: 80px 1fr; gap: 8px; }
+.inputField { border: 1px solid #ccc; padding: 10px; border-radius: 6px; font-size: 14px; width: 100%; }
 .inputField.full { grid-column: span 2; }
 
-/* Totales */
-.cost-summary-pro { margin: 15px 0; border-top: 1px solid #eee; padding-top: 15px; }
-.sumRow { display: flex; justify-content: space-between; font-size: 14px; color: #555; margin-bottom: 5px; }
-.sumRow.total { font-size: 20px; color: #000; font-weight: 800; margin-top: 10px; border-top: 2px solid #000; padding-top: 10px; }
-.sumRow.total strong { color: var(--score-red); font-family: var(--font-title); font-size: 28px; }
-
-/* SECCIONES INTACTAS */
-.wrap { padding-top: 160px; padding-bottom: 80px; width: min(1300px, 94vw); margin: 0 auto; }
-.hero { position: relative; min-height: 600px; border-radius: 20px; overflow: hidden; border: 1px solid #333; display: flex; align-items: center; justify-content: center; background: #000; }
-.heroBg { position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover; }
-.heroOverlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%); }
-.heroContent { position: relative; z-index: 2; text-align: center; max-width: 800px; }
-.hero-main-logo { height: 100px; margin-bottom: 20px; }
-
-/* Botones Intactos */
-.btn { padding: 16px 40px; font-family: var(--font-title); font-size: 24px; text-transform: uppercase; cursor: pointer; border-radius: 50px; border: none; transition: .3s; }
-.btn.primary { background: var(--score-red); color: #fff; }
-.btn.secondary { background: rgba(0,0,0,0.6); border: 2px solid #fff; color: #fff; }
-
-/* Footer Intacto */
-.footer { margin-top: 100px; background: #000; color: #888; padding: 80px 0 20px; border-top: 6px solid var(--score-red); }
-.footerBrandName { font-family: var(--font-title); font-size: 32px; color: #fff; margin-bottom: 10px; }
-.footerLinks button, .footerLinks a { background: none; border: none; color: #888; display: block; margin-bottom: 10px; cursor: pointer; text-align: left; text-decoration: none; }
-.footerLinks button:hover, .footerLinks a:hover { color: #fff; }
-
-/* UTILS */
-.empty-state { text-align: center; padding: 40px; }
-.empty-icon { width: 60px; opacity: 0.2; margin-bottom: 20px; filter: invert(1); }
-.linkDanger { color: var(--score-red); font-size: 11px; text-decoration: underline; background: none; border: none; cursor: pointer; }
-
-@media (max-width: 768px) {
-    .drawer { width: 100%; }
-    .topbar { height: 70px; }
-    .topbarInner { padding: 0 15px; }
-}
+/* Footer Styling */
+.footer { background: #080808; padding: 60px 0 20px; border-top: 5px solid var(--score-red); }
+.footerBrandName { font-family: var(--font-title); font-size: 44px; color: #fff; letter-spacing: 2px; }
