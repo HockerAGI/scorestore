@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — FINAL REV v2026 */
+/* SCORE STORE LOGIC — ORIGINAL OPTIMIZED v2026 */
 
 (function () {
   "use strict";
@@ -21,13 +21,14 @@
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
       s.classList.add("hidden");
+      // Remover del DOM para liberar recursos (Performance)
       setTimeout(() => { try { s.remove(); } catch {} }, 800);
     }
   }
 
   async function init() {
-    setTimeout(hideSplash, 4500); // Safety
-
+    // FIX: Eliminado el retraso de 4500ms. Carga inmediata.
+    
     await loadCatalog();
     loadCart();
     setupUI();
@@ -35,6 +36,8 @@
     initScrollReveal();
 
     if(typeof fbq === 'function') fbq('track', 'ViewContent');
+    
+    // Ocultar pantalla de carga inmediatamente
     hideSplash();
   }
 
@@ -78,7 +81,6 @@
                      <span style="color:#E10600; font-weight:bold;">${money(sellPrice)}</span>
                 </div>`;
 
-            // DETECCIÓN DE IMÁGENES
             const images = p.images && p.images.length ? p.images : [p.img];
             const slidesHtml = images.map(src => 
                 `<div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
@@ -190,8 +192,8 @@
       if(shippingState.mode !== 'pickup' && (!$("cp").value || !$("name").value)) { alert("Faltan datos"); return; }
       btn.disabled = true; btn.innerText = "PROCESANDO...";
       if(typeof fbq === 'function') fbq('track', 'InitiateCheckout');
+      
       try {
-          // CLEAN PAYLOAD: Removing phantom promoCode
           const payload = {
             items: cart, 
             mode: shippingState.mode, 
@@ -203,7 +205,8 @@
           };
 
           const res = await fetch(`${API_BASE}/create_checkout`, {
-              method: 'POST', headers: { "Content-Type": "application/json" },
+              method: 'POST', 
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
           const data = await res.json();
@@ -237,14 +240,12 @@
   function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
   document.addEventListener("DOMContentLoaded", init);
 
-  // --- SERVICE WORKER REGISTRATION (PWA FIX) ---
+  // --- SERVICE WORKER (PWA) REGISTRO ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('SW Registered:', reg.scope);
-      }).catch(err => {
-        console.log('SW Fail:', err);
-      });
+        console.log('SW ok:', reg.scope);
+      }).catch(err => console.log('SW fail:', err));
     });
   }
 })();
