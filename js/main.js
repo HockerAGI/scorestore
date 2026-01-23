@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — ROBUST PRODUCTION READY v2026 */
+/* SCORE STORE LOGIC — V2026 PRO DRAWER (NO SPEED BAR) */
 
 (function () {
   "use strict";
@@ -10,7 +10,8 @@
 
   let cart = [];
   let catalogData = { products: [], sections: [] };
-  let shippingState = { mode: "pickup", cost: 0, label: "Gratis (Fábrica)" };
+  let shippingState = { mode: "pickup", cost: 0, label: "Gratis" };
+  let appliedPromo = null; 
 
   const $ = (id) => document.getElementById(id);
   const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
@@ -25,12 +26,7 @@
   }
 
   async function init() {
-    // 1. SAFETY TIMEOUT: Forzar quitar splash a los 3s si algo falla
-    const safetyTimer = setTimeout(() => {
-        console.warn("Forcing splash hide due to timeout");
-        hideSplash();
-    }, 3000);
-
+    const safetyTimer = setTimeout(() => { hideSplash(); }, 3000);
     try {
         await loadCatalog();
         loadCart();
@@ -52,7 +48,6 @@
       if (!res.ok) throw new Error("Catalog fetch failed");
       catalogData = await res.json();
     } catch (e) {
-      console.warn("Catalog Fallback:", e);
       catalogData = { products: [] };
     }
   }
@@ -138,9 +133,11 @@
       let card = null;
       allBtns.forEach(b => { if(b.closest('#modalCatalog')) card = b.closest('.prodCard'); });
       const size = card ? card.dataset.selSize : "Unitalla";
+      
       const exist = cart.find(x => x.id === pid && x.size === size);
       if(exist) exist.qty++;
       else cart.push({ id: p.id, name: p.name, price: Number(p.baseMXN), img: p.img, size: size, qty: 1 });
+      
       saveCart(); updateCartUI(); showToast("Agregado al pedido");
       closeAll(); openDrawer();
       if(typeof fbq === 'function') fbq('track', 'AddToCart');
@@ -153,8 +150,12 @@
       document.querySelectorAll('input[name="shipMode"]').forEach(r => {
           r.addEventListener("change", () => {
               const form = $("shipForm");
+              shippingState.mode = r.value;
+              
               if(r.value === 'pickup') {
-                  shippingState.cost = 0; shippingState.label = "Gratis"; form.style.display = "none";
+                  shippingState.cost = 0; 
+                  shippingState.label = "Recolección Gratis"; 
+                  form.style.display = "none";
               } else {
                   shippingState.cost = (r.value === 'mx') ? 250 : 800;
                   shippingState.label = (r.value === 'mx') ? "Envío Nacional" : "Envío USA";
@@ -165,11 +166,29 @@
       });
   }
 
+  window.applyPromoUI = () => {
+      const code = $("promoCode").value.trim().toUpperCase();
+      if(!code) return;
+      showToast(`Código ${code} se aplicará en el pago`);
+      appliedPromo = code;
+  };
+
   function updateCartUI() {
-      const box = $("cartItems"); if(!box) return;
+      const box = $("cartItems");
+      const footer = $("cartFooter");
+      const emptyState = $("cartEmpty");
+
+      if (!cart.length) {
+          box.innerHTML = "";
+          emptyState.style.display = "flex"; 
+          footer.style.display = "none";     
+          $("cartCount").innerText = "0";
+          return;
+      }
+
+      emptyState.style.display = "none";
+      footer.style.display = "block";
       box.innerHTML = "";
-      if(!cart.length) $("cartEmpty").style.display = "block";
-      else $("cartEmpty").style.display = "none";
 
       cart.forEach((it, idx) => {
           box.innerHTML += `
@@ -177,7 +196,7 @@
                 <img src="${cleanUrl(it.img)}" class="cartThumb">
                 <div class="cInfo">
                     <div class="cName">${it.name}</div>
-                    <div class="cMeta">${it.size}</div>
+                    <div class="cMeta">Talla: ${it.size} | SKU: ${it.id}</div>
                     <div class="qtyRow">x${it.qty}</div>
                 </div>
                 <div class="cPrice">${money(it.price * it.qty)}</div>
@@ -186,24 +205,29 @@
       });
       
       const sub = cart.reduce((a,b)=>a+(b.price*b.qty),0);
+      const total = sub + shippingState.cost;
+
       $("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0);
       $("subTotal").innerText = money(sub);
       $("shipTotal").innerText = shippingState.cost === 0 ? 'Gratis' : money(shippingState.cost);
-      $("grandTotal").innerText = money(sub + shippingState.cost);
+      $("grandTotal").innerText = money(total);
   }
 
   window.checkout = async () => {
       if(!cart.length) return;
       const btn = $("checkoutBtn");
-      
+
       if(shippingState.mode !== 'pickup') {
           const cp = $("cp").value.trim();
           const name = $("name").value.trim();
           const addr = $("addr").value.trim();
           
           if(!cp || !name || !addr) { 
-              alert("Por favor completa los datos de envío (CP, Dirección y Nombre) para calcular el costo.");
+              alert("⚠️ DATOS FALTANTES\n\nPara envío a domicilio, necesitamos tu Nombre, Dirección y CP.");
               $("shipForm").scrollIntoView({ behavior: 'smooth' });
+              if(!cp) $("cp").style.borderColor = "red";
+              if(!name) $("name").style.borderColor = "red";
+              if(!addr) $("addr").style.borderColor = "red";
               return; 
           }
       }
@@ -215,6 +239,7 @@
           const payload = {
             items: cart, 
             mode: shippingState.mode, 
+            promoCode: appliedPromo || $("promoCode")?.value || "",
             customer: { 
                 name: $("name")?.value, 
                 address: $("addr")?.value, 
@@ -230,7 +255,7 @@
           const data = await res.json();
           if(data.url) location.href = data.url; else throw new Error(data.error);
       } catch(e) { 
-          alert("Error: " + e.message); 
+          alert("Error iniciando pago: " + e.message); 
           btn.disabled = false; btn.innerText = "PAGAR AHORA"; 
       }
   };
@@ -239,12 +264,7 @@
   window.openDrawer = () => { $("drawer").classList.add("active"); $("overlay").classList.add("active"); };
   window.closeAll = () => { document.querySelectorAll(".active").forEach(e => e.classList.remove("active")); };
   window.scrollToId = (id) => { const el = $(id); if(el) el.scrollIntoView({behavior:'smooth'}); };
-  window.openLegal = (type) => {
-      document.querySelectorAll('.legalBlock').forEach(b => b.style.display='none');
-      const blk = document.querySelector(`[data-legal-block="${type}"]`);
-      if(blk) blk.style.display='block';
-      $("legalModal").classList.add("active"); $("overlay").classList.add("active");
-  };
+  
   window.showToast = (msg) => {
       const t = $("toast"); t.innerText = msg; t.classList.add("show");
       setTimeout(() => t.classList.remove("show"), 3000);
