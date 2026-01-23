@@ -13,8 +13,7 @@ const {
 
 /**
  * create_checkout (Netlify Function)
- * FIXED: Implements "Hybrid Mode". 
- * If DB is empty, it falls back to client-side data to prevent "Product not found" errors during initial setup.
+ * FIXED: Implements "Hybrid Mode" & Shipping Address Collection.
  */
 
 function pickShippingMode(body) {
@@ -49,7 +48,6 @@ function normalizeCartItems(body) {
 
 function applyDiscountToLineItems(lineItems, discount) {
   if (!discount) return { lineItems, applied: null };
-
   const type = discount.type;
   const value = discount.value;
   const subtotal = lineItems.reduce((acc, li) => acc + li.price_data.unit_amount * li.quantity, 0);
@@ -60,7 +58,7 @@ function applyDiscountToLineItems(lineItems, discount) {
     const factor = 1 - Math.min(0.9, Math.max(0, value));
     const adjusted = lineItems.map((li) => {
       const unit = li.price_data.unit_amount;
-      const newUnit = Math.max(50, Math.round(unit * factor)); 
+      const newUnit = Math.max(50, Math.round(unit * factor));
       return { ...li, price_data: { ...li.price_data, unit_amount: newUnit } };
     });
     return { lineItems: adjusted, applied: { type, value } };
@@ -77,7 +75,6 @@ function applyDiscountToLineItems(lineItems, discount) {
     });
     return { lineItems: adjusted, applied: { type, value } };
   }
-
   return { lineItems, applied: null };
 }
 
@@ -100,8 +97,7 @@ exports.handler = async (event) => {
     const orgSlug = String(body.orgSlug || "score-store").trim();
     const { ok: dbOk, products: dbProducts } = await getProductsFromDb({ orgSlug });
 
-    // Solo validamos estrictamente contra la BD si la conexión fue exitosa Y la tabla tiene productos.
-    // Esto evita el error "Producto no disponible" si el usuario aún no ha llenado su base de datos.
+    // Activa validación estricta SOLO si la BD responde y tiene productos.
     const useDbValidation = dbOk && dbProducts.length > 0;
 
     const line_items = cartItems.map((item) => {
@@ -110,16 +106,23 @@ exports.handler = async (event) => {
       let image = item.img;
 
       if (useDbValidation) {
-        // Modo Estricto: El producto DEBE existir en la BD
+        // MODO ESTRICTO (BD)
         const p = dbProducts.find((x) => String(x.id) === String(item.id));
-        if (!p) throw new Error(`Producto no disponible (DB Mismatch): ${item.id}`);
+        if (!p) {
+            // Log interno, pero error genérico al usuario si se desea
+            console.error(`DB Mismatch: Product '${item.id}' not found in DB.`);
+            throw new Error(`Producto no disponible (Stock Error): ${item.id}`);
+        }
         name = p.name;
         unit = Math.round(Number(p.price || 0) * 100);
         image = p.image_url || image;
+      } else {
+        // MODO FALLBACK (Confianza en Cliente)
+        // Útil si la BD está vacía o fallando.
+        if (!unit) throw new Error(`Error de precio en producto: ${item.id}`);
       }
 
-      // Validación final de seguridad (incluso en modo fallback)
-      if (!unit || unit < 50) throw new Error(`Precio inválido para producto: ${name}`);
+      if (!unit || unit < 50) throw new Error(`Precio inválido para: ${name}`);
 
       return {
         price_data: {
@@ -138,15 +141,12 @@ exports.handler = async (event) => {
 
     const { lineItems: discountedItems, applied: promoApplied } = applyDiscountToLineItems(line_items, promoRule);
 
-    // --- SHIPPING OPTIONS & ADDRESS ---
+    // --- SHIPPING ---
     const shipping_options = [];
     let shippingAddressCollection = undefined;
 
-    if (mode === "mx") {
-      shippingAddressCollection = { allowed_countries: ["MX"] };
-    } else if (mode === "us") {
-      shippingAddressCollection = { allowed_countries: ["US"] };
-    }
+    if (mode === "mx") shippingAddressCollection = { allowed_countries: ["MX"] };
+    else if (mode === "us") shippingAddressCollection = { allowed_countries: ["US"] };
 
     if (mode === "tj") {
       shipping_options.push({
@@ -190,7 +190,7 @@ exports.handler = async (event) => {
       shipping_address_collection: shippingAddressCollection,
       success_url: success,
       cancel_url: cancel,
-      allow_promotion_codes: false, 
+      allow_promotion_codes: false,
       metadata: {
         shipping_mode: mode,
         promo_code: promoCodeRaw || "",
