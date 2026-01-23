@@ -5,18 +5,7 @@ const { jsonResponse, createEnviaLabel, supabaseAdmin, normalizeQty } = require(
 
 /**
  * Stripe Webhook (Netlify Function)
- * - Verifies signature
- * - On checkout.session.completed: stores order in Supabase (Único OS) + optionally creates Envia label
- * - Sends Telegram notification if TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID exist
- *
- * REQUIRED env vars:
- * - STRIPE_SECRET_KEY
- * - STRIPE_WEBHOOK_SECRET
- *
- * OPTIONAL:
- * - SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY  (recommended)
- * - ENVIA_API_KEY (for label generation)
- * - TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID
+ * FIXED: Uses shipping_details for accurate label generation.
  */
 
 function getSig(headers) {
@@ -63,30 +52,31 @@ exports.handler = async (event) => {
     }
 
     const session = stripeEvent.data.object;
-
     const sessionId = session.id;
     const total = session.amount_total ? session.amount_total / 100 : 0;
 
-    // Metadata (unified)
     const mode = String(session.metadata?.shipping_mode || session.metadata?.score_mode || "pickup").toLowerCase();
     const promoCode = String(session.metadata?.promo_code || "").trim();
 
-    // Customer data
+    // CUSTOMER DATA: Prioritize Shipping Details for Logistics
+    const shipping = session.shipping_details || session.customer_details || {};
+    const addressSource = shipping.address || {};
+
     const customer = {
-      name: session.customer_details?.name || "",
-      email: session.customer_details?.email || "",
+      name: shipping.name || session.customer_details?.name || "",
+      email: session.customer_details?.email || "", 
       phone: session.customer_details?.phone || "",
       address: {
-        line1: session.customer_details?.address?.line1 || "",
-        line2: session.customer_details?.address?.line2 || "",
-        city: session.customer_details?.address?.city || "",
-        state: session.customer_details?.address?.state || "",
-        country: session.customer_details?.address?.country || "",
-        postal_code: session.customer_details?.address?.postal_code || "",
+        line1: addressSource.line1 || "",
+        line2: addressSource.line2 || "",
+        city: addressSource.city || "",
+        state: addressSource.state || "",
+        country: addressSource.country || "",
+        postal_code: addressSource.postal_code || "",
       },
     };
 
-    // Pull line items (real qty, real names)
+    // Pull line items
     const li = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
     const lineItems = (li.data || []).map((x) => ({
       description: x.description || "",
@@ -97,14 +87,13 @@ exports.handler = async (event) => {
 
     const itemsQty = lineItems.reduce((acc, x) => acc + normalizeQty(x.quantity), 0);
 
-    // Shipping label only for MX/US and if ENVIA_API_KEY is present
+    // Label Generation: Only if we have a valid postal code and mode is MX or US
     let envia = null;
     if ((mode === "mx" || mode === "us") && customer.address.postal_code) {
       envia = await createEnviaLabel(customer, itemsQty);
     }
 
-    // Save order to Supabase (Único OS)
-    // Suggested schema fields: stripe_id, total, status, shipping_mode, promo_code, customer_json, items_json, tracking_number, label_url, carrier, delivery_status, created_at
+    // Persist to Supabase
     if (supabaseAdmin) {
       await supabaseAdmin.from("orders").insert([
         {
@@ -134,7 +123,6 @@ exports.handler = async (event) => {
       (promoCode ? `Cupón: <b>${promoCode}</b>\n` : "") +
       (customer.name ? `Cliente: ${customer.name}\n` : "") +
       (customer.phone ? `Tel: ${customer.phone}\n` : "") +
-      (customer.email ? `Email: ${customer.email}\n` : "") +
       (envia?.tracking ? `Tracking: <b>${envia.tracking}</b>\n` : "");
 
     await notifyTelegram(msg);
