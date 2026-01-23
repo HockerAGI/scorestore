@@ -1,7 +1,7 @@
 /* sw.js - VERSIÓN DE PRODUCCIÓN v2026_FINAL (CACHE BUSTING) */
 const CACHE_NAME = "score-store-v2026_prod_final";
 
-// Lista crítica de assets para precarga
+// Lista crítica de assets
 const ASSETS = [
   "/",
   "/index.html",
@@ -14,12 +14,11 @@ const ASSETS = [
   "/site.webmanifest"
 ];
 
-// precache tolerante
+// Precache con estrategia "reload" para ignorar caché HTTP vieja
 async function safePrecache(cache, urls) {
   await Promise.allSettled(
     urls.map(async (url) => {
       try {
-        // cache: "reload" fuerza al navegador a ir a la red y no usar caché de disco antigua
         const res = await fetch(url, { cache: "reload" });
         if (res.ok) await cache.put(url, res);
       } catch {}
@@ -28,7 +27,7 @@ async function safePrecache(cache, urls) {
 }
 
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
+  self.skipWaiting(); // Activar inmediatamente
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => safePrecache(cache, ASSETS))
   );
@@ -38,21 +37,21 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      // Borrar cualquier caché antigua que no coincida con la nueva versión
+      // Borrar cualquier caché antigua que no sea la v2026_prod_final
       await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)));
-      await self.clients.claim();
+      await self.clients.claim(); // Tomar control de inmediato
     })()
   );
 });
 
-// network-first for html, cache-first for others
+// Estrategia Stale-While-Revalidate para máxima velocidad + actualización
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
   if (url.origin !== location.origin) return;
 
-  // HTML siempre fresco (Network First)
+  // HTML: Siempre red primero (Network First)
   if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
     event.respondWith(
       fetch(req)
@@ -66,7 +65,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets estáticos (Stale-While-Revalidate para velocidad + actualización)
+  // Assets (CSS, JS, Imágenes): Usar caché pero actualizar en fondo
   event.respondWith(
     caches.match(req).then((cached) => {
       const networkFetch = fetch(req).then((res) => {
@@ -74,8 +73,6 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((c) => c.put(req, copy));
         return res;
       });
-
-      // Si existe en caché, úsalo pero actualiza en fondo. Si no, ve a red.
       return cached || networkFetch;
     })
   );
