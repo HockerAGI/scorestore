@@ -1,7 +1,7 @@
 {
   "name": "score-store-official",
-  "version": "2.2.0",
-  "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes). Integrado a Único OS (Supabase) + Stripe + Envia + Pixel.",
+  "version": "3.0.0",
+  "description": "Tienda Oficial SCORE International. Operado por Único Uniformes.",
   "main": "index.html",
   "scripts": {
     "start": "netlify dev",
@@ -10,12 +10,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
     "axios": "^1.6.7",
-    "dotenv": "^16.4.1",
-    "stripe": "^14.14.0"
+    "stripe": "^14.14.0",
+    "dotenv": "^16.4.1"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "author": "BAJATEX S. de R.L. de C.V.",
-  "license": "UNLICENSED"
+  "engines": { "node": ">=18" }
 }
