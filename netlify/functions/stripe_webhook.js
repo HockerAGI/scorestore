@@ -5,11 +5,20 @@ const { jsonResponse, createEnviaLabel, supabaseAdmin, normalizeQty } = require(
 
 /**
  * Stripe Webhook (Netlify Function)
- * FIXED: Uses shipping_details for accurate label generation.
  */
 
 function getSig(headers) {
   return headers["stripe-signature"] || headers["Stripe-Signature"] || headers["STRIPE-SIGNATURE"] || "";
+}
+
+// Sanitizar inputs para evitar que el bot de Telegram crashee por HTML inválido
+function escapeHtml(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function notifyTelegram(text) {
@@ -59,6 +68,7 @@ exports.handler = async (event) => {
     const promoCode = String(session.metadata?.promo_code || "").trim();
 
     // CUSTOMER DATA: Prioritize Shipping Details for Logistics
+    // Ahora que activamos phone_collection, session.customer_details.phone vendrá lleno.
     const shipping = session.shipping_details || session.customer_details || {};
     const addressSource = shipping.address || {};
 
@@ -87,10 +97,17 @@ exports.handler = async (event) => {
 
     const itemsQty = lineItems.reduce((acc, x) => acc + normalizeQty(x.quantity), 0);
 
-    // Label Generation: Only if we have a valid postal code and mode is MX or US
+    // Label Generation
     let envia = null;
+    let labelError = null;
+    
+    // Validar que tengamos datos suficientes
     if ((mode === "mx" || mode === "us") && customer.address.postal_code) {
       envia = await createEnviaLabel(customer, itemsQty);
+      if (!envia) {
+        labelError = "Error generando guía (Check Logs)";
+        console.warn("Label generation failed for session:", sessionId);
+      }
     }
 
     // Persist to Supabase
@@ -111,19 +128,22 @@ exports.handler = async (event) => {
           created_at: new Date().toISOString(),
         },
       ]);
-    } else {
-      console.warn("Supabase admin not configured. Order not persisted.");
     }
+
+    const cleanName = escapeHtml(customer.name);
+    const cleanPhone = escapeHtml(customer.phone);
+    const cleanPromo = escapeHtml(promoCode);
 
     const msg =
       `<b>✅ NUEVA ORDEN PAGADA</b>\n` +
       `SCORE Store\n` +
       `Total: <b>$${total.toFixed(2)} MXN</b>\n` +
       `Modo: <b>${mode}</b>\n` +
-      (promoCode ? `Cupón: <b>${promoCode}</b>\n` : "") +
-      (customer.name ? `Cliente: ${customer.name}\n` : "") +
-      (customer.phone ? `Tel: ${customer.phone}\n` : "") +
-      (envia?.tracking ? `Tracking: <b>${envia.tracking}</b>\n` : "");
+      (cleanPromo ? `Cupón: <b>${cleanPromo}</b>\n` : "") +
+      (cleanName ? `Cliente: ${cleanName}\n` : "") +
+      (cleanPhone ? `Tel: ${cleanPhone}\n` : "") +
+      (envia?.tracking ? `Tracking: <b>${envia.tracking}</b>\n` : "") +
+      (labelError ? `⚠️ <b>${labelError}</b>\n` : "");
 
     await notifyTelegram(msg);
 
