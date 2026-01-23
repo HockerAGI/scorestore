@@ -1,31 +1,38 @@
-/* SCORE STORE LOGIC — PRO RACING v2026 */
+/* SCORE STORE LOGIC — V2026 PRO DRAWER (NO SPEED BAR) */
+
 (function () {
   "use strict";
 
-  const CART_KEY = "score_cart_v2026_prod";
+  const CFG = window.__SCORE__ || {};
   const API_BASE = "/.netlify/functions";
+  const CART_KEY = "score_cart_final_v3";
+  const FAKE_MARKUP_FACTOR = 5;
 
   let cart = [];
-  let catalogData = { products: [], editions: [] };
-  let shipping = { mode: "pickup", cost: 0, quoting: false };
-  let promo = { code: null, discountMXN: 0, type: null, label: null };
-
-  const CFG = window.__SCORE__ || {};
+  let catalogData = { products: [], sections: [] };
+  let appliedPromo = null;
 
   const $ = (id) => document.getElementById(id);
-  const money = (n) =>
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
 
-  function toast(msg) {
-    const el = $("toast");
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add("active");
-    setTimeout(() => el.classList.remove("active"), 2400);
-  }
+  const money = (n) =>
+    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+      Number.isFinite(Number(n)) ? Number(n) : 0
+    );
+
+  // Limpieza básica para URLs (evitar inyecciones raras)
+  const cleanUrl = (u) => {
+    try {
+      if (!u) return "";
+      const s = String(u).trim();
+      if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("/")) return s;
+      return "/" + s.replace(/^\/+/, "");
+    } catch {
+      return "";
+    }
+  };
 
   function hideSplash() {
-    const s = document.getElementById("splash-screen");
+    const s = $("splash-screen");
     if (!s) return;
     s.classList.add("hidden");
     setTimeout(() => {
@@ -33,95 +40,6 @@
         s.remove();
       } catch (_) {}
     }, 800);
-  }
-
-  async function init() {
-    await loadCatalog();
-    loadCart();
-    setupEvents();
-    setupScrollReveal();
-    await setupPromoBar(); // opcional, no rompe Lighthouse
-    updateCartUI();
-
-    setTimeout(hideSplash, 4000);
-    const skipBtn = document.getElementById("skipIntro");
-    if (skipBtn) skipBtn.addEventListener("click", hideSplash);
-  }
-
-  function setupScrollReveal() {
-    const els = document.querySelectorAll(".scroll-reveal");
-    if (!els.length) return;
-
-    // Lighthouse-friendly: IntersectionObserver nativo, sin libs pesadas
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("visible");
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
-
-    els.forEach((el) => io.observe(el));
-  }
-
-  async function setupPromoBar() {
-    const bar = $("promo-bar");
-    const text = $("promo-text");
-    if (!bar || !text) return;
-
-    try {
-      // El repo trae promos.json en raíz. Si lo sirves en /promos.json, esto funciona directo.
-      const r = await fetch("/promos.json", { cache: "no-cache" });
-      if (!r.ok) return;
-      const data = await r.json();
-      const rules = Array.isArray(data.rules) ? data.rules : [];
-
-      const active = rules.find((x) => x && x.active);
-      if (!active) return;
-
-      // Mensaje corto, no invasivo
-      text.textContent = `🔥 ${String(active.description || active.code || "PROMO ACTIVA")}`.trim();
-      bar.style.display = "block";
-    } catch (_) {
-      // si falla, no pasa nada
-    }
-  }
-
-  async function loadCatalog() {
-    try {
-      const res = await fetch("/data/catalog.json", { cache: "no-cache" });
-      const data = await res.json();
-
-      const sections = Array.isArray(data.sections) ? data.sections : [];
-      const products = Array.isArray(data.products) ? data.products : [];
-
-      catalogData = {
-        editions: sections.map((s) => ({
-          id: String(s.id || ""),
-          title: String(s.title || ""),
-          badge: String(s.badge || ""),
-          logo: String(s.logo || ""),
-        })),
-        products: products.map((p) => ({
-          id: String(p.id || ""),
-          sku: String(p.sku || ""),
-          name: String(p.name || ""),
-          baseMXN: Number(p.baseMXN || 0),
-          sectionId: String(p.sectionId || ""),
-          subSection: String(p.subSection || ""),
-          img: String(p.img || ""),
-          images: Array.isArray(p.images) ? p.images.map(String) : [],
-          sizes: Array.isArray(p.sizes) ? p.sizes.map(String) : ["Unitalla"],
-        })),
-      };
-    } catch (e) {
-      console.error("Catalog Fail", e);
-      catalogData = { products: [], editions: [] };
-    }
   }
 
   function loadCart() {
@@ -138,50 +56,227 @@
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  function setupEvents() {
-    // Shipping mode change
-    document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
-      r.addEventListener("change", (e) => {
-        shipping.mode = String(e.target.value || "pickup");
+  async function loadCatalog() {
+    try {
+      const res = await fetch("/data/catalog.json", { cache: "no-cache" });
+      const data = await res.json();
+      catalogData = {
+        products: Array.isArray(data.products) ? data.products : [],
+        sections: Array.isArray(data.sections) ? data.sections : [],
+      };
+    } catch (e) {
+      console.error("Catalog Fail", e);
+      catalogData = { products: [], sections: [] };
+    }
+  }
 
-        const shipForm = $("shipForm");
-        if (shipForm) {
-          if (shipping.mode === "pickup") {
-            shipForm.style.display = "none";
-          } else {
-            shipForm.style.display = "block";
-          }
-        }
+  // ===== UI helpers =====
+  function showToast(msg) {
+    const t = $("toast");
+    if (!t) return;
+    t.textContent = String(msg || "");
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2400);
+  }
 
-        if (shipping.mode === "pickup") {
-          shipping.cost = 0;
-          shipping.quoting = false;
-        } else {
-          shipping.cost = null;
-          if (String($("cp")?.value || "").trim().length >= 5) quoteShipping();
-        }
+  function openDrawer() {
+    $("drawer")?.classList.add("active");
+    $("overlay")?.classList.add("active");
+    $("overlay")?.setAttribute("aria-hidden", "false");
+  }
 
-        updateCartUI();
+  function closeAll() {
+    document.querySelectorAll(".active").forEach((el) => el.classList.remove("active"));
+    $("overlay")?.classList.remove("active");
+    $("overlay")?.setAttribute("aria-hidden", "true");
+  }
+
+  function scrollToId(id) {
+    const el = $(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Exponer para HTML
+  window.openDrawer = openDrawer;
+  window.closeAll = closeAll;
+  window.scrollToId = scrollToId;
+
+  // ===== Catalog modal =====
+  function setCatalogHeader(sectionId, fallbackTitle) {
+    const sec = (catalogData.sections || []).find((s) => String(s.id) === String(sectionId));
+    const ct = $("catTitle");
+    if (!ct) return;
+
+    const logo = sec && sec.logo ? cleanUrl(sec.logo) : "";
+    const ttl = (sec && sec.title) ? sec.title : (fallbackTitle || "PRODUCTOS");
+
+    if (logo) {
+      ct.innerHTML = `<span class="logo-header"><img class="editionLogo" src="${logo}" alt="${ttl}"><span>${ttl}</span></span>`;
+    } else {
+      ct.textContent = ttl;
+    }
+  }
+
+  window.openCatalog = (sectionId, title) => {
+    const container = $("catContent");
+    if (!container) return;
+
+    setCatalogHeader(sectionId, title);
+
+    const items = (catalogData.products || []).filter((p) => String(p.sectionId) === String(sectionId));
+    container.innerHTML = "";
+
+    if (!items.length) {
+      container.innerHTML = `<p style="text-align:center;padding:40px;color:#ccc;">Agotado.</p>`;
+      $("modalCatalog")?.classList.add("active");
+      $("overlay")?.classList.add("active");
+      return;
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "catGrid";
+
+    items.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "prodCard";
+
+      const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
+      const defSize = sizes[0];
+
+      const sellPrice = Number(p.baseMXN || 0);
+      const listPrice = Math.round(sellPrice * FAKE_MARKUP_FACTOR);
+
+      const images = Array.isArray(p.images) && p.images.length ? p.images : [p.img].filter(Boolean);
+      const slidesHtml = images
+        .map(
+          (src) => `
+          <div class="prod-slide" style="min-width:100%; display:flex; justify-content:center;">
+            <img src="${cleanUrl(src)}" class="prodImg" loading="lazy" decoding="async" onerror="this.closest('.prod-slide')?.remove()">
+          </div>`
+        )
+        .join("");
+
+      const sizesHtml = sizes
+        .map(
+          (s, i) =>
+            `<button class="size-pill ${i === 0 ? "active" : ""}" onclick="selectSize(this,'${p.id}','${s}')">${s}</button>`
+        )
+        .join("");
+
+      card.dataset.pid = p.id;
+      card.dataset.selSize = defSize;
+
+      card.innerHTML = `
+        <div class="metallic-frame" style="position:relative; overflow:hidden; border-radius:12px; margin-bottom:10px;">
+          <div class="prod-slider" style="display:flex; overflow:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
+            ${slidesHtml}
+          </div>
+        </div>
+
+        <div class="prodName">${p.name || "Producto"}</div>
+
+        <div class="prodPrice">
+          <span style="text-decoration:line-through; color:rgba(255,255,255,.55); font-size:14px;">${money(listPrice)}</span>
+          <span style="color:#E10600; font-weight:1000;">${money(sellPrice)}</span>
+        </div>
+
+        <div class="sizeRow">${sizesHtml}</div>
+
+        <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR AL CARRITO</button>
+      `;
+
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+
+    $("modalCatalog")?.classList.add("active");
+    $("overlay")?.classList.add("active");
+    $("overlay")?.setAttribute("aria-hidden", "false");
+  };
+
+  window.selectSize = (btn, pid, size) => {
+    try {
+      const card = btn.closest(".prodCard");
+      if (card) {
+        card.dataset.selSize = String(size || "Unitalla");
+        card.querySelectorAll(".size-pill").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
+    } catch {}
+  };
+
+  // ===== Cart logic =====
+  function normalizeQty(q) {
+    const n = Number(q);
+    if (!Number.isFinite(n) || n < 1) return 1;
+    return Math.min(50, Math.floor(n));
+  }
+
+  window.addToCart = (pid) => {
+    const p = (catalogData.products || []).find((x) => String(x.id) === String(pid));
+    if (!p) return;
+
+    const card = document.querySelector(`.prodCard[data-pid="${CSS.escape(String(pid))}"]`);
+    const size = card?.dataset?.selSize || (Array.isArray(p.sizes) && p.sizes[0]) || "Unitalla";
+
+    const existing = cart.find((x) => String(x.id) === String(pid) && String(x.size) === String(size));
+    if (existing) existing.qty = normalizeQty(existing.qty + 1);
+    else {
+      cart.push({
+        id: p.id,
+        name: p.name,
+        img: p.img || (Array.isArray(p.images) ? p.images[0] : ""),
+        price: Number(p.baseMXN || 0),
+        size,
+        qty: 1,
+        sectionId: p.sectionId,
+        sku: p.sku || null,
       });
-    });
+    }
 
-    // ZIP input
-    $("cp")?.addEventListener("input", (e) => {
-      const v = String(e.target.value || "").trim();
-      if (v.length >= 5 && shipping.mode !== "pickup") quoteShipping();
-    });
+    saveCart();
+    updateCartUI();
+    openDrawer();
+    showToast("Agregado al carrito");
+  };
 
-    // Cerrar modales con ESC
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAll();
-    });
+  window.changeQty = (idx, delta) => {
+    idx = Number(idx);
+    delta = Number(delta);
+    if (!Number.isFinite(idx) || !cart[idx]) return;
+
+    cart[idx].qty = normalizeQty(cart[idx].qty + delta);
+    if (cart[idx].qty < 1) cart.splice(idx, 1);
+
+    saveCart();
+    updateCartUI();
+  };
+
+  window.emptyCart = () => {
+    cart = [];
+    saveCart();
+    updateCartUI();
+    showToast("Carrito vacío");
+  };
+
+  // ===== Shipping UX (simple + robust) =====
+  const shippingState = { mode: "pickup", cost: 0, quoting: false, label: "Recolección Gratis" };
+
+  function getSelectedShipMode() {
+    const r = document.querySelector('input[name="shipMode"]:checked');
+    return r ? String(r.value) : "pickup";
   }
 
   async function quoteShipping() {
-    const zip = String($("cp")?.value || "").trim();
-    if (!zip || zip.length < 5 || shipping.mode === "pickup") return;
+    const mode = shippingState.mode;
+    if (mode === "pickup") return;
 
-    shipping.quoting = true;
+    const zip = String($("cp")?.value || "").trim();
+    if (zip.length < 5) return;
+
+    shippingState.quoting = true;
     updateCartUI();
 
     try {
@@ -190,440 +285,85 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           zip,
-          country: shipping.mode === "us" ? "US" : "MX",
-          items: cart.map((it) => ({ id: it.id, qty: Number(it.qty || 1) })),
+          country: mode === "us" ? "US" : "MX",
+          items: cart.map((i) => ({ id: i.id, qty: i.qty })),
         }),
       });
 
       const data = await res.json();
+      const floor = mode === "mx" ? 250 : 800;
 
-      const floor = shipping.mode === "mx" ? 250 : 800;
-      const got = data && data.ok ? Number(data.cost || 0) : 0;
-      shipping.cost = data && data.ok ? Math.max(got, floor) : floor;
+      shippingState.cost = data && data.ok ? Math.max(Number(data.cost || 0), floor) : floor;
+      shippingState.label = data && data.label ? String(data.label) : (mode === "mx" ? "Envío Nacional" : "Envío USA");
     } catch (e) {
-      shipping.cost = shipping.mode === "mx" ? 250 : 800;
+      shippingState.cost = shippingState.mode === "mx" ? 250 : 800;
+      shippingState.label = shippingState.mode === "mx" ? "Envío Nacional" : "Envío USA";
     } finally {
-      shipping.quoting = false;
+      shippingState.quoting = false;
       updateCartUI();
     }
   }
 
-  function calcSubtotal() {
-    return cart.reduce((acc, it) => acc + Number(it.price || 0) * Number(it.qty || 0), 0);
-  }
+  function setupShippingEvents() {
+    document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
+      r.addEventListener("change", () => {
+        shippingState.mode = getSelectedShipMode();
 
-  function calcDiscount(subtotal) {
-    if (!promo.code) return 0;
-
-    const type = promo.type;
-    if (!type) return 0;
-
-    if (type === "percent") {
-      const pct = Math.min(0.9, Math.max(0, Number(promo.discountMXN || 0)));
-      // aquí guardamos percent en discountMXN (por compat), pero en applyPromoUI lo seteo bien
-      return Math.round(subtotal * pct);
-    }
-
-    if (type === "fixed_mxn") {
-      return Math.min(subtotal, Math.max(0, Number(promo.discountMXN || 0)));
-    }
-
-    return 0;
-  }
-
-  function effectiveShippingCost() {
-    if (shipping.mode === "pickup") return 0;
-    if (shipping.quoting) return null;
-    if (promo.type === "free_shipping") return 0;
-    return shipping.cost;
-  }
-
-  function updateShippingLabelsUI() {
-    // En tu HTML las .rc-price no tienen id, así que actualizamos por value
-    const radios = document.querySelectorAll('input[name="shipMode"]');
-    radios.forEach((r) => {
-      const wrap = r.closest(".radio-card");
-      const priceEl = wrap ? wrap.querySelector(".rc-price") : null;
-      if (!priceEl) return;
-
-      const val = String(r.value || "");
-      if (val === "pickup") {
-        priceEl.textContent = "GRATIS";
-        return;
-      }
-
-      if (promo.type === "free_shipping") {
-        priceEl.textContent = "GRATIS";
-        return;
-      }
-
-      if (shipping.quoting && shipping.mode === val) {
-        priceEl.textContent = "Cotizando...";
-        return;
-      }
-
-      if (shipping.cost != null && shipping.mode === val) {
-        priceEl.textContent = money(shipping.cost);
-        return;
-      }
-
-      // fallback visual
-      priceEl.textContent = val === "us" ? "$800 MXN" : "$250 MXN";
-    });
-  }
-
-  function updateCartUI() {
-    const box = $("cartItems");
-    const empty = $("cartEmpty");
-    const footer = $("cartFooter");
-
-    if (!box || !empty || !footer) return;
-
-    if (!cart.length) {
-      box.innerHTML = "";
-      empty.style.display = "block";
-      footer.style.display = "none";
-      if ($("cartCount")) $("cartCount").innerText = "0";
-      return;
-    }
-
-    empty.style.display = "none";
-    footer.style.display = "block";
-
-    box.innerHTML = cart
-      .map((it, idx) => {
-        const editionLogo = getEditionLogo(it.sectionId);
-        const lineTotal = Number(it.price || 0) * Number(it.qty || 0);
-
-        return `
-          <div class="cartItem">
-            <img src="${safeUrl(it.img)}" class="cartThumb" alt="${escapeHtml(it.name)}">
-            <div class="cInfo">
-              <div class="cTopRow">
-                ${
-                  editionLogo
-                    ? `<img class="cEdition" src="${safeUrl(editionLogo)}" alt="Edición" loading="lazy">`
-                    : ""
-                }
-                <div class="cName">${escapeHtml(it.name)}</div>
-              </div>
-              <div class="cMeta">${escapeHtml(it.sku || "")} · Talla ${escapeHtml(it.size)}</div>
-
-              <div class="qtyControl" aria-label="Cantidad">
-                <button class="qtyBtn" onclick="changeQty(${idx}, -1)" aria-label="Menos">−</button>
-                <span class="qtyVal">${Number(it.qty || 1)}</span>
-                <button class="qtyBtn" onclick="changeQty(${idx}, 1)" aria-label="Más">+</button>
-              </div>
-            </div>
-
-            <div class="cRight">
-              <div class="cPrice">${money(lineTotal)}</div>
-              <div class="cart-remove" onclick="removeLine(${idx})">Eliminar</div>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    const subtotal = calcSubtotal();
-    const discount = calcDiscount(subtotal);
-
-    const shipCost = effectiveShippingCost();
-    const shipText =
-      shipping.mode === "pickup"
-        ? "GRATIS"
-        : shipCost == null
-        ? "Cotizando..."
-        : money(shipCost);
-
-    const total =
-      shipping.mode === "pickup"
-        ? Math.max(0, subtotal - discount)
-        : shipCost == null
-        ? null
-        : Math.max(0, subtotal - discount + shipCost);
-
-    if ($("subTotal")) $("subTotal").innerText = money(subtotal);
-
-    // Si tienes un renglón de descuento opcional, lo inyectamos sin romper layout
-    injectDiscountRow(discount);
-
-    if ($("shipTotal")) $("shipTotal").innerText = shipText;
-    if ($("grandTotal")) $("grandTotal").innerText = total == null ? "---" : money(total);
-
-    if ($("cartCount")) $("cartCount").innerText = String(cart.reduce((a, b) => a + Number(b.qty || 0), 0));
-
-    const btn = $("checkoutBtn");
-    if (btn) {
-      const needsShip = shipping.mode !== "pickup";
-      const shipOk = !needsShip || (shipCost != null && shipCost >= 0);
-      btn.disabled = !shipOk || !cart.length;
-    }
-
-    updateShippingLabelsUI();
-  }
-
-  function injectDiscountRow(discount) {
-    // Si no hay descuento, elimina el row si existe
-    const summary = document.querySelector(".cost-summary");
-    if (!summary) return;
-
-    let row = document.getElementById("discountRow");
-    if (!discount || discount <= 0) {
-      if (row) row.remove();
-      return;
-    }
-
-    if (!row) {
-      row = document.createElement("div");
-      row.className = "sumRow discount";
-      row.id = "discountRow";
-      row.innerHTML = `<span>Descuento</span><strong id="discountTotal">-$0.00</strong>`;
-      // Insertar después del subtotal
-      const first = summary.querySelector(".sumRow");
-      if (first && first.nextSibling) {
-        summary.insertBefore(row, first.nextSibling);
-      } else {
-        summary.appendChild(row);
-      }
-    }
-
-    const val = document.getElementById("discountTotal");
-    if (val) val.textContent = `-${money(discount)}`;
-  }
-
-  function getEditionLogo(sectionId) {
-    const sec = catalogData.editions.find((x) => String(x.id) === String(sectionId));
-    return sec ? sec.logo : "";
-  }
-
-  function safeUrl(u) {
-    const s = String(u || "").trim();
-    return s ? encodeURI(s) : "";
-  }
-
-  function escapeHtml(str) {
-    return String(str || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  // ====== API UI ======
-  window.openDrawer = () => {
-    $("drawer")?.classList.add("active");
-    $("overlay")?.classList.add("active");
-    $("overlay")?.setAttribute("aria-hidden", "false");
-  };
-
-  window.closeAll = () => {
-    document.querySelectorAll(".active").forEach((el) => el.classList.remove("active"));
-    $("overlay")?.classList.remove("active");
-    $("overlay")?.setAttribute("aria-hidden", "true");
-  };
-
-  window.emptyCart = () => {
-    cart = [];
-    promo = { code: null, discountMXN: 0, type: null, label: null };
-    const promoInput = $("promoCode");
-    if (promoInput) promoInput.value = "";
-    saveCart();
-    updateCartUI();
-    toast("Carrito vaciado");
-  };
-
-  window.removeLine = (idx) => {
-    cart.splice(idx, 1);
-    saveCart();
-    updateCartUI();
-    if (shipping.mode !== "pickup" && cart.length) quoteShipping();
-  };
-
-  window.changeQty = (idx, delta) => {
-    if (!cart[idx]) return;
-
-    const next = Number(cart[idx].qty || 1) + Number(delta || 0);
-    if (next <= 0) {
-      cart.splice(idx, 1);
-    } else {
-      cart[idx].qty = next;
-    }
-
-    saveCart();
-    updateCartUI();
-
-    if (shipping.mode !== "pickup" && cart.length) quoteShipping();
-  };
-
-  window.scrollToId = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // ====== CATALOGO (Modal) ======
-  window.openCatalog = (sectionId) => {
-    const modal = $("modalCatalog");
-    const content = $("catContent");
-    const titleEl = $("catTitle");
-    if (!modal || !content || !titleEl) return;
-
-    const sec = catalogData.editions.find((x) => String(x.id) === String(sectionId));
-    const title = sec ? sec.title : "PRODUCTOS";
-    const logo = sec ? sec.logo : "";
-
-    titleEl.innerHTML = `
-      <div class="logo-header">
-        ${logo ? `<img src="${safeUrl(logo)}" class="editionLogo" alt="${escapeHtml(title)}" loading="lazy">` : ""}
-        <span>${escapeHtml(title)}</span>
-      </div>
-    `;
-
-    const prods = catalogData.products.filter((p) => String(p.sectionId) === String(sectionId));
-
-    if (!prods.length) {
-      content.innerHTML = `<div class="empty-state"><div class="empty-flag">🏁</div><p>No hay productos en esta edición.</p></div>`;
-    } else {
-      content.innerHTML = `
-        <div class="catGrid">
-          ${prods
-            .map((p) => {
-              const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
-              const first = sizes[0];
-
-              return `
-                <div class="prodCard" data-id="${escapeHtml(p.id)}" data-selsize="${escapeHtml(first)}">
-                  <div class="prodEditionStamp">
-                    ${logo ? `<img src="${safeUrl(logo)}" class="prodEditionLogo" alt="Edición" loading="lazy">` : ""}
-                  </div>
-
-                  <img src="${safeUrl(p.img)}" class="prodImg" alt="${escapeHtml(p.name)}" loading="lazy">
-
-                  <div class="prodName">${escapeHtml(p.name)}</div>
-                  <div class="prodSku">${escapeHtml(p.sku || "")}</div>
-
-                  <div class="prodPrice">
-                    <strong>${money(p.baseMXN)}</strong>
-                    <span class="muted">MXN</span>
-                  </div>
-
-                  <div class="sizeRow" role="list">
-                    ${sizes
-                      .map((s) => {
-                        const isA = s === first ? "active" : "";
-                        return `<button type="button" class="size-pill ${isA}" onclick="selectSize('${escapeJs(p.id)}','${escapeJs(s)}')">${escapeHtml(
-                          s
-                        )}</button>`;
-                      })
-                      .join("")}
-                  </div>
-
-                  <button class="btn-add" onclick="addToCart('${escapeJs(p.id)}')">AGREGAR AL CARRITO</button>
-                </div>
-              `;
-            })
-            .join("")}
-        </div>
-      `;
-    }
-
-    modal.classList.add("active");
-    $("overlay")?.classList.add("active");
-    $("overlay")?.setAttribute("aria-hidden", "false");
-  };
-
-  window.selectSize = (pid, size) => {
-    const card = document.querySelector(`.prodCard[data-id="${cssEscape(pid)}"]`);
-    if (!card) return;
-
-    card.dataset.selsize = String(size);
-
-    // Toggle pills
-    const pills = card.querySelectorAll(".size-pill");
-    pills.forEach((b) => {
-      const t = b.textContent || "";
-      if (t.trim() === String(size).trim()) b.classList.add("active");
-      else b.classList.remove("active");
-    });
-  };
-
-  window.addToCart = (pid) => {
-    const p = catalogData.products.find((x) => String(x.id) === String(pid));
-    if (!p) return;
-
-    const card = document.querySelector(`.prodCard[data-id="${cssEscape(pid)}"]`);
-    const sel = card?.dataset.selsize || (Array.isArray(p.sizes) && p.sizes[0]) || "Unitalla";
-
-    const exist = cart.find((x) => String(x.id) === String(pid) && String(x.size) === String(sel));
-    if (exist) {
-      exist.qty = Number(exist.qty || 1) + 1;
-    } else {
-      cart.push({
-        id: p.id,
-        sku: p.sku,
-        name: p.name,
-        img: p.img,
-        sectionId: p.sectionId,
-        size: String(sel),
-        qty: 1,
-        price: Number(p.baseMXN || 0),
+        const form = $("shipForm");
+        if (shippingState.mode === "pickup") {
+          shippingState.cost = 0;
+          shippingState.quoting = false;
+          shippingState.label = "Recolección Gratis";
+          form && (form.style.display = "none");
+        } else {
+          shippingState.cost = shippingState.mode === "mx" ? 250 : 800; // piso inicial visual
+          shippingState.label = shippingState.mode === "mx" ? "Envío Nacional" : "Envío USA";
+          form && (form.style.display = "block");
+          if ((String($("cp")?.value || "").trim()).length === 5) quoteShipping();
+        }
+        updateCartUI();
       });
-    }
+    });
 
-    saveCart();
-    updateCartUI();
-    openDrawer();
+    $("cp")?.addEventListener("input", (e) => {
+      const v = String(e.target.value || "");
+      if (v.length === 5 && shippingState.mode !== "pickup") quoteShipping();
+    });
+  }
 
-    if (shipping.mode !== "pickup") quoteShipping();
-    toast("Agregado al carrito");
-  };
-
-  // ====== PROMO ======
-  const PROMO_RULES = {
-    SCORE25: { type: "percent", value: 0.25, label: "25% OFF" },
-    BAJA25: { type: "percent", value: 0.25, label: "25% OFF" },
-    SCORE10: { type: "percent", value: 0.10, label: "10% OFF" },
-    BAJA200: { type: "fixed_mxn", value: 200, label: "$200 MXN OFF" },
-    ENVIOFREE: { type: "free_shipping", value: 0, label: "ENVÍO GRATIS" },
-  };
-
+  // ===== Promo =====
   window.applyPromoUI = () => {
-    const raw = String($("promoCode")?.value || "").trim().toUpperCase();
-    if (!raw) {
-      promo = { code: null, discountMXN: 0, type: null, label: null };
-      updateCartUI();
-      toast("Código removido");
-      return;
-    }
-
-    const rule = PROMO_RULES[raw];
-    if (!rule) {
-      promo = { code: null, discountMXN: 0, type: null, label: null };
-      updateCartUI();
-      toast("Código inválido");
-      return;
-    }
-
-    promo.code = raw;
-    promo.type = rule.type;
-    promo.label = rule.label || raw;
-
-    // Guardamos distinto según tipo
-    if (rule.type === "percent") {
-      promo.discountMXN = Number(rule.value || 0); // aquí es percent
-    } else if (rule.type === "fixed_mxn") {
-      promo.discountMXN = Number(rule.value || 0);
-    } else {
-      promo.discountMXN = 0;
-    }
-
-    updateCartUI();
-    toast(`Promo aplicada: ${promo.label}`);
+    const el = $("promoCode");
+    if (!el) return;
+    const code = String(el.value || "").trim().toUpperCase();
+    if (!code) return;
+    appliedPromo = code;
+    showToast(`Código ${code} listo para aplicar en el pago`);
   };
 
-  // ====== CHECKOUT ======
+  // ===== Checkout =====
+  function getCartSubtotal() {
+    return cart.reduce((a, b) => a + Number(b.price || 0) * Number(b.qty || 0), 0);
+  }
+
+  function validateShippingInputs() {
+    if (shippingState.mode === "pickup") return true;
+    const zip = String($("cp")?.value || "").trim();
+    const name = String($("name")?.value || "").trim();
+    const addr = String($("addr")?.value || "").trim();
+
+    if (zip.length < 5 || name.length < 2 || addr.length < 6) return false;
+    return true;
+  }
+
   window.checkout = async () => {
+    if (!cart.length) return;
+
+    if (!validateShippingInputs()) {
+      showToast("Completa C.P., nombre y dirección");
+      return;
+    }
+
     const btn = $("checkoutBtn");
     if (btn) {
       btn.disabled = true;
@@ -631,44 +371,20 @@
     }
 
     try {
-      if (!cart.length) throw new Error("Carrito vacío");
-
-      if (shipping.mode !== "pickup") {
-        const zip = String($("cp")?.value || "").trim();
-        const name = String($("name")?.value || "").trim();
-        const addr = String($("addr")?.value || "").trim();
-
-        if (zip.length < 5 || !name || !addr) {
-          throw new Error("Completa dirección (C.P., nombre y dirección)");
-        }
-
-        // Si aún no cotizó, fuerza cotización
-        if (shipping.cost == null || shipping.quoting) {
-          await quoteShipping();
-        }
-      }
-
-      const customer = {
-        name: String($("name")?.value || "").trim(),
-        address: String($("addr")?.value || "").trim(),
-        postal_code: String($("cp")?.value || "").trim(),
-      };
-
       const payload = {
-        orgSlug: String(CFG.orgSlug || "score-store"),
-        items: cart.map((it) => ({
-          id: it.id,
-          sku: it.sku,
-          name: it.name,
-          img: it.img,
-          size: it.size,
-          qty: Number(it.qty || 1),
-          price: Number(it.price || 0),
+        items: cart.map((i) => ({
+          id: i.id,
+          qty: i.qty,
+          size: i.size,
         })),
-        mode: shipping.mode,
-        shippingMode: shipping.mode,
-        customer,
-        promoCode: promo.code || "",
+        ship: {
+          mode: shippingState.mode,
+          zip: String($("cp")?.value || "").trim(),
+          name: String($("name")?.value || "").trim(),
+          address: String($("addr")?.value || "").trim(),
+        },
+        promo: appliedPromo,
+        org: CFG.orgSlug || "score-store",
       };
 
       const res = await fetch(`${API_BASE}/create_checkout`, {
@@ -678,16 +394,15 @@
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(String(data?.error || "Checkout falló"));
-
       if (data && data.url) {
         window.location.href = data.url;
         return;
       }
 
-      throw new Error("No se generó URL de pago");
+      throw new Error(data?.error || "No URL de checkout");
     } catch (e) {
-      toast(String(e?.message || "Error en checkout"));
+      console.error(e);
+      showToast("Error al iniciar pago");
       if (btn) {
         btn.disabled = false;
         btn.textContent = "PAGAR AHORA";
@@ -695,14 +410,150 @@
     }
   };
 
-  // ===== Utils =====
-  function escapeJs(s) {
-    return String(s || "").replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll('"', '\\"');
+  // ===== Render cart =====
+  function updateCartUI() {
+    const box = $("cartItems");
+    const footer = $("cartFooter");
+    const emptyState = $("cartEmpty");
+
+    if (!box || !footer || !emptyState) return;
+
+    const count = cart.reduce((a, b) => a + Number(b.qty || 0), 0);
+    $("cartCount") && ($("cartCount").innerText = String(count));
+
+    if (!cart.length) {
+      box.innerHTML = "";
+      emptyState.style.display = "flex";
+      footer.style.display = "none";
+      return;
+    }
+
+    emptyState.style.display = "none";
+    footer.style.display = "block";
+
+    box.innerHTML = cart
+      .map(
+        (it, idx) => `
+        <div class="cartItem">
+          <img src="${cleanUrl(it.img)}" class="cartThumb" alt="${String(it.name || "Producto")}">
+          <div class="cInfo">
+            <div class="cName">${String(it.name || "Producto")}</div>
+            <div class="cMeta">${String(it.size || "Unitalla")}${it.sku ? ` · <span style="opacity:.7">${it.sku}</span>` : ""}</div>
+            <div class="qtyControl">
+              <button class="qtyBtn" onclick="changeQty(${idx}, -1)" aria-label="Menos">−</button>
+              <span class="qtyVal">${Number(it.qty || 1)}</span>
+              <button class="qtyBtn" onclick="changeQty(${idx}, 1)" aria-label="Más">+</button>
+            </div>
+          </div>
+          <div class="cRight">
+            <div class="cPrice">${money(Number(it.price || 0) * Number(it.qty || 0))}</div>
+            <div class="cart-remove" onclick="changeQty(${idx}, -999)">Eliminar</div>
+          </div>
+        </div>`
+      )
+      .join("");
+
+    const sub = getCartSubtotal();
+    $("subTotal") && ($("subTotal").innerText = money(sub));
+
+    // Shipping numbers (drawer)
+    if (shippingState.mode === "pickup") {
+      $("shipTotal") && ($("shipTotal").innerText = "GRATIS");
+      $("grandTotal") && ($("grandTotal").innerText = money(sub));
+    } else if (shippingState.quoting) {
+      $("shipTotal") && ($("shipTotal").innerText = "COTIZANDO...");
+      $("grandTotal") && ($("grandTotal").innerText = money(sub + Number(shippingState.cost || 0)));
+    } else {
+      $("shipTotal") && ($("shipTotal").innerText = money(Number(shippingState.cost || 0)));
+      $("grandTotal") && ($("grandTotal").innerText = money(sub + Number(shippingState.cost || 0)));
+    }
+
+    const btn = $("checkoutBtn");
+    if (btn) btn.disabled = !cart.length;
   }
 
-  function cssEscape(s) {
-    // mini escape para querySelector, sin depender de CSS.escape (Android viejo)
-    return String(s || "").replaceAll('"', '\\"').replaceAll("\\", "\\\\");
+  // ===== Promo bar (opcional) =====
+  async function initPromoBar() {
+    try {
+      const bar = $("promo-bar");
+      const text = $("promo-text");
+      if (!bar || !text) return;
+
+      const res = await fetch("/data/promos.json", { cache: "no-cache" });
+      const data = await res.json();
+
+      const active = Array.isArray(data.promos) ? data.promos.find((p) => p.active) : null;
+      if (!active) return;
+
+      text.textContent = active.text || "PROMO ACTIVA";
+      bar.style.display = "flex";
+    } catch {}
+  }
+
+  // ===== Cookie banner (opcional) =====
+  function initCookieBanner() {
+    const banner = $("cookieBanner");
+    const accept = $("cookieAccept");
+    const reject = $("cookieReject");
+    if (!banner || !accept || !reject) return;
+
+    const KEY = "score_cookie_ok_v1";
+    const st = localStorage.getItem(KEY);
+
+    if (st === "1" || st === "0") return;
+
+    banner.style.display = "block";
+
+    accept.addEventListener("click", () => {
+      localStorage.setItem(KEY, "1");
+      banner.style.display = "none";
+    });
+
+    reject.addEventListener("click", () => {
+      localStorage.setItem(KEY, "0");
+      banner.style.display = "none";
+    });
+  }
+
+  async function init() {
+    const safetyTimer = setTimeout(() => {
+      // si algo sale mal, igual no te quedas atorado en el splash
+      hideSplash();
+    }, 7000);
+
+    try {
+      await loadCatalog();
+      loadCart();
+      updateCartUI();
+      setupShippingEvents();
+      initPromoBar();
+      initCookieBanner();
+
+      // scroll reveal (sin librerías, friendly con Lighthouse)
+      const revealEls = document.querySelectorAll(".scroll-reveal");
+      if (revealEls.length) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add("visible");
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12 }
+        );
+        revealEls.forEach((el) => io.observe(el));
+      }
+
+      // splash auto
+      setTimeout(hideSplash, 4000);
+      $("skipIntro")?.addEventListener("click", hideSplash);
+    } catch (err) {
+      console.error("Critical Init Error:", err);
+    } finally {
+      clearTimeout(safetyTimer);
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);
