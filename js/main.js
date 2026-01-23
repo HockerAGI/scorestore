@@ -1,4 +1,4 @@
-/* SCORE STORE LOGIC — ORIGINAL OPTIMIZED v2026 */
+/* SCORE STORE LOGIC — ROBUST PRODUCTION READY v2026 */
 
 (function () {
   "use strict";
@@ -6,6 +6,7 @@
   const CFG = window.__SCORE__ || {};
   const API_BASE = "/.netlify/functions";
   const CART_KEY = "score_cart_final_v3";
+  const PROMO_ACTIVE = true;
   const FAKE_MARKUP_FACTOR = 5; 
 
   let cart = [];
@@ -20,27 +21,50 @@
     const s = $("splash-screen");
     if (s && !s.classList.contains("hidden")) {
       s.classList.add("hidden");
+      // Remover del DOM para liberar recursos (Performance)
       setTimeout(() => { try { s.remove(); } catch {} }, 800);
     }
   }
 
   async function init() {
-    await loadCatalog();
-    loadCart();
-    setupUI();
-    updateCartUI();
-    initScrollReveal();
+    // 1. SAFETY TIMEOUT: Si por alguna razón (red lenta, error JS) el init se traba,
+    // forzamos quitar el splash a los 3 segundos.
+    const safetyTimer = setTimeout(() => {
+        console.warn("Forcing splash hide due to timeout");
+        hideSplash();
+    }, 3000);
 
-    if(typeof fbq === 'function') fbq('track', 'ViewContent');
-    hideSplash();
+    try {
+        // Carga de catálogo y carrito
+        await loadCatalog();
+        loadCart();
+        
+        // Renderizado inicial
+        setupUI();
+        updateCartUI();
+        initScrollReveal();
+
+        // Pixel de Facebook (seguro)
+        if(typeof fbq === 'function') fbq('track', 'ViewContent');
+
+    } catch (err) {
+        console.error("Critical Init Error:", err);
+        // Incluso si falla, permitimos que el usuario vea la página (quizás vacía, pero funcional)
+    } finally {
+        // 2. FINALLY: Esto se ejecuta SIEMPRE, haya error o no.
+        clearTimeout(safetyTimer); // Cancelamos el timer de seguridad porque ya terminamos
+        hideSplash(); 
+    }
   }
 
   async function loadCatalog() {
     try {
       const res = await fetch("/data/catalog.json");
+      if (!res.ok) throw new Error("Catalog fetch failed");
       catalogData = await res.json();
-    } catch {
-      console.warn("Fallback");
+    } catch (e) {
+      console.warn("Catalog Fallback:", e);
+      // Fallback para que la UI no rompa
       catalogData = { products: [] };
     }
   }
@@ -53,7 +77,7 @@
     container.innerHTML = "";
 
     if(!items.length) {
-        container.innerHTML = `<p style="text-align:center;padding:40px;color:#ccc;">Agotado.</p>`;
+        container.innerHTML = `<p style="text-align:center;padding:40px;color:#ccc;">Agotado o no disponible.</p>`;
     } else {
         const grid = document.createElement("div");
         grid.className = "catGrid"; 
@@ -183,8 +207,8 @@
   window.checkout = async () => {
       if(!cart.length) return;
       const btn = $("checkoutBtn");
-      
-      // FIXED: Validación estricta de dirección
+
+      // Validacion de dirección obligatoria
       if(shippingState.mode !== 'pickup') {
           const cp = $("cp").value.trim();
           const name = $("name").value.trim();
@@ -192,7 +216,7 @@
           
           if(!cp || !name || !addr) { 
               alert("Por favor completa los datos de envío (CP, Dirección y Nombre) para calcular el costo.");
-              $("shipForm").scrollIntoView();
+              $("shipForm").scrollIntoView({ behavior: 'smooth' });
               return; 
           }
       }
@@ -218,7 +242,10 @@
           });
           const data = await res.json();
           if(data.url) location.href = data.url; else throw new Error(data.error);
-      } catch(e) { alert("Error: " + e.message); btn.disabled = false; btn.innerText = "PAGAR AHORA"; }
+      } catch(e) { 
+          alert("Error: " + e.message); 
+          btn.disabled = false; btn.innerText = "PAGAR AHORA"; 
+      }
   };
 
   /* UTILS */
@@ -243,11 +270,26 @@
       }, { threshold: 0.1 });
       els.forEach(el => observer.observe(el));
   }
-  function loadCart() { const s = localStorage.getItem(CART_KEY); if(s) try{cart=JSON.parse(s)}catch{} }
-  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+
+  // 3. PROTECCIÓN LOCALSTORAGE: Evita crash si las cookies están bloqueadas
+  function loadCart() { 
+      try {
+        const s = localStorage.getItem(CART_KEY); 
+        if(s) cart=JSON.parse(s);
+      } catch(e) {
+        console.warn("LocalStorage access denied or empty:", e);
+      } 
+  }
+  
+  function saveCart() { 
+      try {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart)); 
+      } catch(e) {}
+  }
+
   document.addEventListener("DOMContentLoaded", init);
 
-  // --- SERVICE WORKER ---
+  // --- SERVICE WORKER (PWA) REGISTRO ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW fail:', err));
