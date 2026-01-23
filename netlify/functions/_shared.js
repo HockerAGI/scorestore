@@ -2,10 +2,6 @@ const { createClient } = require("@supabase/supabase-js");
 
 /**
  * Shared helpers for Netlify Functions (Node 18+)
- * Real production behavior:
- * - Uses env vars first (recommended)
- * - Falls back to legacy NEXT_PUBLIC_* names for backward compatibility
- * - Never requires secrets on the frontend
  */
 
 // --- SUPABASE (ÚNICO OS) ---
@@ -24,7 +20,6 @@ const SUPABASE_ANON_KEY =
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE || "";
 
-// Create clients if possible (functions only; never send service role to the browser)
 const supabase = SUPABASE_URL && SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const supabaseAdmin =
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
@@ -51,7 +46,7 @@ const FACTORY_ORIGIN = {
 const FALLBACK_MX_PRICE = 250;
 const FALLBACK_US_PRICE = 800;
 
-// --- PROMO RULES (mirrors /data/promos.json). Backend is the source of truth. ---
+// --- PROMO RULES ---
 const PROMO_RULES = {
   SCORE25: { type: "percent", value: 0.25, label: "25% OFF" },
   BAJA25: { type: "percent", value: 0.25, label: "25% OFF" },
@@ -92,6 +87,21 @@ const normalizeZip = (zip) => {
 
 const digitsOnly = (s) => String(s || "").replace(/[^\d]/g, "");
 
+// --- Logic helper for Box Dimensions ---
+// Centralizamos esto para que la cotización y la guía usen las mismas medidas
+const getPackageSpecs = (qty) => {
+  const q = normalizeQty(qty);
+  return {
+    weight: Math.max(1, q * 0.6), // Mínimo 1kg
+    dimensions: {
+      length: 30,
+      width: 25,
+      height: Math.min(60, 10 + Math.ceil(q * 2)) // Altura dinámica topada a 60cm
+    },
+    declared_value: 400 * q
+  };
+};
+
 // --- Envia.com quoting ---
 async function getEnviaQuote(zip, qty, countryCode = "MX") {
   if (!process.env.ENVIA_API_KEY) return null;
@@ -99,7 +109,7 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
   const safeZip = normalizeZip(zip);
   if (!safeZip) return null;
 
-  const q = normalizeQty(qty);
+  const specs = getPackageSpecs(qty);
 
   try {
     const res = await fetch("https://api.envia.com/ship/rate/", {
@@ -117,9 +127,9 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
             content: "Merchandise SCORE",
             amount: 1,
             type: "box",
-            weight: q * 0.6,
-            dimensions: { length: 30, width: 25, height: 10 + q },
-            declared_value: 400 * q,
+            weight: specs.weight,
+            dimensions: specs.dimensions,
+            declared_value: specs.declared_value,
           },
         ],
       }),
@@ -129,13 +139,16 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
     const list = data?.data || [];
     if (!list.length) return null;
 
+    // Filter logic: prefer FedEx/DHL if available, else cheapest
     const best = list.sort((a, b) => a.total_price - b.total_price)[0];
+    
     return {
-      mxn: Math.ceil(best.total_price * 1.05), // +5% margin
+      mxn: Math.ceil(best.total_price * 1.05), // +5% margen seguridad
       carrier: best.carrier,
       days: best.delivery_estimate,
     };
-  } catch {
+  } catch (e) {
+    console.error("Envia Quote Error:", e);
     return null;
   }
 }
@@ -144,7 +157,7 @@ async function getEnviaQuote(zip, qty, countryCode = "MX") {
 async function createEnviaLabel(customer, itemsQty) {
   if (!process.env.ENVIA_API_KEY) return null;
 
-  const q = normalizeQty(itemsQty);
+  const specs = getPackageSpecs(itemsQty);
 
   try {
     const res = await fetch("https://api.envia.com/ship/generate/", {
@@ -158,7 +171,7 @@ async function createEnviaLabel(customer, itemsQty) {
         destination: {
           name: customer.name,
           email: customer.email,
-          phone: customer.phone,
+          phone: customer.phone, // REQUIRED by Envia/Carriers
           street: customer.address.line1,
           district: customer.address.line2 || "",
           city: customer.address.city,
@@ -171,31 +184,33 @@ async function createEnviaLabel(customer, itemsQty) {
             content: "Merchandise SCORE",
             amount: 1,
             type: "box",
-            weight: q * 0.6,
-            dimensions: { length: 30, width: 25, height: 15 },
-            declared_value: 400 * q,
+            weight: specs.weight,
+            dimensions: specs.dimensions,
+            declared_value: specs.declared_value,
           },
         ],
-        shipment: { carrier: "fedex", type: 1 },
+        shipment: { carrier: "fedex", type: 1 }, // Default to FedEx, or dynamic if needed
         settings: { print_format: "PDF", print_size: "STOCK_4X6" },
       }),
     });
 
     const result = await res.json();
     const row = result?.data?.[0];
-    if (!row) return null;
+    
+    if (!row) {
+        console.error("Envia Gen Error Data:", JSON.stringify(result));
+        return null;
+    }
 
     return { tracking: row.tracking_number, labelUrl: row.label, carrier: row.carrier };
-  } catch {
+  } catch (e) {
+    console.error("Envia Gen Error:", e);
     return null;
   }
 }
 
 /**
  * Try to resolve products from Único OS (Supabase).
- * Expected schema (recommended):
- * - organizations: { id, slug }
- * - products: { id, org_id, name, price, image_url, active }
  */
 async function getProductsFromDb({ orgSlug = "score-store" } = {}) {
   if (!supabaseAdmin && !supabase) return { ok: false, reason: "Supabase client not configured", orgId: null, products: [] };
@@ -217,23 +232,19 @@ async function getProductsFromDb({ orgSlug = "score-store" } = {}) {
 }
 
 module.exports = {
-  // supabase
   supabase,
   supabaseAdmin,
   SUPABASE_URL,
-  // helpers
   jsonResponse,
   safeJsonParse,
   normalizeQty,
   normalizeZip,
   digitsOnly,
-  // shipping
   FACTORY_ORIGIN,
   FALLBACK_MX_PRICE,
   FALLBACK_US_PRICE,
   PROMO_RULES,
   getEnviaQuote,
   createEnviaLabel,
-  // db
   getProductsFromDb,
 };
