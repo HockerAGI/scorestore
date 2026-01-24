@@ -9,24 +9,11 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Local dev compatibility
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# IMPORTANT: don't swallow real static files
-[[redirects]]
-  from = "/legal.html"
-  to = "/legal.html"
-  status = 200
-
-[[redirects]]
-  from = "/site.webmanifest"
-  to = "/site.webmanifest"
-  status = 200
-
-# SPA fallback (must stay last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -43,14 +30,6 @@
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
 
 [[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Cache-Control = "no-store"
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Stripe-Signature, stripe-signature"
-    Access-Control-Allow-Methods = "POST, OPTIONS"
-
-[[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
@@ -64,11 +43,6 @@
   for = "/js/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "public, max-age=300"
 
 [[headers]]
   for = "/sw.js"
