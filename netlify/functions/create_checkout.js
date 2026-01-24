@@ -1,44 +1,13 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-const {
-  jsonResponse,
-  safeJsonParse,
-  normalizeQty,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE,
-  getEnviaQuote,
-  getProductsFromDb,
+const { 
+  jsonResponse, safeJsonParse, getEnviaQuote, 
+  FALLBACK_MX_PRICE, FALLBACK_US_PRICE, normalizeQty 
 } = require("./_shared");
 
-function pickShippingMode(body) {
-  const mode = String(body.shippingMode || body.mode || "pickup").toLowerCase();
-  if (["pickup", "tj", "mx", "us"].includes(mode)) return mode;
-  return "pickup";
-}
+const TJ_FLAT = 0; // Recoger en fábrica gratis
 
-function getCustomer(body) {
-  const c = body.customer || body.shippingData || {};
-  return {
-    name: String(c.name || "").trim(),
-    address: String(c.address || c.line1 || "").trim(),
-    postal_code: String(c.postal_code || c.zip || "").trim(),
-  };
-}
-
-function normalizeCartItems(body) {
-  const raw = Array.isArray(body.items) ? body.items : [];
-  return raw
-    .map((it) => ({
-      id: String(it.id || ""),
-      sku: String(it.sku || ""),
-      name: String(it.name || ""),
-      img: String(it.img || ""),
-      price: Number(it.price || it.baseMXN || 0),
-      qty: normalizeQty(it.qty),
-      size: String(it.size || "Unitalla"),
-    }))
-    .filter((x) => x.id && x.qty > 0 && x.price > 0);
-}
+function baseUrl() { return process.env.URL || "https://unicouniformes.com"; }
+function toCents(mxn) { return Math.max(0, Math.round((Number(mxn) || 0) * 100)); }
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
@@ -46,82 +15,89 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
-    const mode = pickShippingMode(body);
-    const customer = getCustomer(body);
-    const orgSlug = String(body.orgSlug || "score-store");
-
-    const items = normalizeCartItems(body);
-    if (!items.length) return jsonResponse(400, { error: "Cart is empty" });
-
-    // (Optional) strict validation vs DB (if service role key exists)
-    const db = await getProductsFromDb({ orgSlug });
-    const useDbValidation = db.ok && Array.isArray(db.products) && db.products.length;
-
-    // Build line items for Stripe
-    const line_items = items.map((it) => ({
-      quantity: it.qty,
-      price_data: {
-        currency: "mxn",
-        unit_amount: Math.round(Number(it.price) * 100),
-        product_data: {
-          name: it.name,
-          metadata: { sku: it.sku, size: it.size, pid: it.id },
-          images: it.img ? [it.img] : [],
+    const cartItems = Array.isArray(body.cart) ? body.cart : [];
+    const shippingMode = String(body.shippingMode || "pickup").toLowerCase();
+    const shippingData = body.shippingData || {};
+    
+    if (!cartItems.length) return jsonResponse(400, { error: "Carrito vacío" });
+    
+    // 1. Items
+    const line_items = cartItems.map((item) => {
+      return {
+        price_data: {
+          currency: "mxn",
+          product_data: {
+            name: item.name,
+            description: `Talla: ${item.selectedSize} | SKU: ${item.sku || 'N/A'}`,
+            images: item.img ? [`${baseUrl()}${item.img}`] : [],
+            metadata: { id: item.id, size: item.selectedSize }
+          },
+          unit_amount: toCents(item.price),
         },
-      },
-    }));
+        quantity: normalizeQty(item.quantity)
+      };
+    });
 
-    // Shipping
-    let shippingCostMXN = 0;
-    let shippingLabel = "Recolección";
-    if (mode !== "pickup") {
-      const country = mode === "us" ? "US" : "MX";
-      const zip = String(customer.postal_code || "").trim();
-      const qty = items.reduce((a, b) => a + b.qty, 0);
+    // 2. Envío
+    let shipping_options = [];
+    const totalQty = cartItems.reduce((acc, i) => acc + normalizeQty(i.quantity), 0);
 
-      const quote = await getEnviaQuote(zip, qty, country);
-      const floor = mode === "us" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-      shippingCostMXN = quote?.mxn ? Math.max(Number(quote.mxn), Number(floor)) : Number(floor);
-      shippingLabel = quote?.carrier ? `Envío ${quote.carrier}` : "Envío";
+    if (shippingMode === "pickup") {
+        shipping_options = [];
+    } else {
+        let rateAmount = 0;
+        let rateLabel = "";
+        let minDays = 3; let maxDays = 5;
+
+        if (shippingMode === "tj") {
+            rateAmount = TJ_FLAT; rateLabel = "Entrega Local Tijuana"; minDays = 1; maxDays = 2;
+        } else if (shippingData.cp) {
+            const countryCode = shippingMode === 'us' ? 'US' : 'MX';
+            const quote = await getEnviaQuote(shippingData.cp, totalQty, countryCode);
+            
+            if (quote) {
+                rateAmount = quote.mxn;
+                rateLabel = `Envío ${quote.carrier} (Calculado)`;
+            } else {
+                // Fallback si falla API
+                rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+                rateLabel = shippingMode === 'us' ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)";
+            }
+        } else {
+            // Fallback sin CP
+            rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+            rateLabel = "Envío Estándar";
+        }
+
+        shipping_options = [{
+            shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: toCents(rateAmount), currency: "mxn" },
+                display_name: rateLabel,
+                delivery_estimate: { minimum: { unit: "business_day", value: minDays }, maximum: { unit: "business_day", value: maxDays } },
+            },
+        }];
     }
 
-    const shipping_options =
-      mode === "pickup"
-        ? []
-        : [
-            {
-              shipping_rate_data: {
-                type: "fixed_amount",
-                fixed_amount: { amount: Math.round(shippingCostMXN * 100), currency: "mxn" },
-                display_name: shippingLabel,
-              },
-            },
-          ];
-
-    const success = `${process.env.PUBLIC_SITE_URL || "https://scorestore.netlify.app"}/?success=1`;
-    const cancel = `${process.env.PUBLIC_SITE_URL || "https://scorestore.netlify.app"}/?canceled=1`;
-
-    // Stripe session
     const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card", "oxxo"],
       mode: "payment",
       line_items,
       shipping_options,
-      customer_creation: "if_required",
-      billing_address_collection: "required",
-      phone_number_collection: { enabled: true },
-      success_url: success,
-      cancel_url: cancel,
-      allow_promotion_codes: false,
+      shipping_address_collection: shippingMode !== "pickup" ? { allowed_countries: ["MX", "US"] } : undefined,
+      success_url: `${baseUrl()}/?status=success`,
+      cancel_url: `${baseUrl()}/?status=cancel`,
       metadata: {
-        shipping_mode: mode,
-        org_slug: orgSlug,
-        validation_mode: useDbValidation ? "strict_db" : "client_fallback",
-      },
+        order_type: "score_store_v11",
+        shipping_mode: shippingMode,
+        customer_cp: shippingData.cp || ""
+      }
     });
 
-    return jsonResponse(200, { ok: true, url: session.url });
+    return jsonResponse(200, { id: session.id, url: session.url });
+
   } catch (err) {
-    console.error("create_checkout error:", err);
-    return jsonResponse(500, { error: err.message || "Checkout error" });
+    console.error("Checkout Error:", err);
+    return jsonResponse(500, { error: err.message });
   }
 };
