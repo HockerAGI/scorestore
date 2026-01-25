@@ -1,24 +1,31 @@
 [build]
+  # Comando para instalar dependencias antes de compilar
   command = "npm install"
+  # Carpeta donde residen las funciones serverless de Netlify
   functions = "netlify/functions"
+  # Carpeta raíz que se publica en internet
   publish = "."
 
 [functions]
+  # Motor de compilación para las funciones de Node.js
   node_bundler = "esbuild"
 
 [build.environment]
   NODE_VERSION = "18"
 
+# Redirección para simplificar las llamadas a la API
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Asegura que las rutas del navegador siempre apunten al index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Cabeceras de seguridad para proteger el sitio y optimizar el caché
 [[headers]]
   for = "/*"
   [headers.values]
@@ -29,6 +36,7 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
 
+# Configuración de caché agresiva para recursos estáticos (mejora la velocidad)
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -44,6 +52,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Evita que el Service Worker se quede en caché para permitir actualizaciones
 [[headers]]
   for = "/sw.js"
   [headers.values]
