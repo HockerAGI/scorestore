@@ -1,6 +1,6 @@
 const { createClient } = require("@supabase/supabase-js");
 
-// DATOS ORIGEN (BAJATEX)
+// DATOS ORIGEN
 const FACTORY_ORIGIN = {
   name: "Score Store / Único Uniformes",
   company: "BAJATEX S DE RL DE CV",
