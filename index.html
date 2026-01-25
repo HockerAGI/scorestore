@@ -3,258 +3,323 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE | Tienda Oficial - Fabricado por Único</title>
+  <title>SCORE Store | Tienda Oficial -80% OFF</title>
   
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes." />
-  <meta name="theme-color" content="#E10600" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://unicouniformes.com/" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:image" content="/assets/hero.webp" />
-  <meta property="fb:pages" content="1496305187347575" />
-
+  <meta name="description" content="-80% en todos nuestros productos. Fabricado por Único Uniformes, Patrocinador Oficial." />
+  <meta name="theme-color" content="#0b0d10" />
+  
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
   
-  <link rel="stylesheet" href="/css/styles.css?v=2026.1">
+  <!-- Preload Imagen Hero -->
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+
+  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="preload" href="/assets/hero.webp" as="image">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <script src="https://js.stripe.com/v3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Scripts -->
+  <script src="https://js.stripe.com/v3" async></script>
 
-  <!-- Pixel Meta -->
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
+  <style>
+    /* --- SISTEMA DE DISEÑO RACING/PREMIUM/GLASS --- */
+    :root {
+      --red: #E10600;
+      --red-soft: rgba(225, 6, 0, 0.18);
+      --black: #0b0d10;
+      --white: #ffffff;
+      --glass: rgba(255, 255, 255, 0.82);
+      --glass-dark: rgba(12, 14, 18, 0.75);
+      --text: #0b0d10;
+      --muted: #6b6f76;
+      --green: #19b36b;
+      --radius: 18px;
+      --radius-lg: 26px;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      --header-h: 80px;
+      --promo-h: 40px;
+    }
 
-  <!-- CONFIG ÚNICA -->
-  <script>
-    window.__SCORE__ = {
-      orgSlug: "score-store",
-      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
-    };
-  </script>
+    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; font-size: 16px; height: 100%; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--black);
+      color: #fff;
+      background: 
+        radial-gradient(1200px 600px at 20% -10%, var(--red-soft), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.8)),
+        url("/assets/fondo-pagina-score.webp") center top / cover no-repeat fixed;
+      overflow-x: hidden;
+      min-height: 100%;
+    }
+    body.noScroll { overflow: hidden; height: 100vh; }
+
+    /* --- 1. INTRO ENGINE PRO (TACÓMETRO MULTICOLOR + FONDO BLUR) --- */
+    #splash-screen {
+      position: fixed; inset: 0; z-index: 10000; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+    #splash-bg {
+      position: absolute; inset: 0;
+      background: url('/assets/hero.webp') center/cover;
+      filter: blur(20px) brightness(0.4);
+      z-index: -1;
+      transform: scale(1.1);
+    }
+    .splash-inner { text-align: center; color: #fff; width: 280px; }
+    
+    .tacho-container { width: 200px; height: 140px; margin: 0 auto 20px; position: relative; }
+    .tacho-svg { width: 100%; height: 100%; }
+    .needle {
+      transform-origin: 100px 100px;
+      transform: rotate(-100deg);
+      transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .intro-brand { opacity: 0; transform: translateY(10px); transition: 0.8s ease; }
+    .intro-brand img { width: 140px; filter: drop-shadow(0 0 15px rgba(225,0,0,0.3)); }
+    .intro-fab { opacity: 0; transform: translateY(20px); transition: 0.5s ease; margin-top: 15px; font-family: 'Teko'; color: #888; font-size: 16px; letter-spacing: 2px; }
+
+    /* --- 2. NAVBAR & PROMO --- */
+    .promo-bar {
+      position: fixed; top: 0; width: 100%; height: var(--promo-h);
+      background: linear-gradient(90deg, var(--red), #ff2a1a); color: #fff; z-index: 2001;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; text-transform: uppercase;
+    }
+    .topbar {
+      position: fixed; top: var(--promo-h); width: 100%; height: var(--header-h);
+      background: var(--glass); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(0,0,0,0.1); z-index: 2000;
+    }
+    .topbarInner { height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 4%; max-width: 1120px; margin: 0 auto; }
+    .brandLogo { height: 42px; }
+    .cartBtn {
+      display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+      background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); color: var(--green); cursor: pointer; position: relative; font-weight: 800;
+    }
+    .cartCount { position: absolute; top: -5px; right: -5px; background: var(--red); color: #fff; font-size: 11px; font-weight: 900; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* --- 3. HERO VERTICAL OFICIAL --- */
+    .wrap { padding-top: 160px; padding-bottom: 80px; max-width: 1120px; margin: 0 auto; }
+    .hero {
+      position: relative; min-height: 750px; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 80px;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      background: var(--glass-dark); backdrop-filter: blur(12px); box-shadow: var(--shadow);
+    }
+    .heroBg { position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover; opacity: 0.5; z-index: -1; }
+    .heroContent { padding: 40px; width: 100%; }
+    .hero-title { 
+        font-family: var(--font-title); font-size: clamp(55px, 10vw, 110px); 
+        line-height: 0.9; margin-bottom: 20px; color: #fff; text-transform: uppercase;
+        animation: heroPulse 2s infinite alternate;
+    }
+    .hero-subtitle { font-family: 'Inter'; font-size: clamp(18px, 4vw, 24px); color: #f0f0f0; margin-bottom: 40px; font-weight: 600; }
+    .neon-red { color: var(--red); text-shadow: 0 0 25px rgba(225,6,0,0.8); }
+
+    @keyframes heroPulse { from { text-shadow: 0 0 10px rgba(255,255,255,0.1); } to { text-shadow: 0 0 35px rgba(225,6,0,0.4); } }
+
+    /* --- 4. CATALOGO GRID (4 CARDS) --- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 0 16px; }
+    .champItem {
+      height: 400px; background: rgba(0,0,0,0.35); border-radius: var(--radius-lg); overflow: hidden; position: relative;
+      cursor: pointer; transition: 0.4s; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: var(--shadow);
+    }
+    .champItem:hover { transform: translateY(-10px); background: rgba(0,0,0,0.5); }
+    .collection-bg { position: absolute; inset: 0; background: url("/assets/baja1000-texture.webp") center / cover no-repeat; opacity: 0.15; pointer-events: none; }
+    .float-logo { width: 180px; z-index: 2; transition: 0.4s; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); }
+    .card-btn { position: absolute; bottom: 30px; background: var(--red); color: white; padding: 10px 25px; font-family: var(--font-title); font-size: 22px; border-radius: 10px; opacity: 0; transform: translateY(20px); transition: 0.3s; }
+    .champItem:hover .card-btn { opacity: 1; transform: translateY(0); }
+
+    /* --- 5. CARRITO GLASS PREMIUM --- */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.4s; backdrop-filter: blur(4px); }
+    .drawer-overlay.active { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed; top: 0; right: 0; height: 100%; width: min(480px, 100vw);
+      background: var(--glass); backdrop-filter: blur(14px); z-index: 3001; transform: translateX(100%);
+      transition: 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; color: var(--text);
+    }
+    .drawer.active { transform: translateX(0); }
+    .drawer-header { padding: 25px 20px; border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; scrollbar-width: none; }
+
+    /* --- UI ACCESORIOS --- */
+    .btn-pay { width: 100%; padding: 20px; background: linear-gradient(180deg, #ff2a1a, var(--red)); color: #fff; border: none; border-radius: 50px; font-family: var(--font-title); font-size: 28px; cursor: pointer; box-shadow: 0 10px 20px rgba(225,6,0,0.3); transition: 0.3s; margin-top: 15px; }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 150%); background: var(--green); color: #fff; padding: 16px 35px; border-radius: 50px; font-weight: 800; z-index: 6000; transition: 0.4s; }
+    .toast.show { transform: translate(-50%, 0); }
+
+    #sales-notification {
+      position: fixed; left: 20px; bottom: 20px; z-index: 5000;
+      background: #fff; color: #111; padding: 14px 22px; border-radius: 14px; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-left: 6px solid var(--red); transform: translateY(200%); transition: 0.7s; pointer-events: none;
+    }
+    #sales-notification.active { transform: translateY(0); }
+
+    @media (max-width: 768px) {
+        .hero { min-height: 600px; margin: 0 10px 80px; }
+        .hero-title { font-size: 52px; }
+        .grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+    }
+  </style>
 </head>
 
-<body>
-  <!-- Splash Screen -->
+<body class="noScroll">
+
+  <!-- 1. INTRO ENGINE PRO (Tacómetro Multicolor + Fondo Pro) -->
   <div id="splash-screen">
-    <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
-      <div class="rpm-bar-container"><div class="rpm-bar"></div></div>
-      <div class="splash-text">INICIANDO MOTORES...</div>
+    <div id="splash-bg"></div>
+    <div class="splash-inner">
+      <div class="tacho-container">
+        <svg class="tacho-svg" viewBox="0 0 200 200">
+          <!-- Fondo de escala -->
+          <path d="M40 160 A 85 85 0 1 1 160 160" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="10" stroke-linecap="round"/>
+          <!-- Zonas de color RPM -->
+          <path d="M40 160 A 85 85 0 0 1 100 75" fill="none" stroke="#19b36b" stroke-width="10" opacity="0.7"/> <!-- Zona Segura -->
+          <path d="M100 75 A 85 85 0 0 1 140 90" fill="none" stroke="#FFD700" stroke-width="10" opacity="0.7"/> <!-- Zona Alerta -->
+          <path d="M140 90 A 85 85 0 0 1 160 160" fill="none" stroke="#E10600" stroke-width="10" opacity="0.9"/> <!-- Redline -->
+          <!-- Aguja -->
+          <line id="aguja" x1="100" y1="100" x2="35" y2="100" stroke="#E10600" stroke-width="5" stroke-linecap="round" class="needle" />
+          <circle cx="100" cy="100" r="7" fill="#fff" />
+        </svg>
+      </div>
+      <div id="intro-brand" class="intro-brand">
+        <img src="/assets/logo-score.webp" alt="SCORE">
+        <p style="font-family:Teko; color:#fff; font-size:20px; letter-spacing:5px; margin-top:5px;">TIENDA OFICIAL</p>
+      </div>
+      <div id="intro-fab" class="intro-fab">FABRICADO POR ÚNICO UNIFORMES</div>
     </div>
   </div>
 
-  <div id="overlay" class="page-overlay" aria-hidden="true" onclick="closeAll()"></div>
-  
-  <div class="promo-bar slide-in-top" id="promo-bar">
-    <span id="promo-text">⚠️ 80% DE DESCUENTO POR LANZAMIENTO - SOLO HOY</span>
+  <!-- 2. SOCIAL PROOF -->
+  <div id="sales-notification">
+    <div style="background:var(--red); color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cart-shopping"></i></div>
+    <div id="notif-content" style="font-size:13px; font-weight:600;">¡Un cliente acaba de adquirir su Mercancía Oficial!</div>
   </div>
 
+  <div class="promo-bar">🏁 -80% EN TODOS NUESTROS PRODUCTOS POR LANZAMIENTO 🏁</div>
+
   <header class="topbar">
-    <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE International" class="brandLogo">
-      </a>
+    <div class="topbarInner">
+      <a href="/"><img src="/assets/logo-score.webp" alt="SCORE" height="42"></a>
       <div class="navRight">
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2"><path d="M9 22C9.55 22 10 21.55 10 21C10 20.45 9.55 20 9 20C8.45 20 8 20.45 8 21C8 21.55 8.45 22 9 22Z"></path><path d="M20 22C20.55 22 21 21.55 21 21C21 20.45 20.55 20 20 20C19.45 20 19 20.45 19 21C19 21.55 19.45 22 20 22Z"></path><path d="M1 1H5L7.68 14.39C7.77 14.85 8.02 15.26 8.39 15.56C8.75 15.85 9.21 16.01 9.68 16H19.4C19.87 16.01 20.33 15.85 20.69 15.56C21.06 15.26 21.31 14.85 21.4 14.39L23 6H6"></path></svg>
+        <div class="cartBtn" onclick="window.toggleCart()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          MI PEDIDO
           <span id="cartCount" class="cartCount">0</span>
-        </button>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <!-- Hero con 80% OFF -->
-    <section class="hero scroll-reveal" id="top">
+    <!-- HERO OFICIAL VERTICAL -->
+    <section class="hero scroll-reveal">
       <div class="heroBg"></div>
-      <div class="heroOverlay"></div>
       <div class="heroContent">
-        <div class="tagline"><span class="tag-pill">LANZAMIENTO OFICIAL 2026</span></div>
-        <h1 class="hero-title" id="hero-title">80% OFF <span class="neon-text">LAUNCH</span></h1>
+        <h1 class="hero-title">- 80% en todos <br><span class="neon-red">nuestros productos.</span></h1>
+        <h2 class="hero-subtitle">Fabricado por Único Uniformes, Patrocinador Oficial.</h2>
         
-        <div class="logos-row">
-          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo">
-          <img src="/assets/logo-world-desert.webp" alt="WDC" class="hero-desert-seal">
+        <div style="display:flex; justify-content:center; gap:30px; margin-bottom:40px;">
+          <img src="/assets/logo-score.webp" alt="SCORE" height="60">
+          <img src="/assets/logo-world-desert.webp" alt="WDC" height="60">
         </div>
 
-        <div class="marketing-copy">
-          <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br>
-          Patrocinador Oficial: <strong>Único Uniformes</strong>.
-        </div>
-
-        <div class="ctaRow">
-          <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER OFERTAS</button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO</button>
-        </div>
+        <button class="btn-pay" style="width:auto; padding: 20px 60px;" onclick="scrollToId('collections')">VER OFERTAS</button>
       </div>
     </section>
 
-    <!-- Colecciones -->
-    <section class="section scroll-reveal" id="collections">
-      <div class="sectionHead"><h2>COLECCIONES <span>OFICIALES</span></h2><p>SELECCIONA TU CATEGORÍA</p></div>
-      <div class="grid">
-        <div class="champItem" onclick="openCatalog('BAJA_1000','BAJA 1000')">
-          <div class="card-texture"></div><span class="badge">MÁS VENDIDO</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" loading="lazy">
-          <div class="card-btn">VER PRODUCTOS</div>
-        </div>
-        <div class="champItem" onclick="openCatalog('BAJA_500','BAJA 500')">
-          <div class="card-texture"></div>
-          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" loading="lazy">
-          <div class="card-btn">VER PRODUCTOS</div>
-        </div>
-        <div class="champItem" onclick="openCatalog('BAJA_400','BAJA 400')">
-          <div class="card-texture"></div>
-          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" loading="lazy">
-          <div class="card-btn">VER PRODUCTOS</div>
-        </div>
-        <div class="champItem" onclick="openCatalog('SF_250','SAN FELIPE 250')">
-          <div class="card-texture"></div>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe" loading="lazy">
-          <div class="card-btn">VER PRODUCTOS</div>
-        </div>
+    <!-- CATALOGO grid 4 cards (Productos Oficiales) -->
+    <section id="collections" class="grid">
+      <div class="champItem" onclick="window.openCatalog('BAJA_1000')">
+        <div class="collection-bg"></div>
+        <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000">
+        <div class="card-btn">EXPLORAR</div>
+      </div>
+      <div class="champItem" onclick="window.openCatalog('BAJA_500')">
+        <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500">
+        <div class="card-btn">EXPLORAR</div>
+      </div>
+      <div class="champItem" onclick="window.openCatalog('BAJA_400')">
+        <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400">
+        <div class="card-btn">EXPLORAR</div>
+      </div>
+      <div class="champItem" onclick="window.openCatalog('SF_250')">
+        <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe">
+        <div class="card-btn">EXPLORAR</div>
       </div>
     </section>
 
-    <!-- Partners (Logos Corregidos) -->
-    <section class="partners scroll-reveal">
-      <h3>PATROCINADORES OFICIALES</h3>
-      <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" loading="lazy">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" loading="lazy">
+    <section class="partners container" style="margin-top: 100px;">
+      <h3 style="font-family:Teko; font-size:32px; margin-bottom:50px; color: white;">PARTROCINADORES OFICIALES</h3>
+      <div style="display:flex; gap:50px; justify-content:center; flex-wrap:wrap; align-items:center; opacity:0.6;">
+        <img src="/assets/logo-ford.webp" height="50" alt="Ford">
+        <img src="/assets/logo-rzr.webp" height="50" alt="RZR">
+        <img src="/assets/logo-bfgodrich.webp" height="50" alt="BFGoodrich">
+        <img src="/assets/logo-unico.webp" height="50" alt="Unico">
       </div>
     </section>
   </main>
 
-  <footer class="footer scroll-reveal">
-    <div class="container footerInner">
-      <div class="fCol">
-        <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador oficial de merchandise SCORE International.<br>Por <strong>Único Uniformes</strong>.</p>
-        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
-        <div class="social-row">
-          <a href="#" class="social-link">Facebook</a>
-          <a href="#" class="social-link">Instagram</a>
-        </div>
-      </div>
-      <div class="fCol"><h4>ATENCIÓN</h4><div class="footerLinks"><button onclick="openLegal('shipping')">Envíos</button><button onclick="openLegal('returns')">Devoluciones</button></div></div>
-      <div class="fCol"><h4>LEGAL</h4><div class="footerLinks"><button onclick="openLegal('terms')">Términos</button><button onclick="openLegal('privacy')">Privacidad</button></div></div>
+  <footer class="footer">
+    <div class="container">
+      <h4 style="font-family:Teko; font-size:32px; color:white;">SCORE STORE · TIENDA OFICIAL</h4>
+      <p style="color:#666; font-size:12px; margin-top:30px;">© 2026 SCORE Store · Operado por BAJATEX (Único Uniformes)</p>
     </div>
-    <div class="copy">SCORE Store © 2026 · Powered by Único OS</div>
   </footer>
 
-  <!-- Modales y Drawers -->
-  <div id="modalCatalog" class="modal">
-    <div class="dHead"><div id="catTitle" class="dTitle logo-header">PRODUCTOS</div><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div id="catContent" class="dBody"></div>
-  </div>
-
-  <aside id="drawer" class="drawer">
-    <div class="dHead"><h3 class="dTitle">TU PEDIDO</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody"><div id="cartItems"></div><div id="cartEmpty" style="text-align:center;padding:40px;color:#999;">Vacío</div></div>
-    <div class="dFoot">
-      <div style="text-align:right; margin-bottom:10px;"><button onclick="emptyCart()" style="background:none;border:none;color:#E10600;font-size:12px;cursor:pointer;text-decoration:underline;">VACIAR</button></div>
-      
-      <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked><div><span>Pickup Tienda</span><small style="color:green;display:block;">Gratis (Fábrica TJ)</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx"><div><span>Nacional MX</span><small style="color:#555;display:block;">$250 Envío</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us"><div><span>USA International</span><small style="color:#555;display:block;">$800 Envío</small></div></label>
-      </div>
-
-      <div id="shipForm" style="display:none; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
-        <p style="margin-bottom:8px; font-weight:bold; color:#333; font-size:13px;">Datos de Envío:</p>
-        <input id="cp" type="tel" placeholder="Código Postal / ZIP" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="addr" type="text" placeholder="Dirección Completa" class="inputField" style="width:100%; margin-bottom:8px;">
-        <input id="name" type="text" placeholder="Nombre Receptor" class="inputField" style="width:100%;">
-      </div>
-
-      <!-- Campo Cupón Agregado -->
-      <div class="promo-row" style="display:flex; gap:10px; margin-bottom:15px;">
-        <input type="text" id="promoCodeInput" placeholder="CÓDIGO DE CUPÓN" class="inputField" style="flex:1;">
-        <button onclick="applyPromo()" class="btn secondary" style="color:#333; border-color:#ddd; padding:0 15px; font-size:14px;">APLICAR</button>
-      </div>
-
-      <div class="sumRow"><span>Subtotal</span><strong id="subTotal">$0.00</strong></div>
-      <div class="sumRow" id="rowDiscount" style="display:none; color:#E10600;"><span>Descuento</span><strong id="discVal">-$0.00</strong></div>
-      <div class="sumRow"><span>Envío</span><strong id="shipTotal">Gratis</strong></div>
-      <div class="sumRow total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
-
-      <button class="btn primary full" id="checkoutBtn" onclick="checkout()" style="width:100%; margin-top:15px;">PAGAR AHORA</button>
+  <div class="drawer-overlay" id="overlay" onclick="window.toggleCart()"></div>
+  <aside class="drawer" id="cartDrawer">
+    <div class="drawer-header">
+      <div><h3>MI PEDIDO</h3><span>OFICIAL SCORE</span></div>
+      <button onclick="window.toggleCart()" style="background:#eee; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer;">✕</button>
+    </div>
+    <div class="drawer-body" id="cartItems"></div>
+    <div class="drawer-footer" style="padding:25px; border-top:2px solid var(--red);">
+        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:24px; font-family:Teko;">
+            <span>TOTAL</span><span id="grandTotal">$0.00</span>
+        </div>
+        <button class="btn-pay">PAGAR AHORA</button>
     </div>
   </aside>
 
-  <!-- Legal Modal -->
-  <aside class="drawer" id="legalModal" style="width:min(760px, 100vw);">
-    <div class="dHead"><h3 class="dTitle">LEGAL</h3><button class="closeBtn" onclick="closeAll()">✕</button></div>
-    <div class="dBody" style="padding:30px; font-size:14px;">
-       <div class="legalBlock" data-legal-block="shipping" style="display:none;"><h4>ENVÍOS</h4><p>Nacional (MX) e Internacional (USA).</p></div>
-       <div class="legalBlock" data-legal-block="returns" style="display:none;"><h4>DEVOLUCIONES</h4><p>Solo por defectos.</p></div>
-       <div class="legalBlock" data-legal-block="terms" style="display:none;"><h4>TÉRMINOS</h4><p>BAJATEX S. de R.L.</p></div>
-       <div class="legalBlock" data-legal-block="privacy" style="display:none;"><h4>PRIVACIDAD</h4><p>Datos protegidos.</p></div>
-    </div>
-  </aside>
+  <div class="toast" id="toast"></div>
 
-  <div class="toast" id="toast">Mensaje</div>
+  <!-- FIREBASE & LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  <!-- Cookies -->
-  <section class="cookieBanner" id="cookieBanner">
-    <div class="cookieInner">
-      <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
-      <div class="cookieActions">
-        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
-        <button class="cookieBtn primary" id="cookieAccept">ACEPTAR</button>
-      </div>
-    </div>
-  </section>
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'score-store';
 
-  <script src="/js/main.js?v=2026.1" defer></script>
-  
-  <script>
-    function scrollToId(id){ const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
-    function openLegal(type){ 
-      document.querySelectorAll('.legalBlock').forEach(b => b.style.display='none');
-      document.querySelector(`[data-legal-block="${type}"]`).style.display='block';
-      document.getElementById('legalModal').classList.add('active'); document.getElementById('overlay').classList.add('active');
+    window.toggleCart = () => { document.getElementById('cartDrawer').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); };
+    window.scrollToId = (id) => { document.getElementById(id).scrollIntoView({behavior:'smooth'}); };
+
+    function runIntro() {
+      const aguja = document.getElementById('aguja');
+      const brand = document.getElementById('intro-brand');
+      const fab = document.getElementById('intro-fab');
+      const splash = document.getElementById('splash-screen');
+
+      // Animación Tacómetro con Hardstop
+      setTimeout(() => { aguja.style.transform = 'rotate(80deg)'; }, 800);
+      setTimeout(() => { aguja.style.transform = 'rotate(-10deg)'; }, 2200);
+      setTimeout(() => { brand.style.opacity = '1'; brand.style.transform = 'translateY(0)'; }, 1800);
+      setTimeout(() => { fab.style.opacity = '1'; fab.style.transform = 'translateY(0)'; }, 2600);
+      setTimeout(() => { splash.style.opacity = '0'; }, 3400);
+      setTimeout(() => { splash.style.visibility = 'hidden'; document.body.classList.remove('noScroll'); }, 4000);
     }
-    
-    (function () {
-      const KEY = "score_cookie_consent";
-      const banner = document.getElementById("cookieBanner");
-      if (!localStorage.getItem(KEY)) banner.style.display = "block";
-      document.getElementById("cookieAccept").onclick = () => { localStorage.setItem(KEY, "all"); banner.style.display = "none"; };
-      document.getElementById("cookieReject").onclick = () => { localStorage.setItem(KEY, "essential"); banner.style.display = "none"; };
-    })();
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js?v=20.0").then(reg => {
-        reg.onupdatefound = () => {
-          const w = reg.installing;
-          w.onstatechange = () => {
-            if (w.state === 'installed' && navigator.serviceWorker.controller) window.location.reload();
-          };
-        };
-      }).catch(console.warn);
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      runIntro();
+      signInAnonymously(auth);
+    });
   </script>
 </body>
 </html>
