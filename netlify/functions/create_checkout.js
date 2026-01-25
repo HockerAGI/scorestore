@@ -80,17 +80,17 @@ exports.handler = async (event) => {
     }
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card", "oxxo"],
-      mode: "payment",
+      payment_method_types: [\"card\", \"oxxo\"],
+      mode: \"payment\",
       line_items,
       shipping_options,
-      shipping_address_collection: shippingMode !== "pickup" ? { allowed_countries: ["MX", "US"] } : undefined,
+      shipping_address_collection: shippingMode !== \"pickup\" ? { allowed_countries: [\"MX\", \"US\"] } : undefined,
       success_url: `${baseUrl()}/?status=success`,
       cancel_url: `${baseUrl()}/?status=cancel`,
       metadata: {
-        order_type: "score_store_v11",
+        order_type: \"score_store_v11\",
         shipping_mode: shippingMode,
-        customer_cp: shippingData.cp || ""
+        customer_cp: shippingData.cp || \"\"
       }
     });
 
