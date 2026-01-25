@@ -1,50 +1,43 @@
-/* sw.js - VERSIÓN DE PRODUCCIÓN v2026_FINAL */
-const CACHE_NAME = "score-store-v2026_prod_final";
-const ASSETS = [
+/* sw.js - Motor de Rendimiento SCORE v2026 */
+const CACHE_NAME = "score-cache-v2.5";
+const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
-  "/legal.html",
   "/css/styles.css",
   "/js/main.js",
-  "/data/catalog.json",
-  "/data/promos.json",
   "/assets/logo-score.webp",
-  "/site.webmanifest"
+  "/assets/hero.webp",
+  "/data/catalog.json"
 ];
 
-async function safePrecache(cache, urls) {
-  await Promise.allSettled(
-    urls.map(async (url) => {
-      try {
-        const res = await fetch(url, { cache: "reload" });
-        if (res.ok) await cache.put(url, res);
-      } catch {}
+// Instalación: Guarda los archivos base en el celular
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-}
-
-self.addEventListener("install", (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => safePrecache(cache, ASSETS)));
 });
 
+// Activación: Limpia versiones viejas para que la tienda siempre sea la más nueva
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)));
-      await self.clients.claim();
-    })()
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    })
   );
 });
 
+// Estrategia de carga: Carga rápido del caché y actualiza por detrás
 self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-  if (url.origin !== location.origin) return;
-  if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
-    event.respondWith(fetch(req).catch(() => caches.match("/index.html")));
-    return;
-  }
-  event.respondWith(caches.match(req).then((cached) => cached || fetch(req)));
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
