@@ -2,121 +2,361 @@
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE Store | Tienda Oficial</title>
-  
-  <!-- 1. OPTIMIZACIÓN LCP: Prioridad extrema al Hero y Font -->
-  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
-  <link rel="preload" href="https://fonts.gstatic.com/s/teko/v23/LYjNdG7kmE0gfaN9pQlCpVo.woff2" as="font" type="font/woff2" crossorigin>
-  
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#0b0d10" />
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>SCORE STORE | Tienda Oficial - Único Uniformes</title>
 
-  <!-- 2. CSS CRÍTICO INLINE: Evita el bloqueo del primer pintado -->
-  <link rel="stylesheet" href="/css/styles.css?v=2026.PRO_ULTRA" />
+  <!-- SEO & MARKETING -->
+  <meta name="description" content="Mercancía oficial SCORE International Off-Road Racing. Fabricado por Único Uniformes en Tijuana." />
+  <meta name="theme-color" content="#0b0d10" />
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta property="og:title" content="SCORE Store | Tienda Oficial -80% OFF" />
+  <meta property="og:image" content="/assets/hero.webp" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
+  <link rel="preload" href="/assets/hero.webp" as="image" fetchpriority="high" />
   
+  <!-- FUENTES & ICONOS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SDKS -->
   <script src="https://js.stripe.com/v3" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
   <style>
-    /* FIX: Asegurar que nada desborde los 360px del móvil */
-    html, body { 
-        max-width: 100vw; 
-        overflow-x: hidden; 
-        position: relative;
+    /* --- SISTEMA DE DISEÑO MASTER v2026 --- */
+    :root {
+      --red: #E10600;
+      --black: #0b0d10;
+      --white: #ffffff;
+      --glass-white: rgba(255, 255, 255, 0.85);
+      --glass-dark: rgba(12, 14, 18, 0.9);
+      --shadow-pro: 0 25px 60px rgba(0, 0, 0, 0.5);
+      --teko: 'Teko', sans-serif;
+      --inter: 'Inter', sans-serif;
+      --green: #19b36b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; max-width: 100vw; overflow-x: hidden; position: relative; background: var(--black); font-family: var(--inter); color: #fff; scroll-behavior: smooth; }
+    body.noScroll { overflow: hidden; height: 100vh; }
+    img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+    /* 1. INTRO ENGINE PRO (4s) */
+    #splash-screen { position: fixed; inset: 0; z-index: 10000; background: #0A0A0A; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+    #splash-bg { position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover; filter: blur(40px) brightness(0.15); z-index: -1; transform: scale(1.1); }
+    .telemetry-box { text-align: center; width: 260px; }
+    .tacho-svg { width: 100%; height: auto; }
+    .rev-counter { font-family: var(--teko); font-size: 42px; color: #fff; margin-top: -45px; letter-spacing: 3px; font-weight: 700; }
+    .status-text { font-family: var(--teko); color: var(--green); font-size: 16px; margin-top: 15px; letter-spacing: 5px; text-transform: uppercase; animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: 0.3; } }
+    .needle { transform-origin: 100px 100px; transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* 2. NAVBAR & PROMO */
+    .promo-bar { position: fixed; top: 0; width: 100%; height: 40px; background: var(--red); color: #fff; z-index: 2001; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 0 10px; text-align: center; }
+    .topbar { position: fixed; top: 40px; width: 100%; height: 80px; background: var(--glass-white); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 5px solid var(--red); z-index: 2000; }
+    .topbarInner { display: flex; justify-content: space-between; align-items: center; padding: 0 5%; max-width: 1400px; margin: 0 auto; height: 100%; }
+    .brandLogo { height: 46px; width: auto; }
+    .cartBtn { position: relative; width: 50px; height: 50px; border-radius: 50%; background: #fff; color: var(--black); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 2px solid #eee; }
+    .cartCount { position: absolute; top: -5px; right: -5px; background: var(--red); color: #fff; font-size: 11px; font-weight: 900; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+
+    /* 3. HERO MASTER (ÚNICO UNIFORMES) */
+    .wrap { padding-top: 140px; padding-bottom: 80px; width: min(1400px, 94vw); margin: 0 auto; }
+    .hero { position: relative; min-height: 750px; border-radius: 30px; overflow: hidden; margin-bottom: 80px; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: var(--shadow-pro); border: 1px solid rgba(255,255,255,0.08); }
+    .heroImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; z-index: 0; }
+    .heroOverlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.95) 100%); z-index: 1; }
+    .hero-card { position: relative; z-index: 2; padding: 40px 20px; width: 100%; max-width: 900px; }
+    .hero-logos { display: flex; justify-content: center; gap: 20px; margin-bottom: 25px; }
+    .hero-logos img { height: 75px; filter: drop-shadow(0 0 15px rgba(0,0,0,0.5)); }
+    .hero-title { font-family: var(--teko); font-size: clamp(55px, 12vw, 125px); line-height: 0.85; margin-bottom: 25px; text-transform: uppercase; }
+    .neon-red { color: var(--red); text-shadow: 0 0 30px rgba(225,6,0,0.9); }
+    .hero-copy { color: #fff; font-weight: 600; margin-bottom: 40px; font-size: 17px; line-height: 1.5; padding: 0 10px; }
+    .brand-full { color: #fff; font-weight: 900; border-bottom: 3px solid var(--red); padding-bottom: 2px; }
+
+    /* 4. COLECCIONES HOME (CON TEXTURA) */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .champItem { position: relative; height: 420px; background: #fff; border-radius: 30px; overflow: hidden; cursor: pointer; transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: var(--shadow-pro); border: 1px solid #eee; }
+    .champItem:hover { transform: translateY(-12px); border-color: var(--red); }
+    .card-texture { position: absolute; inset: 0; background: url("/assets/baja1000-texture.webp") center / cover no-repeat; opacity: 1; z-index: 1; pointer-events: none; transition: 0.3s; }
+    .float-logo { position: relative; z-index: 2; width: 190px; filter: drop-shadow(0 15px 35px rgba(0,0,0,0.5)); transition: 0.4s; }
+    .card-btn { position: absolute; bottom: 35px; background: var(--red); color: white; padding: 12px 35px; font-family: var(--teko); font-size: 24px; border-radius: 14px; opacity: 0; transform: translateY(30px); transition: 0.3s; z-index: 3; }
+    .champItem:hover .card-btn { opacity: 1; transform: translateY(0); }
+
+    /* 5. CATÁLOGO PRO (SLIDER VERTICAL 4:5) */
+    .modal-catalog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f4f4; z-index: 4000; transform: translateY(100%); transition: 0.45s cubic-bezier(0.2, 1, 0.2, 1); display: flex; flex-direction: column; overflow: hidden; }
+    .modal-catalog.active { transform: translateY(0); }
+    .cat-head { background: var(--white); color: var(--black); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; height: 75px; position: sticky; top: 0; z-index: 10; }
+    .cat-logo-header { height: 40px; width: auto; object-fit: contain; }
+    .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    
+    .p-card { background: #fff; border-radius: 20px; border: 1px solid #eee; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .p-media { width: 100%; aspect-ratio: 4/5; background: #f9f9f9; position: relative; overflow: hidden; }
+    .p-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 100%; scrollbar-width: none; }
+    .p-slider::-webkit-scrollbar { display: none; }
+    .p-slide { min-width: 100%; height: 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; padding: 8px; }
+    .p-slide img { width: 100%; height: 100%; object-fit: contain; }
+    .p-dots { position: absolute; bottom: 8px; left: 0; width: 100%; display: flex; justify-content: center; gap: 4px; pointer-events: none; }
+    .p-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.2); transition: 0.3s; }
+    .p-dot.active { background: var(--red); width: 10px; border-radius: 10px; }
+    .p-body { padding: 10px; flex: 1; display: flex; flex-direction: column; }
+    .p-name { font-weight: 800; font-size: 13px; color: #111; line-height: 1.2; height: 32px; overflow: hidden; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .p-price { font-family: var(--teko); font-size: 24px; color: var(--red); font-weight: 700; margin-bottom: 8px; }
+    .p-size-sel { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; font-weight: 700; margin-bottom: 10px; background: #fff; appearance: none; }
+    .p-btn-add { background: var(--black); color: #fff; width: 100%; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; text-transform: uppercase; }
+
+    /* 6. CARRITO GLASS ROBUSTO */
+    .drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(520px, 100vw); background: var(--glass-white); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); z-index: 3001; transform: translateX(100%); transition: 0.5s; display: flex; flex-direction: column; color: var(--black); box-shadow: -20px 0 60px rgba(0,0,0,0.3); }
+    .drawer.active { transform: translateX(0); }
+    .d-header { padding: 25px; border-bottom: 1px solid rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .d-header h3 { font-family: var(--teko); font-size: 34px; margin: 0; }
+    .d-body { flex: 1; overflow-y: auto; padding: 15px; }
+    .cart-card { display: flex; gap: 15px; background: #fff; padding: 15px; border-radius: 20px; margin-bottom: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); align-items: center; border: 1px solid #eee; }
+    .cart-card img { width: 65px; height: 86px; border-radius: 10px; object-fit: cover; }
+    .qty-ctrl { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .qty-btn { width: 30px; height: 30px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+    .d-footer { padding: 25px; border-top: 3px solid var(--red); background: #fff; position: sticky; bottom: 0; }
+    .summary-total { display: flex; justify-content: space-between; font-weight: 900; font-size: 32px; font-family: var(--teko); padding-top: 10px; margin-top: 10px; border-top: 1px solid #eee; }
+
+    /* 7. FOOTER INDUSTRIAL (BAJATEX) */
+    .footer { padding: 60px 20px; background: #050505; color: #fff; border-top: 8px solid var(--red); text-align: center; background-image: radial-gradient(at top, #121212 0%, #050505 100%); }
+    .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; text-align: left; max-width: 1200px; margin: 0 auto; }
+    .fCol h4 { font-family: var(--teko); font-size: 28px; margin-bottom: 15px; color: #fff; }
+    .f-links { display: flex; flex-direction: column; gap: 8px; }
+    .f-links button { color: #aaa; text-decoration: underline; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; }
+    .social-logos { display: flex; gap: 20px; margin-top: 20px; }
+    .social-logos a { color: #fff; font-size: 24px; transition: 0.3s; }
+    .social-logos a:hover { color: var(--red); transform: translateY(-5px); }
+    .footer-brand { font-family: var(--teko); font-size: 32px; letter-spacing: 2px; margin-bottom: 5px; }
+    
+    .modal-legal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); width: min(850px, 94vw); max-height: 85vh; background: #fff; color: #333; z-index: 5000; border-radius: 30px; opacity: 0; pointer-events: none; transition: 0.4s; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 60px 150px rgba(0,0,0,0.7); }
+    .modal-legal.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .legal-head { background: var(--red); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .legal-body { padding: 35px; overflow-y: auto; line-height: 1.7; text-align: left; font-size: 15px; }
+
+    /* UTILS & FEEDBACK */
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 150%); background: var(--green); color: #fff; padding: 18px 45px; border-radius: 60px; font-weight: 900; z-index: 6000; transition: 0.5s; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+    .toast.show { transform: translate(-50%, 0); }
+    .page-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.4s; backdrop-filter: blur(10px); }
+    .page-overlay.active { opacity: 1; pointer-events: auto; }
+    #sales-notification { position: fixed; left: 20px; bottom: 20px; z-index: 5000; background: #fff; color: #0b0d10; padding: 18px 25px; border-radius: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 25px 60px rgba(0,0,0,0.4); border-left: 8px solid var(--red); transform: translateY(250%); transition: 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
+    #sales-notification.active { transform: translateY(0); }
+    .btn-pay { width: 100%; padding: 22px; background: linear-gradient(135deg, #E10600, #b10500); color: #fff; border-radius: 60px; font-family: var(--teko); font-size: 32px; font-weight: 700; box-shadow: 0 15px 40px rgba(225,6,0,0.4); margin-top: 15px; text-transform: uppercase; cursor: pointer; border: none; }
+
+    /* SHIPPING BOX */
+    .shipping-box { margin-bottom:15px; padding:15px; border-radius:15px; background:rgba(225,6,0,0.05); font-size:13px; display:none; color:#111; border-left: 4px solid var(--red); }
+
+    @media (max-width: 768px) {
+      .wrap { padding-top: 130px; }
+      .hero { min-height: 600px; border-radius: 20px; }
+      .hero-title { font-size: 55px; }
+      .grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+      .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .drawer { width: 100%; }
+      .footer-grid { text-align: center; grid-template-columns: 1fr; }
+      .f-links button, .social-logos { align-self: center; justify-content: center; }
     }
   </style>
-</head>
 
-<body class="noScroll">
+  <script>
+    // CONFIGURACIÓN GLOBAL
+    window.__SCORE__ = {
+      orgSlug: "score-store",
+      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+      stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh"
+    };
+  </script>
 
-  <!-- Intro Optimizada -->
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center; transition: opacity 0.6s ease;">
-    <div style="text-align:center; width:280px;">
-      <div style="width:160px; height:80px; border-radius:160px 160px 0 0; border:4px solid #fff; border-bottom:0; margin:0 auto 20px; position:relative; overflow:hidden;">
-        <div id="aguja" style="position:absolute; bottom:0; left:50%; width:3px; height:70px; background:#E10600; transform-origin:bottom center; transform: rotate(-70deg); transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);"></div>
-      </div>
-      <div id="intro-brand" style="opacity:0; transition:0.8s;">
-        <!-- Logo con dimensiones reales para evitar cálculos del navegador -->
-        <img src="/assets/logo-score.webp" width="140" height="61" alt="SCORE Store">
-      </div>
-    </div>
-  </div>
-
-  <header class="topbar">
-    <div class="container topbarInner">
-      <a href="/"><img src="/assets/logo-score.webp" alt="SCORE Store" width="120" height="52" class="brandLogo"></a>
-      <div class="navRight">
-        <button class="cartBtn" onclick="window.toggleCart()" style="width:48px; height:48px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <!-- HERO: Cambiamos a <img> para forzar la carga prioritaria de LCP -->
-    <section class="hero" style="background: #000;">
-      <img src="/assets/hero.webp" alt="Carrera en el desierto" 
-           style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.5; z-index:0;"
-           fetchpriority="high">
-      <div class="heroContent" style="position:relative; z-index:1;">
-        <h1 class="hero-title">- 80% EN TODOS <br><span class="neon-red">NUESTROS PRODUCTOS</span></h1>
-        <h2 class="hero-subtitle">Fabricado por Único Uniformes, Patrocinador Oficial.</h2>
-        <button class="btn primary" onclick="document.getElementById('collections').scrollIntoView({behavior:'smooth'})">VER OFERTAS</button>
-      </div>
-    </section>
-
-    <!-- COLECCIONES: Corregimos las proporciones según el reporte -->
-    <section id="collections" class="grid">
-      <!-- Baja 1000: Real Ratio 1.62 -->
-      <div class="champItem" onclick="window.openCatalog('BAJA_1000')">
-        <img src="/assets/logo-baja1000.webp" width="180" height="111" class="float-logo" alt="Baja 1000">
-      </div>
-      <!-- Baja 500: Real Ratio 1.60 -->
-      <div class="champItem" onclick="window.openCatalog('BAJA_500')">
-        <img src="/assets/logo-baja500.webp" width="180" height="112" class="float-logo" alt="Baja 500">
-      </div>
-      <!-- Baja 400: Real Ratio 1.29 -->
-      <div class="champItem" onclick="window.openCatalog('BAJA_400')">
-        <img src="/assets/logo-baja400.webp" width="180" height="139" class="float-logo" alt="Baja 400">
-      </div>
-      <!-- SF 250: Real Ratio 1.58 -->
-      <div class="champItem" onclick="window.openCatalog('SF_250')">
-        <img src="/assets/logo-sf250.webp" width="180" height="114" class="float-logo" alt="San Felipe">
-      </div>
-    </section>
-  </main>
-
+  <!-- LÓGICA MAESTRA (FUSIONADA Y SIN ERRORES) -->
   <script type="module">
-    // Registro PWA
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").catch(() => {});
-      });
+    const CFG = window.__SCORE__;
+    let cart = [];
+    
+    // CATÁLOGO OFICIAL INTEGRADO PARA EVITAR ERRORES DE CARGA
+    const catalogData = {
+      "products": [
+        { "id": "b1k-jacket", "sku": "B1K-JKT-25", "name": "Chamarra Oficial Baja 1000", "baseMXN": 1890, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/chamarra-baja1000.webp", "images": ["/assets/EDICION_2025/chamarra-baja1000.webp", "/assets/EDICION_2025/chamarra-baja1000-detalle.webp", "/assets/EDICION_2025/chamarra-baja1000-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-hoodie-ng", "sku": "B1K-HOOD-NG", "name": "Hoodie Oficial Negro / Gris", "baseMXN": 1100, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp", "images": ["/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp", "/assets/EDICION_2025/hoodie-negro-gris-baja1000-detalle.webp", "/assets/EDICION_2025/hoodie-negro-gris-baja1000-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-hoodie-blk", "sku": "B1K-HOOD-BLK", "name": "Hoodie Clásica Negra", "baseMXN": 1100, "sectionId": "BAJA_1000", "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp", "images": ["/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp", "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000-detalle.webp", "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-hoodie-red-blk", "sku": "B1K-HOOD-RB", "name": "Hoodie Contrast Rojo / Negro", "baseMXN": 1100, "sectionId": "BAJA_1000", "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp", "images": ["/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp", "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-detalle.webp", "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-tee-black", "sku": "B1K-TEE-BLK", "name": "Camiseta Negra Oficial Baja 1000", "baseMXN": 480, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp", "images": ["/assets/EDICION_2025/camiseta-negra-baja1000.webp", "/assets/EDICION_2025/camiseta-negra-baja1000-detalles.jpg.webp", "/assets/EDICION_2025/camiseta-negra-baja1000-atras.jpg.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-tee-brown", "sku": "B1K-TEE-BRN", "name": "Camiseta Café Baja 1000", "baseMXN": 480, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp", "images": ["/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp", "/assets/EDICION_2025/camiseta-cafe-baja1000-detalles.jpg.webp", "/assets/EDICION_2025/camiseta-cafe-baja1000-atras.jpg.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-shirt-pits-grey", "sku": "B1K-SHIRT-GRY", "name": "Camisa Pits Gris Baja 1000", "baseMXN": 690, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "images": ["/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "/assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp", "/assets/EDICION_2025/camisa-gris-pits-baja1000-atras.jpg.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-shirt-pits-black", "sku": "B1K-SHIRT-BLK", "name": "Camisa Pits Negra Baja 1000", "baseMXN": 690, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp", "images": ["/assets/EDICION_2025/camisa-negra-pits-baja1000.webp", "/assets/EDICION_2025/camisa-negra-pits-baja1000-detalle.webp", "/assets/EDICION_2025/camisa-negra-pits-baja1000-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b1k-cap", "sku": "B1K-CAP-RG", "name": "Gorra Oficial Roja / Gris", "baseMXN": 650, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/gorras-roja-gris.webp", "images": ["/assets/EDICION_2025/gorras-roja-gris.webp", "/assets/EDICION_2025/gorras-roja-gris-detalle.webp", "/assets/EDICION_2025/gorras-roja-gris-atras.webp"], "sizes": ["Unitalla"] },
+        { "id": "b500-tee-grey", "sku": "B500-TEE-GRY", "name": "Camiseta Oficial Baja 500", "baseMXN": 480, "sectionId": "BAJA_500", "img": "/assets/BAJA500/camiseta-gris-baja500.webp", "images": ["/assets/BAJA500/camiseta-gris-baja500.webp", "/assets/BAJA500/camiseta-gris-baja500-detalle.webp", "/assets/BAJA500/camiseta-gris-baja500-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "b400-tee-brown", "sku": "B400-TEE-BRN", "name": "Camiseta Café Baja 400", "baseMXN": 480, "sectionId": "BAJA_400", "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp", "images": ["/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp", "/assets/BAJA400/camiseta-cafe-oscuro-baja400-detalle.webp", "/assets/BAJA400/camiseta-cafe-oscuro-baja400-atras.webp"], "sizes": ["S","M","L","XL","2XL"] },
+        { "id": "sf250-tank", "sku": "SF250-TNK-BLK", "name": "Tank Top San Felipe 250", "baseMXN": 440, "sectionId": "SF_250", "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp", "images": ["/assets/SF250/camiseta-negra-sinmangas-SF250.webp", "/assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp", "/assets/SF250/camiseta-negra-sinmangas-S250-atras.webp"], "sizes": ["S","M","L","XL","2XL"] }
+      ]
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+    const playSFX = (id) => { const a = $(id); if(a){ a.currentTime = 0; a.volume = 0.2; a.play().catch(()=>{}); } };
+
+    // --- EXPOSICIÓN GLOBAL PARA ONCLICK ---
+    window.scrollToId = (id) => { const el = $(id); if(el) el.scrollIntoView({behavior:'smooth'}); };
+    window.toggleCart = () => { playSFX('sfx-click'); $('cartDrawer').classList.toggle('active'); $('overlay').classList.toggle('active'); };
+    window.closeAll = () => { document.querySelectorAll('.active, .modal-catalog, .modal-legal').forEach(e => e.classList.remove('active')); $('overlay').classList.remove('active'); document.body.classList.remove('noScroll'); };
+
+    /* --- 1. INTRO ENGINE (4.0s HARDSTOP) --- */
+    function runIntro() {
+      const aguja = $('needle');
+      const splash = $('splash-screen');
+      const rev = $('rev-val');
+      const status = $('status-text');
+
+      setTimeout(() => { if(aguja) aguja.style.transform = "rotate(85deg)"; playSFX('sfx-start'); }, 400);
+      let r = 0;
+      const itv = setInterval(() => { r += 580; if(r > 8000) r = 8000; if(rev) rev.innerHTML = String(r).padStart(4, '0'); }, 100);
+
+      setTimeout(() => { 
+        if(status) status.innerHTML = "FUEL INJECTION... READY"; 
+        if(aguja) aguja.style.transform = "rotate(10deg)";
+      }, 1800);
+
+      setTimeout(() => { 
+        clearInterval(itv);
+        if(splash) {
+          splash.style.opacity = '0';
+          setTimeout(() => { splash.style.display = 'none'; document.body.classList.remove('noScroll'); }, 800);
+        }
+      }, 3500);
     }
 
-    // Animación estable
-    window.addEventListener('load', () => {
-        const aguja = document.getElementById('aguja');
-        const brand = document.getElementById('intro-brand');
-        const splash = document.getElementById('splash-screen');
+    /* --- 2. MOTOR CATALOGO PRO --- */
+    window.openCatalog = async (sid) => {
+        const items = catalogData.products.filter(p => p.sectionId === sid);
+        const logoMap = {
+            'BAJA_1000': '/assets/logo-baja1000.webp',
+            'BAJA_500': '/assets/logo-baja500.webp',
+            'BAJA_400': '/assets/logo-baja400.webp',
+            'SF_250': '/assets/logo-sf250.webp'
+        };
+        if($('catLogo')) $('catLogo').src = logoMap[sid] || '/assets/logo-score.webp';
+        
+        const box = $('catContent');
+        if(!box) return;
+        playSFX('sfx-click');
+        box.innerHTML = '';
 
-        setTimeout(() => { if(aguja) aguja.style.transform = "rotate(80deg)"; }, 400);
-        setTimeout(() => { if(brand) brand.style.opacity = "1"; }, 1200);
-        setTimeout(() => { 
-            splash.style.opacity = "0";
-            setTimeout(() => { 
-                splash.style.display = "none";
-                document.body.classList.remove('noScroll');
-            }, 600);
-        }, 3200);
+        if (!items.length) {
+            box.innerHTML = '<p style="text-align:center; padding:100px; grid-column:1/3; color:#888;">Piezas exclusivas en producción técnica...</p>';
+        } else {
+            items.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "p-card";
+                const imgs = (p.images && p.images.length) ? p.images : [p.img];
+                const slidesHtml = imgs.map(src => `<div class="p-slide"><img src="${src}" loading="lazy" alt="${p.name}"></div>`).join('');
+                const dotsHtml = imgs.length > 1 ? imgs.map((_, i) => `<div class="p-dot ${i === 0 ? 'active' : ''}"></div>`).join('') : '';
+                const sizes = Array.isArray(p.sizes) ? p.sizes : ["S", "M", "L", "XL"];
+                const sizeOpts = sizes.map(s => `<option value="${s}">${s}</option>`).join('');
+                
+                card.innerHTML = `
+                    <div class="p-media">
+                        <div class="p-slider" onscroll="window.updateDots(this)">${slidesHtml}</div>
+                        <div class="p-dots">${dotsHtml}</div>
+                    </div>
+                    <div class="p-body">
+                        <div class="p-name">${p.name}</div>
+                        <div class="p-price">${money(p.baseMXN)}</div>
+                        <select class="p-size-sel" id="size_${p.id}">${sizeOpts}</select>
+                        <button class="p-btn-add" onclick="window.addToCart('${p.id}')">AGREGAR</button>
+                    </div>
+                `;
+                box.appendChild(card);
+            });
+        }
+        $('modalCatalog').classList.add('active');
+        $('overlay').classList.add('active');
+    };
+
+    window.updateDots = (el) => {
+        const index = Math.round(el.scrollLeft / el.offsetWidth);
+        const dots = el.parentElement.querySelectorAll('.p-dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    };
+
+    window.addToCart = (pid) => {
+        const p = catalogData.products.find(x => x.id === pid);
+        const sizeSel = $(`size_${pid}`);
+        const size = sizeSel ? sizeSel.value : 'M';
+        if(p) {
+            const exist = cart.find(x => x.id === pid && x.size === size);
+            if(exist) exist.qty++; else cart.push({...p, qty: 1, size: size});
+            playSFX('sfx-click');
+            updateCartUI(); 
+            window.toggleCart();
+            showToast("🏁 PRODUCTO AGREGADO");
+        }
+    };
+
+    window.openLegal = (type) => {
+        const contents = {
+            privacidad: "<h2>Aviso de Privacidad</h2><p><b>BAJATEX, S. de R.L. de C.V.</b>, con nombre comercial <b>Único Uniformes</b>, es responsable del uso y protección de sus datos personales recabados a través de SCORE Store. Los datos se utilizan para procesar pedidos, gestionar entregas y emitir facturación electrónica.</p>",
+            terminos: "<h2>Términos y Condiciones</h2><p>Ventas finales por liquidación del 80%. Se aceptan cambios dentro de los 30 días naturales solo por defectos de fábrica comprobables y con etiquetas originales.</p>",
+            legal: "<h2>Información Legal y Comercial</h2><p><b>Razón Social:</b> BAJATEX, S. de R.L. de C.V.<br><b>Nombre Comercial:</b> Único Uniformes<br><b>RFC:</b> BAJ220613P51<br><b>Ubicación:</b> Palermo 6106 Interior JK, Tijuana, B.C.<br><br>Fabricante oficial de SCORE International.</p>",
+            contacto: "<h2>Contacto</h2><p>📧 ventas.unicotexti@gmail.com<br>📱 WhatsApp: +52 664 236 8701<br>📍 Planta Industrial en Tijuana, México.</p>"
+        };
+        $('legalContent').innerHTML = contents[type] || "";
+        $('modalLegal').classList.add('active');
+        $('overlay').classList.add('active');
+        playSFX('sfx-click');
+    };
+
+    function updateCartUI() {
+        const box = $('cartItems'); 
+        if(!box) return;
+        box.innerHTML = ''; 
+        let total = 0;
+        if(cart.length === 0) { $('cartEmpty').style.display = 'block'; } else { $('cartEmpty').style.display = 'none'; }
+
+        cart.forEach((it, i) => {
+            total += (it.baseMXN * it.qty);
+            box.innerHTML += `
+            <div class="cart-card">
+              <img src="${it.img}" alt="${it.name}">
+              <div style="flex:1"><b>${it.name}</b><br><small>Talla: ${it.size}</small>
+                <div class="qty-ctrl"><button class="qty-btn" onclick="window.modQty(${i},-1)">-</button><b>${it.qty}</b><button class="qty-btn" onclick="window.modQty(${i},1)">+</button></div>
+              </div>
+              <div style="font-weight:900; font-family:'Teko'; font-size:22px; color:var(--red);">${money(it.baseMXN * it.qty)}</div>
+            </div>`;
+        });
+        $('grandTotal').innerText = money(total);
+        $('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
+    }
+
+    window.modQty = (i, d) => { cart[i].qty += d; if(cart[i].qty <= 0) cart.splice(i, 1); updateCartUI(); };
+
+    window.checkout = async () => {
+        if(!cart.length) return;
+        playSFX('sfx-click');
+        showToast("🏁 VALIDANDO ORDEN...");
+        window.location.href = `/.netlify/functions/create_checkout?org=${CFG.orgSlug}`;
+    };
+
+    function showToast(m) { const t=$("toast"); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
+
+    /* --- INIT --- */
+    document.addEventListener('DOMContentLoaded', async () => {
+        runIntro();
+        updateCartUI();
+        
+        setInterval(() => {
+            const users = ["Juan de Ensenada", "Mónica de San Diego", "Roberto de Tijuana", "Arancha de Mexicali"];
+            const notif = $("notif-content");
+            if(notif) {
+                notif.innerHTML = `¡<b>${users[Math.floor(Math.random()*4)]}</b> adquirió su Merch Oficial!`;
+                $("sales-notification").classList.add('active');
+                setTimeout(() => $("sales-notification").classList.remove('active'), 6000);
+            }
+        }, 35000);
     });
   </script>
 </body>
