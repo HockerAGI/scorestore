@@ -1,22 +1,21 @@
-/* --- SCORE STORE - MASTER DESIGN v2026 (FINAL) --- */
+/* --- SCORE STORE - MASTER DESIGN v2026 (FIXED) --- */
 
 :root {
   --red: #E10600;
-  --score-red: #E10600;
   --black: #0b0d10;
   --white: #ffffff;
   --glass-white: rgba(255, 255, 255, 0.88);
-  --glass-dark: rgba(12, 14, 18, 0.92);
   --shadow-pro: 0 25px 60px rgba(0, 0, 0, 0.6);
   --teko: 'Teko', sans-serif;
   --inter: 'Inter', sans-serif;
   --green: #19b36b;
-  --header-h: 80px;
 }
 
+/* REGLA DE ORO PARA EVITAR IMÁGENES ROTAS */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-html { scroll-behavior: smooth; font-size: 16px; }
+img { display: block; max-width: 100%; height: auto; border: 0; }
 
+html { scroll-behavior: smooth; font-size: 16px; }
 body { 
   font-family: var(--inter); 
   background-color: var(--black); 
@@ -28,19 +27,17 @@ body {
   background-position: center;
 }
 
-body.noScroll, body.modalOpen { overflow: hidden; height: 100vh; }
-img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+body.noScroll { overflow: hidden; height: 100vh; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 a { text-decoration: none; color: inherit; }
 
 .container { width: min(1200px, 94vw); margin: 0 auto; }
 .wrap { padding-top: 140px; padding-bottom: 80px; width: min(1200px, 94vw); margin: 0 auto; }
 
-/* 1. HERO FLOTANTE */
+/* 1. HERO FLOTANTE (Card Style) */
 .hero { 
   position: relative; 
   min-height: 650px; 
-  /* Estilo Card Flotante */
   border-radius: 30px; 
   margin-bottom: 80px; 
   box-shadow: 0 30px 60px rgba(0,0,0,0.5); 
@@ -50,7 +47,7 @@ a { text-decoration: none; color: inherit; }
 }
 .heroBg { 
   position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover;
-  opacity: 0.7; z-index: 0; animation: zoomSlow 20s infinite alternate;
+  opacity: 0.7; z-index: 0; 
 }
 .heroOverlay { 
   position: absolute; inset: 0; 
@@ -69,18 +66,16 @@ a { text-decoration: none; color: inherit; }
 }
 
 .hero-logos { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; align-items: center; }
-.hero-main-logo { height: 90px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-.hero-desert-seal { height: 80px; opacity: 0.9; }
+.hero-main-logo { height: 90px; width: auto; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+.hero-desert-seal { height: 80px; width: auto; opacity: 0.9; }
 
 .hero-copy { color: #ddd; font-weight: 500; margin-bottom: 40px; font-size: 18px; }
 
-/* 2. COLECCIONES (VERTICALES) */
-.sectionHead { text-align: center; margin-bottom: 50px; }
+/* 2. COLECCIONES (RETRATO & LIMPIAS) */
+.sectionHead { text-align: center; margin-bottom: 50px; margin-top: 40px; }
 .sectionHead h2 { 
   font-family: var(--teko); font-size: 50px; margin: 0; 
   text-transform: uppercase; letter-spacing: 2px; color: #fff; 
-  /* Centrado visualmente con margen */
-  margin-top: 20px; 
 }
 
 .grid { 
@@ -89,16 +84,17 @@ a { text-decoration: none; color: inherit; }
   gap: 30px; 
 }
 
-/* Card Vertical */
+/* Card Vertical 3:4 */
 .champItem { 
   position: relative; 
-  aspect-ratio: 3/4; /* Formato Retrato */
+  aspect-ratio: 3/4; 
   background: #fff; border-radius: 20px; 
   overflow: hidden; cursor: pointer; 
   display: flex; flex-direction: column; align-items: center; justify-content: center; 
   box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
   transition: transform 0.3s;
 }
+/* Sin zoom exagerado al hover */
 .champItem:hover { transform: translateY(-5px); border-color: var(--red); }
 
 .card-texture { 
@@ -108,10 +104,11 @@ a { text-decoration: none; color: inherit; }
 }
 .champItem:hover .card-texture { opacity: 0.4; }
 
-/* Logos con más margen */
+/* Logos con más margen y sin zoom */
 .float-logo { 
   position: relative; z-index: 2; width: 70%; max-width: 180px; 
   filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); margin: 30px; 
+  transition: transform 0.3s;
 }
 
 .badge { position: absolute; top: 15px; left: 15px; background: var(--black); color: #fff; padding: 5px 12px; font-size: 11px; font-weight: 900; z-index: 5; text-transform: uppercase; }
@@ -132,13 +129,12 @@ a { text-decoration: none; color: inherit; }
   opacity: 0.7; grayscale: 100%; transition: 0.5s; 
 }
 .partnersGrid:hover { opacity: 1; grayscale: 0%; }
-.pLogo { height: 40px; object-fit: contain; }
+.pLogo { height: 40px; width: auto; object-fit: contain; }
 
 /* 4. UTILS & UI */
-.btn { padding: 15px 40px; border-radius: 50px; font-weight: 800; font-family: var(--teko); font-size: 24px; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; display: inline-block; cursor: pointer; border:none; }
+.btn { padding: 15px 40px; border-radius: 50px; font-weight: 800; font-family: var(--teko); font-size: 24px; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; display: inline-block; cursor: pointer; }
 .btn.primary { background: var(--red); color: white; box-shadow: 0 10px 30px rgba(225,6,0,0.4); }
 .btn.primary:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(225,6,0,0.6); }
-.pulse-btn { animation: pulse 2s infinite; }
 
 /* Navbar */
 .topbar { position: fixed; top: 40px; width: 100%; height: 80px; background: var(--glass-white); backdrop-filter: blur(16px); border-bottom: 4px solid var(--red); z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.15); color: #000; }
@@ -153,28 +149,26 @@ a { text-decoration: none; color: inherit; }
 .footerBrandName { font-family: var(--teko); font-size: 36px; margin-bottom: 10px; color: #fff; letter-spacing: 2px; }
 .f-links a { display: block; color: #bbb; text-decoration: none; font-size: 14px; margin-bottom: 10px; transition: 0.2s; }
 .f-links a:hover { color: var(--red); padding-left: 5px; }
-.social-logos { display: flex; gap: 20px; margin-top: 20px; }
-.social-logos a { color: #fff; font-size: 24px; }
 .copy { margin-top: 60px; color: #444; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
 /* Splash */
 #splash-screen { position: fixed; inset: 0; z-index: 10000; background: #0A0A0A; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
 #splash-screen.hidden { opacity: 0; pointer-events: none; }
 .splash-content { text-align: center; width: 100%; max-width: 300px; }
-.splash-logo { width: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+.splash-logo { width: 150px; margin-bottom: 20px; }
 .rpm-bar-container { width: 100%; height: 6px; background: #222; border-radius: 4px; overflow: hidden; margin-top: 10px; }
 .rpm-bar { height: 100%; width: 0%; background: var(--red); box-shadow: 0 0 10px var(--red); transition: width 0.1s linear; }
 .splash-text { font-family: var(--teko); color: var(--green); font-size: 18px; margin-top: 20px; letter-spacing: 4px; }
 
-/* Modales */
+/* Modales & Carrito */
 .modal-catalog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f4f4; z-index: 4000; transform: translateY(100%); transition: 0.4s cubic-bezier(0.2, 1, 0.2, 1); display: flex; flex-direction: column; }
 .modal-catalog.active { transform: translateY(0); }
 .cat-head { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; height: 75px; position: sticky; top: 0; z-index: 10; }
 .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; flex: 1; background: #f0f0f0; padding-bottom: 100px; }
 
-/* Cards Catálogo */
+/* Tarjeta Producto */
 .p-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-.p-media { width: 100%; aspect-ratio: 3/4; background: #fff; padding: 10px; display: flex; align-items: center; justify-content: center; } /* 3:4 Vertical */
+.p-media { width: 100%; aspect-ratio: 3/4; background: #fff; padding: 10px; display: flex; align-items: center; justify-content: center; } 
 .p-slide img { width: 100%; height: 100%; object-fit: contain; }
 .p-body { padding: 15px; text-align: center; }
 .p-name { font-weight: 800; font-size: 14px; margin-bottom: 5px; color: #111; }
@@ -182,7 +176,7 @@ a { text-decoration: none; color: inherit; }
 .p-size-sel { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; }
 .p-btn-add { background: var(--black); color: #fff; width: 100%; padding: 10px; border-radius: 6px; font-weight: 900; font-size: 13px; text-transform: uppercase; cursor: pointer; }
 
-/* Carrito */
+/* Drawer */
 .drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(480px, 100vw); background: #fff; z-index: 5000; transform: translateX(100%); transition: 0.4s; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.4); }
 .drawer.active { transform: translateX(0); }
 .d-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
@@ -228,6 +222,5 @@ a { text-decoration: none; color: inherit; }
   .hero { min-height: 500px; border-radius: 0; width: 100%; border: none; box-shadow: none; }
   .grid { grid-template-columns: 1fr 1fr; gap: 15px; }
   .footer-grid { grid-template-columns: 1fr; text-align: center; }
-  .ai-box { height: 100%; width: 100%; border-radius: 0; }
   .drawer { width: 100%; }
 }
