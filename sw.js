@@ -1,5 +1,5 @@
-/* sw.js - Motor de Rendimiento SCORE v2026 */
-const CACHE_NAME = "score-cache-v2.5";
+/* sw.js - Motor de Rendimiento SCORE v2026 (Optimizado) */
+const CACHE_NAME = "score-cache-v3.0";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -7,37 +7,61 @@ const ASSETS_TO_CACHE = [
   "/js/main.js",
   "/assets/logo-score.webp",
   "/assets/hero.webp",
-  "/data/catalog.json"
+  "/site.webmanifest"
 ];
 
-// Instalación: Guarda los archivos base en el celular
+// Instalación
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Activar inmediatamente
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
-  self.skipWaiting();
 });
 
-// Activación: Limpia versiones viejas para que la tienda siempre sea la más nueva
+// Limpieza de Caché antigua
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
+    caches.keys().then((keys) => Promise.all(
+      keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      })
+    ))
   );
+  self.clients.claim();
 });
 
-// Estrategia de carga: Carga rápido del caché y actualiza por detrás
+// Estrategia Inteligente
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+
+  // 1. API y Backend: Siempre Red (Nunca cachear pagos o inventario)
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/.netlify/")) {
+    return;
+  }
+
+  // 2. Catálogo JSON: Network First (Intenta red para precios frescos, si falla usa caché)
+  if (url.pathname.includes("/data/catalog.json")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // 3. Assets Estáticos (CSS, JS, Imágenes): Stale-While-Revalidate
+  // (Muestra rápido lo cacheado, y actualiza en segundo plano para la próxima)
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      });
+      return cachedResponse || fetchPromise;
     })
   );
 });
