@@ -1,16 +1,29 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { jsonResponse, safeJsonParse } = require("./_shared");
+const { jsonResponse } = require("./_shared");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const SYSTEM_PROMPT = `Eres el Asistente de SCORE Store. Responde brevemente sobre productos, tallas y envíos. Usa emojis de carreras. Si piden descuento, diles que prueben 'SCORE25'.`;
+
+const SYSTEM_CONTEXT = `
+Eres el "Estratega del Desierto", el asistente experto de SCORE STORE.
+Tu objetivo es vender mercancía oficial de las carreras Baja 1000, 500, 400 y San Felipe 250.
+DATOS CLAVE:
+1. El fabricante y operador oficial es Único Uniformes (Tijuana). Patrocinadores de SCORE.
+2. Si preguntan por tallas, todas son tallas americanas (un poco amplias).
+3. Hacemos envíos a todo México y USA vía FedEx.
+4. Si el cliente duda, ofrécele el cupón "SCORE25" para un 25% de descuento.
+5. Usa emojis de carreras (🏁, 🌵, 🏎️). Sé breve y con mucha energía.
+`;
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
-  try {
-    const { message } = safeJsonParse(event.body);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const chat = model.startChat({ history: [{ role: "user", parts: [{ text: SYSTEM_PROMPT }] }] });
-    const result = await chat.sendMessage(message);
-    return jsonResponse(200, { reply: result.response.text() });
-  } catch (e) { return jsonResponse(500, { error: "Error IA" }); }
+    try {
+        const { message } = JSON.parse(event.body);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        const result = await model.generateContent([SYSTEM_CONTEXT, message]);
+        const response = await result.response;
+        
+        return jsonResponse(200, { reply: response.text() });
+    } catch (e) {
+        return jsonResponse(500, { error: "IA Offline" });
+    }
 };
