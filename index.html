@@ -3,40 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SCORE STORE | Mercancía Oficial de Off-Road</title>
+  <title>SCORE Store | Tienda Oficial Off-Road</title>
   
-  <meta name="description" content="Tienda oficial de SCORE International. Merchandise fabricado por Único Uniformes. Envíos a MX y USA." />
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado y operado por Único Uniformes. Envíos a todo México y USA." />
   <meta name="theme-color" content="#E10600" />
   
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:description" content="Equípate con la mercancía oficial de las carreras más duras del mundo." />
-  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
-
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
     n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
     t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
     document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
+    fbq('init', '1496305187347575'); 
     fbq('track', 'PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"/></noscript>
 
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD" />
+  <link rel="stylesheet" href="/css/styles.css?v=GOLD_MASTER_2026" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Teko:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script src="https://js.stripe.com/v3" defer></script>
 </head>
 
 <body>
+
   <div id="splash-screen">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
@@ -49,27 +44,19 @@
   </div>
 
   <div id="overlay" class="page-overlay" onclick="closeAll()"></div>
-  
-  <div class="promo-bar" id="promo-bar">
-    <span id="promo-text">🏁 CÓDIGO <b>SCORE25</b> = 25% OFF | ENVÍOS A TODO MÉXICO Y USA</span>
-  </div>
 
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand">
-        <img src="/assets/logo-score.webp" alt="SCORE" class="brandLogo">
-      </a>
-      <div class="navRight">
-        <button class="cartBtn" onclick="toggleCart()">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span id="cartCount" class="cartCount">0</span>
-        </button>
-      </div>
+      <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE" class="brandLogo"></a>
+      <button class="cartBtn" onclick="toggleCart()" aria-label="Abrir Carrito">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cartCount" class="cartCount">0</span>
+      </button>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero" id="top">
+  <main>
+    <section class="hero scroll-reveal" id="top">
       <div class="heroBg"></div>
       <div class="heroOverlay"></div>
       <div class="heroContent">
@@ -79,112 +66,113 @@
           <img src="/assets/logo-score.webp" class="hero-main-logo" alt="Score">
           <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="WDC">
         </div>
-        <p class="hero-copy">Equípate con la mercancía oficial fabricada por <b>Único Uniformes</b>, patrocinador oficial de SCORE International.</p>
-        <div class="ctaRow">
-            <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER COLECCIONES</button>
-        </div>
+        <p class="hero-copy">Equípate con la mercancía oficial. Fabricado y operado por <b>Único Uniformes</b>.</p>
+        <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER COLECCIONES</button>
       </div>
     </section>
 
-    <section class="section" id="collections">
-      <div class="sectionHead"><h2>CATEGORÍAS</h2></div>
-      <div class="grid">
+    <section class="container" id="collections" style="margin-bottom:100px;">
+      <div class="sectionHead scroll-reveal"><h2>CATEGORÍAS</h2></div>
+      <div class="grid scroll-reveal">
         <div class="champItem" onclick="openCatalog('BAJA_1000')">
-          <div class="card-texture"></div><span class="badge">TOP VENTAS</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000">
-          <div class="card-btn">EXPLORAR</div>
+          <div class="card-texture"></div><span class="badge">MÁS VENDIDO</span>
+          <img src="/assets/logo-baja1000.webp" class="float-logo">
+          <div class="card-btn">ABRIR TIENDA</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_500')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500">
-          <div class="card-btn">EXPLORAR</div>
+          <img src="/assets/logo-baja500.webp" class="float-logo">
+          <div class="card-btn">ABRIR TIENDA</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_400')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400">
-          <div class="card-btn">EXPLORAR</div>
+          <img src="/assets/logo-baja400.webp" class="float-logo">
+          <div class="card-btn">ABRIR TIENDA</div>
         </div>
         <div class="champItem" onclick="openCatalog('SF_250')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250">
-          <div class="card-btn">EXPLORAR</div>
+          <img src="/assets/logo-sf250.webp" class="float-logo">
+          <div class="card-btn">ABRIR TIENDA</div>
         </div>
-      </div>
-    </section>
-
-    <section class="partners">
-      <h3>OFFICIAL PARTNERS</h3>
-      <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico">
       </div>
     </section>
   </main>
 
   <div id="modalCatalog" class="modal-catalog">
     <div class="cat-head">
-      <img src="/assets/logo-score.webp" height="40" alt="Logo">
+      <img src="" id="catLogo" class="cat-section-logo" alt="Colección">
       <button class="closeBtn" onclick="closeAll()">✕</button>
     </div>
-    <div id="catContent" class="cat-grid"></div>
+    <div id="catContent" class="cat-slider"></div>
   </div>
 
   <aside id="cartDrawer" class="drawer">
-    <div class="d-header"><h3>TU CARRITO</h3><button class="closeBtn" onclick="toggleCart()">✕</button></div>
+    <div class="d-header"><h3>TU EQUIPO</h3><button class="closeBtn" onclick="toggleCart()">✕</button></div>
     <div class="d-body" id="cartItems"></div>
     <div class="d-footer">
       <div class="shipSelector">
-        <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked onchange="updateCartUI()"><div><span>PickUp Tijuana</span><small>Gratis</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateCartUI()"><div><span>Envío México</span><small>Calculado</small></div></label>
-        <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateCartUI()"><div><span>USA Shipping</span><small>FedEx</small></div></label>
+         <label class="radio-option"><input type="radio" name="shipMode" value="pickup" checked onchange="updateCartUI()"> <div><span>PickUp TJ (Fábrica)</span><small style="color:#00E676">Gratis</small></div></label>
+         <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateCartUI()"> <div><span>Envío MX</span><small>FedEx</small></div></label>
+         <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateCartUI()"> <div><span>USA / Intl</span><small>FedEx</small></div></label>
       </div>
-      <div class="promo-input-box">
-          <input id="promo" type="text" placeholder="Código: SCORE25" class="inputField" onchange="savePromo(this.value)">
+      <div class="promo-box">
+        <input type="text" id="promo" placeholder="CÓDIGO DE DESCUENTO" onchange="savePromo(this.value)">
       </div>
-      <div id="shipForm" style="display:none;">
-          <input id="cp" type="tel" placeholder="Código Postal" class="inputField">
-      </div>
-      <div class="summary-total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
+      <div class="total-row"><span>TOTAL:</span><span id="grandTotal">$0.00</span></div>
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
     </div>
   </aside>
 
-  <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Estratega del Desierto"><i class="fa-solid fa-bolt"></i></button>
+  <div id="infoModal" class="info-modal">
+    <button class="info-close" onclick="closeAll()">✕</button>
+    <div id="infoContent" class="info-content"></div>
+  </div>
 
   <div id="aiChatModal" class="ai-chat-modal">
     <div class="ai-box">
-      <div class="ai-header">
-        <span>ESTRATEGA SCORE 🏁</span>
-        <button onclick="toggleAiAssistant()">✕</button>
-      </div>
+      <div class="ai-header"><span>SCORE IA 🤖</span><button onclick="toggleAiAssistant()">✕</button></div>
       <div class="ai-body" id="aiMessages"></div>
       <div class="ai-input-bar">
-        <input type="text" id="aiInput" placeholder="¿Tallas, envíos...?" onkeypress="if(event.key==='Enter') sendAiMessage()">
+        <input type="text" id="aiInput" placeholder="Pregunta sobre tallas..." onkeypress="if(event.key==='Enter') sendAiMessage()">
         <button onclick="sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
+  <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Ayuda"><i class="fa-solid fa-headset"></i></button>
+
+  <section class="cookieBanner" id="cookieBanner" style="display:none;">
+    <div class="cookieInner">
+      <div class="cookieText">Usamos cookies para mejorar tu experiencia en la pista. 🍪</div>
+      <div class="cookieActions">
+        <button class="cookieBtn ghost" id="cookieReject">Cerrar</button>
+        <button class="cookieBtn primary" id="cookieAccept">ACEPTAR</button>
+      </div>
+    </div>
+  </section>
 
   <footer class="footer">
     <div class="container footerInner">
       <div class="fCol">
-        <div class="footerBrandName">SCORE STORE</div>
-        <p>Operado por Único Uniformes.<br>Tijuana, Baja California.</p>
+        <div class="footerBrandName">BAJATEX / ÚNICO</div>
+        <p class="footerDesc">Fabricante Oficial de SCORE International.<br>Tijuana, B.C.</p>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/uniforme.unico/" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://www.instagram.com/uniformes.unico" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        </div>
       </div>
       <div class="fCol">
-        <h4>ENLACES</h4>
+        <h4>SOPORTE</h4>
         <div class="f-links">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank">Facebook Único</a>
-          <a href="https://unicouniformes.com/" target="_blank">Web Fabricante</a>
+          <a onclick="openInfo('contacto')">Contacto y Fábrica</a>
+          <a onclick="openInfo('envios')">Envíos y Entregas</a>
+          <a onclick="openInfo('privacidad')">Privacidad y Legal</a>
         </div>
       </div>
     </div>
     <div class="copy">SCORE Store © 2026 | Powered by Único OS</div>
   </footer>
 
-  <div id="toast" class="toast"></div>
-  <script type="module" src="/js/main.js?v=2026_PROD"></script>
+  <div id="toast" class="toast">Mensaje</div>
+  <script type="module" src="/js/main.js?v=GOLD_MASTER_2026"></script>
 </body>
 </html>
