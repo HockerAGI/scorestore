@@ -9,18 +9,22 @@
   <meta name="theme-color" content="#E10600" />
   
   <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:image" content="/assets/hero.webp" />
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+  <meta property="og:description" content="Merchandise Oficial SCORE International. Calidad Único Uniformes." />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+  
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
   
-  <link rel="stylesheet" href="/css/styles.css?v=MASTER_AI">
+  <link rel="preload" as="image" href="/assets/hero.webp">
+  <link rel="preload" as="image" href="/assets/logo-score.webp">
+  
+  <link rel="stylesheet" href="/css/styles.css?v=PERFORMANCE_FIX">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
   
   <script src="https://js.stripe.com/v3" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -42,12 +46,12 @@
 <body>
   <div id="splash-screen">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo">
+      <img src="/assets/logo-score.webp" alt="SCORE" class="splash-logo" width="150" height="68">
       <div class="rpm-wrapper">
         <div class="rev-counter" id="rev-val">0000</div>
         <div class="rpm-bar-container"><div class="rpm-bar" id="needle"></div></div>
       </div>
-      <div class="splash-text" id="status-text">CALENTANDO MOTORES...</div>
+      <div class="splash-text" id="status-text">CARGANDO...</div>
     </div>
   </div>
 
@@ -59,9 +63,11 @@
 
   <header class="topbar">
     <div class="container topbarInner">
-      <a href="/" class="brand"><img src="/assets/logo-score.webp" alt="SCORE" class="brandLogo"></a>
+      <a href="/" class="brand" aria-label="Inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE" class="brandLogo" width="114" height="50">
+      </a>
       <div class="navRight">
-        <button class="cartBtn" onclick="toggleCart()">
+        <button class="cartBtn" onclick="toggleCart()" aria-label="Abrir Carrito">
           <i class="fa-solid fa-cart-shopping"></i>
           <span id="cartCount" class="cartCount">0</span>
         </button>
@@ -76,11 +82,13 @@
         <div class="tagline"><span class="tag-pill">TEMPORADA 2026</span></div>
         <h1 class="hero-title">TIENDA <span class="neon-text">OFICIAL</span></h1>
         <div class="hero-logos">
-          <img src="/assets/logo-score.webp" class="hero-main-logo">
-          <img src="/assets/logo-world-desert.webp" class="hero-desert-seal">
+          <img src="/assets/logo-score.webp" class="hero-main-logo" alt="Score Logo" width="180" height="80">
+          <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="Desert Seal" width="80" height="70">
         </div>
-        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta. Fabricado por <b>Único Uniformes</b>.</p>
-        <div class="ctaRow"><button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER CATÁLOGO</button></div>
+        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta.</p>
+        <div class="ctaRow">
+            <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER CATÁLOGO</button>
+        </div>
       </div>
     </section>
 
@@ -89,22 +97,22 @@
       <div class="grid">
         <div class="champItem" onclick="openCatalog('BAJA_1000')">
           <div class="card-texture"></div><span class="badge">MÁS VENDIDO</span>
-          <img src="/assets/logo-baja1000.webp" class="float-logo">
+          <img src="/assets/logo-baja1000.webp" class="float-logo" alt="Baja 1000" width="220" height="136">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_500')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja500.webp" class="float-logo">
+          <img src="/assets/logo-baja500.webp" class="float-logo" alt="Baja 500" width="220" height="138">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('BAJA_400')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-baja400.webp" class="float-logo">
+          <img src="/assets/logo-baja400.webp" class="float-logo" alt="Baja 400" width="220" height="171">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
         <div class="champItem" onclick="openCatalog('SF_250')">
           <div class="card-texture"></div>
-          <img src="/assets/logo-sf250.webp" class="float-logo">
+          <img src="/assets/logo-sf250.webp" class="float-logo" alt="San Felipe 250" width="220" height="140">
           <div class="card-btn">VER PRODUCTOS</div>
         </div>
       </div>
@@ -113,22 +121,24 @@
     <section class="partners scroll-reveal">
       <h3>PATROCINADORES OFICIALES</h3>
       <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo"><img src="/assets/logo-rzr.webp" class="pLogo">
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo"><img src="/assets/logo-unico.webp" class="pLogo">
+        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" width="105" height="40">
+        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris" width="117" height="40">
+        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" width="157" height="40">
+        <img src="/assets/logo-unico.webp" class="pLogo" alt="Unico" width="135" height="40">
       </div>
     </section>
   </main>
 
   <div id="modalCatalog" class="modal-catalog">
     <div class="cat-head">
-      <img src="/assets/logo-score.webp" class="cat-logo-header" id="catLogo">
-      <button class="closeBtn" onclick="closeAll()">✕</button>
+      <img src="/assets/logo-score.webp" class="cat-logo-header" id="catLogo" alt="Logo" width="100" height="40">
+      <button class="closeBtn" onclick="closeAll()" aria-label="Cerrar">✕</button>
     </div>
     <div id="catContent" class="cat-grid"></div>
   </div>
 
   <aside id="cartDrawer" class="drawer">
-    <div class="d-header"><h3>TU EQUIPO</h3><button class="closeBtn" onclick="toggleCart()">✕</button></div>
+    <div class="d-header"><h3>TU EQUIPO</h3><button class="closeBtn" onclick="toggleCart()" aria-label="Cerrar Carrito">✕</button></div>
     <div class="d-body" id="cartItems"></div>
     <div class="d-footer">
       <div class="shipSelector">
@@ -150,19 +160,19 @@
     <div class="ai-box">
       <div class="ai-header">
         <span style="font-family:Teko; font-size:24px;">ESTRATEGA DEL DESIERTO ✨</span>
-        <button onclick="toggleAiAssistant()" style="color:#fff;">✕</button>
+        <button onclick="toggleAiAssistant()" style="color:#fff;" aria-label="Cerrar Chat">✕</button>
       </div>
       <div class="ai-body" id="aiMessages"></div>
       <div class="ai-input-bar">
-        <input type="text" id="aiInput" class="ai-input" placeholder="Pregunta sobre tallas o materiales..." onkeypress="if(event.key==='Enter') sendAiMessage()">
-        <button class="ai-send" onclick="sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        <input type="text" id="aiInput" class="ai-input" placeholder="Pregunta sobre tallas..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+        <button class="ai-send" onclick="sendAiMessage()" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
-  <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Hablar con IA"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+  <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Hablar con IA" aria-label="Asistente IA"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
 
   <div id="modalLegal" class="modal-legal">
-    <div class="legal-head"><h3>INFORMACIÓN LEGAL</h3><button onclick="closeAll()" style="color:#fff; font-size:24px;">✕</button></div>
+    <div class="legal-head"><h3>INFORMACIÓN LEGAL</h3><button onclick="closeAll()" style="color:#fff; font-size:24px;" aria-label="Cerrar">✕</button></div>
     <div class="legal-body" id="legalContent"></div>
   </div>
 
@@ -172,9 +182,9 @@
         <div class="footerBrandName">BAJATEX</div>
         <p class="fText">Operado por Único Uniformes.<br>Tijuana, B.C., México.</p>
         <div class="social-logos">
-          <a href="#"><i class="fa-brands fa-facebook"></i></a>
-          <a href="#"><i class="fa-brands fa-instagram"></i></a>
-          <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
         </div>
       </div>
       <div class="fCol">
@@ -190,18 +200,7 @@
   </footer>
 
   <div id="toast" class="toast">Mensaje</div>
-  <div id="sales-notification">
-     <div style="font-size:20px;">🔥</div>
-     <div id="notif-content" style="font-size:13px;"></div>
-  </div>
-
-  <script>
-    window.__SCORE__ = {
-      orgSlug: "score-store",
-      supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
-    };
-  </script>
-  <script src="/js/main.js?v=MASTER_V1" type="module"></script>
+  
+  <script type="module" src="/js/main.js?v=PERFORMANCE_FIX"></script>
 </body>
 </html>
