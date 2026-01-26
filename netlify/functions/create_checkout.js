@@ -1,134 +1,126 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { 
-  jsonResponse, safeJsonParse, getEnviaQuote, getProductDetails, getPromo,
-  FALLBACK_MX_PRICE, FALLBACK_US_PRICE, normalizeQty 
-} = require("./_shared");
-
-// --- CORRECCIÓN DE DOMINIO ---
-// Netlify provee process.env.URL automáticamente, pero si falla, usamos tu dominio real.
-function baseUrl() { 
-  return process.env.URL || "https://scorestore.netlify.app"; 
-}
-
-function toCents(mxn) { return Math.max(0, Math.round((Number(mxn) || 0) * 100)); }
+const { jsonResponse, getPromo } = require("./_shared");
+// IMPORTANTE: Asegúrate de que catalog.json existe en esta ruta relativa
+const catalogFallback = require("../../data/catalog.json"); 
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
-  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
+  // Configuración CORS
+  if (event.httpMethod === "OPTIONS") {
+      return jsonResponse(200, { ok: true });
+  }
+
+  if (event.httpMethod !== "POST") {
+      return jsonResponse(405, { error: "Method Not Allowed" });
+  }
 
   try {
-    const body = safeJsonParse(event.body);
-    const cartItems = Array.isArray(body.cart) ? body.cart : [];
-    const shippingMode = String(body.shippingMode || "pickup").toLowerCase();
-    const zip = String(body.zip || "").trim();
-    const promoCode = String(body.promoCode || "").trim();
-    
-    if (!cartItems.length) return jsonResponse(400, { error: "El carrito está vacío" });
+    // 1. CONFIGURACIÓN DE URL BASE (Fixed for Production)
+    // Forzamos la URL oficial para evitar errores de redirección en Stripe
+    const BASE_URL = "https://scorestore.netlify.app"; 
 
-    // 1. Validación de Precios (Server-Side)
-    const validItems = [];
+    const body = JSON.parse(event.body || "{}");
+    const cartItems = body.cart || [];
+    const shippingMode = body.shippingMode || "pickup";
+    const zip = body.zip;
+    const promoCode = body.promoCode;
+
+    if (!cartItems.length) {
+        return jsonResponse(400, { error: "El carrito está vacío" });
+    }
+
+    // 2. VALIDACIÓN DE PRECIOS (Seguridad)
+    // Reconstruimos los items basándonos en el catálogo del servidor para evitar manipulación de precios
+    const validLineItems = [];
     const promo = getPromo(promoCode); 
 
     for (const item of cartItems) {
-        const productDb = getProductDetails(item.id); 
+        // Buscamos el producto en el catálogo seguro (Server Side)
+        const productDb = catalogFallback.products.find(p => p.id === item.id);
         
-        if (!productDb) {
-            console.warn(`Producto omitido (ID no válido): ${item.id}`);
-            continue; 
-        }
+        if (productDb) {
+            let unitPrice = productDb.baseMXN;
+            
+            // Aplicar descuento porcentual si el cupón es válido
+            if (promo && promo.type === 'percent') {
+                unitPrice = unitPrice - (unitPrice * promo.value);
+            }
 
-        let finalPrice = productDb.price_mxn || productDb.baseMXN;
-        if (promo && promo.type === 'percent') {
-            finalPrice = finalPrice * (1 - promo.value);
-        }
-
-        // Construcción segura de la URL de la imagen para Stripe
-        let imgUrl = productDb.image || productDb.img || "";
-        if (imgUrl && !imgUrl.startsWith("http")) {
-            imgUrl = `${baseUrl()}${imgUrl}`; // Ahora usa scorestore.netlify.app
-        }
-
-        validItems.push({
-            price_data: {
-                currency: "mxn",
-                product_data: {
-                    name: productDb.name,
-                    description: `Talla: ${item.selectedSize || item.size} ${promo ? `(Cupón ${promoCode})` : ''}`,
-                    images: imgUrl ? [imgUrl] : [],
-                    metadata: { 
-                        id: item.id, 
-                        size: item.selectedSize || item.size,
-                        sku: productDb.sku || 'N/A'
-                    }
+            // Construcción del objeto LineItem para Stripe
+            validLineItems.push({
+                price_data: {
+                    currency: "mxn",
+                    product_data: {
+                        name: productDb.name,
+                        description: `Talla: ${item.size} ${promo ? `(Cupón ${promoCode})` : ''}`,
+                        images: [BASE_URL + productDb.img], // Imagen absoluta usando la URL oficial
+                        metadata: {
+                            id: item.id,
+                            size: item.size
+                        }
+                    },
+                    unit_amount: Math.round(unitPrice * 100), // Stripe requiere centavos
                 },
-                unit_amount: toCents(finalPrice),
-            },
-            quantity: normalizeQty(item.quantity || item.qty),
-        });
+                quantity: item.qty || 1,
+            });
+        }
     }
 
-    if (validItems.length === 0) return jsonResponse(400, { error: "Error: Productos no válidos." });
+    if(validLineItems.length === 0) {
+        return jsonResponse(400, { error: "Error de validación de productos." });
+    }
 
-    // 2. Envío Dinámico
+    // 3. CÁLCULO DE ENVÍO (Lógica Unico Uniformes)
     let shipping_options = [];
-    const totalQty = validItems.reduce((acc, i) => acc + i.quantity, 0);
-
+    
     if (shippingMode === "pickup") {
+        // Recogida en tienda (Gratis)
         shipping_options = [];
     } else {
-        let rateAmount = 0;
-        let rateLabel = "Envío Estándar";
-        let minDays = 3; let maxDays = 7;
-
-        if (zip) {
-            const country = shippingMode === 'us' ? 'US' : 'MX';
-            const quote = await getEnviaQuote(zip, totalQty, country);
-            
-            if (quote) {
-                rateAmount = quote.price || quote.mxn;
-                rateLabel = `Envío ${quote.carrier} (Express)`;
-                if(quote.days) maxDays = parseInt(quote.days) + 1;
-            } else {
-                rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-            }
-        } else {
-            rateAmount = shippingMode === 'us' ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-        }
-
+        // Costos fijos definidos para operación robusta
+        const isUS = shippingMode === 'us';
+        const cost = isUS ? 80000 : 25000; // $800.00 MXN o $250.00 MXN
+        const label = isUS ? "FedEx International (USA)" : "FedEx Nacional (MX)";
+        
         shipping_options = [{
             shipping_rate_data: {
                 type: "fixed_amount",
-                fixed_amount: { amount: toCents(rateAmount), currency: "mxn" },
-                display_name: rateLabel,
-                delivery_estimate: { minimum: { unit: "business_day", value: minDays }, maximum: { unit: "business_day", value: maxDays } },
+                fixed_amount: { amount: cost, currency: "mxn" },
+                display_name: label,
+                delivery_estimate: {
+                    minimum: { unit: "business_day", value: 3 },
+                    maximum: { unit: "business_day", value: isUS ? 7 : 5 },
+                },
             },
         }];
     }
 
-    // 3. Crear Sesión Stripe
+    // 4. CREAR SESIÓN DE CHECKOUT
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card", "oxxo"],
-      line_items: validItems,
+      line_items: validLineItems,
       mode: "payment",
       shipping_options,
+      // Solo pedimos dirección si es envío
       shipping_address_collection: shippingMode !== "pickup" ? { allowed_countries: ["MX", "US"] } : undefined,
       phone_number_collection: { enabled: true },
-      // Redirección corregida al dominio scorestore.netlify.app
-      success_url: `${baseUrl()}/?status=success`,
-      cancel_url: `${baseUrl()}/?status=cancel`,
+      
+      // URLs de redirección usando la variable BASE_URL correcta
+      success_url: `${BASE_URL}/?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASE_URL}/?status=cancel`,
+      
       metadata: {
         order_source: "score_store_web",
         shipping_mode: shippingMode,
-        promo_code: promo ? promoCode : "NONE",
-        customer_cp: zip
+        promo_code: promoCode || "NONE",
+        customer_cp: zip || "N/A"
       },
-      allow_promotion_codes: false 
+      allow_promotion_codes: false // Controlado manualmente arriba
     });
 
     return jsonResponse(200, { url: session.url });
 
   } catch (e) {
-    console.error("Checkout Error:", e);
-    return jsonResponse(500, { error: "Error al iniciar pago. Intenta de nuevo." });
+    console.error("Stripe Error:", e);
+    return jsonResponse(500, { error: "Error al iniciar pasarela de pago." });
   }
 };
