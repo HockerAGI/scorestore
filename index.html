@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE STORE | Tienda Oficial</title>
   
-  <meta name="description" content="Merchandise Oficial SCORE International. Fabricado por Único Uniformes." />
+  <meta name="description" content="Mercancía oficial SCORE International Off-Road Racing. Fabricado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
   <meta property="og:title" content="SCORE Store | Tienda Oficial" />
   <meta property="og:image" content="/assets/hero.webp" />
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
   <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="preload" href="/assets/hero.webp" as="image" />
   
-  <link rel="stylesheet" href="/css/styles.css?v=MASTER_FINAL">
+  <link rel="stylesheet" href="/css/styles.css?v=FINAL_DESIGN" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,7 +83,7 @@
           <img src="/assets/logo-score.webp" class="hero-main-logo" alt="Score Logo">
           <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="WDC Logo">
         </div>
-        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta.</p>
+        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta. Fabricado por <b>Único Uniformes</b>.</p>
         <div class="ctaRow">
             <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER CATÁLOGO</button>
         </div>
@@ -134,7 +136,7 @@
   </div>
 
   <aside id="cartDrawer" class="drawer">
-    <div class="d-header"><h3>TU EQUIPO</h3><button class="closeBtn" onclick="toggleCart()">✕</button></div>
+    <div class="d-header"><h3>TU EQUIPO</h3><button class="closeBtn" onclick="toggleCart()" aria-label="Cerrar">✕</button></div>
     <div class="d-body" id="cartItems"></div>
     <div class="d-footer">
       <div class="shipSelector">
@@ -142,12 +144,17 @@
         <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateCartUI()"><div><span>Nacional MX</span><small>Calculado</small></div></label>
         <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateCartUI()"><div><span>USA / Intl</span><small>Calculado</small></div></label>
       </div>
+      
+      <div id="promoContainer" style="margin-bottom: 10px;">
+          <input id="promo" type="text" placeholder="Código Promocional" class="inputField" onchange="savePromo(this.value)">
+      </div>
+
       <div id="shipForm" style="display:none;margin-bottom:10px;">
-          <input id="cp" type="tel" placeholder="Código Postal" class="inputField" style="margin-bottom:5px;">
+          <input id="cp" type="tel" placeholder="Código Postal" class="inputField">
       </div>
       <div class="summary-total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
-      <div id="cartEmpty" style="text-align:center; padding:20px; display:none;">Tu carrito está vacío 🌵</div>
+      <div id="cartEmpty" style="text-align:center; padding:20px; display:none; color:#666;">Tu carrito está vacío 🌵</div>
     </div>
   </aside>
 
@@ -167,7 +174,7 @@
   <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Hablar con IA"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
 
   <div id="footerCard" class="footer-card">
-      <button class="close" onclick="this.parentElement.classList.remove('active'); document.getElementById('overlay').classList.remove('active')">×</button>
+      <button class="close" onclick="closeAll()">×</button>
       <div id="footerContent"></div>
   </div>
 
@@ -182,7 +189,7 @@
         <div class="f-links">
           <a href="#" data-footer="privacidad">Aviso de Privacidad</a>
           <a href="#" data-footer="terminos">Términos y Condiciones</a>
-          <a href="#" data-footer="contacto">Contacto</a>
+          <a href="#" data-footer="legal">Información Legal</a>
         </div>
       </div>
     </div>
@@ -202,6 +209,6 @@
       supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
     };
   </script>
-  <script type="module" src="/js/main.js?v=MASTER_FINAL"></script>
+  <script type="module" src="/js/main.js?v=FINAL_2026"></script>
 </body>
 </html>
