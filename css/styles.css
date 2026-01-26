@@ -1,17 +1,23 @@
-/* --- SCORE STORE - MASTER DESIGN v2026 (FINAL UNIFIED) --- */
+/* --- SCORE STORE - MASTER DESIGN v2026 (FINAL) --- */
 
 /* 1. VARIABLES & CONFIGURACIÓN */
 :root {
+  /* Paleta Oficial */
   --red: #E10600;
   --score-red: #E10600;
   --black: #0b0d10;
   --white: #ffffff;
   --glass-white: rgba(255, 255, 255, 0.88);
   --glass-dark: rgba(12, 14, 18, 0.92);
-  --shadow-pro: 0 25px 60px rgba(0, 0, 0, 0.5);
+  --shadow-pro: 0 25px 60px rgba(0, 0, 0, 0.6);
+  
+  /* Fuentes */
   --teko: 'Teko', sans-serif;
   --inter: 'Inter', sans-serif;
+  
+  /* Colores UI */
   --green: #19b36b;
+  --neon-green: #00E676;
   --header-h: 80px;
 }
 
@@ -23,6 +29,7 @@ body {
   background-color: var(--black); 
   color: var(--white); 
   overflow-x: hidden;
+  /* Fondo General (Solicitado) */
   background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url("/assets/fondo-pagina-score.webp");
   background-attachment: fixed;
   background-size: cover;
@@ -35,10 +42,13 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 a { text-decoration: none; color: inherit; }
 
 .container { width: min(1200px, 94vw); margin: 0 auto; }
+/* Ajuste de Padding para no quedar detrás del Header */
 .wrap { padding-top: 140px; padding-bottom: 80px; width: min(1400px, 94vw); margin: 0 auto; }
 
 
-/* --- 2. INTRO ENGINE (SPLASH SCREEN) --- */
+/* =========================================
+   2. INTRO ENGINE (SPLASH SCREEN)
+   ========================================= */
 #splash-screen { 
   position: fixed; inset: 0; z-index: 10000; background: #0A0A0A; 
   display: flex; align-items: center; justify-content: center; 
@@ -47,25 +57,23 @@ a { text-decoration: none; color: inherit; }
 #splash-screen.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
 
 .splash-content { text-align: center; width: 100%; max-width: 300px; position: relative; z-index: 2; }
-.splash-logo { width: 150px; margin: 0 auto 20px; filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); }
+.splash-logo { width: 150px; margin: 0 auto 20px; filter: drop-shadow(0 0 15px rgba(255,255,255,0.1)); animation: logoPulse 1.5s infinite; }
 
-/* Tacómetro / Barra de Carga */
 .rpm-wrapper { position: relative; margin: 20px 0; }
 .rev-counter { 
   font-family: var(--teko); font-size: 48px; color: #fff; 
   font-weight: 700; letter-spacing: 2px; line-height: 1; 
 }
+/* Barra de RPM (Funcional con JS o Animación CSS) */
 .rpm-bar-container { 
   width: 100%; height: 6px; background: #222; border-radius: 4px; 
   overflow: hidden; margin-top: 10px; box-shadow: inset 0 0 5px #000;
-  position: relative;
 }
 .rpm-bar { 
-  height: 100%; width: 100%; /* El JS controla transform o width */
+  height: 100%; width: 0%; 
   background: linear-gradient(90deg, var(--red), #ff4d4d);
   box-shadow: 0 0 15px var(--red);
-  transform-origin: left center; /* Para permitir rotación o escala */
-  transition: transform 0.5s ease-out;
+  transition: width 0.1s linear, transform 0.2s ease; /* Soporte híbrido */
 }
 
 .status-text { 
@@ -74,9 +82,12 @@ a { text-decoration: none; color: inherit; }
   animation: blink 1s infinite; 
 }
 @keyframes blink { 50% { opacity: 0.3; } }
+@keyframes logoPulse { 0%,100% { transform:scale(1) } 50% { transform:scale(1.05) } }
 
 
-/* --- 3. NAVBAR & PROMO --- */
+/* =========================================
+   3. NAVBAR & PROMO
+   ========================================= */
 .promo-bar { 
   position: fixed; top: 0; width: 100%; height: 40px; 
   background: var(--red); color: #fff; z-index: 2001; 
@@ -95,15 +106,13 @@ a { text-decoration: none; color: inherit; }
 .topbarInner { display: flex; justify-content: space-between; align-items: center; height: 100%; padding: 0 20px; }
 
 .brandLogo { height: 46px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-.btnGhost { color: #000; font-weight: 600; font-size: 14px; text-transform: uppercase; border: 1px solid #ddd; padding: 8px 16px; border-radius: 20px; transition: 0.3s; }
-.btnGhost:hover { background: var(--black); color: #fff; border-color: var(--black); }
 
 .cartBtn { 
   position: relative; width: 50px; height: 50px; border-radius: 50%; 
   background: #fff; color: var(--black); display: flex; 
   align-items: center; justify-content: center; 
   box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 2px solid #eee; 
-  transition: transform 0.2s;
+  transition: transform 0.2s; font-size: 20px;
 }
 .cartBtn:hover { transform: scale(1.05); border-color: var(--red); color: var(--red); }
 .cartCount { 
@@ -115,7 +124,9 @@ a { text-decoration: none; color: inherit; }
 }
 
 
-/* --- 4. HERO SECTION --- */
+/* =========================================
+   4. HERO SECTION (DISEÑO SOLICITADO)
+   ========================================= */
 .hero { 
   position: relative; min-height: 750px; border-radius: 30px; 
   overflow: hidden; margin-bottom: 80px; display: flex; 
@@ -126,7 +137,7 @@ a { text-decoration: none; color: inherit; }
   position: absolute; inset: 0; width: 100%; height: 100%; 
   object-fit: cover; opacity: 0.6; z-index: 0; 
 }
-.heroBg { /* Fallback si usas div en vez de img */
+.heroBg { 
   position: absolute; inset: 0; background: url('/assets/hero.webp') center/cover;
   opacity: 0.6; z-index: 0; animation: zoomSlow 20s infinite alternate;
 }
@@ -135,33 +146,38 @@ a { text-decoration: none; color: inherit; }
   background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.95) 100%); 
   z-index: 1; 
 }
-.heroContent, .hero-card { position: relative; z-index: 2; padding: 40px 20px; width: 100%; max-width: 900px; }
+.heroContent { position: relative; z-index: 2; padding: 40px 20px; width: 100%; max-width: 900px; }
 
 .tagline { margin-bottom: 20px; }
 .tag-pill { background: var(--red); color: white; padding: 5px 15px; font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; border-radius: 4px; }
 
 .hero-logos { display: flex; justify-content: center; gap: 20px; margin-bottom: 25px; align-items: center; }
 .hero-logos img { height: 75px; filter: drop-shadow(0 0 15px rgba(0,0,0,0.5)); }
+.hero-main-logo { height: 80px; } 
+.hero-desert-seal { height: 70px; opacity: 0.9; }
 
 .hero-title { 
   font-family: var(--teko); font-size: clamp(55px, 12vw, 125px); 
   line-height: 0.85; text-transform: uppercase; margin-bottom: 25px; 
 }
-.neon-text { color: transparent; -webkit-text-stroke: 2px var(--red); text-shadow: 0 0 30px rgba(225,6,0,0.8); }
+.neon-text { color: var(--red); text-shadow: 0 0 30px rgba(225,6,0,0.9); }
 
-.hero-copy { color: #fff; font-weight: 500; margin-bottom: 40px; font-size: 17px; line-height: 1.5; max-width: 700px; margin-left: auto; margin-right: auto; }
+.hero-copy { color: #fff; font-weight: 600; margin-bottom: 40px; font-size: 17px; line-height: 1.5; max-width: 700px; margin: 0 auto 40px; }
 
-.ctaRow { margin-top: 20px; }
+/* Botones */
 .btn { padding: 15px 40px; border-radius: 50px; font-weight: 800; font-family: var(--teko); font-size: 24px; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; display: inline-block; }
 .btn.primary { background: var(--red); color: white; box-shadow: 0 10px 30px rgba(225,6,0,0.4); }
 .btn.primary:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(225,6,0,0.6); }
 .pulse-btn { animation: pulse 2s infinite; }
 
 
-/* --- 5. COLECCIONES GRID --- */
+/* =========================================
+   5. COLECCIONES GRID (DISEÑO SOLICITADO)
+   ========================================= */
 .sectionHead { text-align: center; margin-bottom: 50px; }
 .sectionHead h2 { font-family: var(--teko); font-size: 60px; line-height: 1; margin: 0; }
 .sectionHead span { color: var(--red); }
+.sectionHead p { color: #888; letter-spacing: 3px; font-size: 14px; text-transform: uppercase; font-weight: 700; margin-top: 10px; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
 
@@ -177,7 +193,7 @@ a { text-decoration: none; color: inherit; }
 .card-texture { 
   position: absolute; inset: 0; 
   background: url("/assets/baja1000-texture.webp") center / cover no-repeat; 
-  opacity: 0.8; z-index: 1; pointer-events: none; transition: 0.3s;
+  opacity: 1; z-index: 1; pointer-events: none; transition: 0.3s;
 }
 .champItem:hover .card-texture { opacity: 0.3; }
 
@@ -195,7 +211,9 @@ a { text-decoration: none; color: inherit; }
 .champItem:hover .card-btn { opacity: 1; transform: translateY(0); }
 
 
-/* --- 6. CATÁLOGO MODAL --- */
+/* =========================================
+   6. CATÁLOGO MODAL PRO
+   ========================================= */
 .modal-catalog { 
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
   background: #f4f4f4; z-index: 4000; transform: translateY(100%); 
@@ -219,7 +237,7 @@ a { text-decoration: none; color: inherit; }
   background: #f0f0f0; padding-bottom: 100px;
 }
 
-/* Tarjeta Producto */
+/* Tarjeta Producto (Diseño Interno) */
 .p-card { 
   background: #fff; border-radius: 20px; border: 1px solid #eee; 
   overflow: hidden; display: flex; flex-direction: column; 
@@ -233,7 +251,7 @@ a { text-decoration: none; color: inherit; }
 .p-slide img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.3s; }
 .p-card:hover .p-slide img { transform: scale(1.05); }
 
-.p-body { padding: 12px; flex: 1; display: flex; flex-direction: column; border-top: 1px solid #f5f5f5; }
+.p-body { padding: 15px; flex: 1; display: flex; flex-direction: column; border-top: 1px solid #f5f5f5; }
 .p-name { 
   font-weight: 800; font-size: 13px; color: #111; line-height: 1.2; 
   height: 32px; overflow: hidden; margin-bottom: 6px; 
@@ -256,13 +274,15 @@ a { text-decoration: none; color: inherit; }
 .p-btn-add:hover { background: var(--red); }
 
 
-/* --- 7. CARRITO DRAWER --- */
+/* =========================================
+   7. CARRITO DRAWER (Lógica Funcional)
+   ========================================= */
 .drawer { 
   position: fixed; top: 0; right: 0; height: 100%; width: min(500px, 100vw); 
   background: var(--glass-white); backdrop-filter: blur(25px); 
   z-index: 5000; transform: translateX(100%); transition: 0.5s; 
   display: flex; flex-direction: column; color: var(--black); 
-  box-shadow: -20px 0 60px rgba(0,0,0,0.3); 
+  box-shadow: -20px 0 60px rgba(0,0,0,0.4); 
 }
 .drawer.active { transform: translateX(0); }
 
@@ -276,14 +296,14 @@ a { text-decoration: none; color: inherit; }
 
 .cart-card { 
   display: flex; gap: 15px; background: #fff; padding: 15px; 
-  border-radius: 20px; margin-bottom: 12px; 
-  box-shadow: 0 8px 20px rgba(0,0,0,0.04); align-items: center; border: 1px solid #eee; 
+  border-radius: 16px; margin-bottom: 12px; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05); align-items: center; border: 1px solid #eee; 
 }
 .cart-card img { width: 65px; height: 65px; border-radius: 10px; object-fit: cover; }
 
-.qty-ctrl { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.qty-ctrl { display: flex; align-items: center; gap: 12px; margin-top: 5px; }
 .qty-btn { 
-  width: 30px; height: 30px; border-radius: 50%; background: #f0f0f0; 
+  width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0; 
   display: flex; align-items: center; justify-content: center; font-weight: 900; transition: 0.2s;
 }
 .qty-btn:hover { background: var(--black); color: #fff; }
@@ -293,12 +313,13 @@ a { text-decoration: none; color: inherit; }
 .shipSelector { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 .radio-option { 
   display: flex; align-items: center; gap: 15px; padding: 12px; 
-  border: 1px solid #ddd; border-radius: 10px; cursor: pointer; color: #333; 
+  border: 1px solid #ddd; border-radius: 10px; cursor: pointer; color: #333; transition: 0.2s;
 }
+.radio-option:hover { border-color: #aaa; }
 .radio-option input:checked + div { color: var(--red); font-weight: 700; }
 
 .inputField { 
-  width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 10px; 
+  width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; 
   font-size: 14px; margin-bottom: 10px; outline: none; background: #fdfdfd;
 }
 .inputField:focus { border-color: var(--red); }
@@ -308,10 +329,18 @@ a { text-decoration: none; color: inherit; }
   font-size: 32px; font-family: var(--teko); padding-top: 10px; 
   margin-top: 10px; border-top: 1px solid #eee; 
 }
-.btn.full { width: 100%; margin-top: 15px; font-size: 24px; }
+.btn.primary.full { width: 100%; margin-top: 15px; font-size: 26px; }
 
 
-/* --- 8. FOOTER INDUSTRIAL --- */
+/* =========================================
+   8. FOOTER & PARTNERS (DISEÑO SOLICITADO)
+   ========================================= */
+.partners { padding: 60px 20px; text-align: center; background: #fff; color: #000; }
+.partners h3 { font-family: var(--teko); font-size: 32px; margin-bottom: 40px; color: #888; }
+.partnersGrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; opacity: 0.6; grayscale: 100%; transition: 0.5s; }
+.partnersGrid:hover { opacity: 1; grayscale: 0%; }
+.pLogo { height: 40px; object-fit: contain; }
+
 .footer { 
   padding: 80px 20px; background: #050505; color: #fff; 
   border-top: 8px solid var(--red); text-align: center; 
@@ -321,8 +350,9 @@ a { text-decoration: none; color: inherit; }
   display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
   gap: 40px; text-align: left; max-width: 1200px; margin: 0 auto; 
 }
-.footerBrandName { font-family: var(--teko); font-size: 36px; margin-bottom: 15px; color: #fff; letter-spacing: 2px; }
+.footerBrandName { font-family: var(--teko); font-size: 36px; color: #fff; margin-bottom: 10px; letter-spacing: 2px; }
 .fCol h4 { font-family: var(--teko); font-size: 28px; margin-bottom: 15px; color: #888; }
+.fText { color: #888; line-height: 1.6; }
 
 .f-links { display: flex; flex-direction: column; gap: 10px; }
 .f-links button { 
@@ -342,7 +372,9 @@ a { text-decoration: none; color: inherit; }
 .copy { margin-top: 60px; color: #444; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
 
-/* --- 9. LEGAL MODAL --- */
+/* =========================================
+   9. MODAL LEGAL & UTILS
+   ========================================= */
 .modal-legal { 
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); 
   width: min(850px, 94vw); max-height: 85vh; background: #fff; color: #333; 
@@ -360,8 +392,33 @@ a { text-decoration: none; color: inherit; }
 .legal-head h3 { font-family: var(--teko); font-size: 28px; margin: 0; }
 .legal-body { padding: 35px; overflow-y: auto; line-height: 1.7; text-align: left; font-size: 15px; }
 
+.toast { 
+  position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 150%); 
+  background: var(--green); color: #fff; padding: 15px 30px; border-radius: 50px; 
+  font-weight: 900; z-index: 7000; transition: 0.5s; box-shadow: 0 15px 40px rgba(0,0,0,0.3); 
+}
+.toast.show { transform: translate(-50%, 0); }
 
-/* --- 10. AI FEATURES & CHAT --- */
+/* Notificación Marketing */
+#sales-notification { 
+  position: fixed; left: 20px; bottom: 20px; z-index: 5000; 
+  background: #fff; color: #0b0d10; padding: 15px 20px; border-radius: 16px; 
+  display: flex; align-items: center; gap: 15px; 
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4); border-left: 6px solid var(--red); 
+  transform: translateY(200%); transition: 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; 
+}
+#sales-notification.active { transform: translateY(0); }
+
+.page-overlay { 
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3500; 
+  opacity: 0; pointer-events: none; transition: 0.4s; backdrop-filter: blur(8px); 
+}
+.page-overlay.active { opacity: 1; pointer-events: auto; }
+
+
+/* =========================================
+   10. AI FEATURES (GEMINI WIDGET)
+   ========================================= */
 .ai-btn-float { 
   position: fixed; right: 25px; bottom: 30px; width: 65px; height: 65px; 
   background: linear-gradient(135deg, #E10600, #0b0d10); color: #fff; 
@@ -386,7 +443,7 @@ a { text-decoration: none; color: inherit; }
 
 .ai-box { 
   background: var(--white); color: var(--black); width: min(500px, 100%); 
-  border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; 
+  border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; 
   box-shadow: var(--shadow-pro); height: min(700px, 85vh); 
 }
 .ai-header { 
@@ -398,9 +455,9 @@ a { text-decoration: none; color: inherit; }
   flex: 1; padding: 25px; overflow-y: auto; font-size: 15px; 
   display: flex; flex-direction: column; gap: 15px; background: #fdfdfd; 
 }
-.ai-bubble { padding: 14px 20px; border-radius: 22px; max-width: 85%; font-weight: 500; }
-.ai-bubble.bot { background: rgba(225,6,0,0.08); align-self: flex-start; border-bottom-left-radius: 4px; }
-.ai-bubble.user { background: #f2f2f2; align-self: flex-end; border-bottom-right-radius: 4px; }
+.ai-bubble { padding: 14px 20px; border-radius: 20px; max-width: 85%; font-weight: 500; }
+.ai-bubble.bot { background: #fff; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.ai-bubble.user { background: var(--red); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
 
 .ai-input-bar { padding: 20px; border-top: 1px solid #eee; display: flex; gap: 12px; background: #fff; }
 .ai-input { 
@@ -409,10 +466,10 @@ a { text-decoration: none; color: inherit; }
 }
 .ai-input:focus { border-color: var(--red); }
 .ai-send { 
-  width: 50px; height: 50px; border-radius: 50%; background: var(--red); 
+  width: 50px; height: 50px; border-radius: 50%; background: var(--black); 
   color: #fff; display: flex; align-items: center; justify-content: center; transition: 0.2s;
 }
-.ai-send:hover { background: var(--black); transform: rotate(-45deg); }
+.ai-send:hover { background: var(--red); transform: rotate(-45deg); }
 
 .cart-ai-box { 
   margin-top: 15px; padding: 15px; border-radius: 18px; 
@@ -425,61 +482,24 @@ a { text-decoration: none; color: inherit; }
   font-size: 10px; border-radius: 10px; font-weight: 900;
 }
 
-
-/* --- 11. PARTNERS & UTILS --- */
-.partners { padding: 60px 20px; text-align: center; background: #fff; color: #000; }
-.partners h3 { font-family: var(--teko); font-size: 32px; margin-bottom: 40px; color: #888; }
-.partnersGrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; opacity: 0.6; grayscale: 100%; transition: 0.5s; }
-.partnersGrid:hover { opacity: 1; grayscale: 0%; }
-.pLogo { height: 40px; object-fit: contain; }
-
-.toast { 
-  position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 150%); 
-  background: var(--green); color: #fff; padding: 18px 45px; border-radius: 60px; 
-  font-weight: 900; z-index: 6000; transition: 0.5s; 
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3); font-size: 14px;
-}
-.toast.show { transform: translate(-50%, 0); }
-
-/* Notificación Flotante (Marketing) */
-#sales-notification { 
-  position: fixed; left: 20px; bottom: 20px; z-index: 5000; 
-  background: #fff; color: #0b0d10; padding: 15px 20px; border-radius: 16px; 
-  display: flex; align-items: center; gap: 15px; 
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4); border-left: 6px solid var(--red); 
-  transform: translateY(200%); transition: 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; 
-}
-#sales-notification.active { transform: translateY(0); }
-
-.page-overlay { 
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3500; 
-  opacity: 0; pointer-events: none; transition: 0.4s; backdrop-filter: blur(8px); 
-}
-.page-overlay.active { opacity: 1; pointer-events: auto; }
-
 /* Animaciones Generales */
 @keyframes slideInDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(225, 6, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0); } }
 @keyframes zoomSlow { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
 
-/* --- 12. MOBILE MEDIA QUERIES --- */
+/* MEDIA QUERIES (MÓVIL) */
 @media (max-width: 768px) {
-  .hero { min-height: 550px; border-radius: 0; width: 100%; margin: 0; }
+  .hero { min-height: 550px; border-radius: 0; width: 100%; margin: 0; border: none; }
   .hero-title { font-size: 60px; }
   .grid { grid-template-columns: 1fr 1fr; gap: 15px; }
   .dBody { grid-template-columns: 1fr 1fr; }
   .cat-grid { grid-template-columns: 1fr 1fr; padding: 10px; }
   .drawer { width: 100%; }
   
-  /* Footer Mobile */
   .footer-grid { text-align: center; grid-template-columns: 1fr; gap: 40px; }
-  .footerBrandName { font-size: 32px; }
   .f-links button, .social-logos { justify-content: center; }
   
-  /* AI Mobile */
   .ai-btn-float { width: 55px; height: 55px; bottom: 20px; right: 20px; font-size: 22px; }
   .ai-box { height: 80vh; width: 95%; border-radius: 20px; }
-  
-  /* Splash Mobile */
   .splash-content { transform: scale(0.9); }
 }
