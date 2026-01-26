@@ -1,165 +1,324 @@
+/* SCORE STORE - MAIN ENGINE v4.0 (Unified) */
 (function () {
-  /* CONFIG */
-  const CFG = window.__SCORE__ || {};
-  const SUPABASE_URL = CFG.supabaseUrl || "";
-  const SUPABASE_KEY = CFG.supabaseAnonKey || "";
-  const STRIPE_KEY = 'pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh';
-  const API_BASE = "/.netlify/functions";
-  const CART_KEY = "score_cart_v2026_final";
-  const FAKE_MARKUP = 5; 
+  /* --- CONFIGURACIÓN --- */
+  const CART_KEY = "score_cart_v2026_pro";
+  const FAKE_MARKUP = 1.4; // 40% más caro el precio "anterior" para marketing
+  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+  let catalog = [];
 
-  let cart = [];
-  let catalogData = { products: [] };
-  let shipping = { cost: 0, label: 'Gratis' };
-  let db = null;
-  let stripe = null;
-
-  const $ = (id) => document.getElementById(id);
-  const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
-  const cleanUrl = (u) => u ? encodeURI(u.trim()) : "";
-
-  /* INTRO */
-  function runIntro() {
-    setTimeout(() => { $('aguja').style.transform = 'rotate(80deg)'; }, 800);
-    setTimeout(() => { $('intro-brand').style.opacity = '1'; }, 1800);
-    setTimeout(() => { $('intro-fab').style.opacity = '1'; $('intro-fab').style.transform = 'translateY(0)'; }, 2600);
-    setTimeout(() => { $('intro-layer').style.opacity = '0'; }, 3400);
-    setTimeout(() => { $('intro-layer').style.visibility = 'hidden'; document.body.classList.remove('noScroll'); }, 4000);
-  }
-
-  /* INIT */
-  async function init() {
-    runIntro();
-    if (typeof Stripe !== 'undefined') stripe = Stripe(STRIPE_KEY);
-    if (window.supabase) try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e){}
-
+  // --- INICIALIZACIÓN ---
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Cargar Catálogo (Con Fallback de seguridad)
     try {
       const res = await fetch("/data/catalog.json");
-      catalogData = await res.json();
-    } catch { 
-        // Fallback robusto para evitar tienda vacía
-        catalogData = { products: [
-             {id:'b1k-jacket', sectionId:'BAJA_1000', name:'Chamarra Oficial Baja 1000', baseMXN:1890, img:'/assets/EDICION_2025/chamarra-baja1000.webp', images:['/assets/EDICION_2025/chamarra-baja1000.webp']},
-             {id:'b1k-tee', sectionId:'BAJA_1000', name:'Jersey Racing', baseMXN:650, img:'/assets/EDICION_2025/jersey-baja1000.webp', images:[]},
-             {id:'sf250-tank', sectionId:'SF_250', name:'Tank Top San Felipe', baseMXN:440, img:'/assets/SF250/camiseta-negra-sinmangas-SF250.webp', images:[]}
-        ]};
+      const data = await res.json();
+      catalog = data.products || [];
+    } catch (e) {
+      console.error("Error cargando catálogo, usando respaldo...", e);
+      // Fallback mínimo para que la tienda no se vea vacía si falla el JSON
+      catalog = [
+         {id:'b1k-jacket', sectionId:'BAJA_1000', name:'Chamarra Oficial Baja 1000', baseMXN:1890, img:'/assets/EDICION_2025/chamarra-baja1000.webp', sizes:['S','M','L','XL']},
+         {id:'b1k-tee', sectionId:'BAJA_1000', name:'Jersey Racing', baseMXN:650, img:'/assets/EDICION_2025/camiseta-negra-baja1000.webp', sizes:['S','M','L']}
+      ];
     }
-    
-    loadCart();
+
+    // 2. Iniciar UI
     updateCartUI();
-    setInterval(showSocialProof, 35000);
+    runIntro();     // Del Script A (Animación)
+    initChat();     // Del Script B (IA Gemini)
+    
+    // 3. Marketing Loop
+    setInterval(showSocialProof, 25000); // Del Script A (Ventas falsas para urgencia)
+  });
+
+  /* --- LOGICA VISUAL (INTRO & MARKETING) --- */
+  function runIntro() {
+    const aguja = document.querySelector('.rpm-bar'); // Adaptado a tu CSS nuevo
+    const splash = document.getElementById("splash-screen");
+    
+    // Simula carga de RPM
+    if(aguja) setTimeout(() => { aguja.style.width = '100%'; }, 500);
+    
+    // Ocultar Splash
+    setTimeout(() => {
+        if(splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.classList.add("hidden"), 600);
+        }
+    }, 2200);
   }
 
-  /* CATALOG MODAL */
-  window.openCatalog = (sid, title) => {
-    const items = catalogData.products.filter(p => p.sectionId === sid);
-    $('catTitle').innerText = title;
-    const box = $('catContent');
-    box.innerHTML = '<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); padding:0; margin:0">';
+  function showSocialProof() {
+    const names = ["Carlos R.", "Miguel A.", "Sarah J.", "Roberto M.", "Alex T."];
+    const items = ["una Chamarra Baja 1000", "una Gorra Oficial", "un Jersey Racing"];
+    const locs = ["Tijuana", "San Diego", "La Paz", "Ensenada"];
     
-    items.forEach(p => {
-      const listPrice = p.baseMXN * FAKE_MARKUP;
-      const slides = (p.images && p.images.length > 0 ? p.images : [p.img]).map(img => `<div class="prod-slide"><img src="${cleanUrl(img)}" class="prodImg" loading="lazy"></div>`).join('');
-      
-      box.querySelector('.grid').innerHTML += `
+    // Solo mostrar si no hay modales abiertos
+    if(document.querySelector('.active')) return;
+
+    const name = names[Math.floor(Math.random() * names.length)];
+    const item = items[Math.floor(Math.random() * items.length)];
+    const loc = locs[Math.floor(Math.random() * locs.length)];
+    
+    showToast(`🔥 ${name} de ${loc} acaba de comprar ${item}`);
+  }
+
+  /* --- CATÁLOGO (FUSIONADO: Visual A + Lógica B) --- */
+  window.openCatalog = (category, title) => {
+    const items = catalog.filter(p => p.category === category || p.sectionId === category || category === 'ALL');
+    document.getElementById("catTitle").innerText = title;
+    const content = document.getElementById("catContent");
+    
+    content.innerHTML = items.map(p => {
+        // Lógica de precio oferta (Script A)
+        const listPrice = Math.round(p.baseMXN || p.price_mxn * FAKE_MARKUP);
+        const realPrice = p.baseMXN || p.price_mxn;
+        const image = p.img || p.image;
+        const sizes = p.sizes || ['UNITALLA'];
+
+        return `
         <div class="prodCard">
-          <div class="metallic-frame">
-            <div class="promo-badge">-80%</div>
-            <div class="prod-slider">${slides}</div>
-          </div>
-          <div class="prodName">${p.name}</div>
-          <div style="margin:10px 0; display:flex; gap:10px; justify-content:center; align-items:baseline;">
-            <span class="price-old">${money(listPrice)}</span>
-            <span class="price-new">${money(p.baseMXN)}</span>
-          </div>
-          <button class="btn-add" onclick="addToCart('${p.id}')">AGREGAR AL PEDIDO</button>
+            <div class="metallic-frame">
+                <div class="promo-badge">OFERTA</div>
+                <img src="${image}" class="prodImg" loading="lazy">
+            </div>
+            <div class="prodName">${p.name}</div>
+            
+            <div style="display:flex; gap:10px; justify-content:center; align-items:center; margin: 5px 0;">
+                <span style="text-decoration:line-through; color:#666; font-size:14px;">$${listPrice}</span>
+                <span class="new-price" style="font-size:24px;">$${realPrice}</span>
+            </div>
+
+            <div class="sizeRow" data-pid="${p.id}">
+                ${sizes.map(s => `<div class="size-pill" onclick="selectSize(this, '${s}')">${s}</div>`).join('')}
+            </div>
+            
+            <button class="btn-add" onclick="addToCart('${p.id}', this)">AGREGAR AL PEDIDO</button>
         </div>`;
-    });
-    $('modalCatalog').classList.add('active'); $('overlay').classList.add('active');
+    }).join('');
+
+    document.getElementById("modalCatalog").classList.add("active");
+    document.getElementById("overlay").classList.add("active");
   };
 
-  /* CART & CHECKOUT */
-  window.addToCart = (pid) => {
-    const p = catalogData.products.find(x => x.id === pid);
-    const exist = cart.find(x => x.id === pid);
-    if(exist) exist.qty++; else cart.push({...p, qty: 1});
-    saveCart(); updateCartUI(); toast("¡Producto Añadido!");
+  /* --- LÓGICA DE TIENDA (Script B - Robusta) --- */
+  window.selectSize = (el, size) => {
+    const row = el.parentElement;
+    row.querySelectorAll('.size-pill').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    row.setAttribute('data-sel', size);
+  };
+
+  window.addToCart = (id, btn) => {
+    const row = btn.parentElement.querySelector('.sizeRow');
+    const size = row.getAttribute('data-sel');
+    
+    // Validación estricta de talla
+    if(!size) return showToast("⚠️ Por favor selecciona una talla");
+
+    // Buscar producto (Soporta ambos formatos de JSON)
+    const p = catalog.find(x => x.id === id);
+    const price = p.baseMXN || p.price_mxn;
+    const img = p.img || p.image;
+
+    const exists = cart.find(i => i.id === id && i.selectedSize === size);
+    if(exists) exists.quantity++; 
+    else cart.push({
+        id: p.id,
+        name: p.name,
+        price_mxn: price,
+        image: img,
+        selectedSize: size,
+        quantity: 1
+    });
+
+    saveCart();
+    showToast("✅ Producto agregado al carrito");
+    closeAll();
+    openDrawer();
+  };
+
+  /* --- CHECKOUT & CARRITO --- */
+  window.renderCart = () => {
+    const container = document.getElementById("cartItems");
+    // Detectar input shipMode (Script B) o ship (Script A) - Usaremos shipMode
+    const modeInput = document.querySelector('input[name="shipMode"]:checked');
+    const mode = modeInput ? modeInput.value : 'pickup';
+    
+    // Mostrar formulario si no es pickup
+    const shipForm = document.getElementById("shipForm");
+    if(shipForm) shipForm.style.display = mode === 'pickup' ? 'none' : 'block';
+
+    if (cart.length === 0) {
+      container.innerHTML = "";
+      document.getElementById("cartEmpty").style.display = "block";
+      document.getElementById("grandTotal").innerText = "$0.00";
+      return;
+    }
+
+    document.getElementById("cartEmpty").style.display = "none";
+    let subtotal = 0;
+
+    container.innerHTML = cart.map((item, idx) => {
+      subtotal += item.price_mxn * item.quantity;
+      return `
+        <div class="cartItem">
+          <img src="${item.image}" class="cartThumb">
+          <div>
+             <div class="cName">${item.name}</div>
+             <div class="cMeta">Talla: ${item.selectedSize}</div>
+             <div class="qtyRow">
+                <button class="qtyBtn" onclick="modQty(${idx},-1)">-</button>
+                <div class="qtyVal">${item.quantity}</div>
+                <button class="qtyBtn" onclick="modQty(${idx},1)">+</button>
+             </div>
+          </div>
+          <div class="cPrice">$${item.price_mxn * item.quantity}</div>
+        </div>`;
+    }).join('');
+
+    // Estimación visual de envío (El real se calcula en Stripe)
+    let shipCost = 0;
+    if (mode === 'mx') shipCost = 250;
+    if (mode === 'us') shipCost = 800;
+    
+    document.getElementById("grandTotal").innerText = `$${subtotal + shipCost} MXN*`;
   };
 
   window.checkout = async () => {
-    if(!cart.length) return toast("Carrito vacío");
-    const btn = $('checkoutBtn');
-    btn.disabled = true; btn.innerText = "PROCESANDO...";
+    const modeInput = document.querySelector('input[name="shipMode"]:checked');
+    const mode = modeInput ? modeInput.value : 'pickup';
+    const cp = document.getElementById("cp")?.value;
+    const promo = document.getElementById("promo")?.value;
+    const btn = document.getElementById("checkoutBtn");
+
+    if (cart.length === 0) return showToast("El carrito está vacío");
+    if (mode !== 'pickup' && !cp) {
+       return showToast("⚠️ Ingresa tu Código Postal para el envío");
+    }
+
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
+
     try {
-      const res = await fetch(`${API_BASE}/create_checkout`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ cart, mode: document.querySelector('input[name="ship"]:checked').value })
+      const res = await fetch("/api/create_checkout", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            cart, 
+            shippingMode: mode, 
+            zip: cp, 
+            promoCode: promo 
+        })
       });
+      
       const data = await res.json();
-      if(data.url) location.href = data.url;
-      else throw new Error("Error en pago");
-    } catch(e) { btn.disabled = false; btn.innerText = "PAGAR AHORA"; toast("Error de conexión"); }
-  };
-
-  function updateCartUI() {
-    const box = $('cartItems'); box.innerHTML = ''; let total = 0;
-    if(cart.length === 0) box.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">Tu carrito está vacío.</p>';
-    
-    cart.forEach((it, i) => {
-      total += it.baseMXN * it.qty;
-      box.innerHTML += `
-        <div class="cart-card">
-          <div class="cart-img-box"><img src="${cleanUrl(it.img)}"></div>
-          <div class="cart-info">
-            <div class="cart-name">${it.name}</div>
-            <div class="cart-price-row">
-               <div class="qty-ctrl"><button class="qty-btn" onclick="modQty(${i},-1)">-</button><b>${it.qty}</b><button class="qty-btn" onclick="modQty(${i},1)">+</button></div>
-               <div class="cart-price">${money(it.baseMXN * it.qty)}</div>
-            </div>
-          </div>
-          <button class="btn-remove" onclick="modQty(${i},-999)">✕</button>
-        </div>`;
-    });
-    $('subTotal').innerText = money(total);
-    $('grandTotal').innerText = money(total + shipping.cost);
-    $('cartCount').innerText = cart.reduce((a,b)=>a+b.qty, 0);
-  }
-
-  /* UTILS */
-  window.toggleCart = () => { $('cartDrawer').classList.toggle('active'); $('overlay').classList.toggle('active'); };
-  window.closeAll = () => { document.querySelectorAll('.active').forEach(e => e.classList.remove('active')); };
-  window.scrollToId = (id) => { $(id).scrollIntoView({behavior:'smooth'}); };
-  window.modQty = (i, d) => { cart[i].qty += d; if(cart[i].qty <= 0) cart.splice(i, 1); saveCart(); updateCartUI(); };
-  window.updateShip = (c, l) => { shipping = { cost: c, label: l }; $('shipLabel').innerText = l; updateCartUI(); };
-  window.emptyCart = () => { if(confirm("¿Vaciar?")) { cart=[]; saveCart(); updateCartUI(); } };
-  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-  function loadCart() { try{ cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; }catch(e){cart=[];} }
-  function toast(m) { const t=$('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
-  
-  /* SOCIAL PROOF */
-  function showSocialProof() {
-      const names = ["Alberto", "Juan", "Mariana", "Roberto", "Carlos"];
-      const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali"];
-      const notif = document.getElementById('sales-notification');
-      if(notif) {
-          const name = names[Math.floor(Math.random()*names.length)];
-          const loc = locs[Math.floor(Math.random()*locs.length)];
-          document.getElementById('notif-content').innerHTML = `¡<b>${name}</b> de ${loc} compró productos oficiales!`;
-          notif.classList.add('active');
-          setTimeout(() => notif.classList.remove('active'), 5000);
+      
+      if (data.url) {
+          window.location.href = data.url;
+      } else {
+          throw new Error(data.error || "Error desconocido");
       }
+    } catch (e) {
+      console.error(e);
+      showToast("❌ Error al conectar con pagos. Intenta de nuevo.");
+      btn.innerText = "PAGAR AHORA";
+      btn.disabled = false;
+    }
+  };
+
+  /* --- UTILIDADES --- */
+  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); updateCartUI(); }
+  function updateCartUI() { 
+      const count = document.getElementById("cartCount");
+      if(count) count.innerText = cart.reduce((a, b) => a + b.quantity, 0);
+      // Si el drawer está abierto, refrescar render
+      if(document.getElementById("drawer").classList.contains("active")) renderCart();
   }
 
-  /* LEGAL */
-  const LEGAL_TXT = {
-      privacidad: "<h2>Aviso de Privacidad</h2><p>Tus datos son seguros. Solo se usan para procesar el pedido.</p>",
-      terminos: "<h2>Términos</h2><p>Cambios solo por defecto de fábrica en 30 días.</p>",
-      legal: "<h2>Legal</h2><p>BAJATEX S. de R.L. de C.V.</p>",
-      contacto: "<h2>Contacto</h2><p>ventas.unicotextil@gmail.com</p>"
+  window.modQty = (idx, delta) => {
+    cart[idx].quantity += delta;
+    if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+    saveCart();
   };
-  window.openLegal = (t) => { $('legalTitle').innerText=t.toUpperCase(); $('legalBody').innerHTML=LEGAL_TXT[t]; $('legalModal').classList.add('active'); $('overlay').classList.add('active'); };
-  window.closeLegal = () => { $('legalModal').classList.remove('active'); $('overlay').classList.remove('active'); };
-  window.togglePromo = () => $('promo-box').classList.toggle('open');
 
-  document.addEventListener('DOMContentLoaded', init);
+  window.openDrawer = () => {
+    document.getElementById("drawer").classList.add("active");
+    document.getElementById("overlay").classList.add("active");
+    renderCart();
+  };
+
+  window.closeAll = () => {
+    document.querySelectorAll(".active").forEach(e => e.classList.remove("active"));
+  };
+  
+  // Soporte para abrir modal legal desde footer
+  window.openLegal = (type) => {
+      // Si tienes un modal legal genérico o redirección
+      window.location.href = `/legal.html#${type}`;
+  };
+
+  window.showToast = (msg) => {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3000);
+  };
+  
+  window.scrollToId = (id) => { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); };
+
+  /* --- CHATBOT IA (Script B) --- */
+  function initChat() {
+    const w = document.getElementById("chat-widget");
+    const inp = document.getElementById("chat-input");
+    const box = document.getElementById("chat-messages");
+    const toggle = document.getElementById("chat-toggle");
+    
+    if(!w || !toggle) return; // Prevenir errores si no existe el HTML
+
+    toggle.onclick = () => { 
+        w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
+        if(w.style.display === 'flex' && inp) inp.focus();
+    };
+    
+    const closeBtn = document.getElementById("close-chat");
+    if(closeBtn) closeBtn.onclick = () => w.style.display = 'none';
+    
+    const sendBtn = document.getElementById("send-chat");
+    
+    async function send() {
+        const txt = inp.value.trim(); 
+        if(!txt) return;
+        
+        appendMsg(txt, 'user');
+        inp.value = ''; 
+        inp.disabled = true;
+        
+        try {
+            const res = await fetch("/api/chat", { 
+                method: "POST", 
+                body: JSON.stringify({ message: txt }) 
+            });
+            const d = await res.json(); 
+            appendMsg(d.reply || "Lo siento, hubo un error de conexión.", 'bot');
+        } catch(e) { 
+            appendMsg("Error conectando con el servidor.", 'bot'); 
+        } finally {
+            inp.disabled = false;
+            inp.focus();
+        }
+    }
+
+    if(sendBtn) sendBtn.onclick = send;
+    if(inp) inp.onkeypress = (e) => { if(e.key === 'Enter') send(); };
+
+    function appendMsg(t, type) {
+        const d = document.createElement("div");
+        d.className = `msg ${type}`;
+        d.innerHTML = t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        box.appendChild(d);
+        box.scrollTop = box.scrollHeight;
+    }
+  }
+
 })();
