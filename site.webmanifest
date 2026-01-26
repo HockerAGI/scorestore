@@ -7,38 +7,53 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
-  "background_color": "#121212",
+  "background_color": "#0b0d10",
   "theme_color": "#E10600",
   "description": "Merch Off-Road de edición limitada. Fabricado en Tijuana por Único Uniformes.",
   "lang": "es-MX",
   "dir": "ltr",
   "categories": ["shopping", "sports", "lifestyle"],
   "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Ver Colecciones",
       "short_name": "Colecciones",
-      "description": "Ir a colecciones oficiales",
+      "description": "Explorar catálogo SCORE",
       "url": "/#collections",
-      "icons": [{ "src": "/assets/icons/shortcut-collections.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Abrir Carrito",
       "short_name": "Carrito",
-      "description": "Abrir el carrito",
+      "description": "Ver mi equipo",
       "url": "/?openCart=1",
-      "icons": [{ "src": "/assets/icons/shortcut-cart.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
-  ],
-  "icons": [
-    { "src": "/assets/icons/icon-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
