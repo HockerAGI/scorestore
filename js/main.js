@@ -1,5 +1,5 @@
 /* =========================================================
-   SCORE STORE · ENGINE v2026 PROD (GOLD MASTER)
+   SCORE STORE · ENGINE v2026 PROD (WHITE BAR EDITION)
    ========================================================= */
 
 (function () {
@@ -9,7 +9,6 @@
   const CART_KEY = "score_cart_GOLD_2026";
   const COOKIE_KEY = "score_cookie_consent";
   
-  // ESTADO GLOBAL
   let catalogData = { products: [], sections: [] };
   let cart = [];
   let promoCode = "";
@@ -18,7 +17,7 @@
   const $ = (id) => document.getElementById(id);
   const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 
-  // DATOS REALES (Centralizados aquí para fácil edición)
+  // DATOS REALES (EXTRAÍDOS DE TUS ARCHIVOS)
   const INFO_DATA = {
       contacto: `
         <h3>CONTACTO Y FÁBRICA</h3>
@@ -36,13 +35,12 @@
             <li><strong>🇺🇸 USA Internacional:</strong> $800 MXN (FedEx Intl). Tiempo: 5-7 días hábiles.</li>
             <li><strong>📍 PickUp Factory:</strong> Gratis. Se notifica vía Email/WhatsApp cuando está listo.</li>
         </ul>
-        <p><small>Nota: No nos hacemos responsables por demoras en aduanas o paquetería externa.</small></p>
       `,
       privacidad: `
         <h3>LEGAL Y PRIVACIDAD</h3>
         <p><strong>Facturación:</strong> Solicitar dentro del mes fiscal enviando Constancia de Situación Fiscal al correo.</p>
-        <p><strong>Cambios:</strong> Solo por defecto de fábrica dentro de los primeros 5 días. No hay cambios por talla usada.</p>
-        <p><strong>Datos:</strong> Tu información se procesa vía Stripe (Pagos) y Envia.com (Guías). No vendemos tus datos.</p>
+        <p><strong>Cambios:</strong> Solo por defecto de fábrica dentro de los primeros 5 días.</p>
+        <p><strong>Datos:</strong> Tu información se procesa vía Stripe (Pagos) y Envia.com (Guías).</p>
       `
   };
 
@@ -53,7 +51,7 @@
       const rev = $('rev-val');
       const status = $('status-text');
       
-      // Safety Timer (Evita pantalla negra infinita)
+      // Safety Timer
       setTimeout(() => { if(splash) splash.remove(); }, 4000);
 
       let r = 0;
@@ -93,12 +91,12 @@
       };
   }
 
-  // --- 3. CATALOGO (SLIDER HORIZONTAL) ---
+  // --- 3. CATALOGO (SLIDER) ---
   async function loadCatalog() {
       try {
           const res = await fetch("/data/catalog.json");
           if(res.ok) catalogData = await res.json();
-      } catch (e) { console.warn("Modo Offline activado"); }
+      } catch (e) { console.warn("Offline"); }
   }
 
   window.openCatalog = (sectionId) => {
@@ -108,7 +106,7 @@
       const content = $("catContent");
       const headerLogo = $("catLogo");
 
-      if (!section || !items.length) return toast("Colección en pits (Mantenimiento)");
+      if (!section || !items.length) return toast("Mantenimiento");
 
       if (headerLogo) headerLogo.src = section.logo;
       
@@ -157,7 +155,7 @@
       radios.forEach(r => { if(r.checked) shippingState.mode = r.value; });
 
       if(!cart.length) {
-          list.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Tu carrito está vacío.</div>`;
+          list.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Carrito vacío</div>`;
           $("grandTotal").innerText = "$0.00"; $("cartCount").innerText = 0;
           return;
       }
@@ -228,13 +226,9 @@
       inp.value = "";
       box.scrollTop = box.scrollHeight;
 
-      try {
-        const res = await fetch(`${API_BASE}/chat`, { method: "POST", body: JSON.stringify({ message: txt }) });
-        const data = await res.json();
-        box.innerHTML += `<div style="text-align:left;margin:5px;"><span style="background:#fff;border:1px solid #eee;padding:8px;border-radius:10px;color:#000;display:inline-block;">${data.reply}</span></div>`;
-      } catch(e) {
-        box.innerHTML += `<div style="text-align:left;margin:5px;"><span style="color:red;">Error de conexión. Intenta de nuevo.</span></div>`;
-      }
+      const res = await fetch(`${API_BASE}/chat`, { method: "POST", body: JSON.stringify({ message: txt }) });
+      const data = await res.json();
+      box.innerHTML += `<div style="text-align:left;margin:5px;"><span style="background:#fff;border:1px solid #eee;padding:8px;border-radius:10px;color:#000;display:inline-block;">${data.reply}</span></div>`;
       box.scrollTop = box.scrollHeight;
   };
 
@@ -251,17 +245,15 @@
       els.forEach(el => observer.observe(el));
   }
 
-  // --- INIT ---
   document.addEventListener('DOMContentLoaded', async () => {
       await loadCatalog(); loadCart(); updateCartUI(); 
       runIntro(); 
       initScrollReveal();
       checkCookies();
       
-      // Check Stripe Success
       const params = new URLSearchParams(window.location.search);
       if(params.get("status") === "success") {
-          toast("🏆 ¡PAGO EXITOSO! TU ORDEN ESTÁ EN MARCHA.");
+          toast("🏆 ¡PAGO EXITOSO! GRACIAS.");
           localStorage.removeItem(CART_KEY); cart=[]; updateCartUI();
           window.history.replaceState({}, document.title, "/");
       }
