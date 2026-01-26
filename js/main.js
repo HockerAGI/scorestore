@@ -1,324 +1,345 @@
-/* SCORE STORE - MAIN ENGINE v4.0 (Unified) */
-(function () {
-  /* --- CONFIGURACIÓN --- */
-  const CART_KEY = "score_cart_v2026_pro";
-  const FAKE_MARKUP = 1.4; // 40% más caro el precio "anterior" para marketing
-  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-  let catalog = [];
+/* SCORE STORE MASTER JS v2026 - PRODUCTION READY */
 
-  // --- INICIALIZACIÓN ---
-  document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Cargar Catálogo (Con Fallback de seguridad)
+// --- CREDENCIALES REALES INTEGRADAS ---
+const GEMINI_API_KEY = "AIzaSyAtFIytBGuc5Dc_ZmQb54cR1d6qsPBix2Y"; 
+
+// Configuración con Fallback de Seguridad (Tus datos de Supabase)
+const CFG = window.__SCORE__ || {
+    orgSlug: "score-store",
+    supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
+    supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE"
+};
+
+let cart = JSON.parse(localStorage.getItem('score_cart_master')) || [];
+let catalogData = { products: [] };
+
+// Helpers
+const $ = (id) => document.getElementById(id);
+const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+
+// --- 1. INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // Carga de catálogo híbrida (Intenta fetch, si falla usa hardcoded de respaldo)
     try {
-      const res = await fetch("/data/catalog.json");
-      const data = await res.json();
-      catalog = data.products || [];
+        const res = await fetch("/data/catalog.json");
+        const data = await res.json();
+        catalogData = data;
     } catch (e) {
-      console.error("Error cargando catálogo, usando respaldo...", e);
-      // Fallback mínimo para que la tienda no se vea vacía si falla el JSON
-      catalog = [
-         {id:'b1k-jacket', sectionId:'BAJA_1000', name:'Chamarra Oficial Baja 1000', baseMXN:1890, img:'/assets/EDICION_2025/chamarra-baja1000.webp', sizes:['S','M','L','XL']},
-         {id:'b1k-tee', sectionId:'BAJA_1000', name:'Jersey Racing', baseMXN:650, img:'/assets/EDICION_2025/camiseta-negra-baja1000.webp', sizes:['S','M','L']}
-      ];
+        console.warn("Usando catálogo de respaldo Master Design");
+        catalogData = {
+          "products": [
+            { "id": "b1k-jacket", "name": "Chamarra Oficial Baja 1000", "baseMXN": 1890, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/chamarra-baja1000.webp", "sizes": ["S","M","L","XL","2XL"] },
+            { "id": "b1k-hoodie-blk", "name": "Hoodie Clásica Negra", "baseMXN": 1100, "sectionId": "BAJA_1000", "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp", "sizes": ["S","M","L","XL"] },
+            { "id": "b1k-tee-black", "name": "Camiseta Negra Oficial", "baseMXN": 480, "sectionId": "BAJA_1000", "img": "/assets/EDICION_2025/camiseta-negra-baja1000.webp", "sizes": ["S","M","L","XL"] },
+            { "id": "b500-tee-grey", "name": "Camiseta Oficial Baja 500", "baseMXN": 480, "sectionId": "BAJA_500", "img": "/assets/BAJA500/camiseta-gris-baja500.webp", "sizes": ["S","M","L"] },
+            { "id": "sf250-tank", "name": "Tank Top San Felipe", "baseMXN": 440, "sectionId": "SF_250", "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp", "sizes": ["S","M","L"] }
+          ]
+        };
     }
 
-    // 2. Iniciar UI
+    runIntro();
     updateCartUI();
-    runIntro();     // Del Script A (Animación)
-    initChat();     // Del Script B (IA Gemini)
     
-    // 3. Marketing Loop
-    setInterval(showSocialProof, 25000); // Del Script A (Ventas falsas para urgencia)
-  });
-
-  /* --- LOGICA VISUAL (INTRO & MARKETING) --- */
-  function runIntro() {
-    const aguja = document.querySelector('.rpm-bar'); // Adaptado a tu CSS nuevo
-    const splash = document.getElementById("splash-screen");
-    
-    // Simula carga de RPM
-    if(aguja) setTimeout(() => { aguja.style.width = '100%'; }, 500);
-    
-    // Ocultar Splash
-    setTimeout(() => {
-        if(splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => splash.classList.add("hidden"), 600);
+    // Social Proof Loop (Marketing: Notificaciones de ventas recientes)
+    setInterval(() => {
+        const names = ["Juan", "Mónica", "Roberto", "Arancha", "Carlos"];
+        const notif = $("notif-content");
+        const box = $("sales-notification");
+        if(notif && box) {
+            notif.innerHTML = `¡<b>${names[Math.floor(Math.random()*names.length)]}</b> adquirió Merch Oficial!`;
+            box.classList.add('active');
+            setTimeout(() => box.classList.remove('active'), 5000);
         }
-    }, 2200);
-  }
+    }, 45000);
+});
 
-  function showSocialProof() {
-    const names = ["Carlos R.", "Miguel A.", "Sarah J.", "Roberto M.", "Alex T."];
-    const items = ["una Chamarra Baja 1000", "una Gorra Oficial", "un Jersey Racing"];
-    const locs = ["Tijuana", "San Diego", "La Paz", "Ensenada"];
-    
-    // Solo mostrar si no hay modales abiertos
-    if(document.querySelector('.active')) return;
+// --- 2. INTRO ENGINE (Física del Tacómetro) ---
+function runIntro() {
+  const aguja = $('needle');
+  const splash = $('splash-screen');
+  const rev = $('rev-val');
+  const status = $('status-text');
 
-    const name = names[Math.floor(Math.random() * names.length)];
-    const item = items[Math.floor(Math.random() * items.length)];
-    const loc = locs[Math.floor(Math.random() * locs.length)];
-    
-    showToast(`🔥 ${name} de ${loc} acaba de comprar ${item}`);
-  }
+  // Mover aguja inicial
+  setTimeout(() => { if(aguja) aguja.style.transform = "rotate(85deg)"; }, 400);
+  
+  // Contador de RPM subiendo
+  let r = 0;
+  const itv = setInterval(() => { r += 580; if(r > 8000) r = 8000; if(rev) rev.innerHTML = String(r).padStart(4, '0'); }, 100);
 
-  /* --- CATÁLOGO (FUSIONADO: Visual A + Lógica B) --- */
-  window.openCatalog = (category, title) => {
-    const items = catalog.filter(p => p.category === category || p.sectionId === category || category === 'ALL');
-    document.getElementById("catTitle").innerText = title;
-    const content = document.getElementById("catContent");
-    
-    content.innerHTML = items.map(p => {
-        // Lógica de precio oferta (Script A)
-        const listPrice = Math.round(p.baseMXN || p.price_mxn * FAKE_MARKUP);
-        const realPrice = p.baseMXN || p.price_mxn;
-        const image = p.img || p.image;
-        const sizes = p.sizes || ['UNITALLA'];
+  // Estado Listo
+  setTimeout(() => { 
+    if(status) status.innerHTML = "FUEL INJECTION... READY"; 
+    if(aguja) aguja.style.transform = "rotate(10deg)";
+  }, 1800);
 
-        return `
-        <div class="prodCard">
-            <div class="metallic-frame">
-                <div class="promo-badge">OFERTA</div>
-                <img src="${image}" class="prodImg" loading="lazy">
+  // Ocultar Splash
+  setTimeout(() => { 
+    clearInterval(itv);
+    if(splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => { splash.style.display = 'none'; document.body.classList.remove('noScroll'); }, 800);
+    }
+  }, 3500);
+}
+
+// --- 3. CORE FUNCTIONS (Carrito y UI) ---
+window.toggleCart = () => { 
+    const d = $('cartDrawer'); 
+    const o = $('overlay');
+    if(d) d.classList.toggle('active');
+    if(o) o.classList.toggle('active');
+};
+
+window.closeAll = () => { 
+    document.querySelectorAll('.active').forEach(e => e.classList.remove('active')); 
+    document.body.classList.remove('noScroll'); 
+};
+
+window.scrollToId = (id) => { const el = $(id); if(el) el.scrollIntoView({behavior:'smooth'}); };
+
+// Abrir Modal de Catálogo
+window.openCatalog = (sid) => {
+    const items = catalogData.products.filter(p => p.sectionId === sid || sid === 'ALL');
+    const box = $('catContent');
+    if(!box) return;
+    box.innerHTML = '';
+
+    items.forEach(p => {
+        const card = document.createElement('div');
+        card.className = "p-card";
+        const sizes = p.sizes || ["S", "M", "L", "XL"];
+        // Fallback de imagen inteligente
+        const mainImg = (p.images && p.images[0]) ? p.images[0] : (p.img || p.image);
+        
+        card.innerHTML = `
+            <div class="p-media">
+                <div class="p-slide"><img src="${mainImg}" loading="lazy" alt="${p.name}"></div>
             </div>
-            <div class="prodName">${p.name}</div>
-            
-            <div style="display:flex; gap:10px; justify-content:center; align-items:center; margin: 5px 0;">
-                <span style="text-decoration:line-through; color:#666; font-size:14px;">$${listPrice}</span>
-                <span class="new-price" style="font-size:24px;">$${realPrice}</span>
-            </div>
-
-            <div class="sizeRow" data-pid="${p.id}">
-                ${sizes.map(s => `<div class="size-pill" onclick="selectSize(this, '${s}')">${s}</div>`).join('')}
-            </div>
-            
-            <button class="btn-add" onclick="addToCart('${p.id}', this)">AGREGAR AL PEDIDO</button>
-        </div>`;
-    }).join('');
-
-    document.getElementById("modalCatalog").classList.add("active");
-    document.getElementById("overlay").classList.add("active");
-  };
-
-  /* --- LÓGICA DE TIENDA (Script B - Robusta) --- */
-  window.selectSize = (el, size) => {
-    const row = el.parentElement;
-    row.querySelectorAll('.size-pill').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-    row.setAttribute('data-sel', size);
-  };
-
-  window.addToCart = (id, btn) => {
-    const row = btn.parentElement.querySelector('.sizeRow');
-    const size = row.getAttribute('data-sel');
-    
-    // Validación estricta de talla
-    if(!size) return showToast("⚠️ Por favor selecciona una talla");
-
-    // Buscar producto (Soporta ambos formatos de JSON)
-    const p = catalog.find(x => x.id === id);
-    const price = p.baseMXN || p.price_mxn;
-    const img = p.img || p.image;
-
-    const exists = cart.find(i => i.id === id && i.selectedSize === size);
-    if(exists) exists.quantity++; 
-    else cart.push({
-        id: p.id,
-        name: p.name,
-        price_mxn: price,
-        image: img,
-        selectedSize: size,
-        quantity: 1
+            <div class="p-body">
+                <div class="p-name">${p.name}</div>
+                <div class="p-price">${money(p.baseMXN || p.price_mxn)}</div>
+                <select class="p-size-sel" id="size_${p.id}">${sizes.map(s => `<option value="${s}">${s}</option>`).join('')}</select>
+                <button class="p-btn-add" onclick="window.addToCart('${p.id}')">AGREGAR</button>
+            </div>`;
+        box.appendChild(card);
     });
+    
+    const modal = $('modalCatalog');
+    const overlay = $('overlay');
+    if(modal) modal.classList.add('active');
+    if(overlay) overlay.classList.add('active');
+};
 
-    saveCart();
-    showToast("✅ Producto agregado al carrito");
-    closeAll();
-    openDrawer();
-  };
+// Agregar al Carrito
+window.addToCart = (pid) => {
+    const p = catalogData.products.find(x => x.id === pid);
+    const sizeEl = $(`size_${pid}`);
+    const size = sizeEl ? sizeEl.value : 'Unitalla';
+    
+    if(p) {
+        const exist = cart.find(x => x.id === pid && x.size === size);
+        if(exist) exist.qty++; 
+        else cart.push({
+            id: p.id,
+            name: p.name,
+            baseMXN: p.baseMXN || p.price_mxn,
+            img: (p.images && p.images[0]) ? p.images[0] : (p.img || p.image),
+            qty: 1, 
+            size: size
+        });
+        
+        saveCart();
+        updateCartUI(); 
+        window.toggleCart();
+        showToast("🏁 AGREGADO AL EQUIPO");
+    }
+};
 
-  /* --- CHECKOUT & CARRITO --- */
-  window.renderCart = () => {
-    const container = document.getElementById("cartItems");
-    // Detectar input shipMode (Script B) o ship (Script A) - Usaremos shipMode
+window.modQty = (i, d) => { 
+    cart[i].qty += d; 
+    if(cart[i].qty <= 0) cart.splice(i, 1); 
+    saveCart(); 
+    updateCartUI(); 
+};
+
+// Renderizar Carrito y Totales
+window.updateCartUI = () => {
+    const box = $('cartItems');
+    if(!box) return;
+    
     const modeInput = document.querySelector('input[name="shipMode"]:checked');
     const mode = modeInput ? modeInput.value : 'pickup';
     
-    // Mostrar formulario si no es pickup
-    const shipForm = document.getElementById("shipForm");
+    // Mostrar/Ocultar form envío según selección
+    const shipForm = $('shipForm');
     if(shipForm) shipForm.style.display = mode === 'pickup' ? 'none' : 'block';
 
-    if (cart.length === 0) {
-      container.innerHTML = "";
-      document.getElementById("cartEmpty").style.display = "block";
-      document.getElementById("grandTotal").innerText = "$0.00";
-      return;
-    }
-
-    document.getElementById("cartEmpty").style.display = "none";
-    let subtotal = 0;
-
-    container.innerHTML = cart.map((item, idx) => {
-      subtotal += item.price_mxn * item.quantity;
-      return `
-        <div class="cartItem">
-          <img src="${item.image}" class="cartThumb">
-          <div>
-             <div class="cName">${item.name}</div>
-             <div class="cMeta">Talla: ${item.selectedSize}</div>
-             <div class="qtyRow">
-                <button class="qtyBtn" onclick="modQty(${idx},-1)">-</button>
-                <div class="qtyVal">${item.quantity}</div>
-                <button class="qtyBtn" onclick="modQty(${idx},1)">+</button>
-             </div>
-          </div>
-          <div class="cPrice">$${item.price_mxn * item.quantity}</div>
-        </div>`;
-    }).join('');
-
-    // Estimación visual de envío (El real se calcula en Stripe)
-    let shipCost = 0;
-    if (mode === 'mx') shipCost = 250;
-    if (mode === 'us') shipCost = 800;
+    box.innerHTML = ''; 
+    let total = 0;
     
-    document.getElementById("grandTotal").innerText = `$${subtotal + shipCost} MXN*`;
-  };
+    const emptyMsg = $('cartEmpty');
+    if(cart.length === 0) { if(emptyMsg) emptyMsg.style.display = 'block'; } 
+    else { if(emptyMsg) emptyMsg.style.display = 'none'; }
 
-  window.checkout = async () => {
+    cart.forEach((it, i) => {
+        total += (it.baseMXN * it.qty);
+        box.innerHTML += `
+        <div class="cart-card">
+          <img src="${it.img}" alt="${it.name}">
+          <div style="flex:1"><b>${it.name}</b><br><small>Talla: ${it.size}</small>
+            <div class="qty-ctrl"><button class="qty-btn" onclick="window.modQty(${i},-1)">-</button><b>${it.qty}</b><button class="qty-btn" onclick="window.modQty(${i},1)">+</button></div>
+          </div>
+          <div style="font-weight:900; font-family:'Teko'; font-size:20px; color:var(--red);">${money(it.baseMXN * it.qty)}</div>
+        </div>`;
+    });
+
+    // Calculo envio estimado visual (El real se calcula en el servidor)
+    let shipping = 0;
+    if(mode === 'mx') shipping = 250;
+    if(mode === 'us') shipping = 800;
+    
+    const grandTotal = $('grandTotal');
+    const cartCount = $('cartCount');
+    if(grandTotal) grandTotal.innerText = money(total + shipping);
+    if(cartCount) cartCount.innerText = cart.reduce((a,b)=>a+b.qty,0);
+    
+    // Inyectar botón de Análisis IA si hay items
+    if (cart.length > 0) {
+        const aiBox = document.createElement('div');
+        aiBox.className = 'cart-ai-box';
+        aiBox.innerHTML = `<button onclick="window.analyzeCart()" style="width:100%; border:1px dashed #E10600; background:rgba(225,6,0,0.05); padding:10px; border-radius:10px; font-weight:800; font-size:12px; color:#E10600; cursor:pointer;">✨ ANALIZAR EQUIPO CON IA</button><div id="ai-res" style="display:none; font-size:12px; line-height:1.4; margin-top:10px; color:#333;"></div>`;
+        box.appendChild(aiBox);
+    }
+};
+
+function saveCart() { localStorage.setItem('score_cart_master', JSON.stringify(cart)); }
+
+// Checkout con Stripe (Netlify Function)
+window.checkout = async () => {
+    if(!cart.length) return;
+    const btn = $('checkoutBtn');
     const modeInput = document.querySelector('input[name="shipMode"]:checked');
     const mode = modeInput ? modeInput.value : 'pickup';
-    const cp = document.getElementById("cp")?.value;
-    const promo = document.getElementById("promo")?.value;
-    const btn = document.getElementById("checkoutBtn");
+    const cp = $('cp') ? $('cp').value : '';
+    const promo = $('promo') ? $('promo').value : '';
 
-    if (cart.length === 0) return showToast("El carrito está vacío");
-    if (mode !== 'pickup' && !cp) {
-       return showToast("⚠️ Ingresa tu Código Postal para el envío");
-    }
+    if(mode !== 'pickup' && !cp) return showToast("⚠️ Ingresa tu Código Postal");
 
-    btn.innerText = "PROCESANDO...";
-    btn.disabled = true;
+    btn.innerText = "PROCESANDO..."; btn.disabled = true;
+    showToast("🏁 INICIANDO CARRERA...");
 
     try {
-      const res = await fetch("/api/create_checkout", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            cart, 
-            shippingMode: mode, 
-            zip: cp, 
-            promoCode: promo 
-        })
-      });
-      
-      const data = await res.json();
-      
-      if (data.url) {
-          window.location.href = data.url;
-      } else {
-          throw new Error(data.error || "Error desconocido");
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("❌ Error al conectar con pagos. Intenta de nuevo.");
-      btn.innerText = "PAGAR AHORA";
-      btn.disabled = false;
+        const res = await fetch("/.netlify/functions/create_checkout", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                cart, 
+                shippingMode: mode, 
+                zip: cp, 
+                promoCode: promo 
+            })
+        });
+        const data = await res.json();
+        if(data.url) window.location.href = data.url;
+        else alert("Error: " + (data.error || "Desconocido"));
+    } catch(e) {
+        alert("Error de conexión");
+        btn.innerText = "PAGAR AHORA"; btn.disabled = false;
     }
-  };
+};
 
-  /* --- UTILIDADES --- */
-  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify(cart)); updateCartUI(); }
-  function updateCartUI() { 
-      const count = document.getElementById("cartCount");
-      if(count) count.innerText = cart.reduce((a, b) => a + b.quantity, 0);
-      // Si el drawer está abierto, refrescar render
-      if(document.getElementById("drawer").classList.contains("active")) renderCart();
-  }
-
-  window.modQty = (idx, delta) => {
-    cart[idx].quantity += delta;
-    if (cart[idx].quantity <= 0) cart.splice(idx, 1);
-    saveCart();
-  };
-
-  window.openDrawer = () => {
-    document.getElementById("drawer").classList.add("active");
-    document.getElementById("overlay").classList.add("active");
-    renderCart();
-  };
-
-  window.closeAll = () => {
-    document.querySelectorAll(".active").forEach(e => e.classList.remove("active"));
-  };
-  
-  // Soporte para abrir modal legal desde footer
-  window.openLegal = (type) => {
-      // Si tienes un modal legal genérico o redirección
-      window.location.href = `/legal.html#${type}`;
-  };
-
-  window.showToast = (msg) => {
-    const t = document.getElementById("toast");
-    t.innerText = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 3000);
-  };
-  
-  window.scrollToId = (id) => { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); };
-
-  /* --- CHATBOT IA (Script B) --- */
-  function initChat() {
-    const w = document.getElementById("chat-widget");
-    const inp = document.getElementById("chat-input");
-    const box = document.getElementById("chat-messages");
-    const toggle = document.getElementById("chat-toggle");
+// --- 4. GEMINI AI LOGIC (INTEGRADA) ---
+async function callGemini(prompt, sys) {
+    if(!GEMINI_API_KEY) return "⚠️ API Key no configurada.";
     
-    if(!w || !toggle) return; // Prevenir errores si no existe el HTML
-
-    toggle.onclick = () => { 
-        w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
-        if(w.style.display === 'flex' && inp) inp.focus();
+    // Endpoint para Gemini 1.5 Flash (Más rápido y eficiente para chat)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const payload = { 
+        contents: [{ role: "user", parts: [{ text: prompt }] }], 
+        systemInstruction: { parts: [{ text: sys }] } 
     };
+
+    try {
+        const response = await fetch(url, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(payload) 
+        });
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sin respuesta del satélite.";
+    } catch (err) { 
+        console.error(err);
+        return "Error de conexión satelital."; 
+    }
+}
+
+// Función 1: Analizar Carrito
+window.analyzeCart = async () => {
+    const resBox = $('ai-res');
+    if(!resBox) return;
+    resBox.style.display = 'block';
+    resBox.innerHTML = '<i>Consultando telemetría...</i>';
     
-    const closeBtn = document.getElementById("close-chat");
-    if(closeBtn) closeBtn.onclick = () => w.style.display = 'none';
+    const items = cart.map(i => `${i.name} (${i.size})`).join(', ');
+    const prompt = `Analiza mi carrito para una carrera SCORE: ${items}. Dame un consejo rápido de experto sobre cómo me ayudará este equipo de Único Uniformes en el desierto.`;
+    const sys = "Eres un estratega experto de SCORE International. Redacta consejos breves, técnicos y motivadores sobre ropa off-road.";
     
-    const sendBtn = document.getElementById("send-chat");
-    
-    async function send() {
-        const txt = inp.value.trim(); 
-        if(!txt) return;
-        
-        appendMsg(txt, 'user');
-        inp.value = ''; 
-        inp.disabled = true;
-        
-        try {
-            const res = await fetch("/api/chat", { 
-                method: "POST", 
-                body: JSON.stringify({ message: txt }) 
-            });
-            const d = await res.json(); 
-            appendMsg(d.reply || "Lo siento, hubo un error de conexión.", 'bot');
-        } catch(e) { 
-            appendMsg("Error conectando con el servidor.", 'bot'); 
-        } finally {
-            inp.disabled = false;
-            inp.focus();
+    const res = await callGemini(prompt, sys);
+    resBox.innerHTML = `✨ <b>Copiloto:</b> ${res}`;
+};
+
+// Función 2: Chat Asistente
+window.toggleAiAssistant = () => {
+    const m = $('aiChatModal');
+    if(m) {
+        m.classList.toggle('active');
+        if (m.classList.contains('active')) {
+            const box = $('aiMessages');
+            if(box && box.innerHTML === "") {
+                box.innerHTML = '<div class="ai-bubble bot">¡Hola! Soy tu Estratega del Desierto. ¿Tienes dudas técnicas sobre la mercancía oficial o la Baja? ✨</div>';
+            }
         }
     }
+};
 
-    if(sendBtn) sendBtn.onclick = send;
-    if(inp) inp.onkeypress = (e) => { if(e.key === 'Enter') send(); };
+window.sendAiMessage = async () => {
+    const input = $('aiInput');
+    const box = $('aiMessages');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    input.value = '';
+    box.innerHTML += `<div class="ai-bubble user">${text}</div>`;
+    box.scrollTop = box.scrollHeight;
+    
+    const id = Date.now();
+    box.innerHTML += `<div class="ai-bubble bot" id="ai-${id}">...</div>`;
+    
+    const res = await callGemini(text, "Eres el Estratega del Desierto de SCORE Store y Único Uniformes. Ayudas a los clientes con dudas sobre tallas, materiales de las playeras y sudaderas, envíos y consejos para la carrera Baja 1000.");
+    const botBubble = $(`ai-${id}`);
+    if(botBubble) botBubble.innerText = res;
+    box.scrollTop = box.scrollHeight;
+};
 
-    function appendMsg(t, type) {
-        const d = document.createElement("div");
-        d.className = `msg ${type}`;
-        d.innerHTML = t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-        box.appendChild(d);
-        box.scrollTop = box.scrollHeight;
-    }
-  }
+// --- 5. LEGAL & UTILS ---
+window.openLegal = (type) => {
+    const contents = {
+        privacidad: "<h2>Aviso de Privacidad</h2><p>Tus datos son seguros con <b>BAJATEX S. de R.L. de C.V.</b>. Solo los usamos para procesar tu pedido, facturación y envío.</p><p>Derechos ARCO: ventas.unicotextil@gmail.com</p>",
+        terminos: "<h2>Términos y Condiciones</h2><p>Ventas finales. Cambios solo por defectos de fábrica comprobables dentro de los 30 días naturales posteriores a la compra.</p>",
+        contacto: "<h2>Contacto y Soporte</h2><p>📧 ventas.unicotextil@gmail.com<br>📱 WhatsApp: +52 664 236 8701<br>📍 Tijuana, B.C.</p>"
+    };
+    const contentBox = $('legalContent');
+    if(contentBox) contentBox.innerHTML = contents[type] || "Cargando...";
+    
+    const modal = $('modalLegal');
+    const overlay = $('overlay');
+    if(modal) modal.classList.add('active');
+    if(overlay) overlay.classList.add('active');
+};
 
-})();
+function showToast(m) { 
+    const t=$("toast"); 
+    if(t){ t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); } 
+}
