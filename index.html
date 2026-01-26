@@ -5,39 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE STORE | Tienda Oficial</title>
   
-  <meta name="description" content="Mercancía oficial SCORE International Off-Road Racing. Fabricado por Único Uniformes." />
+  <meta name="description" content="Mercancía oficial SCORE International. Fabricado por Único Uniformes." />
   <meta name="theme-color" content="#E10600" />
-  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
-  <meta property="og:image" content="/assets/hero.webp" />
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-  
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_DESIGN" />
+  <link rel="stylesheet" href="/css/styles.css?v=FIX_FINAL">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script src="https://js.stripe.com/v3" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
 </head>
 
 <body>
@@ -65,7 +43,7 @@
       </a>
       <div class="navRight">
         <button class="cartBtn" onclick="toggleCart()" aria-label="Abrir Carrito">
-          <i class="fa-solid fa-cart-shopping"></i>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           <span id="cartCount" class="cartCount">0</span>
         </button>
       </div>
@@ -83,9 +61,9 @@
           <img src="/assets/logo-score.webp" class="hero-main-logo" alt="Score Logo">
           <img src="/assets/logo-world-desert.webp" class="hero-desert-seal" alt="WDC Logo">
         </div>
-        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta. Fabricado por <b>Único Uniformes</b>.</p>
+        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta.</p>
         <div class="ctaRow">
-            <button class="btn primary pulse-btn" onclick="scrollToId('collections')">VER CATÁLOGO</button>
+            <button class="btn primary" onclick="scrollToId('collections')">VER CATÁLOGO</button>
         </div>
       </div>
     </section>
@@ -144,17 +122,15 @@
         <label class="radio-option"><input type="radio" name="shipMode" value="mx" onchange="updateCartUI()"><div><span>Nacional MX</span><small>Calculado</small></div></label>
         <label class="radio-option"><input type="radio" name="shipMode" value="us" onchange="updateCartUI()"><div><span>USA / Intl</span><small>Calculado</small></div></label>
       </div>
-      
       <div id="promoContainer" style="margin-bottom: 10px;">
           <input id="promo" type="text" placeholder="Código Promocional" class="inputField" onchange="savePromo(this.value)">
       </div>
-
       <div id="shipForm" style="display:none;margin-bottom:10px;">
           <input id="cp" type="tel" placeholder="Código Postal" class="inputField">
       </div>
       <div class="summary-total"><span>TOTAL</span><strong id="grandTotal">$0.00</strong></div>
       <button class="btn primary full" id="checkoutBtn" onclick="checkout()">PAGAR AHORA</button>
-      <div id="cartEmpty" style="text-align:center; padding:20px; display:none; color:#666;">Tu carrito está vacío 🌵</div>
+      <div id="cartEmpty" style="text-align:center; padding:20px; display:none;">Tu carrito está vacío</div>
     </div>
   </aside>
 
@@ -209,6 +185,6 @@
       supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
     };
   </script>
-  <script type="module" src="/js/main.js?v=FINAL_2026"></script>
+  <script type="module" src="/js/main.js?v=FIX_FINAL"></script>
 </body>
 </html>
