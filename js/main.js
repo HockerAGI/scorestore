@@ -1,1162 +1,1142 @@
 /* =========================================================
-SCORE STORE — main.js (PROD FIX)
-
-Catálogo sin “cuadros vacíos”
-Carrito premium + swipe-to-close
-Cotización envío realtime (debounce)
-IA con fallback local (no truena)
-Notificaciones de compra + sonidos sutiles
-Metatags + Pixel
-Powered by Único OS
+   SCORE STORE — main.js (2026_PROD)
+   - Catálogo + filtros + validación de imagen (no cards vacías)
+   - Carrito premium + swipe cerrar + micro-interacciones
+   - Cotización envío (tiempo real) via Netlify Function /api/quote
+   - Checkout via Netlify Function /api/checkout
+   - Legal modal única (dinámica) + sonido sutil
+   - IA (Gemini) via /api/chat + fallback si no hay API KEY
+   - Notificaciones de compra (sutiles) + sonidos
 ========================================================= */
 
-/* ---------------------------
-0) Helpers base
---------------------------- */
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const $ = (q, el = document) => el.querySelector(q);
+const $$ = (q, el = document) => [...el.querySelectorAll(q)];
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function moneyMXN(n) {
-  try {
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n || 0);
-  } catch {
-    return `$${(n || 0).toFixed(2)}`;
-  }
-}
-
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
-
-function debounce(fn, wait = 450) {
-  let t = null;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-
-function safeJSONParse(str, fallback) {
-  try { return JSON.parse(str); } catch { return fallback; }
-}
-
-/* ---------------------------
-1) PUBLIC CONFIG
-(Credenciales inyectadas estratégicamente)
---------------------------- */
-function metaContent(name) {
-  const el = document.querySelector(`meta[name="${name}"]`);
-  return el ? (el.getAttribute("content") || "").trim() : "";
-} 
-
-const PUBLIC = {
-  // Credenciales Públicas (Seguras para frontend)
-  SUPABASE_URL: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-  SUPABASE_ANON: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
-  STRIPE_PK: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
-  FB_PIXEL: "4249947775334413",
-
-  BRAND: {
-    maker: "Único Uniformes",
-    os: "Único OS",
-    legalEntity: "BAJATEX, S. de R.L. de C.V.",
-    email: "ventas.unicotextil@gmail.com", // Corregido según datos proporcionados
-    whatsapp: "+52 664 236 8701", // Mantenido del original, confirmar si cambia
-    address: "Palermo 6106 Interior JK, Colonia Anexa Roma, C.P. 22614, Tijuana, Baja California, México."
+const state = {
+  catalog: null,
+  promos: null,
+  filter: "ALL",
+  cart: [],
+  promoApplied: null,
+  shipping: { mode: "pickup", zip: "", quote: 0, label: "" },
+  sounds: {
+    enabled: true,
+    volume: 0.16, // <= 20%
   }
 };
 
-/* ---------------------------
-2) Ensure Meta Tags / Theme / OG (fallback)
---------------------------- */
-function ensureMeta() {
-  const head = document.head;
+const STORAGE_CART = "score_cart_v3";
+const STORAGE_INTRO = "score_intro_seen_v1";
+const STORAGE_SOUND = "score_sounds_enabled_v1";
 
-  const upsert = (selector, createTag) => {
-    let el = head.querySelector(selector);
-    if (!el) {
-      el = createTag();
-      head.appendChild(el);
-    }
-    return el;
-  };
+const fmtMXN = (n) => {
+  const v = Number(n || 0);
+  return v.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+};
 
-  upsert('meta[name="theme-color"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("name", "theme-color");
-    m.setAttribute("content", "#E10600");
-    return m;
-  });
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  upsert('meta[name="description"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("name", "description");
-    m.setAttribute("content", "Mercancía oficial de SCORE International Off-Road Racing. Fabricado y operado por Único Uniformes (BAJATEX).");
-    return m;
-  });
-
-  upsert('meta[property="og:title"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("property", "og:title");
-    m.setAttribute("content", "SCORE STORE · Tienda Oficial");
-    return m;
-  });
-
-  upsert('meta[property="og:description"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("property", "og:description");
-    m.setAttribute("content", "Equípate con la mercancía oficial de las carreras off-road más icónicas.");
-    return m;
-  });
-
-  upsert('meta[property="og:image"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("property", "og:image");
-    m.setAttribute("content", `${location.origin}/assets/hero.webp`);
-    return m;
-  });
-  
-  // Facebook Domain Verification
-  upsert('meta[name="facebook-domain-verification"]', () => {
-    const m = document.createElement("meta");
-    m.setAttribute("name", "facebook-domain-verification");
-    m.setAttribute("content", "wuo7x5sxsjcer1t0epn1id5xgjp8su");
-    return m;
-  });
+function toast(msg, type="info"){
+  const t = $("#toast");
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._to);
+  toast._to = setTimeout(() => t.classList.remove("show"), 2400);
+  if(type === "ok") sfx("ok");
+  if(type === "warn") sfx("tap");
+  if(type === "err") sfx("err");
 }
-ensureMeta();
 
-/* ---------------------------
-3) Facebook Pixel (fallback)
---------------------------- */
-function ensureFBPixel() {
-  if (window.fbq) return;
-  const pid = PUBLIC.FB_PIXEL;
-  if (!pid) return;
-
-  /* Pixel loader oficial-style, pero con guard */
-  !(function (f, b, e, v, n, t, s) {
-    if (f.fbq) return;
-    n = (f.fbq = function () {
-      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-    });
-    if (!f._fbq) f._fbq = n;
-    n.push = n;
-    n.loaded = !0;
-    n.version = "2.0";
-    n.queue = [];
-    t = b.createElement(e);
-    t.async = !0;
-    t.src = v;
-    s = b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t, s);
-  })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-
-  window.fbq("init", pid);
-  window.fbq("track", "PageView");
+function loadCart(){
+  try{
+    const raw = localStorage.getItem(STORAGE_CART);
+    state.cart = raw ? JSON.parse(raw) : [];
+  } catch(e){
+    state.cart = [];
+  }
 }
-ensureFBPixel();
 
-/* ---------------------------
-4) Audio (WebAudio) — sutil, low volume
---------------------------- */
-const AudioFX = (() => {
-  let ctx = null;
-  let unlocked = false;
-  const V = 0.16; // volumen general bajo (<20%)
+function saveCart(){
+  try{ localStorage.setItem(STORAGE_CART, JSON.stringify(state.cart)); } catch(e){}
+}
 
-  function init() {
-    if (ctx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    ctx = new AC();
+function setSoundsEnabled(on){
+  state.sounds.enabled = !!on;
+  try{ localStorage.setItem(STORAGE_SOUND, on ? "1" : "0"); } catch(e){}
+}
+
+function loadSoundsEnabled(){
+  try{
+    const v = localStorage.getItem(STORAGE_SOUND);
+    if(v === null) return; // default true
+    state.sounds.enabled = v === "1";
+  } catch(e){}
+}
+
+/* =========================
+   SFX — WebAudio (no assets)
+========================= */
+let _audioCtx = null;
+
+function audioCtx(){
+  if(_audioCtx) return _audioCtx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  _audioCtx = new AC();
+  return _audioCtx;
+}
+
+function sfx(name){
+  if(!state.sounds.enabled) return;
+  const ctx = audioCtx();
+  if(!ctx) return;
+
+  // iOS/Android autoplay policy: resume on first gesture
+  if(ctx.state === "suspended"){ ctx.resume().catch(()=>{}); }
+
+  const now = ctx.currentTime;
+  const vol = state.sounds.volume;
+
+  // helpers
+  const gain = ctx.createGain();
+  gain.gain.value = 0.0001;
+  gain.connect(ctx.destination);
+
+  function env(a=0.005, d=0.08, peak=vol){
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peak, now + a);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + a + d);
   }
 
-  async function unlock() {
-    if (unlocked) return true;
-    init();
-    if (!ctx) return false;
-    try {
-      if (ctx.state === "suspended") await ctx.resume();
-      // ping silencioso
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      g.gain.value = 0.0001;
-      o.connect(g).connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.01);
-      unlocked = true;
-      return true;
-    } catch {
-      return false;
+  // noise
+  function noiseBurst(duration=0.08, hp=1400){
+    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){
+      data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
     }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = hp;
+    src.connect(filter);
+    filter.connect(gain);
+    src.start(now);
+    src.stop(now + duration);
   }
 
-  function tone({ freq = 440, dur = 0.06, type = "sine", gain = V * 0.25 } = {}) {
-    if (!ctx || !unlocked) return;
+  if(name === "whoosh"){
+    // soft whoosh: filtered noise + short envelope
+    env(0.01, 0.14, vol * 0.14);
+    noiseBurst(0.14, 800);
+    return;
+  }
+
+  if(name === "tap"){
+    // soft click: short sine
     const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.value = 0.0001;
-
-    o.connect(g).connect(ctx.destination); 
-    const t = ctx.currentTime; 
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.01); 
-    g.gain.exponentialRampToValueAtTime(0.0002, t + dur); 
-    o.start(t); 
-    o.stop(t + dur + 0.02); 
+    o.type = "sine";
+    o.frequency.setValueAtTime(520, now);
+    o.frequency.exponentialRampToValueAtTime(260, now + 0.06);
+    o.connect(gain);
+    env(0.004, 0.06, vol * 0.18);
+    o.start(now);
+    o.stop(now + 0.07);
+    return;
   }
 
-  function click() { tone({ freq: 520, dur: 0.05, type: "triangle", gain: V * 0.22 }); }
-  function whoosh() { tone({ freq: 180, dur: 0.09, type: "sawtooth", gain: V * 0.18 }); }
-  function paper() { tone({ freq: 320, dur: 0.07, type: "square", gain: V * 0.12 }); }
-  function ok() { tone({ freq: 660, dur: 0.07, type: "sine", gain: V * 0.22 }); }
-  function bad() { tone({ freq: 140, dur: 0.08, type: "sine", gain: V * 0.22 }); }
+  if(name === "paper"){
+    // paper/slide: tiny noise burst
+    env(0.01, 0.10, vol * 0.12);
+    noiseBurst(0.10, 1200);
+    return;
+  }
 
-  return { unlock, click, whoosh, paper, ok, bad };
-})();
+  if(name === "ok"){
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(660, now);
+    o.frequency.setValueAtTime(880, now + 0.06);
+    o.connect(gain);
+    env(0.004, 0.10, vol * 0.20);
+    o.start(now);
+    o.stop(now + 0.12);
+    return;
+  }
 
-["pointerdown", "touchstart", "mousedown", "keydown"].forEach((evt) => {
-  window.addEventListener(evt, () => AudioFX.unlock(), { once: true, passive: true });
-});
+  if(name === "err"){
+    const o = ctx.createOscillator();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(240, now);
+    o.frequency.exponentialRampToValueAtTime(120, now + 0.16);
+    o.connect(gain);
+    env(0.004, 0.18, vol * 0.18);
+    o.start(now);
+    o.stop(now + 0.18);
+    return;
+  }
 
-/* ---------------------------
-5) Toast
---------------------------- */
-function toast(msg, ms = 2200) {
-  const el = $("#toast");
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add("show");
-  setTimeout(() => el.classList.remove("show"), ms);
+  // default
+  env(0.005, 0.08, vol * 0.12);
+  noiseBurst(0.08, 1000);
 }
 
-/* ---------------------------
-6) Intro (Tipo A PRO)
---------------------------- */
-const Intro = (() => {
-  const el = $("#intro");
-  const fill = $("#introBarFill");
+/* =========================
+   INTRO
+========================= */
+async function runIntro(){
+  const intro = $("#intro");
+  if(!intro) return;
+
+  const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const seen = localStorage.getItem(STORAGE_INTRO) === "1";
+
+  // show once per device (unless user clears storage)
+  if(seen || prefersReduced){
+    intro.classList.remove("show");
+    return;
+  }
+
+  intro.classList.add("show");
+  intro.setAttribute("aria-hidden","false");
+
+  const bar = $("#introBarFill");
   const skip = $("#introSkip");
 
   let done = false;
 
-  function close() {
-    if (!el) return;
-    el.classList.remove("show");
-    el.setAttribute("aria-hidden", "true");
+  function closeIntro(){
+    if(done) return;
     done = true;
-    try { localStorage.setItem("score_intro_done", "1"); } catch {}
+    localStorage.setItem(STORAGE_INTRO,"1");
+    intro.classList.remove("show");
+    intro.setAttribute("aria-hidden","true");
+    sfx("paper");
   }
 
-  function run() {
-    if (!el || !fill) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const already = (() => {
-      try { return localStorage.getItem("score_intro_done") === "1"; } catch { return false; }
-    })();
-
-    if (already || reduced) { close(); return; } 
-    el.classList.add("show"); 
-    el.setAttribute("aria-hidden", "false"); 
-    const total = 1600; 
-    const start = performance.now(); 
-    const loop = (t) => { 
-      if (done) return; 
-      const p = clamp((t - start) / total, 0, 1); 
-      fill.style.width = `${Math.round(p * 100)}%`; 
-      if (p < 1) requestAnimationFrame(loop); 
-      else setTimeout(close, 220); 
-    }; 
-    requestAnimationFrame(loop); 
-    if (skip) { skip.addEventListener("click", () => { AudioFX.paper(); close(); }, { once: true }); } 
-    // click anywhere to skip (sutil) 
-    el.addEventListener("click", (e) => { 
-      if (e.target === el || e.target.classList.contains("introBg")) { AudioFX.paper(); close(); } 
-    }, { passive: true }); 
+  if(skip){
+    skip.addEventListener("click", () => closeIntro(), { once:true });
   }
 
-  return { run, close };
-})();
+  // animate progress
+  const total = 1700;
+  const start = performance.now();
+  (function tick(t){
+    if(done) return;
+    const p = Math.min(1, (t - start) / total);
+    if(bar) bar.style.width = `${Math.round(p*100)}%`;
+    if(p >= 1){
+      closeIntro();
+      return;
+    }
+    requestAnimationFrame(tick);
+  })(start);
 
-/* ---------------------------
-7) Legal Modal (card única) — dinámico
---------------------------- */
-const LEGAL_TEXT = {
+  // allow click background to skip
+  intro.addEventListener("click", (e) => {
+    // don't close if click on button
+    if(e.target && (e.target.closest && e.target.closest("#introSkip"))) return;
+    closeIntro();
+  });
+}
+
+/* =========================
+   CATALOG LOAD + RENDER
+========================= */
+async function fetchJSON(url){
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+function normalizeSectionId(id){
+  return String(id || "").trim();
+}
+
+function productMatchesFilter(p){
+  if(state.filter === "ALL") return true;
+  return normalizeSectionId(p.sectionId) === normalizeSectionId(state.filter);
+}
+
+function createEl(tag, cls){
+  const el = document.createElement(tag);
+  if(cls) el.className = cls;
+  return el;
+}
+
+function safeText(s){ return String(s ?? ""); }
+
+function validateImage(url){
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url + (url.includes("?") ? "&" : "?") + "v=" + Date.now(); // bypass stale
+  });
+}
+
+async function renderCatalog(){
+  const grid = $("#productsGrid");
+  if(!grid || !state.catalog) return;
+
+  grid.innerHTML = "";
+
+  // filter products
+  const products = (state.catalog.products || []).filter(productMatchesFilter);
+
+  // render with image validation; skip if missing
+  const tasks = products.map(async (p) => {
+    const imgOk = p.img ? await validateImage(p.img) : false;
+    if(!imgOk) return null;
+
+    const card = createEl("article","card");
+
+    const imgWrap = createEl("div","cardImg");
+    const img = createEl("img");
+    img.alt = safeText(p.name);
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.src = p.img;
+    imgWrap.appendChild(img);
+
+    const body = createEl("div","cardBody");
+
+    const title = createEl("div","cardTitle");
+    title.textContent = safeText(p.name);
+
+    const meta = createEl("div","cardMeta");
+    meta.textContent = safeText(p.subSection || "");
+
+    const price = createEl("div","cardPrice");
+    price.textContent = fmtMXN(p.baseMXN);
+
+    const controls = createEl("div","cardControls");
+
+    const sel = createEl("select");
+    const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["Unitalla"];
+    sizes.forEach(s => {
+      const opt = createEl("option");
+      opt.value = s;
+      opt.textContent = s;
+      sel.appendChild(opt);
+    });
+
+    const btn = createEl("button","btn primary");
+    btn.type = "button";
+    btn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+    btn.addEventListener("click", () => {
+      addToCart(p, sel.value);
+      sfx("tap");
+      toast("Agregado a tu pedido", "ok");
+      // soft bounce cart icon
+      const cartBtn = $("#cartBtn");
+      if(cartBtn){
+        cartBtn.animate(
+          [{ transform:"scale(1)" }, { transform:"scale(1.08)" }, { transform:"scale(1)" }],
+          { duration: 260, easing: "ease-out" }
+        );
+      }
+    });
+
+    controls.appendChild(sel);
+    controls.appendChild(btn);
+
+    body.appendChild(title);
+    body.appendChild(meta);
+    body.appendChild(price);
+    body.appendChild(controls);
+
+    card.appendChild(imgWrap);
+    card.appendChild(body);
+
+    return card;
+  });
+
+  const cards = (await Promise.all(tasks)).filter(Boolean);
+  if(!cards.length){
+    const empty = createEl("div");
+    empty.style.padding = "14px 0";
+    empty.style.fontWeight = "900";
+    empty.style.color = "rgba(15,15,16,.65)";
+    empty.textContent = "No hay productos disponibles en esta sección.";
+    grid.appendChild(empty);
+    return;
+  }
+
+  cards.forEach(c => grid.appendChild(c));
+}
+
+/* =========================
+   FILTERS
+========================= */
+function bindFilters(){
+  $$(".chip").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      $$(".chip").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      state.filter = btn.getAttribute("data-filter") || "ALL";
+      sfx("tap");
+      await renderCatalog();
+    });
+  });
+}
+
+/* =========================
+   CART
+========================= */
+function cartKey(p, size){
+  return `${p.id}__${size}`;
+}
+
+function addToCart(p, size){
+  const key = cartKey(p, size);
+  const idx = state.cart.findIndex(i => i.key === key);
+  if(idx >= 0){
+    state.cart[idx].qty += 1;
+  } else {
+    state.cart.push({
+      key,
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      sectionId: p.sectionId,
+      size,
+      price: Number(p.baseMXN || 0),
+      img: p.img || "",
+      qty: 1
+    });
+  }
+  saveCart();
+  updateCartUI();
+}
+
+function removeItem(key){
+  state.cart = state.cart.filter(i => i.key !== key);
+  saveCart();
+  updateCartUI();
+}
+
+function changeQty(key, delta){
+  const it = state.cart.find(i => i.key === key);
+  if(!it) return;
+  it.qty += delta;
+  if(it.qty <= 0){
+    removeItem(key);
+    return;
+  }
+  saveCart();
+  updateCartUI();
+}
+
+function cartSubtotal(){
+  return state.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+}
+
+function promoDiscount(subtotal){
+  if(!state.promoApplied) return 0;
+  const p = state.promoApplied;
+  if(p.type === "percent"){
+    return Math.round(subtotal * (p.value/100));
+  }
+  if(p.type === "fixed"){
+    return Math.min(subtotal, Number(p.value || 0));
+  }
+  return 0;
+}
+
+function cartTotal(){
+  const sub = cartSubtotal();
+  const disc = promoDiscount(sub);
+  const ship = Number(state.shipping.quote || 0);
+  return Math.max(0, sub - disc) + ship;
+}
+
+function updateCartCount(){
+  const count = state.cart.reduce((s,i)=> s + i.qty, 0);
+  const el = $("#cartCount");
+  if(el) el.textContent = String(count);
+}
+
+function updateCartUI(){
+  updateCartCount();
+
+  const items = $("#cartItems");
+  if(items){
+    items.innerHTML = "";
+    if(!state.cart.length){
+      const empty = createEl("div");
+      empty.style.padding = "14px 6px";
+      empty.style.fontWeight = "950";
+      empty.style.color = "rgba(255,255,255,.82)";
+      empty.textContent = "Tu pedido está vacío. Elige tu merch y vuelve aquí.";
+      items.appendChild(empty);
+    } else {
+      state.cart.forEach(it => {
+        const row = createEl("div","cartRow");
+
+        const thumb = createEl("div","cartThumb");
+        const img = createEl("img");
+        img.alt = safeText(it.name);
+        img.loading = "lazy";
+        img.src = it.img || "/assets/hero.webp";
+        thumb.appendChild(img);
+
+        const info = createEl("div","cartInfo");
+        const nm = createEl("div","name"); nm.textContent = safeText(it.name);
+        const meta = createEl("div","meta"); meta.textContent = `Talla: ${it.size}`;
+        const pr = createEl("div","price"); pr.textContent = fmtMXN(it.price);
+        info.appendChild(nm);
+        info.appendChild(meta);
+        info.appendChild(pr);
+
+        const qty = createEl("div","qty");
+        const minus = createEl("button","qtyBtn");
+        minus.type = "button";
+        minus.textContent = "−";
+        minus.addEventListener("click", () => { changeQty(it.key, -1); sfx("tap"); });
+
+        const num = createEl("div","qtyNum");
+        num.textContent = String(it.qty);
+
+        const plus = createEl("button","qtyBtn");
+        plus.type = "button";
+        plus.textContent = "+";
+        plus.addEventListener("click", () => { changeQty(it.key, +1); sfx("tap"); });
+
+        const rm = createEl("button","removeBtn");
+        rm.type = "button";
+        rm.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+        rm.addEventListener("click", () => { removeItem(it.key); sfx("err"); toast("Eliminado", "warn"); });
+
+        qty.appendChild(minus);
+        qty.appendChild(num);
+        qty.appendChild(plus);
+
+        row.appendChild(thumb);
+        row.appendChild(info);
+        row.appendChild(qty);
+        row.appendChild(rm);
+
+        items.appendChild(row);
+      });
+    }
+  }
+
+  const subEl = $("#cartSubtotal");
+  const shipEl = $("#cartShipping");
+  const totalEl = $("#cartTotal");
+  if(subEl) subEl.textContent = fmtMXN(cartSubtotal() - promoDiscount(cartSubtotal()));
+  if(shipEl) shipEl.textContent = fmtMXN(state.shipping.quote || 0);
+  if(totalEl) totalEl.textContent = fmtMXN(cartTotal());
+
+  // Update mini label
+  const mini = $("#miniShipLabel");
+  if(mini) mini.textContent = state.shipping.label || "";
+}
+
+function openCart(){
+  const d = $("#cartDrawer");
+  const b = $("#backdrop");
+  if(!d || !b) return;
+
+  d.classList.add("open");
+  d.setAttribute("aria-hidden","false");
+  b.classList.add("show");
+
+  sfx("whoosh");
+
+  // lock body scroll
+  document.body.style.overflow = "hidden";
+}
+
+function closeCart(){
+  const d = $("#cartDrawer");
+  const b = $("#backdrop");
+  if(!d || !b) return;
+
+  d.classList.remove("open");
+  d.setAttribute("aria-hidden","true");
+  b.classList.remove("show");
+
+  sfx("tap");
+
+  // unlock scroll
+  document.body.style.overflow = "";
+}
+
+function bindCart(){
+  const btn = $("#cartBtn");
+  if(btn) btn.addEventListener("click", () => openCart());
+
+  // close with Esc
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      if($("#legalModal")?.classList.contains("show")) closeLegal();
+      else if($("#aiChatModal")?.classList.contains("show")) toggleAiAssistant(false);
+      else closeCart();
+    }
+  });
+
+  // swipe right to close
+  const drawer = $("#cartDrawer");
+  if(drawer){
+    let x0 = null;
+    drawer.addEventListener("touchstart", (e) => {
+      if(!drawer.classList.contains("open")) return;
+      x0 = e.touches[0].clientX;
+    }, { passive:true });
+
+    drawer.addEventListener("touchmove", (e) => {
+      if(x0 === null) return;
+      const x = e.touches[0].clientX;
+      const dx = x - x0;
+      if(dx > 40){
+        closeCart();
+        x0 = null;
+      }
+    }, { passive:true });
+
+    drawer.addEventListener("touchend", () => { x0 = null; }, { passive:true });
+  }
+}
+
+/* =========================
+   PROMOS
+========================= */
+function findPromo(code){
+  if(!state.promos?.promos) return null;
+  const c = String(code || "").trim().toUpperCase();
+  return state.promos.promos.find(p => String(p.code).toUpperCase() === c) || null;
+}
+
+window.applyPromo = function applyPromo(){
+  const inp = $("#promoCode");
+  const code = String(inp?.value || "").trim();
+  if(!code){
+    state.promoApplied = null;
+    toast("Cupón vacío", "warn");
+    return;
+  }
+  const p = findPromo(code);
+  if(!p){
+    state.promoApplied = null;
+    toast("Cupón no válido", "err");
+    return;
+  }
+  state.promoApplied = p;
+  toast("Cupón aplicado", "ok");
+  sfx("ok");
+  updateCartUI();
+};
+
+/* =========================
+   SHIPPING — realtime quote
+   Fix crítico: no depende de SUPABASE_URL
+========================= */
+function shippingModeToCountry(mode){
+  if(mode === "us") return "US";
+  return "MX";
+}
+
+function getMiniZip(){
+  const z = $("#miniZip");
+  return String(z?.value || "").trim();
+}
+
+async function quoteShipping(country, zip){
+  if(!zip || zip.length < 4) throw new Error("Código postal inválido");
+
+  // build items
+  const items = state.cart.map(i => ({
+    id: i.id,
+    qty: i.qty,
+    price_mxn: i.price
+  }));
+
+  if(!items.length) throw new Error("Agrega productos para cotizar");
+
+  const body = {
+    country,
+    zip,
+    items
+  };
+
+  const r = await fetch("/api/quote", {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok || data.ok === false){
+    const msg = data?.detail || data?.error || `Error cotizando`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+window.quoteShippingUI = async function quoteShippingUI(){
+  try{
+    const country = $("#shipCountry")?.value || "MX";
+    const zip = String($("#shipZip")?.value || "").trim();
+    const box = $("#shipQuote");
+    const hint = $("#shipHint");
+
+    if(box) box.textContent = "Cotizando…";
+    if(hint) hint.textContent = "";
+
+    const res = await quoteShipping(country, zip);
+
+    const amount = Number(res.amount_mxn || 0);
+    const label = res.label || `Envío ${country}`;
+    if(box) box.textContent = `${label}: ${fmtMXN(amount)}`;
+
+    // Do not auto apply to cart totals (this is "marketing quote" section)
+    if(hint){
+      hint.textContent = "Tip: también puedes cotizar desde el carrito para aplicar al total.";
+    }
+
+    sfx("ok");
+  } catch(err){
+    toast(err.message || "Error cotizando", "err");
+    const box = $("#shipQuote");
+    if(box) box.textContent = "";
+  }
+};
+
+window.quoteShippingMini = async function quoteShippingMini(){
+  try{
+    const mode = $("#shippingMode")?.value || "pickup";
+    const z = getMiniZip();
+
+    if(mode === "pickup"){
+      state.shipping = { mode, zip: "", quote: 0, label: "Pickup confirmado (Tijuana)" };
+      updateCartUI();
+      toast("Pickup seleccionado", "ok");
+      return;
+    }
+
+    const country = shippingModeToCountry(mode);
+    const res = await quoteShipping(country, z);
+
+    state.shipping = {
+      mode,
+      zip: z,
+      quote: Number(res.amount_mxn || 0),
+      label: `${res.label || "Entrega"} · ${fmtMXN(res.amount_mxn || 0)}`
+    };
+
+    updateCartUI();
+    toast("Entrega aplicada al total", "ok");
+    sfx("ok");
+  } catch(err){
+    state.shipping.quote = 0;
+    state.shipping.label = "";
+    updateCartUI();
+    toast(err.message || "No se pudo cotizar", "err");
+  }
+};
+
+/* Auto-quote on zip change (debounced, no saturar) */
+let _qTimer = null;
+function bindRealtimeShipping(){
+  const mode = $("#shippingMode");
+  const zip = $("#miniZip");
+  if(!mode || !zip) return;
+
+  function schedule(){
+    clearTimeout(_qTimer);
+    _qTimer = setTimeout(async () => {
+      const m = mode.value;
+      if(m === "pickup") return;
+      const z = String(zip.value || "").trim();
+      if(z.length < 4) return;
+      try{
+        await window.quoteShippingMini();
+      } catch(e){}
+    }, 520);
+  }
+
+  mode.addEventListener("change", () => { sfx("tap"); schedule(); });
+  zip.addEventListener("input", schedule);
+}
+
+/* =========================
+   CHECKOUT
+========================= */
+window.checkout = async function checkout(){
+  try{
+    if(!state.cart.length){
+      toast("Tu pedido está vacío", "warn");
+      return;
+    }
+
+    const mode = $("#shippingMode")?.value || "pickup";
+    if(mode !== "pickup"){
+      const z = getMiniZip();
+      if(!z || z.length < 4){
+        toast("Escribe tu CP para entrega", "warn");
+        return;
+      }
+      // must have quote applied
+      if(!state.shipping.quote){
+        toast("Primero cotiza la entrega", "warn");
+        return;
+      }
+    }
+
+    const payload = {
+      items: state.cart.map(i => ({
+        id: i.id,
+        name: i.name,
+        sku: i.sku,
+        size: i.size,
+        qty: i.qty,
+        price_mxn: i.price
+      })),
+      promo: state.promoApplied?.code || null,
+      shipping: {
+        mode,
+        country: (mode === "us") ? "US" : "MX",
+        zip: (mode === "pickup") ? "" : getMiniZip(),
+        amount_mxn: Number(state.shipping.quote || 0)
+      }
+    };
+
+    toast("Preparando pago seguro…");
+    sfx("whoosh");
+
+    const r = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok || data.ok === false){
+      throw new Error(data?.detail || data?.error || "No se pudo iniciar el pago");
+    }
+
+    if(data.url){
+      window.location.href = data.url;
+      return;
+    }
+    throw new Error("Stripe URL no disponible");
+  } catch(err){
+    toast(err.message || "Error checkout", "err");
+  }
+};
+
+/* =========================
+   LEGAL MODAL — single reusable card
+========================= */
+const LEGAL_CONTENT = {
   privacy: {
     title: "Aviso de Privacidad",
+    icon: `<i class="fa-solid fa-shield-halved"></i>`,
     html: `
-      <p><b>${PUBLIC.BRAND.legalEntity}</b>, con nombre comercial <b>${PUBLIC.BRAND.maker}</b>, es responsable del uso y protección de los datos personales recabados a través de SCORE Store.</p>
-      <h3>Finalidades</h3> <ul> <li>Procesar pedidos y pagos.</li> <li>Gestionar envíos y entregas.</li> <li>Emitir facturación electrónica (CFDI).</li> <li>Atención al cliente y seguimiento postventa.</li> <li>Cumplimiento de obligaciones legales y fiscales.</li> </ul> <h3>Derechos ARCO</h3> <p>El titular de los datos puede ejercer sus Derechos ARCO enviando una solicitud al correo:</p> <div class="legalBox"><p>📧 <b>${PUBLIC.BRAND.email}</b></p></div> <p>${PUBLIC.BRAND.legalEntity} se reserva el derecho de modificar el presente aviso para cumplir con actualizaciones legales o mejoras en sus procesos internos.</p> 
-    ` 
+      <h4>AVISO DE PRIVACIDAD</h4>
+      <p><b>BAJATEX, S. de R.L. de C.V.</b>, con nombre comercial <b>Único Uniformes</b>, es responsable del uso y protección de los datos personales recabados a través de <b>SCORE Store</b>.</p>
+      <p>Los datos personales se utilizan exclusivamente para:</p>
+      <ul>
+        <li>Procesar pedidos y pagos.</li>
+        <li>Gestionar envíos y entregas.</li>
+        <li>Emitir facturación electrónica.</li>
+        <li>Atención al cliente y seguimiento postventa.</li>
+        <li>Cumplimiento de obligaciones legales y fiscales.</li>
+      </ul>
+      <p>No compartimos datos personales con terceros ajenos a la operación comercial.</p>
+      <p>Derechos ARCO: <b>ventas.unicotexti@gmail.com</b></p>
+      <p>BAJATEX puede modificar este aviso para cumplir actualizaciones legales o mejoras internas.</p>
+    `
   },
   terms: {
     title: "Términos y Condiciones",
+    icon: `<i class="fa-solid fa-file-contract"></i>`,
     html: `
-      <p><b>SCORE STORE · TIENDA OFICIAL</b></p>
-      <p>Mercancía oficial de SCORE International Off-Road Racing.</p>
-      <p>Fabricado, operado y comercializado por <b>${PUBLIC.BRAND.maker}</b>, patrocinador oficial.</p>
-      <h3>Pagos y seguridad</h3> <p>Los pagos se procesan a través de <b>Stripe</b>, plataforma internacional con altos estándares de seguridad. SCORE Store no almacena información bancaria sensible; los datos de pago son cifrados y gestionados directamente por Stripe.</p> <h3>Envíos</h3> <p>Realizamos envíos dentro de México y hacia Estados Unidos. Los envíos se gestionan mediante <b>Envia.com</b>, plataforma logística que conecta con múltiples paqueterías nacionales e internacionales. Los tiempos de entrega son estimados y pueden variar según destino y condiciones logísticas.</p> <p>Pickup disponible en Tijuana, previa confirmación.</p> <h3>Cambios y devoluciones</h3> <p>Se aceptan cambios o devoluciones dentro de los 30 días naturales posteriores a la recepción del pedido, siempre que el producto:</p> <ul> <li>No haya sido utilizado ni lavado.</li> <li>Conserve etiquetas y empaques originales.</li> <li>Se encuentre en perfectas condiciones.</li> </ul> <p>No se aceptan cambios ni devoluciones en:</p> <ul> <li>Productos personalizados.</li> <li>Ediciones especiales fabricadas bajo pedido.</li> <li>Productos adquiridos con descuentos finales o en liquidación.</li> </ul> <p>Para iniciar un proceso, comunícate vía correo o WhatsApp.</p> <h3>Facturación (CFDI)</h3> <p>La factura debe solicitarse dentro del mismo mes fiscal de la compra. Enviar Constancia de Situación Fiscal y número de pedido a:</p> <div class="legalBox"><p>📧 <b>${PUBLIC.BRAND.email}</b></p></div> 
-    ` 
+      <h4>USO DEL SITIO</h4>
+      <p>El uso de SCORE Store está limitado a fines lícitos. Queda prohibido el uso para actividades fraudulentas, ilegales o no autorizadas.</p>
+
+      <h4>PAGOS Y SEGURIDAD</h4>
+      <p>Los pagos se procesan a través de <b>Stripe</b>. SCORE Store no almacena información bancaria sensible. Los datos se cifran y gestionan directamente por Stripe.</p>
+
+      <h4>ENVÍOS</h4>
+      <p>Envíos dentro de México y hacia Estados Unidos. Se gestionan mediante <b>Envia.com</b>.</p>
+      <p>Los tiempos de entrega son estimados y pueden variar por destino, disponibilidad y condiciones externas.</p>
+      <p>Pickup en Tijuana disponible previa confirmación.</p>
+
+      <h4>CAMBIOS Y DEVOLUCIONES</h4>
+      <p>Se aceptan cambios o devoluciones dentro de <b>30 días naturales</b> posteriores a la recepción.</p>
+      <ul>
+        <li>No utilizado ni lavado.</li>
+        <li>Conservar etiquetas y empaques.</li>
+        <li>En perfectas condiciones.</li>
+      </ul>
+      <p>No aplica para productos personalizados, ediciones especiales bajo pedido, o liquidación/descuento final.</p>
+      <p>Para iniciar: correo o WhatsApp.</p>
+
+      <h4>FACTURACIÓN</h4>
+      <p>La factura (CFDI) debe solicitarse dentro del mismo mes fiscal de la compra. Enviar CSF y número de pedido a: <b>ventas.unicotexti@gmail.com</b></p>
+    `
   },
   legal: {
     title: "Información Legal y Comercial",
+    icon: `<i class="fa-solid fa-circle-info"></i>`,
     html: `
-      <p><b>INFORMACIÓN COMERCIAL</b></p>
-      <p>Razón social: ${PUBLIC.BRAND.legalEntity}</p>
-      <p>Nombre comercial: ${PUBLIC.BRAND.maker}</p>
-      <p>Domicilio comercial: ${PUBLIC.BRAND.address}</p>
-      <p>Correo: ${PUBLIC.BRAND.email}</p>
-      <p>WhatsApp: ${PUBLIC.BRAND.whatsapp}</p>
-      <h3>Sobre SCORE International</h3> <p>SCORE International es la organización líder a nivel mundial en competencias off-road de larga distancia (Baja 1000, Baja 500, Baja 400, San Felipe 250). Marcas, logotipos y nombres de eventos son propiedad de SCORE International, LLC y se usan con autorización para comercializar mercancía oficial.</p> <h3>Propiedad intelectual</h3> <p>Todo el contenido del sitio (textos, imágenes, diseños, logotipos, marcas) está protegido por leyes de propiedad intelectual. Queda prohibida su reproducción o uso sin autorización expresa de BAJATEX o SCORE International, según corresponda.</p> <h3>Uso del sitio</h3> <p>El uso de SCORE Store está limitado a fines lícitos. Queda estrictamente prohibido el uso del sitio para actividades fraudulentas o ilegales.</p> 
-    ` 
+      <h4>SCORE STORE · TIENDA OFICIAL</h4>
+      <p>Mercancía oficial de SCORE International Off-Road Racing.</p>
+      <p>Fabricado, operado y comercializado por <b>Único Uniformes</b>, patrocinador oficial.</p>
+
+      <h4>INFORMACIÓN COMERCIAL</h4>
+      <p><b>Razón social:</b> BAJATEX, S. de R.L. de C.V.<br/>
+      <b>Nombre comercial:</b> Único Uniformes</p>
+      <p><b>Domicilio:</b><br/>
+      Palermo 6106 Interior JK,<br/>
+      Colonia Anexa Roma,<br/>
+      C.P. 22614,<br/>
+      Tijuana, Baja California, México.</p>
+
+      <p><b>Correo:</b> ventas.unicotexti@gmail.com<br/>
+      <b>WhatsApp:</b> +52 664 236 8701</p>
+
+      <h4>SOBRE SCORE INTERNATIONAL</h4>
+      <p>SCORE International es líder mundial en competencias off-road de larga distancia y creadora de eventos como Baja 1000, Baja 500, Baja 400 y San Felipe 250.</p>
+      <p>Marcas y logotipos son propiedad de SCORE International, LLC y se usan con autorización para mercancía oficial.</p>
+
+      <h4>PROPIEDAD INTELECTUAL</h4>
+      <p>Contenido protegido por leyes de propiedad intelectual. Prohibida reproducción total o parcial sin autorización expresa.</p>
+    `
   },
   contact: {
     title: "Contacto",
-    html: `<div class="legalBox"> <p><b>${PUBLIC.BRAND.maker}</b><br> 📍 ${PUBLIC.BRAND.address}</p> </div> <div class="legalBox"> <p>📧 <b>${PUBLIC.BRAND.email}</b><br> 💬 <b>${PUBLIC.BRAND.whatsapp}</b></p> </div> <p>Para facturación: envía tu Constancia de Situación Fiscal + número de pedido dentro del mes fiscal.</p>` 
+    icon: `<i class="fa-solid fa-headset"></i>`,
+    html: `
+      <h4>ATENCIÓN AL CLIENTE</h4>
+      <p><b>WhatsApp:</b> +52 664 236 8701</p>
+      <p><b>Correo:</b> ventas.unicotexti@gmail.com</p>
+      <p><b>Dirección:</b><br/>
+      Palermo 6106 Interior JK,<br/>
+      Colonia Anexa Roma,<br/>
+      C.P. 22614,<br/>
+      Tijuana, Baja California, México.</p>
+
+      <h4>HORARIO</h4>
+      <p>Lun–Vie: 9:00–18:00 (hora local)</p>
+    `
   }
 };
 
-window.openLegal = function openLegal(key) {
-  const overlay = $("#legalOverlay");
-  const card = $("#legalCard");
+function openLegal(key){
+  const m = $("#legalModal");
   const title = $("#legalTitle");
   const body = $("#legalBody");
-  if (!overlay || !card || !title || !body) return;
+  if(!m || !title || !body) return;
 
-  const data = LEGAL_TEXT[key] || LEGAL_TEXT.legal;
+  const entry = LEGAL_CONTENT[key] || LEGAL_CONTENT.legal;
+  title.textContent = entry.title;
 
-  AudioFX.paper();
+  // transition content (fade-out / fade-in)
+  body.animate([{opacity:1},{opacity:0}], {duration:120, easing:"ease-out"})
+    .onfinish = () => {
+      body.innerHTML = entry.html;
+      body.scrollTop = 0;
+      body.animate([{opacity:0},{opacity:1}], {duration:160, easing:"ease-out"});
+    };
 
-  // animación cambio sección (fade-out/in texto)
-  body.style.opacity = "0";
+  m.classList.remove("closing");
+  m.classList.add("show");
+  m.setAttribute("aria-hidden","false");
+
+  sfx("paper");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLegal(){
+  const m = $("#legalModal");
+  if(!m) return;
+
+  m.classList.add("closing");
+  sfx("tap");
+
   setTimeout(() => {
-    title.textContent = data.title;
-    body.innerHTML = data.html;
-    body.style.opacity = "1";
-  }, 90);
-
-  overlay.classList.add("show");
-  overlay.setAttribute("aria-hidden", "false");
-  card.classList.remove("closing");
-
-  // focus accesible
-  setTimeout(() => {
-    const btn = $(".legalClose", card);
-    btn && btn.focus && btn.focus();
-  }, 60);
-};
-
-window.closeLegal = function closeLegal() {
-  const overlay = $("#legalOverlay");
-  const card = $("#legalCard");
-  if (!overlay || !card) return;
-
-  AudioFX.paper();
-  card.classList.add("closing");
-  setTimeout(() => {
-    overlay.classList.remove("show");
-    overlay.setAttribute("aria-hidden", "true");
-    card.classList.remove("closing");
-  }, 170);
-};
-
-/* ---------------------------
-8) Catalog + Filters
---------------------------- */
-let CATALOG = null;
-let PRODUCTS = [];
-let FILTER = "ALL";
-
-const productsGrid = $("#productsGrid");
-const catalogEmpty = $("#catalogEmpty");
-
-async function fetchJSON(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+    m.classList.remove("show","closing");
+    m.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+  }, 180);
 }
 
-/** Verifica si una imagen carga (sin HEAD) */
-function imageExists(url, timeoutMs = 2200) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    let done = false;
-
-    const finish = (ok) => { if (done) return; done = true; img.onload = null; img.onerror = null; resolve(ok); }; 
-    const t = setTimeout(() => finish(false), timeoutMs); 
-    img.onload = () => { clearTimeout(t); finish(true); }; 
-    img.onerror = () => { clearTimeout(t); finish(false); }; 
-    // bust cache para detectar 404 rápido en algunos CDNs 
-    img.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`; 
-  });
-}
-
-function sectionFromId(id) {
-  if (!CATALOG?.sections) return null;
-  return CATALOG.sections.find(s => s.id === id) || null;
-}
-
-function productCardHTML(p) {
-  const sec = sectionFromId(p.sectionId);
-  const badge = sec?.badge || "OFICIAL";
-  const title = p.name || "Producto";
-  const price = moneyMXN(p.baseMXN || 0);
-
-  const sizes = (p.sizes || []).map(sz => `<option value="${sz}">${sz}</option>`).join("");
-
-  return `
-    <article class="card" data-id="${p.id}" data-filter="${p.sectionId}"> 
-      <div class="cardImg"> <img loading="lazy" decoding="async" src="${p.img}" alt="${title}"> </div> 
-      <div class="cardBody"> 
-        <div class="cardTitle">${title}</div> 
-        <div class="cardMeta"> <span class="badge"><i class="fa-solid fa-tag"></i> ${badge}</span> ${p.subSection ? ` · ${p.subSection}`: ""} </div> 
-        <div class="cardPrice">${price}</div> 
-        <div class="cardControls"> 
-          <select class="sizeSelect" aria-label="Talla"> ${(p.sizes && p.sizes.length) ? sizes : `<option value="Unitalla">Unitalla</option>`} </select> 
-          <button class="btn primary addBtn" type="button"><i class="fa-solid fa-plus"></i> Agregar</button> 
-        </div> 
-      </div> 
-    </article>
-  `;
-}
-
-async function renderCatalog() {
-  if (!productsGrid) return;
-  productsGrid.innerHTML = "";
-  catalogEmpty && (catalogEmpty.hidden = false);
-
-  // filtro
-  const list = (FILTER === "ALL")
-  ? PRODUCTS
-  : PRODUCTS.filter(p => (p.sectionId || "").toUpperCase() === FILTER);
-
-  // SIN cuadros vacíos: render solo los que pasan imagenExists
-  const fragments = [];
-  for (const p of list) {
-    const ok = await imageExists(p.img);
-    if (!ok) continue;
-    fragments.push(productCardHTML(p));
-  }
-
-  productsGrid.innerHTML = fragments.join("");
-
-  catalogEmpty && (catalogEmpty.hidden = true);
-
-  // listeners add-to-cart
-  $$(".addBtn", productsGrid).forEach(btn => {
-    btn.addEventListener("click", () => {
-      const card = btn.closest(".card");
-      if (!card) return;
-      const id = card.getAttribute("data-id");
-      const size = $(".sizeSelect", card)?.value || "Unitalla";
-      addToCart(id, size);
-      AudioFX.ok();
-      toast("Agregado al carrito ✅");
-      try { window.fbq && window.fbq("track", "AddToCart"); } catch {}
+function bindLegal(){
+  $$(".jsLegalLink").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      const key = el.getAttribute("data-legal") || "legal";
+      openLegal(key);
     });
   });
+
+  const closeBtn = $("#legalClose");
+  const backdrop = $("#legalBackdrop");
+  if(closeBtn) closeBtn.addEventListener("click", closeLegal);
+  if(backdrop) backdrop.addEventListener("click", closeLegal);
 }
 
-function initFilters() {
-  $$(".chip").forEach((chip) => {
-    chip.addEventListener("click", async () => {
-      $$(".chip").forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-
-      FILTER = chip.dataset.filter || "ALL"; 
-      AudioFX.click(); 
-      await renderCatalog(); 
-    }); 
-  });
-}
-
-/* ---------------------------
-9) Cart (localStorage)
---------------------------- */
-const CART_KEY = "score_cart_v1";
-const cartBtn = $("#cartBtn");
-const cartDrawer = $("#cartDrawer");
-const backdrop = $("#backdrop");
-const cartItems = $("#cartItems");
-const cartCount = $("#cartCount");
-const cartSubtotal = $("#cartSubtotal");
-const cartShipping = $("#cartShipping");
-const cartTotal = $("#cartTotal");
-const miniZip = $("#miniZip");
-const shippingMode = $("#shippingMode");
-const miniShipLabel = $("#miniShipLabel");
-const promoCode = $("#promoCode");
-
-let CART = [];
-let SHIPPING = { mode: "pickup", zip: "", amount: 0, label: "Pickup (Tijuana)" };
-let PROMO = { code: "", off: 0 };
-
-function loadCart() {
-  const raw = (() => { try { return localStorage.getItem(CART_KEY); } catch { return null; } })();
-  const data = raw ? safeJSONParse(raw, null) : null;
-  if (data && Array.isArray(data.items)) {
-    CART = data.items;
-    SHIPPING = data.shipping || SHIPPING;
-    PROMO = data.promo || PROMO;
-  }
-  syncCartUI();
-}
-
-function saveCart() {
-  try {
-    localStorage.setItem(CART_KEY, JSON.stringify({ items: CART, shipping: SHIPPING, promo: PROMO }));
-  } catch {}
-}
-
-function findProduct(id) {
-  return PRODUCTS.find(p => p.id === id) || null;
-}
-
-function addToCart(id, size) {
-  const p = findProduct(id);
-  if (!p) return;
-
-  const key = `${id}__${size}`;
-  const existing = CART.find(i => i.key === key);
-  if (existing) existing.qty += 1;
-  else CART.push({ key, id, size, qty: 1 });
-
-  saveCart();
-  syncCartUI();
-}
-
-function incItem(key) {
-  const it = CART.find(i => i.key === key);
-  if (!it) return;
-  it.qty += 1;
-  saveCart();
-  syncCartUI();
-}
-function decItem(key) {
-  const it = CART.find(i => i.key === key);
-  if (!it) return;
-  it.qty -= 1;
-  if (it.qty <= 0) CART = CART.filter(i => i.key !== key);
-  saveCart();
-  syncCartUI();
-}
-function removeItem(key) {
-  CART = CART.filter(i => i.key !== key);
-  saveCart();
-  syncCartUI();
-}
-
-function calcSubtotal() {
-  let sum = 0;
-  for (const it of CART) {
-    const p = findProduct(it.id);
-    if (!p) continue;
-    sum += (p.baseMXN || 0) * (it.qty || 1);
-  }
-  return sum;
-}
-
-function applyPromoInternal(code) {
-  const c = (code || "").trim().toUpperCase();
-  // Si tienes /data/promos.json, aquí se puede cargar y validar.
-  // Por ahora: ejemplo SCORE25 => 10% (ajústalo a lo real)
-  if (!c) { PROMO = { code: "", off: 0 }; return; }
-
-  if (c === "SCORE25") {
-    PROMO = { code: c, off: 0.10 };
-  } else {
-    PROMO = { code: c, off: 0 };
-  }
-}
-
-function calcDiscount(subtotal) {
-  if (!PROMO?.off) return 0;
-  return Math.round(subtotal * PROMO.off);
-}
-
-function syncCartUI() {
-  if (cartCount) cartCount.textContent = String(CART.reduce((a, b) => a + (b.qty || 0), 0));
-
-  if (!cartItems) return;
-
-  if (!CART.length) {
-    cartItems.innerHTML = `<div style="opacity:.92;font-weight:900;line-height:1.35"> Tu carrito está vacío.<br> <span style="opacity:.78;font-weight:800">Agrega tu merch oficial y armamos tu envío al instante.</span> </div>`;
-  } else {
-    cartItems.innerHTML = CART.map((it) => {
-      const p = findProduct(it.id);
-      if (!p) return "";
-      const price = moneyMXN((p.baseMXN || 0) * (it.qty || 1));
-      const meta = `Talla: ${it.size} · ${moneyMXN(p.baseMXN || 0)}`;
-      const img = p.img || "/assets/hero.webp";
-      return `<div class="cartRow" data-key="${it.key}"> <div class="cartLeft"> <div class="cartThumb"><img src="${img}" alt=""></div> <div class="cartInfo"> <div class="name">${p.name || "Producto"}</div> <div class="meta">${meta}</div> </div> </div> <div class="cartRight"> <button class="qtyBtn" data-act="dec" aria-label="menos">−</button> <div class="qtyVal">${it.qty}</div> <button class="qtyBtn" data-act="inc" aria-label="más">+</button> <button class="removeBtn" data-act="rm" aria-label="eliminar">✕</button> </div> </div>`;
-    }).join("");
-
-    $$(".cartRow", cartItems).forEach(row => { 
-      const key = row.getAttribute("data-key"); 
-      $$(".qtyBtn,.removeBtn", row).forEach(btn => { 
-        btn.addEventListener("click", () => { 
-          const act = btn.getAttribute("data-act"); 
-          AudioFX.click(); 
-          if (act === "inc") incItem(key); 
-          if (act === "dec") decItem(key); 
-          if (act === "rm") removeItem(key); 
-        }); 
-      }); 
-    }); 
-  }
-
-  // Totales
-  const sub = calcSubtotal();
-  const disc = calcDiscount(sub);
-  const ship = SHIPPING?.amount || 0;
-  const total = Math.max(0, sub - disc + ship);
-
-  cartSubtotal && (cartSubtotal.textContent = moneyMXN(sub - disc));
-  cartShipping && (cartShipping.textContent = moneyMXN(ship));
-  cartTotal && (cartTotal.textContent = moneyMXN(total));
-
-  // Persist UI fields
-  if (shippingMode) shippingMode.value = SHIPPING.mode || "pickup";
-  if (miniZip) miniZip.value = SHIPPING.zip || "";
-  if (miniShipLabel) miniShipLabel.textContent = SHIPPING.label || "";
-  if (promoCode) promoCode.value = PROMO.code || "";
-}
-
-/* Drawer open/close */
-window.openCart = function openCart() {
-  if (!cartDrawer || !backdrop) return;
-  cartDrawer.classList.add("open");
-  cartDrawer.setAttribute("aria-hidden", "false");
-  backdrop.classList.add("show");
-  AudioFX.whoosh();
-  try { window.fbq && window.fbq("track", "ViewContent"); } catch {}
-};
-window.closeCart = function closeCart() {
-  if (!cartDrawer || !backdrop) return;
-  cartDrawer.classList.remove("open");
-  cartDrawer.setAttribute("aria-hidden", "true");
-  backdrop.classList.remove("show");
-  AudioFX.click();
-};
-
-if (cartBtn) cartBtn.addEventListener("click", () => window.openCart());
-if (backdrop) backdrop.addEventListener("click", () => window.closeCart());
-
-/* Swipe to close (mobile) */
-(function enableSwipeClose() {
-  if (!cartDrawer) return;
-  let startX = 0;
-  let currentX = 0;
-  let dragging = false;
-
-  cartDrawer.addEventListener("touchstart", (e) => {
-    if (!cartDrawer.classList.contains("open")) return;
-    const t = e.touches[0];
-    startX = t.clientX;
-    currentX = startX;
-    dragging = true;
-  }, { passive: true });
-
-  cartDrawer.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    const t = e.touches[0];
-    currentX = t.clientX;
-  }, { passive: true });
-
-  cartDrawer.addEventListener("touchend", () => {
-    if (!dragging) return;
-    dragging = false;
-    const dx = currentX - startX;
-    if (dx > 80) window.closeCart();
-  }, { passive: true });
-})();
-
-/* Promo */
-window.applyPromo = function applyPromo() {
-  const code = promoCode ? promoCode.value : "";
-  applyPromoInternal(code);
-  saveCart();
-  syncCartUI();
-  AudioFX.ok();
-  toast(PROMO.off ? "Cupón aplicado ✅" : "Cupón no válido");
-};
-
-/* ---------------------------
-10) Shipping Quote (Real-time)
---------------------------- */
-async function quoteShipping({ mode, zip, country }) {
-  // Pickup: no cotiza
-  if (mode === "pickup") {
-    return { ok: true, amount: 0, label: "Pickup (Tijuana)" };
-  }
-
-  // si no hay zip: no cotiza
-  const z = (zip || "").trim();
-  if (!z || z.length < 4) {
-    return { ok: false, error: "Ingresa un código postal válido." };
-  }
-
-  const payload = {
-    country: country || (mode === "us" ? "US" : "MX"),
-    zip: z,
-    items: CART.map(it => {
-      const p = findProduct(it.id);
-      return {
-        id: it.id,
-        sku: p?.sku || it.id,
-        qty: it.qty || 1
-      };
-    })
-  };
-
-  try {
-    const res = await fetch("/.netlify/functions/quote_shipping", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json().catch(() => ({})); 
-    if (!res.ok || !data?.ok) { 
-      return { ok: false, error: data?.error || `No se pudo cotizar (HTTP ${res.status})`, detail: data?.detail }; 
-    } 
-    return { ok: true, amount: Number(data.amount || 0), label: data.label || "Envío estimado" }; 
-
-  } catch (e) {
-    return { ok: false, error: "Error de conexión cotizando envío.", detail: String(e?.message || e) };
-  }
-}
-
-function setShippingState(next) {
-  SHIPPING = { ...SHIPPING, ...next };
-  saveCart();
-  syncCartUI();
-}
-
-/* UI section quote */
-window.quoteShippingUI = async function quoteShippingUI() {
-  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
-  const zip = ($("#shipZip")?.value || "").trim();
-  const out = $("#shipQuote");
-
-  AudioFX.click();
-  if (out) out.textContent = "Cotizando…";
-
-  const mode = country === "US" ? "us" : "mx";
-  const r = await quoteShipping({ mode, zip, country });
-
-  if (!r.ok) {
-    AudioFX.bad();
-    if (out) out.textContent = r.detail ? `${r.error} (${r.detail})` : r.error;
-    return;
-  }
-
-  AudioFX.ok();
-  if (out) out.textContent = `${r.label}: ${moneyMXN(r.amount)}`;
-  toast("Envío calculado ✅");
-
-  // Solo lo aplicamos al carrito si hay items (para evitar confusión)
-  if (CART.length) {
-    setShippingState({ mode, zip, amount: r.amount, label: `${r.label} · ${moneyMXN(r.amount)}` });
-  }
-};
-
-/* Mini quote in cart (realtime) */
-window.quoteShippingMini = async function quoteShippingMini() {
-  const mode = (shippingMode?.value || "pickup");
-  const zip = (miniZip?.value || "").trim();
-  AudioFX.click();
-
-  if (miniShipLabel) miniShipLabel.textContent = "Cotizando…";
-
-  const r = await quoteShipping({ mode, zip, country: mode === "us" ? "US" : "MX" });
-
-  if (!r.ok) {
-    AudioFX.bad();
-    if (miniShipLabel) miniShipLabel.textContent = r.detail ? `${r.error} (${r.detail})` : r.error;
-    setShippingState({ mode, zip, amount: 0, label: "Envío pendiente" });
-    return;
-  }
-
-  AudioFX.ok();
-  setShippingState({ mode, zip, amount: r.amount, label: `${r.label} · ${moneyMXN(r.amount)}` });
-  if (miniShipLabel) miniShipLabel.textContent = SHIPPING.label;
-};
-
-const quoteMiniDebounced = debounce(() => {
-  const mode = (shippingMode?.value || "pickup");
-  const zip = (miniZip?.value || "").trim();
-  if (mode === "pickup") {
-    setShippingState({ mode, zip: "", amount: 0, label: "Pickup (Tijuana)" });
-    if (miniShipLabel) miniShipLabel.textContent = "Pickup (Tijuana)";
-    return;
-  }
-  if (zip.length >= 4) window.quoteShippingMini();
-}, 520);
-
-if (shippingMode) shippingMode.addEventListener("change", () => {
-  AudioFX.click();
-  quoteMiniDebounced();
-});
-if (miniZip) miniZip.addEventListener("input", quoteMiniDebounced);
-
-/* ---------------------------
-11) Checkout (server-side)
---------------------------- */
-window.checkout = async function checkout() {
-  if (!CART.length) {
-    AudioFX.bad();
-    toast("Tu carrito está vacío.");
-    return;
-  }
-
-  AudioFX.click();
-  toast("Preparando pago…");
-
-  const subtotal = calcSubtotal();
-  const discount = calcDiscount(subtotal);
-
-  const payload = {
-    currency: "MXN",
-    items: CART.map(it => {
-      const p = findProduct(it.id);
-      return {
-        id: it.id,
-        sku: p?.sku || it.id,
-        name: p?.name || "Producto",
-        qty: it.qty || 1,
-        unitAmount: Number(p?.baseMXN || 0),
-        size: it.size || "Unitalla",
-        img: p?.img || ""
-      };
-    }),
-    shipping: SHIPPING,
-    promo: PROMO,
-    totals: {
-      subtotal,
-      discount,
-      shipping: SHIPPING.amount || 0
-    },
-    // datos comerciales (Único OS)
-    merchant: {
-      maker: PUBLIC.BRAND.maker,
-      legalEntity: PUBLIC.BRAND.legalEntity,
-      email: PUBLIC.BRAND.email
-    }
-  };
-
-  try {
-    const res = await fetch("/.netlify/functions/create_checkout", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok || !data?.ok) {
-      AudioFX.bad();
-      toast(data?.error || `No se pudo iniciar checkout (HTTP ${res.status})`);
-      return;
-    }
-
-    // Redirige a Stripe Checkout (URL creada server-side)
-    if (data?.url) {
-      try { window.fbq && window.fbq("track", "InitiateCheckout"); } catch {}
-      location.href = data.url;
-      return;
-    }
-
-    AudioFX.bad();
-    toast("Checkout sin URL. Revisa create_checkout.");
-  } catch (e) {
-    AudioFX.bad();
-    toast("Error de conexión preparando el pago.");
-  }
-};
-
-/* ---------------------------
-   12) AI Assistant (SCORE AI) — robusto con fallback local
---------------------------- */
-const AI = (() => {
+/* =========================
+   AI — Gemini endpoint + fallback
+========================= */
+window.toggleAiAssistant = function toggleAiAssistant(force){
   const modal = $("#aiChatModal");
-  const body = $("#aiMessages");
-  const input = $("#aiInput");
+  if(!modal) return;
 
-  function addMsg(who, text) {
-    if (!body) return;
-    const div = document.createElement("div");
-    div.className = "ai-msg";
-    div.innerHTML = `<div class="who">${who}:</div><div class="text">${text}</div>`;
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-  }
-
-  function normalize(s) {
-    return (s || "").toLowerCase().trim();
-  }
-
-  function fallbackAnswer(q) {
-    const t = normalize(q);
-
-    // reglas rápidas
-    if (t.includes("talla") || t.includes("tallas")) {
-      return `Manejamos tallas: S, M, L, XL, 2XL (según producto). En cada card eliges tu talla y lo agregas al carrito. Si me dices el producto + tu altura/peso te recomiendo talla.`;
+  const on = (typeof force === "boolean") ? force : !modal.classList.contains("show");
+  if(on){
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden","false");
+    sfx("paper");
+    // greet once
+    if(!toggleAiAssistant._greeted){
+      pushAiMsg("bot", "Estoy listo. Dime producto + talla + CP y te ayudo con tallas, entrega y compra. 🏁");
+      toggleAiAssistant._greeted = true;
     }
-    if (t.includes("envío") || t.includes("envio") || t.includes("enviar") || t.includes("shipping")) {
-      return `Envíos a México y USA por Envia.com. En el carrito puedes cotizar con tu CP en tiempo real. También hay Pickup en Tijuana (previa confirmación).`;
-    }
-    if (t.includes("pago") || t.includes("oxxo") || t.includes("tarjeta")) {
-      return `Pagos seguros por Stripe: tarjeta y OXXO. SCORE Store no guarda datos bancarios.`;
-    }
-    if (t.includes("factura") || t.includes("cfdi")) {
-      return `Facturación (CFDI): envía Constancia de Situación Fiscal + número de pedido dentro del mismo mes fiscal a ${PUBLIC.BRAND.email}.`;
-    }
-    if (t.includes("cambio") || t.includes("devol") || t.includes("reembolso")) {
-      return `Cambios/devoluciones: hasta 30 días naturales. Sin uso/lavado, con etiquetas/empaque. No aplica a personalizados, bajo pedido o liquidación. Escríbenos a ${PUBLIC.BRAND.whatsapp}.`;
-    }
-    if (t.includes("contacto") || t.includes("whats") || t.includes("correo") || t.includes("dirección") || t.includes("direccion")) {
-      return `Contacto: ${PUBLIC.BRAND.email} · WhatsApp: ${PUBLIC.BRAND.whatsapp} · ${PUBLIC.BRAND.address}`;
-    }
-
-    // genérico pro
-    return `Dime 3 datos y te lo resuelvo rápido: producto + talla + CP (si es envío). 🏁`;
-  }
-
-  async function callRemote(q) {
-    // endpoint opcional. Si no existe o falla, fallbackAnswer
-    try {
-      const res = await fetch("/.netlify/functions/ai_assistant", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          q,
-          cart: CART,
-          shipping: SHIPPING,
-          promo: PROMO
-        })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok || !data?.answer) return null;
-      return String(data.answer);
-    } catch {
-      return null;
-    }
-  }
-
-  async function send() {
-    const q = (input?.value || "").trim();
-    if (!q) return;
-
-    AudioFX.click();
-    input.value = "";
-    addMsg("Tú", q);
-
-    // intenta remoto
-    let ans = await callRemote(q);
-    if (!ans) ans = fallbackAnswer(q);
-
-    addMsg("SCORE AI", ans);
-  }
-
-  function toggle() {
-    if (!modal) return;
-    const show = !modal.classList.contains("show");
-    modal.classList.toggle("show", show);
-    modal.setAttribute("aria-hidden", show ? "false" : "true");
-    show ? AudioFX.whoosh() : AudioFX.click();
-
-    if (show && body && !body.children.length) {
-      addMsg("SCORE AI", "Estoy listo. Dime producto + talla + CP y lo hacemos fácil. 🏁");
-    }
-    if (show) setTimeout(() => input?.focus && input.focus(), 80);
-  }
-
-  return { toggle, send };
-})();
-
-window.toggleAiAssistant = () => AI.toggle();
-window.sendAiMessage = () => AI.send();
-
-/* ---------------------------
-   13) Live Purchase Pops (notificaciones sutiles)
---------------------------- */
-const LivePops = (() => {
-  const el = $("#popBuy");
-  if (!el) return { start() {}, stop() {} };
-
-  let timer = null;
-
-  const names = [
-    "Carlos", "Andrea", "Luis", "Sofía", "Miguel", "Valeria", "Jorge", "Fernanda",
-    "Diego", "Mariana", "Roberto", "Ana", "Héctor", "Paola", "Iván", "Lucía"
-  ];
-
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  function pickProductName() {
-    // usa catálogo real si está cargado
-    if (PRODUCTS?.length) return pick(PRODUCTS).name || "Merch oficial";
-    return pick([
-      "Camiseta Oficial", "Hoodie Oficial", "Chamarra Oficial", "Gorra Oficial",
-      "Camisa Pits", "Tank Top"
-    ]);
-  }
-
-  function formatAgo() {
-    const mins = [1, 2, 3, 4, 6, 8, 10, 12, 15];
-    const m = pick(mins);
-    return `hace ${m} min`;
-  }
-
-  function showOnce() {
-    const who = pick(names);
-    const what = pickProductName();
-    const when = formatAgo();
-
-    el.innerHTML = `
-      <div class="pbIcon"><i class="fa-solid fa-bolt"></i></div>
-      <div class="pbTxt">
-        <div class="pbTop"><b>${who}</b> compró <b>${what}</b></div>
-        <div class="pbSub">${when} · SCORE STORE</div>
-      </div>
-    `;
-
-    el.classList.add("show");
-    AudioFX.ok();
-
-    // auto-hide
-    setTimeout(() => el.classList.remove("show"), 5200);
-
-    // next schedule (no saturar)
-    const next = Math.floor(18000 + Math.random() * 16000); // 18–34s
-    timer = setTimeout(showOnce, next);
-  }
-
-  function start() {
-    if (timer) return;
-    // primer pop: 10–16s después de cargar
-    timer = setTimeout(showOnce, Math.floor(10000 + Math.random() * 6000));
-  }
-
-  function stop() {
-    if (timer) clearTimeout(timer);
-    timer = null;
-  }
-
-  return { start, stop };
-})();
-
-/* ---------------------------
-   14) Inject CSS for popBuy
---------------------------- */
-(function ensurePopBuyStyles() {
-  if (!$("#popBuy")) return;
-  // si ya tienes reglas, no duplicamos
-  if (document.getElementById("popbuy-style")) return;
-
-  const style = document.createElement("style");
-  style.id = "popbuy-style";
-  style.textContent = `
-    .popBuy{
-      position: fixed;
-      left: 14px;
-      bottom: 18px;
-      z-index: 140;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 12px;
-      border-radius: 18px;
-      color: #fff;
-      background: rgba(10,10,10,.55);
-      border: 1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 30px 90px rgba(0,0,0,.28);
-      transform: translateY(16px);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform .22s ease, opacity .22s ease;
-      max-width: min(360px, 92vw);
-    }
-    .popBuy.show{
-      transform: translateY(0);
-      opacity: 1;
-    }
-    .popBuy .pbIcon{
-      width: 42px; height: 42px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: rgba(225,6,0,.22);
-      border: 1px solid rgba(225,6,0,.32);
-      box-shadow: 0 18px 40px rgba(225,6,0,.18);
-      flex: 0 0 auto;
-    }
-    .popBuy .pbTop{ font-weight: 950; font-size: 12.5px; line-height: 1.2; }
-    .popBuy .pbSub{ margin-top: 4px; font-weight: 800; font-size: 11px; opacity: .82; }
-    @media (max-width: 420px){
-      .popBuy{ left: 10px; right: 10px; max-width: unset; }
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
-/* ---------------------------
-   15) Boot
---------------------------- */
-async function boot() {
-  // Intro
-  Intro.run();
-
-  // Filtros
-  initFilters();
-
-  // Cart load
-  loadCart();
-
-  // Si el URL trae openCart=1
-  try {
-    const u = new URL(location.href);
-    if (u.searchParams.get("openCart") === "1") window.openCart();
-  } catch {}
-
-  // Carga catálogo real
-  try {
-    CATALOG = await fetchJSON("/data/catalog.json");
-    PRODUCTS = Array.isArray(CATALOG?.products) ? CATALOG.products : [];
-  } catch (e) {
-    PRODUCTS = [];
-    console.warn("No se pudo cargar catalog.json", e);
-  }
-
-  // Render catálogo
-  if (!PRODUCTS.length) {
-    catalogEmpty && (catalogEmpty.hidden = false);
-    productsGrid && (productsGrid.innerHTML = "");
-    toast("Catálogo no disponible. Revisa /data/catalog.json");
+    setTimeout(() => $("#aiInput")?.focus(), 50);
   } else {
-    await renderCatalog();
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden","true");
+    sfx("tap");
   }
+};
 
-  // Notificaciones de compra (sutil)
-  LivePops.start();
-
-  // Autocotizar si ya hay modo/zip guardados
-  if (CART.length && SHIPPING?.mode && SHIPPING.mode !== "pickup" && (SHIPPING.zip || "").length >= 4) {
-    // actualiza label a "Cotizando…" y recalcula
-    if (miniShipLabel) miniShipLabel.textContent = "Cotizando…";
-    const r = await quoteShipping({ mode: SHIPPING.mode, zip: SHIPPING.zip, country: SHIPPING.mode === "us" ? "US" : "MX" });
-    if (r.ok) setShippingState({ amount: r.amount, label: `${r.label} · ${moneyMXN(r.amount)}` });
-    else setShippingState({ amount: 0, label: "Envío pendiente" });
-  }
+function pushAiMsg(who, text){
+  const box = $("#aiMessages");
+  if(!box) return;
+  const msg = createEl("div", `ai-msg ${who === "me" ? "ai-me" : "ai-bot"}`);
+  msg.textContent = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+function buildAiContext(){
+  const items = state.cart.map(i => `${i.qty}x ${i.name} (${i.size})`).join(", ");
+  const shipMode = $("#shippingMode")?.value || "pickup";
+  const zip = getMiniZip();
+  return {
+    cart: items || "vacío",
+    shipping: shipMode === "pickup" ? "Pickup Tijuana" : `Entrega ${shipMode.toUpperCase()} CP ${zip || "—"}`,
+    catalogHint: "Puedes recomendar tallas, explicar envíos, pagos con OXXO, y guiar al usuario a comprar."
+  };
+}
+
+window.sendAiMessage = async function sendAiMessage(){
+  const inp = $("#aiInput");
+  const q = String(inp?.value || "").trim();
+  if(!q) return;
+  inp.value = "";
+  pushAiMsg("me", q);
+  sfx("tap");
+
+  try{
+    const payload = { message: q, context: buildAiContext() };
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok || data.ok === false){
+      throw new Error(data?.detail || data?.error || "Fallo IA");
+    }
+    pushAiMsg("bot", data.reply || "Listo. ¿Qué más necesitas?");
+    sfx("ok");
+  } catch(err){
+    // friendly fallback
+    pushAiMsg("bot", "Tuve un fallo rápido. Dime producto + talla + CP y te lo resuelvo igual. 🏁");
+    toast("IA temporalmente no disponible", "warn");
+  }
+};
+
+function bindAiEnter(){
+  const inp = $("#aiInput");
+  if(!inp) return;
+  inp.addEventListener("keypress", (e) => {
+    if(e.key === "Enter") window.sendAiMessage();
+  });
+}
+
+/* =========================
+   PURCHASE POPUPS (subtle)
+========================= */
+function startPurchasePopups(){
+  // no saturar: 25–45s
+  const names = [
+    "Chamarra Baja 1000",
+    "Hoodie Oficial",
+    "Camiseta Baja 500",
+    "Camiseta Baja 400",
+    "Gorra Oficial",
+    "Camisa Pits"
+  ];
+  const cities = ["Tijuana", "Ensenada", "Mexicali", "CDMX", "Guadalajara", "San Diego", "Phoenix", "Monterrey"];
+
+  async function loop(){
+    while(true){
+      const delay = 25000 + Math.random()*20000;
+      await sleep(delay);
+
+      // don't show if drawer open (avoid annoying)
+      if($("#cartDrawer")?.classList.contains("open")) continue;
+      if($("#legalModal")?.classList.contains("show")) continue;
+      if($("#aiChatModal")?.classList.contains("show")) continue;
+
+      const n = names[Math.floor(Math.random()*names.length)];
+      const c = cities[Math.floor(Math.random()*cities.length)];
+      const mins = 1 + Math.floor(Math.random()*12);
+
+      toast(`Compra reciente: ${n} · ${c} · hace ${mins} min`, "info");
+      sfx("paper");
+    }
+  }
+  loop();
+}
+
+/* =========================
+   INIT
+========================= */
+async function init(){
+  loadSoundsEnabled();
+  loadCart();
+  updateCartUI();
+
+  // bind
+  bindFilters();
+  bindCart();
+  bindLegal();
+  bindAiEnter();
+  bindRealtimeShipping();
+
+  // load data
+  try{
+    const [catalog, promos] = await Promise.all([
+      fetchJSON("/data/catalog.json"),
+      fetchJSON("/data/promos.json").catch(()=> ({ promos: [] }))
+    ]);
+    state.catalog = catalog;
+    state.promos = promos;
+  } catch(err){
+    toast("No se pudo cargar el catálogo", "err");
+  }
+
+  await renderCatalog();
+  await runIntro();
+
+  // start subtle purchase notifications
+  startPurchasePopups();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+// expose cart helpers for inline HTML
+window.openCart = openCart;
+window.closeCart = closeCart;
