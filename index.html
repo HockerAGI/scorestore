@@ -17,12 +17,13 @@
 
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" /> <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" />
+  <link rel="preload" href="/css/styles.css?v=2026_FIXED_V2" as="style" />
 
-  <link rel="stylesheet" href="/css/styles.css?v=2026_FIXED" />
+  <link rel="stylesheet" href="/css/styles.css?v=2026_FIXED_V2" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
 
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -34,7 +35,7 @@
     fbq('init','4249947775334413');
     fbq('track','PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"/></noscript>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" alt=""/></noscript>
 </head>
 
 <body class="appBg">
@@ -43,19 +44,19 @@
   <div class="introBg"></div>
   <div class="introCenter">
     <div class="introMark">
-      <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE Logo" />
+      <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE Logo" width="64" height="28" />
       <div class="introWord">SCORE STORE</div>
       <div class="introTag">OFFICIAL MERCH · DESERT RACING</div>
     </div>
     <div class="introBar"><div class="introBarFill" id="introBarFill"></div></div>
-    <button id="introSkip" class="introSkip" type="button">Saltar <span>↳</span></button>
+    <button id="introSkip" class="introSkip" type="button" aria-label="Saltar intro">Saltar <span>↳</span></button>
   </div>
 </div>
 
 <header class="topbar">
   <div class="container topInner">
     <div class="brand">
-      <img src="/assets/logo-score.webp" class="brandLogo brandLogoBig" alt="SCORE" />
+      <img src="/assets/logo-score.webp" class="brandLogo brandLogoBig" alt="SCORE" width="54" height="24" />
     </div>
 
     <nav class="nav">
@@ -64,19 +65,20 @@
       <a href="#faq">FAQ</a>
     </nav>
 
-    <button id="cartBtn" class="cartBtn" aria-label="Carrito">
-      <i class="fa-solid fa-cart-shopping"></i>
+    <button id="cartBtn" class="cartBtn" aria-label="Abrir Carrito"> <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
       <span id="cartCount" class="cartCount">0</span>
     </button>
   </div>
 </header>
 
-<section class="hero" style="background-image:url('/assets/hero.webp')">
+<section class="hero">
+  <img src="/assets/hero.webp" class="heroBgImg" alt="Fondo Desierto Racing" width="1920" height="1080" fetchpriority="high" />
+  
   <div class="heroOverlay heroOverlayDark"></div>
 
   <div class="container heroInner">
     <div class="heroBadge">
-      <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" />
+      <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="45" height="41" />
       <span>OFFICIAL MERCH</span>
     </div>
 
@@ -84,15 +86,15 @@
     <p>Diseñada para la Baja. Fabricada por <b>Único Uniformes</b> · Envíos MX & USA.</p>
 
     <div class="heroCtas">
-      <a href="#catalogo" class="btn primary"><i class="fa-solid fa-flag-checkered"></i> VER EQUIPO</a>
-      <button class="btn ghost" onclick="openCart()"><i class="fa-solid fa-cart-shopping"></i> MI PEDIDO</button>
+      <a href="#catalogo" class="btn primary" aria-label="Ver Catálogo"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> VER EQUIPO</a>
+      <button class="btn ghost" onclick="openCart()" aria-label="Mi Pedido"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> MI PEDIDO</button>
     </div>
 
     <div class="heroLogos">
-      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" />
-      <img src="/assets/logo-baja500.webp" alt="Baja 500" />
-      <img src="/assets/logo-baja400.webp" alt="Baja 400" />
-      <img src="/assets/logo-sf250.webp" alt="SF 250" />
+      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="71" height="44" />
+      <img src="/assets/logo-baja500.webp" alt="Baja 500" width="70" height="44" />
+      <img src="/assets/logo-baja400.webp" alt="Baja 400" width="70" height="44" />
+      <img src="/assets/logo-sf250.webp" alt="SF 250" width="69" height="44" />
     </div>
   </div>
 </section>
@@ -116,7 +118,7 @@
   </div>
 </section>
 
-<section id="envios" class="section alt" style="background-image:url('/assets/fondo-pagina-score.webp')">
+<section id="envios" class="section alt">
   <div class="overlaySoft"></div>
   <div class="container">
     <div class="sectionHead">
@@ -125,17 +127,17 @@
     </div>
     <div class="shippingBox">
       <div class="shipRow">
-        <label>País</label>
+        <label for="shipCountry">País</label>
         <select id="shipCountry"><option value="MX">México</option><option value="US">USA</option></select>
       </div>
       <div class="shipRow">
-        <label>Código postal</label>
-        <input id="shipZip" placeholder="Ej. 22614" />
+        <label for="shipZip">Código postal</label>
+        <input id="shipZip" placeholder="Ej. 22614" inputmode="numeric" />
       </div>
-      <button class="btn primary" onclick="quoteShippingUI()"><i class="fa-solid fa-calculator"></i> CALCULAR ENVÍO</button>
+      <button class="btn primary" onclick="quoteShippingUI()"><i class="fa-solid fa-calculator" aria-hidden="true"></i> CALCULAR ENVÍO</button>
       <div id="shipQuote" class="shipQuote"></div>
     </div>
-    <div class="note"><i class="fa-solid fa-location-dot"></i> También puedes recoger en fábrica (Tijuana).</div>
+    <div class="note"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> También puedes recoger en fábrica (Tijuana).</div>
   </div>
 </section>
 
@@ -152,8 +154,8 @@
 
 <aside id="cartDrawer" class="drawer drawerGlass" aria-hidden="true">
   <div class="drawerHead">
-    <div class="drawerTitle"><i class="fa-solid fa-bag-shopping"></i> MI PEDIDO</div>
-    <button class="drawerClose" onclick="closeCart()">✕</button>
+    <div class="drawerTitle"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> MI PEDIDO</div>
+    <button class="drawerClose" onclick="closeCart()" aria-label="Cerrar Carrito">✕</button>
   </div>
   <div id="cartItems" class="drawerBody"></div>
   <div class="drawerFoot">
@@ -162,37 +164,38 @@
     <div class="row total"><span>Total</span><span id="cartTotal">$0</span></div>
     
     <div class="promoBox">
-      <input id="promoCode" placeholder="Cupón (ej. SCORE25)" />
+      <input id="promoCode" placeholder="Cupón (ej. SCORE25)" aria-label="Código Promocional" />
       <button class="btn ghost" onclick="applyPromo()">Aplicar</button>
     </div>
 
     <div class="shipMini">
+      <label for="shippingMode" class="sr-only">Método de Envío</label>
       <select id="shippingMode">
         <option value="pickup">📍 Pickup Tijuana (Gratis)</option>
         <option value="mx">🇲🇽 Envío México</option>
         <option value="us">🇺🇸 Envío USA</option>
       </select>
-      <input id="miniZip" placeholder="Código Postal" style="display:none;" />
+      <input id="miniZip" placeholder="Código Postal" style="display:none;" aria-label="Código Postal para envío" />
       <div id="miniShipLabel" class="miniShipLabel"></div>
     </div>
 
-    <button id="checkoutBtn" class="btn primary full" onclick="checkout()"><i class="fa-solid fa-lock"></i> PAGAR SEGURO</button>
+    <button id="checkoutBtn" class="btn primary full" onclick="checkout()"><i class="fa-solid fa-lock" aria-hidden="true"></i> PAGAR SEGURO</button>
   </div>
 </aside>
 <div id="backdrop" class="backdrop" onclick="closeCart()"></div>
 
-<button class="ai-btn-float" onclick="toggleAiAssistant()"><i class="fa-solid fa-headset"></i></button>
+<button class="ai-btn-float" onclick="toggleAiAssistant()" aria-label="Asistente Virtual"><i class="fa-solid fa-headset" aria-hidden="true"></i></button>
 
 <div id="aiChatModal" class="ai-chat-modal" aria-hidden="true">
   <div class="ai-box">
     <div class="ai-header">
       <span>ASISTENTE SCORE 🏁</span>
-      <button onclick="toggleAiAssistant()">✕</button>
+      <button onclick="toggleAiAssistant()" aria-label="Cerrar Chat">✕</button>
     </div>
     <div class="ai-body" id="aiMessages"></div>
     <div class="ai-input-bar">
-      <input type="text" id="aiInput" placeholder="Pregunta por tallas..." />
-      <button onclick="sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+      <input type="text" id="aiInput" placeholder="Pregunta por tallas..." aria-label="Mensaje" />
+      <button onclick="sendAiMessage()" aria-label="Enviar"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
     </div>
   </div>
 </div>
@@ -208,21 +211,21 @@
       <button class="fLink jsLegalLink" data-legal="terms">Términos</button>
       <button class="fLink jsLegalLink" data-legal="legal">Legal</button>
       <button class="fLink jsLegalLink" data-legal="contact">Contacto</button>
-      <a class="fSocial" href="https://www.facebook.com/uniforme.unico/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
-      <a class="fSocial" href="https://www.instagram.com/uniformes.unico" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+      <a class="fSocial" href="https://www.facebook.com/uniforme.unico/" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+      <a class="fSocial" href="https://www.instagram.com/uniformes.unico" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
     </div>
   </div>
 </footer>
 
 <div id="legalModal" class="legalModal" aria-hidden="true">
   <div class="legalBackdrop" id="legalBackdrop"></div>
-  <div class="legalCard">
+  <div class="legalCard" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
     <div class="legalHead">
       <div class="legalHeadLeft">
-        <div class="legalPill"><i class="fa-solid fa-certificate"></i> OFICIAL</div>
+        <div class="legalPill"><i class="fa-solid fa-certificate" aria-hidden="true"></i> OFICIAL</div>
         <h3 id="legalTitle">Información</h3>
       </div>
-      <button class="legalClose" id="legalClose">✕</button>
+      <button class="legalClose" id="legalClose" aria-label="Cerrar">✕</button>
     </div>
     <div class="legalBody" id="legalBody"></div>
     <div class="legalFoot">© 2026 Único Uniformes · BAJATEX</div>
@@ -231,6 +234,15 @@
 
 <div id="toast" class="toast"></div>
 
-<script type="module" src="/js/main.js?v=2026_FIXED"></script>
+<script type="module" src="/js/main.js?v=2026_FIXED_V2"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js")
+        .then(reg => console.log("SW registrado:", reg.scope))
+        .catch(err => console.error("SW error:", err));
+    });
+  }
+</script>
 </body>
 </html>
