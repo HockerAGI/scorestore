@@ -6,25 +6,33 @@
    - Fallback offline mínimo
    ========================================================= */
 
-const VERSION = "2026_PROD_v1";
+// ¡IMPORTANTE! Cambiamos la versión para forzar la actualización en clientes
+const VERSION = "2026_FIXED_V2";
 const CACHE_STATIC = `scorestore_static_${VERSION}`;
 const CACHE_PAGES = `scorestore_pages_${VERSION}`;
 
 const PRECACHE = [
-  "/",               // index
+  "/",               
   "/index.html",
   "/legal.html",
-  "/css/styles.css?v=2026_PROD",
-  "/js/main.js?v=2026_PROD",
+  // Estos deben coincidir EXACTO con lo que pusimos en index.html
+  "/css/styles.css?v=2026_FIXED_V2",
+  "/js/main.js?v=2026_FIXED_V2",
   "/data/catalog.json",
   "/data/promos.json",
   "/site.webmanifest",
   "/robots.txt",
   "/sitemap.xml",
+  // Imágenes críticas para LCP
   "/assets/hero.webp",
   "/assets/fondo-pagina-score.webp",
   "/assets/baja1000-texture.webp",
-  "/assets/logo-score.webp"
+  "/assets/logo-score.webp",
+  "/assets/logo-world-desert.webp",
+  "/assets/logo-baja1000.webp",
+  "/assets/logo-baja500.webp",
+  "/assets/logo-baja400.webp",
+  "/assets/logo-sf250.webp"
 ];
 
 // Solo cacheamos estas extensiones como estático
@@ -44,6 +52,7 @@ self.addEventListener("activate", (event) => {
     const keys = await caches.keys();
     await Promise.all(
       keys.map((k) => {
+        // Borra cachés viejas (ej. 2026_PROD_v1) para liberar espacio y evitar conflictos
         if (![CACHE_STATIC, CACHE_PAGES].includes(k)) return caches.delete(k);
         return null;
       })
@@ -78,8 +87,8 @@ self.addEventListener("fetch", (event) => {
       const cache = await caches.open(CACHE_PAGES);
       try {
         const fresh = await fetch(req);
-        // Guardamos copia
-        cache.put(req, fresh.clone());
+        // Guardamos copia actualizada
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
         return fresh;
       } catch {
         const cached = await cache.match(req);
@@ -107,8 +116,8 @@ self.addEventListener("fetch", (event) => {
               <div class="card">
                 <div class="tag">🏁 SCORE STORE</div>
                 <h1>Estás sin conexión</h1>
-                <p>Cuando recuperes señal, recarga y podrás ver el catálogo y pagar normalmente.</p>
-                <p><a href="/">Intentar de nuevo</a></p>
+                <p>Cuando recuperes señal, recarga para ver el catálogo actualizado.</p>
+                <p><a href="/">Reintentar</a></p>
               </div>
             </div>
           </body>
@@ -127,10 +136,14 @@ self.addEventListener("fetch", (event) => {
       const cached = await cache.match(req);
       if (cached) return cached;
 
-      const fresh = await fetch(req);
-      // Cachear solo respuestas OK
-      if (fresh && fresh.ok) cache.put(req, fresh.clone());
-      return fresh;
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        return fresh;
+      } catch (e) {
+        // Si falla fetch de imagen, no rompemos nada, simplemente falla silencioso o retorna nada
+        return null; 
+      }
     })());
   }
 });
