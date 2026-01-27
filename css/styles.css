@@ -57,26 +57,68 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: grid; place-items: center;
 }
 
-/* HERO (MODIFICADO) */
-.hero { min-height: 90vh; background-size: cover; background-position: center; position: relative; display:flex; align-items:center; }
-.heroOverlayDark { position: absolute; inset: 0; background: rgba(0,0,0,0.45); } /* Negro mínimo (Cambio 1) */
-.heroInner { position: relative; z-index: 1; text-align: center; color: #fff; width: 100%; padding-top: 80px; }
 
-.heroBadge {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
-  padding: 8px 16px; border-radius: 999px; margin-bottom: 20px;
-  backdrop-filter: blur(8px);
+/* HERO LCP OPTIMIZED */
+.hero {
+  min-height: 90vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden; /* Asegura que la imagen no se salga */
 }
-.heroDesertBig { width: 45px; height: auto; } /* Logo Desert más grande (Cambio 4) */
-.heroBadge span { font-weight: 800; font-size: 11px; letter-spacing: 1px; }
 
-.hero h1 { font-size: clamp(38px, 6vw, 64px); margin: 0 0 15px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-.hero .accent { color: #fff; background: var(--accent); padding: 0 8px; }
-.hero p { font-size: 16px; opacity: 0.95; margin-bottom: 30px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-.heroCtas { display: flex; gap: 12px; justify-content: center; margin-bottom: 40px; }
-.heroLogos { display: flex; gap: 20px; justify-content: center; }
-.heroLogos img { height: 44px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
+/* Imagen real para LCP rápido */
+.heroBgImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.heroOverlayDark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1; /* Encima de la imagen */
+}
+
+.heroInner {
+  position: relative;
+  z-index: 2; /* Encima del overlay */
+  text-align: center;
+  color: #fff;
+  width: 100%;
+  padding-top: 80px;
+}
+
+/* Fix para CLS en tarjetas de producto */
+.cardImg {
+  aspect-ratio: 1 / 1;
+  background: #f4f4f4;
+  display: grid;
+  place-items: center;
+  width: 100%; /* Asegura que llene el contenedor */
+}
+.cardImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Accessibility helper */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 
 /* BUTTONS */
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; transition: transform 0.2s; }
