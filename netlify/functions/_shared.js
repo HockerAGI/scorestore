@@ -1,16 +1,29 @@
 const { createClient } = require("@supabase/supabase-js");
-const axios = require("axios");
+const localCatalog = require("../../data/catalog.json"); // NO se modifica
 
-// --- 1. CREDENCIALES REALES SUPABASE (Extraídas de tus archivos) ---
-// Usamos estas como fallback para garantizar que funcione al copiar y pegar.
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://lpbzndnavkbpxwnlbqgb.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
+/**
+ * SHARED HELPERS v2026 (Unified)
+ * - ENV VARS ONLY (no secrets en repo)
+ * - Soporta Supabase (ÚNICO OS), Envia, Telegram, promos
+ */
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// --- 2. CONFIGURACIÓN FÁBRICA (ORIGEN ENVÍOS) ---
+const supabase =
+  SUPABASE_URL && SUPABASE_ANON ? createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+const supabaseAdmin =
+  SUPABASE_URL && SUPABASE_SERVICE
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE, {
+        auth: { persistSession: false },
+      })
+    : null;
+
+// Origen (Único / Score Store)
 const FACTORY_ORIGIN = {
-  name: "Score Store / Unico Uniformes",
+  name: "Score Store / Único Uniformes",
   company: "BAJATEX S DE RL DE CV",
   email: "ventas.unicotextil@gmail.com",
   phone: "6642368701",
@@ -20,71 +33,203 @@ const FACTORY_ORIGIN = {
   city: "Tijuana",
   state: "BC",
   country: "MX",
-  postalCode: "22614"
+  postalCode: "22614",
+  reference: "Interior JK",
 };
 
 const PROMO_RULES = {
-  "SCORE25": { type: "percent", value: 0.25 },
-  "BAJA25": { type: "percent", value: 0.25 },
-  "STAFF": { type: "percent", value: 1.00 }
+  SCORE25: { type: "percent", value: 0.25, label: "25% OFF" },
+  BAJA25: { type: "percent", value: 0.25, label: "25% OFF" },
+  SCORE10: { type: "percent", value: 0.1, label: "10% OFF" },
 };
 
-const jsonResponse = (code, body) => ({
-  statusCode: code,
-  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-  body: JSON.stringify(body)
+const jsonResponse = (statusCode, body) => ({
+  statusCode,
+  headers: {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Stripe-Signature",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+  },
+  body: JSON.stringify(body),
 });
 
-// --- 3. LÓGICA DE GENERACIÓN DE GUÍAS (ENVIA.COM) ---
+const safeJsonParse = (str) => {
+  try {
+    return JSON.parse(str || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const normalizeQty = (q) => {
+  const n = parseInt(q, 10);
+  return n > 0 ? n : 1;
+};
+
+const digitsOnly = (s) => String(s || "").replace(/[^\d]/g, "");
+
+/**
+ * Paquetería: fallback solo para que el MVP no muera.
+ * Para operación REAL al 100%, guarda specs por SKU en ÚNICO OS:
+ * weight_kg, length_cm, width_cm, height_cm, declared_value_mxn
+ */
+const getPackageSpecs = (qty) => {
+  const q = normalizeQty(qty);
+  return {
+    weight: Math.max(1, q * 0.6),
+    dimensions: {
+      length: 30,
+      width: 25,
+      height: Math.min(60, 10 + Math.ceil(q * 2)),
+    },
+    declared_value: 400 * q,
+  };
+};
+
+async function getEnviaQuote(zip, qty, country = "MX") {
+  const ENVIA_API_TOKEN = process.env.ENVIA_API_TOKEN;
+  if (!ENVIA_API_TOKEN) return null;
+
+  const specs = getPackageSpecs(qty);
+
+  try {
+    const res = await fetch("https://api.envia.com/ship/rate/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ENVIA_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        origin: { country_code: "MX", postal_code: FACTORY_ORIGIN.postalCode },
+        destination: { country_code: country, postal_code: zip },
+        shipment: { carrier: "fedex", type: 1 },
+        packages: [
+          {
+            content: "SCORE Merch",
+            amount: 1,
+            type: "box",
+            weight: specs.weight,
+            dimensions: specs.dimensions,
+            declared_value: specs.declared_value,
+          },
+        ],
+      }),
+    });
+
+    const data = await res.json();
+    const list = data?.data || [];
+    if (!list.length) return null;
+
+    const best = list.sort((a, b) => a.total_price - b.total_price)[0];
+
+    return {
+      mxn: Math.ceil(best.total_price * 1.05),
+      carrier: best.carrier,
+      days: best.delivery_estimate,
+    };
+  } catch (e) {
+    console.error("Envia Quote Error:", e);
+    return null;
+  }
+}
 async function createEnviaLabel(customer, itemsQty) {
-    if (!process.env.ENVIA_API_KEY) {
-        // Si no hay API KEY, no rompe el flujo, solo no genera guía automática.
-        console.warn("⚠️ FALTA ENVIA_API_KEY en Netlify.");
-        return null;
-    }
-    try {
-        const payload = {
-            origin: { ...FACTORY_ORIGIN },
-            destination: {
-                name: customer.name,
-                email: customer.email || "cliente@scorestore.com",
-                phone: customer.phone || "0000000000",
-                street: customer.address?.line1 || "Domicilio Conocido",
-                number: "",
-                district: customer.address?.city || "",
-                city: customer.address?.city,
-                state: customer.address?.state,
-                country: customer.address?.country,
-                postalCode: customer.address?.postal_code
-            },
-            package: {
-                content: "Ropa Deportiva SCORE",
-                amount: 1, 
-                type: "box", 
-                dimensions: { length: 30, width: 25, height: 10 + itemsQty }, 
-                weight: itemsQty * 0.5,
-                declared_value: 400 * itemsQty 
-            },
-            shipment: { carrier: "fedex", type: 1 },
-            settings: { print_format: "PDF", print_size: "STOCK_4X6" }
-        };
+  const ENVIA_API_TOKEN = process.env.ENVIA_API_TOKEN;
+  if (!ENVIA_API_TOKEN) return null;
 
-        const { data } = await axios.post("https://api.envia.com/ship/generate", payload, {
-            headers: { "Authorization": `Bearer ${process.env.ENVIA_API_KEY}` }
-        });
+  const specs = getPackageSpecs(itemsQty);
 
-        if (data && data.meta === "generate") {
-            return {
-                tracking: data.data[0].tracking_number,
-                labelUrl: data.data[0].label,
-                carrier: data.data[0].carrier
-            };
-        }
-        return null;
-    } catch (e) {
-        console.error("Envia Error:", e.response?.data || e.message);
-        return null;
+  try {
+    const res = await fetch("https://api.envia.com/ship/generate/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ENVIA_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        origin: { ...FACTORY_ORIGIN, postal_code: FACTORY_ORIGIN.postalCode },
+        destination: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          street: customer.address.line1,
+          district: customer.address.line2 || "",
+          city: customer.address.city,
+          state: customer.address.state,
+          country: customer.address.country,
+          postal_code: customer.address.postal_code,
+        },
+        packages: [
+          {
+            content: "SCORE Official Merch",
+            amount: 1,
+            type: "box",
+            weight: specs.weight,
+            dimensions: specs.dimensions,
+            declared_value: specs.declared_value,
+          },
+        ],
+        shipment: { carrier: "fedex", type: 1 },
+        settings: { print_format: "PDF", print_size: "STOCK_4X6" },
+      }),
+    });
+
+    const result = await res.json();
+    const row = result?.data?.[0];
+
+    if (!row) {
+      console.error("Envia Gen Error:", JSON.stringify(result));
+      return null;
     }
+
+    return {
+      tracking: row.tracking_number,
+      labelUrl: row.label,
+      carrier: row.carrier,
+    };
+  } catch (e) {
+    console.error("Envia Label Error:", e);
+    return null;
+  }
 }
 
-module.exports = { supabase, PROMO_RULES, jsonResponse, createEnviaLabel, FACTORY_ORIGIN };
+// DB -> JSON fallback
+async function getProductDetails(id) {
+  if (supabase) {
+    const { data } = await supabase.from("products").select("*").eq("id", id).single();
+    if (data) return data;
+  }
+
+  const local = (localCatalog?.products || []).find((p) => p.id === id);
+  if (local) {
+    return {
+      id: local.id,
+      name: local.name,
+      price_mxn: local.baseMXN,
+      image: local.img,
+      sku: local.sku || local.id,
+      size_chart: local.sizeChart || null,
+    };
+  }
+
+  return null;
+}
+
+function getPromo(code) {
+  if (!code) return null;
+  return PROMO_RULES[String(code).toUpperCase()] || null;
+}
+
+module.exports = {
+  jsonResponse,
+  safeJsonParse,
+  normalizeQty,
+  digitsOnly,
+  supabase,
+  supabaseAdmin,
+  getEnviaQuote,
+  createEnviaLabel,
+  getProductDetails,
+  getPromo,
+  FACTORY_ORIGIN,
+};
