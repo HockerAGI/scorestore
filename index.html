@@ -1,90 +1,111 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SCORE STORE | Mercancía Oficial de Off-Road</title>
-  
-  <link rel="stylesheet" href="styles.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <meta name="score:supabase_url" content="https://lpbzndnavkbpxwnlbqgb.supabase.co">
-  <meta name="score:supabase_anon" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE">
-  <meta name="score:stripe_pk" content="pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh">
-  <meta name="score:fb_pixel" content="4249947775334413">
-  
+  <meta name="description" content="Tienda oficial de SCORE International. Merchandise fabricado por Único Uniformes. Envíos a MX y USA." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta name="theme-color" content="#E10600" />
 
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SCORE Store | Tienda Oficial" />
+  <meta property="og:description" content="Equípate con la mercancía oficial de las carreras más duras del mundo." />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+  <meta property="og:url" content="https://scorestore.netlify.app" />
+
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD" />
+
+  <link rel="preload" href="/assets/hero.webp" as="image" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
+  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Meta Pixel Code -->
   <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '4249947775334413');
+  fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
+  src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"
   /></noscript>
-  </head>
-<body>
+  <!-- End Meta Pixel Code -->
+</head>
 
-  <div id="intro" class="intro" aria-hidden="false">
+<body class="appBg">
+
+  <!-- INTRO RACING (Tipo A PRO) -->
+  <div id="intro" class="intro" aria-hidden="true">
     <div class="introBg"></div>
+
     <div class="introCenter">
       <div class="introMark">
         <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE">
         <div class="introWord">SCORE STORE</div>
         <div class="introTag">OFFICIAL MERCH · DESERT RACING</div>
       </div>
+
       <div class="introBar">
         <div class="introBarFill" id="introBarFill"></div>
       </div>
+
       <button class="introSkip" id="introSkip" type="button" aria-label="Saltar intro">
         Saltar <span>↳</span>
       </button>
     </div>
   </div>
+  <!-- /INTRO -->
 
-  <div id="toast" class="toast"></div>
-  <div id="backdrop" class="backdrop"></div>
-  <div id="popBuy" class="popBuy"></div>
-
-  <div class="topbar">
+  <header class="topbar">
     <div class="container topInner">
       <div class="brand">
-        <img src="/assets/logo-score.webp" class="brandLogo big" alt="SCORE Store">
+        <img src="/assets/logo-score.webp" class="brandLogo brandLogoBig" alt="SCORE Logo">
       </div>
+
       <nav class="nav">
         <a href="#catalogo">CATÁLOGO</a>
-        <a href="#envios">ENVÍOS</a>
+        <a href="#envios">ENTREGA</a>
         <a href="#faq">FAQ</a>
+        <a href="/legal.html">LEGAL</a>
       </nav>
+
       <button id="cartBtn" class="cartBtn" aria-label="Carrito">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cartCount" class="cartCount">0</span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <header class="hero bgGlobal">
-    <div class="heroOverlay heroOverlayMin"></div>
+  <section class="hero" style="background-image:url('/assets/hero.webp')">
+    <div class="heroOverlay heroOverlayDark"></div>
+
     <div class="container heroInner">
       <div class="heroBadge">
-        <img src="/assets/logo-world-desert.webp" alt="World Desert Championship">
+        <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship">
         <span>OFFICIAL MERCH</span>
       </div>
-      <h1>VÍSTETE COMO <span class="accent">SCORE</span></h1>
-      <p>Mercancía oficial de las carreras off-road más icónicas. Fabricado por <b>Único Uniformes</b> · Envíos MX & USA · Pago seguro con tarjeta u OXXO.</p>
-      
+
+      <h1>MERCANCÍA OFICIAL DE LA <span class="accent">OFF-ROAD</span></h1>
+      <p>Fabricado por <b>Único Uniformes</b> • Envíos a México y USA • Pago con tarjeta u OXXO</p>
+
       <div class="heroCtas">
         <a class="btn primary" href="#catalogo"><i class="fa-solid fa-flag-checkered"></i> VER CATÁLOGO</a>
-        <button class="btn ghost" onclick="openCart()"><i class="fa-solid fa-cart-shopping"></i> ABRIR CARRITO</button>
+        <button class="btn ghost" onclick="openCart()"><i class="fa-solid fa-cart-shopping"></i> ABRIR MI PEDIDO</button>
       </div>
 
       <div class="heroLogos">
@@ -94,14 +115,13 @@
         <img src="/assets/logo-sf250.webp" alt="SF 250">
       </div>
     </div>
-  </header>
+  </section>
 
-  <main class="container">
-    
-    <section id="catalogo" class="section">
+  <section id="catalogo" class="section">
+    <div class="container">
       <div class="sectionHead">
-        <h2>CATÁLOGO OFICIAL</h2>
-        <p>Elige tu talla, arma tu pedido y arranca. Merch auténtico SCORE.</p>
+        <h2>ELIGE TU EQUIPO</h2>
+        <p>Merch auténtico SCORE. Tallas disponibles y compra segura.</p>
       </div>
 
       <div class="filters">
@@ -115,19 +135,15 @@
       </div>
 
       <div id="productsGrid" class="grid"></div>
-      
-      <div id="catalogEmpty" class="catalogEmpty" hidden>
-        <div class="emptyCard">
-          <div class="emptyTitle">Catálogo cargando…</div>
-          <div class="emptyText">Si una imagen no existe, esa card no se muestra (cero cuadros vacíos).</div>
-        </div>
-      </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="envios" class="section">
+  <section id="envios" class="section alt sectionBg">
+    <div class="overlaySoft"></div>
+    <div class="container">
       <div class="sectionHead">
-        <h2>RECÍBELO EN TU PUERTA</h2>
-        <p>Cotiza tu envío al instante y elige la mejor opción. Logística por Envia.com (FedEx).</p>
+        <h2>ENTREGA A TU PUERTA</h2>
+        <p>Cotiza tu envío al instante con <b>Envia.com</b> (FedEx y más).</p>
       </div>
 
       <div class="shippingBox">
@@ -142,157 +158,182 @@
           <label>Código postal</label>
           <input id="shipZip" placeholder="Ej. 22614" inputmode="numeric" />
         </div>
-        <button class="btn primary" onclick="quoteShippingUI()"><i class="fa-solid fa-truck-fast"></i> COTIZAR</button>
+        <button class="btn primary" onclick="quoteShippingUI()"><i class="fa-solid fa-truck-fast"></i> COTIZAR ENTREGA</button>
         <div id="shipQuote" class="shipQuote"></div>
+        <div class="shipHint" id="shipHint"></div>
       </div>
-      
-      <div class="note">
-        <i class="fa-solid fa-circle-info"></i> Pickup disponible en Tijuana (previa confirmación). Envíos MX/USA gestionados por Envia.com.
-      </div>
-    </section>
 
-    <section id="faq" class="section">
+      <div class="note">
+        <i class="fa-solid fa-circle-info"></i>
+        También puedes recoger en fábrica (Tijuana) previa confirmación.
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="section">
+    <div class="container">
       <div class="sectionHead">
         <h2>FAQ</h2>
-        <p>Resolvemos lo esencial antes de arrancar.</p>
+        <p>Resolvemos lo esencial para comprar sin fricción.</p>
       </div>
 
       <div class="faq">
         <details>
           <summary>¿Cómo pago?</summary>
-          <div>Pagos seguros con <b>Stripe</b>: tarjeta y <b>OXXO</b>. SCORE Store no almacena datos bancarios.</div>
+          <div>Por Stripe: tarjeta o <b>OXXO</b>.</div>
         </details>
         <details>
           <summary>¿Quién opera la tienda?</summary>
-          <div>El protagonista es <b>SCORE STORE</b>. Fabricación/operación: <b>Único Uniformes (BAJATEX)</b>.</div>
+          <div>El protagonista es <b>SCORE STORE</b>. Operación y fabricación: <b>Único Uniformes (BAJATEX)</b>.</div>
         </details>
         <details>
           <summary>¿Envíos a USA?</summary>
-          <div>Sí. Logística gestionada por Envia.com con paqueterías nacionales e internacionales (ej. FedEx).</div>
+          <div>Sí. Cotización y guías vía Envia.com.</div>
         </details>
         <details>
           <summary>¿Tallas?</summary>
-          <div>En cada producto eliges talla. Si quieres, pregúntale al asistente SCORE AI.</div>
+          <div>Elige talla en cada producto. Si dudas, usa el asistente.</div>
         </details>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </main>
+  <!-- Cart Drawer (GLASS PREMIUM) -->
+  <aside id="cartDrawer" class="drawer drawerGlass" aria-hidden="true">
+    <div class="drawerHead drawerHeadSticky">
+      <div class="drawerTitle">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <div class="drawerTitleText">
+          <div class="drawerH1">MI PEDIDO</div>
+          <div class="drawerH2">Mercancía oficial SCORE</div>
+        </div>
+      </div>
+      <button class="drawerClose" onclick="closeCart()" aria-label="Cerrar">✕</button>
+    </div>
 
+    <div id="cartItems" class="drawerBody"></div>
+
+    <div class="drawerFoot">
+      <div class="row">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+
+      <div class="row">
+        <span>Entrega</span>
+        <span id="cartShipping">$0</span>
+      </div>
+
+      <div class="row total">
+        <span>Total</span>
+        <span id="cartTotal">$0</span>
+      </div>
+
+      <div class="promoBox">
+        <input id="promoCode" placeholder="Cupón (ej. SCORE25)" />
+        <button class="btn ghost" onclick="applyPromo()">Aplicar</button>
+      </div>
+
+      <div class="shipMini">
+        <select id="shippingMode">
+          <option value="pickup">Pickup (Tijuana)</option>
+          <option value="mx">Envío MX</option>
+          <option value="us">Envío USA</option>
+        </select>
+        <input id="miniZip" placeholder="CP para envío" inputmode="numeric" />
+        <button class="btn ghost" onclick="quoteShippingMini()">Cotizar</button>
+        <div id="miniShipLabel" class="miniShipLabel"></div>
+      </div>
+
+      <button id="checkoutBtn" class="btn primary full" onclick="checkout()">
+        <i class="fa-solid fa-credit-card"></i> PAGAR SEGURO
+      </button>
+
+      <button class="btn ghost full" onclick="closeCart()">
+        <i class="fa-solid fa-chevron-left"></i> SEGUIR COMPRANDO
+      </button>
+
+      <div class="finePrint">
+        Al pagar aceptas los <a href="/legal.html" class="jsLegalLink" data-legal="terms">términos</a>.
+      </div>
+    </div>
+  </aside>
+
+  <div id="backdrop" class="backdrop" onclick="closeCart()"></div>
+
+  <!-- AI Button -->
+  <button class="ai-btn-float" onclick="toggleAiAssistant()" title="Estratega SCORE">
+    <i class="fa-solid fa-bolt"></i>
+  </button>
+
+  <!-- AI Modal -->
+  <div id="aiChatModal" class="ai-chat-modal" aria-hidden="true">
+    <div class="ai-box">
+      <div class="ai-header">
+        <span>ESTRATEGA SCORE 🏁</span>
+        <button onclick="toggleAiAssistant()" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="ai-body" id="aiMessages"></div>
+      <div class="ai-input-bar">
+        <input type="text" id="aiInput" placeholder="¿Tallas, envíos, pedidos...?" />
+        <button onclick="sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER MINI (NO FIJO) + Links -->
   <footer class="footerMini">
     <div class="container footerMiniInner">
-      <div>
-        <div class="fmTitle">SCORE STORE · TIENDA OFICIAL</div>
-        <div class="fmSub">Fabricado por Único Uniformes · © 2026 BAJATEX</div>
+      <div class="fMiniLeft">
+        <div class="fMiniTitle">SCORE STORE · TIENDA OFICIAL</div>
+        <div class="fMiniSub">Fabricado por Único Uniformes · © 2026 BAJATEX</div>
       </div>
-      <div class="fmLinks">
-        <a href="#" onclick="openLegal('privacy');return false;">
-          <i class="fa-solid fa-shield-halved"></i> Aviso
+
+      <div class="fMiniLinks">
+        <button class="fLink jsLegalLink" data-legal="privacy">Aviso de privacidad</button>
+        <button class="fLink jsLegalLink" data-legal="terms">Términos</button>
+        <button class="fLink jsLegalLink" data-legal="legal">Información legal</button>
+        <button class="fLink jsLegalLink" data-legal="contact">Contacto</button>
+
+        <a class="fSocial" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" aria-label="Facebook">
+          <i class="fa-brands fa-facebook-f"></i>
         </a>
-        <a href="#" onclick="openLegal('terms');return false;">
-          <i class="fa-solid fa-file-signature"></i> Términos
-        </a>
-        <a href="#" onclick="openLegal('legal');return false;">
-          <i class="fa-solid fa-scale-balanced"></i> Legal
-        </a>
-        <a href="#" onclick="openLegal('contact');return false;">
-          <i class="fa-solid fa-headset"></i> Contacto
-        </a>
-        <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" aria-label="Facebook Único">
-          <i class="fa-brands fa-facebook"></i>
-        </a>
-        <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" aria-label="Instagram Único">
+        <a class="fSocial" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" aria-label="Instagram">
           <i class="fa-brands fa-instagram"></i>
         </a>
-        <a href="https://linktr.ee/unicouniformes" target="_blank" rel="noopener" aria-label="Linktree Único">
+        <a class="fSocial" href="https://linktr.ee/unicouniformes" target="_blank" rel="noopener" aria-label="Linktree">
           <i class="fa-solid fa-link"></i>
         </a>
       </div>
     </div>
   </footer>
 
-  <div id="cartDrawer" class="drawer" aria-hidden="true">
-    <div class="drawerGlass"></div>
-    <div class="drawerPanel">
-      <div class="drawerHead sticky">
-        <div class="drawerTitle">
-          <div class="t1"><i class="fa-solid fa-cart-shopping"></i> MI PEDIDO</div>
-          <div class="t2">Mercancía oficial SCORE</div>
-        </div>
-        <button class="drawerClose" onclick="closeCart()" aria-label="Cerrar">✕</button>
-      </div>
-      
-      <div id="cartItems" class="drawerBody"></div>
-      
-      <div class="drawerFoot">
-        <div class="row"> <span>Subtotal</span> <span id="cartSubtotal">$0</span> </div>
-        <div class="row"> <span>Envío</span> <span id="cartShipping">$0</span> </div>
-        <div class="row total"> <span>Total</span> <span id="cartTotal">$0</span> </div>
-        
-        <div class="promoBox">
-          <input id="promoCode" placeholder="Cupón (ej. SCORE25)" />
-          <button class="btn ghost" onclick="applyPromo()">Aplicar</button>
-        </div>
-        
-        <div class="shipMini">
-          <select id="shippingMode">
-            <option value="pickup">Pickup (Tijuana)</option>
-            <option value="mx">Envío MX</option>
-            <option value="us">Envío USA</option>
-          </select>
-          <input id="miniZip" placeholder="CP para envío" inputmode="numeric" />
-          <button class="btn ghost" onclick="quoteShippingMini()">Cotizar</button>
-          <div id="miniShipLabel" class="miniShipLabel"></div>
-        </div>
-        
-        <button id="checkoutBtn" class="btn primary full" onclick="checkout()">
-          <i class="fa-solid fa-credit-card"></i> PAGAR
-        </button>
-        <button class="btn ghost full" onclick="closeCart()">
-          <i class="fa-solid fa-arrow-left"></i> SEGUIR COMPRANDO
-        </button>
-        <div class="finePrint">
-          Al pagar aceptas los <a href="#" onclick="openLegal('terms');return false;">términos</a>.
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- LEGAL MODAL (UNA SOLA CARD REUTILIZABLE) -->
+  <div id="legalModal" class="legalModal" aria-hidden="true">
+    <div class="legalBackdrop" id="legalBackdrop"></div>
 
-  <div id="legalOverlay" class="legalOverlay" aria-hidden="true">
-    <div id="legalCard" class="legalCard">
+    <div class="legalCard" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
       <div class="legalHead">
-        <div>
-          <div id="legalTitle" class="legalTitle">Información</div>
-          <div class="legalSub">SCORE STORE · Confianza máxima</div>
+        <div class="legalHeadLeft">
+          <div class="legalPill"><i class="fa-solid fa-shield-halved"></i> Confianza Oficial</div>
+          <h3 id="legalTitle">Información</h3>
         </div>
-        <button class="legalClose" onclick="closeLegal()">✕</button>
+        <button class="legalClose" id="legalClose" aria-label="Cerrar">✕</button>
       </div>
+
       <div class="legalBody" id="legalBody"></div>
+
       <div class="legalFoot">
         © 2026 Único Uniformes · BAJATEX
       </div>
     </div>
   </div>
 
-  <button class="ai-btn-float" onclick="toggleAiAssistant()" aria-label="Asistente AI">
-    <i class="fa-solid fa-robot"></i>
-  </button>
-  
-  <div id="aiChatModal" class="ai-chat-modal" aria-hidden="true">
-    <div class="ai-box">
-      <div class="ai-header">
-        <span>ESTRATEGA SCORE 🏁</span>
-        <button onclick="toggleAiAssistant()">✕</button>
-      </div>
-      <div id="aiMessages" class="ai-body"></div>
-      <div class="ai-input-bar">
-        <input id="aiInput" placeholder="Pregunta sobre tallas o envíos..." onkeydown="if(event.key==='Enter') sendAiMessage()" />
-        <button onclick="sendAiMessage()">➜</button>
-      </div>
-    </div>
-  </div>
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
 
-  <script src="main.js"></script>
+  <script type="module" src="/js/main.js?v=2026_PROD"></script>
+
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
