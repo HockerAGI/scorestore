@@ -1,28 +1,32 @@
 /* =========================================================
-   SCORE STORE — STYLES
+   SCORE STORE — STYLES (PROD 2026)
    Racing Pro · Claro (no dark) · Detalles negros
-   Operado por Único Uniformes
+   Operado por Único Uniformes · Protagonista SCORE STORE
    ========================================================= */
 
 :root {
   --bg: #ffffff;
   --bg-soft: #f6f6f6;
   --bg-alt: #f2f2f2;
+
   --ink: #111111;
   --ink-soft: #444;
   --muted: #777;
 
   --accent: #e10600;        /* racing red */
-  --accent-2: #000000;     /* negro */
+  --accent-2: #000000;      /* negro */
   --accent-soft: #ffe5e3;
 
   --radius: 14px;
   --radius-sm: 10px;
+
   --shadow: 0 10px 30px rgba(0,0,0,.08);
   --shadow-soft: 0 6px 18px rgba(0,0,0,.06);
 
   --max: 1180px;
   --speed: .25s ease;
+
+  --ring: 0 0 0 4px rgba(225, 6, 0, .14);
 }
 
 /* RESET -------------------------------------------------- */
@@ -36,11 +40,29 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select { font-family: inherit; }
+
+::selection {
+  background: rgba(225,6,0,.18);
+}
+
+/* A11Y --------------------------------------------------- */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
 
 /* HELPERS ------------------------------------------------ */
 .container {
@@ -85,20 +107,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 10px;
   padding: 14px 20px;
   border-radius: var(--radius-sm);
-  font-weight: 600;
-  transition: transform var(--speed), box-shadow var(--speed), background var(--speed);
+  font-weight: 700;
+  transition: transform var(--speed), box-shadow var(--speed), background var(--speed), border-color var(--speed), color var(--speed);
   box-shadow: var(--shadow-soft);
+  user-select: none;
 }
 
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.primary:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn.primary:active { transform: translateY(0px) scale(.99); }
 
 .btn.ghost {
   background: #fff;
   color: var(--ink);
   border: 1px solid #e0e0e0;
 }
-.btn.ghost:hover { background: var(--bg-soft); }
+.btn.ghost:hover { background: var(--bg-soft); border-color: #d8d8d8; }
+.btn.ghost:active { transform: translateY(0px) scale(.99); }
 
 .btn.full { width: 100%; justify-content: center; }
 
@@ -107,8 +132,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   position: sticky;
   top: 0;
   z-index: 50;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0,0,0,.06);
 }
 
 .topInner {
@@ -122,19 +148,31 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 800;
-  letter-spacing: .5px;
+  font-weight: 900;
+  letter-spacing: .6px;
 }
 
-.brandLogo { width: 34px; height: auto; }
+.brandLogo { width: 34px; height: auto; filter: drop-shadow(0 8px 18px rgba(0,0,0,.10)); }
 .brandText { font-size: 15px; }
 
 .nav { display: flex; gap: 22px; }
-.nav a { font-size: 14px; color: var(--ink-soft); }
-.nav a:hover, .nav a.active { color: var(--ink); }
+.nav a { font-size: 14px; color: var(--ink-soft); font-weight: 700; opacity: .9; }
+.nav a:hover, .nav a.active { color: var(--ink); opacity: 1; }
 
 /* CART ICON -------------------------------------------- */
-.cartBtn { position: relative; font-size: 18px; }
+.cartBtn {
+  position: relative;
+  font-size: 18px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.8);
+  box-shadow: 0 10px 24px rgba(0,0,0,.05);
+}
+.cartBtn:hover { background: #fff; }
 .cartCount {
   position: absolute;
   top: -6px;
@@ -148,6 +186,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: grid;
   place-items: center;
   padding: 0 4px;
+  box-shadow: 0 10px 18px rgba(225,6,0,.18);
 }
 
 /* HERO -------------------------------------------------- */
@@ -175,12 +214,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #fff;
+  background: rgba(255,255,255,.9);
   padding: 8px 14px;
-  border-radius: 30px;
+  border-radius: 999px;
   box-shadow: var(--shadow-soft);
   font-size: 12px;
   margin-bottom: 20px;
+  border: 1px solid rgba(0,0,0,.06);
 }
 
 .heroBadge img { width: 22px; }
@@ -188,7 +228,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .hero h1 {
   font-size: clamp(34px, 5vw, 56px);
   margin: 0 0 10px;
-  line-height: 1.1;
+  line-height: 1.08;
+  letter-spacing: .3px;
 }
 
 .hero .accent { color: var(--accent); }
@@ -197,6 +238,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   color: var(--ink-soft);
   max-width: 620px;
   margin: 0 auto 26px;
+  line-height: 1.45;
 }
 
 .heroCtas {
@@ -214,7 +256,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   flex-wrap: wrap;
 }
 
-.heroLogos img { height: 42px; opacity: .85; }
+.heroLogos img {
+  height: 42px;
+  opacity: .88;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.08));
+}
 
 /* FILTERS ---------------------------------------------- */
 .filters {
@@ -226,11 +272,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .chip {
   padding: 8px 14px;
-  border-radius: 30px;
+  border-radius: 999px;
   border: 1px solid #ddd;
-  background: #fff;
+  background: rgba(255,255,255,.92);
   font-size: 13px;
+  font-weight: 800;
+  transition: background var(--speed), transform var(--speed), border-color var(--speed);
+  box-shadow: 0 10px 20px rgba(0,0,0,.04);
 }
+.chip:hover { transform: translateY(-1px); border-color: rgba(0,0,0,.18); }
 .chip.active {
   background: var(--accent);
   border-color: var(--accent);
@@ -252,14 +302,33 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   flex-direction: column;
   transition: transform var(--speed), box-shadow var(--speed);
+  border: 1px solid rgba(0,0,0,.06);
+  position: relative;
 }
+
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(600px 200px at 50% -20%, rgba(225,6,0,.09), transparent 55%);
+  opacity: .8;
+}
+
 .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
 
 .cardImg {
   aspect-ratio: 1/1;
-  background: var(--bg-soft);
+  background: linear-gradient(180deg, #f7f7f7, #f1f1f1);
   display: grid;
   place-items: center;
+  position: relative;
+}
+
+.cardImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cardBody {
@@ -267,27 +336,45 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
-.cardTitle { font-weight: 700; font-size: 15px; }
-.cardPrice { font-weight: 800; color: var(--accent); }
+.cardTitle { font-weight: 900; font-size: 15px; letter-spacing: .2px; }
+.cardPrice { font-weight: 900; color: var(--accent); }
 
 .cardControls { display: flex; gap: 8px; margin-top: auto; }
+
 .cardControls select {
   flex: 1;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px 10px;
+  border-radius: 10px;
   border: 1px solid #ddd;
+  background: #fff;
+  font-weight: 800;
+  color: #111;
 }
+.cardControls select:focus-visible { box-shadow: var(--ring); }
+
 .cardControls button { flex: 1; }
+
+.card.pulse {
+  animation: cardPulse 420ms ease-out both;
+}
+@keyframes cardPulse {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-3px) scale(1.01); }
+  100% { transform: translateY(0) scale(1); }
+}
 
 /* SHIPPING SECTION ------------------------------------- */
 .shippingBox {
   max-width: 420px;
-  background: #fff;
+  background: rgba(255,255,255,.94);
   padding: 24px;
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0,0,0,.06);
 }
 
 .shipRow {
@@ -297,14 +384,27 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin-bottom: 12px;
 }
 
-.shipRow input, .shipRow select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-}
+.shipRow label { font-weight: 900; font-size: 13px; }
 
-.shipQuote { margin-top: 12px; font-weight: 600; }
-.note { margin-top: 20px; font-size: 13px; color: var(--muted); }
+.shipRow input, .shipRow select {
+  padding: 12px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-weight: 700;
+}
+.shipRow input::placeholder { color: #999; }
+
+.shipQuote { margin-top: 12px; font-weight: 900; color: #111; }
+.note {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.note i { color: var(--accent); margin-top: 2px; }
 
 /* FAQ --------------------------------------------------- */
 .faq details {
@@ -313,8 +413,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-soft);
   margin-bottom: 12px;
+  border: 1px solid rgba(0,0,0,.06);
 }
-.faq summary { cursor: pointer; font-weight: 600; }
+.faq summary {
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq details > div { margin-top: 10px; color: #333; line-height: 1.45; }
 
 /* DRAWER / CART ---------------------------------------- */
 .drawer {
@@ -324,80 +431,101 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   width: 360px;
   max-width: 100%;
   height: 100%;
-  background: #fff;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(10px);
   box-shadow: -10px 0 30px rgba(0,0,0,.12);
   transform: translateX(100%);
   transition: transform var(--speed);
   z-index: 100;
   display: flex;
   flex-direction: column;
+  border-left: 1px solid rgba(0,0,0,.06);
 }
 .drawer.open { transform: translateX(0); }
 
 .drawerHead {
   padding: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0,0,0,.06);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.drawerTitle { font-weight: 900; letter-spacing: .4px; }
+.drawerTitle {
+  font-weight: 1000;
+  letter-spacing: .4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .drawerClose {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  background: rgba(0,0,0,.06);
-  font-weight: 900;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.75);
 }
-.drawerClose:hover { background: rgba(0,0,0,.10); }
+.drawerClose:hover { background: #fff; }
 
 .drawerBody { padding: 16px; flex: 1; overflow-y: auto; }
-.drawerFoot { padding: 16px; border-top: 1px solid #eee; }
+.drawerFoot { padding: 16px; border-top: 1px solid rgba(0,0,0,.06); }
 
-.drawerFoot .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.drawerFoot .row.total { font-weight: 800; font-size: 18px; }
+.drawerFoot .row { display: flex; justify-content: space-between; margin-bottom: 8px; color: #222; }
+.drawerFoot .row.total { font-weight: 1000; font-size: 18px; }
 
 .cartRow {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   padding: 12px 10px;
-  border-radius: 12px;
-  background: var(--bg-soft);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafafa, #f4f4f4);
   margin-bottom: 10px;
   border: 1px solid rgba(0,0,0,.06);
 }
-.cartRow small { color: var(--muted); }
 
+.cartRow small { color: var(--muted); font-weight: 700; }
 .removeBtn {
-  margin-left: 8px;
   background: rgba(0,0,0,.08);
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-weight: 800;
+  border-radius: 12px;
+  padding: 7px 10px;
+  font-weight: 1000;
+  line-height: 1;
+  transition: background var(--speed), transform var(--speed);
 }
-.removeBtn:hover { background: rgba(0,0,0,.14); }
+.removeBtn:hover { background: rgba(0,0,0,.14); transform: translateY(-1px); }
+.removeBtn:active { transform: translateY(0px) scale(.99); }
 
 .promoBox { display: flex; gap: 8px; margin: 12px 0; }
 .promoBox input {
   flex: 1;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px 10px;
+  border-radius: 10px;
   border: 1px solid #ddd;
+  font-weight: 800;
 }
+.promoBox input::placeholder { color: #999; }
 
 .shipMini { display: grid; gap: 8px; margin-bottom: 12px; }
 .shipMini select, .shipMini input {
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px 10px;
+  border-radius: 10px;
   border: 1px solid #ddd;
+  font-weight: 800;
 }
-.miniShipLabel { font-size: 13px; color: var(--ink-soft); }
+.miniShipLabel {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-weight: 800;
+  background: rgba(225,6,0,.08);
+  border: 1px solid rgba(225,6,0,.12);
+  border-radius: 12px;
+  padding: 10px 10px;
+}
 
-.finePrint { font-size: 12px; color: var(--muted); }
-.finePrint a { text-decoration: underline; }
+.finePrint { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.finePrint a { text-decoration: underline; font-weight: 900; }
 
 .backdrop {
   position: fixed;
@@ -424,7 +552,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   place-items: center;
   box-shadow: var(--shadow);
   z-index: 120;
+  border: 1px solid rgba(0,0,0,.10);
+  transition: transform var(--speed), box-shadow var(--speed);
 }
+.ai-btn-float:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.14); }
+.ai-btn-float:active { transform: translateY(0px) scale(.99); }
 
 .ai-chat-modal {
   position: fixed;
@@ -436,39 +568,52 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .ai-chat-modal.show { display: grid; place-items: center; }
 
 .ai-box {
-  background: #fff;
-  width: 340px;
+  background: rgba(255,255,255,.96);
+  width: 360px;
   max-width: 92%;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.18);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid rgba(0,0,0,.10);
 }
 
 .ai-header {
   padding: 12px 16px;
-  background: var(--accent);
+  background: linear-gradient(90deg, rgba(225,6,0,.98), rgba(0,0,0,.94), rgba(225,6,0,.98));
   color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 1000;
+  letter-spacing: .3px;
 }
 
 .ai-header button {
   width: 34px;
   height: 34px;
   border-radius: 12px;
-  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.22);
   color: #fff;
-  font-weight: 900;
+  background: rgba(255,255,255,.08);
 }
-.ai-header button:hover { background: rgba(255,255,255,.28); }
 
 .ai-body { padding: 14px; flex: 1; overflow-y: auto; font-size: 14px; }
-.ai-input-bar { display: flex; border-top: 1px solid #eee; }
-.ai-input-bar input { flex: 1; padding: 10px; border: none; outline: none; }
-.ai-input-bar button { padding: 0 16px; background: var(--accent); color: #fff; }
+.ai-input-bar { display: flex; border-top: 1px solid rgba(0,0,0,.08); }
+.ai-input-bar input {
+  flex: 1;
+  padding: 12px 12px;
+  border: none;
+  background: transparent;
+  font-weight: 800;
+}
+.ai-input-bar button {
+  padding: 0 16px;
+  background: var(--accent);
+  color: #fff;
+  border-left: 1px solid rgba(0,0,0,.10);
+}
 
 /* FOOTER ----------------------------------------------- */
 .footer {
@@ -483,15 +628,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   gap: 30px;
 }
 
-.footerBrandName { font-weight: 800; margin-bottom: 6px; }
-.footer a { color: #fff; opacity: .8; }
-.footer a:hover { opacity: 1; }
+.footerBrandName { font-weight: 1000; margin-bottom: 6px; letter-spacing: .4px; }
+.footer a { color: #fff; opacity: .85; font-weight: 800; }
+.footer a:hover { opacity: 1; text-decoration: underline; }
 
 .copy {
   text-align: center;
   margin-top: 20px;
   font-size: 12px;
-  opacity: .7;
+  opacity: .75;
 }
 
 /* TOAST ----------------------------------------------- */
@@ -503,24 +648,28 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: #111;
   color: #fff;
   padding: 10px 16px;
-  border-radius: 30px;
+  border-radius: 999px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--speed), transform var(--speed);
   z-index: 300;
+  box-shadow: 0 20px 50px rgba(0,0,0,.20);
+  border: 1px solid rgba(255,255,255,.12);
+  font-weight: 900;
 }
 .toast.show { opacity: 1; transform: translate(-50%, -6px); }
 
 /* RESPONSIVE ------------------------------------------- */
 @media (max-width: 900px) { .nav { display: none; } }
+
 @media (max-width: 600px) {
   .heroInner { padding-top: 100px; }
   .footerInner { grid-template-columns: 1fr; }
+  .drawer { width: 100%; }
 }
 
 /* =========================================================
    INTRO RACING (Tipo A) — Pro, light, no-dark
-   - Overlay no bloquea DOM (solo visual)
    - Skippable + auto-close
    - Respeta reduced motion
    ========================================================= */
@@ -545,10 +694,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background-size: cover;
   background-position: center;
   filter: contrast(1.05) saturate(1.08);
-  animation: introBgIn 900ms var(--speed) both;
+  animation: introBgIn 900ms ease-out both;
 }
 
-/* “Dust / grit” sin canvas (puro CSS) */
+/* “Dust / grit” puro CSS */
 .introBg::before,
 .introBg::after {
   content: "";
@@ -571,7 +720,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   animation-duration: 3.2s;
 }
 
-/* Centro */
 .introCenter {
   position: relative;
   width: min(520px, 92vw);
@@ -585,7 +733,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   animation: introCardIn 720ms cubic-bezier(.2,.9,.2,1) both;
 }
 
-/* Stripe racing top */
 .introCenter::before {
   content: "";
   position: absolute;
@@ -623,7 +770,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .introWord {
-  font-weight: 900;
+  font-weight: 1000;
   letter-spacing: .8px;
   font-size: clamp(22px, 4.4vw, 28px);
   color: var(--ink);
@@ -641,7 +788,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   animation: textRise 740ms ease-out 300ms both;
 }
 
-/* Barra de progreso */
 .introBar {
   height: 8px;
   border-radius: 999px;
@@ -656,6 +802,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(225,6,0,.95), rgba(0,0,0,.92), rgba(225,6,0,.95));
   box-shadow: 0 6px 18px rgba(225,6,0,.18);
+  transition: width 80ms linear;
 }
 
 .introSkip {
@@ -666,64 +813,56 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border: 1px solid rgba(0,0,0,.10);
   background: rgba(255,255,255,.7);
   color: rgba(17,17,17,.88);
-  font-weight: 700;
+  font-weight: 900;
   display: inline-flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   transition: transform var(--speed), background var(--speed), border-color var(--speed);
 }
 
+.introSkip span {
+  display: inline-block;
+  transform: translateY(1px);
+  opacity: .9;
+}
+
 .introSkip:hover {
+  background: #fff;
+  border-color: rgba(0,0,0,.16);
   transform: translateY(-1px);
-  background: rgba(255,255,255,.92);
-  border-color: rgba(0,0,0,.18);
 }
 
-/* Cierre */
-.intro.hide {
-  animation: introOut 420ms ease-in forwards;
-}
+.introSkip:active { transform: translateY(0px) scale(.99); }
 
+/* Animations ------------------------------------------- */
 @keyframes introBgIn {
-  from { opacity: 0; transform: scale(1.03); }
+  from { opacity: 0; transform: scale(1.02); }
   to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes introCardIn {
-  from { opacity: 0; transform: translateY(16px) scale(.98); }
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes stripeSweep {
-  from { opacity: 0; transform: translateX(-14%) skewX(-18deg); }
-  to   { opacity: .9; transform: translateX(0) skewX(-18deg); }
-}
-
-@keyframes dustDrift {
-  from { transform: translate3d(-2%, -1%, 0); }
-  to   { transform: translate3d(2%, 1%, 0); }
+  from { opacity: 0; transform: skewX(-18deg) translateX(-14%); }
+  to   { opacity: .9; transform: skewX(-18deg) translateX(0%); }
 }
 
 @keyframes logoPop {
-  0%   { opacity: 0; transform: translateY(14px) scale(.92); }
-  60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateY(12px) scale(.92); }
+  65%  { opacity: 1; transform: translateY(0px)  scale(1.02); }
+  100% { opacity: 1; transform: translateY(0px)  scale(1.00); }
 }
 
 @keyframes textRise {
   from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0px); }
 }
 
-@keyframes introOut {
-  to { opacity: 0; transform: scale(1.01); pointer-events: none; }
-}
-
-/* Accesibilidad: reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  .introBg, .introBg::before, .introBg::after,
-  .introCenter, .introLogo, .introWord, .introTag {
-    animation: none !important;
-  }
+@keyframes dustDrift {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(-40px, 18px, 0) rotate(2deg); }
 }
