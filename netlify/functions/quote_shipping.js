@@ -1,4 +1,4 @@
-const { jsonResponse, safeJsonParse, getEnviaQuote, FALLBACK_MX_PRICE, FALLBACK_US_PRICE, normalizeQty } = require("./_shared");
+const { jsonResponse, safeJsonParse, normalizeQty, getEnviaQuote } = require("./_shared");
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
@@ -6,37 +6,23 @@ exports.handler = async (event) => {
 
   try {
     const body = safeJsonParse(event.body);
+    const zip = String(body.zip || "").trim();
     const country = String(body.country || "MX").toUpperCase();
-    const zip = String(body.zip || "");
-    
-    let qty = 1;
-    if (Array.isArray(body.items)) {
-        qty = body.items.reduce((acc, item) => acc + normalizeQty(item.quantity || item.qty), 0);
-    } else {
-        qty = normalizeQty(body.items || body.qty);
-    }
+    const qty = normalizeQty(body.qty);
 
-    if (!zip || zip.trim().length < 5) {
-      return jsonResponse(400, { error: "Código postal inválido" });
-    }
+    if (!zip) return jsonResponse(400, { error: "CP requerido" });
 
     const quote = await getEnviaQuote(zip, qty, country);
-
-    if (quote) {
+    if (!quote) {
       return jsonResponse(200, {
-        ok: true,
-        cost: quote.mxn,
-        label: `${quote.carrier} (${quote.days} días)`,
+        ok: false,
+        note: "No se pudo cotizar con Envia (token faltante o CP sin cobertura).",
       });
     }
 
-    const isUS = country === "US";
-    return jsonResponse(200, {
-      ok: true,
-      cost: isUS ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE,
-      label: isUS ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)",
-    });
-  } catch (error) {
-    return jsonResponse(200, { ok: true, cost: FALLBACK_MX_PRICE, label: "Envío Estándar" });
+    return jsonResponse(200, { ok: true, quote });
+  } catch (e) {
+    console.error("quote_shipping error:", e);
+    return jsonResponse(500, { error: "Error al cotizar envío." });
   }
 };
