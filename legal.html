@@ -1,142 +1,199 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es-MX">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Legal y Privacidad · SCORE Store</title>
-  <meta name="robots" content="noindex, follow" />
-  <meta name="theme-color" content="#E10600" />
-  
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Legal | SCORE STORE</title>
 
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '4249947775334413');
-    fbq('track', 'PageView');
-  </script>
+  <meta name="description" content="Términos, privacidad, envíos, devoluciones y avisos legales de SCORE STORE." />
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta name="theme-color" content="#111111" />
+
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD" />
 </head>
-
 <body>
+
   <header class="topbar">
-    <div class="container topbarInner">
-      <a class="btnGhost" href="/" style="color: inherit; text-decoration: none;">← Volver a la Tienda</a>
-      <img class="brandLogo" src="/assets/logo-score.webp" alt="SCORE Store" />
-      <div style="width:40px;"></div> </div>
+    <div class="container topInner">
+      <div class="brand">
+        <img src="/assets/logo-score.webp" class="brandLogo" alt="SCORE Logo">
+        <span class="brandText">SCORE STORE</span>
+      </div>
+
+      <nav class="nav">
+        <a href="/#catalogo">CATÁLOGO</a>
+        <a href="/#envios">ENVÍOS</a>
+        <a href="/#faq">FAQ</a>
+        <a class="active" href="/legal.html">LEGAL</a>
+      </nav>
+
+      <a class="btn ghost" href="/"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    </div>
   </header>
 
-  <main class="legal">
-    
-    <section class="legalCard" style="text-align:center; padding: 20px;">
-      <h2 class="h2" style="border:none; margin:0; text-align: center;">CENTRO LEGAL</h2>
-      <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap; margin-top:15px;">
-        <a href="#privacidad" class="btnGhost" style="color:#000; border-color:#ccc;">Aviso de Privacidad</a>
-        <a href="#terminos" class="btnGhost" style="color:#000; border-color:#ccc;">Términos y Condiciones</a>
-        <a href="#comercial" class="btnGhost" style="color:#000; border-color:#ccc;">Información Comercial</a>
+  <main class="section legalPage">
+    <div class="container">
+      <div class="sectionHead">
+        <h2>LEGAL</h2>
+        <p>Lee esto antes de comprar. Transparente, directo y sin letras chiquitas raras.</p>
       </div>
-    </section>
 
-    <section id="privacidad" class="legalCard">
-      <h1 class="legal-doc-title">1. AVISO DE PRIVACIDAD INTEGRAL</h1>
-      <p class="p muted">Última actualización: Enero 2026</p>
+      <article class="legalCard">
+        <h3>1) Identidad del sitio</h3>
+        <p>
+          <b>SCORE STORE</b> es la tienda de mercancía oficial asociada a eventos off-road.
+          La operación de fabricación/producción y administración logística se realiza a través de
+          <b>Único Uniformes</b> (BAJATEX), con sede en Tijuana, Baja California, México.
+        </p>
+        <p>
+          Contacto operativo (producción y soporte): <b>ventas.unicotextil@gmail.com</b>
+        </p>
+      </article>
 
-      <div class="legal-section-title">RESPONSABLE DEL TRATAMIENTO DE DATOS</div>
-      <p class="legal-text">
-        <strong>BAJATEX, S. de R.L. de C.V.</strong>, operando bajo el nombre comercial Único Uniformes y SCORE Store, con domicilio en Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, Baja California, México, es responsable del uso y protección de sus datos personales.
-      </p>
+      <article class="legalCard">
+        <h3>2) Aceptación de términos</h3>
+        <p>
+          Al navegar o comprar en este sitio aceptas estos términos, así como las políticas aquí descritas.
+          Si no estás de acuerdo, por favor no uses el sitio ni completes compras.
+        </p>
+      </article>
 
-      <div class="legal-section-title">DATOS PERSONALES RECABADOS</div>
-      <p class="legal-text">Para fines comerciales y logísticos, recabamos:</p>
-      <ul class="legal-list">
-        <li>Identificación: Nombre completo.</li>
-        <li>Contacto: Teléfono, WhatsApp y Correo electrónico.</li>
-        <li>Logística: Dirección de envío detallada y referencias.</li>
-        <li>Fiscales: RFC, razón social y código postal fiscal (si solicita factura).</li>
-      </ul>
+      <article class="legalCard">
+        <h3>3) Pagos (Stripe)</h3>
+        <p>
+          Los pagos se procesan mediante <b>Stripe</b>. Dependiendo de disponibilidad, puedes pagar con:
+        </p>
+        <ul>
+          <li>Tarjeta (débito/crédito)</li>
+          <li>OXXO (pago en efectivo mediante referencia)</li>
+        </ul>
+        <p>
+          SCORE STORE no almacena datos completos de tu tarjeta. Stripe maneja el procesamiento con estándares de seguridad.
+        </p>
+      </article>
 
-      <div class="legal-section-title">FINALIDAD DEL USO DE DATOS</div>
-      <ul class="legal-list">
-        <li>Procesamiento seguro de pagos (vía Stripe).</li>
-        <li>Gestión de guías de envío (vía Envia.com / FedEx).</li>
-        <li>Emisión de comprobantes fiscales (CFDI).</li>
-        <li>Notificaciones sobre el estatus del pedido.</li>
-      </ul>
+      <article class="legalCard">
+        <h3>4) Precios, moneda y disponibilidad</h3>
+        <p>
+          Los precios se muestran en <b>MXN</b> (pesos mexicanos), salvo que se indique lo contrario.
+          La disponibilidad de productos puede cambiar sin previo aviso.
+        </p>
+        <p>
+          En caso de error evidente de precio (ej. $1 MXN por un producto), podremos cancelar la orden y reembolsar el pago.
+        </p>
+      </article>
 
-      <div class="legal-section-title">DERECHOS ARCO</div>
-      <p class="legal-text">
-        Usted puede ejercer sus derechos de Acceso, Rectificación, Cancelación u Oposición enviando una solicitud a nuestro departamento de datos personales en: <strong>ventas.unicotextil@gmail.com</strong>
-      </p>
-    </section>
+      <article class="legalCard">
+        <h3>5) Envíos (Envia.com / FedEx) — Operación real</h3>
+        <p>
+          Para envíos a México y USA, se utiliza integración con <b>Envia.com</b> (carrier principal: <b>FedEx</b>).
+          El costo de envío puede ser cotizado en la sección de envíos o dentro del carrito.
+        </p>
+        <ul>
+          <li>Los tiempos de entrega dependen de carrier, cobertura y temporada.</li>
+          <li>Una vez generada la guía, se proporciona número de rastreo (tracking) cuando aplique.</li>
+          <li>Direcciones incompletas o incorrectas pueden causar retrasos o devolución.</li>
+        </ul>
+        <p class="muted">
+          Nota: En casos específicos puede aplicarse un costo “fallback” si no se puede cotizar en tiempo real.
+        </p>
+      </article>
 
-    <section id="terminos" class="legalCard">
-      <h1 class="legal-doc-title">2. TÉRMINOS Y CONDICIONES</h1>
+      <article class="legalCard">
+        <h3>6) Devoluciones y cambios</h3>
+        <p>
+          La mercancía puede ser personalizada o producida por lote. Por higiene y control de tallas:
+        </p>
+        <ul>
+          <li><b>Cambios por talla</b>: se evalúan caso por caso (producto sin uso, con etiquetas, empaque completo).</li>
+          <li><b>Devoluciones</b>: se aceptan únicamente si el producto llega con defecto de fabricación o error de surtido.</li>
+          <li>El cliente debe reportar cualquier problema dentro de <b>48 horas</b> posteriores a la entrega.</li>
+        </ul>
+        <p>
+          Para solicitar soporte: <b>ventas.unicotextil@gmail.com</b> (incluye número de orden, fotos y descripción).
+        </p>
+      </article>
 
-      <div class="legal-section-title">PRODUCTOS Y PRECIOS</div>
-      <p class="legal-text">
-        SCORE STORE es el canal oficial de mercancía de SCORE International. 
-        Todos los precios están expresados en Moneda Nacional (MXN) e incluyen IVA. Nos reservamos el derecho de modificar precios o suspender productos sin previo aviso.
-      </p>
+      <article class="legalCard">
+        <h3>7) Cancelaciones</h3>
+        <p>
+          Si la orden ya fue procesada/empacada o si la guía ya fue generada, puede no ser posible cancelar.
+          Si es posible cancelar, se hará reembolso según tiempos de Stripe y banco del cliente.
+        </p>
+      </article>
 
-      <div class="legal-section-title">POLÍTICA DE ENVÍOS</div>
-      <p class="legal-text">
-        Realizamos envíos a todo México y Estados Unidos. 
-        <br>• <strong>Tiempo de procesamiento:</strong> 1-2 días hábiles.
-        <br>• <strong>Tiempo de tránsito:</strong> 3-5 días hábiles (Estándar).
-        <br>El riesgo de pérdida de la mercancía se transfiere al cliente en el momento en que entregamos el paquete al transportista (FedEx/Estafeta).
-      </p>
+      <article class="legalCard">
+        <h3>8) Privacidad y datos</h3>
+        <p>
+          Recolectamos los datos necesarios para procesar tu compra y entrega: nombre, correo, teléfono y dirección.
+          Podemos usar cookies técnicas para funcionamiento del carrito y experiencia del sitio.
+        </p>
+        <p>
+          Tus datos se usan para: procesar pagos, logística de envío, soporte al cliente y notificaciones relacionadas a tu orden.
+          No vendemos tu información personal.
+        </p>
+      </article>
 
-      <div class="legal-section-title">CAMBIOS Y DEVOLUCIONES</div>
-      <ul class="legal-list">
-        <li>Se aceptan cambios por defecto de fábrica o error en talla dentro de los <strong>30 días naturales</strong> posteriores a la compra.</li>
-        <li>El producto debe estar nuevo, sin lavar y con etiquetas originales.</li>
-        <li>No aplican cambios en productos de liquidación o personalizados.</li>
-      </ul>
-    </section>
+      <article class="legalCard">
+        <h3>9) Propiedad intelectual</h3>
+        <p>
+          Los nombres, logotipos y gráficos presentados pueden pertenecer a sus respectivos propietarios.
+          No se otorga licencia de uso comercial por el simple acceso al sitio.
+        </p>
+      </article>
 
-    <section id="comercial" class="legalCard">
-      <h1 class="legal-doc-title">3. INFORMACIÓN COMERCIAL</h1>
+      <article class="legalCard">
+        <h3>10) Limitación de responsabilidad</h3>
+        <p>
+          SCORE STORE y Único Uniformes no serán responsables por:
+          interrupciones del servicio por terceros, fallos de carrier, retrasos fuera de control razonable,
+          o daños indirectos derivados del uso del sitio.
+        </p>
+      </article>
 
-      <div class="legal-section-title">IDENTIDAD DEL COMERCIO</div>
-      <p class="legal-text">
-        <strong>Nombre Comercial:</strong> SCORE Store<br>
-        <strong>Razón Social:</strong> BAJATEX, S. de R.L. de C.V.<br>
-        <strong>Dirección:</strong> Palermo 6106 Interior JK, Anexa Roma, 22614 Tijuana, B.C.
-      </p>
+      <article class="legalCard">
+        <h3>11) Jurisdicción</h3>
+        <p>
+          Para efectos de interpretación y cumplimiento, se aplican leyes aplicables en México,
+          salvo disposiciones distintas por transacciones internacionales cuando corresponda.
+        </p>
+      </article>
 
-      <div class="legal-section-title">ATENCIÓN AL CLIENTE</div>
-      <p class="legal-text">
-        📧 ventas.unicotextil@gmail.com<br>
-        📱 WhatsApp: +52 664 236 8701
-      </p>
+      <article class="legalCard">
+        <h3>12) Contacto</h3>
+        <p>
+          Soporte / Producción: <b>ventas.unicotextil@gmail.com</b><br>
+          Web fabricante: <a href="https://unicouniformes.com/" target="_blank" rel="noopener">unicouniformes.com</a><br>
+          Facebook: <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Uniformes Único</a>
+        </p>
+      </article>
 
-      <div class="legal-section-title">FACTURACIÓN ELECTRÓNICA</div>
-      <p class="legal-text">
-        Si requiere factura, por favor envíe su Constancia de Situación Fiscal y número de pedido al correo de contacto dentro del <strong>mismo mes calendario</strong> de su compra.
-      </p>
-
-      <div class="legal-section-title">PROPIEDAD INTELECTUAL</div>
-      <p class="legal-text">
-        Las marcas "SCORE International", "Baja 1000" y sus logotipos son propiedad exclusiva de SCORE International, LLC. 
-        BAJATEX cuenta con la licencia oficial para la fabricación y distribución de esta mercancía.
-      </p>
-    </section>
-
+      <div class="legalFooter">
+        <a class="btn primary" href="/"><i class="fa-solid fa-flag-checkered"></i> Volver a la tienda</a>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
-    <div class="container footerInner" style="justify-content: center; text-align: center;">
+    <div class="container footerInner">
       <div class="fCol">
-        <p class="fText" style="opacity: 0.7;">© 2026 SCORE Store · Operado por Único Uniformes (BAJATEX)</p>
+        <div class="footerBrandName">SCORE STORE</div>
+        <p>Operado por Único Uniformes.<br>Tijuana, Baja California.</p>
+      </div>
+      <div class="fCol">
+        <h4>ENLACES</h4>
+        <div class="f-links">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook Único</a>
+          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Web Fabricante</a>
+        </div>
       </div>
     </div>
+    <div class="copy">SCORE Store © 2026 | Powered by Único OS</div>
   </footer>
+
+  <!-- Font Awesome (para que los iconos del botón vuelvan y no se rompa el layout) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js" crossorigin="anonymous"></script>
+
 </body>
 </html>
