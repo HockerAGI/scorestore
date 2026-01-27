@@ -49,18 +49,32 @@ async function loadCatalog() {
   } catch(e) { $("#productsGrid").innerHTML = "<p>Cargando...</p>"; }
 }
 
+/* Reemplaza la función renderGrid en js/main.js con esta versión */
+
 function renderGrid(list) {
-  const grid = $("#productsGrid"); grid.innerHTML = "";
+  const grid = $("#productsGrid");
+  grid.innerHTML = "";
+  
+  if(list.length === 0) {
+    grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;padding:40px;opacity:0.6'>No hay productos disponibles.</p>";
+    return;
+  }
+
   list.forEach(p => {
-    const card = document.createElement("div"); card.className = "card";
+    const card = document.createElement("div");
+    card.className = "card";
+    // OPTIMIZACIÓN: width/height explícitos para CLS score
     card.innerHTML = `
-      <div class="cardImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
+      <div class="cardImg">
+        <img src="${p.img}" loading="lazy" alt="${p.name}" width="300" height="300">
+      </div>
       <div class="cardBody">
         <div class="cardTitle">${p.name}</div>
         <div class="cardPrice">${fmtMXN(p.baseMXN)}</div>
         <div class="cardControls">
+          <label for="size-${p.id}" class="sr-only">Talla</label>
           <select id="size-${p.id}">${(p.sizes||["Unitalla"]).map(s=>`<option value="${s}">${s}</option>`).join("")}</select>
-          <button onclick="addToCart('${p.id}')"><i class="fa-solid fa-plus"></i></button>
+          <button onclick="addToCart('${p.id}')" aria-label="Agregar ${p.name} al carrito"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
         </div>
       </div>`;
     grid.appendChild(card);
