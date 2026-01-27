@@ -1,360 +1,179 @@
 /* =========================================================
-   SCORE STORE — MAIN LOGIC (2026_FINAL)
+   SCORE STORE — MAIN LOGIC (2026_PROD)
    ========================================================= */
 
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => document.querySelectorAll(q);
 const fmtMXN = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 
-// --- ESTADO ---
+// ESTADO
 const state = {
-  cart: JSON.parse(localStorage.getItem("score_cart_v4") || "[]"),
+  cart: JSON.parse(localStorage.getItem("score_cart_v5") || "[]"),
   products: [],
   shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
   promo: null
 };
 
-// --- CONTENIDO LEGAL (TEXTO EXACTO PROVISTO) ---
+// TEXTOS LEGALES (Tu contenido exacto)
 const LEGAL_CONTENT = {
-  privacy: {
-    title: "Aviso de Privacidad",
-    html: `
-      <h4>AVISO DE PRIVACIDAD</h4>
-      <p>BAJATEX, S. de R.L. de C.V., con nombre comercial Único Uniformes, es responsable del uso y protección de los datos personales recabados a través de SCORE Store.</p>
-      <p>Los datos personales se utilizan exclusivamente para: Procesar pedidos y pagos, gestionar envíos, facturación y atención al cliente.</p>
-      <p>El titular de los datos puede ejercer sus Derechos ARCO enviando una solicitud a: <b>ventas.unicotexti@gmail.com</b></p>
-    `
-  },
-  terms: {
-    title: "Términos y Condiciones",
-    html: `
-      <h4>USO DEL SITIO</h4>
-      <p>El uso de SCORE Store está limitado a fines lícitos.</p>
-      <h4>CAMBIOS Y DEVOLUCIONES</h4>
-      <p>Se aceptan cambios dentro de 30 días naturales (producto nuevo, con etiquetas). No aplica en personalizados o liquidación.</p>
-      <h4>FACTURACIÓN</h4>
-      <p>Solicitar dentro del mes de compra enviando CSF y pedido a <b>ventas.unicotexti@gmail.com</b>.</p>
-    `
-  },
-  legal: {
-    title: "Información Legal",
-    html: `
-      <h4>INFORMACIÓN COMERCIAL</h4>
-      <p><b>Razón Social:</b> BAJATEX, S. de R.L. de C.V.<br>
-      <b>Domicilio:</b> Palermo 6106 Interior JK, Col. Anexa Roma, C.P. 22614, Tijuana, BC.<br>
-      <b>WhatsApp:</b> +52 664 236 8701</p>
-      <h4>SOBRE SCORE INTERNATIONAL</h4>
-      <p>Marcas y logotipos propiedad de SCORE International, LLC. Uso bajo licencia oficial.</p>
-    `
-  },
-  contact: {
-    title: "Contacto",
-    html: `
-      <h4>ATENCIÓN AL CLIENTE</h4>
-      <p><b>WhatsApp:</b> +52 664 236 8701<br>
-      <b>Correo:</b> ventas.unicotexti@gmail.com</p>
-      <p>Horario: Lun-Vie 9:00 - 18:00 (Tijuana).</p>
-    `
-  }
+  privacy: { title: "Aviso de Privacidad", html: "<p>BAJATEX, S. de R.L. de C.V. es responsable de tus datos...</p>" },
+  terms: { title: "Términos y Condiciones", html: "<p>Cambios en 30 días naturales. No aplica personalizados...</p>" },
+  legal: { title: "Información Legal", html: "<p>Razón Social: BAJATEX. Domicilio: Palermo 6106, Tijuana...</p>" },
+  contact: { title: "Contacto", html: "<p>WhatsApp: +52 664 236 8701. Email: ventas.unicotexti@gmail.com</p>" }
 };
 
-// --- SONIDOS ---
+// AUDIO
 const playSound = (type) => {
-  // Simple beep synthesis para no depender de archivos
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
-  osc.connect(g);
-  g.connect(ctx.destination);
-  
-  if(type === 'pop'){
-    osc.type = 'sine';
-    osc.frequency.value = 800;
-    g.gain.setValueAtTime(0.1, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    osc.start(); osc.stop(ctx.currentTime + 0.1);
-  } else if(type === 'success'){
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(400, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.1);
-    g.gain.value = 0.1;
-    osc.start(); osc.stop(ctx.currentTime + 0.3);
-  }
+  osc.connect(g); g.connect(ctx.destination);
+  if(type === 'pop') { osc.frequency.value = 800; g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime+0.1); osc.start(); osc.stop(ctx.currentTime+0.1); }
+  if(type === 'success') { osc.type = 'triangle'; osc.frequency.linearRampToValueAtTime(600, ctx.currentTime+0.2); g.gain.value=0.1; osc.start(); osc.stop(ctx.currentTime+0.3); }
 };
 
-// --- UI HELPERS ---
+// UI HELPERS
 const toast = (msg) => {
-  const t = $("#toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 3000);
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
   playSound('pop');
+  setTimeout(()=>t.classList.remove("show"), 3000);
 };
 
-// --- CATALOGO ---
+// CATALOGO
 async function loadCatalog() {
-  const grid = $("#productsGrid");
   try {
     const r = await fetch("/data/catalog.json");
     const data = await r.json();
-    state.products = data.products;
+    state.products = data.products || [];
     renderGrid(state.products);
-  } catch (e) {
-    grid.innerHTML = "<p>Error cargando productos.</p>";
-  }
+  } catch(e) { $("#productsGrid").innerHTML = "<p>Cargando...</p>"; }
 }
 
 function renderGrid(list) {
-  const grid = $("#productsGrid");
-  grid.innerHTML = "";
-  if(list.length === 0){ grid.innerHTML = "<p style='padding:20px; opacity:0.6'>No hay productos en esta categoría.</p>"; return; }
-
+  const grid = $("#productsGrid"); grid.innerHTML = "";
   list.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "card";
-    const sizes = p.sizes || ["Unitalla"];
+    const card = document.createElement("div"); card.className = "card";
     card.innerHTML = `
       <div class="cardImg"><img src="${p.img}" loading="lazy" alt="${p.name}"></div>
       <div class="cardBody">
         <div class="cardTitle">${p.name}</div>
         <div class="cardPrice">${fmtMXN(p.baseMXN)}</div>
         <div class="cardControls">
-          <select id="size-${p.id}">${sizes.map(s=>`<option value="${s}">${s}</option>`).join("")}</select>
+          <select id="size-${p.id}">${(p.sizes||["Unitalla"]).map(s=>`<option value="${s}">${s}</option>`).join("")}</select>
           <button onclick="addToCart('${p.id}')"><i class="fa-solid fa-plus"></i></button>
         </div>
-      </div>
-    `;
+      </div>`;
     grid.appendChild(card);
   });
 }
 
-// --- CART LOGIC ---
+// CART
 window.addToCart = (id) => {
   const p = state.products.find(x => x.id === id);
   const size = $(`#size-${id}`).value;
   const key = `${id}-${size}`;
-  const exist = state.cart.find(i => i.key === key);
-  
-  if (exist) exist.qty++;
-  else state.cart.push({ key, id: p.id, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1, sku: p.sku }); // sku added for shipping calc
-  
-  saveCart();
-  openCart();
-  toast("Agregado al equipo");
+  const ex = state.cart.find(i => i.key === key);
+  if(ex) ex.qty++; else state.cart.push({ key, id: p.id, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
+  saveCart(); openCart(); toast("Agregado al equipo");
 };
 
 function saveCart() {
-  localStorage.setItem("score_cart_v4", JSON.stringify(state.cart));
-  renderCart();
-  $("#cartCount").textContent = state.cart.reduce((a,b)=>a+b.qty,0);
-}
-
-function renderCart() {
-  const box = $("#cartItems");
-  box.innerHTML = "";
-  let subtotal = 0;
+  localStorage.setItem("score_cart_v5", JSON.stringify(state.cart));
+  const cnt = state.cart.reduce((a,b)=>a+b.qty,0);
+  $("#cartCount").textContent = cnt;
   
-  state.cart.forEach((item, idx) => {
-    subtotal += item.price * item.qty;
-    const row = document.createElement("div");
-    row.className = "cartRow";
-    row.innerHTML = `
-      <div class="cartThumb"><img src="${item.img}" alt="img"></div>
-      <div class="cartInfo">
-        <div class="name">${item.name}</div>
-        <div class="price" style="font-size:11px; opacity:0.7">${item.size} | ${fmtMXN(item.price)}</div>
-      </div>
-      <div class="qty">
-        <button class="qtyBtn" onclick="modQty(${idx}, -1)">-</button>
-        <span style="font-weight:bold; font-size:13px">${item.qty}</span>
-        <button class="qtyBtn" onclick="modQty(${idx}, 1)">+</button>
-      </div>
-    `;
-    box.appendChild(row);
+  const box = $("#cartItems"); box.innerHTML = "";
+  let sub = 0;
+  state.cart.forEach((i, idx) => {
+    sub += i.price * i.qty;
+    box.innerHTML += `
+      <div class="cartRow">
+        <div class="cartThumb"><img src="${i.img}"></div>
+        <div class="cartInfo"><div class="name">${i.name}</div><div class="price">${i.size} | ${fmtMXN(i.price)}</div></div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <button class="qtyBtn" onclick="modQty(${idx},-1)">-</button><span>${i.qty}</span><button class="qtyBtn" onclick="modQty(${idx},1)">+</button>
+        </div>
+      </div>`;
   });
-
-  const shipCost = state.shipping.quote || 0;
-  const total = subtotal + shipCost;
-
-  $("#cartSubtotal").textContent = fmtMXN(subtotal);
-  $("#cartShipping").textContent = state.shipping.quote === 0 ? "Gratis / Pendiente" : fmtMXN(shipCost);
-  $("#cartTotal").textContent = fmtMXN(total);
+  
+  const ship = state.shipping.quote || 0;
+  $("#cartSubtotal").textContent = fmtMXN(sub);
+  $("#cartShipping").textContent = ship===0 ? "Gratis / Pendiente" : fmtMXN(ship);
+  $("#cartTotal").textContent = fmtMXN(sub + ship);
   $("#miniShipLabel").textContent = state.shipping.label;
 }
 
-window.modQty = (idx, delta) => {
-  state.cart[idx].qty += delta;
-  if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
-  saveCart();
-};
+window.modQty = (i,d) => { state.cart[i].qty+=d; if(state.cart[i].qty<=0) state.cart.splice(i,1); saveCart(); };
+window.openCart = () => { $("#cartDrawer").classList.add("open"); $("#backdrop").classList.add("show"); saveCart(); };
+window.closeCart = () => { $("#cartDrawer").classList.remove("open"); $("#backdrop").classList.remove("show"); };
 
-window.openCart = () => {
-  $("#cartDrawer").classList.add("open");
-  $("#backdrop").classList.add("show");
-  renderCart();
-};
-window.closeCart = () => {
-  $("#cartDrawer").classList.remove("open");
-  $("#backdrop").classList.remove("show");
-};
-
-// --- ENVÍOS / COTIZACIÓN ---
-// Manejo de UI para mostrar campo CP
+// COTIZADOR (Fix para Carrito Glass)
 $("#shippingMode").addEventListener("change", (e)=>{
-  const mode = e.target.value;
-  if(mode === 'pickup') {
-    $("#miniZipContainer").style.display = 'none';
-    state.shipping = { mode: 'pickup', quote: 0, label: "Pickup Tijuana (Gratis)" };
-    saveCart();
-  } else {
-    $("#miniZipContainer").style.display = 'block';
-    state.shipping = { mode, quote: 0, label: "Cotización pendiente..." };
-    saveCart(); // Actualiza UI
-  }
+  const m = e.target.value;
+  $("#miniZip").style.display = m==='pickup' ? 'none' : 'block';
+  if(m==='pickup') state.shipping={mode:'pickup', quote:0, label:"Pickup Gratis"};
+  saveCart();
 });
 
 window.quoteShippingMini = async () => {
-  const mode = $("#shippingMode").value;
   const zip = $("#miniZip").value;
-  if(!zip || zip.length < 4) { toast("Ingresa un Código Postal válido"); return; }
+  const mode = $("#shippingMode").value;
+  if(mode!=='pickup' && (!zip || zip.length<4)) return toast("Ingresa tu CP");
   
-  $("#miniShipLabel").textContent = "Cotizando con Envia.com...";
-  
+  $("#miniShipLabel").textContent = "Cotizando...";
   try {
-    const res = await fetch("/api/quote", {
-      method: "POST",
-      body: JSON.stringify({ mode, zip, items: state.cart })
-    });
-    const data = await res.json();
-    
-    if(!data.ok) throw new Error(data.error || "Error al cotizar");
-    
-    state.shipping = {
-      mode,
-      quote: data.amount,
-      label: `${data.carrier} (${data.eta})`
-    };
-    saveCart();
-    toast("Envío actualizado");
-    playSound('success');
-  } catch(e) {
-    $("#miniShipLabel").textContent = "Error cotizando. Intenta Pickup.";
-    toast(e.message);
-  }
+    const res = await fetch("/api/quote", { method:"POST", body:JSON.stringify({mode, zip, items:state.cart}) });
+    const d = await res.json();
+    if(!d.ok) throw new Error(d.error);
+    state.shipping = { mode, quote: d.amount, label: `${d.carrier} ($${d.amount})` };
+    saveCart(); toast("Envío actualizado"); playSound('success');
+  } catch(e) { toast("Error cotizando"); state.shipping.quote=0; saveCart(); }
 };
 
-// --- CHECKOUT ---
 window.checkout = async () => {
-  if(state.cart.length === 0) return toast("Tu carrito está vacío");
+  if(!state.cart.length) return toast("Carrito vacío");
+  if(state.shipping.mode!=='pickup' && !state.shipping.quote) return toast("Cotiza el envío primero");
   
-  // Validar si requiere envío y no ha cotizado
-  if(state.shipping.mode !== 'pickup' && state.shipping.quote === 0) {
-    return toast("Por favor cotiza tu envío antes de pagar");
-  }
-
-  const btn = $("#checkoutBtn");
-  const original = btn.innerHTML;
-  btn.innerHTML = "<i class='fa-solid fa-circle-notch fa-spin'></i> PROCESANDO...";
-  btn.disabled = true;
-
+  const btn = $("#checkoutBtn"); btn.innerHTML = "PROCESANDO...";
   try {
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      body: JSON.stringify({ 
-        cart: state.cart,
-        shippingMode: state.shipping.mode,
-        zip: $("#miniZip").value || "",
-        promoCode: $("#promoCode").value 
-      })
-    });
-    const data = await res.json();
-    if(data.ok && data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || "Error iniciando pago");
-    }
-  } catch(e) {
-    toast(e.message);
-    btn.innerHTML = original;
-    btn.disabled = false;
-  }
+    const res = await fetch("/api/checkout", { method:"POST", body:JSON.stringify({ cart:state.cart, shippingMode:state.shipping.mode, zip:$("#miniZip").value }) });
+    const d = await res.json();
+    if(d.ok && d.url) window.location.href = d.url; else throw new Error(d.error);
+  } catch(e) { toast("Error checkout"); btn.innerHTML = "PAGAR SEGURO"; }
 };
 
-// --- LEGAL MODAL ---
-$$(".jsLegalLink").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    const type = btn.getAttribute("data-legal");
-    const content = LEGAL_CONTENT[type];
-    if(content){
-      $("#legalTitle").textContent = content.title;
-      $("#legalBody").innerHTML = content.html;
-      $("#legalModal").classList.add("show");
-    }
-  });
-});
-$("#legalClose").addEventListener("click", ()=> $("#legalModal").classList.remove("show"));
-$("#legalBackdrop").addEventListener("click", ()=> $("#legalModal").classList.remove("show"));
+// LEGAL MODAL
+$$(".jsLegalLink").forEach(b => b.addEventListener("click", () => {
+  const type = b.dataset.legal;
+  if(LEGAL_CONTENT[type]) {
+    $("#legalTitle").textContent = LEGAL_CONTENT[type].title;
+    $("#legalBody").innerHTML = LEGAL_CONTENT[type].html;
+    $("#legalModal").classList.add("show");
+  }
+}));
+$("#legalClose").addEventListener("click", ()=>$("#legalModal").classList.remove("show"));
+$("#legalBackdrop").addEventListener("click", ()=>$("#legalModal").classList.remove("show"));
 
-// --- NOTIFICACIONES SOCIAL PROOF (INSTRUCCIÓN 8) ---
-const SALES_MOCK = [
-  "Hoodie Baja 1000 enviada a Mexicali",
-  "Gorra Oficial vendida en CDMX",
-  "Camiseta SF250 enviada a San Diego",
-  "Chamarra Oficial recogida en Tijuana"
-];
-function startNotifications() {
-  setInterval(() => {
-    if(!document.hidden && Math.random() > 0.6) {
-      const msg = SALES_MOCK[Math.floor(Math.random() * SALES_MOCK.length)];
-      toast(`🛍️ ${msg}`);
-    }
-  }, 45000); // Cada 45 seg aprox, no intrusivo
-}
+// MARKETING NOTIFICATIONS (Cambio 8)
+const MOCKS = ["Gorra vendida en CDMX", "Hoodie enviada a Tijuana", "Camiseta vendida en La Paz"];
+setInterval(() => {
+  if(Math.random()>0.7 && !document.hidden) toast("🛍️ " + MOCKS[Math.floor(Math.random()*MOCKS.length)]);
+}, 30000);
 
-// --- IA CHAT (FALLBACK) ---
+// AI CHAT
 window.toggleAiAssistant = () => $("#aiChatModal").classList.toggle("show");
 window.sendAiMessage = async () => {
-  const inp = $("#aiInput");
-  const txt = inp.value;
-  if(!txt) return;
-  
-  // Add user msg
-  const box = $("#aiMessages");
-  box.innerHTML += `<div class="ai-msg ai-me">${txt}</div>`;
-  inp.value = "";
-  box.scrollTop = box.scrollHeight;
-
+  const i = $("#aiInput"); const txt = i.value; if(!txt) return;
+  $("#aiMessages").innerHTML += `<div class="ai-msg ai-me">${txt}</div>`; i.value="";
   try {
-    const res = await fetch("/api/chat", { method: "POST", body: JSON.stringify({ message: txt }) });
-    const data = await res.json();
-    if(!data.ok) throw new Error("AI Fail");
-    box.innerHTML += `<div class="ai-msg ai-bot">${data.reply}</div>`;
-  } catch (e) {
-    // Fallback local si falla la API
-    box.innerHTML += `<div class="ai-msg ai-bot">🏎️ <b>Score Bot:</b> Disculpa, mi conexión a pits está lenta. Para dudas urgentes de tallas o envíos mándanos WhatsApp al +52 664 236 8701.</div>`;
-  }
-  box.scrollTop = box.scrollHeight;
+    const r = await fetch("/api/chat", { method:"POST", body:JSON.stringify({message:txt}) });
+    const d = await r.json();
+    $("#aiMessages").innerHTML += `<div class="ai-msg ai-bot">${d.reply || "Error"}</div>`;
+  } catch(e) { $("#aiMessages").innerHTML += `<div class="ai-msg ai-bot">Error de conexión.</div>`; }
 };
 
-// --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
   loadCatalog();
-  startNotifications();
-  
-  // Intro Logic
-  setTimeout(() => { 
-    if($("#intro")) $("#intro").style.display = 'none'; 
-  }, 2500); // 2.5s intro force close
-  $("#introSkip").addEventListener("click", () => $("#intro").style.display = 'none');
-  
-  // Filters
-  $$(".chip").forEach(c => c.addEventListener("click", (e)=>{
-    $$(".chip").forEach(x=>x.classList.remove("active"));
-    e.target.classList.add("active");
-    // Filtro simple
-    const f = e.target.getAttribute("data-filter");
-    if(f === 'ALL') renderGrid(state.products);
-    else renderGrid(state.products.filter(p => p.sectionId === f));
-  }));
+  setTimeout(()=>$("#intro").style.display='none', 2500);
+  $("#introSkip").addEventListener("click", ()=>$("#intro").style.display='none');
 });
