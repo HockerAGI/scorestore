@@ -1,262 +1,593 @@
 /* =========================================================
-   SCORE STORE · ENGINE v2026 PROD (WHITE BAR EDITION)
+   SCORE STORE — MAIN JS (PROD)
+   - Catálogo (data/catalog.json)
+   - Carrito (drawer)
+   - Envíos (Envia quote)
+   - Checkout (Stripe via Netlify Function)
+   - Score AI (Gemini via Netlify Function)
+   - Intro Racing (Tipo A)
    ========================================================= */
 
-(function () {
-  "use strict";
-  
-  const API_BASE = "/.netlify/functions";
-  const CART_KEY = "score_cart_GOLD_2026";
-  const COOKIE_KEY = "score_cookie_consent";
-  
-  let catalogData = { products: [], sections: [] };
-  let cart = [];
-  let promoCode = "";
-  const shippingState = { mode: "pickup" };
-  
-  const $ = (id) => document.getElementById(id);
-  const money = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+const API = {
+  checkout: "/api/checkout",
+  quote: "/api/quote",
+  chat: "/api/chat"
+};
 
-  // DATOS REALES (EXTRAÍDOS DE TUS ARCHIVOS)
-  const INFO_DATA = {
-      contacto: `
-        <h3>CONTACTO Y FÁBRICA</h3>
-        <p><strong>Operador:</strong> BAJATEX S. DE R.L. DE C.V.</p>
-        <p><strong>Dirección:</strong> Palermo 6106 Interior JK, Col. Anexa Roma, 22614 Tijuana, B.C.</p>
-        <p><strong>WhatsApp:</strong> +52 664 236 8701</p>
-        <p><strong>Email:</strong> ventas.unicotextil@gmail.com</p>
-        <p><em>Horario: Lunes a Viernes 8:00 AM - 5:00 PM (PST)</em></p>
-      `,
-      envios: `
-        <h3>POLÍTICA DE ENVÍOS</h3>
-        <p>Todos los pedidos se procesan desde Tijuana, B.C.</p>
-        <ul>
-            <li><strong>🇲🇽 MX Nacional:</strong> $250 MXN (FedEx Standard). Tiempo: 3-5 días hábiles.</li>
-            <li><strong>🇺🇸 USA Internacional:</strong> $800 MXN (FedEx Intl). Tiempo: 5-7 días hábiles.</li>
-            <li><strong>📍 PickUp Factory:</strong> Gratis. Se notifica vía Email/WhatsApp cuando está listo.</li>
-        </ul>
-      `,
-      privacidad: `
-        <h3>LEGAL Y PRIVACIDAD</h3>
-        <p><strong>Facturación:</strong> Solicitar dentro del mes fiscal enviando Constancia de Situación Fiscal al correo.</p>
-        <p><strong>Cambios:</strong> Solo por defecto de fábrica dentro de los primeros 5 días.</p>
-        <p><strong>Datos:</strong> Tu información se procesa vía Stripe (Pagos) y Envia.com (Guías).</p>
-      `
+const STORAGE_KEYS = {
+  cart: "score_cart",
+  introSeen: "score_intro_seen"
+};
+
+let catalog = [];
+let cart = [];
+let promoApplied = null;       // { code, type, value } o null
+let shippingQuote = null;      // { mxn, carrier, eta, raw? } o null
+
+/* -------------------- DOM HELPERS ---------------------- */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function safeText(str) {
+  return String(str ?? "").replace(/[<>&"]/g, (c) => ({
+    "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;"
+  }[c]));
+}
+
+/* -------------------- UI HELPERS ----------------------- */
+function money(n) {
+  const num = Number(n || 0);
+  return "$" + num.toLocaleString("es-MX");
+}
+
+function toast(msg) {
+  const t = $("#toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+/* =========================================================
+   INTRO (Tipo A) — PRO
+   ========================================================= */
+function shouldShowIntro() {
+  try {
+    return !localStorage.getItem(STORAGE_KEYS.introSeen);
+  } catch {
+    return true;
+  }
+}
+function markIntroSeen() {
+  try { localStorage.setItem(STORAGE_KEYS.introSeen, "1"); } catch {}
+}
+
+function showIntro() {
+  const intro = $("#intro");
+  const skip = $("#introSkip");
+  const bar = $("#introBarFill");
+  if (!intro || !skip || !bar) return;
+
+  intro.classList.add("show");
+  intro.setAttribute("aria-hidden", "false");
+
+  const D = 2400; // duración total
+  let start = null;
+  let raf = null;
+  let closed = false;
+
+  const closeIntro = () => {
+    if (closed) return;
+    closed = true;
+
+    if (raf) cancelAnimationFrame(raf);
+    markIntroSeen();
+    intro.classList.add("hide");
+    intro.setAttribute("aria-hidden", "true");
+
+    setTimeout(() => {
+      intro.classList.remove("show", "hide");
+      bar.style.width = "0%";
+    }, 430);
   };
 
-  // --- 1. SPLASH SCREEN (RPM) ---
-  function runIntro() {
-      const aguja = $('needle');
-      const splash = $('splash-screen');
-      const rev = $('rev-val');
-      const status = $('status-text');
-      
-      // Safety Timer
-      setTimeout(() => { if(splash) splash.remove(); }, 4000);
+  const tick = (t) => {
+    if (!start) start = t;
+    const p = Math.min(1, (t - start) / D);
+    bar.style.width = (p * 100).toFixed(2) + "%";
+    if (p < 1) raf = requestAnimationFrame(tick);
+    else closeIntro();
+  };
 
-      let r = 0;
-      const itv = setInterval(() => { 
-          r += 450; 
-          if(r > 8000) r = 7800 + Math.random() * 200; 
-          if(rev) rev.innerText = String(Math.floor(r)).padStart(4, '0');
-          if(aguja) aguja.style.left = Math.min((r/8000)*100, 100) + '%';
-      }, 50);
+  raf = requestAnimationFrame(tick);
 
-      setTimeout(() => { 
-          if(status) status.innerText = "SISTEMAS ONLINE 🏁"; 
-      }, 1500);
+  skip.onclick = closeIntro;
 
-      setTimeout(() => { 
-          clearInterval(itv);
-          if(splash) {
-             splash.style.opacity = '0';
-             setTimeout(() => splash.remove(), 500);
-          }
-      }, 2500);
+  // Clic fuera de la tarjeta cierra
+  intro.onclick = (e) => {
+    if (e.target === intro) closeIntro();
+  };
+
+  // ESC cierra
+  const onKey = (e) => {
+    if (e.key === "Escape") {
+      closeIntro();
+      window.removeEventListener("keydown", onKey);
+    }
+  };
+  window.addEventListener("keydown", onKey);
+}
+
+/* =========================================================
+   CART STORAGE
+   ========================================================= */
+function loadCart() {
+  try {
+    cart = JSON.parse(localStorage.getItem(STORAGE_KEYS.cart)) || [];
+    if (!Array.isArray(cart)) cart = [];
+  } catch {
+    cart = [];
   }
+}
 
-  // --- 2. COOKIES ---
-  function checkCookies() {
-      const banner = $("cookieBanner");
-      if (!localStorage.getItem(COOKIE_KEY)) {
-          banner.style.display = "flex";
-      }
-      $("cookieAccept").onclick = () => {
-          localStorage.setItem(COOKIE_KEY, "accepted");
-          banner.style.display = "none";
+function saveCart() {
+  try { localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart)); } catch {}
+  updateCartUI();
+}
+
+/* =========================================================
+   CART DRAWER
+   ========================================================= */
+function openCart() {
+  const drawer = $("#cartDrawer");
+  const backdrop = $("#backdrop");
+  if (drawer) drawer.classList.add("open");
+  if (backdrop) backdrop.classList.add("show");
+}
+
+function closeCart() {
+  const drawer = $("#cartDrawer");
+  const backdrop = $("#backdrop");
+  if (drawer) drawer.classList.remove("open");
+  if (backdrop) backdrop.classList.remove("show");
+}
+
+/* Exponer para onclick inline del HTML */
+window.openCart = openCart;
+window.closeCart = closeCart;
+
+/* =========================================================
+   CART LOGIC
+   ========================================================= */
+function cartCount() {
+  return cart.reduce((a, b) => a + (Number(b.qty) || 0), 0);
+}
+
+function cartSubtotal() {
+  return cart.reduce((a, b) => a + (Number(b.price) || 0) * (Number(b.qty) || 0), 0);
+}
+
+function updateCartUI() {
+  const list = $("#cartItems");
+  const countEl = $("#cartCount");
+
+  if (countEl) countEl.textContent = String(cartCount());
+
+  if (!list) return;
+  list.innerHTML = "";
+
+  if (!cart.length) {
+    list.innerHTML = `<div class="cartRow"><div><b>Carrito vacío</b><br><small>Agrega productos del catálogo.</small></div></div>`;
+  } else {
+    cart.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "cartRow";
+      row.innerHTML = `
+        <div>
+          <b>${safeText(item.name)}</b><br>
+          <small>Talla: ${safeText(item.size)}</small>
+        </div>
+        <div style="text-align:right;">
+          <div>${money(item.price)} <small>x ${item.qty}</small></div>
+          <button data-i="${idx}" class="removeBtn" type="button" aria-label="Eliminar">✕</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll(".removeBtn").forEach((btn) => {
+      btn.onclick = () => {
+        const i = Number(btn.dataset.i);
+        if (Number.isNaN(i)) return;
+        cart.splice(i, 1);
+        // Si se vacía el carrito, también reseteamos shipping quote
+        if (!cart.length) shippingQuote = null;
+        saveCart();
       };
-      $("cookieReject").onclick = () => {
-          localStorage.setItem(COOKIE_KEY, "rejected");
-          banner.style.display = "none";
-      };
+    });
   }
 
-  // --- 3. CATALOGO (SLIDER) ---
-  async function loadCatalog() {
-      try {
-          const res = await fetch("/data/catalog.json");
-          if(res.ok) catalogData = await res.json();
-      } catch (e) { console.warn("Offline"); }
-  }
+  const sub = cartSubtotal();
+  const ship = shippingQuote?.mxn ? Number(shippingQuote.mxn) : 0;
+  const total = sub + ship;
 
-  window.openCatalog = (sectionId) => {
-      const section = catalogData.sections.find(s => s.id === sectionId);
-      const items = catalogData.products.filter(p => p.sectionId === sectionId);
-      const modal = $("modalCatalog");
-      const content = $("catContent");
-      const headerLogo = $("catLogo");
+  const subtotalEl = $("#cartSubtotal");
+  const shippingEl = $("#cartShipping");
+  const totalEl = $("#cartTotal");
 
-      if (!section || !items.length) return toast("Mantenimiento");
+  if (subtotalEl) subtotalEl.textContent = money(sub);
+  if (shippingEl) shippingEl.textContent = money(ship);
+  if (totalEl) totalEl.textContent = money(total);
+}
 
-      if (headerLogo) headerLogo.src = section.logo;
-      
-      content.innerHTML = items.map(p => {
-          const imgUrl = (p.images && p.images[0]) ? p.images[0] : p.img;
-          return `
-          <div class="p-card">
-              <div class="p-media"><img src="${imgUrl}" loading="lazy" alt="${p.name}"></div>
-              <div class="p-body">
-                  <div class="p-name">${p.name}</div>
-                  <div class="p-price">${money(p.baseMXN)}</div>
-                  <div class="p-actions">
-                      <select class="p-size-sel" id="size_${p.id}">${(p.sizes||['Uni']).map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
-                      <button class="p-btn-add" onclick="window.addToCart('${p.id}')">AGREGAR</button>
-                  </div>
-              </div>
-          </div>`;
-      }).join("");
-      
-      modal.classList.add("active");
-  };
+/* =========================================================
+   CATALOG
+   ========================================================= */
+async function loadCatalog() {
+  const res = await fetch("/data/catalog.json", { cache: "no-store" });
+  if (!res.ok) throw new Error("No se pudo cargar catalog.json");
+  const data = await res.json();
 
-  // --- 4. CARRITO ---
-  window.addToCart = (pid) => {
-      const p = catalogData.products.find(x => x.id === pid);
-      if(!p) return;
-      const size = $(`size_${pid}`)?.value || "Uni";
-      const ex = cart.find(i => i.id === pid && i.size === size);
-      
-      if(ex) ex.qty++; else cart.push({ ...p, qty: 1, size });
-      
-      saveCart(); updateCartUI(); toast("AGREGADO AL EQUIPO 🏁");
-      window.toggleCart();
-  };
+  // NO modificamos tu catalog.json. Solo lo leemos.
+  catalog = Array.isArray(data?.products) ? data.products : [];
 
-  window.modQty = (idx, d) => {
-      cart[idx].qty += d;
-      if(cart[idx].qty <= 0) cart.splice(idx, 1);
-      saveCart(); updateCartUI();
-  };
+  renderProducts("ALL");
+}
 
-  window.updateCartUI = () => {
-      const list = $("cartItems");
-      if(!list) return;
-      const radios = document.getElementsByName("shipMode");
-      radios.forEach(r => { if(r.checked) shippingState.mode = r.value; });
+function renderProducts(filter = "ALL") {
+  const grid = $("#productsGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
 
-      if(!cart.length) {
-          list.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">Carrito vacío</div>`;
-          $("grandTotal").innerText = "$0.00"; $("cartCount").innerText = 0;
-          return;
-      }
-
-      let subtotal = 0;
-      list.innerHTML = cart.map((item, i) => {
-          subtotal += item.baseMXN * item.qty;
-          return `
-          <div class="cart-card">
-              <img src="${item.img}" style="width:60px;height:60px;object-fit:contain;background:#fff;border-radius:5px;">
-              <div style="flex:1;">
-                  <div style="color:#fff;font-weight:bold;">${item.name}</div>
-                  <div style="color:#888;font-size:12px;">Talla: ${item.size}</div>
-                  <div class="qty-ctrl" style="margin-top:5px;">
-                      <button class="qty-btn" onclick="window.modQty(${i},-1)">-</button>
-                      <span style="color:#fff;">${item.qty}</span>
-                      <button class="qty-btn" onclick="window.modQty(${i},1)">+</button>
-                  </div>
-              </div>
-              <div style="color:var(--score-red);font-weight:bold;">${money(item.baseMXN * item.qty)}</div>
-          </div>`;
-      }).join("");
-
-      let shipCost = shippingState.mode === 'mx' ? 250 : (shippingState.mode === 'us' ? 800 : 0);
-      $("grandTotal").innerText = money(subtotal + shipCost);
-      $("cartCount").innerText = cart.reduce((a,b)=>a+b.qty,0);
-      if($("promo")) $("promo").value = promoCode;
-  };
-
-  window.savePromo = (val) => { promoCode = val.toUpperCase().trim(); saveCart(); updateCartUI(); };
-  function saveCart() { localStorage.setItem(CART_KEY, JSON.stringify({ cart, promoCode })); }
-  function loadCart() { const r = JSON.parse(localStorage.getItem(CART_KEY)||"{}"); cart=r.cart||[]; promoCode=r.promoCode||""; }
-
-  // --- 5. CHECKOUT ---
-  window.checkout = async () => {
-      if(!cart.length) return;
-      const btn = $("checkoutBtn");
-      btn.innerHTML = `PROCESANDO...`; btn.disabled = true;
-
-      try {
-          const res = await fetch(`${API_BASE}/create_checkout`, {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ cart: cart.map(i=>({id:i.id, qty:i.qty, size:i.size})), shippingMode: shippingState.mode, promoCode })
-          });
-          const data = await res.json();
-          if(data.url) window.location.href = data.url; else throw new Error(data.error);
-      } catch(e) { 
-          toast("Error: " + e.message);
-          btn.innerHTML = "PAGAR AHORA"; btn.disabled = false; 
-      }
-  };
-
-  // --- 6. SCORE IA ---
-  window.toggleAiAssistant = () => {
-      const m = $("aiChatModal");
-      m.classList.toggle("active");
-      if(m.classList.contains("active") && $("aiMessages").innerHTML === "") {
-          $("aiMessages").innerHTML = `<div class="ai-bubble bot" style="padding:10px;background:#eee;border-radius:10px;margin-bottom:10px;color:#000;">¡Hola! Soy SCORE IA 🏎️. ¿Dudas con envíos a USA o México?</div>`;
-      }
-  };
-  window.sendAiMessage = async () => {
-      const inp = $("aiInput");
-      const box = $("aiMessages");
-      const txt = inp.value.trim();
-      if(!txt) return;
-
-      box.innerHTML += `<div style="text-align:right;margin:5px;"><span style="background:#ddd;padding:8px;border-radius:10px;color:#000;display:inline-block;">${txt}</span></div>`;
-      inp.value = "";
-      box.scrollTop = box.scrollHeight;
-
-      const res = await fetch(`${API_BASE}/chat`, { method: "POST", body: JSON.stringify({ message: txt }) });
-      const data = await res.json();
-      box.innerHTML += `<div style="text-align:left;margin:5px;"><span style="background:#fff;border:1px solid #eee;padding:8px;border-radius:10px;color:#000;display:inline-block;">${data.reply}</span></div>`;
-      box.scrollTop = box.scrollHeight;
-  };
-
-  // --- UTILS ---
-  window.toggleCart = () => { $('cartDrawer').classList.toggle('active'); $("overlay").classList.toggle('active'); };
-  window.openInfo = (k) => { $("infoContent").innerHTML = INFO_DATA[k]; $("infoModal").classList.add("active"); $("overlay").classList.add("active"); };
-  window.closeAll = () => { document.querySelectorAll('.active').forEach(e => e.classList.remove('active')); };
-  window.scrollToId = (id) => $(id)?.scrollIntoView({behavior:'smooth'});
-  window.toast = (m) => { const t=$("toast"); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); };
-  
-  function initScrollReveal() {
-      const els = document.querySelectorAll(".scroll-reveal");
-      const observer = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting) e.target.classList.add("visible"); }); });
-      els.forEach(el => observer.observe(el));
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-      await loadCatalog(); loadCart(); updateCartUI(); 
-      runIntro(); 
-      initScrollReveal();
-      checkCookies();
-      
-      const params = new URLSearchParams(window.location.search);
-      if(params.get("status") === "success") {
-          toast("🏆 ¡PAGO EXITOSO! GRACIAS.");
-          localStorage.removeItem(CART_KEY); cart=[]; updateCartUI();
-          window.history.replaceState({}, document.title, "/");
-      }
-      document.addEventListener("keydown", (e) => { if(e.key==="Escape") window.closeAll(); });
+  const items = catalog.filter((p) => {
+    if (filter === "ALL") return true;
+    return String(p.category || "").toUpperCase() === String(filter).toUpperCase();
   });
-})();
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="card"><div class="cardBody"><b>Sin productos</b><div class="muted">No hay productos en esta categoría.</div></div></div>`;
+    return;
+  }
+
+  items.forEach((p) => {
+    const id = p.id;
+    const name = p.name;
+    const img = p.img;
+    const baseMXN = Number(p.baseMXN || p.price || 0);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="cardImg">
+        <img src="${safeText(img)}" alt="${safeText(name)}" loading="lazy">
+      </div>
+      <div class="cardBody">
+        <div class="cardTitle">${safeText(name)}</div>
+        <div class="cardPrice">${money(baseMXN)}</div>
+
+        <div class="cardControls">
+          <select data-size aria-label="Talla">
+            <option value="S">S</option>
+            <option value="M" selected>M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+          </select>
+          <button class="btn primary" type="button">
+            <i class="fa-solid fa-plus"></i> Agregar
+          </button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector("button").onclick = () => {
+      const size = card.querySelector("[data-size]")?.value || "M";
+      addToCart({ id, name, baseMXN }, size);
+    };
+
+    grid.appendChild(card);
+  });
+}
+
+function addToCart(product, size) {
+  const id = String(product.id);
+  const name = String(product.name);
+  const price = Number(product.baseMXN || 0);
+
+  if (!id || !name || !price) {
+    toast("Producto inválido");
+    return;
+  }
+
+  const found = cart.find((i) => i.id === id && i.size === size);
+  if (found) {
+    found.qty += 1;
+  } else {
+    cart.push({ id, name, size, price, qty: 1 });
+  }
+
+  toast("Producto agregado 🏁");
+  saveCart();
+  openCart();
+}
+
+/* =========================================================
+   FILTERS
+   ========================================================= */
+function initFilters() {
+  const chips = $$(".chip");
+  chips.forEach((chip) => {
+    chip.onclick = () => {
+      chips.forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      renderProducts(chip.dataset.filter || "ALL");
+    };
+  });
+}
+
+/* =========================================================
+   PROMOS
+   ========================================================= */
+function applyPromo() {
+  const input = $("#promoCode");
+  if (!input) return;
+  const code = input.value.trim().toUpperCase();
+  if (!code) return toast("Ingresa un cupón");
+
+  // Ejemplo: SCORE25
+  if (code === "SCORE25") {
+    promoApplied = { code, type: "percent", value: 0.25 };
+
+    // Nota: el descuento REAL se valida server-side en create_checkout.js.
+    // Aquí solo hacemos una vista previa en UI para que se sienta pro.
+    // Para evitar doble-discount en UI si aplican 2 veces, reseteamos precios desde catálogo:
+    cart = cart.map((item) => {
+      const p = catalog.find((x) => String(x.id) === String(item.id));
+      const base = Number(p?.baseMXN || item.price || 0);
+      const discounted = Math.round(base * (1 - promoApplied.value));
+      return { ...item, price: discounted };
+    });
+
+    toast("Cupón aplicado ✅");
+    saveCart();
+  } else {
+    toast("Cupón inválido");
+  }
+}
+window.applyPromo = applyPromo;
+
+/* =========================================================
+   SHIPPING (Envia quote) — UI + Mini
+   ========================================================= */
+async function quoteShipping({ zip, country, qty }) {
+  const res = await fetch(API.quote, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zip, country, qty })
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !data?.ok) {
+    const msg = data?.error || "No se pudo cotizar envío";
+    throw new Error(msg);
+  }
+  return data.quote;
+}
+
+async function quoteShippingUI() {
+  const zip = $("#shipZip")?.value?.trim();
+  const country = $("#shipCountry")?.value || "MX";
+  if (!zip) return toast("Ingresa CP");
+
+  const qty = Math.max(1, cartCount() || 1);
+
+  const out = $("#shipQuote");
+  if (out) out.textContent = "Cotizando...";
+
+  try {
+    const q = await quoteShipping({ zip, country, qty });
+    shippingQuote = q;
+
+    if (out) out.textContent =
+      `Envío ${String(q.carrier || "").toUpperCase()}: ${money(q.mxn)} (${q.eta || "ETA"})`;
+
+    updateCartUI();
+    toast("Envío cotizado ✅");
+  } catch (e) {
+    if (out) out.textContent = "No se pudo cotizar";
+    toast(e.message || "Error cotizando envío");
+  }
+}
+window.quoteShippingUI = quoteShippingUI;
+
+async function quoteShippingMini() {
+  const zip = $("#miniZip")?.value?.trim();
+  const mode = $("#shippingMode")?.value || "pickup";
+  if (mode === "pickup") {
+    shippingQuote = null;
+    $("#miniShipLabel").textContent = "Pickup seleccionado";
+    updateCartUI();
+    return;
+  }
+  if (!zip) return toast("CP requerido");
+
+  const country = mode === "us" ? "US" : "MX";
+  const qty = Math.max(1, cartCount() || 1);
+
+  const label = $("#miniShipLabel");
+  if (label) label.textContent = "Cotizando...";
+
+  try {
+    const q = await quoteShipping({ zip, country, qty });
+    shippingQuote = q;
+    if (label) label.textContent = `${String(q.carrier || "").toUpperCase()} ${money(q.mxn)} · ${q.eta || ""}`.trim();
+    updateCartUI();
+  } catch (e) {
+    if (label) label.textContent = "Sin cotización";
+    toast(e.message || "Error cotizando envío");
+  }
+}
+window.quoteShippingMini = quoteShippingMini;
+
+/* =========================================================
+   CHECKOUT (Stripe session)
+   ========================================================= */
+async function checkout() {
+  if (!cart.length) return toast("Carrito vacío");
+
+  const shippingMode = $("#shippingMode")?.value || "pickup";
+  const zip = $("#miniZip")?.value?.trim() || "";
+
+  // Si el usuario eligió envío pero no cotizó (y tu backend lo exige),
+  // el backend devolverá error claro. Aquí damos hint.
+  if ((shippingMode === "mx" || shippingMode === "us") && !zip) {
+    toast("Ingresa CP para envío");
+    return;
+  }
+
+  const payload = {
+    cart,
+    shippingMode,
+    zip,
+    promoCode: promoApplied?.code || ""
+  };
+
+  const btn = $("#checkoutBtn");
+  const prev = btn?.innerHTML;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+  }
+
+  try {
+    const res = await fetch(API.checkout, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data?.url) {
+      const msg = data?.error || "No se pudo iniciar el pago";
+      throw new Error(msg);
+    }
+
+    // Redirige a Stripe Checkout
+    window.location.href = data.url;
+  } catch (e) {
+    toast(e.message || "Error en checkout");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = prev || `<i class="fa-solid fa-credit-card"></i> PAGAR`;
+    }
+  }
+}
+window.checkout = checkout;
+
+/* =========================================================
+   SCORE AI (Gemini) — Chat UI
+   ========================================================= */
+function toggleAiAssistant() {
+  const modal = $("#aiChatModal");
+  if (!modal) return;
+  modal.classList.toggle("show");
+}
+window.toggleAiAssistant = toggleAiAssistant;
+
+async function sendAiMessage() {
+  const input = $("#aiInput");
+  const msg = input?.value?.trim();
+  if (!msg) return;
+
+  const body = $("#aiMessages");
+  if (body) body.innerHTML += `<div style="margin-bottom:10px;"><b>Tú:</b> ${safeText(msg)}</div>`;
+  if (input) input.value = "";
+
+  try {
+    const res = await fetch(API.chat, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    const reply = data?.reply || "Estoy aquí. Dime qué necesitas (tallas, envío, producto).";
+    if (body) body.innerHTML += `<div style="margin-bottom:12px;"><b>SCORE AI:</b> ${safeText(reply)}</div>`;
+    if (body) body.scrollTop = body.scrollHeight;
+  } catch {
+    if (body) body.innerHTML += `<div style="margin-bottom:12px;"><b>SCORE AI:</b> No pude responder. Intenta de nuevo.</div>`;
+  }
+}
+window.sendAiMessage = sendAiMessage;
+
+/* =========================================================
+   BINDINGS / EVENTS
+   ========================================================= */
+function bindCoreEvents() {
+  // Botón carrito (header)
+  const cartBtn = $("#cartBtn");
+  if (cartBtn) cartBtn.addEventListener("click", openCart);
+
+  // Backdrop ya trae onclick en HTML, pero lo reforzamos
+  const backdrop = $("#backdrop");
+  if (backdrop) backdrop.addEventListener("click", closeCart);
+
+  // Modal AI: click fuera cierra (opcional)
+  const aiModal = $("#aiChatModal");
+  if (aiModal) {
+    aiModal.addEventListener("click", (e) => {
+      if (e.target === aiModal) toggleAiAssistant();
+    });
+  }
+
+  // Cambiar modo shipping: si cambia a pickup, limpia quote
+  const shippingMode = $("#shippingMode");
+  if (shippingMode) {
+    shippingMode.addEventListener("change", () => {
+      const mode = shippingMode.value;
+      if (mode === "pickup") {
+        shippingQuote = null;
+        const label = $("#miniShipLabel");
+        if (label) label.textContent = "Pickup seleccionado";
+        updateCartUI();
+      }
+    });
+  }
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+document.addEventListener("DOMContentLoaded", async () => {
+  loadCart();
+  updateCartUI();
+  bindCoreEvents();
+  initFilters();
+
+  // Si vienes de Stripe success
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("status") === "success") {
+    toast("Pago confirmado 🏁");
+    cart = [];
+    shippingQuote = null;
+    promoApplied = null;
+    saveCart();
+  }
+
+  // Carga catálogo (no modifica tu JSON)
+  try {
+    await loadCatalog();
+  } catch (e) {
+    console.error(e);
+    toast("No se pudo cargar el catálogo");
+  }
+
+  // Intro (solo 1 vez)
+  if (shouldShowIntro()) showIntro();
+});
