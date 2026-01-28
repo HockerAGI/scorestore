@@ -1,5 +1,5 @@
 /* =========================================================
-   SCORE STORE — MAIN LOGIC (2026_PROD_UNIFIED)
+   SCORE STORE — MAIN LOGIC (2026_FIXED_V3)
    ========================================================= */
 
 const $ = (q) => document.querySelector(q);
@@ -9,28 +9,31 @@ const fmtMXN = (n) =>
     Number(n || 0)
   );
 
-/* --- INTRO LOGIC (PRIORIDAD) --- */
+/* --- INTRO LOGIC: PRIORIDAD MÁXIMA --- */
+// Ejecutar inmediatamente para asegurar que se vaya
 function removeIntro() {
   const intro = document.getElementById("intro");
   if (intro) {
-    intro.setAttribute("aria-hidden", "true"); // Usa el CSS que ya definiste
+    intro.style.opacity = "0";
+    intro.style.pointerEvents = "none";
     setTimeout(() => { intro.style.display = "none"; }, 500);
   }
 }
-// Forzar salida
+// Forzar salida a los 2.5s pase lo que pase
 setTimeout(removeIntro, 2500);
+// Listener manual por si acaso
 document.getElementById("introSkip")?.addEventListener("click", removeIntro);
+
 
 // ESTADO
 const state = {
   cart: JSON.parse(localStorage.getItem("score_cart_v5") || "[]"),
   products: [],
   shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
-  promo: { code: "", applied: false },
   filter: "ALL",
 };
 
-// AUDIO
+// AUDIO CONTEXT (Lazy load)
 let __audioCtx = null;
 const getAudioCtx = () => {
   if (__audioCtx) return __audioCtx;
@@ -39,6 +42,7 @@ const getAudioCtx = () => {
   __audioCtx = new Ctx();
   return __audioCtx;
 };
+
 const playSound = (type) => {
   const ctx = getAudioCtx();
   if (!ctx || ctx.state === "closed") return;
@@ -81,7 +85,7 @@ const modeToCountry = (mode) => (String(mode || "mx").toLowerCase() === "us" ? "
 const cartItemsForQuote = () => (state.cart || []).map((i) => ({ qty: normalizeQty(i.qty) }));
 
 // --------------------
-// CATALOGO + CAROUSEL LOGIC
+// CATALOGO + CARRUSEL
 // --------------------
 async function loadCatalog() {
   try {
@@ -90,8 +94,10 @@ async function loadCatalog() {
     state.products = data.products || [];
     renderGrid(getFilteredProducts());
   } catch (e) {
-    $("#productsGrid").innerHTML = "<p>Error cargando catálogo.</p>";
-    console.error(e);
+    console.error("Error catalogo:", e);
+    // Si falla el catálogo, al menos quitamos el intro
+    removeIntro();
+    $("#productsGrid").innerHTML = "<p>Error cargando productos.</p>";
   }
 }
 
@@ -108,7 +114,7 @@ function renderGrid(list) {
   grid.innerHTML = "";
 
   if (!list || list.length === 0) {
-    grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>No hay productos disponibles.</p>";
+    grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;opacity:0.6;padding:40px;'>No hay productos disponibles.</p>";
     return;
   }
 
@@ -116,35 +122,27 @@ function renderGrid(list) {
     const card = document.createElement("div");
     card.className = "card";
 
-    // CAROUSEL LOGIC
-    let mediaHtml = "";
-    // Usar p.images si existe y tiene más de 1, si no, usar array de p.img
+    // Lógica Carrusel
     const images = (p.images && p.images.length > 0) ? p.images : [p.img];
+    let mediaHtml = "";
     
     if (images.length > 1) {
-      // Múltiples imágenes: Slider con scroll snap
       const slides = images.map(src => 
         `<div class="carousel-item"><img src="${src}" loading="lazy" alt="${p.name}"></div>`
       ).join("");
-      
       const dots = images.map((_, i) => 
         `<div class="dot ${i === 0 ? 'active' : ''}" data-idx="${i}"></div>`
       ).join("");
 
       mediaHtml = `
         <div class="cardMedia" id="media-${p.id}">
-          <div class="carousel" onscroll="updateDots(this, '${p.id}')">
-            ${slides}
-          </div>
-          <div class="carousel-dots" id="dots-${p.id}">
-            ${dots}
-          </div>
+          <div class="carousel" onscroll="updateDots(this, '${p.id}')">${slides}</div>
+          <div class="carousel-dots" id="dots-${p.id}">${dots}</div>
         </div>`;
     } else {
-      // Imagen única
       mediaHtml = `
         <div class="cardMedia">
-          <div class="carousel-item"><img src="${images[0]}" loading="lazy" alt="${p.name}"></div>
+          <img src="${images[0]}" loading="lazy" alt="${p.name}" style="object-fit:cover;width:100%;height:100%">
         </div>`;
     }
 
@@ -169,17 +167,12 @@ function renderGrid(list) {
   });
 }
 
-// Función global para actualizar los puntitos al hacer scroll
+// Global para los dots
 window.updateDots = (carousel, id) => {
   const width = carousel.offsetWidth;
   const idx = Math.round(carousel.scrollLeft / width);
-  const dotsContainer = document.getElementById(`dots-${id}`);
-  if(dotsContainer) {
-    const dots = dotsContainer.querySelectorAll('.dot');
-    dots.forEach((d, i) => {
-      d.classList.toggle('active', i === idx);
-    });
-  }
+  const dots = document.querySelectorAll(`#dots-${id} .dot`);
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
 };
 
 // --------------------
@@ -187,10 +180,8 @@ window.updateDots = (carousel, id) => {
 // --------------------
 window.addToCart = (id) => {
   const p = state.products.find((x) => x.id === id);
-  if (!p) return toast("Producto no disponible");
-
-  const sizeEl = $(`#size-${id}`);
-  const size = sizeEl ? sizeEl.value : "Unitalla";
+  if (!p) return;
+  const size = $(`#size-${id}`)?.value || "Unitalla";
   const key = `${id}-${size}`;
   const ex = state.cart.find((i) => i.key === key);
   
@@ -198,7 +189,7 @@ window.addToCart = (id) => {
   else state.cart.push({ key, id: p.id, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
 
   openCart();
-  toast("Agregado al equipo");
+  toast("Agregado al carrito");
 };
 
 function saveCart() {
@@ -222,7 +213,7 @@ function saveCart() {
         </div>
         <div style="display:flex;align-items:center;gap:5px;">
           <button class="qtyBtn" onclick="modQty(${idx},-1)">-</button>
-          <span style="font-weight:900;font-size:13px">${normalizeQty(i.qty)}</span>
+          <span>${normalizeQty(i.qty)}</span>
           <button class="qtyBtn" onclick="modQty(${idx},1)">+</button>
         </div>
       </div>`;
@@ -244,7 +235,6 @@ window.modQty = (i, d) => {
   if (!state.cart[i]) return;
   state.cart[i].qty += d;
   if (state.cart[i].qty <= 0) state.cart.splice(i, 1);
-  
   if (state.shipping.mode !== "pickup") {
     state.shipping.quote = 0;
     state.shipping.label = "Cotiza de nuevo";
@@ -255,33 +245,26 @@ window.modQty = (i, d) => {
 window.openCart = () => { $("#cartDrawer")?.classList.add("open"); $("#backdrop")?.classList.add("show"); saveCart(); };
 window.closeCart = () => { $("#cartDrawer")?.classList.remove("open"); $("#backdrop")?.classList.remove("show"); };
 
-// SHIPPING LOGIC
 $("#shippingMode")?.addEventListener("change", (e) => {
   const m = e.target.value;
-  const miniZip = $("#miniZip");
-  
+  const mz = $("#miniZip");
   if (m === "pickup") {
-    miniZip.style.display = "none";
+    mz.style.display = "none";
     state.shipping = { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" };
   } else {
-    miniZip.style.display = "block";
-    miniZip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
-    state.shipping = { mode: m, quote: 0, label: "Ingresa CP y cotiza" };
+    mz.style.display = "block";
+    mz.placeholder = m === "us" ? "ZIP (USA)" : "CP (MX)";
+    state.shipping = { mode: m, quote: 0, label: "Calculando..." };
   }
   saveCart();
 });
 
-// Cotizador MINI (Carrito)
 window.quoteShippingMini = async () => {
-  const zipRaw = $("#miniZip")?.value || "";
-  const zip = digitsOnly(zipRaw);
+  const zip = digitsOnly($("#miniZip")?.value || "");
   const mode = $("#shippingMode")?.value || "pickup";
-
-  if (mode === "pickup") return;
-  if (zip.length < 4) return toast("Ingresa un CP válido");
+  if (mode === "pickup" || zip.length < 4) return;
 
   $("#miniShipLabel").textContent = "Cotizando...";
-
   try {
     const res = await fetch("/api/quote", {
       method: "POST",
@@ -290,35 +273,25 @@ window.quoteShippingMini = async () => {
     });
     const d = await res.json();
     if (!d.ok) throw new Error(d.error);
-
     state.shipping = { mode, quote: d.cost, label: d.label };
     saveCart();
     toast("Envío actualizado");
-    playSound("success");
   } catch (e) {
-    console.error(e);
-    toast("Error al cotizar");
-    state.shipping.label = "Error. Intenta de nuevo.";
+    state.shipping.label = "Error al cotizar";
     saveCart();
   }
 };
 
-// Cotizador GRANDE (Landing)
 window.quoteShippingUI = async () => {
   const country = $("#shipCountry")?.value || "MX";
   const zip = digitsOnly($("#shipZip")?.value || "");
   const out = $("#shipQuote");
-
-  if (zip.length < 4) {
-    if (out) out.textContent = "Ingresa un código postal válido.";
-    return;
-  }
-  if (out) out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cotizando...';
+  
+  if (zip.length < 4) { if(out) out.innerText = "Ingresa CP válido"; return; }
+  if(out) out.innerHTML = "Cotizando...";
 
   try {
-    // Simulamos items si el carrito está vacío para dar una idea al usuario
     const items = cartItemsForQuote().length ? cartItemsForQuote() : [{qty:1}];
-
     const res = await fetch("/api/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -326,29 +299,20 @@ window.quoteShippingUI = async () => {
     });
     const d = await res.json();
     if (!d.ok) throw new Error(d.error);
-
     out.innerHTML = `<b>${d.label}</b> · ${fmtMXN(d.cost)}`;
     playSound("success");
   } catch (e) {
-    console.error(e);
-    out.textContent = "No se encontró tarifa. Intenta otro CP.";
+    if(out) out.innerText = "Error cotizando";
   }
 };
 
-// CHECKOUT
 window.checkout = async () => {
   if (!state.cart.length) return toast("Carrito vacío");
   const mode = state.shipping.mode;
-  const zip = digitsOnly($("#miniZip")?.value);
-
-  if (mode !== "pickup") {
-    if (!zip || zip.length < 4) return toast("Falta código postal");
-    if (!state.shipping.quote) return toast("Cotiza el envío primero");
-  }
-
+  if (mode !== "pickup" && !state.shipping.quote) return toast("Cotiza el envío");
+  
   const btn = $("#checkoutBtn");
-  btn.innerHTML = "PROCESANDO...";
-
+  btn.innerText = "PROCESANDO...";
   try {
     const res = await fetch("/api/checkout", {
       method: "POST",
@@ -356,7 +320,7 @@ window.checkout = async () => {
       body: JSON.stringify({
         cart: state.cart,
         shippingMode: mode,
-        shippingData: { postal_code: zip },
+        shippingData: { postal_code: digitsOnly($("#miniZip")?.value) },
         promoCode: $("#promoCode")?.value
       }),
     });
@@ -365,15 +329,15 @@ window.checkout = async () => {
     else throw new Error(d.error);
   } catch (e) {
     toast("Error iniciando pago");
-    btn.innerHTML = "PAGAR SEGURO";
+    btn.innerText = "PAGAR SEGURO";
   }
 };
 
-// BOOT
+/* --- BOOT --- */
 document.addEventListener("DOMContentLoaded", () => {
   loadCatalog();
-  
-  // Filtros
+
+  // Eventos filtros
   $$(".chip").forEach(chip => {
     chip.addEventListener("click", () => {
       $$(".chip").forEach(c => c.classList.remove("active"));
@@ -383,20 +347,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Init shipping visibility
+  // UI Init
   const m = $("#shippingMode")?.value || "pickup";
-  const mz = $("#miniZip");
-  if(mz) mz.style.display = m === "pickup" ? "none" : "block";
-
-  saveCart();
+  if($("#miniZip")) $("#miniZip").style.display = m === "pickup" ? "none" : "block";
   
-  // Stripe Status
-  const params = new URLSearchParams(location.search);
-  if (params.get("status") === "success") {
-    toast("Pago confirmado 🏁");
-    state.cart = [];
-    localStorage.removeItem("score_cart_v5");
-    saveCart();
-    history.replaceState({}, document.title, "/");
-  }
+  saveCart();
 });
