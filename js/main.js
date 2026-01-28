@@ -1,9 +1,10 @@
 /* =========================================================
-   SCORE STORE — MAIN LOGIC (2026_PROD_UNIFIED)
-   - Catálogo desde /data/catalog.json
-   - Carrusel tipo Facebook por producto (scroll-snap + dots)
-   - Carrito + cotización real /api/quote (Netlify Function)
-   - Checkout /api/checkout (Stripe Session)
+   SCORE STORE — MAIN LOGIC (2026_PROD_UNIFIED · ALIGNED)
+   - Catálogo /data/catalog.json
+   - Carrusel tipo FB (scroll-snap + dots)
+   - Carrito + cotización /api/quote
+   - Checkout /api/checkout
+   - Alineado a index FINAL_AUDIT (drawerClose, ai modal, legal modal)
    ========================================================= */
 
 const $ = (q) => document.querySelector(q);
@@ -14,19 +15,23 @@ const fmtMXN = (n) =>
     Number(n || 0)
   );
 
+// --------------------
 // ESTADO
+// --------------------
 const state = {
   cart: JSON.parse(localStorage.getItem("score_cart_v5") || "[]"),
   products: [],
   shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
-  promo: { code: "", applied: false },
   filter: "ALL",
+  __quoteTimer: null,
+  __quoteInFlight: false,
 };
 
 // --------------------
 // AUDIO (simple, safe)
 // --------------------
 let __audioCtx = null;
+
 const getAudioCtx = () => {
   if (__audioCtx) return __audioCtx;
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -44,6 +49,7 @@ const playSound = (type) => {
   const g = ctx.createGain();
   osc.connect(g);
   g.connect(ctx.destination);
+
   const now = ctx.currentTime;
   g.gain.setValueAtTime(0.0001, now);
 
@@ -54,9 +60,7 @@ const playSound = (type) => {
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
     osc.start(now);
     osc.stop(now + 0.13);
-  }
-
-  if (type === "success") {
+  } else if (type === "success") {
     osc.type = "triangle";
     osc.frequency.setValueAtTime(450, now);
     osc.frequency.linearRampToValueAtTime(720, now + 0.18);
@@ -67,19 +71,55 @@ const playSound = (type) => {
   }
 };
 
+// --------------------
+// UI helpers
+// --------------------
 const toast = (msg) => {
   const t = $("#toast");
   if (!t) return;
   t.textContent = msg;
   t.classList.add("show");
   playSound("pop");
-  setTimeout(() => t.classList.remove("show"), 3000);
+  setTimeout(() => t.classList.remove("show"), 2800);
 };
 
 const digitsOnly = (s) => String(s || "").replace(/\D+/g, "");
 const normalizeQty = (n) => Math.max(1, Math.min(99, Math.round(Number(n) || 1)));
 const modeToCountry = (mode) => (String(mode || "mx").toLowerCase() === "us" ? "US" : "MX");
 const cartItemsForQuote = () => (state.cart || []).map((i) => ({ qty: normalizeQty(i.qty) }));
+
+function safeId(str) {
+  return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+// --------------------
+// INTRO (si existe)
+// --------------------
+function initIntro() {
+  const intro = $("#intro");
+  const skip = $("#introSkip");
+  if (!intro) return;
+
+  const hide = () => {
+    intro.style.opacity = "0";
+    intro.style.pointerEvents = "none";
+    setTimeout(() => intro.remove(), 400);
+  };
+
+  skip?.addEventListener("click", hide);
+  // auto hide (rápido)
+  setTimeout(hide, 1200);
+}
 
 // --------------------
 // CATALOGO + CAROUSEL
@@ -93,7 +133,10 @@ async function loadCatalog() {
     renderGrid(getFilteredProducts());
   } catch (e) {
     const g = $("#productsGrid");
-    if (g) g.innerHTML = "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>Error cargando catálogo.</p>";
+    if (g) {
+      g.innerHTML =
+        "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>Error cargando catálogo.</p>";
+    }
     console.error(e);
   }
 }
@@ -103,10 +146,6 @@ function getFilteredProducts() {
   return (state.products || []).filter(
     (p) => String(p.sectionId || "").toUpperCase() === String(state.filter).toUpperCase()
   );
-}
-
-function safeId(str) {
-  return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
 function renderGrid(list) {
@@ -125,8 +164,7 @@ function renderGrid(list) {
     const card = document.createElement("div");
     card.className = "card";
 
-    // imágenes: usa p.images si existe; si no, p.img
-    const images = (p.images && p.images.length > 0) ? p.images : [p.img];
+    const images = (p.images && p.images.length > 0) ? p.images : [p.img].filter(Boolean);
 
     let mediaHtml = "";
     if (images.length > 1) {
@@ -138,9 +176,7 @@ function renderGrid(list) {
         .join("");
 
       const dots = images
-        .map(
-          (_, i) => `<div class="dot ${i === 0 ? "active" : ""}" data-idx="${i}"></div>`
-        )
+        .map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`)
         .join("");
 
       mediaHtml = `
@@ -155,7 +191,7 @@ function renderGrid(list) {
     } else {
       mediaHtml = `
         <div class="cardMedia">
-          <img src="${images[0]}" loading="lazy" alt="${p.name}" width="420" height="420" style="object-fit:cover;width:100%;height:100%">
+          <img src="${images[0] || "/assets/placeholder.webp"}" loading="lazy" alt="${p.name}" width="420" height="420" style="object-fit:cover;width:100%;height:100%">
         </div>`;
     }
 
@@ -172,26 +208,28 @@ function renderGrid(list) {
             ${(p.sizes || ["Unitalla"]).map((s) => `<option value="${s}">${s}</option>`).join("")}
           </select>
           <button type="button" data-add="${pid}" aria-label="Agregar">
-            <i class="fa-solid fa-plus"></i>
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
           </button>
         </div>
       </div>`;
 
     grid.appendChild(card);
 
-    // Bind button
-    const btn = card.querySelector(`[data-add="${pid}"]`);
-    if (btn) btn.addEventListener("click", () => addToCart(p.id));
+    // add
+    card.querySelector(`[data-add="${pid}"]`)?.addEventListener("click", () => addToCart(p.id));
 
-    // Bind carousel dots update (scroll)
+    // carousel dots
     const car = card.querySelector(".carousel");
     if (car) {
-      car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
+      car.addEventListener(
+        "scroll",
+        () => updateDots(car, pid),
+        { passive: true }
+      );
     }
   });
 }
 
-// Actualiza dots por scroll
 function updateDots(carousel, pid) {
   const width = carousel.getBoundingClientRect().width || carousel.clientWidth || 1;
   const idx = Math.round((carousel.scrollLeft || 0) / width);
@@ -219,6 +257,7 @@ function addToCart(id) {
 
   openCart();
   toast("Agregado al carrito");
+  requestMiniQuote(); // si ya hay modo envío y CP, re-cotiza
 }
 
 function saveCart() {
@@ -280,15 +319,19 @@ function saveCart() {
 
 function modQty(i, d) {
   if (!state.cart[i]) return;
-  state.cart[i].qty = normalizeQty(state.cart[i].qty + d);
-  if (state.cart[i].qty <= 0) state.cart.splice(i, 1);
+
+  const next = Number(state.cart[i].qty) + Number(d);
+  if (next <= 0) state.cart.splice(i, 1);
+  else state.cart[i].qty = normalizeQty(next);
 
   // si no es pickup, obligamos a recotizar
   if (state.shipping.mode !== "pickup") {
     state.shipping.quote = 0;
     state.shipping.label = "Cotiza de nuevo";
   }
+
   saveCart();
+  requestMiniQuote();
 }
 
 function openCart() {
@@ -305,8 +348,20 @@ window.openCart = openCart;
 window.closeCart = closeCart;
 
 // --------------------
-// SHIPPING
+// SHIPPING (MINI)
 // --------------------
+function requestMiniQuote() {
+  clearTimeout(state.__quoteTimer);
+  state.__quoteTimer = setTimeout(() => {
+    // auto-cotiza si aplica
+    const mode = $("#shippingMode")?.value || "pickup";
+    const zip = digitsOnly($("#miniZip")?.value || "");
+    if (mode === "pickup") return;
+    if (zip.length < 4) return;
+    quoteShippingMini().catch(() => {});
+  }, 350);
+}
+
 $("#shippingMode")?.addEventListener("change", (e) => {
   const m = e.target.value;
   const miniZip = $("#miniZip");
@@ -321,27 +376,25 @@ $("#shippingMode")?.addEventListener("change", (e) => {
     }
     state.shipping = { mode: m, quote: 0, label: "Ingresa CP y cotiza" };
   }
+
   saveCart();
+  requestMiniQuote();
 });
 
-async function postJSON(url, payload) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
-}
+$("#miniZip")?.addEventListener("input", requestMiniQuote);
 
 // Cotizador MINI (Carrito)
-window.quoteShippingMini = async () => {
+async function quoteShippingMini() {
+  if (state.__quoteInFlight) return;
+
   const zipRaw = $("#miniZip")?.value || "";
   const zip = digitsOnly(zipRaw);
   const mode = $("#shippingMode")?.value || "pickup";
 
   if (mode === "pickup") return;
   if (zip.length < 4) return toast("Ingresa un CP válido");
+
+  state.__quoteInFlight = true;
 
   const miniLabel = $("#miniShipLabel");
   if (miniLabel) miniLabel.textContent = "Cotizando...";
@@ -350,27 +403,38 @@ window.quoteShippingMini = async () => {
     const { data } = await postJSON("/api/quote", {
       zip,
       country: modeToCountry(mode),
-      items: cartItemsForQuote(),
+      items: cartItemsForQuote().length ? cartItemsForQuote() : [{ qty: 1 }],
     });
 
     if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
-    state.shipping = { mode, quote: Number(data.cost || 0), label: data.label || "Envío actualizado" };
+    state.shipping = {
+      mode,
+      quote: Number(data.cost || 0),
+      label: data.label || "Envío actualizado",
+    };
+
     saveCart();
     toast("Envío actualizado");
     playSound("success");
   } catch (e) {
     console.error(e);
-    toast("No se pudo cotizar");
     state.shipping.quote = 0;
     state.shipping.label = "Error. Intenta otro CP.";
     saveCart();
+    toast("No se pudo cotizar");
+  } finally {
+    state.__quoteInFlight = false;
   }
-};
+}
 
-// Cotizador GRANDE (Landing)
+window.quoteShippingMini = quoteShippingMini;
+
+// --------------------
+// SHIPPING (LANDING /envios)
+// --------------------
 window.quoteShippingUI = async () => {
-  const country = $("#shipCountry")?.value || "MX";
+  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
   const zip = digitsOnly($("#shipZip")?.value || "");
   const out = $("#shipQuote");
 
@@ -378,12 +442,12 @@ window.quoteShippingUI = async () => {
     if (out) out.textContent = "Ingresa un código postal válido.";
     return;
   }
-  if (out) out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cotizando...';
+  if (out) out.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Cotizando...';
 
   try {
     const items = cartItemsForQuote().length ? cartItemsForQuote() : [{ qty: 1 }];
-
     const { data } = await postJSON("/api/quote", { zip, country, items });
+
     if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
     if (out) out.innerHTML = `<b>${data.label}</b> · ${fmtMXN(data.cost)}`;
@@ -401,7 +465,7 @@ window.checkout = async () => {
   if (!state.cart.length) return toast("Carrito vacío");
 
   const mode = state.shipping.mode;
-  const zip = digitsOnly($("#miniZip")?.value);
+  const zip = digitsOnly($("#miniZip")?.value || "");
 
   if (mode !== "pickup") {
     if (!zip || zip.length < 4) return toast("Falta código postal");
@@ -409,22 +473,101 @@ window.checkout = async () => {
   }
 
   const btn = $("#checkoutBtn");
-  if (btn) btn.innerHTML = "PROCESANDO...";
+  if (btn) btn.textContent = "PROCESANDO...";
 
   try {
     const { data } = await postJSON("/api/checkout", {
       cart: state.cart,
       shippingMode: mode,
       shippingData: { postal_code: zip },
-      promoCode: $("#promoCode")?.value || "",
+      promoCode: "", // no existe promo input en tu index actual
     });
 
-    if (data?.url) window.location.href = data.url;
+    if (data?.url) {
+      window.location.href = data.url;
+      return; // ✅ FIX CRÍTICO: no seguir ejecutando
+    }
+
     throw new Error(data?.error || "CHECKOUT_FAILED");
   } catch (e) {
     console.error(e);
     toast("Error iniciando pago");
-    if (btn) btn.innerHTML = "PAGAR SEGURO";
+    if (btn) btn.textContent = "PAGAR SEGURO";
+  }
+};
+
+// --------------------
+// LEGAL (stubs safe si aún no lo pegaste)
+// --------------------
+(function initLegalSafe() {
+  const modal = $("#legalModal");
+  const backdrop = $("#legalBackdrop");
+  const closeBtn = $("#legalClose");
+  const title = $("#legalTitle");
+  const body = $("#legalBody");
+
+  if (!modal || !backdrop || !closeBtn || !title || !body) return;
+
+  const show = (t, html) => {
+    title.textContent = t || "Info";
+    body.innerHTML = html || "<p>Contenido no disponible.</p>";
+    modal.classList.add("show");
+  };
+  const hide = () => modal.classList.remove("show");
+
+  closeBtn.addEventListener("click", hide);
+  backdrop.addEventListener("click", hide);
+
+  // Si ya existe window.LEGAL_CONTENT, úsalo
+  $$(".jsLegalLink").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.legal;
+      const lib = window.LEGAL_CONTENT || {};
+      const item = lib[key] || null;
+      show(item?.title || "Info", item?.html || "<p>Próximamente.</p>");
+    });
+  });
+})();
+
+// --------------------
+// AI (stubs safe)
+// --------------------
+window.toggleAiAssistant = () => {
+  const m = $("#aiChatModal");
+  if (!m) return;
+  m.classList.toggle("show");
+};
+
+window.sendAiMessage = async () => {
+  const input = $("#aiInput");
+  const box = $("#aiMessages");
+  if (!input || !box) return;
+
+  const text = String(input.value || "").trim();
+  if (!text) return;
+
+  const me = document.createElement("div");
+  me.className = "ai-msg ai-me";
+  me.textContent = text;
+  box.appendChild(me);
+  box.scrollTop = box.scrollHeight;
+  input.value = "";
+
+  // si tienes /api/chat, lo usamos. si no, respuesta placeholder
+  try {
+    const { data } = await postJSON("/api/chat", { message: text });
+    const replyText = data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?";
+    const bot = document.createElement("div");
+    bot.className = "ai-msg ai-bot";
+    bot.textContent = replyText;
+    box.appendChild(bot);
+    box.scrollTop = box.scrollHeight;
+  } catch {
+    const bot = document.createElement("div");
+    bot.className = "ai-msg ai-bot";
+    bot.textContent = "Estoy en modo offline. Conecta /api/chat para respuestas en vivo.";
+    box.appendChild(bot);
+    box.scrollTop = box.scrollHeight;
   }
 };
 
@@ -432,6 +575,7 @@ window.checkout = async () => {
 // BOOT
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
+  initIntro();
   loadCatalog();
 
   // filtros
@@ -444,15 +588,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // init shipping visibility
+  // init shipping visibility (mini)
   const m = $("#shippingMode")?.value || "pickup";
   const mz = $("#miniZip");
   if (mz) mz.style.display = m === "pickup" ? "none" : "block";
 
-  // cart open/close
-  $("#cartBtn")?.addEventListener("click", openCart);
+  // drawer close (index usa .drawerClose)
+  $(".drawerClose")?.addEventListener("click", closeCart);
   $("#backdrop")?.addEventListener("click", closeCart);
-  $("#cartClose")?.addEventListener("click", closeCart);
 
   saveCart();
 
@@ -463,6 +606,9 @@ document.addEventListener("DOMContentLoaded", () => {
     state.cart = [];
     localStorage.removeItem("score_cart_v5");
     saveCart();
+    history.replaceState({}, document.title, "/");
+  } else if (params.get("status") === "cancel") {
+    toast("Pago cancelado");
     history.replaceState({}, document.title, "/");
   }
 });
