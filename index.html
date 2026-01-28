@@ -10,10 +10,19 @@
 
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  
-  <link rel="stylesheet" href="/css/styles.css?v=FINAL_AUDIT" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+  <link rel="stylesheet" href="/css/styles.css?v=FINAL_AUDIT" />
+
+  <!-- FontAwesome: no bloquear render -->
+  <link rel="preload"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </noscript>
+
+  <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -30,7 +39,7 @@
 
 <div id="intro" class="intro" role="dialog" aria-label="Cargando">
   <div class="introCenter">
-    <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE" width="80" />
+    <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE" width="80" height="80" />
     <div class="introBar"><div class="introBarFill"></div></div>
     <button id="introSkip" class="introSkip">Saltar</button>
   </div>
@@ -39,33 +48,38 @@
 <header class="topbar">
   <div class="container topInner">
     <div class="brand">
-      <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="54" />
+      <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="54" height="54" />
     </div>
     <nav class="nav">
       <a href="#catalogo">CATÁLOGO</a>
       <a href="#envios">ENVÍOS</a>
+      <a href="#partners">PARTNERS</a>
     </nav>
-    <button id="cartBtn" class="cartBtn" onclick="openCart()">
-      <i class="fa-solid fa-cart-shopping"></i>
+    <button id="cartBtn" class="cartBtn" onclick="openCart()" aria-label="Abrir carrito">
+      <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
       <span id="cartCount" class="cartCount">0</span>
     </button>
   </div>
 </header>
 
 <section class="hero" id="top">
-  <div class="heroBgImg"></div>
+  <!-- IMPORTANTE: antes era <div>. Tu CSS estaba para IMG. -->
+  <img class="heroBgImg" src="/assets/fondo-pagina-score.webp" alt="" width="1920" height="1080" decoding="async" />
   <div class="heroOverlayDark"></div>
 
   <div class="container heroInner">
     <div class="heroBadge">
-      <img src="/assets/icons/icon-192.png" alt="" style="width:14px; height:14px; margin-right:6px;">
+      <!-- ✅ FIX: NO más icon-192.png (3.37MB) -->
+      <svg class="badgeIcon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1 14-3-3 1.4-1.4L11 13.2l4.6-4.6L17 10l-6 6Z"/>
+      </svg>
       <span>OFFICIAL MERCH</span>
     </div>
 
-    <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" />
+    <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="128" height="128" />
 
     <h1>MERCANCÍA OFICIAL <span class="accent">OFF-ROAD</span></h1>
-    <p>Diseñada para la Baja. Fabricada por <b>Único Uniformes</b>.</p>
+    <p>Hecha para la Baja. Producida por <b>Único Uniformes</b>.</p>
 
     <div class="heroCtas">
       <a href="#catalogo" class="btn primary">VER EQUIPO</a>
@@ -73,10 +87,10 @@
     </div>
 
     <div class="heroLogos">
-      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" />
-      <img src="/assets/logo-baja500.webp" alt="Baja 500" />
-      <img src="/assets/logo-baja400.webp" alt="Baja 400" />
-      <img src="/assets/logo-sf250.webp" alt="SF 250" />
+      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-baja500.webp" alt="Baja 500" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-baja400.webp" alt="Baja 400" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-sf250.webp" alt="San Felipe 250" width="120" height="44" loading="lazy" />
     </div>
   </div>
 </section>
@@ -85,18 +99,19 @@
   <div class="container">
     <div class="sectionHead">
       <h2>ELIGE TU EQUIPO</h2>
-      <p>Merch auténtico SCORE. Selecciona talla y agrega.</p>
+      <p>Merch oficial SCORE. Selecciona tu talla y agrégalo al carrito.</p>
     </div>
 
-    <div class="filters">
-      <button class="chip active" data-filter="ALL">TODO</button>
-      <button class="chip" data-filter="EDICION_2025">EDICIÓN 2025</button>
-      <button class="chip" data-filter="BAJA_1000">BAJA 1000</button>
-      <button class="chip" data-filter="BAJA_500">BAJA 500</button>
-      <button class="chip" data-filter="sf250">SAN FELIPE 250</button>
+    <!-- ✅ FIX: filtros alineados con catalog.json (sectionId reales) -->
+    <div class="filters" aria-label="Filtros de catálogo">
+      <button class="chip active" data-filter="ALL" type="button">TODO</button>
+      <button class="chip" data-filter="BAJA_1000" type="button">BAJA 1000</button>
+      <button class="chip" data-filter="BAJA_500" type="button">BAJA 500</button>
+      <button class="chip" data-filter="BAJA_400" type="button">BAJA 400</button>
+      <button class="chip" data-filter="SF_250" type="button">SAN FELIPE 250</button>
     </div>
 
-    <div id="productsGrid" class="grid"></div>
+    <div id="productsGrid" class="grid" aria-live="polite"></div>
   </div>
 </section>
 
@@ -104,20 +119,43 @@
   <div class="container">
     <div class="sectionHead">
       <h2>LLEGA A TU PUERTA</h2>
-      <p>Envíos seguros vía FedEx / Envia.com</p>
+      <!-- ✅ FIX: no mencionar paquetería -->
+      <p>Cotiza en tiempo real por código postal (México y USA).</p>
     </div>
 
     <div class="shippingBox">
       <div class="shipRow">
-        <label>País</label>
-        <select id="shipCountry"><option value="MX">México</option><option value="US">USA</option></select>
+        <label for="shipCountry">País</label>
+        <select id="shipCountry">
+          <option value="MX">México</option>
+          <option value="US">USA</option>
+        </select>
       </div>
       <div class="shipRow">
-        <label>Código Postal</label>
-        <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" />
+        <label for="shipZip">Código Postal</label>
+        <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" autocomplete="postal-code" />
       </div>
       <button class="btn primary full" onclick="quoteShippingUI()">COTIZAR ENVÍO</button>
-      <div id="shipQuote" class="shipQuote"></div>
+      <div id="shipQuote" class="shipQuote" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ✅ NUEVO: PARTNERS -->
+<section id="partners" class="section">
+  <div class="container">
+    <div class="sectionHead">
+      <h2>PARTNERS</h2>
+      <p>Alianzas que respaldan la tienda oficial.</p>
+    </div>
+
+    <div class="heroLogos" aria-label="Logos de partners">
+      <img src="/assets/logo-score.webp" alt="SCORE International" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-baja500.webp" alt="Baja 500" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-baja400.webp" alt="Baja 400" width="120" height="44" loading="lazy" />
+      <img src="/assets/logo-sf250.webp" alt="San Felipe 250" width="120" height="44" loading="lazy" />
     </div>
   </div>
 </section>
@@ -128,65 +166,74 @@
     <div class="fMiniSub">Powered by Único Uniformes</div>
 
     <div class="social-center">
-      <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="fSocial"><i class="fa-brands fa-facebook-f"></i></a>
-      <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="fSocial"><i class="fa-brands fa-instagram"></i></a>
-      <a href="https://wa.me/526641234567" target="_blank" class="fSocial"><i class="fa-brands fa-whatsapp"></i></a>
+      <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" class="fSocial" aria-label="Facebook">
+        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+      </a>
+      <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" class="fSocial" aria-label="Instagram">
+        <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+      </a>
+      <a href="https://wa.me/526641234567" target="_blank" rel="noopener" class="fSocial" aria-label="WhatsApp">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+      </a>
     </div>
 
     <div class="fMiniLinks">
-      <button class="fLink jsLegalLink" data-legal="privacy">Privacidad</button>
-      <button class="fLink jsLegalLink" data-legal="terms">Términos</button>
-      <button class="fLink jsLegalLink" data-legal="contact">Contacto</button>
+      <button class="fLink jsLegalLink" data-legal="privacy" type="button">Privacidad</button>
+      <button class="fLink jsLegalLink" data-legal="terms" type="button">Términos</button>
+      <button class="fLink jsLegalLink" data-legal="contact" type="button">Contacto</button>
     </div>
   </div>
 </footer>
 
-<aside id="cartDrawer" class="drawer drawerGlass">
+<aside id="cartDrawer" class="drawer drawerGlass" aria-label="Carrito">
   <div class="drawerHead">
     <div class="drawerTitle">CARRITO</div>
-    <button class="drawerClose" onclick="closeCart()">✕</button>
+    <button class="drawerClose" onclick="closeCart()" aria-label="Cerrar carrito">✕</button>
   </div>
   <div id="cartItems" class="drawerBody"></div>
   <div class="drawerFoot">
     <div class="row"><span>Subtotal</span><span id="cartSubtotal">$0</span></div>
     <div class="row"><span>Envío</span><span id="cartShipping">$0</span></div>
     <div class="row total"><span>Total</span><span id="cartTotal">$0</span></div>
-    
+
     <div class="shipMini">
-        <select id="shippingMode">
-            <option value="pickup">📍 Pickup Tijuana (Gratis)</option>
-            <option value="mx">🇲🇽 Envío Nacional</option>
-            <option value="us">🇺🇸 Envío USA</option>
-        </select>
-        <input id="miniZip" placeholder="Código Postal" style="display:none">
-        <div id="miniShipLabel" class="miniShipLabel"></div>
+      <select id="shippingMode" aria-label="Método de entrega">
+        <option value="pickup">📍 Pickup Tijuana (Gratis)</option>
+        <option value="mx">🇲🇽 Envío Nacional</option>
+        <option value="us">🇺🇸 Envío USA</option>
+      </select>
+      <input id="miniZip" placeholder="Código Postal" style="display:none" inputmode="numeric" autocomplete="postal-code">
+      <div id="miniShipLabel" class="miniShipLabel"></div>
     </div>
 
     <button id="checkoutBtn" class="btn primary full" onclick="checkout()">PAGAR SEGURO</button>
   </div>
 </aside>
-<div id="backdrop" class="backdrop" onclick="closeCart()"></div>
+<div id="backdrop" class="backdrop" onclick="closeCart()" aria-label="Cerrar"></div>
 
-<button class="ai-btn-float" onclick="toggleAiAssistant()"><i class="fa-solid fa-headset"></i></button>
-<div id="aiChatModal" class="ai-chat-modal">
+<button class="ai-btn-float" onclick="toggleAiAssistant()" aria-label="Abrir asistente">
+  <i class="fa-solid fa-headset" aria-hidden="true"></i>
+</button>
+
+<div id="aiChatModal" class="ai-chat-modal" aria-label="Asistente">
   <div class="ai-box">
-    <div class="ai-header">SCORE AI <button onclick="toggleAiAssistant()">✕</button></div>
+    <div class="ai-header">SCORE AI <button onclick="toggleAiAssistant()" aria-label="Cerrar">✕</button></div>
     <div id="aiMessages" class="ai-body"></div>
     <div class="ai-input-bar">
       <input id="aiInput" placeholder="Escribe aquí..." />
-      <button onclick="sendAiMessage()">→</button>
+      <button onclick="sendAiMessage()" aria-label="Enviar">→</button>
     </div>
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <div id="legalModal" class="legalModal">
-    <div class="legalBackdrop" id="legalBackdrop"></div>
-    <div class="legalCard">
-        <div class="legalHead"><h3 id="legalTitle">Info</h3><button id="legalClose">✕</button></div>
-        <div class="legalBody" id="legalBody"></div>
-    </div>
+  <div class="legalBackdrop" id="legalBackdrop"></div>
+  <div class="legalCard">
+    <div class="legalHead"><h3 id="legalTitle">Info</h3><button id="legalClose" aria-label="Cerrar">✕</button></div>
+    <div class="legalBody" id="legalBody"></div>
+  </div>
 </div>
 
 <script type="module" src="/js/main.js?v=FINAL_AUDIT"></script>
