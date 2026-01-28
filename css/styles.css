@@ -51,20 +51,15 @@ input, select { font-family: inherit; }
 .section.alt { background: rgba(255,255,255,0.70); }
 
 /* =========================================================
-   INTRO (Splash) - CORREGIDO
+   INTRO (Splash) - CORREGIDO Z-INDEX Y TRANSICIÓN
    ========================================================= */
 .intro {
-  position: fixed; inset: 0; z-index: 9999; /* Z-index alto para tapar todo */
+  position: fixed; inset: 0; z-index: 9999;
   display: grid; place-items: center; padding: 18px;
-  background: #000;
-  transition: opacity 0.5s ease, visibility 0.5s; /* Transición suave */
+  background: #000; /* Fondo solido para tapar carga */
+  transition: opacity 0.5s ease, visibility 0.5s;
 }
-/* Estado oculto controlado por JS */
-.intro[aria-hidden="true"] { 
-  opacity: 0; 
-  visibility: hidden; 
-  pointer-events: none; 
-}
+.intro[aria-hidden="true"] { opacity: 0; visibility: hidden; pointer-events: none; }
 
 .introBg{
   position:absolute; inset:0;
@@ -131,15 +126,14 @@ input, select { font-family: inherit; }
 }
 
 /* =========================================================
-   HERO - CORREGIDO (Centrado)
+   HERO - CORREGIDO ESCUADRE
    ========================================================= */
 .hero { 
   min-height: 90vh; 
   position: relative; 
   display: flex; 
   align-items: center; 
-  justify-content: center; /* CENTRADO VERTICAL Y HORIZONTAL */
-  text-align: center;
+  justify-content: center; /* ESTO CENTRA TODO */
   overflow: hidden; 
   width: 100%;
 }
@@ -205,7 +199,7 @@ input, select { font-family: inherit; }
 }
 .card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(0,0,0,.10); }
 
-/* === CAROUSEL (Facebook Style) - CORREGIDO === */
+/* === CAROUSEL (Facebook Style) - CORREGIDO RECORTE === */
 .cardMedia {
   position: relative;
   width: 100%;
@@ -230,18 +224,17 @@ input, select { font-family: inherit; }
   width: 100%;
   height: 100%;
   scroll-snap-align: start;
-  /* Centrado de imagen */
   display: flex;
   align-items: center;
   justify-content: center;
   background: #fff;
 }
-/* IMAGEN CONTAIN (No recortada) */
+/* CAMBIO CLAVE: object-fit: contain evita recortes */
 .carousel-item img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* CLAVE: Muestra toda la prenda */
-  padding: 10px; /* Aire alrededor */
+  object-fit: contain; 
+  padding: 10px; /* Margen interno para que no toque bordes */
   display: block;
 }
 
@@ -261,7 +254,7 @@ input, select { font-family: inherit; }
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.2); /* Más visible en fondo blanco */
+  background: rgba(0,0,0,0.2); /* Más visible sobre blanco */
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(255,255,255,0.5);
 }
@@ -279,7 +272,7 @@ input, select { font-family: inherit; }
 .cardControls button:hover{ background: rgba(0,0,0,.10); }
 
 /* =========================================================
-   SHIPPING & FAQ
+   SHIPPING & FAQ - CORREGIDO (Asegurado que cierre llaves)
    ========================================================= */
 .shippingBox {
   max-width: 420px; margin: 0 auto; background: #fff; padding: 20px;
@@ -338,11 +331,11 @@ input, select { font-family: inherit; }
 .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.60); z-index: 150; opacity: 0; pointer-events: none; transition: 0.3s; }
 .backdrop.show { opacity: 1; pointer-events: auto; }
 
-/* Footer & Legal (Asegurado cierre de llave) */
-.footerMini { margin-top: 40px; padding-bottom: 20px; background: #111; color: #fff; padding: 40px 0;}
+/* Footer & Legal - ASEGURADO QUE APAREZCA */
+.footerMini { margin-top: 40px; padding-bottom: 20px; background: #111; color: #fff; padding: 40px 0; }
 .footerMiniInner { background: transparent; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; align-items: center; text-align: center; }
 .fMiniLinks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; align-items:center; }
-.fLink { font-size: 11px; font-weight: 900; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 99px; color: #fff; cursor: pointer; border: none; }
+.fLink { font-size: 11px; font-weight: 900; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 99px; color: #fff; border:none; cursor:pointer;}
 .fLink:hover { background: #fff; color: #000; }
 .fSocial { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 14px; }
 
