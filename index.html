@@ -15,16 +15,37 @@
   <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
   <meta property="og:url" content="https://scorestore.netlify.app/" />
 
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
+
+  <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" /> <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" />
-  <link rel="preload" href="/css/styles.css?v=2026_FIXED_V2" as="style" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
+  <!-- PERF: evita overflow en móvil (sin tocar tu layout) -->
+  <style>
+    html, body { max-width: 100vw; overflow-x: hidden; }
+  </style>
+
+  <!-- PERF: LCP -->
+  <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
+  <link rel="preload" href="/css/styles.css?v=2026_FIXED_V2" as="style" />
   <link rel="stylesheet" href="/css/styles.css?v=2026_FIXED_V2" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
+  <!-- PERF: precarga JS (module) -->
+  <link rel="modulepreload" href="/js/main.js?v=2026_FIXED_V2" />
 
+  <!-- Icons (non-blocking) -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  </noscript>
+
+  <!-- Pixel Meta -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -35,66 +56,95 @@
     fbq('init','4249947775334413');
     fbq('track','PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" alt=""/></noscript>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1" alt=""/>
+  </noscript>
 </head>
 
-<body class="appBg">
+<body class="appBg noScroll">
 
-<div id="intro" class="intro" aria-hidden="true">
+<!-- INTRO (4s) — no rompe tu JS: conserva ids y estructura base -->
+<div id="intro" class="intro" aria-hidden="true" role="dialog" aria-label="Intro SCORE Store">
   <div class="introBg"></div>
+
+  <!-- Extras “pro” (opcionales): si tu CSS/JS los usa, perfecto; si no, no afecta -->
+  <div class="introFx" aria-hidden="true">
+    <div class="introDust"></div>
+    <div class="introScan"></div>
+  </div>
+
   <div class="introCenter">
     <div class="introMark">
-      <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE Logo" width="64" height="28" />
+      <img src="/assets/logo-score.webp" class="introLogo" alt="SCORE Logo" width="64" height="28" decoding="async" />
       <div class="introWord">SCORE STORE</div>
       <div class="introTag">OFFICIAL MERCH · DESERT RACING</div>
     </div>
-    <div class="introBar"><div class="introBarFill" id="introBarFill"></div></div>
-    <button id="introSkip" class="introSkip" type="button" aria-label="Saltar intro">Saltar <span>↳</span></button>
+
+    <!-- Barra (mantiene tu id) -->
+    <div class="introBar" aria-label="Cargando">
+      <div class="introBarFill" id="introBarFill"></div>
+    </div>
+
+    <button id="introSkip" class="introSkip" type="button" aria-label="Saltar intro">
+      Saltar <span aria-hidden="true">↳</span>
+    </button>
   </div>
 </div>
 
 <header class="topbar">
   <div class="container topInner">
-    <div class="brand">
-      <img src="/assets/logo-score.webp" class="brandLogo brandLogoBig" alt="SCORE" width="54" height="24" />
+    <div class="brand" aria-label="SCORE">
+      <img src="/assets/logo-score.webp" class="brandLogo brandLogoBig" alt="SCORE" width="54" height="24" decoding="async" />
     </div>
 
-    <nav class="nav">
+    <nav class="nav" aria-label="Navegación">
       <a href="#catalogo">CATÁLOGO</a>
       <a href="#envios">ENTREGA</a>
       <a href="#faq">FAQ</a>
     </nav>
 
-    <button id="cartBtn" class="cartBtn" aria-label="Abrir Carrito"> <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-      <span id="cartCount" class="cartCount">0</span>
+    <button id="cartBtn" class="cartBtn" aria-label="Abrir Carrito">
+      <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+      <span id="cartCount" class="cartCount" aria-label="Artículos en carrito">0</span>
     </button>
   </div>
 </header>
 
-<section class="hero">
-  <img src="/assets/hero.webp" class="heroBgImg" alt="Fondo Desierto Racing" width="1920" height="1080" fetchpriority="high" />
-  
-  <div class="heroOverlay heroOverlayDark"></div>
+<section class="hero" id="top">
+  <img src="/assets/hero.webp"
+       class="heroBgImg"
+       alt="Fondo Desierto Racing"
+       width="1920" height="1080"
+       fetchpriority="high"
+       decoding="async" />
+
+  <div class="heroOverlay heroOverlayDark" aria-hidden="true"></div>
 
   <div class="container heroInner">
     <div class="heroBadge">
-      <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="45" height="41" />
+      <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="45" height="41" decoding="async" />
       <span>OFFICIAL MERCH</span>
     </div>
 
     <h1>MERCANCÍA OFICIAL <span class="accent">OFF-ROAD</span></h1>
-    <p>Diseñada para la Baja. Fabricada por <b>Único Uniformes</b> · Envíos MX & USA.</p>
+    <p>Diseñada para la Baja. Fabricada por <b>Único Uniformes</b> · Envíos MX &amp; USA.</p>
 
     <div class="heroCtas">
-      <a href="#catalogo" class="btn primary" aria-label="Ver Catálogo"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> VER EQUIPO</a>
-      <button class="btn ghost" onclick="openCart()" aria-label="Mi Pedido"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> MI PEDIDO</button>
+      <a href="#catalogo" class="btn primary" aria-label="Ver Catálogo">
+        <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> VER EQUIPO
+      </a>
+      <button class="btn ghost" onclick="openCart()" aria-label="Mi Pedido">
+        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> MI PEDIDO
+      </button>
     </div>
 
-    <div class="heroLogos">
-      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="71" height="44" />
-      <img src="/assets/logo-baja500.webp" alt="Baja 500" width="70" height="44" />
-      <img src="/assets/logo-baja400.webp" alt="Baja 400" width="70" height="44" />
-      <img src="/assets/logo-sf250.webp" alt="SF 250" width="69" height="44" />
+    <!-- LOGOS por edición (ya OK) -->
+    <div class="heroLogos" aria-label="Ediciones SCORE">
+      <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="71" height="44" loading="lazy" decoding="async" />
+      <img src="/assets/logo-baja500.webp" alt="Baja 500" width="70" height="44" loading="lazy" decoding="async" />
+      <img src="/assets/logo-baja400.webp" alt="Baja 400" width="70" height="44" loading="lazy" decoding="async" />
+      <img src="/assets/logo-sf250.webp" alt="SF 250" width="69" height="44" loading="lazy" decoding="async" />
     </div>
   </div>
 </section>
@@ -105,7 +155,8 @@
       <h2>ELIGE TU EQUIPO</h2>
       <p>Merch auténtico SCORE. Selecciona talla y agrega.</p>
     </div>
-    <div class="filters">
+
+    <div class="filters" aria-label="Filtros de catálogo">
       <button class="chip active" data-filter="ALL">TODO</button>
       <button class="chip" data-filter="EDICION_2025">EDICIÓN 2025</button>
       <button class="chip" data-filter="BAJA_1000">BAJA 1000</button>
@@ -114,57 +165,90 @@
       <button class="chip" data-filter="SF_250">SAN FELIPE 250</button>
       <button class="chip" data-filter="OTRAS_EDICIONES">OTRAS EDICIONES</button>
     </div>
-    <div id="productsGrid" class="grid"></div>
+
+    <div id="productsGrid" class="grid" aria-live="polite"></div>
   </div>
 </section>
 
 <section id="envios" class="section alt">
-  <div class="overlaySoft"></div>
+  <div class="overlaySoft" aria-hidden="true"></div>
   <div class="container">
     <div class="sectionHead">
       <h2>LLEGA HASTA TU PUERTA</h2>
       <p>Tu pedido viaja seguro con FedEx a través de <b>Envia.com</b>.</p>
     </div>
+
     <div class="shippingBox">
       <div class="shipRow">
         <label for="shipCountry">País</label>
-        <select id="shipCountry"><option value="MX">México</option><option value="US">USA</option></select>
+        <select id="shipCountry">
+          <option value="MX">México</option>
+          <option value="US">USA</option>
+        </select>
       </div>
+
       <div class="shipRow">
         <label for="shipZip">Código postal</label>
-        <input id="shipZip" placeholder="Ej. 22614" inputmode="numeric" />
+        <input id="shipZip" placeholder="Ej. 22614" inputmode="numeric" autocomplete="postal-code" />
       </div>
-      <button class="btn primary" onclick="quoteShippingUI()"><i class="fa-solid fa-calculator" aria-hidden="true"></i> CALCULAR ENVÍO</button>
-      <div id="shipQuote" class="shipQuote"></div>
+
+      <button class="btn primary" onclick="quoteShippingUI()">
+        <i class="fa-solid fa-calculator" aria-hidden="true"></i> CALCULAR ENVÍO
+      </button>
+
+      <div id="shipQuote" class="shipQuote" aria-live="polite"></div>
     </div>
-    <div class="note"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> También puedes recoger en fábrica (Tijuana).</div>
+
+    <div class="note">
+      <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+      También puedes recoger en fábrica (Tijuana).
+    </div>
   </div>
 </section>
 
 <section id="faq" class="section">
   <div class="container">
-    <div class="sectionHead"><h2>FAQ</h2><p>Lo esencial antes de arrancar.</p></div>
+    <div class="sectionHead">
+      <h2>FAQ</h2>
+      <p>Lo esencial antes de arrancar.</p>
+    </div>
+
     <div class="faq">
-      <details><summary>¿Métodos de pago?</summary><div>Stripe: Tarjeta y <b>OXXO</b>.</div></details>
-      <details><summary>¿Quién opera la tienda?</summary><div>SCORE STORE es el protagonista. Fabrica: Único Uniformes.</div></details>
-      <details><summary>¿Envíos a USA?</summary><div>Sí. Vía FedEx.</div></details>
+      <details>
+        <summary>¿Métodos de pago?</summary>
+        <div>Stripe: Tarjeta y <b>OXXO</b>.</div>
+      </details>
+      <details>
+        <summary>¿Quién opera la tienda?</summary>
+        <div>SCORE STORE es el protagonista. Fabrica: Único Uniformes.</div>
+      </details>
+      <details>
+        <summary>¿Envíos a USA?</summary>
+        <div>Sí. Vía FedEx.</div>
+      </details>
     </div>
   </div>
 </section>
 
+<!-- CART DRAWER (ya incluye cerrar + backdrop) -->
 <aside id="cartDrawer" class="drawer drawerGlass" aria-hidden="true">
   <div class="drawerHead">
-    <div class="drawerTitle"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> MI PEDIDO</div>
+    <div class="drawerTitle">
+      <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> MI PEDIDO
+    </div>
     <button class="drawerClose" onclick="closeCart()" aria-label="Cerrar Carrito">✕</button>
   </div>
+
   <div id="cartItems" class="drawerBody"></div>
+
   <div class="drawerFoot">
     <div class="row"><span>Subtotal</span><span id="cartSubtotal">$0</span></div>
     <div class="row"><span>Envío</span><span id="cartShipping">$0</span></div>
     <div class="row total"><span>Total</span><span id="cartTotal">$0</span></div>
-    
+
+    <!-- Promo (campo listo para activación) -->
     <div class="promoBox">
-      <input id="promoCode" placeholder="Cupón (ej. SCORE25)" aria-label="Código Promocional" />
+      <input id="promoCode" placeholder="Cupón (ej. SCORE25)" aria-label="Código Promocional" autocomplete="off" />
       <button class="btn ghost" onclick="applyPromo()">Aplicar</button>
     </div>
 
@@ -175,67 +259,95 @@
         <option value="mx">🇲🇽 Envío México</option>
         <option value="us">🇺🇸 Envío USA</option>
       </select>
-      <input id="miniZip" placeholder="Código Postal" style="display:none;" aria-label="Código Postal para envío" />
-      <div id="miniShipLabel" class="miniShipLabel"></div>
+
+      <input id="miniZip" placeholder="Código Postal" style="display:none;" aria-label="Código Postal para envío" inputmode="numeric" autocomplete="postal-code" />
+      <div id="miniShipLabel" class="miniShipLabel" aria-live="polite"></div>
     </div>
 
-    <button id="checkoutBtn" class="btn primary full" onclick="checkout()"><i class="fa-solid fa-lock" aria-hidden="true"></i> PAGAR SEGURO</button>
+    <button id="checkoutBtn" class="btn primary full" onclick="checkout()">
+      <i class="fa-solid fa-lock" aria-hidden="true"></i> PAGAR SEGURO
+    </button>
   </div>
 </aside>
-<div id="backdrop" class="backdrop" onclick="closeCart()"></div>
+<div id="backdrop" class="backdrop" onclick="closeCart()" aria-hidden="true"></div>
 
-<button class="ai-btn-float" onclick="toggleAiAssistant()" aria-label="Asistente Virtual"><i class="fa-solid fa-headset" aria-hidden="true"></i></button>
+<!-- AI -->
+<button class="ai-btn-float" onclick="toggleAiAssistant()" aria-label="Asistente Virtual">
+  <i class="fa-solid fa-headset" aria-hidden="true"></i>
+</button>
 
 <div id="aiChatModal" class="ai-chat-modal" aria-hidden="true">
-  <div class="ai-box">
+  <div class="ai-box" role="dialog" aria-modal="true" aria-label="Asistente SCORE">
     <div class="ai-header">
       <span>ASISTENTE SCORE 🏁</span>
       <button onclick="toggleAiAssistant()" aria-label="Cerrar Chat">✕</button>
     </div>
-    <div class="ai-body" id="aiMessages"></div>
+    <div class="ai-body" id="aiMessages" aria-live="polite"></div>
     <div class="ai-input-bar">
-      <input type="text" id="aiInput" placeholder="Pregunta por tallas..." aria-label="Mensaje" />
-      <button onclick="sendAiMessage()" aria-label="Enviar"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+      <input type="text" id="aiInput" placeholder="Pregunta por tallas..." aria-label="Mensaje" autocomplete="off" />
+      <button onclick="sendAiMessage()" aria-label="Enviar">
+        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 </div>
 
+<!-- FOOTER MINI + Legal Card modal (1 card) -->
 <footer class="footerMini">
   <div class="container footerMiniInner">
     <div class="fMiniLeft">
       <div class="fMiniTitle">SCORE STORE · TIENDA OFICIAL</div>
       <div class="fMiniSub">Fabricado por Único Uniformes · © 2026 BAJATEX</div>
     </div>
-    <div class="fMiniLinks">
+
+    <div class="fMiniLinks" aria-label="Enlaces legales y redes">
       <button class="fLink jsLegalLink" data-legal="privacy">Privacidad</button>
       <button class="fLink jsLegalLink" data-legal="terms">Términos</button>
       <button class="fLink jsLegalLink" data-legal="legal">Legal</button>
       <button class="fLink jsLegalLink" data-legal="contact">Contacto</button>
-      <a class="fSocial" href="https://www.facebook.com/uniforme.unico/" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
-      <a class="fSocial" href="https://www.instagram.com/uniformes.unico" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+
+      <a class="fSocial" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" aria-label="Facebook">
+        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+      </a>
+      <a class="fSocial" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" aria-label="Instagram">
+        <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+      </a>
     </div>
   </div>
 </footer>
 
 <div id="legalModal" class="legalModal" aria-hidden="true">
-  <div class="legalBackdrop" id="legalBackdrop"></div>
+  <div class="legalBackdrop" id="legalBackdrop" aria-hidden="true"></div>
+
+  <!-- UNA sola card; el contenido cambia según click -->
   <div class="legalCard" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
     <div class="legalHead">
       <div class="legalHeadLeft">
-        <div class="legalPill"><i class="fa-solid fa-certificate" aria-hidden="true"></i> OFICIAL</div>
+        <div class="legalPill">
+          <i class="fa-solid fa-certificate" aria-hidden="true"></i> OFICIAL
+        </div>
         <h3 id="legalTitle">Información</h3>
       </div>
       <button class="legalClose" id="legalClose" aria-label="Cerrar">✕</button>
     </div>
+
     <div class="legalBody" id="legalBody"></div>
     <div class="legalFoot">© 2026 Único Uniformes · BAJATEX</div>
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<noscript>
+  <div style="padding:14px; background:#fff3f2; border-top:1px solid #ffd1cc; color:#111; font-family:system-ui;">
+    Para comprar necesitas activar JavaScript.
+  </div>
+</noscript>
 
 <script type="module" src="/js/main.js?v=2026_FIXED_V2"></script>
+
 <script>
+  // PWA
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("/sw.js")
