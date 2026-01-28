@@ -10,131 +10,97 @@ const {
   digitsOnly,
 } = require("./_shared");
 
-function buildEstimate(totalQty) {
-  // Estimación conservadora (ropa/merch), para que Envia no rechace por falta de paquete
-  const qty = Math.max(1, normalizeQty(totalQty));
-
-  // Caja base (CM) + “crece” con qty
-  const length = 30;
-  const width = 25;
-  const height = Math.min(45, 8 + qty * 2); // no se dispare
-
-  // Peso (KG)
-  const weight = Math.min(25, Math.max(0.5, qty * 0.55)); // ~0.55kg por pieza
-
-  return { qty, length, width, height, weight };
-}
-
-// Compat: soporta firmas distintas de getEnviaQuote sin romper
-async function callEnviaQuote(zip, totalQty, country, est) {
-  // 1) Firma “extendida”: (zip, qty, country, weight, length, height, width)
-  try {
-    if (typeof getEnviaQuote === "function" && getEnviaQuote.length >= 4) {
-      return await getEnviaQuote(
-        zip,
-        totalQty,
-        country,
-        est.weight,
-        est.length,
-        est.height,
-        est.width
-      );
-    }
-  } catch (_) {}
-
-  // 2) Firma “simple”: (zip, qty, country)
-  try {
-    if (typeof getEnviaQuote === "function") {
-      return await getEnviaQuote(zip, totalQty, country);
-    }
-  } catch (_) {}
-
-  return null;
-}
+const pickFallback = (country) => (String(country || "MX").toUpperCase() === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE);
 
 exports.handler = async (event) => {
   // CORS + método
   if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
-  if (event.httpMethod !== "POST")
-    return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
+  if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
 
   try {
     const body = safeJsonParse(event.body);
 
-    const country = String(body.country || "MX").toUpperCase() === "US" ? "US" : "MX";
+    const country = String(body.country || "MX").toUpperCase(); // "MX" | "US"
     const zip = digitsOnly(body.zip || body.cp || body.postal_code || "");
 
-    const items = Array.isArray(body.items) ? body.items : [{ qty: 1 }];
-    const totalQty = items.reduce(
-      (acc, i) => acc + normalizeQty(i.qty || i.quantity || 1),
-      0
-    );
+    // Items (solo qty). El backend hace estimación.
+    const items = Array.isArray(body.items) && body.items.length ? body.items : [{ qty: 1 }];
+    const totalQty = items.reduce((acc, i) => acc + normalizeQty(i.qty || i.quantity || 1), 0);
 
-    // Validación mínima
+    // Validación básica
     if (!zip || zip.length < 4) {
       return jsonResponse(200, { ok: false, error: "ZIP_INVALID" });
     }
 
-    // 1) Validar cobertura “real” antes de fallback (para no inventar zonas)
-    // validateZip(country, zip) debe devolver algo como:
-    // { ok:true, normalizedZip:"xxxxx", country:"MX" } o { ok:false, error:"NO_COVERAGE" }
-    const v = await validateZip(country, zip);
-    if (!v || v.ok !== true) {
-      return jsonResponse(200, {
-        ok: false,
-        error: (v && v.error) || "NO_COVERAGE",
-      });
+    // 1) Validación “real” del ZIP/CP (evita fallbacks en zonas inexistentes)
+    // validateZip debe regresar algo tipo:
+    // { ok:true, normalized:"22614", coverage:true, label:"Tijuana, BC" } (ejemplo)
+    // o { ok:false, coverage:false, error:"NO_COVERAGE" }
+    let v = null;
+    try {
+      v = await validateZip(country, zip);
+    } catch (e) {
+      // Si tu validador falla por red/timeout, no rompemos: seguimos con intento de cotización
+      v = null;
     }
 
-    const normalizedZip = digitsOnly(v.normalizedZip || zip) || zip;
+    // Si el validador dice que NO hay cobertura real, respondemos ok:false para que el frontend muestre “no hay tarifa”
+    if (v && v.ok === false) {
+      return jsonResponse(200, { ok: false, error: v.error || "NO_COVERAGE", label: v.label || "" });
+    }
 
-    // 2) Intentar cotización real (Envia)
-    const est = buildEstimate(totalQty);
+    // 2) Intento de cotización real
+    // Estimaciones: sin SKU weights reales todavía; usamos un estimado coherente por item.
+    // Ajusta números si ya tienes tabla por producto.
+    const estWeightKg = Math.max(0.5, totalQty * 0.55);         // 0.55kg por pieza aprox
+    const estLen = 30;                                          // cm
+    const estWid = 25;                                          // cm
+    const estHei = Math.min(35, 6 + totalQty * 2);              // cm: base + apilado
+
     let quote = null;
-
     try {
-      quote = await callEnviaQuote(normalizedZip, est.qty, country, est);
-    } catch (apiErr) {
-      console.warn("[quote_shipping] getEnviaQuote error:", apiErr?.message || apiErr);
+      // OJO: tu getEnviaQuote del shared anterior solo acepta (zip, qty, countryCode)
+      // y trae dimensiones internas.
+      // Si ya lo actualizaste para aceptar dimensiones, esto igual funciona:
+      quote = await getEnviaQuote(zip, totalQty, country, estWeightKg, estLen, estHei, estWid);
+    } catch (e) {
       quote = null;
     }
 
-    // Si hay cotización real
+    // 3) Respuesta final
     if (quote && Number(quote.mxn) > 0) {
+      // NO mencionamos paquetería
+      const daysTxt = quote.days ? ` · ${quote.days} días` : "";
       return jsonResponse(200, {
         ok: true,
         cost: Number(quote.mxn),
-        // Importante: NO mencionar paquetería
-        label:
-          country === "US"
-            ? "Envío internacional"
-            : "Envío nacional",
+        label: `Envío estimado${daysTxt}`, // limpio, sin carrier
         source: "envia",
-        // opcional para UI: días estimados si tu shared los expone
-        days: quote.days ?? null,
+        zip: (v && v.normalized) ? v.normalized : zip,
+        zone: (v && v.label) ? v.label : "",
       });
     }
 
-    // 3) Fallback SOLO dentro de cobertura válida (ya validamos zip)
-    const fallbackCost = country === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-
+    // Si el validador dijo que sí hay cobertura / zip válido, pero la API falló → fallback
+    const fallbackCost = pickFallback(country);
     return jsonResponse(200, {
       ok: true,
-      cost: Number(fallbackCost),
-      label: country === "US" ? "Envío internacional" : "Envío nacional",
+      cost: fallbackCost,
+      label: country === "US" ? "Envío USA (Estándar)" : "Envío Nacional (Estándar)",
       source: "fallback",
+      zip: (v && v.normalized) ? v.normalized : zip,
+      zone: (v && v.label) ? v.label : "",
     });
+
   } catch (err) {
     console.error("[quote_shipping] Critical:", err);
-
-    // Rescate: no romper frontend
-    // (mantén ok:true para que UI no explote, pero costo fijo seguro)
+    // Modo “rescate”: respondemos ok:true para que el frontend no reviente,
+    // pero con costo fijo seguro.
     return jsonResponse(200, {
       ok: true,
       cost: FALLBACK_MX_PRICE,
-      label: "Envío nacional",
+      label: "Envío Estándar",
       source: "error_rescue",
     });
   }
 };
-```0
