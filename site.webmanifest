@@ -9,36 +9,16 @@
   "orientation": "portrait",
   "background_color": "#FFFFFF",
   "theme_color": "#E10600",
-  "description": "Merch Off-Road de edición limitada. Fabricado en Tijuana por Único Uniformes.",
+  "description": "Merch Off-Road de edición limitada. Fabricado en Tijuana por Único Uniformes (BAJATEX).",
   "lang": "es-MX",
   "dir": "ltr",
   "categories": ["shopping", "sports", "lifestyle"],
   "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "/assets/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/icons/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/assets/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/icons/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {
@@ -51,7 +31,7 @@
     {
       "name": "Abrir Carrito",
       "short_name": "Carrito",
-      "description": "Ver mi equipo",
+      "description": "Ver mi pedido",
       "url": "/?openCart=1",
       "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
