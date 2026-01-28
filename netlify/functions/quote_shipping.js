@@ -1,66 +1,81 @@
-import { ok, fail, parseJSON, enviaQuote, normalizeCountry, normalizeZip } from "./_shared.js";
+// netlify/functions/quote_shipping.js
+// Returns best-effort shipping quote using Envia (fallback if fails)
+//
+// POST body (tolerante):
+// { zip|cp|postal_code: "...", country:"MX"|"US", items: 3 }
+// o también:
+// { zip:"...", country:"MX", items:[{qty:1},{qty:2}] }
+//
+// Respuesta estable:
+// { ok:true, cost:<MXN>, label:"...", source:"envia|fallback|..." }
 
-export async function handler(event) {
-  if (event.httpMethod === "OPTIONS") return ok({});
-  if (event.httpMethod !== "POST") return fail(405, "Method Not Allowed");
+const {
+  jsonResponse,
+  safeJsonParse,
+  getEnviaQuote,
+  FALLBACK_MX_PRICE,
+  FALLBACK_US_PRICE,
+  normalizeQty,
+  digitsOnly,
+} = require("./_shared");
+
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
+  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
   try {
-    const { mode, zip, items } = parseJSON(event.body);
+    const body = safeJsonParse(event.body);
 
-    if (mode === "pickup") {
-      return ok({ amount: 0, carrier: "Pickup", eta: "Inmediato" });
+    const country = String(body.country || "MX").toUpperCase();
+    const zip = digitsOnly(body.zip || body.cp || body.postal_code || "");
+
+    // items puede venir como número o como array
+    let qty = 1;
+    if (Array.isArray(body.items)) {
+      qty = body.items.reduce(
+        (acc, item) => acc + normalizeQty(item.quantity || item.qty || 1),
+        0
+      );
+    } else {
+      qty = normalizeQty(body.items || body.qty || 1);
     }
 
-    const postalCode = normalizeZip(zip);
-    const country = normalizeCountry(mode);
+    if (!zip || zip.length < 4) {
+      const cost = country === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+      return jsonResponse(200, {
+        ok: true,
+        cost,
+        label: country === "US" ? "Envío USA (Estimado)" : "Envío Nacional (Estimado)",
+        source: "fallback_no_zip",
+      });
+    }
 
-    if (!postalCode) return fail(400, "Código postal requerido");
+    const quote = await getEnviaQuote(zip, qty, country);
 
-    // Construir paquetes para Envia (simplificado a peso volumétrico estandar si no hay specs detalladas)
-    // Asumimos un peso promedio de 0.5kg por item para asegurar cotización si falta data en BD
-    const packages = items.map(item => ({
-      content: "Ropa deportiva",
-      amount: item.qty,
-      type: "box",
-      dimensions: { length: 30, width: 20, height: 10 },
-      weight: 1 // 1kg minimo para asegurar tarifa
-    }));
+    if (quote?.mxn) {
+      const daysTxt = quote.days ? ` · ${quote.days} días` : "";
+      return jsonResponse(200, {
+        ok: true,
+        cost: Number(quote.mxn || 0),
+        label: `Envío (${quote.carrier || "Envia"})${daysTxt}`,
+        source: "envia",
+      });
+    }
 
-    const rates = await enviaQuote({
-      origin: {
-        name: "Unico Uniformes",
-        company: "Bajatex",
-        email: "ventas.unicotexti@gmail.com",
-        phone: "6642368701",
-        street: "Palermo",
-        number: "6106",
-        district: "Anexa Roma",
-        city: "Tijuana",
-        state: "BC",
-        country: "MX",
-        postalCode: "22614"
-      },
-      destination: {
-        country: country,
-        postalCode: postalCode
-      },
-      packages: packages,
-      shipment: { carrier: "fedex", type: "package" } // Forzar FedEx como preferencia
+    const cost = country === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
+    return jsonResponse(200, {
+      ok: true,
+      cost,
+      label: country === "US" ? "Envío USA (Estimado)" : "Envío Nacional (Estimado)",
+      source: "fallback",
     });
-
-    if (!rates || rates.length === 0) throw new Error("No hay cobertura para este CP");
-
-    // Tomar la opción más económica
-    const bestRate = rates.sort((a, b) => a.totalAmount - b.totalAmount)[0];
-
-    return ok({
-      amount: bestRate.totalAmount,
-      carrier: bestRate.carrier,
-      eta: bestRate.deliveryEstimate || "3-7 días"
+  } catch (err) {
+    console.error("[quote_shipping] error:", err);
+    return jsonResponse(200, {
+      ok: true,
+      cost: FALLBACK_MX_PRICE,
+      label: "Envío (Estimado)",
+      source: "error_fallback",
     });
-
-  } catch (e) {
-    console.error(e);
-    return fail(500, "No se pudo cotizar el envío. Verifica tu CP.");
   }
-}
+};
