@@ -1,277 +1,232 @@
 /* =========================================================
-   SCORE STORE — STYLES (PROD 2026 - HIGH CONTRAST)
+   SCORE STORE — STYLES (PROD 2026 - WHITE THEME)
    ========================================================= */
 
 :root {
   --bg: #ffffff;
-  --ink: #000000; /* Negro puro para contraste */
-  --ink-soft: #222222;
-  --accent: #E10600; /* Rojo SCORE */
-  --border: #000000; /* Bordes duros */
+  --text-main: #0a0a0a;  /* Negro profundo */
+  --text-soft: #444444;
+  --accent: #E10600;     /* Rojo Score */
+  --accent-dark: #b30000;
   
-  --radius: 8px; /* Menos redondeado, más rudo */
-  --shadow-hard: 5px 5px 0px var(--accent); /* Sombra dura estilo racing */
+  /* Glass Dark (Menús) */
+  --glass-bg: rgba(20, 20, 20, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  
+  --shadow-card: 0 10px 25px rgba(0,0,0,0.08);
+  --shadow-float: 0 20px 40px rgba(0,0,0,0.22);
+  --radius: 14px;
   --max: 1180px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+
 body {
   margin: 0; padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-  color: var(--ink);
-  background: var(--bg); /* Fondo Blanco solicitado */
-  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-main);
+  background: #ffffff; /* Fondo base blanco */
+  /* Si la imagen es muy clara, esto asegura contraste */
+  background-image: url("/assets/fondo-pagina-score.webp");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
-input, select { font-family: inherit; }
-
-/* Focus visible */
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+input, select { font-family: inherit; color: var(--text-main); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
 /* LAYOUT */
 .container { max-width: var(--max); margin: 0 auto; padding: 0 18px; }
 .section { padding: 80px 0; position: relative; }
-.section.alt { background: #f4f4f4; border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); }
 
 /* =========================================================
-   INTRO (FIX ANTI-ATORO)
+   INTRO (Negro solido para cubrir todo)
    ========================================================= */
 .intro {
   position: fixed; inset: 0; z-index: 9999;
   display: grid; place-items: center; padding: 18px;
-  background: #000; /* Fondo negro para intro impactante */
-  
-  /* CSS KILL SWITCH: Si JS falla, esto lo oculta a los 3.5s */
-  animation: introFadeOut 0.5s ease-out 3.5s forwards;
-  pointer-events: auto;
+  background: #000; /* Fondo negro sólido para tapar */
+  transition: opacity 0.5s ease, visibility 0.5s;
 }
-@keyframes introFadeOut {
-  to { opacity: 0; visibility: hidden; pointer-events: none; }
-}
-
 .introCenter{
-  position:relative; width: min(300px, 90vw);
-  text-align: center; color: #fff;
+  width: min(500px, 90vw); text-align: center; color: #fff;
 }
-.introLogo{ width: 120px; margin: 0 auto 20px; }
+.introLogo{ width: 80px; margin: 0 auto 20px; filter: drop-shadow(0 0 10px rgba(225,6,0,0.5)); }
 .introBar{
-  width: 100%; height: 4px; background: #333;
-  margin-top: 20px; overflow: hidden;
+  width: 200px; height: 4px; background: #333; margin: 20px auto; border-radius: 99px; overflow: hidden;
 }
 .introBarFill{
-  height: 100%; background: var(--accent); width: 0%;
-  animation: loadFill 2.5s ease-in-out forwards;
+  width: 50%; height: 100%; background: var(--accent);
+  animation: load 1s infinite alternate;
 }
-@keyframes loadFill { to { width: 100%; } }
-
-.introSkip{
-  margin-top: 20px; color: #666; font-size: 12px; font-weight: 700;
-  border: 1px solid #333; padding: 8px 16px; border-radius: 99px;
-  transition: 0.2s;
-}
-.introSkip:hover{ color: #fff; border-color: #fff; }
+@keyframes load { from{transform: translateX(-100%)} to{transform: translateX(200%)} }
 
 /* =========================================================
    HEADER
    ========================================================= */
 .topbar {
   position: sticky; top: 0; z-index: 50;
-  background: #fff; border-bottom: 3px solid var(--border);
+  background: rgba(255,255,255,0.95); /* Blanco translúcido */
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 .topInner { display: flex; align-items: center; justify-content: space-between; height: 70px; }
-.brandLogoBig { width: 60px; height: auto; }
-
+.brandLogoBig { width: 55px; height: auto; }
 .nav { display: flex; gap: 24px; }
 .nav a { 
-  font-size: 14px; font-weight: 900; letter-spacing:.05em; text-transform: uppercase;
-  color: var(--ink); transition: color 0.2s;
+  font-size: 13px; font-weight: 800; color: var(--text-main); 
+  opacity: 0.7; transition: 0.2s; letter-spacing: 0.5px;
 }
-.nav a:hover { color: var(--accent); text-decoration: underline; text-decoration-thickness: 3px; }
-
-.cartBtn { 
-  font-size: 20px; padding: 8px; position: relative; 
-  color: var(--ink);
-}
+.nav a:hover { opacity: 1; color: var(--accent); }
+.cartBtn { font-size: 18px; padding: 8px; color: var(--text-main); }
 .cartCount {
-  position: absolute; top: -2px; right: -5px;
+  position: absolute; top: 0; right: 0;
   background: var(--accent); color: #fff;
-  font-size: 11px; font-weight: 900;
-  width: 20px; height: 20px; border-radius: 50%;
+  font-size: 10px; font-weight: 900;
+  width: 18px; height: 18px; border-radius: 50%;
   display: grid; place-items: center;
-  border: 2px solid #fff;
+  border: 2px solid #fff; transform: translate(25%, -25%);
 }
 
 /* =========================================================
-   HERO (Estilo Racing)
+   HERO (Ajustado para fondo claro)
    ========================================================= */
-.hero { 
-  min-height: 85vh; display: flex; align-items: center; 
-  background: #000; color: #fff; position: relative; overflow: hidden;
+.hero { min-height: 85vh; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; }
+.heroOverlayDark {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.9) 100%);
+  z-index: 1;
 }
-.heroBgImg { 
-  position: absolute; inset: 0; width: 100%; height: 100%; 
-  object-fit: cover; opacity: 0.6; 
-}
-.heroInner { position: relative; z-index: 2; text-align: center; padding-top: 60px; }
+.heroInner { position: relative; z-index: 2; padding-top: 60px; width: 100%; }
 
 .heroBadge {
-  background: var(--accent); color: #fff; padding: 6px 12px;
-  display: inline-block; font-weight: 900; font-size: 12px;
-  letter-spacing: 2px; margin-bottom: 20px;
-  box-shadow: 4px 4px 0px #fff; transform: skew(-10deg);
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 16px; background: #000; color: #fff;
+  border-radius: 99px; margin-bottom: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
 }
+.heroBadge span { font-weight: 800; font-size: 11px; letter-spacing: 1px; }
 
+/* Texto Hero Oscuro para contrastar con blanco */
 .heroInner h1 {
-  font-size: clamp(40px, 8vw, 80px); font-weight: 900; margin: 0;
-  line-height: 0.9; text-transform: uppercase; font-style: italic;
-  text-shadow: 4px 4px 0px var(--accent);
+  margin: 10px 0; font-size: clamp(32px, 6vw, 56px);
+  font-weight: 900; color: var(--text-main); line-height: 1;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.8);
 }
 .heroInner p {
-  font-size: 18px; font-weight: 600; max-width: 600px; margin: 20px auto;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  color: var(--text-soft); font-weight: 600; max-width: 600px; margin: 0 auto 24px;
+  font-size: 16px;
 }
-.heroCtas { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+.accent { color: var(--accent); }
 
-/* =========================================================
-   BUTTONS (Estilo Duro)
-   ========================================================= */
+/* Botones no lisos (Gradientes y Sombras) */
 .btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 14px 28px; font-weight: 900; font-size: 14px;
-  text-transform: uppercase; letter-spacing: 1px;
-  transition: transform 0.1s, box-shadow 0.1s;
-  cursor: pointer;
-  border: 2px solid var(--border);
+  display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px;
+  border-radius: 12px; font-weight: 900; font-size: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-
 .btn.primary {
-  background: var(--accent); color: #fff; border-color: var(--accent);
-  box-shadow: 4px 4px 0px var(--ink);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(225, 6, 0, 0.35);
+  border: 1px solid rgba(255,255,255,0.2);
 }
-.btn.primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--ink); }
-.btn.primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--ink); }
+.btn.primary:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(225, 6, 0, 0.45); }
 
 .btn.ghost {
-  background: #fff; color: var(--ink);
-  box-shadow: 4px 4px 0px var(--border);
+  background: #fff; color: var(--text-main);
+  border: 1px solid #ddd;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
-.btn.ghost:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--border); }
+.btn.ghost:hover { background: #f9f9f9; border-color: #bbb; }
+
+.heroLogos {
+  margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;
+  filter: grayscale(100%) opacity(0.7);
+}
 
 /* =========================================================
-   CATALOGO & CARDS (Estilo "No Liso")
+   CATALOGO & CARDS
    ========================================================= */
-.sectionHead h2 { 
-  font-size: 32px; font-weight: 900; text-transform: uppercase; 
-  border-bottom: 4px solid var(--accent); display: inline-block;
-  font-style: italic;
-}
-
-.filters { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 30px; }
+.sectionHead h2 { font-size: 28px; font-weight: 900; margin-bottom: 8px; color: var(--text-main); }
+.filters { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; justify-content: flex-start; }
 .chip {
-  background: #fff; border: 2px solid var(--border);
-  padding: 8px 16px; font-weight: 800; text-transform: uppercase;
-  font-size: 12px; cursor: pointer;
-  box-shadow: 3px 3px 0px #ccc;
-  transition: 0.2s;
+  padding: 8px 18px; border-radius: 99px; background: #fff;
+  border: 1px solid #eee; color: var(--text-soft); font-weight: 700; font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s;
 }
 .chip.active {
-  background: var(--ink); color: #fff; border-color: var(--ink);
-  box-shadow: 3px 3px 0px var(--accent); transform: translate(-1px, -1px);
+  background: #000; color: #fff; border-color: #000;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
 
 .card {
-  background: #fff;
-  border: 2px solid var(--border);
-  box-shadow: var(--shadow-hard); /* SOMBRA DURA ROJA */
+  background: #fff; border-radius: 18px; overflow: hidden;
+  border: 1px solid #f0f0f0;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex; flex-direction: column;
-  transition: transform 0.2s;
 }
-.card:hover { transform: translateY(-5px); }
+.card:hover { transform: translateY(-6px); box-shadow: var(--shadow-float); }
 
-.cardMedia {
-  position: relative; width: 100%; aspect-ratio: 1;
-  background: #f4f4f4; border-bottom: 2px solid var(--border);
-  overflow: hidden;
-}
-
-/* Carrusel interno */
+.cardMedia { position: relative; width: 100%; aspect-ratio: 1; background: #f8f8f8; }
 .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; width: 100%; height: 100%; scrollbar-width: none; }
 .carousel::-webkit-scrollbar { display: none; }
 .carousel-item { flex: 0 0 100%; width: 100%; scroll-snap-align: start; }
 .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
-.carousel-dots { position: absolute; bottom: 10px; left: 0; width: 100%; display: flex; justify-content: center; gap: 6px; }
-.dot { width: 8px; height: 8px; background: rgba(0,0,0,0.5); border: 1px solid #fff; }
-.dot.active { background: var(--accent); border-color: var(--accent); }
 
-.cardBody { padding: 15px; flex: 1; display: flex; flex-direction: column; }
-.cardTitle { font-weight: 800; font-size: 15px; margin-bottom: 5px; text-transform: uppercase; line-height: 1.2; }
-.cardPrice { color: var(--accent); font-weight: 900; font-size: 18px; margin-bottom: 10px; }
+.carousel-dots {
+  position: absolute; bottom: 12px; width: 100%; display: flex; justify-content: center; gap: 6px;
+}
+.dot { width: 6px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 50%; transition: 0.3s; }
+.dot.active { background: var(--accent); transform: scale(1.3); }
 
-.cardControls { margin-top: auto; display: flex; gap: 10px; }
-.cardControls select { 
-  flex: 1; border: 2px solid var(--border); padding: 8px; font-weight: 700;
-  background: #f9f9f9; border-radius: 0; 
+.cardBody { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.cardTitle { font-weight: 800; font-size: 14px; color: var(--text-main); margin-bottom: 4px; line-height: 1.3; }
+.cardPrice { font-weight: 900; color: var(--accent); font-size: 15px; margin-bottom: 12px; }
+
+.cardControls { display: flex; gap: 8px; margin-top: auto; }
+.cardControls select {
+  flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd;
+  background: #f9f9f9; font-weight: 700; font-size: 12px;
 }
 .cardControls button {
-  background: var(--ink); color: #fff; width: 40px; 
-  display: grid; place-items: center; border: 2px solid var(--border);
+  width: 42px; height: 38px; background: #000; color: #fff;
+  border-radius: 10px; display: grid; place-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-.cardControls button:hover { background: var(--accent); border-color: var(--accent); }
+.cardControls button:hover { background: var(--accent); }
 
 /* =========================================================
-   SHIPPING & FOOTER
+   DRAWER (GLASS DARK) & FOOTER
    ========================================================= */
-.shippingBox {
-  background: #fff; border: 2px solid var(--border); box-shadow: var(--shadow-hard);
-  padding: 30px; max-width: 450px; margin: 0 auto;
+.drawerGlass {
+  background: var(--glass-bg); backdrop-filter: blur(16px);
+  border-left: 1px solid var(--glass-border); color: #fff;
 }
-.shipRow label { display: block; font-weight: 800; margin-bottom: 5px; font-size: 13px; text-transform: uppercase; }
-.shipRow input, .shipRow select { 
-  width: 100%; padding: 10px; border: 2px solid #ccc; 
-  font-weight: 700; margin-bottom: 15px;
-}
-.shipRow input:focus { border-color: var(--accent); outline: none; }
+.drawerHead { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 20px; }
+.cartRow { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); }
 
-.footerMini {
-  background: var(--ink); color: #fff; padding: 40px 0;
-  margin-top: 60px; border-top: 4px solid var(--accent);
+/* Footer con detalle negro */
+.footerMini { margin-top: 60px; padding: 40px 0; background: #000; color: #fff; border-radius: 24px 24px 0 0; }
+.footerMiniInner { 
+  background: transparent; box-shadow: none; border: none; color: #fff;
 }
-.footerMiniInner {
-  display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center;
-}
-.fMiniLinks button {
-  color: #aaa; font-size: 12px; font-weight: 700; text-transform: uppercase; margin: 0 10px;
-}
-.fMiniLinks button:hover { color: #fff; text-decoration: underline; }
+.fMiniTitle { font-size: 18px; margin-bottom: 4px; }
+.fMiniSub { opacity: 0.5; font-size: 12px; }
+.fLink { background: rgba(255,255,255,0.15); color: #fff; }
+.fLink:hover { background: #fff; color: #000; }
 
-/* =========================================================
-   DRAWER (Carrito)
-   ========================================================= */
-.drawer {
-  background: #fff; border-left: 3px solid var(--border);
-  width: 100%; max-width: 400px;
-}
-.drawerHead { background: var(--ink); color: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-.drawerClose { color: #fff; font-size: 24px; font-weight: 900; }
-.cartRow { 
-  border-bottom: 1px solid #eee; padding: 15px 0; display: flex; gap: 15px; 
-}
-.cartThumb { width: 60px; height: 60px; border: 1px solid #ddd; }
-.cartThumb img { width: 100%; height: 100%; object-fit: cover; }
-.qtyBtn { 
-  width: 25px; height: 25px; background: #eee; border: 1px solid #ccc; font-weight: 900; 
-}
-
-/* Responsive */
-@media (max-width: 768px){
-  .heroInner h1 { font-size: 42px; }
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-  .cardBody { padding: 10px; }
-  .cardPrice { font-size: 15px; }
+/* AI Button */
+.ai-btn-float {
+  background: linear-gradient(135deg, #000 0%, #222 100%);
+  border: 2px solid var(--accent);
 }
