@@ -1514,3 +1514,200 @@ body.theme-dark .cardControls button:hover i{ color:#fff; }
 .cookieBtn.ghost{ border:1px solid #555; color:#aaa; background:transparent; }
 
 /* =========================================================
+   19) FOOTERS (FULL + MINI) + PARTNERS
+   ========================================================= */
+
+/* MINI FOOTER (white pages) */
+.footerMini{ margin-top:40px; padding-bottom:20px; }
+.footerMiniInner{
+  background:rgba(0,0,0,.92);
+  color:#fff;
+  backdrop-filter:blur(10px);
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 18px 60px rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.10);
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  align-items:center;
+  text-align:center;
+}
+.fMiniTitle{ font-weight:900; letter-spacing:.5px; font-size:14px; }
+.fMiniSub{ font-size:11px; opacity:.65; margin-top:4px; font-weight:800; }
+.fMiniLinks{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.fLink{
+  font-size:11px;
+  font-weight:900;
+  padding:6px 12px;
+  background:rgba(255,255,255,.10);
+  border-radius:99px;
+  color:#fff;
+}
+.fLink:hover{ background:#fff; color:#000; }
+
+.social-center{ display:flex; gap:10px; justify-content:center; align-items:center; }
+.fSocial{
+  width:32px;height:32px;
+  background:var(--accent);
+  color:#fff;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:14px;
+}
+
+/* FULL FOOTER (PDF legacy) */
+.footer{
+  margin-top:40px;
+  padding:28px 0 14px;
+  background:rgba(0,0,0,.92);
+  color:#fff;
+}
+.footerInner{
+  display:flex;
+  gap:18px;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.fCol{ min-width:220px; }
+.footerBrandName{
+  font-family:var(--font-title);
+  font-weight:900;
+  letter-spacing:.06em;
+  font-size:42px;
+  line-height:1;
+  margin-bottom:10px;
+}
+.footerDesc{
+  color:rgba(255,255,255,.70);
+  font-size:14px;
+  line-height:1.6;
+  max-width:320px;
+}
+.fCol h4{
+  color:#fff;
+  margin-bottom:12px;
+  font-family:var(--font-title);
+  font-size:24px;
+  letter-spacing:1px;
+}
+.f-links a{
+  display:inline-block;
+  margin-top:8px;
+  font-weight:900;
+  font-size:12px;
+  opacity:.80;
+}
+.f-links a:hover{ opacity:1; color:var(--accent); transform:translateX(2px); }
+
+.copy{
+  text-align:center;
+  opacity:.7;
+  font-size:11px;
+  font-weight:800;
+  padding-top:14px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  border-top:1px solid rgba(255,255,255,.08);
+  margin-top:18px;
+}
+
+/* Partners */
+.partners{
+  padding:30px 0 10px;
+  text-align:center;
+}
+.partners h3{
+  margin:0 0 14px;
+  font-weight:900;
+  letter-spacing:.08em;
+  font-size:12px;
+  opacity:.75;
+}
+.partnersGrid{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex-wrap:wrap;
+  align-items:center;
+  opacity:.78;
+  filter:grayscale(1);
+  transition:.25s;
+}
+.partnersGrid:hover{ opacity:1; filter:grayscale(0); }
+.pLogo{
+  height:34px;
+  width:auto;
+  opacity:.85;
+}
+.pLogo:hover{ opacity:1; }
+
+/* =========================================================
+   20) SCROLL REVEAL (COMPAT: JS .js-active + .visible)
+   ========================================================= */
+.scroll-reveal{
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .8s ease-out, transform .8s ease-out;
+}
+.scroll-reveal.js-active{ opacity:0; transform:translateY(30px); }
+.scroll-reveal.visible{ opacity:1; transform:translateY(0); }
+
+/* =========================================================
+   21) ACCESSIBILITY / SMALL UTILITIES
+   ========================================================= */
+.hr{
+  height:1px;
+  width:100%;
+  background:rgba(0,0,0,.08);
+}
+body.theme-dark .hr{ background:rgba(255,255,255,.10); }
+
+/* smooth buttons for touch */
+button, .btn{ touch-action:manipulation; }
+
+/* prevent iOS zoom on inputs */
+input, select, textarea{ font-size:16px; }
+
+/* =========================================================
+   22) RESPONSIVE
+   ========================================================= */
+@media (max-width: 860px){
+  .section{ padding:64px 0; }
+  .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+  .topInner, .topbarInner{ height:64px; }
+  body.theme-dark .topbar{ height:74px; }
+}
+
+@media (max-width: 520px){
+  .container{ padding:0 14px; }
+  .brandLogoBig{ height:42px; width:auto; }
+  .nav{ gap:10px; }
+  .drawer, .drawerGlass{ max-width:100%; }
+  .cat-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .champItem{ min-height:190px; }
+  .promo-bar{ font-size:11px; }
+}
+
+/* =========================================================
+   23) SAFE FALLBACKS (si existen clases alternas)
+   ========================================================= */
+
+/* Si tu modal catálogo usa full-screen (dark racing old) */
+.modal-catalog.fullscreen{
+  inset:0;
+  left:0; top:0;
+  transform:none;
+  width:100%;
+  max-height:100%;
+  border-radius:0;
+}
+
+/* Si tu overlay principal usa .active en vez de .show */
+.backdrop.active{ opacity:1; pointer-events:auto; }
+
+/* =========================================================
+   END — SCORE STORE MASTER STYLES v2026 (PROD · UNIFIED 360)
+   ========================================================= */
