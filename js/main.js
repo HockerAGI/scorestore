@@ -1,9 +1,14 @@
 /* =========================================================
    SCORE STORE — MAIN LOGIC (2026_PROD_UNIFIED)
+   - Catálogo desde /data/catalog.json
+   - Carrusel tipo Facebook por producto (scroll-snap + dots)
+   - Carrito + cotización real /api/quote (Netlify Function)
+   - Checkout /api/checkout (Stripe Session)
    ========================================================= */
 
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => document.querySelectorAll(q);
+
 const fmtMXN = (n) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
     Number(n || 0)
@@ -18,8 +23,9 @@ const state = {
   filter: "ALL",
 };
 
-// ... (LEGAL_CONTENT y AUDIO igual que antes, omitido por brevedad, no afecta lógica) ...
-// AUDIO
+// --------------------
+// AUDIO (simple, safe)
+// --------------------
 let __audioCtx = null;
 const getAudioCtx = () => {
   if (__audioCtx) return __audioCtx;
@@ -28,11 +34,12 @@ const getAudioCtx = () => {
   __audioCtx = new Ctx();
   return __audioCtx;
 };
+
 const playSound = (type) => {
   const ctx = getAudioCtx();
   if (!ctx || ctx.state === "closed") return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  
+
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
   osc.connect(g);
@@ -41,17 +48,22 @@ const playSound = (type) => {
   g.gain.setValueAtTime(0.0001, now);
 
   if (type === "pop") {
-    osc.type = "sine"; osc.frequency.setValueAtTime(800, now);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, now);
     g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-    osc.start(now); osc.stop(now + 0.13);
+    osc.start(now);
+    osc.stop(now + 0.13);
   }
+
   if (type === "success") {
-    osc.type = "triangle"; osc.frequency.setValueAtTime(450, now);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(450, now);
     osc.frequency.linearRampToValueAtTime(720, now + 0.18);
     g.gain.exponentialRampToValueAtTime(0.10, now + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-    osc.start(now); osc.stop(now + 0.29);
+    osc.start(now);
+    osc.stop(now + 0.29);
   }
 };
 
@@ -70,16 +82,18 @@ const modeToCountry = (mode) => (String(mode || "mx").toLowerCase() === "us" ? "
 const cartItemsForQuote = () => (state.cart || []).map((i) => ({ qty: normalizeQty(i.qty) }));
 
 // --------------------
-// CATALOGO + CAROUSEL LOGIC
+// CATALOGO + CAROUSEL
 // --------------------
 async function loadCatalog() {
   try {
     const r = await fetch("/data/catalog.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("CATALOG_HTTP_" + r.status);
     const data = await r.json();
     state.products = data.products || [];
     renderGrid(getFilteredProducts());
   } catch (e) {
-    $("#productsGrid").innerHTML = "<p>Error cargando catálogo.</p>";
+    const g = $("#productsGrid");
+    if (g) g.innerHTML = "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>Error cargando catálogo.</p>";
     console.error(e);
   }
 }
@@ -91,49 +105,57 @@ function getFilteredProducts() {
   );
 }
 
+function safeId(str) {
+  return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 function renderGrid(list) {
   const grid = $("#productsGrid");
   if (!grid) return;
   grid.innerHTML = "";
 
   if (!list || list.length === 0) {
-    grid.innerHTML = "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>No hay productos disponibles.</p>";
+    grid.innerHTML =
+      "<p style='grid-column:1/-1;text-align:center;opacity:0.6'>No hay productos disponibles.</p>";
     return;
   }
 
   list.forEach((p) => {
+    const pid = safeId(p.id);
     const card = document.createElement("div");
     card.className = "card";
 
-    // CAROUSEL LOGIC
-    let mediaHtml = "";
-    // Usar p.images si existe y tiene más de 1, si no, usar array de p.img
+    // imágenes: usa p.images si existe; si no, p.img
     const images = (p.images && p.images.length > 0) ? p.images : [p.img];
-    
+
+    let mediaHtml = "";
     if (images.length > 1) {
-      // Múltiples imágenes: Slider con scroll snap
-      const slides = images.map(src => 
-        `<div class="carousel-item"><img src="${src}" loading="lazy" alt="${p.name}" width="300" height="300"></div>`
-      ).join("");
-      
-      const dots = images.map((_, i) => 
-        `<div class="dot ${i === 0 ? 'active' : ''}" data-idx="${i}"></div>`
-      ).join("");
+      const slides = images
+        .map(
+          (src) =>
+            `<div class="carousel-item"><img src="${src}" loading="lazy" alt="${p.name}" width="420" height="420"></div>`
+        )
+        .join("");
+
+      const dots = images
+        .map(
+          (_, i) => `<div class="dot ${i === 0 ? "active" : ""}" data-idx="${i}"></div>`
+        )
+        .join("");
 
       mediaHtml = `
-        <div class="cardMedia" id="media-${p.id}">
-          <div class="carousel" onscroll="updateDots(this, '${p.id}')">
+        <div class="cardMedia" id="media-${pid}">
+          <div class="carousel" data-pid="${pid}">
             ${slides}
           </div>
-          <div class="carousel-dots" id="dots-${p.id}">
+          <div class="carousel-dots" id="dots-${pid}">
             ${dots}
           </div>
         </div>`;
     } else {
-      // Imagen única
       mediaHtml = `
         <div class="cardMedia">
-          <img src="${images[0]}" loading="lazy" alt="${p.name}" width="300" height="300" style="object-fit:cover;width:100%;height:100%">
+          <img src="${images[0]}" loading="lazy" alt="${p.name}" width="420" height="420" style="object-fit:cover;width:100%;height:100%">
         </div>`;
     }
 
@@ -141,67 +163,76 @@ function renderGrid(list) {
       ${mediaHtml}
       <div class="cardBody">
         <div>
-            <div class="cardTitle">${p.name}</div>
-            <div class="cardPrice">${fmtMXN(p.baseMXN)}</div>
+          <div class="cardTitle">${p.name}</div>
+          <div class="cardPrice">${fmtMXN(p.baseMXN)}</div>
         </div>
         <div class="cardControls">
-          <label for="size-${p.id}" class="sr-only">Talla</label>
-          <select id="size-${p.id}">
+          <label for="size-${pid}" class="sr-only">Talla</label>
+          <select id="size-${pid}">
             ${(p.sizes || ["Unitalla"]).map((s) => `<option value="${s}">${s}</option>`).join("")}
           </select>
-          <button type="button" onclick="addToCart('${p.id}')" aria-label="Agregar">
+          <button type="button" data-add="${pid}" aria-label="Agregar">
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>
       </div>`;
+
     grid.appendChild(card);
+
+    // Bind button
+    const btn = card.querySelector(`[data-add="${pid}"]`);
+    if (btn) btn.addEventListener("click", () => addToCart(p.id));
+
+    // Bind carousel dots update (scroll)
+    const car = card.querySelector(".carousel");
+    if (car) {
+      car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
+    }
   });
 }
 
-// Función global para actualizar los puntitos al hacer scroll
-window.updateDots = (carousel, id) => {
-  const width = carousel.offsetWidth;
-  const scrollLeft = carousel.scrollLeft;
-  const idx = Math.round(scrollLeft / width);
-  
-  const dotsContainer = document.getElementById(`dots-${id}`);
-  if(dotsContainer) {
-    const dots = dotsContainer.querySelectorAll('.dot');
-    dots.forEach((d, i) => {
-      if(i === idx) d.classList.add('active');
-      else d.classList.remove('active');
-    });
-  }
-};
+// Actualiza dots por scroll
+function updateDots(carousel, pid) {
+  const width = carousel.getBoundingClientRect().width || carousel.clientWidth || 1;
+  const idx = Math.round((carousel.scrollLeft || 0) / width);
+  const dotsContainer = document.getElementById(`dots-${pid}`);
+  if (!dotsContainer) return;
+  const dots = dotsContainer.querySelectorAll(".dot");
+  dots.forEach((d, i) => (i === idx ? d.classList.add("active") : d.classList.remove("active")));
+}
 
 // --------------------
-// CART & SHIPPING
+// CART
 // --------------------
-window.addToCart = (id) => {
+function addToCart(id) {
   const p = state.products.find((x) => x.id === id);
   if (!p) return toast("Producto no disponible");
 
-  const sizeEl = $(`#size-${id}`);
+  const pid = safeId(id);
+  const sizeEl = $(`#size-${pid}`);
   const size = sizeEl ? sizeEl.value : "Unitalla";
   const key = `${id}-${size}`;
+
   const ex = state.cart.find((i) => i.key === key);
-  
-  if (ex) ex.qty++;
+  if (ex) ex.qty = normalizeQty(ex.qty + 1);
   else state.cart.push({ key, id: p.id, name: p.name, price: p.baseMXN, img: p.img, size, qty: 1 });
 
   openCart();
-  toast("Agregado al equipo");
-};
+  toast("Agregado al carrito");
+}
 
 function saveCart() {
   localStorage.setItem("score_cart_v5", JSON.stringify(state.cart));
+
   const cnt = state.cart.reduce((a, b) => a + normalizeQty(b.qty), 0);
-  $("#cartCount").textContent = cnt;
+  const cartCount = $("#cartCount");
+  if (cartCount) cartCount.textContent = cnt;
 
   const box = $("#cartItems");
   if (!box) return;
+
   box.innerHTML = "";
-  
+
   let sub = 0;
   state.cart.forEach((i, idx) => {
     sub += Number(i.price) * normalizeQty(i.qty);
@@ -212,56 +243,96 @@ function saveCart() {
           <div class="name">${i.name}</div>
           <div class="price">${i.size} | ${fmtMXN(i.price)}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <button class="qtyBtn" onclick="modQty(${idx},-1)">-</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="qtyBtn" type="button" aria-label="Menos" data-mod="${idx}" data-d="-1">-</button>
           <span style="font-weight:900;font-size:13px">${normalizeQty(i.qty)}</span>
-          <button class="qtyBtn" onclick="modQty(${idx},1)">+</button>
+          <button class="qtyBtn" type="button" aria-label="Más" data-mod="${idx}" data-d="1">+</button>
         </div>
       </div>`;
   });
 
-  const ship = Number(state.shipping.quote || 0);
-  $("#cartSubtotal").textContent = fmtMXN(sub);
-  
-  const shipEl = $("#cartShipping");
-  if (state.shipping.mode === "pickup") shipEl.textContent = "Gratis";
-  else if (ship > 0) shipEl.textContent = fmtMXN(ship);
-  else shipEl.textContent = "Pendiente";
+  // bind qty buttons
+  box.querySelectorAll("[data-mod]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const i = Number(b.getAttribute("data-mod"));
+      const d = Number(b.getAttribute("data-d"));
+      modQty(i, d);
+    });
+  });
 
-  $("#cartTotal").textContent = fmtMXN(sub + ship);
-  $("#miniShipLabel").textContent = state.shipping.label || "";
+  const ship = Number(state.shipping.quote || 0);
+  const subEl = $("#cartSubtotal");
+  const shipEl = $("#cartShipping");
+  const totEl = $("#cartTotal");
+  const miniLabel = $("#miniShipLabel");
+
+  if (subEl) subEl.textContent = fmtMXN(sub);
+
+  if (shipEl) {
+    if (state.shipping.mode === "pickup") shipEl.textContent = "Gratis";
+    else if (ship > 0) shipEl.textContent = fmtMXN(ship);
+    else shipEl.textContent = "Pendiente";
+  }
+
+  if (totEl) totEl.textContent = fmtMXN(sub + ship);
+  if (miniLabel) miniLabel.textContent = state.shipping.label || "";
 }
 
-window.modQty = (i, d) => {
+function modQty(i, d) {
   if (!state.cart[i]) return;
-  state.cart[i].qty += d;
+  state.cart[i].qty = normalizeQty(state.cart[i].qty + d);
   if (state.cart[i].qty <= 0) state.cart.splice(i, 1);
-  
+
+  // si no es pickup, obligamos a recotizar
   if (state.shipping.mode !== "pickup") {
     state.shipping.quote = 0;
     state.shipping.label = "Cotiza de nuevo";
   }
   saveCart();
-};
+}
 
-window.openCart = () => { $("#cartDrawer")?.classList.add("open"); $("#backdrop")?.classList.add("show"); saveCart(); };
-window.closeCart = () => { $("#cartDrawer")?.classList.remove("open"); $("#backdrop")?.classList.remove("show"); };
+function openCart() {
+  $("#cartDrawer")?.classList.add("open");
+  $("#backdrop")?.classList.add("show");
+  saveCart();
+}
+function closeCart() {
+  $("#cartDrawer")?.classList.remove("open");
+  $("#backdrop")?.classList.remove("show");
+}
 
-// SHIPPING LOGIC
+window.openCart = openCart;
+window.closeCart = closeCart;
+
+// --------------------
+// SHIPPING
+// --------------------
 $("#shippingMode")?.addEventListener("change", (e) => {
   const m = e.target.value;
   const miniZip = $("#miniZip");
-  
+
   if (m === "pickup") {
-    miniZip.style.display = "none";
+    if (miniZip) miniZip.style.display = "none";
     state.shipping = { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" };
   } else {
-    miniZip.style.display = "block";
-    miniZip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
+    if (miniZip) {
+      miniZip.style.display = "block";
+      miniZip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
+    }
     state.shipping = { mode: m, quote: 0, label: "Ingresa CP y cotiza" };
   }
   saveCart();
 });
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
 
 // Cotizador MINI (Carrito)
 window.quoteShippingMini = async () => {
@@ -272,25 +343,27 @@ window.quoteShippingMini = async () => {
   if (mode === "pickup") return;
   if (zip.length < 4) return toast("Ingresa un CP válido");
 
-  $("#miniShipLabel").textContent = "Cotizando...";
+  const miniLabel = $("#miniShipLabel");
+  if (miniLabel) miniLabel.textContent = "Cotizando...";
 
   try {
-    const res = await fetch("/api/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zip, country: modeToCountry(mode), items: cartItemsForQuote() }),
+    const { data } = await postJSON("/api/quote", {
+      zip,
+      country: modeToCountry(mode),
+      items: cartItemsForQuote(),
     });
-    const d = await res.json();
-    if (!d.ok) throw new Error(d.error);
 
-    state.shipping = { mode, quote: d.cost, label: d.label };
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
+
+    state.shipping = { mode, quote: Number(data.cost || 0), label: data.label || "Envío actualizado" };
     saveCart();
     toast("Envío actualizado");
     playSound("success");
   } catch (e) {
     console.error(e);
-    toast("Error al cotizar");
-    state.shipping.label = "Error. Intenta de nuevo.";
+    toast("No se pudo cotizar");
+    state.shipping.quote = 0;
+    state.shipping.label = "Error. Intenta otro CP.";
     saveCart();
   }
 };
@@ -308,28 +381,25 @@ window.quoteShippingUI = async () => {
   if (out) out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cotizando...';
 
   try {
-    // Simulamos items si el carrito está vacío para dar una idea al usuario
-    const items = cartItemsForQuote().length ? cartItemsForQuote() : [{qty:1}];
+    const items = cartItemsForQuote().length ? cartItemsForQuote() : [{ qty: 1 }];
 
-    const res = await fetch("/api/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zip, country, items }),
-    });
-    const d = await res.json();
-    if (!d.ok) throw new Error(d.error);
+    const { data } = await postJSON("/api/quote", { zip, country, items });
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
-    out.innerHTML = `<b>${d.label}</b> · ${fmtMXN(d.cost)}`;
+    if (out) out.innerHTML = `<b>${data.label}</b> · ${fmtMXN(data.cost)}`;
     playSound("success");
   } catch (e) {
     console.error(e);
-    out.textContent = "No se encontró tarifa. Intenta otro CP.";
+    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
   }
 };
 
+// --------------------
 // CHECKOUT
+// --------------------
 window.checkout = async () => {
   if (!state.cart.length) return toast("Carrito vacío");
+
   const mode = state.shipping.mode;
   const zip = digitsOnly($("#miniZip")?.value);
 
@@ -339,52 +409,54 @@ window.checkout = async () => {
   }
 
   const btn = $("#checkoutBtn");
-  btn.innerHTML = "PROCESANDO...";
+  if (btn) btn.innerHTML = "PROCESANDO...";
 
   try {
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cart: state.cart,
-        shippingMode: mode,
-        shippingData: { postal_code: zip },
-        promoCode: $("#promoCode")?.value
-      }),
+    const { data } = await postJSON("/api/checkout", {
+      cart: state.cart,
+      shippingMode: mode,
+      shippingData: { postal_code: zip },
+      promoCode: $("#promoCode")?.value || "",
     });
-    const d = await res.json();
-    if (d.url) window.location.href = d.url;
-    else throw new Error(d.error);
+
+    if (data?.url) window.location.href = data.url;
+    throw new Error(data?.error || "CHECKOUT_FAILED");
   } catch (e) {
+    console.error(e);
     toast("Error iniciando pago");
-    btn.innerHTML = "PAGAR SEGURO";
+    if (btn) btn.innerHTML = "PAGAR SEGURO";
   }
 };
 
-// ... Resto de lógica de UI (Legal, Filtros, Init) igual ...
+// --------------------
 // BOOT
+// --------------------
 document.addEventListener("DOMContentLoaded", () => {
   loadCatalog();
-  // ... resto de tu init code ...
-  
-  // Filtros
-  $$(".chip").forEach(chip => {
+
+  // filtros
+  $$(".chip").forEach((chip) => {
     chip.addEventListener("click", () => {
-      $$(".chip").forEach(c => c.classList.remove("active"));
+      $$(".chip").forEach((c) => c.classList.remove("active"));
       chip.classList.add("active");
       state.filter = chip.dataset.filter;
       renderGrid(getFilteredProducts());
     });
   });
 
-  // Init shipping visibility
+  // init shipping visibility
   const m = $("#shippingMode")?.value || "pickup";
   const mz = $("#miniZip");
-  if(mz) mz.style.display = m === "pickup" ? "none" : "block";
+  if (mz) mz.style.display = m === "pickup" ? "none" : "block";
+
+  // cart open/close
+  $("#cartBtn")?.addEventListener("click", openCart);
+  $("#backdrop")?.addEventListener("click", closeCart);
+  $("#cartClose")?.addEventListener("click", closeCart);
 
   saveCart();
-  
-  // Stripe Status
+
+  // status stripe
   const params = new URLSearchParams(location.search);
   if (params.get("status") === "success") {
     toast("Pago confirmado 🏁");
