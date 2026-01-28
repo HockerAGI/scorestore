@@ -1,42 +1,55 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ok, fail, parseJSON, env } from "./_shared.js";
+/* netlify/functions/chat.js */
+const { jsonResponse, safeJsonParse } = require("./_shared");
 
-export async function handler(event) {
-  if (event.httpMethod === "OPTIONS") return ok({});
-  if (event.httpMethod !== "POST") return fail(405, "Method Not Allowed");
+// TU API KEY REAL
+const GEMINI_API_KEY = "AIzaSyAtFIytBGuc5Dc_ZmQb54cR1d6qsPBix2Y";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// CONTEXTO SCORE STORE
+const SYSTEM_PROMPT = `
+Eres SCORE AI, experto en ventas de Score Store y Único Uniformes.
+Vendes mercancía oficial de carreras Baja 1000, 500, etc.
+Datos:
+- Envíos: Nacionales e Internacionales (FedEx/Envia.com).
+- Pagos: Stripe (Tarjeta/OXXO).
+- Tallas: Standard Fit.
+- Ubicación: Tijuana, Baja California.
+Responde corto, amable y persuasivo.
+`;
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
   try {
-    const { message } = parseJSON(event.body);
-    const key = env("GEMINI_API_KEY");
+    const body = safeJsonParse(event.body);
+    const userMsg = body.message || "";
 
-    // MODO FALLBACK INTELIGENTE (Si no hay key o falla Google)
-    if (!key) {
-      // Respuestas pre-programadas basadas en palabras clave (Surgical fix para que no de error)
-      const msg = message.toLowerCase();
-      let reply = "Soy el asistente virtual de SCORE. ¿En qué te puedo ayudar?";
-      
-      if(msg.includes("talla") || msg.includes("medida")) reply = "Nuestras tallas son estándar (Fit Regular). Si dudas entre dos, te recomiendo la más grande para mayor comodidad en el desierto.";
-      else if(msg.includes("envio") || msg.includes("tarda")) reply = "Enviamos a todo México (3-5 días) y USA (5-7 días) vía FedEx. También puedes recoger gratis en nuestra fábrica en Tijuana.";
-      else if(msg.includes("pago") || msg.includes("oxxo")) reply = "Aceptamos tarjetas Visa, Mastercard y pagos en efectivo en OXXO (solo México). Todo procesado de forma segura por Stripe.";
-      else if(msg.includes("ubicacion") || msg.includes("donde")) reply = "Estamos en Tijuana, Col. Anexa Roma. Puedes seleccionar 'Pickup' al finalizar tu compra.";
-      
-      return ok({ reply });
+    if (!userMsg) return jsonResponse(400, { error: "Empty" });
+
+    // Llamada directa a REST API de Gemini (Evita problemas de dependencias)
+    const payload = {
+      contents: [{
+        parts: [{ text: SYSTEM_PROMPT + "\nUsuario: " + userMsg + "\nAI:" }]
+      }]
+    };
+
+    const response = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    let reply = "Lo siento, hubo un error de conexión.";
+    
+    if (data.candidates && data.candidates[0].content) {
+      reply = data.candidates[0].content.parts[0].text;
     }
 
-    // MODO REAL (Si pones la KEY en _shared.js después)
-    const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const result = await model.generateContent(`
-      Eres el vendedor experto de SCORE STORE. Vendes mercancía oficial Off-Road.
-      Responde corto, amable y motivando la compra.
-      Datos clave: Envíos FedEx MX/USA, Pagos Stripe/OXXO, Fabricado por Único Uniformes Tijuana.
-      Usuario: ${message}
-    `);
-    
-    return ok({ reply: result.response.text() });
+    return jsonResponse(200, { reply });
 
-  } catch (e) {
-    return ok({ reply: "Lo siento, mi radio está fallando. Por favor contáctanos por WhatsApp para respuesta inmediata." });
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return jsonResponse(500, { error: "Internal Server Error" });
   }
-}
+};
