@@ -1,12 +1,12 @@
 {
-  "id": "/",
+  "id": "/?source=pwa",
   "name": "SCORE Store · Merch Off-Road",
   "short_name": "SCORE Store",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#FFFFFF",
   "theme_color": "#E10600",
   "description": "Merch Off-Road de edición limitada. Fabricado en Tijuana por Único Uniformes (BAJATEX).",
@@ -32,7 +32,7 @@
       "name": "Abrir Carrito",
       "short_name": "Carrito",
       "description": "Ver mi pedido",
-      "url": "/?openCart=1",
+      "url": "/?source=pwa&openCart=1",
       "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
