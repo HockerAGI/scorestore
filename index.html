@@ -26,10 +26,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FINAL" />
-
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_HEAVY_DUTY" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <script src="https://js.stripe.com/v3/" async></script>
@@ -62,13 +61,11 @@
           <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="72" height="72" />
         </a>
       </div>
-
       <nav class="nav">
         <a href="#catalogo">CATÁLOGO</a>
         <a href="#envios">ENVÍOS</a>
         <a href="#partners">PARTNERS</a>
       </nav>
-
       <button id="cartBtn" class="cartBtn" type="button" onclick="window.openDrawer()" aria-label="Abrir carrito">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cartCount" class="cartCount">0</span>
@@ -147,7 +144,6 @@
             <label for="shipZip">Código Postal</label>
             <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" autocomplete="postal-code" />
           </div>
-          
           <button class="btn primary full" type="button" onclick="window.quoteShippingUI()">COTIZAR ENVÍO</button>
           <div id="shipQuote" class="shipQuote"></div>
         </div>
@@ -175,10 +171,6 @@
           Tienda oficial operada por <strong>Único Uniformes</strong>.<br>
           Envíos a todo México y Estados Unidos.
         </p>
-        <div style="margin-top:15px; opacity:0.7;">
-            <i class="fa-brands fa-facebook" style="font-size:20px; margin-right:10px;"></i>
-            <i class="fa-brands fa-instagram" style="font-size:20px;"></i>
-        </div>
       </div>
       <div class="fCol">
         <h4>NAVEGACIÓN</h4>
@@ -190,8 +182,7 @@
       </div>
       <div class="fCol">
         <h4>CONTACTO</h4>
-        <p><i class="fa-solid fa-envelope" style="color:var(--score-red)"></i> ventas.unicotextil@gmail.com</p>
-        <p><i class="fa-brands fa-whatsapp" style="color:var(--score-red)"></i> +52 664 123 4567</p>
+        <p>ventas.unicotextil@gmail.com</p>
       </div>
     </div>
     <div class="copy">&copy; 2026 SCORE INTERNATIONAL. TODOS LOS DERECHOS RESERVADOS.</div>
@@ -218,24 +209,17 @@
           <div><span>🇺🇸 USA Shipping</span><small>Quote</small></div>
         </label>
       </div>
-      
-      <input type="text" id="miniZip" class="inputField" placeholder="Código Postal / ZIP Code" style="display:none;" inputmode="numeric">
-      
+      <input type="text" id="miniZip" class="inputField" placeholder="CP / ZIP Code" style="display:none;">
       <div class="summary-total">
         <span>TOTAL</span>
         <div style="text-align:right">
-          <div id="cartShipLabel" style="font-size:12px;color:#aaa; font-weight:400;">Pickup Gratis</div>
+          <div id="cartShipLabel" style="font-size:12px;color:#aaa">Pickup Gratis</div>
           <strong id="cartTotal">$0.00</strong>
         </div>
       </div>
-      
       <button id="checkoutBtn" class="btn primary full" type="button" onclick="window.doCheckout()">
         PAGAR AHORA <i class="fa-solid fa-lock" style="margin-left:8px;"></i>
       </button>
-      
-      <div style="text-align:center; margin-top:10px; font-size:10px; opacity:0.5;">
-        Pagos procesados de forma segura por <b>Stripe</b>.
-      </div>
     </div>
   </aside>
   <div id="pageOverlay" class="page-overlay" onclick="window.closeDrawer()"></div>
@@ -244,7 +228,7 @@
   <div id="aiChatModal" class="ai-chat-modal">
     <div class="ai-box">
       <div class="ai-header">SCORE AI ASSISTANT <button onclick="window.toggleAiAssistant()">✕</button></div>
-      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¡Hola! Soy tu asistente. ¿Dudas sobre tallas o envíos?</div></div>
+      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¡Hola! ¿Dudas sobre tallas o envíos?</div></div>
       <div class="ai-input-bar">
         <input id="aiInput" class="ai-input" placeholder="Escribe aquí..." autocomplete="off" />
         <button class="ai-send" onclick="window.sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
@@ -262,17 +246,9 @@
 
   <div id="toast" class="toast" role="status"></div>
 
-  <div id="cookieBanner" class="cookieBanner" style="display:none;"> <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
-    <div class="cookieActions">
-      <div class="cookieBtn ghost" onclick="window.acceptCookies()">Cerrar</div>
-      <div class="cookieBtn primary" onclick="window.acceptCookies()">ACEPTAR</div>
-    </div>
-  </div>
-
-  <script type="module" src="/js/main.js?v=2026_PROD_FINAL"></script>
+  <script type="module" src="/js/main.js?v=2026_PROD_HEAVY_DUTY"></script>
 
   <script>
-    // Safe Drawer
     window.openDrawer = function(){ 
       if(document.getElementById("cartDrawer")) {
         document.getElementById("cartDrawer").classList.add("open"); 
@@ -287,32 +263,13 @@
         document.body.style.overflow = "";
       }
     };
-
-    // Safe AI
     window.toggleAiAssistant = function(){ 
       var m = document.getElementById("aiChatModal");
       if(m) m.classList.toggle("show");
     };
-
-    // Safe Legal
-    window.openLegal = function(type){ 
-      var m = document.getElementById("legalModal");
-      if(m) {
-        m.classList.add("show");
-        var body = document.getElementById("legalBody");
-        if(body) body.innerHTML = "<p>Sitio operado por <b>Único Uniformes</b> (BAJATEX).</p><p>Tus datos son procesados de forma segura.</p>";
-      }
-    };
     window.closeLegal = function(){
       var m = document.getElementById("legalModal");
       if(m) m.classList.remove("show");
-    };
-
-    // Safe Cookies
-    window.acceptCookies = function(){
-      var b = document.getElementById("cookieBanner");
-      if(b) b.style.display="none";
-      localStorage.setItem("score_cookies","1");
     };
   </script>
 </body>
