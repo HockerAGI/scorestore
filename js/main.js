@@ -5,6 +5,8 @@
    ✅ Detecta imágenes existentes y omite las que no (sin romper carousel)
    ✅ NO cambia nombres de productos (respeta espacios en name)
    ✅ Soporta rutas con espacios (las encodea al cargar imágenes)
+   ✅ Envío: manda items [{id, sku, qty}] (ÚNICO OS ready)
+   ✅ PWA: /?openCart=1 abre carrito automáticamente
    ========================================================= */
 
 /* -----------------------
@@ -122,6 +124,26 @@ async function postJSON(url, payload, timeoutMs = 15000) {
     },
     timeoutMs
   );
+}
+
+/* ✅ limpia params sin romper otros (ej: source=pwa) */
+function removeQueryParams(keys = []) {
+  try {
+    const url = new URL(window.location.href);
+    let changed = false;
+
+    (keys || []).forEach((k) => {
+      if (url.searchParams.has(k)) {
+        url.searchParams.delete(k);
+        changed = true;
+      }
+    });
+
+    if (!changed) return;
+    const qs = url.searchParams.toString();
+    const next = url.pathname + (qs ? `?${qs}` : "") + url.hash;
+    history.replaceState({}, document.title, next);
+  } catch {}
 }
 
 /* -----------------------
@@ -324,6 +346,30 @@ async function loadCatalog() {
   // 3) local fallback
   state.products = normalizeProducts(getLocalCatalog());
   renderGrid(getFilteredProducts());
+}
+
+/* ✅ Backfill para carrito viejo: añade sku si no venía (para envío real) */
+function syncCartSkusFromCatalog() {
+  try {
+    if (!Array.isArray(state.cart) || !state.cart.length) return;
+    if (!Array.isArray(state.products) || !state.products.length) return;
+
+    const byId = new Map(state.products.map((p) => [String(p.id), p]));
+    let changed = false;
+
+    state.cart.forEach((it) => {
+      if (!it) return;
+      if (!it.sku) {
+        const p = byId.get(String(it.id || ""));
+        if (p?.sku) {
+          it.sku = String(p.sku);
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
+  } catch {}
 }
 
 function normalizeProducts(list) {
@@ -572,7 +618,7 @@ function addToCart(id) {
   const thumbCandidate =
     (Array.isArray(p.images) && p.images[0]) ? p.images[0] : p.img;
 
-  // thumb “seguro” (si está en cache ok)
+  // thumb “seguro”
   const thumb = urlEncodePathIfNeeded(safeUrl(thumbCandidate) || CONFIG.fallbackImg);
 
   if (ex) ex.qty = clampQty(ex.qty + 1);
@@ -580,7 +626,8 @@ function addToCart(id) {
     state.cart.push({
       key,
       id: p.id,
-      name: p.name, // ✅ respeta espacios
+      sku: p.sku || "",          // ✅ NUEVO: sku para envío real / ÚNICO OS
+      name: p.name,              // ✅ respeta espacios
       price: Number(p.baseMXN || 0),
       img: thumb || CONFIG.fallbackImg,
       size: String(size),
@@ -689,6 +736,17 @@ function closeDrawer() {
 function openCart(){ openDrawer(); }
 function closeCart(){ closeDrawer(); }
 
+/* ✅ PWA: start_url /?openCart=1 */
+function handleOpenCartQuery() {
+  try {
+    const v = String(new URLSearchParams(window.location.search).get("openCart") || "").toLowerCase();
+    if (v === "1" || v === "true" || v === "yes") {
+      openDrawer();
+      removeQueryParams(["openCart"]);
+    }
+  } catch {}
+}
+
 /* -----------------------
    13) SHIPPING
 ------------------------ */
@@ -721,10 +779,16 @@ function toggleShipping(mode) {
   requestMiniQuote();
 }
 
+/* ✅ ahora manda id/sku/qty (ÚNICO OS ready) */
 function cartItemsForQuote() {
-  const items = (state.cart || []).map((i) => ({ qty: clampQty(i.qty) }));
+  const items = (state.cart || []).map((i) => ({
+    id: String(i.id || ""),
+    sku: String(i.sku || ""),
+    qty: clampQty(i.qty),
+  }));
   return items.length ? items : [{ qty: 1 }];
 }
+
 function modeToCountry(mode) {
   return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
 }
@@ -1089,7 +1153,6 @@ function bindUI() {
   $("#shipZip")?.addEventListener("input", () => {
     const v = digitsOnly($("#shipZip")?.value || "");
     if (v.length >= 4) {
-      // no spamear requests: mini debounce simple
       clearTimeout(window.__shipUiDeb);
       window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 450);
     }
@@ -1120,10 +1183,10 @@ function bindUI() {
     toast("¡Pago confirmado! 🏁", "success");
     state.cart = [];
     saveCart();
-    history.replaceState({}, document.title, "/");
+    removeQueryParams(["status"]);
   } else if (params.get("status") === "cancel") {
     toast("Pago cancelado", "info");
-    history.replaceState({}, document.title, "/");
+    removeQueryParams(["status"]);
   }
 }
 
@@ -1136,6 +1199,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Carga catálogo + chips
   await loadCatalog();
+  syncCartSkusFromCatalog();
 
   // Mantén coherencia shipping UI
   toggleShipping(getShipModeFromUI());
@@ -1143,6 +1207,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Bind UI + render inicial
   bindUI();
   saveCart();
+
+  // ✅ PWA openCart shortcut
+  handleOpenCartQuery();
 
   // Social proof + SW
   initSocialProof();
