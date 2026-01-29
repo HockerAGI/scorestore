@@ -1,186 +1,379 @@
-/* netlify/functions/create_checkout.js */
-const fs = require("fs");
-const path = require("path");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+// netlify/functions/create_checkout.js
+/* =========================================================
+   SCORE STORE — CREATE CHECKOUT (Stripe) v2026 PROD
+   ✅ Precios server-side desde /data/catalog.json (anti-tamper)
+   ✅ Shipping server-side (Envia si hay key, fallback si no)
+   ✅ No modifica precios del catálogo
+   ✅ Metadata lista para stripe_webhook.js (labels + supabase)
+   ========================================================= */
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
 
 const {
+  handleOptions,
   jsonResponse,
   safeJsonParse,
-  validateZip,
-  getEnviaQuote,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE,
-  normalizeQty,
-  digitsOnly,
   baseUrl,
-  handleOptions,
+  digitsOnly,
+  normalizeQty,
+  getEnviaQuote,
+  validateZip,
+  getFallbackShipping,
+  supabaseAdmin,
 } = require("./_shared");
 
-function toCents(mxn) {
-  return Math.max(0, Math.round((Number(mxn) || 0) * 100));
+let CATALOG_CACHE = { ts: 0, data: null };
+const CATALOG_TTL_MS = 2 * 60 * 1000; // 2 min
+
+function now() {
+  return Date.now();
 }
 
-function readCatalog() {
-  const candidates = [
-    path.resolve(__dirname, "../../data/catalog.json"),
-    path.resolve(__dirname, "../data/catalog.json"),
-    path.resolve(process.cwd(), "data/catalog.json"),
-    path.resolve(process.cwd(), "public/data/catalog.json"),
-  ];
-
-  for (const p of candidates) {
-    try {
-      if (fs.existsSync(p)) {
-        const raw = fs.readFileSync(p, "utf8");
-        const data = JSON.parse(raw);
-        if (data && Array.isArray(data.products)) return data;
-      }
-    } catch (_) {}
-  }
-  return null;
+function sumQty(cart) {
+  if (!Array.isArray(cart) || !cart.length) return 0;
+  return cart.reduce((acc, row) => acc + normalizeQty(row?.qty || row?.quantity || 1), 0);
 }
 
 function safeStr(s, max = 140) {
-  return String(s || "")
-    .replace(/[\u0000-\u001F\u007F]/g, " ")
-    .trim()
-    .slice(0, max);
+  return String(s || "").trim().slice(0, max);
 }
 
-function safeId(s, max = 80) {
-  return String(s || "")
-    .replace(/[^a-zA-Z0-9_-]/g, "")
-    .slice(0, max);
+function toCentsMXN(mxn) {
+  const n = Number(mxn || 0);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * 100);
 }
 
-function resolveImageUrl(bUrl, img) {
-  if (!img) return null;
-  const s = String(img);
-  if (s.startsWith("http://") || s.startsWith("https://")) return s;
-  return `${bUrl}${s.startsWith("/") ? s : `/${s}`}`;
+// Construye URL absoluta para imágenes (Stripe requiere URL absoluta)
+function absUrl(site, path) {
+  const p = String(path || "").trim();
+  if (!p) return "";
+  if (/^https?:\/\//i.test(p)) return p;
+  if (p.startsWith("/")) return site.replace(/\/+$/, "") + p;
+  return site.replace(/\/+$/, "") + "/" + p;
 }
 
-function getProductPriceFromCatalog(catalog, id, fallbackPrice) {
+// Evita romper por nombres con espacios en assets
+function encodePathIfNeeded(url) {
   try {
-    const pid = String(id || "");
-    const p = catalog?.products?.find((x) => String(x.id) === pid);
-    const val = Number(p?.baseMXN);
-    if (Number.isFinite(val) && val > 0) return val;
-  } catch (_) {}
-  const fb = Number(fallbackPrice);
-  return Number.isFinite(fb) && fb > 0 ? fb : 0;
+    const u = new URL(url);
+    u.pathname = u.pathname
+      .split("/")
+      .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
+      .join("/");
+    return u.toString();
+  } catch {
+    // si no es URL completa, encode parcial
+    if (url.startsWith("/")) {
+      return url
+        .split("/")
+        .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
+        .join("/");
+    }
+    return url;
+  }
+}
+
+async function loadCatalog(event) {
+  const fresh = CATALOG_CACHE.data && now() - CATALOG_CACHE.ts < CATALOG_TTL_MS;
+  if (fresh) return CATALOG_CACHE.data;
+
+  const site = baseUrl(event);
+  const url = site.replace(/\/+$/, "") + "/data/catalog.json";
+
+  // 1) fetch desde el site (ideal)
+  try {
+    const r = await fetch(url, { headers: { "cache-control": "no-store" } });
+    if (r.ok) {
+      const data = await r.json();
+      if (data && (Array.isArray(data.products) || Array.isArray(data))) {
+        CATALOG_CACHE = { ts: now(), data };
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn("[catalog] fetch fail:", e?.message || e);
+  }
+
+  // 2) fallback FS (por si fetch no funciona en tu build)
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const p1 = path.join(process.cwd(), "data", "catalog.json");
+    const p2 = path.join(__dirname, "..", "..", "data", "catalog.json");
+    const filePath = fs.existsSync(p1) ? p1 : fs.existsSync(p2) ? p2 : null;
+
+    if (filePath) {
+      const raw = fs.readFileSync(filePath, "utf8");
+      const data = JSON.parse(raw);
+      CATALOG_CACHE = { ts: now(), data };
+      return data;
+    }
+  } catch (e) {
+    console.warn("[catalog] fs fail:", e?.message || e);
+  }
+
+  return null;
+}
+
+function buildProductMap(catalog) {
+  const list = Array.isArray(catalog?.products)
+    ? catalog.products
+    : Array.isArray(catalog)
+    ? catalog
+    : [];
+
+  const map = new Map();
+  for (const p of list) {
+    if (!p?.id) continue;
+    map.set(String(p.id), {
+      id: String(p.id),
+      sku: String(p.sku || ""),
+      name: String(p.name || "Producto"),
+      baseMXN: Number(p.baseMXN || 0),
+      img: String(p.img || ""),
+      images: Array.isArray(p.images) ? p.images.map(String) : [],
+    });
+  }
+  return map;
+}
+
+async function computeShipping({ event, mode, zip, qty, country }) {
+  const m = String(mode || "pickup").toLowerCase();
+  const cc = String(country || (m === "us" ? "US" : "MX")).toUpperCase();
+
+  if (m === "pickup") {
+    return { ok: true, cost: 0, label: "Pickup Tijuana (Gratis)", source: "pickup" };
+  }
+
+  const z = digitsOnly(zip || "");
+  if (!z || z.length < 4) {
+    return { ok: false, error: "ZIP_INVALID" };
+  }
+
+  // valida zip (si hay key, si no, ok:true)
+  const v = await validateZip(cc, z);
+  if (v?.ok === false) {
+    return { ok: false, error: v?.error || "ZIP_NOT_FOUND" };
+  }
+
+  // intenta Envia real (si hay key)
+  const quote = await getEnviaQuote(z, Math.max(1, Number(qty) || 1), cc);
+  if (quote?.ok && Number(quote.mxn) > 0) {
+    const carrierTxt = quote.carrier ? String(quote.carrier).toUpperCase() : "ENVIA";
+    const serviceTxt = quote.service ? ` ${quote.service}` : "";
+    const daysTxt =
+      Number.isFinite(quote.days) && quote.days > 0 ? ` · ${quote.days}d` : "";
+
+    return {
+      ok: true,
+      cost: Number(quote.mxn),
+      label: `${carrierTxt}${serviceTxt}${daysTxt}`.trim(),
+      source: "envia",
+    };
+  }
+
+  // fallback
+  const fb = getFallbackShipping(cc);
+  return { ok: true, cost: fb, label: "Envío (Estimación)", source: "fallback" };
 }
 
 exports.handler = async (event) => {
-  const pre = handleOptions(event);
-  if (pre) return pre;
+  // Preflight
+  const opt = handleOptions(event);
+  if (opt) return opt;
 
-  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
+  }
+
   if (!process.env.STRIPE_SECRET_KEY) {
-    return jsonResponse(500, { error: "Stripe no está configurado (STRIPE_SECRET_KEY faltante)." });
+    return jsonResponse(500, { ok: false, error: "Missing STRIPE_SECRET_KEY" });
   }
 
   try {
     const body = safeJsonParse(event.body);
 
-    const mode = String(body.shippingMode || "pickup").toLowerCase();
     const cart = Array.isArray(body.cart) ? body.cart : [];
-    const zip = digitsOnly(body.shippingData?.postal_code || "");
+    if (!cart.length) return jsonResponse(400, { ok: false, error: "CART_EMPTY" });
+    if (cart.length > 60) return jsonResponse(400, { ok: false, error: "CART_TOO_LARGE" });
 
-    if (!cart.length) return jsonResponse(400, { error: "Carrito vacío" });
+    // URLs
+    const site = baseUrl(event);
+    const success_url = safeStr(body.success_url) || `${site}/?status=success`;
+    const cancel_url = safeStr(body.cancel_url) || `${site}/?status=cancel`;
 
-    const catalog = readCatalog();
-    if (!catalog) console.warn("catalog.json no encontrado: se usará fallback desde payload (si existe).");
+    // Shipping mode + zip
+    const mode = String(body.shippingMode || body.shipping_mode || body?.shipping?.mode || "pickup").toLowerCase();
 
-    const bUrl = baseUrl(event);
+    const zip =
+      digitsOnly(
+        body?.shippingData?.postal_code ||
+          body?.shippingData?.zip ||
+          body?.shippingData?.cp ||
+          body?.shipping?.postal_code ||
+          body?.shipping?.zip ||
+          body?.shipping?.cp ||
+          ""
+      ) || "";
 
-    const line_items = cart.map((it) => {
-      const id = safeId(it.id);
-      const size = safeStr(it.size || "Unitalla", 40);
-      const name = safeStr(it.name || "Producto", 120);
+    const country =
+      String(body?.shippingData?.country || body?.shipping?.country || (mode === "us" ? "US" : "MX")).toUpperCase();
 
-      const realPrice = getProductPriceFromCatalog(catalog, it.id, it.price);
+    // Carga catálogo (canónico)
+    const catalog = await loadCatalog(event);
+    if (!catalog) return jsonResponse(500, { ok: false, error: "CATALOG_NOT_AVAILABLE" });
 
-      const imgUrl = resolveImageUrl(bUrl, it.img);
-      const images = imgUrl ? [imgUrl] : [];
+    const productMap = buildProductMap(catalog);
 
-      return {
+    // Construye line_items desde catálogo (anti-tamper)
+    const line_items = [];
+    let itemsQty = 0;
+
+    for (const row of cart) {
+      const id = String(row?.id || "").trim();
+      const size = safeStr(row?.size || row?.talla || "Unitalla", 18);
+      const qty = normalizeQty(row?.qty || row?.quantity || 1);
+
+      const p = productMap.get(id);
+      if (!p) return jsonResponse(400, { ok: false, error: `PRODUCT_NOT_FOUND:${id}` });
+
+      const unitAmount = toCentsMXN(p.baseMXN);
+      if (!unitAmount) return jsonResponse(400, { ok: false, error: `PRICE_INVALID:${id}` });
+
+      // imagen
+      const imgCandidate = p.images?.[0] || p.img || "";
+      const imgAbs = imgCandidate ? encodePathIfNeeded(absUrl(site, imgCandidate)) : "";
+
+      line_items.push({
+        quantity: qty,
         price_data: {
           currency: "mxn",
+          unit_amount: unitAmount,
           product_data: {
-            name,
-            description: `Talla: ${size}`,
-            images,
-            metadata: { id, size },
-          },
-          unit_amount: toCents(realPrice),
-        },
-        quantity: normalizeQty(it.qty),
-      };
-    });
-
-    let shippingAmount = 0;
-    let shippingLabel = "Pickup Tijuana (Gratis)";
-    let country = "MX";
-
-    if (mode !== "pickup") {
-      country = mode === "us" ? "US" : "MX";
-
-      if (!zip || zip.length < 4) return jsonResponse(400, { error: "Código postal inválido" });
-
-      const zipCheck = await validateZip(country, zip);
-      if (zipCheck && zipCheck.ok === false) return jsonResponse(400, { error: "Código postal no encontrado" });
-
-      const totalQty = cart.reduce((a, b) => a + normalizeQty(b.qty), 0);
-
-      let quoted = null;
-      try {
-        const estWeight = totalQty * 0.6;
-        const estH = 5 + Math.ceil(totalQty * 3);
-        quoted = await getEnviaQuote(zip, totalQty, country, estWeight, 30, estH, 20);
-      } catch (_) {}
-
-      if (quoted?.mxn && Number(quoted.mxn) > 0) {
-        shippingAmount = Number(quoted.mxn);
-        shippingLabel = quoted.carrier ? `Envío (${quoted.carrier})` : "Envío (Cotizado)";
-      } else {
-        shippingAmount = country === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-        shippingLabel = "Envío (Estimación)";
-      }
-    }
-
-    const payment_method_types = mode === "us" ? ["card"] : ["card", "oxxo"];
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types,
-      line_items,
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: toCents(shippingAmount), currency: "mxn" },
-            display_name: shippingLabel,
-            delivery_estimate: {
-              minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: 7 },
+            name: `${p.name} — Talla ${size}`,
+            description: p.sku ? `SKU: ${p.sku}` : undefined,
+            images: imgAbs ? [imgAbs] : undefined,
+            metadata: {
+              product_id: p.id,
+              sku: p.sku || "",
+              size,
             },
           },
         },
-      ],
-      success_url: `${bUrl}/?status=success`,
-      cancel_url: `${bUrl}/?status=cancel`,
-      metadata: {
-        order_type: "score_store",
-        shipping_mode: safeStr(mode, 20),
-        customer_zip: safeStr(zip, 12),
-        country: safeStr(country, 2),
-      },
+      });
+
+      itemsQty += qty;
+    }
+
+    itemsQty = Math.max(1, itemsQty);
+
+    // Shipping server-side (re-cotiza)
+    const shippingCalc = await computeShipping({
+      event,
+      mode,
+      zip,
+      qty: itemsQty,
+      country,
     });
 
-    return jsonResponse(200, { id: session.id, url: session.url });
-  } catch (err) {
-    console.error("Checkout Error:", err?.message || err);
-    return jsonResponse(500, { error: "Error creando pago. Intenta de nuevo." });
+    if (!shippingCalc.ok) {
+      // si no es pickup y no hay zip válido
+      return jsonResponse(400, { ok: false, error: shippingCalc.error || "SHIPPING_INVALID" });
+    }
+
+    const shippingCost = Number(shippingCalc.cost || 0);
+
+    // ✅ Shipping como line item (simple, estable)
+    if (mode !== "pickup" && shippingCost > 0) {
+      line_items.push({
+        quantity: 1,
+        price_data: {
+          currency: "mxn",
+          unit_amount: toCentsMXN(shippingCost),
+          product_data: {
+            name: country === "US" ? "Envío internacional" : "Envío nacional",
+            description: shippingCalc.label || "Envío",
+          },
+        },
+      });
+    }
+
+    // Compact cart para metadata (no exceder)
+    const compact = cart
+      .slice(0, 40)
+      .map((r) => `${safeStr(r?.id, 32)}:${safeStr(r?.size || "U", 6)}:${normalizeQty(r?.qty || 1)}`)
+      .join("|")
+      .slice(0, 450);
+
+    // Stripe session
+    const sessionParams = {
+      mode: "payment",
+      line_items,
+      success_url,
+      cancel_url,
+
+      // Checkout UX
+      billing_address_collection: "auto",
+      phone_number_collection: { enabled: true },
+
+      // Solo pedir shipping address si NO es pickup
+      ...(mode !== "pickup"
+        ? {
+            shipping_address_collection: {
+              allowed_countries: ["MX", "US"],
+            },
+          }
+        : {}),
+
+      // Pagos
+      automatic_payment_methods: { enabled: true },
+      payment_method_options: {
+        oxxo: { expires_after_days: 2 }, // si tu cuenta lo soporta, lo mostrará
+      },
+
+      // Metadata para webhook + Supabase
+      metadata: {
+        source: "score_store",
+        shipping_mode: mode,
+        customer_zip: zip || "",
+        customer_country: country || "",
+        score_items: String(itemsQty),
+        shipping_label: safeStr(shippingCalc.label || "", 120),
+        shipping_source: safeStr(shippingCalc.source || "", 30),
+        cart_compact: compact,
+      },
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    // Opcional: guarda un “pending order” (no rompe si no hay supabaseAdmin)
+    if (supabaseAdmin) {
+      try {
+        await supabaseAdmin.from("orders").insert([
+          {
+            stripe_session_id: session.id,
+            status: "checkout_created",
+            currency: "mxn",
+            total: null,
+            shipping_mode: mode,
+            customer_cp: zip || null,
+            items_qty: itemsQty,
+            raw_meta: JSON.stringify(sessionParams.metadata || {}),
+          },
+        ]);
+      } catch (e) {
+        console.warn("[supabase] pending insert fail:", e?.message || e);
+      }
+    }
+
+    return jsonResponse(200, {
+      ok: true,
+      id: session.id,
+      url: session.url, // main.js redirige directo si viene url
+    });
+  } catch (e) {
+    console.error("[create_checkout] error:", e?.message || e);
+    return jsonResponse(500, { ok: false, error: "CHECKOUT_FAILED" });
   }
 };
