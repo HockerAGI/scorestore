@@ -1,581 +1,383 @@
 /* =========================================================
-   SCORE STORE — PRODUCTION ENGINE v2026 (FINAL ROBUST)
-   Integraciones: Stripe, Supabase, Envia.com, Gemini, SocialProof
-   Características: Splash RPM, SW, AudioFX, Image Probing.
+   SCORE STORE — MASTER STYLES v2026 (PROD · HEAVY DUTY)
+   - Identidad: Score International + Único Uniformes
+   - UI: Glassmorphism, Splash RPM, Drawer, Modales
+   - Compatibilidad: Móvil First, Animaciones CSS3
    ========================================================= */
 
-/* ---------------------------------------------------------
-   1. CONFIGURACIÓN CENTRAL (Tus Keys Reales)
-   --------------------------------------------------------- */
-const CONFIG = {
-  stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+:root {
+  /* --- PALETA OFICIAL --- */
+  --score-red: #E10600;
+  --score-blue: #003087;
+  --neon-green: #00E676;
   
-  supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
-  
-  endpoints: {
-    checkout: "/.netlify/functions/create_checkout",
-    quote: "/.netlify/functions/quote_shipping",
-    chat: "/.netlify/functions/chat"
-  },
-  
-  catalogUrl: "/data/catalog.json",
-  fallbackImg: "/assets/hero.webp",
-  storageKey: "score_store_cart_v2026_prod",
-  
-  // UX Settings
-  imgProbeTimeout: 2000,
-  socialProofInterval: 45000,
-  useSound: true
-};
+  /* --- TEMA --- */
+  --bg: #ffffff;
+  --bg-soft: #f6f6f6;
+  --ink: #111111;
+  --ink-soft: #444444;
+  --accent: var(--score-red);
 
-/* ---------------------------------------------------------
-   2. ESTADO GLOBAL
-   --------------------------------------------------------- */
-const state = {
-  cart: JSON.parse(localStorage.getItem(CONFIG.storageKey) || "[]"),
-  products: [],
-  filter: "ALL",
-  shipping: { 
-    mode: "pickup", 
-    cost: 0, 
-    label: "Pickup Tijuana (Gratis)",
-    zip: ""
-  },
-  imgCache: new Map() // Evita re-verificar imágenes
-};
+  /* --- VIDRIO (GLASSMORPHISM) --- */
+  --glass-dark: rgba(20, 20, 25, 0.90);
+  --glass-bg: rgba(18, 18, 22, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-blur: blur(14px);
 
-// Selectores rápidos
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => document.querySelectorAll(s);
-const fmtMoney = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+  /* --- TIPOGRAFÍA --- */
+  --font-title: "Teko", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-/* ---------------------------------------------------------
-   3. SISTEMA DE AUDIO (AUDIO CONTEXT ROBUSTO)
-   --------------------------------------------------------- */
-let audioCtx = null;
-function initAudio() {
-  if (!CONFIG.useSound) return;
-  const Ctx = window.AudioContext || window.webkitAudioContext;
-  if (Ctx && !audioCtx) audioCtx = new Ctx();
+  /* --- DIMENSIONES --- */
+  --max: 1200px;
+  --header-h: 80px;
+  --promo-h: 40px;
+  --radius: 16px;
 }
 
-function playSound(type) {
-  if (!audioCtx || audioCtx.state === 'suspended') {
-    if(audioCtx) audioCtx.resume().catch(()=>{});
-  }
-  if (!audioCtx) return;
+/* =========================================================
+   1. BASE & RESET
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--bg); overflow-x: hidden; }
 
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  const now = audioCtx.currentTime;
-
-  if (type === 'click') {
-    osc.frequency.setValueAtTime(600, now);
-    osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.1);
-    osc.start(now); osc.stop(now + 0.1);
-  } else if (type === 'success') {
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(400, now);
-    osc.frequency.linearRampToValueAtTime(800, now + 0.2);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.3);
-    osc.start(now); osc.stop(now + 0.3);
-  } else if (type === 'error') {
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(150, now);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.2);
-    osc.start(now); osc.stop(now + 0.2);
-  }
+/* 8. FONDO OFICIAL (CORREGIDO) */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: url("/assets/fondo-pagina-score.webp") center/cover no-repeat fixed;
+  opacity: 0.08; filter: contrast(1.05) saturate(1.05);
 }
 
-/* ---------------------------------------------------------
-   4. INICIALIZACIÓN DE SERVICIOS
-   --------------------------------------------------------- */
-let stripeInstance = null;
-function initStripe() {
-  if (stripeInstance) return stripeInstance;
-  if (window.Stripe && CONFIG.stripeKey) stripeInstance = window.Stripe(CONFIG.stripeKey);
-  return stripeInstance;
+body.noScroll, body.modalOpen { overflow: hidden; height: 100vh; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; transition: .25s; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+/* =========================================================
+   2. HEADER & NAV
+   ========================================================= */
+.promo-bar {
+  position: fixed; top: 0; left: 0; width: 100%; height: var(--promo-h);
+  display: flex; align-items: center; justify-content: center; z-index: 120;
+  background: #000; color: #fff; border-bottom: 2px solid var(--accent);
+  font-size: 12px; font-weight: 900; letter-spacing: .04em; text-align: center; padding: 0 10px;
+}
+.promo-bar b { color: var(--accent); margin: 0 4px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.06); height: var(--header-h);
+  transition: all .3s ease;
+}
+.promo-bar + .topbar { top: var(--promo-h); }
+
+.topInner { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.brandLogoBig { height: 50px; width: auto; transition: .25s; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1)); }
+.brandLogoBig:hover { transform: scale(1.05); }
+
+.nav { display: flex; gap: 24px; }
+.nav a { font-size: 14px; font-weight: 800; opacity: 0.7; letter-spacing: .02em; text-transform: uppercase; position: relative; }
+.nav a:hover { opacity: 1; color: var(--accent); }
+.nav a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--accent); transition: width .3s; }
+.nav a:hover::after { width: 100%; }
+
+/* Botón Carrito */
+.cartBtn {
+  position: relative; width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; transition: .2s;
+  background: rgba(0,0,0,0.04); color: var(--ink); font-size: 18px;
+}
+.cartBtn:hover { background: rgba(0,0,0,0.08); color: var(--accent); transform: scale(1.05); }
+.cartCount {
+  position: absolute; top: -4px; right: -4px; background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; border: 2px solid #fff;
+  transition: transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.cartCount.pop { transform: scale(1.3); }
+
+/* =========================================================
+   3. HERO SECTION (CORREGIDO: SCORE INTERNATIONAL)
+   ========================================================= */
+.hero {
+  position: relative; min-height: 90vh; display: flex; align-items: center;
+  overflow: hidden; background: #000; padding-top: var(--header-h);
+}
+.heroBgImg {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  z-index: 0; opacity: 0.85; transform: scale(1.02); filter: contrast(1.1);
+  animation: slowZoom 20s infinite alternate;
+}
+@keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+.heroOverlayDark {
+  position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7)); z-index: 1;
 }
 
-// Splash Screen con RPM (Recuperado de tu código original)
-function initIntroSplash() {
-  const splash = $("#splash-screen");
-  if (!splash) return;
-  
-  const bar = $(".rpm-bar");
-  const rpm = $("#revCounter");
-  let p = 0;
-  
-  const t = setInterval(() => {
-    p += Math.random() * 8 + 2; // Velocidad variable
-    if (p > 100) p = 100;
-    
-    if (bar) bar.style.width = p + "%";
-    if (rpm) rpm.textContent = Math.floor(p * 85) + " RPM";
-    
-    if (p === 100) {
-      clearInterval(t);
-      splash.style.opacity = 0;
-      setTimeout(() => splash.remove(), 600);
-    }
-  }, 80);
+.heroInner { position: relative; z-index: 2; text-align: center; color: #fff; width: 100%; }
+
+/* 5. TÍTULO: SCORE (Blanco) INTERNATIONAL (Rojo) */
+.hero-title {
+  font-family: var(--font-title);
+  font-size: clamp(48px, 14vw, 140px);
+  line-height: 0.85; margin: 0 0 20px;
+  color: #fff; text-transform: uppercase;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  letter-spacing: -2px;
+}
+.hero-title .accent { color: var(--score-red); }
+
+/* 4. LOGO DESERT SIN FONDO */
+.hero-logos { margin: 20px auto; width: fit-content; }
+.heroDesertBig { width: 160px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); transition: transform .3s; }
+.heroDesertBig:hover { transform: scale(1.05) rotate(2deg); }
+
+/* 6. COPY NUEVO */
+.hero-copy {
+  margin: 0 auto 30px; max-width: 600px; color: rgba(255, 255, 255, 0.95);
+  font-weight: 500; font-size: 18px; line-height: 1.5; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
-// Service Worker (Recuperado)
-function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    // navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW fail', err));
-  }
+.ctaRow { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 40px; }
+
+/* Logos Eventos (Footer Hero) */
+.heroLogos { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; opacity: 0.9; margin-top: 20px; }
+.heroLogos img { height: 40px; width: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+
+/* =========================================================
+   4. COMPONENTES UI (Botones, Chips, Sección)
+   ========================================================= */
+.sectionHead { text-align: center; margin-bottom: 40px; }
+.sectionHead h2 { margin: 0 0 8px; font-family: var(--font-title); font-weight: 700; letter-spacing: .06em; font-size: clamp(32px, 5vw, 56px); text-transform: uppercase; }
+.sectionHead p { margin: 0; color: var(--ink-soft); font-weight: 500; font-size: 18px; }
+.accent { color: var(--accent); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 28px; border-radius: 50px; font-weight: 800; font-size: 14px;
+  text-transform: uppercase; letter-spacing: .05em; transition: all .25s ease;
+  position: relative; overflow: hidden;
+}
+.btn:active { transform: scale(0.96); }
+
+.btn.primary {
+  background: var(--score-red); color: #fff;
+  box-shadow: 0 8px 20px rgba(225, 6, 0, 0.4);
+}
+.btn.primary:hover { background: #ff1a1a; box-shadow: 0 12px 30px rgba(225, 6, 0, 0.6); transform: translateY(-2px); }
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.5); color: #fff;
+  backdrop-filter: blur(10px);
+}
+.btn.ghost:hover { background: rgba(255, 255, 255, 0.25); border-color: #fff; }
+.btn.full { width: 100%; border-radius: 12px; }
+.pulse-btn { animation: pulseRed 2s infinite; }
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(225, 6, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0); }
 }
 
-/* ---------------------------------------------------------
-   5. MOTOR DE CATÁLOGO (Dual Source + Image Probing)
-   --------------------------------------------------------- */
-async function probeImage(url) {
-  if (state.imgCache.has(url)) return state.imgCache.get(url);
-  return new Promise(resolve => {
-    const img = new Image();
-    const t = setTimeout(() => { state.imgCache.set(url, false); resolve(false); }, CONFIG.imgProbeTimeout);
-    img.onload = () => { clearTimeout(t); state.imgCache.set(url, true); resolve(true); };
-    img.onerror = () => { clearTimeout(t); state.imgCache.set(url, false); resolve(false); };
-    img.src = url;
-  });
+/* Filtros */
+.filters { 
+  display: flex; gap: 10px; overflow-x: auto; padding: 5px 20px 20px; 
+  margin: 0 -20px 20px; justify-content: flex-start; scrollbar-width: none; 
 }
+.filters::-webkit-scrollbar { display: none; }
+@media(min-width: 768px) { .filters { justify-content: center; } }
 
-async function loadCatalog() {
-  const grid = $("#productsGrid");
-  if(grid) grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; opacity:0.6;"><i class="fa-solid fa-circle-notch fa-spin"></i> CARGANDO MOTOR...</div>`;
-
-  // 1. Intento Supabase
-  try {
-    const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*&active=eq.true`, {
-      headers: { apikey: CONFIG.supabaseKey, Authorization: `Bearer ${CONFIG.supabaseKey}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.length > 0) {
-        state.products = normalizeCatalog(data);
-        renderGrid();
-        return;
-      }
-    }
-  } catch (e) { console.warn("Supabase offline, switching to local."); }
-
-  // 2. Intento JSON Local (Fallback)
-  try {
-    const res = await fetch(CONFIG.catalogUrl);
-    if (!res.ok) throw new Error("Local JSON missing");
-    const data = await res.json();
-    const items = data.products || data; // Maneja ambas estructuras
-    state.products = normalizeCatalog(items);
-    renderGrid();
-  } catch (e) {
-    if(grid) grid.innerHTML = `<div style='text-align:center;width:100%'>Error crítico: No se pudo cargar inventario.</div>`;
-    console.error(e);
-  }
+.chip {
+  padding: 10px 20px; border-radius: 30px; background: #fff; 
+  border: 1px solid rgba(0,0,0,0.1); font-weight: 700; font-size: 12px; 
+  white-space: nowrap; transition: .2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
+.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 5px 15px rgba(225,6,0,0.3); }
 
-function normalizeCatalog(items) {
-  return items.map(p => ({
-    id: String(p.id || p.sku),
-    name: p.name,
-    price: Number(p.baseMXN || p.price || 0),
-    section: p.sectionId || "ALL",
-    sub: (p.subSection || "").toUpperCase(),
-    img: p.img || CONFIG.fallbackImg,
-    images: (p.images && p.images.length) ? p.images : [p.img || CONFIG.fallbackImg],
-    sizes: p.sizes || ["Unitalla"]
-  }));
+/* =========================================================
+   5. GRID & CARDS (ROBUSTO + CARRUSEL)
+   ========================================================= */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+
+.card {
+  background: #fff; border-radius: 20px; overflow: hidden; position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: transform .3s, box-shadow .3s;
+  display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.04);
 }
+.card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.12); }
 
-/* ---------------------------------------------------------
-   6. RENDERIZADO (Grid & Carrusel)
-   --------------------------------------------------------- */
-async function renderGrid() {
-  const grid = $("#productsGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
+/* Media & Carrusel */
+.cardMedia { position: relative; width: 100%; aspect-ratio: 4/5; background: #f4f4f4; overflow: hidden; }
+.cardMedia img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+.card:hover .cardMedia img { transform: scale(1.05); }
 
-  const filtered = state.filter === "ALL" 
-    ? state.products 
-    : state.products.filter(p => p.section === state.filter || p.sub.includes(state.filter));
-
-  if (!filtered.length) {
-    grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;padding:40px;'>No hay productos en esta categoría.</div>";
-    return;
-  }
-
-  for (const p of filtered) {
-    const imgOk = await probeImage(p.img);
-    const mainImg = imgOk ? p.img : CONFIG.fallbackImg;
-    
-    const card = document.createElement("div");
-    card.className = "card";
-    
-    // Carrusel lógico
-    let mediaHtml;
-    if (p.images.length > 1) {
-      const slides = p.images.map(src => `<div class="carousel-item"><img src="${src}" loading="lazy" style="width:100%;height:100%;object-fit:cover;"></div>`).join("");
-      const dots = p.images.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join("");
-      mediaHtml = `
-        <div class="carousel" id="car-${p.id}" onscroll="window.handleScroll('${p.id}')">${slides}</div>
-        <div class="carousel-dots" id="dots-${p.id}">${dots}</div>
-      `;
-    } else {
-      mediaHtml = `<div class="cardMediaWrapper" style="width:100%;height:100%;"><img src="${mainImg}" style="width:100%;height:100%;object-fit:cover;"></div>`;
-    }
-
-    card.innerHTML = `
-      <div class="cardMedia" style="position:relative; aspect-ratio:4/5; overflow:hidden;">${mediaHtml}</div>
-      <div class="cardBody">
-        <div class="cardTitle">${p.name}</div>
-        <div class="cardPrice">${fmtMoney(p.price)}</div>
-        <div class="cardControls">
-          <select id="size-${p.id}" class="sizeSelector">${p.sizes.map(s => `<option value="${s}">${s}</option>`).join("")}</select>
-          <button class="addBtn" onclick="window.addToCart('${p.id}')"><i class="fa-solid fa-plus"></i></button>
-        </div>
-      </div>
-    `;
-    grid.appendChild(card);
-  }
+.carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; width: 100%; height: 100%; scrollbar-width: none; }
+.carousel-item { flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; }
+.carousel-dots { 
+  position: absolute; bottom: 15px; left: 0; width: 100%; 
+  display: flex; justify-content: center; gap: 6px; pointer-events: none; z-index: 2; 
 }
-
-// Handler global del scroll
-window.handleScroll = function(pid) {
-  const car = document.getElementById(`car-${pid}`);
-  const dotsBox = document.getElementById(`dots-${pid}`);
-  if (!car || !dotsBox) return;
-  const index = Math.round(car.scrollLeft / car.offsetWidth);
-  const dots = dotsBox.querySelectorAll(".dot");
-  dots.forEach((d, i) => i === index ? d.classList.add("active") : d.classList.remove("active"));
-};
-
-/* ---------------------------------------------------------
-   7. LÓGICA DE CARRITO (Core)
-   --------------------------------------------------------- */
-function saveCart() {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart));
-  updateCartUI();
+.dot { 
+  width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); 
+  transition: .3s; box-shadow: 0 1px 2px rgba(0,0,0,0.3); 
 }
+.dot.active { background: #fff; transform: scale(1.4); }
 
-function updateCartUI() {
-  const count = state.cart.reduce((acc, item) => acc + item.qty, 0);
-  const badge = $("#cartCount");
-  if(badge) {
-    badge.textContent = count;
-    badge.classList.remove("pop");
-    void badge.offsetWidth; 
-    badge.classList.add("pop");
-  }
-  renderCartList();
+.cardBody { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.cardTitle { font-weight: 800; font-size: 16px; line-height: 1.3; font-family: var(--font-title); letter-spacing: 0.5px; text-transform: uppercase; }
+.cardPrice { color: var(--score-red); font-weight: 800; font-size: 18px; margin-bottom: 5px; }
+
+.cardControls { display: flex; gap: 10px; margin-top: auto; }
+.sizeSelector {
+  flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; 
+  font-weight: 600; font-size: 13px; background: #f9f9f9; outline: none; cursor: pointer;
 }
-
-function addToCart(pid) {
-  initAudio();
-  const p = state.products.find(x => x.id === pid);
-  if (!p) return;
-  
-  const sizeEl = document.getElementById(`size-${pid}`);
-  const size = sizeEl ? sizeEl.value : "Unitalla";
-  const key = `${pid}-${size}`;
-  
-  const existing = state.cart.find(i => i.key === key);
-  if (existing) existing.qty++;
-  else state.cart.push({ key, id: pid, name: p.name, price: p.price, img: p.img, size, qty: 1 });
-  
-  playSound("success");
-  saveCart();
-  openDrawer();
-  toast(`Agregado: ${p.name}`);
+.addBtn {
+  width: 44px; height: 42px; border-radius: 10px; background: #111; color: #fff;
+  display: grid; place-items: center; font-size: 16px; transition: .2s;
 }
+.addBtn:hover { background: var(--score-red); transform: scale(1.05); }
 
-function modQty(index, delta) {
-  initAudio();
-  const item = state.cart[index];
-  if (!item) return;
-  
-  item.qty += delta;
-  if (item.qty <= 0) state.cart.splice(index, 1);
-  
-  playSound("click");
-  saveCart();
+/* =========================================================
+   6. COTIZADOR & PARTNERS
+   ========================================================= */
+.shippingBox {
+  max-width: 450px; margin: 0 auto; background: #fff; padding: 25px;
+  border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+  border: 1px solid rgba(0,0,0,0.05); position: relative; overflow: hidden;
 }
-
-function renderCartList() {
-  const container = $("#cartItems");
-  if (!container) return;
-  container.innerHTML = "";
-  
-  if (state.cart.length === 0) {
-    container.innerHTML = "<div style='text-align:center; padding:20px; opacity:0.6;'>Tu carrito está vacío.<br>¡Equípate para la carrera!</div>";
-    $("#cartTotal").textContent = "$0.00";
-    return;
-  }
-  
-  let subtotal = 0;
-  state.cart.forEach((item, idx) => {
-    subtotal += item.price * item.qty;
-    container.innerHTML += `
-      <div class="cartRow" style="display:flex; gap:12px; margin-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:10px;">
-        <img src="${item.img}" style="width:60px; height:60px; object-fit:cover; border-radius:8px;">
-        <div style="flex:1;">
-          <div style="font-weight:700; font-size:13px;">${item.name}</div>
-          <div style="font-size:11px; opacity:0.8;">Talla: ${item.size}</div>
-          <div style="color:var(--score-red); font-weight:700;">${fmtMoney(item.price)}</div>
-        </div>
-        <div class="qty-ctrl" style="display:flex; align-items:center; gap:8px;">
-           <button onclick="window.modQty(${idx}, -1)" style="width:24px; height:24px; background:#eee; border-radius:4px;">-</button>
-           <span style="font-weight:700;">${item.qty}</span>
-           <button onclick="window.modQty(${idx}, 1)" style="width:24px; height:24px; background:#eee; border-radius:4px;">+</button>
-        </div>
-      </div>
-    `;
-  });
-  
-  const total = subtotal + state.shipping.cost;
-  $("#cartTotal").textContent = fmtMoney(total);
-  $("#cartShipLabel").textContent = state.shipping.label;
+.shippingBox::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; 
+  background: linear-gradient(90deg, var(--score-red), var(--score-blue));
 }
-
-/* ---------------------------------------------------------
-   8. CHECKOUT & SHIPPING (API CALLS)
-   --------------------------------------------------------- */
-async function quoteShippingUI() {
-  const zipInput = $("#shipZip");
-  const countryInput = $("#shipCountry");
-  const resultBox = $("#shipQuote");
-  
-  const zip = zipInput.value.replace(/\D/g, "");
-  const country = countryInput.value;
-  
-  if (zip.length < 4) {
-    resultBox.innerHTML = "<span style='color:red'>Ingresa CP válido (5 dígitos).</span>";
-    playSound("error");
-    return;
-  }
-  
-  resultBox.innerHTML = "<i><i class='fa-solid fa-spinner fa-spin'></i> Cotizando con Envia.com...</i>";
-  playSound("click");
-  
-  try {
-    const res = await fetch(CONFIG.endpoints.quote, {
-      method: "POST",
-      body: JSON.stringify({ zip, country, items: [{qty: 1}] }) 
-    });
-    const data = await res.json();
-    
-    if (data.ok) {
-      resultBox.innerHTML = `<b>${data.label}:</b> <span style="color:var(--score-blue)">${fmtMoney(data.cost)}</span>`;
-      state.shipping.zip = zip; // Guardar contexto
-      playSound("success");
-    } else {
-      resultBox.innerHTML = "<span style='color:red'>Sin cobertura o error. Intenta otro CP.</span>";
-      playSound("error");
-    }
-  } catch (e) {
-    resultBox.innerHTML = "<span style='color:red'>Error de conexión.</span>";
-  }
+.shipRow { margin-bottom: 15px; }
+.shipRow label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #666; text-transform: uppercase; }
+.shipRow input, .shipRow select {
+  width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd;
+  font-weight: 600; font-size: 15px; background: #fdfdfd; transition: border .2s;
 }
+.shipRow input:focus, .shipRow select:focus { border-color: var(--accent); }
+.shipQuote { margin-top: 15px; padding: 15px; background: #f4f4f4; border-radius: 10px; font-weight: 700; min-height: 20px; text-align: center; }
 
-async function doCheckout() {
-  initAudio();
-  if (state.cart.length === 0) return toast("Tu carrito está vacío");
-  
-  const btn = $("#checkoutBtn");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
-  btn.disabled = true;
-  
-  try {
-    initStripe();
-    const res = await fetch(CONFIG.endpoints.checkout, {
-      method: "POST",
-      body: JSON.stringify({
-        cart: state.cart,
-        shipping: state.shipping,
-        shippingMode: state.shipping.mode
-      })
-    });
-    
-    const data = await res.json();
-    if (data.sessionId) {
-      await stripeInstance.redirectToCheckout({ sessionId: data.sessionId });
-    } else {
-      throw new Error(data.error || "Error al iniciar sesión de pago");
-    }
-  } catch (e) {
-    console.error(e);
-    toast("Error en el checkout. Intenta de nuevo.");
-    playSound("error");
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
+/* 7. PARTNERS REALES (Petición #7) */
+.partners { padding: 50px 0; text-align: center; overflow: hidden; }
+.partners h3 { margin: 0 0 30px; font-weight: 800; letter-spacing: .1em; font-size: 12px; opacity: 0.6; text-transform: uppercase; }
+.partnersGrid { 
+  display: flex; gap: 40px; justify-content: center; align-items: center; 
+  flex-wrap: wrap; opacity: 0.8; 
 }
-
-/* ---------------------------------------------------------
-   9. SOCIAL PROOF (VENTAS FALSAS)
-   --------------------------------------------------------- */
-const FAKE_NAMES = ["Carlos de TJ", "Miguel de Ensenada", "Sarah de San Diego", "Jorge de La Paz", "Ana de Mexicali", "Roberto de AZ", "Mike de CA"];
-const FAKE_ITEMS = ["Hoodie Oficial", "Gorra Baja 1000", "Camiseta Score", "Chamarra Oficial", "Jersey Baja 500"];
-
-function initSocialProof() {
-  // Retraso inicial para no saturar al entrar
-  setTimeout(() => {
-    setInterval(() => {
-      if (Math.random() > 0.6) return; // 40% de probabilidad
-      const name = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
-      const item = FAKE_ITEMS[Math.floor(Math.random() * FAKE_ITEMS.length)];
-      toast(`🔥 ${name} acaba de comprar ${item}`);
-    }, CONFIG.socialProofInterval);
-  }, 5000);
+.pLogo { 
+  height: 45px; width: auto; max-width: 140px; object-fit: contain; 
+  filter: grayscale(100%); transition: .4s; opacity: 0.7; 
 }
+.pLogo:hover { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
 
-/* ---------------------------------------------------------
-   10. INTERFAZ DE USUARIO (DRAWER, TOAST, AI)
-   --------------------------------------------------------- */
-function toast(msg) {
-  const t = $("#toast");
-  if (!t) return;
-  t.innerHTML = msg;
-  t.classList.add("show");
-  playSound("click");
-  setTimeout(() => t.classList.remove("show"), 3500);
+/* =========================================================
+   7. DRAWER (CARRITO)
+   ========================================================= */
+.drawer {
+  position: fixed; top: 0; right: 0; width: 100%; max-width: 400px; height: 100%;
+  background: var(--glass-dark); color: #fff; backdrop-filter: var(--glass-blur);
+  border-left: 1px solid var(--glass-border); transform: translateX(110%);
+  transition: transform .4s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 1000;
+  display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.5);
 }
+.drawer.open { transform: translateX(0); }
 
-function openDrawer() { 
-  $("#cartDrawer").classList.add("open"); 
-  $("#pageOverlay").classList.add("show");
-  document.body.classList.add("noScroll");
+.d-header { padding: 20px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+.d-header h3 { margin: 0; font-family: var(--font-title); font-size: 24px; letter-spacing: 1px; }
+.closeBtn { width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 8px; color: #fff; display: grid; place-items: center; font-size: 18px; transition: .2s; }
+.closeBtn:hover { background: rgba(255,255,255,0.2); }
+
+.d-body { flex: 1; overflow-y: auto; padding: 20px; }
+.cartRow { 
+  display: flex; gap: 15px; margin-bottom: 15px; padding: 15px; border-radius: 12px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); align-items: center;
 }
+.cartRow img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #fff; }
+.qty-ctrl button { width: 28px; height: 28px; background: rgba(255,255,255,0.1); color: #fff; border-radius: 6px; font-weight: 700; transition: .2s; }
+.qty-ctrl button:hover { background: var(--score-red); }
 
-function closeDrawer() { 
-  $("#cartDrawer").classList.remove("open"); 
-  $("#pageOverlay").classList.remove("show");
-  document.body.classList.remove("noScroll");
+.d-footer { padding: 20px; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); }
+.shipSelector { display: grid; gap: 10px; margin-bottom: 15px; }
+.radio-option { 
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 10px; 
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: .2s;
 }
+.radio-option:hover { background: rgba(255,255,255,0.1); }
+.radio-option input { margin-top: 3px; accent-color: var(--score-red); }
+.inputField { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff; margin-bottom: 10px; font-weight: 600; }
+.summary-total { display: flex; justify-content: space-between; align-items: baseline; margin: 15px 0; padding-top: 15px; border-top: 1px solid var(--glass-border); font-weight: 900; font-size: 20px; font-family: var(--font-title); }
 
-function toggleShipping(mode) {
-  state.shipping.mode = mode;
-  playSound("click");
-  if (mode === 'pickup') {
-    state.shipping.cost = 0;
-    state.shipping.label = "Pickup Tijuana (Gratis)";
-    $("#miniZip").style.display = "none";
-  } else {
-    state.shipping.label = "Se cotizará en Checkout";
-    state.shipping.cost = 0;
-    $("#miniZip").style.display = "block";
-  }
-  updateCartUI();
+/* =========================================================
+   8. CHATBOT, SPLASH & MODALS
+   ========================================================= */
+/* Splash RPM */
+#splash-screen { 
+  position: fixed; inset: 0; z-index: 9999; background: #000; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; 
+  transition: opacity .6s ease; 
 }
+.splash-logo { width: 140px; margin-bottom: 30px; animation: pulse 2s infinite; }
+.rpm-bar-container { width: 220px; height: 6px; background: #222; border-radius: 10px; overflow: hidden; margin-bottom: 10px; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+.rpm-bar { height: 100%; width: 0%; background: var(--score-red); transition: width .1s linear; }
+.rev-counter { font-family: var(--font-title); font-size: 24px; color: var(--score-red); letter-spacing: 2px; }
+.splash-text { font-size: 12px; color: #666; letter-spacing: 4px; margin-top: 10px; }
 
-// IA Chat
-async function sendAiMessage() {
-  const input = $("#aiInput");
-  const box = $("#aiMessages");
-  const text = input.value.trim();
-  if (!text) return;
-
-  // User Msg
-  const userDiv = document.createElement("div");
-  userDiv.className = "ai-bubble user";
-  userDiv.textContent = text;
-  box.appendChild(userDiv);
-  input.value = "";
-  box.scrollTop = box.scrollHeight;
-
-  // Loader
-  const botDiv = document.createElement("div");
-  botDiv.className = "ai-bubble bot";
-  botDiv.innerHTML = '<i class="fa-solid fa-ellipsis fa-bounce"></i>';
-  box.appendChild(botDiv);
-  box.scrollTop = box.scrollHeight;
-
-  try {
-    const res = await fetch(CONFIG.endpoints.chat, {
-      method: "POST",
-      body: JSON.stringify({ message: text })
-    });
-    const data = await res.json();
-    botDiv.textContent = data.reply || "Soy Score AI, ¿en qué te ayudo?";
-    playSound("click");
-  } catch (e) {
-    botDiv.textContent = "Error de conexión con el asistente.";
-  }
+/* Chatbot */
+.ai-btn-float {
+  position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: #000;
+  color: #fff; border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 500;
+  border: 2px solid var(--score-red); display: grid; place-items: center; font-size: 24px; 
+  transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+.ai-btn-float:hover { transform: scale(1.1) rotate(10deg); background: var(--score-red); }
+.ai-chat-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 600; display: none; place-items: center; backdrop-filter: blur(4px); }
+.ai-chat-modal.show { display: grid; }
+.ai-box { width: 360px; max-width: 90vw; height: 500px; background: #fff; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+.ai-header { background: var(--score-red); color: #fff; padding: 15px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+.ai-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 12px; }
+.ai-bubble { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 13px; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.ai-bubble.bot { align-self: flex-start; background: #fff; border: 1px solid #eee; border-bottom-left-radius: 2px; }
+.ai-bubble.user { align-self: flex-end; background: #000; color: #fff; border-bottom-right-radius: 2px; }
+.ai-input-bar { display: flex; gap: 10px; padding: 12px; border-top: 1px solid #eee; background: #fff; }
+.ai-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+.ai-send { width: 40px; height: 40px; background: var(--score-red); color: #fff; border-radius: 8px; display: grid; place-items: center; }
 
-function bindUI() {
-  // Binds de filtros
-  $$(".chip").forEach(c => c.addEventListener("click", () => {
-    $$(".chip").forEach(ch => ch.classList.remove("active"));
-    c.classList.add("active");
-    state.filter = c.dataset.filter;
-    playSound("click");
-    renderGrid();
-  }));
+/* Legal Modal */
+.legalModal { position: fixed; inset: 0; z-index: 1200; display: none; place-items: center; }
+.legalModal.show { display: grid; }
+.legalBackdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+.legalCard { position: relative; width: min(700px, 90vw); max-height: 80vh; background: #1a1a1a; color: #ddd; border-radius: 20px; display: flex; flex-direction: column; z-index: 1; border: 1px solid #333; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+.legalHead { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+.legalBody { padding: 30px; overflow-y: auto; font-size: 15px; line-height: 1.6; }
 
-  // Cierres de modales
-  $(".drawerClose").addEventListener("click", closeDrawer);
-  $("#pageOverlay").addEventListener("click", closeDrawer);
+/* Toast */
+.toast { 
+  position: fixed; bottom: 30px; left: 50%; transform: translate(-50%, 20px); 
+  background: #111; color: #fff; padding: 12px 24px; border-radius: 50px; 
+  font-weight: 700; font-size: 13px; opacity: 0; transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+  z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); 
+  display: flex; align-items: center; gap: 8px; pointer-events: none;
 }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* ---------------------------------------------------------
-   11. BINDINGS & ARRANQUE (DOM READY)
-   --------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", async () => {
-  initStripe();
-  initIntroSplash();
-  
-  // Carga asíncrona robusta
-  await loadCatalog();
-  
-  // UI Bindings
-  bindUI();
-  updateCartUI();
-  
-  // Extras
-  initSocialProof();
-  initServiceWorker();
-  
-  // URL Params (Success/Cancel Stripe)
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("success")) {
-    toast("✅ ¡Pago Exitoso! Gracias por tu compra.");
-    state.cart = [];
-    saveCart();
-    window.history.replaceState({}, document.title, "/");
-  } else if (params.get("cancel")) {
-    toast("⚠️ Pago cancelado. Intenta de nuevo.");
-    window.history.replaceState({}, document.title, "/");
-  }
-});
+/* Overlay Global */
+.page-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; opacity: 0; pointer-events: none; transition: .3s; }
+.page-overlay.show { opacity: 1; pointer-events: auto; }
 
-/* ---------------------------------------------------------
-   12. EXPORTACIONES GLOBALES (PARA COMPATIBILIDAD HTML)
-   --------------------------------------------------------- */
-window.addToCart = addToCart;
-window.modQty = modQty;
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-window.quoteShippingUI = quoteShippingUI;
-window.doCheckout = doCheckout;
-window.toggleShipping = toggleShipping;
-window.sendAiMessage = sendAiMessage;
-window.toggleAiAssistant = () => { $("#aiChatModal").classList.toggle("show"); playSound("click"); };
-window.handleScroll = window.handleScroll; // Carrusel handler
+/* Footer */
+.footer { margin-top: 60px; padding: 60px 0 30px; background: #0a0a0a; color: #fff; border-top: 1px solid #222; }
+.footerInner { display: flex; gap: 40px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 40px; }
+.fCol { min-width: 200px; }
+.footerBrandName { font-family: var(--font-title); font-size: 36px; line-height: 1; margin-bottom: 15px; letter-spacing: 1px; }
+.footerDesc { opacity: 0.6; font-size: 14px; line-height: 1.6; max-width: 300px; }
+.fCol h4 { color: #fff; margin-bottom: 20px; font-family: var(--font-title); font-size: 20px; letter-spacing: 1px; }
+.f-links a { display: block; margin-top: 10px; font-size: 14px; opacity: 0.6; transition: .2s; }
+.f-links a:hover { opacity: 1; color: var(--accent); transform: translateX(5px); }
+.copy { text-align: center; opacity: 0.3; font-size: 12px; border-top: 1px solid #222; padding-top: 30px; text-transform: uppercase; letter-spacing: 1px; }
 
-// Compatibilidad Legal & Cookies
-window.openLegal = (type) => {
-    $("#legalModal").classList.add("show");
-    const title = type === 'privacy' ? 'AVISO DE PRIVACIDAD' : 'TÉRMINOS';
-    $("#legalTitle").textContent = title;
-};
-window.closeLegal = () => $("#legalModal").classList.remove("show");
-window.acceptCookies = () => { $("#cookieBanner").style.display='none'; localStorage.setItem("score_cookies","1"); };
+/* Responsive */
+@media (max-width: 860px) { .hero-title { font-size: 70px; } .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; } .section { padding: 60px 0; } }
+@media (max-width: 500px) { .hero-title { font-size: 52px; } .nav { display: none; } .grid { grid-template-columns: repeat(2, 1fr); } .promo-bar { font-size: 10px; } }
