@@ -1,18 +1,13 @@
 /* =========================================================
-   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (360)
-   ✅ Catálogo: Supabase (REST) -> fallback /data/catalog.json -> fallback local
-   ✅ Checkout: Netlify Function (Stripe Live) -> fallback /api/checkout
-   ✅ Shipping Quote: Netlify Function -> fallback /api/quote -> fallback fijo
-   ✅ UI: compatible con tus 2 HTML (drawer active/open, backdrop/overlay, chips, etc.)
-   ✅ AI: Netlify Function -> fallback /api/chat -> offline
-   ✅ Extras: social proof, cookies, service worker, intro/splash
+   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (360) — OPTION B
+   ✅ Endpoints Netlify Functions: create_checkout / quote_shipping / chat
+   ✅ Alineado a tu _shared.js actual (fallback 250/800, shape ok/cost/label)
    ========================================================= */
 
 /* -----------------------
    1) CONFIG REAL (respeta claves)
 ------------------------ */
 const CONFIG = {
-  // PUBLIC FRONTEND KEYS (provided by you)
   stripeKey:
     "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
 
@@ -20,19 +15,23 @@ const CONFIG = {
   supabaseKey:
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
 
-  // Endpoints (prefer Netlify Functions) — OPCIÓN B (nombres reales)
+  // ✅ OPTION B: Netlify Functions (nombres reales por archivo)
   endpoints: {
     checkout: "/.netlify/functions/create_checkout",
     quote: "/.netlify/functions/quote_shipping",
-    ai: "/.netlify/functions/chat", // 👈 tu chat es chat.js
+    ai: "/.netlify/functions/chat",
 
-    // fallback APIs (si existen en tu backend)
+    // fallback APIs (si existen)
     apiCheckout: "/api/checkout",
     apiQuote: "/api/quote",
     apiChat: "/api/chat",
   },
 
   storageKey: "score_cart_2026",
+
+  // ✅ alineado a tu _shared.js
+  fallbackShippingMX: 250,
+  fallbackShippingUS: 800,
 };
 
 /* -----------------------
@@ -58,7 +57,6 @@ const escapeHtml = (s) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-// URL segura (no “inventa”)
 function safeUrl(u) {
   const raw = String(u || "").trim();
   if (!raw) return "";
@@ -97,9 +95,7 @@ async function postJSON(url, payload, timeoutMs = 15000) {
 let stripe = null;
 function initStripe() {
   if (stripe) return stripe;
-  if (window.Stripe && CONFIG.stripeKey) {
-    stripe = window.Stripe(CONFIG.stripeKey);
-  }
+  if (window.Stripe && CONFIG.stripeKey) stripe = window.Stripe(CONFIG.stripeKey);
   return stripe;
 }
 
@@ -118,7 +114,7 @@ const state = {
 };
 
 /* -----------------------
-   5) AUDIO FX (WebAudio, sin assets)
+   5) AUDIO FX (WebAudio)
 ------------------------ */
 let audioCtx = null;
 const getAudioCtx = () => {
@@ -169,7 +165,7 @@ function playSound(type) {
 }
 
 /* -----------------------
-   6) TOAST (CSS existente)
+   6) TOAST
 ------------------------ */
 function toast(msg, type = "info") {
   const t = $("#toast") || $(".toast");
@@ -185,12 +181,9 @@ function toast(msg, type = "info") {
 ------------------------ */
 async function loadCatalog() {
   const grid = $("#productsGrid");
-  if (grid) {
-    grid.innerHTML =
-      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
-  }
+  if (grid) grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
 
-  // 1) Supabase REST first (real)
+  // 1) Supabase REST
   try {
     const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*`, {
       headers: {
@@ -210,7 +203,7 @@ async function loadCatalog() {
     console.warn("[catalog] supabase fail:", e);
   }
 
-  // 2) fallback /data/catalog.json
+  // 2) /data/catalog.json
   try {
     const { res, data } = await fetchJSON("/data/catalog.json", { cache: "no-store" }, 12000);
     if (res.ok) {
@@ -225,7 +218,7 @@ async function loadCatalog() {
     console.warn("[catalog] /data/catalog.json fail:", e);
   }
 
-  // 3) final fallback local (no vacío)
+  // 3) local fallback
   state.products = normalizeProducts(getLocalCatalog());
   renderGrid(getFilteredProducts());
 }
@@ -233,12 +226,7 @@ async function loadCatalog() {
 function normalizeProducts(list) {
   return (list || []).map((p, idx) => {
     const id = p?.id ?? p?.sku ?? `p${idx + 1}`;
-    const images =
-      Array.isArray(p?.images) && p.images.length
-        ? p.images
-        : p?.img
-        ? [p.img]
-        : [];
+    const images = Array.isArray(p?.images) && p.images.length ? p.images : (p?.img ? [p.img] : []);
     return {
       id: String(id),
       sectionId: String(p?.sectionId || p?.category || "ALL").toUpperCase(),
@@ -251,11 +239,10 @@ function normalizeProducts(list) {
   });
 }
 
-// Fallback local alineado a tus assets
 function getLocalCatalog() {
   return [
-    { id: "p1", sectionId: "HOODIES", name: "Baja 1000 Legacy Hoodie", baseMXN: 1200, img: "/assets/prod1.webp", images: ["/assets/prod1.webp"], sizes: ["S", "M", "L", "XL"] },
-    { id: "p2", sectionId: "TEES", name: "Score International Tee", baseMXN: 650, img: "/assets/prod2.webp", images: ["/assets/prod2.webp"], sizes: ["S", "M", "L", "XL"] },
+    { id: "p1", sectionId: "HOODIES", name: "Baja 1000 Legacy Hoodie", baseMXN: 1200, img: "/assets/prod1.webp", images: ["/assets/prod1.webp"], sizes: ["S","M","L","XL"] },
+    { id: "p2", sectionId: "TEES", name: "Score International Tee", baseMXN: 650, img: "/assets/prod2.webp", images: ["/assets/prod2.webp"], sizes: ["S","M","L","XL"] },
     { id: "p3", sectionId: "CAPS", name: "Trophy Truck Cap", baseMXN: 800, img: "/assets/prod3.webp", images: ["/assets/prod3.webp"], sizes: ["Unitalla"] },
     { id: "p4", sectionId: "ACCESORIOS", name: "Sticker Pack Oficial", baseMXN: 250, img: "/assets/prod4.webp", images: ["/assets/prod4.webp"], sizes: ["Pack"] },
   ];
@@ -277,8 +264,7 @@ function renderGrid(list) {
   grid.innerHTML = "";
 
   if (!list || !list.length) {
-    grid.innerHTML =
-      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>No hay productos en esta categoría.</div>";
+    grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;opacity:.6'>No hay productos en esta categoría.</div>";
     return;
   }
 
@@ -290,9 +276,7 @@ function renderGrid(list) {
     const nameSafe = escapeHtml(p.name);
     const price = fmtMXN(p.baseMXN);
 
-    const images = (p.images && p.images.length ? p.images : [p.img])
-      .map(safeUrl)
-      .filter(Boolean);
+    const images = (p.images && p.images.length ? p.images : [p.img]).map(safeUrl).filter(Boolean);
 
     const media = buildMediaHTML(images, nameSafe, pid);
     const sizes = (p.sizes && p.sizes.length ? p.sizes : ["Unitalla"]).map(String);
@@ -330,16 +314,11 @@ function renderGrid(list) {
 
 function buildMediaHTML(images, nameSafe, pid) {
   if (images.length > 1) {
-    const slides = images
-      .map(
-        (src) =>
-          `<div class="carousel-item"><img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525"></div>`
-      )
-      .join("");
+    const slides = images.map((src) =>
+      `<div class="carousel-item"><img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525"></div>`
+    ).join("");
 
-    const dots = images
-      .map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`)
-      .join("");
+    const dots = images.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`).join("");
 
     return `
       <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
@@ -470,7 +449,6 @@ function updateDrawerUI() {
     const btns = row.querySelectorAll(".qtyBtn");
     btns[0]?.addEventListener("click", () => modQty(i, -1));
     btns[1]?.addEventListener("click", () => modQty(i, +1));
-
     box.appendChild(row);
   });
 
@@ -479,6 +457,7 @@ function updateDrawerUI() {
   const total = sub + ship;
 
   if ($("#cartSubtotal")) $("#cartSubtotal").textContent = fmtMXN(sub);
+
   if ($("#cartShipping")) {
     $("#cartShipping").textContent =
       state.shipping.mode === "pickup" ? "Gratis" : ship > 0 ? fmtMXN(ship) : "Pendiente";
@@ -495,36 +474,27 @@ function updateDrawerUI() {
 }
 
 /* -----------------------
-   10) DRAWER OPEN/CLOSE (compat)
+   10) DRAWER OPEN/CLOSE
 ------------------------ */
 function openDrawer() {
-  const drawer = $("#cartDrawer");
-  drawer?.classList.add("active", "open");
-
+  $("#cartDrawer")?.classList.add("active", "open");
   $("#pageOverlay")?.classList.add("active", "show");
   $(".page-overlay")?.classList.add("active", "show");
   $("#backdrop")?.classList.add("active", "show");
-
   document.body.classList.add("noScroll", "modalOpen");
   document.body.style.overflow = "hidden";
-
   saveCart();
 }
-
 function closeDrawer() {
-  const drawer = $("#cartDrawer");
-  drawer?.classList.remove("active", "open");
-
+  $("#cartDrawer")?.classList.remove("active", "open");
   $("#pageOverlay")?.classList.remove("active", "show");
   $(".page-overlay")?.classList.remove("active", "show");
   $("#backdrop")?.classList.remove("active", "show");
-
   document.body.classList.remove("noScroll", "modalOpen");
   document.body.style.overflow = "";
 }
-
-function openCart() { openDrawer(); }
-function closeCart() { closeDrawer(); }
+function openCart(){ openDrawer(); }
+function closeCart(){ closeDrawer(); }
 
 /* -----------------------
    11) SHIPPING
@@ -562,7 +532,6 @@ function cartItemsForQuote() {
   const items = (state.cart || []).map((i) => ({ qty: clampQty(i.qty) }));
   return items.length ? items : [{ qty: 1 }];
 }
-
 function modeToCountry(mode) {
   return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
 }
@@ -583,6 +552,7 @@ async function quoteShippingMini() {
 
   const mode = getShipModeFromUI();
   const zip = digitsOnly($("#miniZip")?.value || "");
+
   if (mode === "pickup") return;
   if (zip.length < 4) return toast("Ingresa un CP válido", "error");
 
@@ -593,23 +563,17 @@ async function quoteShippingMini() {
   try {
     const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
 
+    // ✅ Opción B: quote_shipping
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
     if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
 
-    let cost = 0;
-    let label = "";
+    // Shape esperado de quote_shipping:
+    // { ok:true, cost, label, source }
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
-    if (data?.price) {
-      cost = Number(data.price || 0);
-      label = String(data.carrier || "Envío actualizado");
-    } else if (data?.ok) {
-      cost = Number(data.cost || 0);
-      label = String(data.label || "Envío actualizado");
-    } else {
-      throw new Error(data?.error || "QUOTE_FAILED");
-    }
-
+    const cost = Number(data.cost || 0);
+    const label = String(data.label || "Envío estimado");
     if (!cost) throw new Error("QUOTE_ZERO");
 
     state.shipping = { mode, quote: cost, label };
@@ -618,18 +582,49 @@ async function quoteShippingMini() {
     playSound("success");
   } catch (e) {
     console.warn("[quote] fallback:", e);
-    const fallbackCost = mode === "us" ? 450 : 180;
+    const fallbackCost = mode === "us" ? CONFIG.fallbackShippingUS : CONFIG.fallbackShippingMX;
     state.shipping.quote = fallbackCost;
-    state.shipping.label = "Envío Fijo (Fallback)";
+    state.shipping.label = "Envío (Estimación)";
     saveCart();
-    toast("No se pudo cotizar en vivo. Usando fallback.", "info");
+    toast("No se pudo cotizar en vivo. Usando estimación.", "info");
   } finally {
     state.__quoteInFlight = false;
   }
 }
 
+async function quoteShippingUI() {
+  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
+  const zip = digitsOnly($("#shipZip")?.value || "");
+  const out = $("#shipQuote");
+
+  if (zip.length < 4) {
+    if (out) out.textContent = "Ingresa un código postal válido.";
+    return;
+  }
+  if (out) out.textContent = "Cotizando...";
+
+  try {
+    const payload = { zip, country, items: cartItemsForQuote() };
+    let res, data;
+    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
+
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
+
+    const cost = Number(data.cost || 0);
+    const label = String(data.label || "Envío estimado");
+    if (!cost) throw new Error("QUOTE_ZERO");
+
+    if (out) out.innerHTML = `<b>${escapeHtml(label)}</b> · ${fmtMXN(cost)}`;
+    playSound("success");
+  } catch (e) {
+    console.warn("[quote-ui] fail:", e);
+    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
+  }
+}
+
 /* -----------------------
-   12) CHECKOUT
+   12) CHECKOUT (create_checkout)
 ------------------------ */
 async function doCheckout() {
   if (!state.cart.length) return toast("Carrito vacío", "error");
@@ -662,6 +657,7 @@ async function doCheckout() {
       promoCode: "",
     };
 
+    // ✅ Opción B: create_checkout
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 20000));
     if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
@@ -675,7 +671,6 @@ async function doCheckout() {
       window.location.href = directUrl;
       return;
     }
-
     if (sessionId && stripe) {
       const result = await stripe.redirectToCheckout({ sessionId: String(sessionId) });
       if (result?.error) throw new Error(result.error.message);
@@ -694,7 +689,7 @@ async function doCheckout() {
 }
 
 /* -----------------------
-   13) AI (chat.js)
+   13) AI (chat)
 ------------------------ */
 function toggleAiAssistant() {
   const modal = $("#aiChatModal") || $(".ai-chat-modal");
@@ -722,9 +717,8 @@ async function sendAiMessage() {
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
     if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
-    if (!res.ok) throw new Error("AI_HTTP_" + res.status);
-
     const reply = String(data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?");
+
     const bot = document.createElement("div");
     bot.className = "ai-bubble bot ai-msg ai-bot";
     bot.textContent = reply;
@@ -764,7 +758,7 @@ function openLegal(type) {
   const FALLBACK = {
     privacy: { title: "AVISO DE PRIVACIDAD", html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>" },
     terms: { title: "TÉRMINOS Y CONDICIONES", html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>" },
-    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com<br><b>WhatsApp:</b> +52 664 123 4567</p>" },
+    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>" },
   };
 
   const key = String(type || "privacy").trim();
@@ -778,8 +772,7 @@ function openLegal(type) {
 }
 
 function closeLegal() {
-  const modal = $("#legalModal");
-  modal?.classList.remove("active", "show");
+  $("#legalModal")?.classList.remove("active", "show");
   document.body.classList.remove("modalOpen", "noScroll");
 }
 
@@ -794,7 +787,7 @@ function acceptCookies() {
 }
 
 /* -----------------------
-   16) INTRO + SPLASH
+   16) INTRO/SPLASH + SOCIAL + SW
 ------------------------ */
 function initIntroSplash() {
   const intro = $("#intro");
@@ -829,21 +822,15 @@ function initIntroSplash() {
   }
 }
 
-/* -----------------------
-   17) Social Proof
------------------------- */
 function initSocialProof() {
   const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
   const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "Rosarito", "Tecate"];
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   const show = () => {
-    const cartOpen =
-      $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
-    const aiOpen =
-      $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
+    const cartOpen = $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
+    const aiOpen = $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
     if (cartOpen || aiOpen) return;
-
     toast(`🏁 ${pick(names)} de ${pick(locs)} armó su pedido oficial.`, "info");
   };
 
@@ -852,20 +839,14 @@ function initSocialProof() {
   state.__socialTimer = setInterval(show, 42000);
 }
 
-/* -----------------------
-   18) Service Worker
------------------------- */
 function initServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-
-  navigator.serviceWorker
-    .register("/sw.js?v=2026_PROD_UNIFIED_360")
-    .catch(() => {});
+  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_360").catch(() => {});
 }
 
 /* -----------------------
-   19) BOOT
+   17) BOOT
 ------------------------ */
 function bindUI() {
   $(".cartBtn")?.addEventListener("click", openDrawer);
@@ -878,14 +859,14 @@ function bindUI() {
   $(".closeBtn")?.addEventListener("click", closeDrawer);
   $(".drawerClose")?.addEventListener("click", closeDrawer);
 
+  // ✅ checkout button
+  $("#checkoutBtn")?.addEventListener("click", doCheckout);
+
   $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
   $(".ai-send")?.addEventListener("click", sendAiMessage);
   bindAiEnter();
 
-  $$(".jsLegalLink").forEach((btn) => {
-    btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"));
-  });
-
+  $$(".jsLegalLink").forEach((btn) => btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy")));
   $("#legalClose")?.addEventListener("click", closeLegal);
   $("#legalBackdrop")?.addEventListener("click", closeLegal);
 
@@ -905,8 +886,6 @@ function bindUI() {
   document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
     r.addEventListener("change", () => toggleShipping(r.value));
   });
-
-  $("#checkoutBtn")?.addEventListener("click", doCheckout);
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
@@ -943,3 +922,24 @@ document.addEventListener("DOMContentLoaded", () => {
   initSocialProof();
   initServiceWorker();
 });
+
+/* -----------------------
+   EXPORTS legacy
+------------------------ */
+window.addToCart = addToCart;
+window.modQty = modQty;
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+window.openCart = openCart;
+window.closeCart = closeCart;
+window.toggleShipping = toggleShipping;
+window.quoteShipping = quoteShippingMini;
+window.quoteShippingMini = quoteShippingMini;
+window.quoteShippingUI = quoteShippingUI;
+window.doCheckout = doCheckout;
+window.checkout = doCheckout;
+window.toggleAiAssistant = toggleAiAssistant;
+window.sendAiMessage = sendAiMessage;
+window.openLegal = openLegal;
+window.closeLegal = closeLegal;
+window.acceptCookies = acceptCookies;
