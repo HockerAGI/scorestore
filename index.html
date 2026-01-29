@@ -11,15 +11,15 @@
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
 
-  <!-- Fonts (alineado a tu CSS v2026: Inter + Teko) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- CSS (TU MASTER STYLES v2026) -->
+  <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_360" />
 
-  <!-- FontAwesome: no bloquear render -->
+  <!-- FontAwesome (non-blocking) -->
   <link rel="preload"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         as="style"
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   </noscript>
 
-  <!-- Stripe (Checkout) -->
+  <!-- Stripe -->
   <script src="https://js.stripe.com/v3/" async></script>
 
   <!-- Meta Pixel -->
@@ -46,7 +46,7 @@
 
 <body class="appBg">
   <!-- =========================
-       SPLASH (RPM Engine) — CSS: #splash-screen
+       SPLASH (RPM Engine)
        ========================= -->
   <div id="splash-screen" aria-label="Cargando" aria-hidden="false">
     <div class="splash-content">
@@ -68,21 +68,20 @@
   </noscript>
 
   <!-- =========================
-       PROMO BAR — CSS: .promo-bar
+       PROMO BAR
        ========================= -->
   <div class="promo-bar" role="status" aria-live="polite">
-    ENVÍOS GRATIS EN <b>PICKUP TIJUANA</b> | WORLDWIDE SHIPPING
+    PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA EN TIEMPO REAL
   </div>
 
   <!-- =========================
-       TOPBAR — CSS: .topbar + .topInner
-       (sin texto “Score Store”, solo logo grande)
+       TOPBAR
        ========================= -->
   <header class="topbar" role="banner">
     <div class="container topInner">
       <div class="brand" aria-label="SCORE Store">
         <a href="#top" aria-label="Ir al inicio">
-          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="64" height="64" decoding="async" />
+          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="72" height="72" decoding="async" />
         </a>
       </div>
 
@@ -99,13 +98,12 @@
     </div>
   </header>
 
-  <!-- wrapper real del HTML (PDF/Index) -->
+  <!-- wrapper -->
   <div class="wrap">
     <!-- =========================
-         HERO — CSS: .hero + .heroBgImg + .heroOverlayDark (overlay mínimo)
+         HERO
          ========================= -->
     <section class="hero" id="top" aria-label="Portada">
-      <!-- Recomendado: IMG real -->
       <img class="heroBgImg" src="/assets/hero.webp" alt="" width="1920" height="1080" decoding="async" />
       <div class="heroOverlayDark" aria-hidden="true"></div>
 
@@ -118,7 +116,7 @@
         <h1 class="hero-title">BORN IN <span class="accent">BAJA</span></h1>
 
         <div class="hero-logos" aria-label="Sello World Desert">
-          <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="160" height="160" decoding="async" />
+          <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="180" height="180" decoding="async" />
         </div>
 
         <p class="hero-copy">
@@ -141,7 +139,7 @@
     </section>
 
     <!-- =========================
-         CATALOGO — un solo #productsGrid (sin duplicados)
+         CATALOGO
          ========================= -->
     <section id="catalogo" class="section" aria-label="Catálogo">
       <div class="container">
@@ -150,7 +148,6 @@
           <p>Selecciona tu categoría y agrégalo al carrito.</p>
         </div>
 
-        <!-- Filtros (unificados: puedes cambiar data-filter en tu JS) -->
         <div class="filters" aria-label="Filtros de catálogo">
           <button class="chip active" data-filter="ALL" type="button">TODO</button>
           <button class="chip" data-filter="HOODIES" type="button">HOODIES</button>
@@ -211,7 +208,7 @@
   </div>
 
   <!-- =========================
-       FOOTER (Full) — sin duplicar footerMini
+       FOOTER
        ========================= -->
   <footer class="footer" aria-label="Footer">
     <div class="container footerInner">
@@ -229,7 +226,7 @@
           <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" class="fSocial" aria-label="Instagram">
             <i class="fa-brands fa-instagram" aria-hidden="true"></i>
           </a>
-          <a href="https://wa.me/526641234567" target="_blank" rel="noopener" class="fSocial" aria-label="WhatsApp">
+          <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="fSocial" aria-label="WhatsApp">
             <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
           </a>
         </div>
@@ -265,8 +262,7 @@
   </footer>
 
   <!-- =========================
-       DRAWER (CART) — CSS: .drawer (glass)
-       Compatible: .open / .active
+       DRAWER (CART)
        ========================= -->
   <aside id="cartDrawer" class="drawer" aria-label="Carrito" aria-live="polite">
     <div class="d-header">
@@ -277,7 +273,6 @@
     <div id="cartItems" class="d-body" aria-label="Productos del carrito"></div>
 
     <div class="d-footer">
-      <!-- Selector envío (drawer) -->
       <div class="shipSelector" aria-label="Método de entrega">
         <label class="radio-option">
           <input type="radio" name="shipMode" value="pickup" checked onchange="toggleShippingCompat('pickup')">
@@ -324,11 +319,10 @@
     </div>
   </aside>
 
-  <!-- Overlay (compat: .page-overlay.active o .backdrop.show) -->
   <div id="pageOverlay" class="page-overlay" onclick="closeDrawerCompat()" aria-label="Cerrar overlay" aria-hidden="true"></div>
 
   <!-- =========================
-       AI — CSS: .ai-btn-float + .ai-chat-modal (.active/.show)
+       AI
        ========================= -->
   <button class="ai-btn-float" type="button" onclick="toggleAiAssistant()" aria-label="Abrir asistente">
     <i class="fa-solid fa-robot" aria-hidden="true"></i>
@@ -355,7 +349,7 @@
   </div>
 
   <!-- =========================
-       LEGAL MODAL — CSS: .legalModal.show
+       LEGAL MODAL
        ========================= -->
   <div id="legalModal" class="legalModal" aria-label="Información legal">
     <div class="legalBackdrop" id="legalBackdrop" aria-hidden="true"></div>
@@ -365,7 +359,6 @@
         <button id="legalClose" type="button" aria-label="Cerrar" onclick="closeLegalCompat()">✕</button>
       </div>
       <div class="legalBody" id="legalBody">
-        <!-- Tu JS puede inyectar aquí privacy/terms/contact -->
         <p style="margin-bottom:10px;">
           <b>Política de Privacidad:</b> Tus datos se procesan conforme a la normativa aplicable y solo para operar tu compra, envíos y soporte.
         </p>
@@ -377,12 +370,12 @@
   </div>
 
   <!-- =========================
-       TOAST — CSS: .toast.show
+       TOAST
        ========================= -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <!-- =========================
-       COOKIES — CSS: .cookieBanner
+       COOKIES
        ========================= -->
   <div id="cookieBanner" class="cookieBanner" aria-label="Cookies">
     <div class="cookieText">
@@ -394,38 +387,37 @@
     </div>
   </div>
 
-  <!-- =========================
-       MAIN JS (tu lógica real)
-       ========================= -->
+  <!-- MAIN JS -->
   <script type="module" src="/js/main.js?v=2026_PROD_UNIFIED_360"></script>
 
   <!-- =========================
-       COMPAT LAYER (no duplica tu lógica; solo evita romper)
-       - Si tu main.js ya define estas funciones, NO se toca.
+       COMPAT LAYER SAFE (PROD)
+       - NO pisa funciones reales de main.js
        ========================= -->
   <script>
     // Drawer compat
-    function openDrawerCompat(){
-      if (typeof openDrawer === "function") return openDrawer();
-      if (typeof openCart === "function") return openCart();
+    window.openDrawerCompat = function(){
+      if (typeof window.openDrawer === "function") return window.openDrawer();
+      if (typeof window.openCart === "function") return window.openCart();
       const drawer = document.getElementById("cartDrawer");
       const overlay = document.getElementById("pageOverlay");
       if (drawer) drawer.classList.add("open","active");
       if (overlay) overlay.classList.add("active","show");
       document.body.classList.add("noScroll","modalOpen");
-    }
-    function closeDrawerCompat(){
-      if (typeof closeDrawer === "function") return closeDrawer();
-      if (typeof closeCart === "function") return closeCart();
+    };
+
+    window.closeDrawerCompat = function(){
+      if (typeof window.closeDrawer === "function") return window.closeDrawer();
+      if (typeof window.closeCart === "function") return window.closeCart();
       const drawer = document.getElementById("cartDrawer");
       const overlay = document.getElementById("pageOverlay");
       if (drawer) drawer.classList.remove("open","active");
       if (overlay) overlay.classList.remove("active","show");
       document.body.classList.remove("noScroll","modalOpen");
-    }
+    };
 
-    function toggleShippingCompat(mode){
-      if (typeof toggleShipping === "function") return toggleShipping(mode);
+    window.toggleShippingCompat = function(mode){
+      if (typeof window.toggleShipping === "function") return window.toggleShipping(mode);
       const zip = document.getElementById("miniZip");
       const label = document.getElementById("cartShipLabel");
       if (!zip || !label) return;
@@ -439,25 +431,24 @@
         zip.style.display = "block";
         label.textContent = "Quote USA pending…";
       }
-    }
+    };
 
     // Checkout compat
-    function checkoutCompat(){
-      if (typeof doCheckout === "function") return doCheckout();
-      if (typeof checkout === "function") return checkout();
-      // Fallback: toast
+    window.checkoutCompat = function(){
+      if (typeof window.doCheckout === "function") return window.doCheckout();
+      if (typeof window.checkout === "function") return window.checkout();
       showToastCompat("Checkout no configurado en main.js");
-    }
+    };
 
     // Shipping quote UI compat
-    function quoteShippingUICompat(){
-      if (typeof quoteShippingUI === "function") return quoteShippingUI();
+    window.quoteShippingUICompat = function(){
+      if (typeof window.quoteShippingUI === "function") return window.quoteShippingUI();
       showToastCompat("Cotizador no configurado en main.js");
-    }
+    };
 
     // Legal compat
-    function openLegalCompat(which){
-      if (typeof openLegal === "function") return openLegal(which);
+    window.openLegalCompat = function(which){
+      if (typeof window.openLegal === "function") return window.openLegal(which);
       const modal = document.getElementById("legalModal");
       const body = document.getElementById("legalBody");
       const title = document.getElementById("legalTitle");
@@ -482,52 +473,57 @@
       title.textContent = data.t;
       body.innerHTML = data.b;
       modal.classList.add("show");
+      modal.classList.add("active");
       document.body.classList.add("modalOpen","noScroll");
-    }
+    };
 
-    function closeLegalCompat(){
-      if (typeof closeLegal === "function") return closeLegal();
+    window.closeLegalCompat = function(){
+      if (typeof window.closeLegal === "function") return window.closeLegal();
       const modal = document.getElementById("legalModal");
-      if (modal) modal.classList.remove("show");
+      if (modal) modal.classList.remove("show","active");
       document.body.classList.remove("modalOpen","noScroll");
+    };
+
+    // ✅ AI: NO pisar si ya existe en main.js
+    if (typeof window.toggleAiAssistant !== "function") {
+      window.toggleAiAssistant = function(){
+        const m = document.getElementById("aiChatModal");
+        if (!m) return;
+        m.classList.toggle("active");
+        m.classList.toggle("show");
+      };
     }
 
-    // AI compat
-    function toggleAiAssistant(){
-      const m = document.getElementById("aiChatModal");
-      if (!m) return;
-      m.classList.toggle("active");
-    }
+    if (typeof window.sendAiMessage !== "function") {
+      window.sendAiMessage = function(){
+        const input = document.getElementById("aiInput");
+        const box = document.getElementById("aiMessages");
+        if (!input || !box) return;
+        const text = (input.value || "").trim();
+        if (!text) return;
 
-    function sendAiMessage(){
-      if (typeof window.sendAiMessageReal === "function") return window.sendAiMessageReal();
-      const input = document.getElementById("aiInput");
-      const box = document.getElementById("aiMessages");
-      if (!input || !box) return;
-      const text = (input.value || "").trim();
-      if (!text) return;
+        const me = document.createElement("div");
+        me.className = "ai-bubble user";
+        me.textContent = text;
+        box.appendChild(me);
 
-      const me = document.createElement("div");
-      me.className = "ai-bubble user";
-      me.textContent = text;
-      box.appendChild(me);
+        const bot = document.createElement("div");
+        bot.className = "ai-bubble bot";
+        bot.textContent = "Modo offline. Conecta el endpoint AI para respuestas en vivo.";
+        box.appendChild(bot);
 
-      const bot = document.createElement("div");
-      bot.className = "ai-bubble bot";
-      bot.textContent = "Listo. Para ayudarte con tallas o envíos, dime: producto + talla + CP/ZIP.";
-      box.appendChild(bot);
-
-      input.value = "";
-      box.scrollTop = box.scrollHeight;
+        input.value = "";
+        box.scrollTop = box.scrollHeight;
+      };
     }
 
     // Cookies compat
-    function acceptCookiesCompat(){
-      if (typeof acceptCookies === "function") return acceptCookies();
+    window.acceptCookiesCompat = function(){
+      if (typeof window.acceptCookies === "function") return window.acceptCookies();
       const b = document.getElementById("cookieBanner");
       if (b) b.style.display = "none";
       try { localStorage.setItem("score_cookie_ok","1"); } catch(e){}
-    }
+    };
 
     // Toast compat
     function showToastCompat(msg){
@@ -539,7 +535,7 @@
       window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
     }
 
-    // Splash RPM micro-anim (si tu main.js ya lo hace, esto no estorba)
+    // Splash fallback (si main ya lo hace, no estorba)
     (function(){
       const splash = document.getElementById("splash-screen");
       const bar = document.querySelector(".rpm-bar");
@@ -563,7 +559,7 @@
     // Cookie persisted
     (function(){
       try{
-        if (localStorage.getItem("score_cookie_ok") === "1"){
+        if (localStorage.getItem("score_cookie_ok") === "1" || localStorage.getItem("score_cookies") === "accepted"){
           const b = document.getElementById("cookieBanner");
           if (b) b.style.display = "none";
         }
