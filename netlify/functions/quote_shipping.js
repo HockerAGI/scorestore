@@ -1,62 +1,88 @@
+// netlify/functions/quote_shipping.js
 /* =========================================================
-   SCORE STORE — SHIPPING QUOTER (ENDPOINT)
+   SCORE STORE — Shipping Quote (Envia.com) v2026
+   - Entrada:
+      { zip, country: "MX"|"US", items:[{qty:number}] }
+   - Salida:
+      { ok:true, cost:number, label:string, country, zip, source }
+   ✅ Envia PRIORIDAD
+   ✅ Fallback seguro si no hay key / falla Envia
    ========================================================= */
 
-const { 
-  jsonResponse, 
-  handleOptions, 
-  getEnviaQuote, 
+const {
+  handleOptions,
+  jsonResponse,
+  safeJsonParse,
+  normalizeQty,
   digitsOnly,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE 
+  getFallbackShipping,
+  validateZip,
+  getEnviaQuote,
 } = require("./_shared");
 
-exports.handler = async (event) => {
-  const pre = handleOptions(event);
-  if (pre) return pre;
+function sumQty(items) {
+  if (!Array.isArray(items) || !items.length) return 1;
+  return items.reduce((a, b) => a + normalizeQty(b?.qty), 0);
+}
 
-  if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
+exports.handler = async (event) => {
+  // Preflight
+  const opt = handleOptions(event);
+  if (opt) return opt;
 
   try {
-    const body = JSON.parse(event.body);
-    const zip = digitsOnly(body.zip);
-    const country = (body.country || "MX").toUpperCase();
-    const qty = body.items ? body.items.reduce((a,b)=>a+(b.qty||1),0) : 1;
+    const body = safeJsonParse(event.body);
+    const country = String(body.country || "MX").toUpperCase();
+    const zip = digitsOnly(body.zip || "");
+    const items = body.items || [];
+    const qty = sumQty(items);
 
-    if (zip.length < 4) return jsonResponse(200, { ok: false, error: "CP Inválido" });
+    if (!zip || zip.length < 4) {
+      return jsonResponse(400, { ok: false, error: "ZIP_INVALID" });
+    }
 
-    // 1. Intentar cotización real
+    // Validación zip (si hay key)
+    const zipCheck = await validateZip(country, zip);
+    if (zipCheck?.ok === false) {
+      return jsonResponse(404, { ok: false, error: zipCheck.error || "ZIP_NOT_FOUND" });
+    }
+
+    // Envia quote real (si hay key)
     const quote = await getEnviaQuote(zip, qty, country);
+    if (quote?.ok && quote?.mxn > 0) {
+      const daysTxt =
+        Number.isFinite(quote.days) && quote.days > 0 ? ` · ${quote.days}d` : "";
 
-    if (quote) {
+      const carrierTxt = quote.carrier ? String(quote.carrier).toUpperCase() : "ENVIA";
+      const serviceTxt = quote.service ? ` ${quote.service}` : "";
+
       return jsonResponse(200, {
         ok: true,
-        cost: quote.cost,
-        currency: quote.currency,
-        label: `Envío Express ${quote.carrier.toUpperCase()} (${quote.days} días)`,
-        source: "envia"
+        country,
+        zip,
+        cost: Number(quote.mxn),
+        label: `${carrierTxt}${serviceTxt}${daysTxt}`.trim(),
+        source: "envia",
       });
     }
 
-    // 2. Fallback (Si falla Envia, usamos tarifa plana)
-    const fallbackPrice = country === "MX" ? FALLBACK_MX_PRICE : FALLBACK_US_PRICE;
-    
+    // Fallback seguro
+    const fallback = getFallbackShipping(country);
     return jsonResponse(200, {
       ok: true,
-      cost: fallbackPrice,
-      currency: "MXN",
-      label: country === "MX" ? "Envío Nacional Estándar" : "USA International Shipping",
-      source: "fallback"
+      country,
+      zip,
+      cost: fallback,
+      label: "Envío (Estimación)",
+      source: "fallback",
     });
+  } catch (e) {
+    console.error("[quote_shipping] error:", e?.message || e);
 
-  } catch (error) {
-    console.error(error);
-    // En caso de error crítico, regresamos fallback para no bloquear venta
-    return jsonResponse(200, { 
-      ok: true, 
-      cost: 250, 
-      label: "Envío Estándar",
-      source: "emergency" 
+    // Respuesta robusta
+    return jsonResponse(500, {
+      ok: false,
+      error: "QUOTE_ERROR",
     });
   }
 };
