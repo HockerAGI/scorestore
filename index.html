@@ -26,8 +26,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FINAL_FIX" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FINAL" />
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
@@ -35,7 +36,7 @@
 </head>
 
 <body>
-  <div id="splash-screen">
+  <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
       <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE" width="160" height="160">
       <div class="rpm-wrapper"><div class="rpm-bar-container"><div class="rpm-bar"></div></div></div>
@@ -44,6 +45,12 @@
     </div>
   </div>
 
+  <noscript>
+    <div style="padding:15px; background:#000; color:#fff; text-align:center; font-weight:bold;">
+      Esta tienda requiere JavaScript para funcionar correctamente.
+    </div>
+  </noscript>
+
   <div class="promo-bar">
     PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA · CHECKOUT SEGURO
   </div>
@@ -51,15 +58,17 @@
   <header class="topbar">
     <div class="container topInner">
       <div class="brand">
-        <a href="#top">
+        <a href="#top" aria-label="Ir al inicio">
           <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="72" height="72" />
         </a>
       </div>
+
       <nav class="nav">
         <a href="#catalogo">CATÁLOGO</a>
         <a href="#envios">ENVÍOS</a>
         <a href="#partners">PARTNERS</a>
       </nav>
+
       <button id="cartBtn" class="cartBtn" type="button" onclick="window.openDrawer()" aria-label="Abrir carrito">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cartCount" class="cartCount">0</span>
@@ -87,6 +96,13 @@
           <a href="#catalogo" class="btn primary pulse-btn">VER CATÁLOGO</a>
           <button class="btn ghost" type="button" onclick="window.openDrawer()">MI CARRITO</button>
         </div>
+
+        <div class="heroLogos">
+          <img src="/assets/logo-baja1000.webp" alt="Baja 1000" loading="lazy" />
+          <img src="/assets/logo-baja500.webp" alt="Baja 500" loading="lazy" />
+          <img src="/assets/logo-baja400.webp" alt="Baja 400" loading="lazy" />
+          <img src="/assets/logo-sf250.webp" alt="San Felipe 250" loading="lazy" />
+        </div>
       </div>
     </section>
 
@@ -106,8 +122,8 @@
           <button class="chip" data-filter="BAJA_500">BAJA 500</button>
         </div>
 
-        <div id="productsGrid" class="grid">
-            <div style="grid-column:1/-1;text-align:center;padding:40px;">Cargando catálogo...</div>
+        <div id="productsGrid" class="grid" aria-live="polite">
+            <div style="grid-column:1/-1;text-align:center;padding:40px;opacity:0.6;">Cargando catálogo...</div>
         </div>
       </div>
     </section>
@@ -129,8 +145,9 @@
           </div>
           <div class="shipRow">
             <label for="shipZip">Código Postal</label>
-            <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" />
+            <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" autocomplete="postal-code" />
           </div>
+          
           <button class="btn primary full" type="button" onclick="window.quoteShippingUI()">COTIZAR ENVÍO</button>
           <div id="shipQuote" class="shipQuote"></div>
         </div>
@@ -141,10 +158,10 @@
       <div class="container">
         <h3>OFFICIAL PARTNERS</h3>
         <div class="partnersGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes">
+          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
+          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
+          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR" loading="lazy">
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" loading="lazy">
         </div>
       </div>
     </section>
@@ -158,6 +175,10 @@
           Tienda oficial operada por <strong>Único Uniformes</strong>.<br>
           Envíos a todo México y Estados Unidos.
         </p>
+        <div style="margin-top:15px; opacity:0.7;">
+            <i class="fa-brands fa-facebook" style="font-size:20px; margin-right:10px;"></i>
+            <i class="fa-brands fa-instagram" style="font-size:20px;"></i>
+        </div>
       </div>
       <div class="fCol">
         <h4>NAVEGACIÓN</h4>
@@ -169,10 +190,11 @@
       </div>
       <div class="fCol">
         <h4>CONTACTO</h4>
-        <p>ventas.unicotextil@gmail.com</p>
+        <p><i class="fa-solid fa-envelope" style="color:var(--score-red)"></i> ventas.unicotextil@gmail.com</p>
+        <p><i class="fa-brands fa-whatsapp" style="color:var(--score-red)"></i> +52 664 123 4567</p>
       </div>
     </div>
-    <div class="copy">&copy; 2026 SCORE INTERNATIONAL.</div>
+    <div class="copy">&copy; 2026 SCORE INTERNATIONAL. TODOS LOS DERECHOS RESERVADOS.</div>
   </footer>
 
   <aside id="cartDrawer" class="drawer">
@@ -185,7 +207,7 @@
       <div class="shipSelector">
         <label class="radio-option">
           <input type="radio" name="shipMode" value="pickup" checked onchange="window.toggleShipping('pickup')">
-          <div><span>📍 Pickup Tijuana</span><small style="color:var(--neon-green)">GRATIS</small></div>
+          <div><span>📍 Pickup Tijuana</span><small style="color:var(--neon-green); font-weight:700;">GRATIS</small></div>
         </label>
         <label class="radio-option">
           <input type="radio" name="shipMode" value="mx" onchange="window.toggleShipping('mx')">
@@ -196,17 +218,24 @@
           <div><span>🇺🇸 USA Shipping</span><small>Quote</small></div>
         </label>
       </div>
-      <input type="text" id="miniZip" class="inputField" placeholder="CP / ZIP Code" style="display:none;">
+      
+      <input type="text" id="miniZip" class="inputField" placeholder="Código Postal / ZIP Code" style="display:none;" inputmode="numeric">
+      
       <div class="summary-total">
         <span>TOTAL</span>
         <div style="text-align:right">
-          <div id="cartShipLabel" style="font-size:12px;color:#aaa">Pickup Gratis</div>
+          <div id="cartShipLabel" style="font-size:12px;color:#aaa; font-weight:400;">Pickup Gratis</div>
           <strong id="cartTotal">$0.00</strong>
         </div>
       </div>
+      
       <button id="checkoutBtn" class="btn primary full" type="button" onclick="window.doCheckout()">
-        PAGAR AHORA <i class="fa-solid fa-lock"></i>
+        PAGAR AHORA <i class="fa-solid fa-lock" style="margin-left:8px;"></i>
       </button>
+      
+      <div style="text-align:center; margin-top:10px; font-size:10px; opacity:0.5;">
+        Pagos procesados de forma segura por <b>Stripe</b>.
+      </div>
     </div>
   </aside>
   <div id="pageOverlay" class="page-overlay" onclick="window.closeDrawer()"></div>
@@ -214,32 +243,77 @@
   <button class="ai-btn-float" onclick="window.toggleAiAssistant()"><i class="fa-solid fa-robot"></i></button>
   <div id="aiChatModal" class="ai-chat-modal">
     <div class="ai-box">
-      <div class="ai-header">SCORE AI <button onclick="window.toggleAiAssistant()">✕</button></div>
-      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¿En qué puedo ayudarte?</div></div>
+      <div class="ai-header">SCORE AI ASSISTANT <button onclick="window.toggleAiAssistant()">✕</button></div>
+      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¡Hola! Soy tu asistente. ¿Dudas sobre tallas o envíos?</div></div>
       <div class="ai-input-bar">
-        <input id="aiInput" class="ai-input" placeholder="Pregunta..." />
+        <input id="aiInput" class="ai-input" placeholder="Escribe aquí..." autocomplete="off" />
         <button class="ai-send" onclick="window.sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
 
   <div id="legalModal" class="legalModal">
-    <div class="legalBackdrop" id="legalBackdrop" onclick="document.getElementById('legalModal').style.display='none'"></div>
+    <div class="legalBackdrop" id="legalBackdrop" onclick="window.closeLegal()"></div>
     <div class="legalCard">
-      <div class="legalHead"><h3 id="legalTitle">LEGAL</h3><button onclick="document.getElementById('legalModal').style.display='none'">✕</button></div>
+      <div class="legalHead"><h3 id="legalTitle">INFORMACIÓN LEGAL</h3><button id="legalClose" type="button" onclick="window.closeLegal()">✕</button></div>
       <div class="legalBody" id="legalBody"></div>
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status"></div>
 
-  <script type="module" src="/js/main.js?v=2026_PROD_FINAL_FIX"></script>
-  
+  <div id="cookieBanner" class="cookieBanner" style="display:none;"> <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
+    <div class="cookieActions">
+      <div class="cookieBtn ghost" onclick="window.acceptCookies()">Cerrar</div>
+      <div class="cookieBtn primary" onclick="window.acceptCookies()">ACEPTAR</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js?v=2026_PROD_FINAL"></script>
+
   <script>
-    window.openDrawer = function(){ document.getElementById("cartDrawer").classList.add("open"); document.getElementById("pageOverlay").classList.add("show"); };
-    window.closeDrawer = function(){ document.getElementById("cartDrawer").classList.remove("open"); document.getElementById("pageOverlay").classList.remove("show"); };
-    window.toggleAiAssistant = function(){ document.getElementById("aiChatModal").classList.toggle("show"); };
-    window.openLegal = function(t){ document.getElementById("legalModal").style.display="flex"; document.getElementById("legalBody").innerHTML="<p>Operado por Único Uniformes.</p>"; };
+    // Safe Drawer
+    window.openDrawer = function(){ 
+      if(document.getElementById("cartDrawer")) {
+        document.getElementById("cartDrawer").classList.add("open"); 
+        document.getElementById("pageOverlay").classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+    };
+    window.closeDrawer = function(){ 
+      if(document.getElementById("cartDrawer")) {
+        document.getElementById("cartDrawer").classList.remove("open"); 
+        document.getElementById("pageOverlay").classList.remove("show");
+        document.body.style.overflow = "";
+      }
+    };
+
+    // Safe AI
+    window.toggleAiAssistant = function(){ 
+      var m = document.getElementById("aiChatModal");
+      if(m) m.classList.toggle("show");
+    };
+
+    // Safe Legal
+    window.openLegal = function(type){ 
+      var m = document.getElementById("legalModal");
+      if(m) {
+        m.classList.add("show");
+        var body = document.getElementById("legalBody");
+        if(body) body.innerHTML = "<p>Sitio operado por <b>Único Uniformes</b> (BAJATEX).</p><p>Tus datos son procesados de forma segura.</p>";
+      }
+    };
+    window.closeLegal = function(){
+      var m = document.getElementById("legalModal");
+      if(m) m.classList.remove("show");
+    };
+
+    // Safe Cookies
+    window.acceptCookies = function(){
+      var b = document.getElementById("cookieBanner");
+      if(b) b.style.display="none";
+      localStorage.setItem("score_cookies","1");
+    };
   </script>
 </body>
 </html>
