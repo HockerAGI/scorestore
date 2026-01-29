@@ -1,1275 +1,791 @@
 /* =========================================================
-   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (361) — UPDATED (PROD)
-   ✅ Netlify Functions: create_checkout / quote_shipping / chat
-   ✅ Catálogo oficial (sections + subSection) + UI chips
-   ✅ Detecta imágenes existentes y omite faltantes (sin romper carousel)
-   ✅ NO cambia nombres de productos (respeta espacios)
-   ✅ Soporta rutas con espacios (encode por segmento)
-   ✅ FIX: bindUI duplicado / cortado (tu main venía roto)
-   ✅ FIX: quote realtime robusto + parsing seguro
-   ✅ FIX: evita double-trigger de eventos (bindOnce)
-   ✅ UPDATE: close AI + cookies sin onclick inline
-   ✅ UPDATE: yearNow set desde JS (no inline)
+   SCORE STORE — MAIN v2026_PROD_UNIFIED_361
+   Mobile-first · Premium · Real-time shipping quote · Cart drawer · AI chat
    ========================================================= */
+(() => {
+  "use strict";
 
-/* -----------------------
-   1) CONFIG REAL (respeta claves)
------------------------- */
-const CONFIG = {
-  stripeKey:
-    "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
+  const VERSION = "2026_PROD_UNIFIED_361";
 
-  supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-  supabaseKey:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+  const CONFIG = {
+    currency: "MXN",
+    locale: "es-MX",
+    catalogUrl: `/catalog.json?v=${VERSION}`,
+    endpoints: {
+      shippingQuote: "/.netlify/functions/quote_shipping",
+      createCheckout: "/.netlify/functions/create_checkout",
+      chat: "/.netlify/functions/chat"
+    }
+  };
 
-  endpoints: {
-    checkout: "/.netlify/functions/create_checkout",
-    quote: "/.netlify/functions/quote_shipping",
-    ai: "/.netlify/functions/chat",
+  // -------------------- DOM --------------------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-    apiCheckout: "/api/checkout",
-    apiQuote: "/api/quote",
-    apiChat: "/api/chat",
-  },
+  const el = {
+    splash: $("#splash-screen"),
+    rpmBar: $(".rpm-bar"),
+    rpmCounter: $("#revCounter"),
 
-  storageKey: "score_cart_2026",
+    productsGrid: $("#productsGrid"),
+    chips: $$(".chip"),
 
-  fallbackShippingMX: 250,
-  fallbackShippingUS: 800,
+    cartBtn: $("#cartBtn"),
+    cartCount: $("#cartCount"),
+    cartDrawer: $("#cartDrawer"),
+    cartItems: $("#cartItems"),
+    cartSubtotal: $("#cartSubtotal"),
+    cartShipping: $("#cartShipping"),
+    cartTotal: $("#cartTotal"),
+    cartShipLabel: $("#cartShipLabel"),
+    checkoutBtn: $("#checkoutBtn"),
 
-  catalogUrl: "/data/catalog.json",
-  fallbackImg: "/assets/hero.webp",
+    pageOverlay: $("#pageOverlay"),
+    backdrop: $("#backdrop"),
 
-  imgProbeTimeoutMs: 2200,
-};
+    shipCountry: $("#shipCountry"),
+    shipZip: $("#shipZip"),
+    shipQuote: $("#shipQuote"),
 
-/* -----------------------
-   2) Helpers
------------------------- */
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => document.querySelectorAll(q);
+    shippingModeSelect: $("#shippingMode"),
+    shipModeRadios: $$("input[name='shipMode']"),
+    miniZip: $("#miniZip"),
+    miniShipLabel: $("#miniShipLabel"),
 
-const fmtMXN = (n) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
-    Number(n || 0)
-  );
+    toast: $("#toast"),
 
-const safeId = (s) => String(s || "").replace(/[^a-zA-Z0-9_-]/g, "");
-const digitsOnly = (s) => String(s || "").replace(/\D+/g, "");
-const clampQty = (n) => Math.max(1, Math.min(99, Math.round(Number(n) || 1)));
+    aiFloatBtn: $(".ai-btn-float"),
+    aiModal: $("#aiChatModal"),
+    aiMessages: $("#aiMessages"),
+    aiInput: $("#aiInput"),
+    aiSendBtn: $(".ai-send"),
 
-const escapeHtml = (s) =>
-  String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    legalModal: $("#legalModal"),
+    legalBackdrop: $("#legalBackdrop"),
+    legalTitle: $("#legalTitle"),
+    legalBody: $("#legalBody"),
+    legalClose: $("#legalClose"),
+    legalLinks: $$(".jsLegalLink"),
 
-function safeUrl(u) {
-  const raw = String(u || "").trim();
-  if (!raw) return "";
-  if (raw.startsWith("/")) return raw;
-  if (/^https?:\/\//i.test(raw)) return raw;
-  return "";
-}
+    cookieBanner: $("#cookieBanner")
+  };
 
-// ✅ Maneja espacios en rutas (/assets/.../cafe oscuro.webp)
-function urlEncodePathIfNeeded(url) {
-  const raw = String(url || "").trim();
-  if (!raw) return "";
-  if (raw.startsWith("/")) {
-    return raw
-      .split("/")
-      .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
-      .join("/");
-  }
-  if (/^https?:\/\//i.test(raw)) {
+  // -------------------- STATE --------------------
+  const state = {
+    products: [],
+    filter: "ALL",
+    cart: [], // {id, name, price, size, qty, image}
+    shipping: {
+      mode: "pickup", // pickup | mx | us
+      zip: "",
+      quote: null // {cost, etaDays}
+    },
+    soundUnlocked: false,
+    notifTimer: null,
+    quoteTimer: null,
+    lastQuoteKey: ""
+  };
+
+  // -------------------- HELPERS --------------------
+  const money = (n) => {
+    const v = Number(n || 0);
     try {
-      const u = new URL(raw);
-      u.pathname = u.pathname
-        .split("/")
-        .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
-        .join("/");
-      return u.toString();
+      return new Intl.NumberFormat(CONFIG.locale, { style: "currency", currency: CONFIG.currency, maximumFractionDigits: 0 }).format(v);
     } catch {
-      return raw;
+      return `$${Math.round(v)}`;
     }
-  }
-  return raw;
-}
+  };
 
-/** fetch JSON robusto:
- * - si el server devuelve HTML/texto, no truena
- * - te deja data.__rawText para debug
- */
-async function fetchJSON(url, options = {}, timeoutMs = 12000) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { ...options, signal: ctrl.signal });
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-    let data = {};
-    const ct = (res.headers.get("content-type") || "").toLowerCase();
-
-    if (ct.includes("application/json")) {
-      data = await res.json().catch(() => ({}));
-    } else {
-      const txt = await res.text().catch(() => "");
-      data = (() => {
-        try {
-          return JSON.parse(txt);
-        } catch {
-          return { __rawText: txt };
-        }
-      })();
-    }
-
-    return { res, data };
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-async function postJSON(url, payload, timeoutMs = 15000) {
-  return fetchJSON(
-    url,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload || {}),
-    },
-    timeoutMs
-  );
-}
-
-/* bindOnce para evitar double trigger (inline onclick + addEventListener) */
-function bindOnce(el, evt, fn, opts) {
-  if (!el) return;
-  const key = `__bound_${evt}`;
-  if (el[key]) return;
-  el[key] = true;
-  el.addEventListener(evt, fn, opts);
-}
-
-/* -----------------------
-   3) Stripe Init (Live)
------------------------- */
-let stripe = null;
-
-function initStripe() {
-  if (stripe) return stripe;
-  if (window.Stripe && CONFIG.stripeKey) stripe = window.Stripe(CONFIG.stripeKey);
-  return stripe;
-}
-function initStripeRetry() {
-  initStripe();
-  if (stripe) return;
-  let tries = 0;
-  const timer = setInterval(() => {
-    tries++;
-    initStripe();
-    if (stripe || tries >= 20) clearInterval(timer);
-  }, 200);
-}
-
-/* -----------------------
-   4) STATE
------------------------- */
-const state = {
-  cart: JSON.parse(localStorage.getItem(CONFIG.storageKey) || "[]"),
-  products: [],
-  sections: [],
-  filter: "ALL",
-  shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
-
-  __quoteTimer: null,
-  __quoteInFlight: false,
-  __socialTimer: null,
-  __introDone: false,
-
-  __imgOkCache: new Map(),
-};
-
-/* -----------------------
-   5) AUDIO FX (WebAudio)
------------------------- */
-let audioCtx = null;
-const getAudioCtx = () => {
-  if (audioCtx) return audioCtx;
-  const Ctx = window.AudioContext || window.webkitAudioContext;
-  if (!Ctx) return null;
-  audioCtx = new Ctx();
-  return audioCtx;
-};
-
-function playSound(type) {
-  const ctx = getAudioCtx();
-  if (!ctx || ctx.state === "closed") return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.connect(g);
-  g.connect(ctx.destination);
-
-  const now = ctx.currentTime;
-  g.gain.setValueAtTime(0.0001, now);
-
-  if (type === "click") {
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
-    g.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-    osc.start(now);
-    osc.stop(now + 0.1);
-  } else if (type === "success") {
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(460, now);
-    osc.frequency.linearRampToValueAtTime(820, now + 0.16);
-    g.gain.exponentialRampToValueAtTime(0.11, now + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-    osc.start(now);
-    osc.stop(now + 0.29);
-  } else {
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(720, now);
-    g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-    osc.start(now);
-    osc.stop(now + 0.15);
-  }
-}
-
-/* -----------------------
-   6) TOAST
------------------------- */
-function toast(msg, type = "info") {
-  const t = $("#toast") || $(".toast");
-  if (!t) return;
-  t.textContent = String(msg || "");
-  t.className = `toast show ${type}`;
-  playSound("click");
-  setTimeout(() => t.classList.remove("show"), 3000);
-}
-
-/* -----------------------
-   7) IMAGES: detecta existentes (sin romper)
------------------------- */
-function probeImage(url, timeoutMs = CONFIG.imgProbeTimeoutMs) {
-  const uRaw = safeUrl(url);
-  if (!uRaw) return Promise.resolve(false);
-
-  const u = urlEncodePathIfNeeded(uRaw);
-  if (state.__imgOkCache.has(u)) return Promise.resolve(!!state.__imgOkCache.get(u));
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    let done = false;
-
-    const finish = (ok) => {
-      if (done) return;
-      done = true;
-      state.__imgOkCache.set(u, !!ok);
-      resolve(!!ok);
-    };
-
-    const t = setTimeout(() => finish(false), timeoutMs);
-
-    img.onload = () => {
+  const debounce = (fn, ms) => {
+    let t = null;
+    return (...args) => {
       clearTimeout(t);
-      finish(true);
+      t = setTimeout(() => fn(...args), ms);
     };
-    img.onerror = () => {
-      clearTimeout(t);
-      finish(false);
+  };
+
+  const safeText = (s) => String(s ?? "").replace(/[<>]/g, "");
+
+  const toast = (msg, type = "info") => {
+    if (!el.toast) return;
+    el.toast.className = `toast ${type}`;
+    el.toast.textContent = msg;
+    el.toast.classList.add("show");
+    setTimeout(() => el.toast.classList.remove("show"), 2600);
+  };
+
+  const lockScroll = (lock) => {
+    document.documentElement.classList.toggle("noScroll", !!lock);
+    document.body.classList.toggle("noScroll", !!lock);
+  };
+
+  // Sound (no assets; WebAudio beep)
+  let audioCtx = null;
+  const beep = (freq = 440, dur = 0.06, gain = 0.04) => {
+    try {
+      if (!state.soundUnlocked) return;
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      setTimeout(() => {
+        o.stop();
+        o.disconnect();
+        g.disconnect();
+      }, dur * 1000);
+    } catch {}
+  };
+
+  const unlockSound = () => {
+    if (state.soundUnlocked) return;
+    state.soundUnlocked = true;
+    beep(880, 0.03, 0.02);
+  };
+
+  // -------------------- SPLASH --------------------
+  const runSplash = () => {
+    if (!el.splash) return;
+
+    const start = performance.now();
+    const tick = (t) => {
+      const p = clamp((t - start) / 900, 0, 1);
+      const rpm = Math.round(p * 9000);
+      if (el.rpmBar) el.rpmBar.style.width = `${Math.round(p * 100)}%`;
+      if (el.rpmCounter) el.rpmCounter.textContent = `${rpm.toLocaleString("es-MX")} RPM`;
+      if (p < 1) requestAnimationFrame(tick);
     };
+    requestAnimationFrame(tick);
 
-    img.decoding = "async";
-    img.loading = "eager";
-    img.src = u;
-  });
-}
-
-async function filterExistingImages(urls) {
-  const unique = [...new Set((urls || []).map(safeUrl).filter(Boolean))].map(
-    urlEncodePathIfNeeded
-  );
-  if (!unique.length) return [];
-  const checks = await Promise.all(unique.map((u) => probeImage(u)));
-  return unique.filter((u, i) => checks[i]);
-}
-
-async function getProductImagesSafe(p) {
-  const candidates = [...(Array.isArray(p.images) ? p.images : []), p.img]
-    .map(safeUrl)
-    .filter(Boolean);
-
-  const ok = await filterExistingImages(candidates);
-  if (ok.length) return ok;
-  return [CONFIG.fallbackImg];
-}
-
-/* -----------------------
-   8) CATALOGO (Supabase -> /data/catalog.json -> local)
------------------------- */
-async function loadCatalog() {
-  const grid = $("#productsGrid");
-  if (grid) {
-    grid.innerHTML =
-      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
-  }
-
-  // 1) Supabase REST
-  try {
-    const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*`, {
-      headers: {
-        apikey: CONFIG.supabaseKey,
-        Authorization: `Bearer ${CONFIG.supabaseKey}`,
-      },
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        el.splash.style.opacity = "0";
+        el.splash.style.visibility = "hidden";
+        el.splash.setAttribute("aria-hidden", "true");
+      }, 950);
     });
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length) {
-        state.products = normalizeProducts(data);
-        renderGrid(getFilteredProducts());
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn("[catalog] supabase fail:", e);
-  }
+  };
 
-  // 2) /data/catalog.json
-  try {
-    const { res, data } = await fetchJSON(CONFIG.catalogUrl, { cache: "no-store" }, 12000);
-    if (res.ok) {
-      const list = Array.isArray(data?.products)
-        ? data.products
-        : Array.isArray(data)
-        ? data
-        : [];
-      if (Array.isArray(data?.sections)) state.sections = data.sections;
-      if (list.length) {
-        state.products = normalizeProducts(list);
-        ensureSectionChipsFromCatalog();
-        renderGrid(getFilteredProducts());
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn("[catalog] /data/catalog.json fail:", e);
-  }
-
-  // 3) fallback local
-  state.products = normalizeProducts(getLocalCatalog());
-  renderGrid(getFilteredProducts());
-}
-
-function normalizeProducts(list) {
-  return (list || []).map((p, idx) => {
-    const id = p?.id ?? p?.sku ?? `p${idx + 1}`;
-    const name = String(p?.name || p?.title || "Producto"); // ✅ no tocar espacios
-
-    const rawImages =
-      Array.isArray(p?.images) && p.images.length ? p.images : p?.img ? [p.img] : [];
-    const images = rawImages.map(safeUrl).filter(Boolean);
-
+  // -------------------- CATALOG --------------------
+  const normalizeProduct = (p) => {
+    const images = Array.isArray(p.images) ? p.images.filter(Boolean) : (p.image ? [p.image] : []);
+    const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["S", "M", "L", "XL"];
     return {
-      id: String(id),
-      sku: String(p?.sku || ""),
-      sectionId: String(p?.sectionId || p?.category || "ALL").toUpperCase(),
-      subSection: String(p?.subSection || p?.type || "").trim(),
-      name,
-      baseMXN: Number(p?.baseMXN ?? p?.price ?? 0),
-      img: safeUrl(p?.img) || safeUrl(images[0]) || CONFIG.fallbackImg,
+      id: String(p.id ?? p.sku ?? p.slug ?? p.name),
+      name: String(p.name ?? "Producto"),
+      category: String((p.category ?? (p.subSection || p.subsection) ?? "ALL")),
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      price: Number(p.price ?? p.mxn ?? p.baseMXN ?? 0),
+      badge: String(p.badge ?? ""),
       images,
-      sizes:
-        Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["Unitalla"],
+      sizes
     };
-  });
-}
+  };
 
-function getLocalCatalog() {
-  return [
-    {
-      id: "p1",
-      sectionId: "BAJA_1000",
-      subSection: "Hoodies",
-      name: "Baja 1000 Legacy Hoodie",
-      baseMXN: 1200,
-      img: "/assets/prod1.webp",
-      images: ["/assets/prod1.webp"],
-      sizes: ["S", "M", "L", "XL"],
-    },
-    {
-      id: "p2",
-      sectionId: "BAJA_1000",
-      subSection: "Camisetas",
-      name: "Score International Tee",
-      baseMXN: 650,
-      img: "/assets/prod2.webp",
-      images: ["/assets/prod2.webp"],
-      sizes: ["S", "M", "L", "XL"],
-    },
-    {
-      id: "p3",
-      sectionId: "BAJA_500",
-      subSection: "Gorras",
-      name: "Trophy Truck Cap",
-      baseMXN: 800,
-      img: "/assets/prod3.webp",
-      images: ["/assets/prod3.webp"],
-      sizes: ["Unitalla"],
-    },
-  ];
-}
+  const productMatchesFilter = (p) => {
+    if (state.filter === "ALL") return true;
+    const f = state.filter;
+    let cat = String(p.category || "").toUpperCase();
+    // normalize common names
+    if (cat.includes("TEE")) cat = "TEES";
+    if (cat.includes("HOOD")) cat = "HOODIES";
+    if (cat.includes("HAT") || cat.includes("CAP")) cat = "HATS";
+    const tags = (p.tags || []).map(x => String(x).toUpperCase());
+    return cat === f || tags.includes(f);
+  };
 
-/* -----------------------
-   9) FILTERS
------------------------- */
-function normalizeStr(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
+  const renderProducts = () => {
+    if (!el.productsGrid) return;
+    const list = state.products.filter(productMatchesFilter);
 
-function matchesFilter(p, filter) {
-  const f = String(filter || "ALL").toUpperCase();
-  if (f === "ALL") return true;
+    el.productsGrid.innerHTML = list.map((p) => {
+      const imgHtml = (p.images.length > 1)
+        ? `
+          <div class="carousel" data-carousel="${p.id}">
+            ${p.images.map((src, i) => `
+              <div class="carousel-item">
+                <img class="prodImg" src="${src}" alt="${safeText(p.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+              </div>`).join("")}
+          </div>
+          <div class="carousel-dots" data-dots="${p.id}">
+            ${p.images.map((_, i) => `<span class="dot ${i===0?'active':''}"></span>`).join("")}
+          </div>
+        `
+        : `
+          <img class="prodImg" src="${p.images[0] || "/assets/fallback.webp"}" alt="${safeText(p.name)}" loading="lazy" decoding="async" onerror="this.src='/assets/fallback.webp'">
+        `;
 
-  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(f)) {
-    return String(p.sectionId || "").toUpperCase() === f;
-  }
+      const sizeOptions = p.sizes.map(s => `<option value="${safeText(s)}">${safeText(s)}</option>`).join("");
 
-  const sub = normalizeStr(p.subSection);
-  if (f === "HOODIES") return sub.includes("hoodie") || sub.includes("sudadera");
-  if (f === "TEES")
-    return (
-      sub.includes("camiseta") ||
-      sub.includes("playera") ||
-      sub.includes("tee") ||
-      sub.includes("tank")
-    );
-  if (f === "CAPS") return sub.includes("gorra") || sub.includes("cap");
+      return `
+        <article class="card" data-prod="${p.id}">
+          <div class="card-texture" aria-hidden="true"></div>
+          <div class="cardMedia" style="position:relative">
+            ${imgHtml}
+            ${p.badge ? `<div class="badge">${safeText(p.badge)}</div>` : ""}
+          </div>
 
-  return true;
-}
+          <div class="cardBody">
+            <div class="prodTitle">${safeText(p.name)}</div>
+            <div class="prodMeta">Oficial · Off-Road · Único Uniformes</div>
+            <div class="prodPrice">${money(p.price)}</div>
 
-function getFilteredProducts() {
-  return (state.products || []).filter((p) => matchesFilter(p, state.filter));
-}
+            <select class="size-selector" aria-label="Talla">
+              ${sizeOptions}
+            </select>
+          </div>
 
-function ensureSectionChipsFromCatalog() {
-  const filtersWrap = document.querySelector(".filters");
-  if (!filtersWrap) return;
-  if (!Array.isArray(state.sections) || !state.sections.length) return;
+          <button class="card-btn" type="button" data-add="${p.id}">
+            <i class="fa-solid fa-plus"></i> AGREGAR AL CARRITO
+          </button>
+        </article>
+      `;
+    }).join("");
 
-  const existing = new Set(
-    [...filtersWrap.querySelectorAll(".chip")].map((c) =>
-      String(c.dataset.filter || "").toUpperCase()
-    )
-  );
+    bindCatalogInteractions();
+  };
 
-  state.sections.forEach((s) => {
-    const id = String(s?.id || "").toUpperCase();
-    const title = String(s?.title || id).toUpperCase();
-    if (!id || existing.has(id)) return;
-    if (!["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(id)) return;
+  const bindCatalogInteractions = () => {
+    // add buttons
+    $$("[data-add]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        unlockSound();
+        const id = btn.getAttribute("data-add");
+        const card = btn.closest("[data-prod]");
+        const p = state.products.find(x => x.id === id);
+        if (!p) return;
 
-    const btn = document.createElement("button");
-    btn.className = "chip";
-    btn.type = "button";
-    btn.dataset.filter = id;
-    btn.textContent = title.replaceAll("_", " ");
+        const sizeSel = card ? $(".size-selector", card) : null;
+        const size = sizeSel ? sizeSel.value : (p.sizes[0] || "M");
 
-    btn.addEventListener("click", () => {
-      $$(".chip").forEach((ch) => ch.classList.remove("active"));
-      btn.classList.add("active");
-      state.filter = id;
-      renderGrid(getFilteredProducts());
-      playSound("click");
+        addToCart(p, size);
+      }, { passive: true });
     });
 
-    filtersWrap.appendChild(btn);
-    existing.add(id);
-  });
-}
+    // carousels dots
+    $$("[data-carousel]").forEach(car => {
+      const id = car.getAttribute("data-carousel");
+      const dotsWrap = $(`[data-dots="${CSS.escape(id)}"]`);
+      if (!dotsWrap) return;
 
-/* -----------------------
-   10) RENDER GRID (async por imágenes seguras)
------------------------- */
-async function renderGrid(list) {
-  const grid = $("#productsGrid");
-  if (!grid) return;
+      const onScroll = debounce(() => {
+        const w = car.clientWidth || 1;
+        const idx = Math.round(car.scrollLeft / w);
+        $$(".dot", dotsWrap).forEach((d, i) => d.classList.toggle("active", i === idx));
+      }, 80);
 
-  grid.innerHTML = "";
+      car.addEventListener("scroll", onScroll, { passive: true });
+    });
+  };
 
-  if (!list || !list.length) {
-    grid.innerHTML =
-      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>No hay productos en esta categoría.</div>";
-    return;
-  }
+  // -------------------- FILTERS --------------------
+  const bindFilters = () => {
+    el.chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        unlockSound();
+        el.chips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        state.filter = chip.getAttribute("data-filter") || "ALL";
+        renderProducts();
+        beep(680, 0.04, 0.03);
+      }, { passive: true });
+    });
+  };
 
-  for (const p of list) {
-    const card = await buildProductCard(p);
-    grid.appendChild(card);
-  }
-}
+  // -------------------- CART --------------------
+  const calcSubtotal = () => state.cart.reduce((sum, it) => sum + (Number(it.price) * Number(it.qty)), 0);
 
-async function buildProductCard(p) {
-  const pid = safeId(p.id);
-  const card = document.createElement("div");
-  card.className = "champItem card";
+  const updateCartCount = () => {
+    const count = state.cart.reduce((sum, it) => sum + it.qty, 0);
+    if (el.cartCount) el.cartCount.textContent = String(count);
+  };
 
-  const nameSafe = escapeHtml(p.name);
-  const price = fmtMXN(p.baseMXN);
-
-  const images = await getProductImagesSafe(p);
-  const media = buildMediaHTML(images, nameSafe, pid);
-
-  const sizes = (p.sizes && p.sizes.length ? p.sizes : ["Unitalla"]).map(String);
-
-  const sizeSelectHTML = `
-    <select id="size-${pid}" class="size-selector">
-      ${sizes
-        .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
-        .join("")}
-    </select>
-  `;
-
-  card.innerHTML = `
-    <div class="card-texture"></div>
-    ${media}
-    <div class="cardBody" style="z-index:2; text-align:center; padding:10px; width:100%;">
-      <div class="cardTitle" style="font-family:'Teko'; font-size:24px; line-height:1;">${nameSafe}</div>
-      <div class="cardPrice" style="color:var(--score-red); font-weight:900; font-size:18px;">${price}</div>
-      <div style="margin-top:8px; display:flex; justify-content:center;">
-        ${sizeSelectHTML}
-      </div>
-    </div>
-    <button class="card-btn" type="button" data-add="${pid}">AGREGAR</button>
-    <div class="badge">OFFICIAL</div>
-  `;
-
-  card.querySelector(`[data-add="${pid}"]`)?.addEventListener("click", () => addToCart(p.id));
-
-  const car = card.querySelector(".carousel");
-  if (car) {
-    car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
-    requestAnimationFrame(() => updateDots(car, pid));
-  }
-
-  return card;
-}
-
-function buildMediaHTML(images, nameSafe, pid) {
-  const list = (images || []).map((u) => urlEncodePathIfNeeded(u)).filter(Boolean);
-  const finalList = list.length ? list : [CONFIG.fallbackImg];
-
-  if (finalList.length > 1) {
-    const slides = finalList
-      .map(
-        (src) =>
-          `<div class="carousel-item"><img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525"></div>`
-      )
-      .join("");
-
-    const dots = finalList.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`).join("");
-
-    return `
-      <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
-        <div class="carousel" data-pid="${pid}" style="scroll-snap-type:x mandatory; overflow:auto; display:flex;">
-          ${slides}
-        </div>
-        <div class="carousel-dots" id="dots-${pid}">
-          ${dots}
-        </div>
-      </div>
-    `;
-  }
-
-  const src = finalList[0] || CONFIG.fallbackImg;
-  return `
-    <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
-      <img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525" style="width:100%;height:auto;object-fit:cover;">
-    </div>
-  `;
-}
-
-function updateDots(carousel, pid) {
-  const width = carousel.getBoundingClientRect().width || carousel.clientWidth || 1;
-  const idx = Math.round((carousel.scrollLeft || 0) / width);
-  const dotsContainer = document.getElementById(`dots-${pid}`);
-  if (!dotsContainer) return;
-  const dots = dotsContainer.querySelectorAll(".dot");
-  dots.forEach((d, i) => (i === idx ? d.classList.add("active") : d.classList.remove("active")));
-}
-
-/* -----------------------
-   11) CART
------------------------- */
-function cartCountTotal() {
-  return (state.cart || []).reduce((a, b) => a + clampQty(b.qty), 0);
-}
-
-function cartSubtotal() {
-  return (state.cart || []).reduce((a, b) => a + Number(b.price || 0) * clampQty(b.qty), 0);
-}
-
-function saveCart() {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
-
-  const qty = cartCountTotal();
-  const cc = $("#cartCount");
-  if (cc) cc.textContent = String(qty);
-  $$(".cartCount").forEach((el) => (el.textContent = String(qty)));
-
-  updateDrawerUI();
-}
-
-function addToCart(id) {
-  const p = (state.products || []).find((x) => String(x.id) === String(id));
-  if (!p) return toast("Producto no disponible", "error");
-
-  const pid = safeId(p.id);
-  const size = $(`#size-${pid}`)?.value || "Unitalla";
-  const key = `${p.id}-${size}`;
-
-  const ex = state.cart.find((i) => i.key === key);
-
-  const thumbCandidate = Array.isArray(p.images) && p.images[0] ? p.images[0] : p.img;
-  const thumb = urlEncodePathIfNeeded(safeUrl(thumbCandidate) || CONFIG.fallbackImg);
-
-  if (ex) ex.qty = clampQty(ex.qty + 1);
-  else {
-    state.cart.push({
+  const addToCart = (p, size) => {
+    const key = `${p.id}__${size}`;
+    const existing = state.cart.find(x => x.key === key);
+    if (existing) existing.qty += 1;
+    else state.cart.push({
       key,
       id: p.id,
       name: p.name,
-      price: Number(p.baseMXN || 0),
-      img: thumb || CONFIG.fallbackImg,
-      size: String(size),
+      price: p.price,
+      size,
       qty: 1,
+      image: p.images[0] || "/assets/fallback.webp"
     });
-  }
 
-  if (state.shipping.mode !== "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Recotizar envío";
-  }
+    updateCartUI();
+    toast("Agregado al carrito.", "success");
+    beep(920, 0.05, 0.04);
+  };
 
-  playSound("success");
-  saveCart();
-  openDrawer();
-  toast("Agregado al carrito", "success");
-  requestMiniQuote();
-}
+  const changeQty = (key, delta) => {
+    const it = state.cart.find(x => x.key === key);
+    if (!it) return;
+    it.qty = clamp(it.qty + delta, 0, 99);
+    if (it.qty === 0) state.cart = state.cart.filter(x => x.key !== key);
+    updateCartUI();
+    beep(delta > 0 ? 820 : 420, 0.04, 0.03);
+  };
 
-function modQty(idx, delta) {
-  if (!state.cart[idx]) return;
+  const openCart = () => {
+    if (!el.cartDrawer) return;
+    el.cartDrawer.classList.add("active", "open");
+    if (el.pageOverlay) el.pageOverlay.classList.add("active", "show");
+    if (el.backdrop) el.backdrop.classList.add("active", "show");
+    lockScroll(true);
+  };
 
-  const next = Number(state.cart[idx].qty) + Number(delta);
-  if (next <= 0) state.cart.splice(idx, 1);
-  else state.cart[idx].qty = clampQty(next);
+  const closeCart = () => {
+    if (!el.cartDrawer) return;
+    el.cartDrawer.classList.remove("active", "open");
+    if (el.pageOverlay) el.pageOverlay.classList.remove("active", "show");
+    if (el.backdrop) el.backdrop.classList.remove("active", "show");
+    lockScroll(false);
+  };
 
-  if (state.shipping.mode !== "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Recotizar envío";
-  }
+  const updateShipUI = () => {
+    const mode = state.shipping.mode;
 
-  saveCart();
-  requestMiniQuote();
-}
+    if (el.miniZip) el.miniZip.style.display = (mode === "mx" || mode === "us") ? "block" : "none";
+    if (el.miniZip) el.miniZip.placeholder = mode === "us" ? "ZIP (USA)" : "Código Postal (MX)";
 
-function updateDrawerUI() {
-  const box = $("#cartItems");
-  if (!box) return;
+    const label = mode === "pickup"
+      ? "Pickup Gratis"
+      : mode === "mx"
+        ? "Envío México"
+        : "Envío USA";
 
-  box.innerHTML = "";
-  (state.cart || []).forEach((item, i) => {
-    const row = document.createElement("div");
-    row.className = "cart-card cartRow";
+    if (el.miniShipLabel) el.miniShipLabel.textContent = label;
+    if (el.cartShipLabel) el.cartShipLabel.textContent = label;
+  };
 
-    row.innerHTML = `
-      <img src="${urlEncodePathIfNeeded(safeUrl(item.img) || CONFIG.fallbackImg)}" alt="" style="width:60px; height:70px; object-fit:contain; background:#fff; border-radius:6px;">
-      <div style="flex:1; margin-left:10px;">
-        <div style="color:#fff; font-weight:900; font-size:14px;">${escapeHtml(item.name)}</div>
-        <div style="color:#aaa; font-size:12px;">Talla: ${escapeHtml(item.size)}</div>
-        <div style="color:var(--score-red); font-weight:900;">${fmtMXN(item.price)}</div>
-        <div class="qty-ctrl" style="margin-top:5px; display:flex; gap:10px; align-items:center;">
-           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Menos">-</button>
-           <span style="color:#fff; font-weight:900;">${clampQty(item.qty)}</span>
-           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Más">+</button>
+  const updateTotalsUI = () => {
+    const subtotal = calcSubtotal();
+    const shipCost = state.shipping.mode === "pickup" ? 0 : Number(state.shipping.quote?.cost || 0);
+    const total = subtotal + shipCost;
+
+    if (el.cartSubtotal) el.cartSubtotal.textContent = money(subtotal);
+
+    if (el.cartShipping) {
+      if (state.shipping.mode === "pickup") el.cartShipping.textContent = "Gratis";
+      else el.cartShipping.textContent = shipCost ? money(shipCost) : "—";
+    }
+
+    if (el.cartTotal) el.cartTotal.textContent = money(total);
+
+    if (el.checkoutBtn) el.checkoutBtn.disabled = state.cart.length === 0;
+  };
+
+  const renderCartItems = () => {
+    if (!el.cartItems) return;
+
+    if (state.cart.length === 0) {
+      el.cartItems.innerHTML = `<div class="muted">Tu carrito está vacío. Elige una prenda y dale <b>AGREGAR</b>.</div>`;
+      return;
+    }
+
+    el.cartItems.innerHTML = state.cart.map(it => `
+      <div class="cart-card" data-key="${safeText(it.key)}">
+        <img class="cart-thumb" src="${it.image}" alt="" loading="lazy" decoding="async" onerror="this.src='/assets/fallback.webp'">
+        <div class="cart-info">
+          <div class="cart-name">${safeText(it.name)}</div>
+          <div class="cart-sub">Talla: <b>${safeText(it.size)}</b></div>
+          <div class="cart-row">
+            <div class="qty">
+              <button class="qtyBtn" type="button" data-qty="-1">-</button>
+              <div class="qtyNum">${it.qty}</div>
+              <button class="qtyBtn" type="button" data-qty="1">+</button>
+            </div>
+            <div class="cartPrice">${money(Number(it.price) * it.qty)}</div>
+          </div>
         </div>
       </div>
-    `;
+    `).join("");
 
-    const btns = row.querySelectorAll(".qtyBtn");
-    btns[0]?.addEventListener("click", () => modQty(i, -1));
-    btns[1]?.addEventListener("click", () => modQty(i, +1));
-    box.appendChild(row);
-  });
+    $$("[data-key]").forEach(card => {
+      const key = card.getAttribute("data-key");
+      const btns = $$("[data-qty]", card);
+      btns.forEach(b => {
+        b.addEventListener("click", () => {
+          unlockSound();
+          changeQty(key, Number(b.getAttribute("data-qty")));
+        }, { passive: true });
+      });
+    });
+  };
 
-  const sub = cartSubtotal();
-  const ship = Number(state.shipping.quote || 0);
-  const total = sub + ship;
+  const updateCartUI = () => {
+    updateCartCount();
+    renderCartItems();
+    updateTotalsUI();
 
-  if ($("#cartSubtotal")) $("#cartSubtotal").textContent = fmtMXN(sub);
+    // quote if needed
+    if (state.shipping.mode !== "pickup") requestShippingQuote();
+  };
 
-  if ($("#cartShipping")) {
-    $("#cartShipping").textContent =
-      state.shipping.mode === "pickup" ? "Gratis" : ship > 0 ? fmtMXN(ship) : "Pendiente";
-  }
+  // -------------------- SHIPPING QUOTE --------------------
+  const shipModeToCountry = (mode) => (mode === "us" ? "US" : "MX");
 
-  const shipLabel = $("#cartShipLabel") || $("#miniShipLabel");
-  if (shipLabel) {
-    if (state.shipping.mode === "pickup") shipLabel.textContent = "Pickup Gratis";
-    else shipLabel.textContent = state.shipping.label || (ship > 0 ? fmtMXN(ship) : "Cotiza envío");
-  }
-
-  const totalEl = $("#cartTotal");
-  if (totalEl) totalEl.textContent = fmtMXN(total);
-}
-
-/* -----------------------
-   12) DRAWER OPEN/CLOSE
------------------------- */
-function openDrawer() {
-  $("#cartDrawer")?.classList.add("active", "open");
-  $("#pageOverlay")?.classList.add("active", "show");
-  $(".page-overlay")?.classList.add("active", "show");
-  $("#backdrop")?.classList.add("active", "show");
-  document.body.classList.add("noScroll", "modalOpen");
-  document.body.style.overflow = "hidden";
-  saveCart();
-}
-function closeDrawer() {
-  $("#cartDrawer")?.classList.remove("active", "open");
-  $("#pageOverlay")?.classList.remove("active", "show");
-  $(".page-overlay")?.classList.remove("active", "show");
-  $("#backdrop")?.classList.remove("active", "show");
-  document.body.classList.remove("noScroll", "modalOpen");
-  document.body.style.overflow = "";
-}
-function openCart() { openDrawer(); }
-function closeCart() { closeDrawer(); }
-
-/* -----------------------
-   13) SHIPPING
------------------------- */
-function getShipModeFromUI() {
-  const sel = $("#shippingMode");
-  if (sel) return String(sel.value || "pickup");
-  const checked = document.querySelector('input[name="shipMode"]:checked');
-  return String(checked?.value || "pickup");
-}
-
-function toggleShipping(mode) {
-  const m = String(mode || getShipModeFromUI() || "pickup").toLowerCase();
-  state.shipping.mode = m;
-
-  const zip = $("#miniZip");
-  if (m === "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Pickup Tijuana (Gratis)";
-    if (zip) zip.style.display = "none";
-  } else {
-    state.shipping.quote = 0;
-    state.shipping.label = "Ingresa CP y cotiza";
-    if (zip) {
-      zip.style.display = "block";
-      zip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
+  const requestShippingQuote = debounce(async () => {
+    if (state.shipping.mode === "pickup") {
+      state.shipping.quote = { cost: 0, etaDays: null };
+      updateTotalsUI();
+      return;
     }
-  }
 
-  saveCart();
-  requestMiniQuote();
-}
+    const zip = String(state.shipping.zip || "").trim();
+    const country = shipModeToCountry(state.shipping.mode);
+    const minZip = country === "US" ? 5 : 4;
 
-function cartItemsForQuote() {
-  const items = (state.cart || []).map((i) => ({ qty: clampQty(i.qty) }));
-  return items.length ? items : [{ qty: 1 }];
-}
-function modeToCountry(mode) {
-  return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
-}
+    if (zip.length < minZip) {
+      state.shipping.quote = null;
+      updateTotalsUI();
+      return;
+    }
 
-function requestMiniQuote() {
-  clearTimeout(state.__quoteTimer);
-  state.__quoteTimer = setTimeout(() => {
-    const mode = getShipModeFromUI();
-    const zip = digitsOnly($("#miniZip")?.value || "");
-    if (mode === "pickup") return;
-    if (zip.length < 4) return;
-    quoteShippingMini().catch(() => {});
-  }, 520);
-}
+    const items = state.cart.map(it => ({ id: it.id, qty: it.qty }));
+    if (!items.length) return;
 
-async function quoteShippingMini() {
-  if (state.__quoteInFlight) return;
+    const key = `${country}:${zip}:${items.map(i => `${i.id}x${i.qty}`).join(",")}`;
+    if (key === state.lastQuoteKey) return;
+    state.lastQuoteKey = key;
 
-  const mode = getShipModeFromUI();
-  const zip = digitsOnly($("#miniZip")?.value || "");
+    try {
+      const r = await fetch(CONFIG.endpoints.shippingQuote, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country, zip, items })
+      });
 
-  if (mode === "pickup") return;
-  if (zip.length < 4) return toast("Ingresa un CP/ZIP válido", "error");
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data?.ok) throw new Error(data?.error || "No se pudo cotizar");
 
-  state.__quoteInFlight = true;
-  const lbl = $("#miniShipLabel") || $("#cartShipLabel");
-  if (lbl) lbl.textContent = "Cotizando...";
+      state.shipping.quote = { cost: Number(data.cost || 0), etaDays: data.etaDays ?? null };
+      updateTotalsUI();
 
-  try {
-    const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
+      // update "envios" section quick quote text
+      if (el.shipQuote) {
+        const eta = data.etaDays ? ` · ${data.etaDays} días` : "";
+        el.shipQuote.textContent = `Envío estimado: ${money(data.cost)}${eta}`;
+      }
+      beep(740, 0.04, 0.02);
+    } catch (e) {
+      state.shipping.quote = null;
+      updateTotalsUI();
+      if (el.shipQuote) el.shipQuote.textContent = "No pude cotizar. Revisa tu CP/ZIP.";
+    }
+  }, 450);
 
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 17000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 17000));
+  const bindShipping = () => {
+    // section estimator (envios)
+    if (el.shipCountry) {
+      el.shipCountry.addEventListener("change", () => {
+        unlockSound();
+        // this estimator doesn't change cart mode, it's just a quick estimator
+        if (el.shipQuote) el.shipQuote.textContent = "Escribe tu CP/ZIP para cotizar.";
+      });
+    }
 
-    if (!res.ok) throw new Error(data?.error || "QUOTE_HTTP_" + res.status);
-    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
+    if (el.shipZip) {
+      el.shipZip.addEventListener("input", debounce(async () => {
+        const zip = String(el.shipZip.value || "").trim();
+        const country = String(el.shipCountry?.value || "MX").toUpperCase();
+        const minZip = country === "US" ? 5 : 4;
 
-    const cost = Number(data.cost || 0);
-    const label = String(data.label || "Envío estimado");
-    if (!cost) throw new Error("QUOTE_ZERO");
+        if (zip.length < minZip) {
+          if (el.shipQuote) el.shipQuote.textContent = "Escribe tu CP/ZIP para cotizar.";
+          return;
+        }
 
-    state.shipping = { mode, quote: cost, label };
-    saveCart();
-    toast("Envío actualizado", "success");
-    playSound("success");
-  } catch (e) {
-    console.warn("[quote] fallback:", e);
-    const fallbackCost = mode === "us" ? CONFIG.fallbackShippingUS : CONFIG.fallbackShippingMX;
-    state.shipping.quote = fallbackCost;
-    state.shipping.label = "Envío (Estimación)";
-    saveCart();
-    toast("No se pudo cotizar en vivo. Usando estimación.", "info");
-  } finally {
-    state.__quoteInFlight = false;
-  }
-}
+        try {
+          const r = await fetch(CONFIG.endpoints.shippingQuote, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ country, zip, items: [{ id: "ESTIMATE", qty: 1 }] })
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data?.ok) throw new Error();
+          const eta = data.etaDays ? ` · ${data.etaDays} días` : "";
+          if (el.shipQuote) el.shipQuote.textContent = `Envío estimado: ${money(data.cost)}${eta}`;
+        } catch {
+          if (el.shipQuote) el.shipQuote.textContent = "No pude cotizar. Revisa tu CP/ZIP.";
+        }
+      }, 480));
+    }
 
-async function quoteShippingUI() {
-  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
-  const zip = digitsOnly($("#shipZip")?.value || "");
-  const out = $("#shipQuote");
-
-  if (zip.length < 4) {
-    if (out) out.textContent = "Ingresa un código postal válido.";
-    return;
-  }
-  if (out) out.textContent = "Cotizando...";
-
-  try {
-    const payload = { zip, country, items: cartItemsForQuote() };
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 17000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 17000));
-
-    if (!res.ok) throw new Error(data?.error || "QUOTE_HTTP_" + res.status);
-    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
-
-    const cost = Number(data.cost || 0);
-    const label = String(data.label || "Envío estimado");
-    if (!cost) throw new Error("QUOTE_ZERO");
-
-    if (out) out.innerHTML = `<b>${escapeHtml(label)}</b> · ${fmtMXN(cost)}`;
-    playSound("success");
-  } catch (e) {
-    console.warn("[quote-ui] fail:", e);
-    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
-  }
-}
-
-/* -----------------------
-   14) CHECKOUT
------------------------- */
-async function doCheckout() {
-  if (!state.cart.length) return toast("Carrito vacío", "error");
-
-  const mode = state.shipping.mode || getShipModeFromUI();
-  const zip = digitsOnly($("#miniZip")?.value || "");
-
-  if (mode !== "pickup") {
-    if (zip.length < 4) return toast("Ingresa tu CP/ZIP", "error");
-    if (!state.shipping.quote) return toast("Cotiza el envío primero", "error");
-  }
-
-  const btn = $("#checkoutBtn");
-  const original = btn?.innerHTML || "PAGAR AHORA";
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESANDO...';
-    btn.disabled = true;
-  }
-
-  try {
-    initStripeRetry();
-
-    const payload = {
-      cart: state.cart,
-      shipping: state.shipping,
-      shippingMode: mode,
-      shippingData: { postal_code: zip },
-      cancel_url: window.location.origin + "/?status=cancel",
-      success_url: window.location.origin + "/?status=success",
-      promoCode: "",
+    // cart drawer shipping mode
+    const setMode = (mode) => {
+      state.shipping.mode = mode;
+      updateShipUI();
+      updateTotalsUI();
+      requestShippingQuote();
     };
 
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 22000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 22000));
-
-    if (!res.ok) throw new Error(data?.error || "CHECKOUT_HTTP_" + res.status);
-
-    const directUrl = data?.url ? String(data.url) : "";
-    const sessionId = data?.id || data?.sessionId;
-
-    if (directUrl) {
-      window.location.href = directUrl;
-      return;
-    }
-    initStripe();
-    if (sessionId && stripe) {
-      const result = await stripe.redirectToCheckout({ sessionId: String(sessionId) });
-      if (result?.error) throw new Error(result.error.message);
-      return;
+    if (el.shippingModeSelect) {
+      el.shippingModeSelect.addEventListener("change", () => {
+        unlockSound();
+        setMode(el.shippingModeSelect.value);
+      });
     }
 
-    throw new Error(data?.error || "CHECKOUT_FAILED");
-  } catch (e) {
-    console.error("[checkout] error:", e);
-    toast("Error en pago. Intenta de nuevo.", "error");
-    if (btn) {
-      btn.innerHTML = original;
-      btn.disabled = false;
-    }
-  }
-}
-
-/* -----------------------
-   15) AI (chat)
------------------------- */
-function toggleAiAssistant() {
-  const modal = $("#aiChatModal") || $(".ai-chat-modal");
-  if (!modal) return;
-  modal.classList.toggle("active");
-  modal.classList.toggle("show");
-}
-
-function closeAiAssistant() {
-  const modal = $("#aiChatModal") || $(".ai-chat-modal");
-  if (!modal) return;
-  modal.classList.remove("active", "show");
-}
-
-async function sendAiMessage() {
-  const input = $("#aiInput") || $(".ai-input");
-  const box = $("#aiMessages") || document.querySelector(".ai-body");
-  if (!input || !box) return;
-
-  const text = String(input.value || "").trim();
-  if (!text) return;
-
-  const me = document.createElement("div");
-  me.className = "ai-bubble user ai-msg ai-me";
-  me.textContent = text;
-  box.appendChild(me);
-  box.scrollTop = box.scrollHeight;
-  input.value = "";
-
-  try {
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
-
-    if (!res.ok) throw new Error(data?.error || "AI_HTTP_" + res.status);
-    const reply = String(
-      data?.reply ||
-        data?.message ||
-        "Listo. Dime tu talla, tu código postal y qué producto quieres."
-    );
-
-    const bot = document.createElement("div");
-    bot.className = "ai-bubble bot ai-msg ai-bot";
-    bot.textContent = reply;
-    box.appendChild(bot);
-    box.scrollTop = box.scrollHeight;
-  } catch (e) {
-    console.warn("[ai] offline:", e);
-    const bot = document.createElement("div");
-    bot.className = "ai-bubble bot ai-msg ai-bot";
-    bot.textContent =
-      "Ahora mismo estoy sin respuesta en vivo. Si quieres, dime: producto + talla + CP y te calculo total (estimación) aquí mismo.";
-    box.appendChild(bot);
-    box.scrollTop = box.scrollHeight;
-  }
-}
-
-function bindAiEnter() {
-  const input = $("#aiInput") || $(".ai-input");
-  if (!input) return;
-  bindOnce(input, "keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendAiMessage();
-    }
-  });
-}
-
-/* -----------------------
-   16) LEGAL
------------------------- */
-function openLegal(type) {
-  const modal = $("#legalModal");
-  if (!modal) return;
-
-  const title = $("#legalTitle");
-  const body = $("#legalBody");
-
-  const lib = window.LEGAL_CONTENT || {};
-  const FALLBACK = {
-    privacy: {
-      title: "AVISO DE PRIVACIDAD",
-      html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>",
-    },
-    terms: {
-      title: "TÉRMINOS Y CONDICIONES",
-      html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>",
-    },
-    contact: {
-      title: "CONTACTO",
-      html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>",
-    },
-  };
-
-  const key = String(type || "privacy").trim();
-  const item = lib[key] || FALLBACK[key] || FALLBACK.privacy;
-
-  if (title) title.textContent = item.title || "Info";
-  if (body) body.innerHTML = item.html || "<p>Contenido no disponible.</p>";
-
-  modal.classList.add("active", "show");
-  document.body.classList.add("modalOpen", "noScroll");
-}
-function closeLegal() {
-  $("#legalModal")?.classList.remove("active", "show");
-  document.body.classList.remove("modalOpen", "noScroll");
-}
-
-/* -----------------------
-   17) COOKIES
------------------------- */
-function acceptCookies() {
-  const b = $("#cookieBanner") || $(".cookieBanner");
-  if (b) b.style.display = "none";
-  localStorage.setItem("score_cookies", "accepted");
-  localStorage.setItem("score_cookie_consent", "all");
-}
-
-/* -----------------------
-   18) INTRO/SPLASH + SOCIAL + SW
------------------------- */
-function initIntroSplash() {
-  const splash = $("#splash-screen");
-  const bar = $(".rpm-bar");
-  const rpm = $("#revCounter");
-
-  if (splash && bar) {
-    let p = 0;
-    const tick = setInterval(() => {
-      p = Math.min(100, p + (Math.random() * 14 + 6));
-      bar.style.width = p.toFixed(0) + "%";
-      if (rpm) rpm.textContent = Math.min(9000, Math.floor(p * 90)) + " RPM";
-      if (p >= 100) {
-        clearInterval(tick);
-        splash.style.opacity = "0";
-        splash.style.visibility = "hidden";
-        splash.setAttribute("aria-hidden", "true");
-        setTimeout(() => splash.remove?.(), 650);
-      }
-    }, 120);
-  }
-}
-
-function initSocialProof() {
-  const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
-  const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "Rosarito", "Tecate"];
-  const items = ["HOODIE", "TEE", "CAP", "JERSEY", "HOODIE BAJA", "TEE SCORE"];
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  const show = () => {
-    const cartOpen =
-      $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
-    const aiOpen =
-      $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
-    if (cartOpen || aiOpen) return;
-
-    toast(`🏁 ${pick(names)} (${pick(locs)}) agregó ${pick(items)} a su carrito.`, "info");
-  };
-
-  clearInterval(state.__socialTimer);
-  setTimeout(show, 18000);
-  state.__socialTimer = setInterval(show, 42000);
-}
-
-function initServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
-  if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_361").catch(() => {});
-}
-
-/* -----------------------
-   19) BOOT / BIND UI (FIXED)
------------------------- */
-function bindUI() {
-  // Year
-  const y = $("#yearNow");
-  if (y) y.textContent = new Date().getFullYear();
-
-  // Drawer open
-  bindOnce($(".cartBtn"), "click", openDrawer);
-  bindOnce($("#cartBtn"), "click", openDrawer);
-
-  // Overlay click close
-  bindOnce($(".page-overlay"), "click", closeDrawer);
-  bindOnce($("#pageOverlay"), "click", closeDrawer);
-  bindOnce($("#backdrop"), "click", closeDrawer);
-
-  // Drawer close btn
-  bindOnce($(".closeBtn"), "click", closeDrawer);
-  bindOnce($(".drawerClose"), "click", closeDrawer);
-
-  // Checkout
-  bindOnce($("#checkoutBtn"), "click", (e) => {
-    e.preventDefault();
-    doCheckout();
-  });
-
-  // AI
-  bindOnce($(".ai-btn-float"), "click", toggleAiAssistant);
-  bindOnce($(".ai-send"), "click", sendAiMessage);
-  bindAiEnter();
-
-  // ✅ AI close (sin onclick inline)
-  bindOnce($("#aiCloseBtn"), "click", closeAiAssistant);
-
-  // Legal
-  $$(".jsLegalLink").forEach((btn) => {
-    bindOnce(btn, "click", () => openLegal(btn.dataset.legal || "privacy"));
-  });
-  bindOnce($("#legalClose"), "click", closeLegal);
-  bindOnce($("#legalBackdrop"), "click", closeLegal);
-
-  // Chips
-  $$(".chip").forEach((c) => {
-    bindOnce(c, "click", () => {
-      $$(".chip").forEach((ch) => ch.classList.remove("active"));
-      c.classList.add("active");
-      state.filter = c.dataset.filter || "ALL";
-      renderGrid(getFilteredProducts());
-      playSound("click");
+    el.shipModeRadios.forEach(r => {
+      r.addEventListener("change", () => {
+        if (!r.checked) return;
+        unlockSound();
+        setMode(r.value);
+        if (el.shippingModeSelect) el.shippingModeSelect.value = r.value;
+      });
     });
-  });
 
-  // Shipping
-  bindOnce($("#shippingMode"), "change", (e) => toggleShipping(e.target.value));
-  bindOnce($("#miniZip"), "input", requestMiniQuote);
-
-  document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
-    bindOnce(r, "change", () => toggleShipping(r.value));
-  });
-
-  // Landing quote UI
-  bindOnce($("#shipZip"), "input", () => {
-    const v = digitsOnly($("#shipZip")?.value || "");
-    if (v.length >= 4) {
-      clearTimeout(window.__shipUiDeb);
-      window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 520);
+    if (el.miniZip) {
+      el.miniZip.addEventListener("input", () => {
+        state.shipping.zip = el.miniZip.value;
+        requestShippingQuote();
+      });
     }
-  });
-  bindOnce($("#shipCountry"), "change", () => {
-    const v = digitsOnly($("#shipZip")?.value || "");
-    if (v.length >= 4) quoteShippingUI().catch?.(() => {});
-  });
+  };
 
-  // Escape
-  bindOnce(document, "keydown", (e) => {
-    if (e.key !== "Escape") return;
-    closeLegal();
-    closeAiAssistant();
-    closeDrawer();
-  });
+  // -------------------- CHECKOUT --------------------
+  const createCheckout = async () => {
+    if (state.cart.length === 0) return;
 
-  // Cookies persist
-  if (localStorage.getItem("score_cookies") === "accepted" || localStorage.getItem("score_cookie_ok") === "1") {
-    const b = $("#cookieBanner") || $(".cookieBanner");
-    if (b) b.style.display = "none";
-  }
+    const subtotal = calcSubtotal();
+    const shipping = state.shipping.mode === "pickup"
+      ? { mode: "pickup", cost: 0, zip: "" }
+      : { mode: state.shipping.mode, cost: Number(state.shipping.quote?.cost || 0), zip: String(state.shipping.zip || "").trim() };
 
-  // ✅ cookie accept (sin onclick inline)
-  bindOnce($("#cookieAcceptBtn"), "click", acceptCookies);
+    try {
+      const r = await fetch(CONFIG.endpoints.createCheckout, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currency: CONFIG.currency,
+          items: state.cart.map(it => ({
+            id: it.id,
+            name: it.name,
+            price: it.price,
+            qty: it.qty,
+            size: it.size
+          })),
+          shipping
+        })
+      });
 
-  // Success/cancel params
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("status") === "success") {
-    toast("¡Pago confirmado! 🏁", "success");
-    state.cart = [];
-    saveCart();
-    history.replaceState({}, document.title, "/");
-  } else if (params.get("status") === "cancel") {
-    toast("Pago cancelado", "info");
-    history.replaceState({}, document.title, "/");
-  }
-}
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data?.url) throw new Error(data?.error || "Checkout no disponible");
+      beep(960, 0.06, 0.04);
+      window.location.href = data.url;
+    } catch (e) {
+      toast("Checkout no disponible todavía (falta create_checkout).", "error");
+    }
+  };
 
-/* -----------------------
-   20) DOM READY
------------------------- */
-document.addEventListener("DOMContentLoaded", async () => {
-  initStripeRetry();
-  initIntroSplash();
+  // -------------------- AI CHAT --------------------
+  const openAi = () => {
+    if (!el.aiModal) return;
+    el.aiModal.classList.add("active", "show");
+    el.aiModal.setAttribute("aria-hidden", "false");
+    lockScroll(true);
+    setTimeout(() => el.aiInput?.focus(), 50);
+  };
 
-  await loadCatalog();
+  const closeAi = () => {
+    if (!el.aiModal) return;
+    el.aiModal.classList.remove("active", "show");
+    el.aiModal.setAttribute("aria-hidden", "true");
+    lockScroll(false);
+  };
 
-  toggleShipping(getShipModeFromUI());
+  const addAiBubble = (text, who = "bot") => {
+    if (!el.aiMessages) return;
+    const div = document.createElement("div");
+    div.className = `ai-bubble ${who === "me" ? "ai-me" : "ai-bot"} ai-msg`;
+    div.innerHTML = safeText(text).replace(/\n/g, "<br>");
+    el.aiMessages.appendChild(div);
+    el.aiMessages.scrollTop = el.aiMessages.scrollHeight;
+  };
 
-  bindUI();
-  saveCart();
+  const sendAi = async () => {
+    const msg = String(el.aiInput?.value || "").trim();
+    if (!msg) return;
+    unlockSound();
+    el.aiInput.value = "";
+    addAiBubble(msg, "me");
+    beep(620, 0.04, 0.02);
 
-  initSocialProof();
-  initServiceWorker();
-});
+    try {
+      const r = await fetch(CONFIG.endpoints.chat, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          context: {
+            cart: state.cart.map(it => ({ name: it.name, size: it.size, qty: it.qty, price: it.price })),
+            shipping: state.shipping
+          }
+        })
+      });
 
-/* -----------------------
-   21) EXPORTS legacy (compat)
------------------------- */
-window.addToCart = addToCart;
-window.modQty = modQty;
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data?.reply) throw new Error(data?.error || "AI falló");
+      addAiBubble(data.reply, "bot");
+    } catch {
+      addAiBubble("Ahorita no pude responder. Intenta de nuevo en un momento.", "bot");
+    }
+  };
 
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-window.openCart = openCart;
-window.closeCart = closeCart;
+  // -------------------- LEGAL --------------------
+  const LEGAL = {
+    terms: `
+      <b>Términos</b><br><br>
+      Al comprar en SCORE STORE aceptas nuestras políticas de producción, cambios y envío.
+      <br><br><b>Producción</b>: tiempos pueden variar por temporada.<br>
+      <b>Envíos</b>: la cotización es estimada y puede ajustarse por paquetería.<br>
+      <b>Devoluciones</b>: por ser merch con tallas, revisa antes de pagar.
+    `,
+    privacy: `
+      <b>Privacidad</b><br><br>
+      Usamos datos únicamente para procesar tu pedido y mejorar la experiencia.
+      No vendemos tu información.
+    `,
+    contact: `
+      <b>Contacto</b><br><br>
+      Soporte: <b>contacto.hocker@gmail.com</b><br>
+      Pickup: Tijuana, BC (coordinación por soporte).
+    `
+  };
 
-window.toggleShipping = toggleShipping;
-window.quoteShipping = quoteShippingMini;
-window.quoteShippingMini = quoteShippingMini;
-window.quoteShippingUI = quoteShippingUI;
+  const openLegal = (key) => {
+    if (!el.legalModal) return;
+    el.legalTitle.textContent = (key || "INFO").toUpperCase();
+    el.legalBody.innerHTML = LEGAL[key] || LEGAL.terms;
+    el.legalModal.classList.add("active", "show");
+    el.legalModal.setAttribute("aria-hidden", "false");
+    lockScroll(true);
+  };
 
-window.doCheckout = doCheckout;
-window.checkout = doCheckout;
+  const closeLegal = () => {
+    if (!el.legalModal) return;
+    el.legalModal.classList.remove("active", "show");
+    el.legalModal.setAttribute("aria-hidden", "true");
+    lockScroll(false);
+  };
 
-window.toggleAiAssistant = toggleAiAssistant;
-window.sendAiMessage = sendAiMessage;
+  // -------------------- COOKIES --------------------
+  window.acceptCookies = () => {
+    try { localStorage.setItem("scorestore_cookies_ok", "1"); } catch {}
+    if (el.cookieBanner) el.cookieBanner.style.display = "none";
+    toast("Listo. Cookies activadas.", "success");
+  };
 
-window.openLegal = openLegal;
-window.closeLegal = closeLegal;
+  const initCookies = () => {
+    let ok = false;
+    try { ok = localStorage.getItem("scorestore_cookies_ok") === "1"; } catch {}
+    if (el.cookieBanner) el.cookieBanner.style.display = ok ? "none" : "flex";
+  };
 
-window.acceptCookies = acceptCookies;
+  // -------------------- NOTIFICATIONS --------------------
+  const startPurchaseToasts = () => {
+    const names = ["Baja 1000 Tee", "SCORE Hoodie", "Desert Cap", "Baja 500 Tee", "San Felipe 250 Tee"];
+    const cities = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "CDMX", "LA"];
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-window.__score_encodePath = urlEncodePathIfNeeded;
-window.__score_probeImage = probeImage;
+    const run = () => {
+      const prod = pick(names);
+      const city = pick(cities);
+      const mins = Math.floor(Math.random() * 14) + 1;
+      toast(`Compra reciente: ${prod} · ${city} · hace ${mins} min`, "info");
+      beep(520, 0.04, 0.015);
+      const next = Math.floor(Math.random() * 14000) + 16000; // 16–30s (sin saturar)
+      state.notifTimer = setTimeout(run, next);
+    };
+
+    clearTimeout(state.notifTimer);
+    state.notifTimer = setTimeout(run, 9000);
+  };
+
+  // -------------------- BIND UI --------------------
+  const bindUI = () => {
+    // cart open
+    if (el.cartBtn) el.cartBtn.addEventListener("click", () => { unlockSound(); openCart(); beep(760, 0.05, 0.03); });
+    // any "cartBtn" class elements
+    $$(".cartBtn").forEach(b => b.addEventListener("click", () => { unlockSound(); openCart(); }));
+
+    // close cart
+    $$(".drawerClose, .closeBtn").forEach(b => b.addEventListener("click", () => { unlockSound(); closeCart(); beep(420, 0.04, 0.02); }));
+    if (el.pageOverlay) el.pageOverlay.addEventListener("click", closeCart);
+    if (el.backdrop) el.backdrop.addEventListener("click", closeCart);
+
+    // checkout
+    if (el.checkoutBtn) el.checkoutBtn.addEventListener("click", () => { unlockSound(); createCheckout(); });
+
+    // AI
+    if (el.aiFloatBtn) el.aiFloatBtn.addEventListener("click", () => { unlockSound(); openAi(); });
+    if (el.aiSendBtn) el.aiSendBtn.addEventListener("click", sendAi);
+    if (el.aiInput) el.aiInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendAi();
+      if (e.key === "Escape") closeAi();
+    });
+
+    // close ai if click outside card
+    if (el.aiModal) {
+      el.aiModal.addEventListener("click", (e) => {
+        const card = $(".ai-chat-card", el.aiModal);
+        if (!card) return;
+        if (!card.contains(e.target)) closeAi();
+      });
+    }
+
+    // Legal
+    el.legalLinks.forEach(b => b.addEventListener("click", () => openLegal(b.getAttribute("data-legal"))));
+    if (el.legalClose) el.legalClose.addEventListener("click", closeLegal);
+    if (el.legalBackdrop) el.legalBackdrop.addEventListener("click", closeLegal);
+
+    // Escape to close modals
+    window.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      closeCart();
+      closeLegal();
+      closeAi();
+    }, { passive: true });
+
+    // unlock sound on first interaction
+    window.addEventListener("pointerdown", unlockSound, { once: true, passive: true });
+  };
+
+  // -------------------- INIT --------------------
+  const loadCatalog = async () => {
+    try {
+      const r = await fetch(CONFIG.catalogUrl, { cache: "no-store" });
+      const data = await r.json();
+      const list = Array.isArray(data) ? data : (Array.isArray(data.products) ? data.products : []);
+      state.products = list.map(normalizeProduct).filter(p => p.id && p.name);
+      renderProducts();
+    } catch {
+      if (el.productsGrid) el.productsGrid.innerHTML = `<div class="muted">No pude cargar el catálogo. Revisa <b>catalog.json</b>.</div>`;
+    }
+  };
+
+  const init = async () => {
+    runSplash();
+    initCookies();
+    bindFilters();
+    bindShipping();
+    bindUI();
+
+    updateShipUI();
+    updateCartUI();
+    startPurchaseToasts();
+
+    await loadCatalog();
+  };
+
+  init();
+})();
