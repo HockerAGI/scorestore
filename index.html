@@ -295,7 +295,9 @@
         <div class="ai-badge">
           <span class="dotLive"></span> ASISTENTE
         </div>
-        <button class="ai-close" type="button" onclick="document.getElementById('aiChatModal')?.classList.remove('active','show')">
+
+        <!-- ✅ sin onclick inline (main.js lo bindea) -->
+        <button id="aiCloseBtn" class="ai-close" type="button" aria-label="Cerrar asistente">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -308,7 +310,7 @@
 
       <div class="ai-foot">
         <input id="aiInput" class="ai-input" placeholder="Escribe aquí..." autocomplete="off" />
-        <button class="ai-send" type="button">
+        <button class="ai-send" type="button" aria-label="Enviar mensaje">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
@@ -335,7 +337,9 @@
       <div class="cookieText">
         Usamos cookies para mejorar tu experiencia y medir rendimiento.
       </div>
-      <button class="btnPrimary small" type="button" onclick="acceptCookies()">ACEPTAR</button>
+
+      <!-- ✅ sin onclick inline (main.js lo bindea) -->
+      <button id="cookieAcceptBtn" class="btnPrimary small" type="button">ACEPTAR</button>
     </div>
   </div>
 
@@ -419,11 +423,6 @@
       </div>
     </div>
   </aside>
-
-  <script>
-    // year
-    document.getElementById("yearNow").textContent = new Date().getFullYear();
-  </script>
 
   <!-- MAIN -->
   <script src="/js/main.js?v=2026_PROD_UNIFIED_361" defer></script>
