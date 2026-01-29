@@ -1,255 +1,206 @@
-<!DOCTYPE html>
-<html lang="es-MX">
+<!doctype html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-  <title>SCORE STORE | Mercancía Oficial Off-Road</title>
-  <meta name="description" content="Tienda oficial de mercancía SCORE International. Fabricado por Único Uniformes. Envíos a México y USA." />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-  <meta name="robots" content="index,follow" />
-
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <title>SCORE STORE</title>
+  <meta name="description" content="Merch oficial off-road. Compra rápido, pickup o envío con cotización en tiempo real." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_361" />
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
-  <!-- FontAwesome (non-blocking) -->
-  <link rel="preload"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  </noscript>
-
-  <!-- Stripe -->
-  <script src="https://js.stripe.com/v3/" async></script>
-
-  <!-- Meta Pixel -->
-  <link rel="preconnect" href="https://connect.facebook.net" crossorigin>
-  <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init','4249947775334413');
-    fbq('track','PageView');
-  </script>
+  <link rel="stylesheet" href="/styles.css?v=2026_PROD_UNIFIED_361" />
 </head>
 
 <body>
-  <!-- SPLASH -->
-  <div id="splash-screen" aria-label="Cargando" aria-hidden="false">
+  <div class="bgTexture" aria-hidden="true"></div>
+
+  <!-- Splash -->
+  <div id="splash-screen" aria-hidden="false">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE" width="160" height="160" decoding="async">
-      <div class="rpm-wrapper" aria-hidden="true">
+      <img class="splash-logo" src="/assets/score-logo.png" alt="SCORE Logo" />
+      <div class="rpm-wrapper">
+        <div class="rev-counter" id="revCounter">0 RPM</div>
         <div class="rpm-bar-container">
           <div class="rpm-bar"></div>
         </div>
       </div>
-      <div class="rev-counter" id="revCounter" aria-hidden="true">0 RPM</div>
-      <div class="splash-text">LOADING ENGINE...</div>
+      <div class="splash-text">CARGANDO MERCH OFICIAL…</div>
     </div>
   </div>
 
-  <noscript>
-    <div style="padding:12px; background:#000; color:#fff; font-weight:900; text-align:center;">
-      Esta tienda requiere JavaScript para funcionar correctamente.
-    </div>
-  </noscript>
-
-  <!-- PROMO BAR -->
-  <div class="promo-bar" role="status" aria-live="polite">
-    PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA · CHECKOUT SEGURO
+  <!-- Promo -->
+  <div class="promo-bar">
+    EDICIÓN LIMITADA · <b>MERCH OFICIAL OFF-ROAD</b> · PICKUP / ENVÍO
   </div>
 
-  <!-- TOPBAR -->
-  <header class="topbar" role="banner">
+  <!-- Topbar -->
+  <header class="topbar">
     <div class="container topInner">
-      <div class="brand" aria-label="SCORE">
+      <div class="brand">
         <a href="#top" aria-label="Ir al inicio">
-          <!-- ✅ logo más grande / sin texto -->
-          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="92" height="92" decoding="async" />
+          <img class="brandLogoBig" src="/assets/score-logo.png" alt="SCORE" />
+          <span class="brandText">Score Store</span>
         </a>
       </div>
 
-      <nav class="nav" aria-label="Navegación principal">
+      <nav class="nav" aria-label="Navegación">
         <a href="#catalogo">CATÁLOGO</a>
         <a href="#envios">ENVÍOS</a>
         <a href="#partners">PARTNERS</a>
       </nav>
 
-      <button id="cartBtn" class="cartBtn" type="button" aria-label="Abrir carrito">
-        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-        <span id="cartCount" class="cartCount" aria-label="Productos en el carrito">0</span>
+      <button class="cartBtn" id="cartBtn" aria-label="Abrir carrito" type="button">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="cartCount" id="cartCount">0</span>
       </button>
     </div>
   </header>
 
-  <!-- PAGE BG -->
-  <div class="bgTexture" aria-hidden="true"></div>
-
-  <div class="wrap">
-    <!-- HERO -->
-    <section class="hero" id="top" aria-label="Portada">
-      <img class="heroBgImg" src="/assets/hero.webp" alt="" width="1920" height="1080" decoding="async" />
-      <!-- ✅ overlay negro MINIMO -->
+  <!-- HERO -->
+  <main class="wrap" id="top">
+    <section class="hero">
+      <img class="heroBgImg" src="/assets/hero-bg.webp" alt="" aria-hidden="true">
       <div class="heroOverlayDark" aria-hidden="true"></div>
 
       <div class="container heroInner">
-        <div class="heroBadge" aria-label="Etiqueta oficial">
-          <i class="fa-solid fa-certificate badgeIcon" aria-hidden="true"></i>
-          <span>OFFICIAL MERCH</span>
+        <div class="heroBadge">
+          <i class="fa-solid fa-bolt badgeIcon"></i>
+          DROP 2026 · SCORE OFFICIAL
         </div>
 
         <h1 class="hero-title">
-          BORN IN <span class="heroAccent">DUST</span><br>
-          BUILT FOR <span class="heroAccent">LEGENDS</span>
+          MERCH <span class="heroAccent">OFICIAL</span><br>
+          HECHO PARA EL DESIERTO
         </h1>
 
         <p class="hero-sub">
-          Mercancía oficial de <b>SCORE International</b>. Hecho por <b>Único Uniformes</b>.
-          Compra en segundos: elige talla, agrega y paga.
+          Prendas premium para fans del off-road: cortes pro, calidad real y entrega rápida.
+          Pickup en Tijuana o envío con cotización en tiempo real.
         </p>
 
         <div class="heroCtas">
           <a class="btnPrimary" href="#catalogo">
-            <i class="fa-solid fa-bolt"></i> VER CATÁLOGO
+            <i class="fa-solid fa-bag-shopping"></i> VER CATÁLOGO
           </a>
-          <a class="btnGhost" href="#envios">
-            <i class="fa-solid fa-truck-fast"></i> COTIZAR ENVÍO
-          </a>
+          <button class="btnGhost jsLegalLink" data-legal="terms" type="button">
+            <i class="fa-solid fa-shield"></i> POLÍTICAS
+          </button>
         </div>
 
         <div class="heroLogos">
-          <!-- ✅ “Desert” más protagonista -->
-          <img src="/assets/logo-desert.webp" class="heroLogoDesert" alt="Desert" width="180" height="80" decoding="async">
-          <img src="/assets/logo-score.webp" class="heroLogoScore" alt="SCORE" width="88" height="88" decoding="async">
+          <img class="heroLogoDesert" src="/assets/desert-logo.png" alt="Desert Logo">
+          <img class="heroLogoScore" src="/assets/score-logo.png" alt="SCORE">
         </div>
       </div>
     </section>
 
     <!-- CATALOGO -->
-    <section class="section" id="catalogo" aria-label="Catálogo">
+    <section class="section" id="catalogo">
       <div class="container">
-        <div class="sectionHead">
+        <div class="sectionHead compact">
           <div>
-            <div class="kicker">SCORE STORE</div>
-            <h2 class="h2">Catálogo oficial</h2>
-            <p class="muted">
-              Cards premium (mobile-first). Si una imagen no existe, no rompe: se omite o usa fallback.
-            </p>
+            <div class="kicker">CATÁLOGO</div>
+            <div class="h2">ELIGE TU PRÓXIMA PRENDA</div>
+            <div class="muted">Card única · no plano · mobile-first · compra rápida.</div>
           </div>
 
-          <div class="filters" aria-label="Filtros de catálogo">
+          <div class="filters" aria-label="Filtros">
             <button class="chip active" type="button" data-filter="ALL">TODO</button>
-            <button class="chip" type="button" data-filter="BAJA_1000">BAJA 1000</button>
-            <button class="chip" type="button" data-filter="BAJA_500">BAJA 500</button>
-            <button class="chip" type="button" data-filter="BAJA_400">BAJA 400</button>
-            <button class="chip" type="button" data-filter="SF_250">SAN FELIPE 250</button>
-            <button class="chip" type="button" data-filter="HOODIES">HOODIES</button>
             <button class="chip" type="button" data-filter="TEES">TEES</button>
-            <button class="chip" type="button" data-filter="CAPS">CAPS</button>
+            <button class="chip" type="button" data-filter="HOODIES">HOODIES</button>
+            <button class="chip" type="button" data-filter="HATS">HATS</button>
           </div>
         </div>
 
-        <div id="productsGrid" class="grid" aria-live="polite"></div>
+        <div class="grid" id="productsGrid" aria-live="polite">
+          <!-- JS inject -->
+        </div>
       </div>
     </section>
 
-    <!-- ENVIOS -->
-    <section class="section alt" id="envios" aria-label="Envíos">
+    <!-- ENVÍOS -->
+    <section class="section alt" id="envios">
       <div class="container">
+        <div class="sectionHead">
+          <div>
+            <div class="kicker">ENVÍOS</div>
+            <div class="h2">COTIZACIÓN EN TIEMPO REAL</div>
+            <div class="muted">Escribe tu CP/ZIP para ver costo estimado. (El total final se calcula en el carrito.)</div>
+          </div>
+        </div>
+
         <div class="twoCol">
-          <div class="cardPanel">
-            <div class="kicker">LOGÍSTICA</div>
-            <h2 class="h2">Envíos MX / USA</h2>
-            <p class="muted">
-              El checkout calcula el total con envío. Para estimación rápida aquí: selecciona país y escribe tu CP/ZIP.
-            </p>
+          <div class="cardPanel highlight">
+            <div class="h3">Cotiza aquí</div>
+
+            <label class="label" for="shipCountry">País</label>
+            <select class="input" id="shipCountry">
+              <option value="MX" selected>México</option>
+              <option value="US">USA</option>
+            </select>
+
+            <label class="label" for="shipZip">Código Postal / ZIP</label>
+            <input class="input" id="shipZip" placeholder="Ej: 22000" inputmode="numeric" />
 
             <div class="shipBox">
-              <label class="label">País</label>
-              <select id="shipCountry" class="input">
-                <option value="MX" selected>México</option>
-                <option value="US">USA</option>
-              </select>
-
-              <label class="label">Código Postal / ZIP</label>
-              <input id="shipZip" class="input" inputmode="numeric" placeholder="Ej: 22010" maxlength="10" />
-
-              <div id="shipQuote" class="shipQuote">
-                Escribe tu CP/ZIP para cotizar.
-              </div>
+              <div class="shipQuote" id="shipQuote">Escribe tu CP/ZIP para cotizar.</div>
             </div>
 
             <div class="infoRow">
-              <div class="infoPill"><i class="fa-solid fa-location-dot"></i> Pickup Tijuana: <b>Gratis</b></div>
-              <div class="infoPill"><i class="fa-solid fa-shield"></i> Pago seguro</div>
-              <div class="infoPill"><i class="fa-solid fa-headset"></i> Soporte</div>
+              <div class="infoPill"><i class="fa-solid fa-lock"></i> Pago seguro</div>
+              <div class="infoPill"><i class="fa-solid fa-truck-fast"></i> Tracking</div>
+              <div class="infoPill"><i class="fa-solid fa-shirt"></i> Calidad pro</div>
+            </div>
+
+            <div class="fineprint">
+              * La cotización es estimada y puede variar por peso/volumen final.
             </div>
           </div>
 
-          <div class="cardPanel highlight">
-            <div class="kicker">TIP</div>
-            <h3 class="h3">La forma más rápida</h3>
-            <p class="muted">
-              Abre el carrito, elige envío y escribe tu CP/ZIP. La cotización se actualiza en vivo sin saturar requests.
-            </p>
-
+          <div class="cardPanel">
+            <div class="h3">Cómo funciona</div>
             <div class="miniSteps">
-              <div class="step"><span class="stepNum">1</span> Elige producto + talla</div>
-              <div class="step"><span class="stepNum">2</span> Agrega al carrito</div>
-              <div class="step"><span class="stepNum">3</span> CP/ZIP + pagar</div>
+              <div class="step"><span class="stepNum">1</span> Elige producto y talla</div>
+              <div class="step"><span class="stepNum">2</span> Abre el carrito y selecciona método</div>
+              <div class="step"><span class="stepNum">3</span> Cotiza con tu CP/ZIP en tiempo real</div>
+              <div class="step"><span class="stepNum">4</span> Paga y recibe (o pickup)</div>
             </div>
-
-            <button class="btnPrimary wide cartBtn" type="button">
-              <i class="fa-solid fa-cart-shopping"></i> ABRIR CARRITO
-            </button>
-
-            <p class="fineprint">
-              Producción y disponibilidad pueden variar por temporada.
-            </p>
+            <div class="fineprint">
+              Pickup en Tijuana (coordinación por soporte). Envíos MX/USA.
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- PARTNERS -->
-    <section class="section" id="partners" aria-label="Partners">
+    <section class="section" id="partners">
       <div class="container">
-        <div class="sectionHead compact">
+        <div class="sectionHead">
           <div>
-            <div class="kicker">HECHO CON</div>
-            <h2 class="h2">Partners</h2>
-            <p class="muted">SCORE International · Único Uniformes</p>
+            <div class="kicker">PARTNERS</div>
+            <div class="h2">PRODUCCIÓN Y LOGÍSTICA</div>
+            <div class="muted">Operación cuidada por Único Uniformes + partners.</div>
           </div>
         </div>
 
         <div class="partners">
           <div class="partnerCard">
-            <img src="/assets/logo-score.webp" alt="SCORE" width="110" height="110" decoding="async">
-            <div>
-              <div class="partnerTitle">SCORE International</div>
-              <div class="partnerSub">Oficial · Off-Road Racing</div>
-            </div>
-          </div>
-
-          <div class="partnerCard">
-            <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="110" height="110" decoding="async">
             <div>
               <div class="partnerTitle">Único Uniformes</div>
-              <div class="partnerSub">Fabricación · Calidad</div>
+              <div class="partnerSub">Manufactura · Calidad · Control</div>
+            </div>
+          </div>
+          <div class="partnerCard">
+            <div>
+              <div class="partnerTitle">Envia.com</div>
+              <div class="partnerSub">Cotización · Tracking · MX/USA</div>
             </div>
           </div>
         </div>
@@ -257,174 +208,172 @@
     </section>
 
     <!-- FOOTER -->
-    <footer class="footer" aria-label="Footer">
-      <div class="container footerInner">
-        <div class="footerLeft">
-          <img src="/assets/logo-score-bw.webp" class="footerLogo" alt="SCORE" width="56" height="56" decoding="async">
-          <div>
-            <div class="footerTitle">SCORE STORE</div>
-            <div class="footerSub">Mercancía oficial Off-Road · Fabricado por Único Uniformes</div>
+    <footer class="footer">
+      <div class="container">
+        <div class="footerInner">
+          <div class="footerLeft">
+            <img class="footerLogo" src="/assets/score-logo.png" alt="SCORE" width="46" height="46">
+            <div>
+              <div class="footerTitle">SCORE STORE</div>
+              <div class="footerSub">Merch oficial off-road</div>
+            </div>
+          </div>
+
+          <div class="footerRight">
+            <button class="footerLink jsLegalLink" data-legal="terms" type="button">TÉRMINOS</button>
+            <button class="footerLink jsLegalLink" data-legal="privacy" type="button">PRIVACIDAD</button>
+            <button class="footerLink jsLegalLink" data-legal="contact" type="button">CONTACTO</button>
           </div>
         </div>
 
-        <div class="footerRight">
-          <button class="footerLink jsLegalLink" type="button" data-legal="terms">Términos</button>
-          <button class="footerLink jsLegalLink" type="button" data-legal="privacy">Privacidad</button>
-          <button class="footerLink jsLegalLink" type="button" data-legal="contact">Contacto</button>
+        <div class="footerBottom">
+          <span>© <span id="year"></span> SCORE STORE</span>
+          <span>Operado por Único Uniformes</span>
         </div>
       </div>
-      <div class="container footerBottom">
-        <span>© <span id="yearNow"></span> SCORE STORE</span>
-        <span class="muted">Hecho para mobile · Engine v2026</span>
-      </div>
     </footer>
-  </div>
+  </main>
 
   <!-- TOAST -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- AI FLOAT -->
-  <button class="ai-btn-float" type="button" aria-label="Asistente">
+  <button class="ai-btn-float" type="button" aria-label="Abrir asistente">
     <i class="fa-solid fa-wand-magic-sparkles"></i>
   </button>
 
   <!-- AI MODAL -->
-  <div id="aiChatModal" class="ai-chat-modal" aria-hidden="true">
-    <div class="ai-chat-card" role="dialog" aria-label="Asistente">
+  <div class="ai-chat-modal" id="aiChatModal" aria-hidden="true">
+    <div class="ai-chat-card">
       <div class="ai-head">
         <div class="ai-badge">
-          <span class="dotLive"></span> ASISTENTE
+          <span class="dotLive" aria-hidden="true"></span>
+          ASISTENTE
         </div>
-
-        <!-- ✅ sin onclick inline (main.js lo bindea) -->
-        <button id="aiCloseBtn" class="ai-close" type="button" aria-label="Cerrar asistente">
+        <button class="ai-close" type="button" onclick="document.getElementById('aiChatModal').classList.remove('active','show')">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div id="aiMessages" class="ai-body" aria-live="polite">
-        <div class="ai-bubble bot ai-msg ai-bot">
-          Dime: <b>producto</b> + <b>talla</b> + <b>CP/ZIP</b> y te calculo el total.
+      <div class="ai-body" id="aiMessages">
+        <div class="ai-bubble ai-bot ai-msg">
+          Dime qué estás buscando y te recomiendo talla, drop y cómo pagar rápido.
         </div>
       </div>
 
       <div class="ai-foot">
-        <input id="aiInput" class="ai-input" placeholder="Escribe aquí..." autocomplete="off" />
-        <button class="ai-send" type="button" aria-label="Enviar mensaje">
+        <input class="ai-input" id="aiInput" placeholder="Escribe aquí…" />
+        <button class="ai-send" type="button" aria-label="Enviar">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- LEGAL MODAL -->
-  <div id="legalModal" class="legalModal" aria-hidden="true">
-    <div id="legalBackdrop" class="legalBackdrop"></div>
-    <div class="legalCard" role="dialog" aria-label="Legal">
-      <div class="legalHead">
-        <div id="legalTitle" class="legalTitle">INFO</div>
-        <button id="legalClose" class="legalClose" type="button" aria-label="Cerrar">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div id="legalBody" class="legalBody"></div>
-    </div>
-  </div>
-
-  <!-- COOKIE BANNER -->
-  <div id="cookieBanner" class="cookieBanner" role="dialog" aria-label="Cookies">
-    <div class="cookieInner">
-      <div class="cookieText">
-        Usamos cookies para mejorar tu experiencia y medir rendimiento.
-      </div>
-
-      <!-- ✅ sin onclick inline (main.js lo bindea) -->
-      <button id="cookieAcceptBtn" class="btnPrimary small" type="button">ACEPTAR</button>
-    </div>
-  </div>
-
-  <!-- OVERLAYS for Drawer -->
-  <div id="pageOverlay" class="page-overlay" aria-hidden="true"></div>
-  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+  <!-- OVERLAYS -->
+  <div class="page-overlay" id="pageOverlay" aria-hidden="true"></div>
+  <div id="backdrop" aria-hidden="true"></div>
 
   <!-- CART DRAWER -->
-  <aside id="cartDrawer" class="cartDrawer" aria-label="Carrito">
+  <aside id="cartDrawer" aria-label="Carrito">
     <div class="drawerHead">
-      <div class="drawerTitle">
-        <i class="fa-solid fa-cart-shopping"></i> TU CARRITO
-      </div>
-      <button class="closeBtn drawerClose" type="button" aria-label="Cerrar">
+      <div class="drawerTitle">CARRITO</div>
+      <button class="drawerClose" type="button" aria-label="Cerrar">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
 
     <div class="drawerBody">
       <div class="shippingSwitch">
-        <div class="switchTitle">Entrega</div>
+        <div class="switchTitle">ENTREGA</div>
 
         <div class="switchRow">
           <label class="radioPill">
-            <input type="radio" name="shipMode" value="pickup" checked />
-            <span>Pickup Tijuana (Gratis)</span>
+            <input type="radio" name="shipMode" value="pickup" checked>
+            PICKUP
           </label>
           <label class="radioPill">
-            <input type="radio" name="shipMode" value="mx" />
-            <span>Envío MX</span>
+            <input type="radio" name="shipMode" value="mx">
+            MX
           </label>
           <label class="radioPill">
-            <input type="radio" name="shipMode" value="us" />
-            <span>Envío USA</span>
+            <input type="radio" name="shipMode" value="us">
+            USA
           </label>
         </div>
 
-        <!-- opcional: select (JS lo soporta también) -->
-        <select id="shippingMode" class="input shipSelect" aria-label="Modo envío">
-          <option value="pickup" selected>Pickup Tijuana (Gratis)</option>
+        <select class="input" id="shippingMode">
+          <option value="pickup" selected>Pickup (Gratis)</option>
           <option value="mx">Envío México</option>
           <option value="us">Envío USA</option>
         </select>
 
-        <input id="miniZip" class="input miniZip" inputmode="numeric" placeholder="Código Postal (MX)" maxlength="10" style="display:none" />
+        <input class="input miniZip" id="miniZip" style="display:none" placeholder="Código Postal" inputmode="numeric">
 
         <div class="miniShipRow">
           <div class="miniShipTag" id="miniShipLabel">Pickup Gratis</div>
-          <div class="miniShipHint">La cotización se actualiza en vivo</div>
+          <div class="miniShipHint">Cotiza al instante</div>
         </div>
       </div>
 
-      <div id="cartItems" class="cartItems"></div>
+      <div class="cartItems" id="cartItems"></div>
 
       <div class="totals">
         <div class="totRow">
           <span>Subtotal</span>
-          <b id="cartSubtotal">$0</b>
+          <span id="cartSubtotal">$0</span>
         </div>
         <div class="totRow">
-          <span>Envío</span>
-          <b id="cartShipping">Gratis</b>
+          <span id="cartShipLabel">Pickup Gratis</span>
+          <span id="cartShipping">Gratis</span>
         </div>
         <div class="totRow total">
           <span>Total</span>
-          <b id="cartTotal">$0</b>
+          <span id="cartTotal">$0</span>
         </div>
-        <div class="shipLabelSmall" id="cartShipLabel">Pickup Gratis</div>
+
+        <div class="shipLabelSmall" id="shipLabelSmall">Pagas seguro y recibes tracking.</div>
       </div>
     </div>
 
     <div class="drawerFoot">
-      <button id="checkoutBtn" class="btnPrimary wide" type="button">
-        <i class="fa-solid fa-credit-card"></i> PAGAR AHORA
+      <button class="btnPrimary wide" id="checkoutBtn" type="button" disabled>
+        <i class="fa-solid fa-credit-card"></i> PAGAR
       </button>
 
       <div class="trustRow">
-        <div class="trust"><i class="fa-solid fa-lock"></i> Checkout seguro</div>
+        <div class="trust"><i class="fa-solid fa-lock"></i> Seguro</div>
         <div class="trust"><i class="fa-solid fa-bolt"></i> Rápido</div>
-        <div class="trust"><i class="fa-solid fa-truck-fast"></i> MX/USA</div>
+        <div class="trust"><i class="fa-solid fa-truck"></i> Tracking</div>
       </div>
     </div>
   </aside>
 
-  <!-- MAIN -->
-  <script src="/js/main.js?v=2026_PROD_UNIFIED_361" defer></script>
+  <!-- LEGAL MODAL -->
+  <div id="legalModal" aria-hidden="true">
+    <div class="legalBackdrop" id="legalBackdrop" aria-hidden="true"></div>
+    <div class="legalCard">
+      <div class="legalHead">
+        <div id="legalTitle">TÉRMINOS</div>
+        <button id="legalClose" type="button" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="legalBody"></div>
+    </div>
+  </div>
+
+  <!-- COOKIES -->
+  <div id="cookieBanner" class="cookieBanner" role="dialog" aria-live="polite">
+    <div class="cookieText">
+      Usamos cookies para mejorar tu experiencia y medir rendimiento.
+    </div>
+    <button class="cookieBtn" type="button" onclick="acceptCookies()">OK</button>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+  <script src="/main.js?v=2026_PROD_UNIFIED_361" defer></script>
 </body>
 </html>
