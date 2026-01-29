@@ -1,27 +1,23 @@
 /* =========================================================
    SCORE STORE — Service Worker (PWA) · UNIFICADO (PROD)
-   - Cache-first para assets estáticos (CSS/JS/IMG/JSON/FONTS)
-   - Network-first para HTML (para que NO se quede viejo)
+   - Cache-first: assets estáticos (CSS/JS/IMG/FONTS)
+   - Stale-while-revalidate: JSON de catálogo/promos
+   - Network-first: HTML (para no quedarse viejo)
    - NO cachea /api/* ni /.netlify/functions/*
-   - Precarga best-effort
-   - Fallback offline mínimo (HTML)
    ========================================================= */
 
-const VERSION = "2026_FIXED_V2";
+const VERSION = "2026_PROD_UNIFIED_360";
 const CACHE_STATIC = `scorestore_static_${VERSION}`;
 const CACHE_PAGES  = `scorestore_pages_${VERSION}`;
+const CACHE_DATA   = `scorestore_data_${VERSION}`;
 
-// Precarga: incluimos rutas con y sin query para evitar “miss” por versiones
 const PRECACHE = [
   "/",
   "/index.html",
   "/legal.html",
 
   "/css/styles.css",
-  `/css/styles.css?v=${VERSION}`,
-
   "/js/main.js",
-  `/js/main.js?v=${VERSION}`,
 
   "/data/catalog.json",
   "/data/promos.json",
@@ -30,7 +26,6 @@ const PRECACHE = [
   "/robots.txt",
   "/sitemap.xml",
 
-  // LCP / críticos
   "/assets/hero.webp",
   "/assets/fondo-pagina-score.webp",
   "/assets/baja1000-texture.webp",
@@ -41,12 +36,12 @@ const PRECACHE = [
   "/assets/logo-baja400.webp",
   "/assets/logo-sf250.webp",
 
-  // Icons PWA (por si)
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
 ];
 
-const STATIC_EXT = /\.(?:css|js|json|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
+const STATIC_EXT = /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
+const DATA_EXT = /\.(?:json)$/i;
 
 function isAPI(url) {
   try {
@@ -67,29 +62,31 @@ function isHTML(req) {
   );
 }
 
+function pathnameOf(url) {
+  try { return new URL(url).pathname; } catch { return ""; }
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE_STATIC);
-      await Promise.allSettled(PRECACHE.map((u) => cache.add(u)));
-      self.skipWaiting();
-    })()
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_STATIC);
+    await Promise.allSettled(PRECACHE.map((u) => cache.add(u)));
+    self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys.map((k) => {
-          if (![CACHE_STATIC, CACHE_PAGES].includes(k)) return caches.delete(k);
-          return null;
-        })
-      );
-      self.clients.claim();
-    })()
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.map((k) => {
+        if (![CACHE_STATIC, CACHE_PAGES, CACHE_DATA].includes(k)) {
+          return caches.delete(k);
+        }
+        return Promise.resolve();
+      })
+    );
+    self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
@@ -101,20 +98,18 @@ self.addEventListener("fetch", (event) => {
 
   // HTML: network-first
   if (isHTML(req)) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_PAGES);
-        try {
-          const fresh = await fetch(req);
-          if (fresh && fresh.ok) cache.put(req, fresh.clone());
-          return fresh;
-        } catch {
-          const cached = await cache.match(req);
-          if (cached) return cached;
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_PAGES);
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        return fresh;
+      } catch {
+        const cached = await cache.match(req);
+        if (cached) return cached;
 
-          // Fallback offline mínimo
-          return new Response(
-            `<!doctype html>
+        return new Response(
+`<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
@@ -141,38 +136,53 @@ self.addEventListener("fetch", (event) => {
   </div>
 </body>
 </html>`,
-            { headers: { "Content-Type": "text/html; charset=utf-8" } }
-          );
-        }
-      })()
-    );
+          { headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      }
+    })());
     return;
   }
 
-  // Static assets: cache-first (ignorando query para no duplicar caches por ?v=)
-  const pathname = (() => {
-    try { return new URL(url).pathname; } catch { return ""; }
-  })();
+  const pathname = pathnameOf(url);
 
-  if (STATIC_EXT.test(pathname) || STATIC_EXT.test(url)) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_STATIC);
+  // JSON data: stale-while-revalidate (catálogo/promos)
+  if (DATA_EXT.test(pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_DATA);
+      const cached = await cache.match(req, { ignoreSearch: true });
 
-        // Intento 1: match exacto
-        let cached = await cache.match(req);
-        // Intento 2: match ignorando query (para /css/styles.css?v=xxx)
-        if (!cached) cached = await cache.match(req, { ignoreSearch: true });
-        if (cached) return cached;
-
+      const fetchPromise = (async () => {
         try {
           const fresh = await fetch(req);
-          if (fresh && fresh.ok) cache.put(req, fresh.clone());
+          if (fresh && fresh.ok) await cache.put(req, fresh.clone());
           return fresh;
         } catch {
-          return cached || new Response("", { status: 504 });
+          return null;
         }
-      })()
-    );
+      })();
+
+      // Devuelve cache rápido, actualiza en background
+      return cached || (await fetchPromise) || new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+    })());
+    return;
+  }
+
+  // Static assets: cache-first (ignorando query)
+  if (STATIC_EXT.test(pathname) || STATIC_EXT.test(url)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_STATIC);
+
+      let cached = await cache.match(req);
+      if (!cached) cached = await cache.match(req, { ignoreSearch: true });
+      if (cached) return cached;
+
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        return fresh;
+      } catch {
+        return new Response("", { status: 504 });
+      }
+    })());
   }
 });
