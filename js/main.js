@@ -1,666 +1,1181 @@
 /* =========================================================
-   SCORE STORE — PRODUCTION ENGINE v2026 (HEAVY DUTY ROBUST)
-   ---------------------------------------------------------
-   Arquitectura: Modular Monolith (Vanilla JS)
-   Integraciones: Stripe, Supabase, Envia.com, Gemini AI.
-   Características:
-   - Splash Screen RPM Animado
-   - Carga Híbrida de Catálogo (BD + Respaldo Local)
-   - Sistema de Audio (Sound FX)
-   - Validación de Imágenes (Probing)
-   - Social Proof (Notificaciones de venta)
-   - Carruseles Táctiles
-   - Gestión de Estado (State Management)
+   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (360) — UPDATED (PROD)
+   ✅ Netlify Functions: create_checkout / quote_shipping / chat
+   ✅ Alineado con tu catálogo oficial (sections + subSection) + UI chips
+   ✅ Detecta imágenes existentes y omite las que no (sin romper carousel)
+   ✅ NO cambia nombres de productos (respeta espacios en name)
+   ✅ Soporta rutas con espacios (las encodea al cargar imágenes)
    ========================================================= */
 
-/* ---------------------------------------------------------
-   1. CONFIGURACIÓN CENTRAL (PROD KEYS)
-   --------------------------------------------------------- */
+/* -----------------------
+   1) CONFIG REAL (respeta claves)
+------------------------ */
 const CONFIG = {
-  // Pasarela de Pagos
-  stripeKey: "pk_live_51Se6fsGUCnsKfgrBdpVBcTbXG99reZVkx8cpzMlJxr0EtUfuJAq0Qe3igAiQYmKhMn0HewZI5SGRcnKqAdTigpqB00fVsfpMYh",
-  
-  // Base de Datos (Inventario y Ordenes)
+  stripeKey:
+    "pk_live_51STepg1ExTx11WqTGdkk68CLhZHqnBkIAzE2EacmhSR336HvR9nQY5dskyPWotJ6AExFjstC7C7wUTsOIIzRGols00hFSwI8yp",
+
   supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
-  
-  // Serverless Functions (Backend)
+  supabaseKey:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+
   endpoints: {
     checkout: "/.netlify/functions/create_checkout",
     quote: "/.netlify/functions/quote_shipping",
-    chat: "/.netlify/functions/chat"
+    ai: "/.netlify/functions/chat",
+
+    apiCheckout: "/api/checkout",
+    apiQuote: "/api/quote",
+    apiChat: "/api/chat",
   },
-  
-  // Recursos Estáticos
-  catalogUrl: "/data/catalog.json", // Respaldo crítico
+
+  storageKey: "score_cart_2026",
+
+  fallbackShippingMX: 250,
+  fallbackShippingUS: 800,
+
+  // catálogo oficial en JSON
+  catalogUrl: "/data/catalog.json",
+
+  // imagen fallback global (debe existir)
   fallbackImg: "/assets/hero.webp",
-  
-  // Persistencia
-  storageKey: "score_cart_2026_prod_v1",
-  
-  // UX / UI Settings
-  imgProbeTimeout: 2000,     // 2s máx para validar img
-  socialProofInterval: 45000, // 45s entre notificaciones
-  useSound: true             // Efectos de sonido activados
+
+  // timeouts
+  imgProbeTimeoutMs: 2200,
 };
 
-/* ---------------------------------------------------------
-   2. GESTIÓN DE ESTADO (STATE)
-   --------------------------------------------------------- */
+/* -----------------------
+   2) Helpers
+------------------------ */
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => document.querySelectorAll(q);
+
+const fmtMXN = (n) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    Number(n || 0)
+  );
+
+const safeId = (s) => String(s || "").replace(/[^a-zA-Z0-9_-]/g, "");
+const digitsOnly = (s) => String(s || "").replace(/\D+/g, "");
+const clampQty = (n) => Math.max(1, Math.min(99, Math.round(Number(n) || 1)));
+
+const escapeHtml = (s) =>
+  String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+function safeUrl(u) {
+  const raw = String(u || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/")) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return "";
+}
+
+// ✅ Maneja espacios en rutas (/assets/..../cafe oscuro.webp)
+function urlEncodePathIfNeeded(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/")) {
+    // encode solo cada segmento (no rompas /)
+    return raw
+      .split("/")
+      .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
+      .join("/");
+  }
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const u = new URL(raw);
+      u.pathname = u.pathname
+        .split("/")
+        .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
+        .join("/");
+      return u.toString();
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
+}
+
+async function fetchJSON(url, options = {}, timeoutMs = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    const data = await res.json().catch(() => ({}));
+    return { res, data };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function postJSON(url, payload, timeoutMs = 15000) {
+  return fetchJSON(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
+    },
+    timeoutMs
+  );
+}
+
+/* -----------------------
+   3) Stripe Init (Live)
+------------------------ */
+let stripe = null;
+function initStripe() {
+  if (stripe) return stripe;
+  if (window.Stripe && CONFIG.stripeKey) stripe = window.Stripe(CONFIG.stripeKey);
+  return stripe;
+}
+
+/* -----------------------
+   4) STATE
+------------------------ */
 const state = {
   cart: JSON.parse(localStorage.getItem(CONFIG.storageKey) || "[]"),
   products: [],
+  sections: [],
   filter: "ALL",
-  shipping: { 
-    mode: "pickup", 
-    cost: 0, 
-    label: "Pickup Tijuana (Gratis)",
-    zip: "",
-    country: "MX"
-  },
-  // Caché de validación de imágenes para rendimiento
-  imgCache: new Map() 
+  shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
+  __quoteTimer: null,
+  __quoteInFlight: false,
+  __socialTimer: null,
+  __introDone: false,
+
+  // cache para no “probar” imágenes cada vez
+  __imgOkCache: new Map(), // url -> true/false
 };
 
-// Selectores DOM de alto rendimiento
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => document.querySelectorAll(s);
-const fmtMoney = (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
-
-/* ---------------------------------------------------------
-   3. SISTEMA DE AUDIO (AUDIO CONTEXT ROBUSTO)
-   --------------------------------------------------------- */
+/* -----------------------
+   5) AUDIO FX (WebAudio)
+------------------------ */
 let audioCtx = null;
-
-function initAudio() {
-  if (!CONFIG.useSound) return;
+const getAudioCtx = () => {
+  if (audioCtx) return audioCtx;
   const Ctx = window.AudioContext || window.webkitAudioContext;
-  if (Ctx && !audioCtx) audioCtx = new Ctx();
-}
+  if (!Ctx) return null;
+  audioCtx = new Ctx();
+  return audioCtx;
+};
 
 function playSound(type) {
-  // Reactivar contexto si el navegador lo suspendió (política de autoplay)
-  if (!audioCtx || audioCtx.state === 'suspended') {
-    if(audioCtx) audioCtx.resume().catch(()=>{});
-  }
-  if (!audioCtx) return;
+  const ctx = getAudioCtx();
+  if (!ctx || ctx.state === "closed") return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.connect(g);
+  g.connect(ctx.destination);
 
-  const now = audioCtx.currentTime;
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0.0001, now);
 
-  // Diseño de sonido sintético
-  if (type === 'click') {
-    // Click mecánico corto
-    osc.frequency.setValueAtTime(600, now);
-    osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.1);
-    osc.start(now); osc.stop(now + 0.1);
-  } else if (type === 'success') {
-    // Campanada de éxito
+  if (type === "click") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  } else if (type === "success") {
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(400, now);
-    osc.frequency.linearRampToValueAtTime(800, now + 0.2);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.3);
-    osc.start(now); osc.stop(now + 0.3);
-  } else if (type === 'error') {
-    // Error grave
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(150, now);
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.2);
-    osc.start(now); osc.stop(now + 0.2);
+    osc.frequency.setValueAtTime(460, now);
+    osc.frequency.linearRampToValueAtTime(820, now + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.11, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    osc.start(now);
+    osc.stop(now + 0.29);
+  } else {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(720, now);
+    g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+    osc.start(now);
+    osc.stop(now + 0.15);
   }
 }
 
-/* ---------------------------------------------------------
-   4. INICIALIZACIÓN DE SERVICIOS
-   --------------------------------------------------------- */
-let stripeInstance = null;
-function initStripe() {
-  if (stripeInstance) return stripeInstance;
-  if (window.Stripe && CONFIG.stripeKey) {
-    stripeInstance = window.Stripe(CONFIG.stripeKey);
-  }
-  return stripeInstance;
+/* -----------------------
+   6) TOAST
+------------------------ */
+function toast(msg, type = "info") {
+  const t = $("#toast") || $(".toast");
+  if (!t) return;
+  t.textContent = String(msg || "");
+  t.className = `toast show ${type}`;
+  playSound("click");
+  setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-// Service Worker (Para PWA y Caché Offline)
-function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    // navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Registration failed', err));
-  }
-}
+/* -----------------------
+   7) IMAGES: detecta existentes (sin romper)
+------------------------ */
+function probeImage(url, timeoutMs = CONFIG.imgProbeTimeoutMs) {
+  const uRaw = safeUrl(url);
+  if (!uRaw) return Promise.resolve(false);
 
-// Splash Screen RPM (Animación de carga inicial)
-function initIntroSplash() {
-  const splash = $("#splash-screen");
-  if (!splash) return;
-  
-  const bar = $(".rpm-bar");
-  const rpm = $("#revCounter");
-  let p = 0;
-  
-  // Simulación de carga de motor
-  const t = setInterval(() => {
-    p += Math.random() * 10 + 2; 
-    if (p > 100) p = 100;
-    
-    if (bar) bar.style.width = p + "%";
-    if (rpm) rpm.textContent = Math.floor(p * 85) + " RPM";
-    
-    if (p >= 100) {
-      clearInterval(t);
-      splash.style.opacity = 0;
-      setTimeout(() => splash.remove(), 600);
-    }
-  }, 90);
-}
+  const u = urlEncodePathIfNeeded(uRaw);
+  if (state.__imgOkCache.has(u)) return Promise.resolve(!!state.__imgOkCache.get(u));
 
-/* ---------------------------------------------------------
-   5. MOTOR DE CATÁLOGO (DUAL SOURCE + IMAGE PROBING)
-   --------------------------------------------------------- */
-
-// Validador de imágenes (evita 404 visibles)
-async function probeImage(url) {
-  if (state.imgCache.has(url)) return state.imgCache.get(url);
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const img = new Image();
-    const t = setTimeout(() => {
-        state.imgCache.set(url, false);
-        resolve(false); 
-    }, CONFIG.imgProbeTimeout);
-    
-    img.onload = () => { clearTimeout(t); state.imgCache.set(url, true); resolve(true); };
-    img.onerror = () => { clearTimeout(t); state.imgCache.set(url, false); resolve(false); };
-    img.src = url;
+    let done = false;
+
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      state.__imgOkCache.set(u, !!ok);
+      resolve(!!ok);
+    };
+
+    const t = setTimeout(() => finish(false), timeoutMs);
+
+    img.onload = () => {
+      clearTimeout(t);
+      finish(true);
+    };
+    img.onerror = () => {
+      clearTimeout(t);
+      finish(false);
+    };
+
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = u;
   });
 }
 
-// Carga resiliente: Supabase -> JSON Local -> Error
+async function filterExistingImages(urls) {
+  const unique = [...new Set((urls || []).map(safeUrl).filter(Boolean))].map(urlEncodePathIfNeeded);
+  if (!unique.length) return [];
+  const checks = await Promise.all(unique.map((u) => probeImage(u)));
+  return unique.filter((u, i) => checks[i]);
+}
+
+async function getProductImagesSafe(p) {
+  const candidates = [
+    ...(Array.isArray(p.images) ? p.images : []),
+    p.img,
+  ].map(safeUrl).filter(Boolean);
+
+  const ok = await filterExistingImages(candidates);
+  if (ok.length) return ok;
+
+  // si no existe nada, usa fallback global (debe existir)
+  return [CONFIG.fallbackImg];
+}
+
+/* -----------------------
+   8) CATALOGO (Supabase -> /data/catalog.json -> local)
+------------------------ */
 async function loadCatalog() {
   const grid = $("#productsGrid");
-  if(grid) grid.innerHTML = `
-    <div style="grid-column:1/-1; text-align:center; padding:60px; opacity:0.6;">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size:24px; color:#E10600;"></i><br><br>
-        <span style="font-family:'Teko'; font-size:20px;">CARGANDO MOTOR...</span>
-    </div>`;
+  if (grid) {
+    grid.innerHTML =
+      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
+  }
 
-  // ESTRATEGIA 1: Supabase (Datos en tiempo real)
+  // 1) Supabase REST (si tu tabla coincide)
   try {
-    const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*&active=eq.true`, {
-      headers: { apikey: CONFIG.supabaseKey, Authorization: `Bearer ${CONFIG.supabaseKey}` }
+    const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*`, {
+      headers: {
+        apikey: CONFIG.supabaseKey,
+        Authorization: `Bearer ${CONFIG.supabaseKey}`,
+      },
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.length > 0) {
-        console.log("Inventario cargado desde Supabase");
-        state.products = normalizeCatalog(data);
-        renderGrid();
+      if (Array.isArray(data) && data.length) {
+        state.products = normalizeProducts(data);
+        renderGrid(getFilteredProducts());
         return;
       }
     }
-  } catch (e) { 
-    console.warn("Supabase offline/lento, cambiando a respaldo local..."); 
-  }
-
-  // ESTRATEGIA 2: JSON Local (Respaldo infalible)
-  try {
-    const res = await fetch(CONFIG.catalogUrl);
-    if (!res.ok) throw new Error("JSON local no encontrado");
-    const data = await res.json();
-    // Soporta estructura { products: [] } o [ ... ]
-    const items = data.products || data; 
-    console.log("Inventario cargado desde Local JSON");
-    state.products = normalizeCatalog(items);
-    renderGrid();
   } catch (e) {
-    if(grid) grid.innerHTML = `<div style='text-align:center;width:100%;padding:40px'>
-      <i class="fa-solid fa-triangle-exclamation"></i> Error crítico de inventario.<br>Por favor recarga la página.
-    </div>`;
-    console.error(e);
+    console.warn("[catalog] supabase fail:", e);
   }
+
+  // 2) catálogo oficial /data/catalog.json (sections + products)
+  try {
+    const { res, data } = await fetchJSON(CONFIG.catalogUrl, { cache: "no-store" }, 12000);
+    if (res.ok) {
+      const list = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
+      if (Array.isArray(data?.sections)) state.sections = data.sections;
+      if (list.length) {
+        state.products = normalizeProducts(list);
+        // ✅ opcional: si faltan chips BAJA_400 / SF_250, se agregan solos
+        ensureSectionChipsFromCatalog();
+        renderGrid(getFilteredProducts());
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn("[catalog] /data/catalog.json fail:", e);
+  }
+
+  // 3) local fallback
+  state.products = normalizeProducts(getLocalCatalog());
+  renderGrid(getFilteredProducts());
 }
 
-// Normalizador de datos (Estandariza Supabase y JSON)
-function normalizeCatalog(items) {
-  return items.map(p => ({
-    id: String(p.id || p.sku),
-    name: p.name,
-    price: Number(p.baseMXN || p.price || 0),
-    section: p.sectionId || "ALL",
-    sub: (p.subSection || "").toUpperCase(),
-    // Fallback de imagen si viene vacía
-    img: p.img || CONFIG.fallbackImg,
-    // Asegurar array de imágenes para carrusel
-    images: (p.images && Array.isArray(p.images) && p.images.length) ? p.images : [p.img || CONFIG.fallbackImg],
-    sizes: (p.sizes && Array.isArray(p.sizes)) ? p.sizes : ["Unitalla"]
-  }));
+function normalizeProducts(list) {
+  return (list || []).map((p, idx) => {
+    const id = p?.id ?? p?.sku ?? `p${idx + 1}`;
+
+    // ✅ respeta name con espacios: NO lo tocamos
+    const name = String(p?.name || p?.title || "Producto");
+
+    const rawImages = Array.isArray(p?.images) && p.images.length ? p.images : (p?.img ? [p.img] : []);
+    const images = rawImages.map(safeUrl).filter(Boolean);
+
+    return {
+      id: String(id),
+      sku: String(p?.sku || ""),
+      sectionId: String(p?.sectionId || p?.category || "ALL").toUpperCase(),
+      subSection: String(p?.subSection || p?.type || "").trim(), // ✅ para chips HOODIES/TEES/CAPS
+      name,
+      baseMXN: Number(p?.baseMXN ?? p?.price ?? 0),
+      img: safeUrl(p?.img) || safeUrl(images[0]) || CONFIG.fallbackImg,
+      images,
+      sizes: Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["Unitalla"],
+    };
+  });
 }
 
-/* ---------------------------------------------------------
-   6. RENDERIZADO DEL GRID (CON CARRUSEL TÁCTIL)
-   --------------------------------------------------------- */
-async function renderGrid() {
+function getLocalCatalog() {
+  return [
+    { id: "p1", sectionId: "BAJA_1000", subSection: "Hoodies", name: "Baja 1000 Legacy Hoodie", baseMXN: 1200, img: "/assets/prod1.webp", images: ["/assets/prod1.webp"], sizes: ["S","M","L","XL"] },
+    { id: "p2", sectionId: "BAJA_1000", subSection: "Camisetas", name: "Score International Tee", baseMXN: 650, img: "/assets/prod2.webp", images: ["/assets/prod2.webp"], sizes: ["S","M","L","XL"] },
+    { id: "p3", sectionId: "BAJA_500", subSection: "Gorras", name: "Trophy Truck Cap", baseMXN: 800, img: "/assets/prod3.webp", images: ["/assets/prod3.webp"], sizes: ["Unitalla"] },
+  ];
+}
+
+/* -----------------------
+   9) FILTERS (ALINEADOS con chips del index + catálogo real)
+   Chips actuales: ALL / HOODIES / TEES / CAPS / BAJA_1000 / BAJA_500 (+ opcional auto BAJA_400 / SF_250)
+------------------------ */
+function normalizeStr(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // sin acentos
+}
+
+function matchesFilter(p, filter) {
+  const f = String(filter || "ALL").toUpperCase();
+  if (f === "ALL") return true;
+
+  // eventos
+  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(f)) {
+    return String(p.sectionId || "").toUpperCase() === f;
+  }
+
+  const sub = normalizeStr(p.subSection);
+  if (f === "HOODIES") return sub.includes("hoodie") || sub.includes("sudadera");
+  if (f === "TEES") return sub.includes("camiseta") || sub.includes("playera") || sub.includes("tee") || sub.includes("tank");
+  if (f === "CAPS") return sub.includes("gorra") || sub.includes("cap");
+
+  return true;
+}
+
+function getFilteredProducts() {
+  return (state.products || []).filter((p) => matchesFilter(p, state.filter));
+}
+
+/* ✅ si el catálogo trae secciones extra y no tienes chip en el HTML, lo agrega */
+function ensureSectionChipsFromCatalog() {
+  const filtersWrap = document.querySelector(".filters");
+  if (!filtersWrap) return;
+  if (!Array.isArray(state.sections) || !state.sections.length) return;
+
+  const existing = new Set([...filtersWrap.querySelectorAll(".chip")].map((c) => String(c.dataset.filter || "").toUpperCase()));
+
+  // solo agrega secciones que falten (BAJA_400 / SF_250)
+  state.sections.forEach((s) => {
+    const id = String(s?.id || "").toUpperCase();
+    const title = String(s?.title || id).toUpperCase();
+    if (!id || existing.has(id)) return;
+
+    // agrega chips solo para secciones “evento”
+    if (!["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(id)) return;
+
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.type = "button";
+    btn.dataset.filter = id;
+    btn.textContent = title.replaceAll("_", " ");
+
+    btn.addEventListener("click", () => {
+      $$(".chip").forEach((ch) => ch.classList.remove("active"));
+      btn.classList.add("active");
+      state.filter = id;
+      renderGrid(getFilteredProducts());
+      playSound("click");
+    });
+
+    filtersWrap.appendChild(btn);
+    existing.add(id);
+  });
+}
+
+/* -----------------------
+   10) RENDER GRID (ahora async por imágenes seguras)
+------------------------ */
+async function renderGrid(list) {
   const grid = $("#productsGrid");
   if (!grid) return;
+
   grid.innerHTML = "";
 
-  const filtered = state.filter === "ALL" 
-    ? state.products 
-    : state.products.filter(p => p.section === state.filter || p.sub.includes(state.filter));
-
-  if (!filtered.length) {
-    grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;padding:40px;font-weight:700;'>No hay productos en esta categoría.</div>";
+  if (!list || !list.length) {
+    grid.innerHTML =
+      "<div style='grid-column:1/-1;text-align:center;opacity:.6'>No hay productos en esta categoría.</div>";
     return;
   }
 
-  // Renderizado optimizado
-  for (const p of filtered) {
-    // Validar existencia de imagen principal
-    const imgOk = await probeImage(p.img);
-    const mainImg = imgOk ? p.img : CONFIG.fallbackImg;
-    
-    const card = document.createElement("div");
-    card.className = "card";
-    
-    // Lógica del Carrusel
-    let mediaHtml;
-    if (p.images.length > 1) {
-      const slides = p.images.map(src => 
-        `<div class="carousel-item"><img src="${src}" loading="lazy" style="width:100%;height:100%;object-fit:cover;"></div>`
-      ).join("");
-      const dots = p.images.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join("");
-      
-      mediaHtml = `
-        <div class="carousel" id="car-${p.id}" onscroll="window.handleScroll('${p.id}')">
-          ${slides}
-        </div>
-        <div class="carousel-dots" id="dots-${p.id}">
-          ${dots}
-        </div>
-      `;
-    } else {
-      mediaHtml = `<div class="cardMedia"><img src="${mainImg}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;"></div>`;
-    }
-
-    card.innerHTML = `
-      <div style="position:relative; aspect-ratio:4/5; overflow:hidden;">${mediaHtml}</div>
-      <div class="cardBody">
-        <div class="cardTitle">${p.name}</div>
-        <div class="cardPrice">${fmtMoney(p.price)}</div>
-        <div class="cardControls">
-          <select id="size-${p.id}" class="sizeSelector" aria-label="Talla">
-            ${p.sizes.map(s => `<option value="${s}">${s}</option>`).join("")}
-          </select>
-          <button class="addBtn" onclick="window.addToCart('${p.id}')" aria-label="Agregar al carrito">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-      </div>
-    `;
+  // render progresivo sin congelar la UI
+  for (const p of list) {
+    const card = await buildProductCard(p);
     grid.appendChild(card);
   }
 }
 
-// Handler global para scroll del carrusel (puntos de navegación)
-window.handleScroll = function(pid) {
-  const car = document.getElementById(`car-${pid}`);
-  const dotsBox = document.getElementById(`dots-${pid}`);
-  if (!car || !dotsBox) return;
-  
-  const index = Math.round(car.scrollLeft / car.offsetWidth);
-  const dots = dotsBox.querySelectorAll(".dot");
-  dots.forEach((d, i) => {
-    if (i === index) d.classList.add("active");
-    else d.classList.remove("active");
-  });
-};
+async function buildProductCard(p) {
+  const pid = safeId(p.id);
+  const card = document.createElement("div");
+  card.className = "champItem card";
 
-/* ---------------------------------------------------------
-   7. LÓGICA DEL CARRITO (CORE)
-   --------------------------------------------------------- */
-function saveCart() {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart));
-  updateCartUI();
+  const nameSafe = escapeHtml(p.name); // NO cambia name, solo escapa HTML
+  const price = fmtMXN(p.baseMXN);
+
+  // ✅ imágenes existentes (ignora faltantes)
+  const images = await getProductImagesSafe(p);
+  const media = buildMediaHTML(images, nameSafe, pid);
+
+  const sizes = (p.sizes && p.sizes.length ? p.sizes : ["Unitalla"]).map(String);
+
+  const sizeSelectHTML = `
+    <select id="size-${pid}" class="size-selector">
+      ${sizes.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}
+    </select>
+  `;
+
+  card.innerHTML = `
+    <div class="card-texture"></div>
+    ${media}
+    <div class="cardBody" style="z-index:2; text-align:center; padding:10px; width:100%;">
+      <div class="cardTitle" style="font-family:'Teko'; font-size:24px; line-height:1;">${nameSafe}</div>
+      <div class="cardPrice" style="color:var(--score-red); font-weight:900; font-size:18px;">${price}</div>
+      <div style="margin-top:8px; display:flex; justify-content:center;">
+        ${sizeSelectHTML}
+      </div>
+    </div>
+    <button class="card-btn" type="button" data-add="${pid}">AGREGAR</button>
+    <div class="badge">OFFICIAL</div>
+  `;
+
+  card.querySelector(`[data-add="${pid}"]`)?.addEventListener("click", () => addToCart(p.id));
+
+  const car = card.querySelector(".carousel");
+  if (car) {
+    car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
+    requestAnimationFrame(() => updateDots(car, pid));
+  }
+
+  return card;
 }
 
-function updateCartUI() {
-  const count = state.cart.reduce((acc, item) => acc + item.qty, 0);
-  const badge = $("#cartCount");
-  if(badge) {
-    badge.textContent = count;
-    // Animación "Pop"
-    badge.classList.remove("pop");
-    void badge.offsetWidth; // Trigger reflow
-    badge.classList.add("pop");
-  }
-  renderCartList();
-}
+function buildMediaHTML(images, nameSafe, pid) {
+  const list = (images || []).map((u) => urlEncodePathIfNeeded(u)).filter(Boolean);
+  const finalList = list.length ? list : [CONFIG.fallbackImg];
 
-function addToCart(pid) {
-  initAudio();
-  const p = state.products.find(x => x.id === pid);
-  if (!p) return;
-  
-  const sizeEl = document.getElementById(`size-${pid}`);
-  const size = sizeEl ? sizeEl.value : "Unitalla";
-  const key = `${pid}-${size}`;
-  
-  const existing = state.cart.find(i => i.key === key);
-  if (existing) {
-    existing.qty++;
-  } else {
-    state.cart.push({
-      key, id: pid, name: p.name, price: p.price, img: p.img, size, qty: 1
-    });
-  }
-  
-  playSound("success");
-  saveCart();
-  openDrawer();
-  toast(`Agregado: ${p.name}`);
-}
+  if (finalList.length > 1) {
+    const slides = finalList
+      .map(
+        (src) =>
+          `<div class="carousel-item"><img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525"></div>`
+      )
+      .join("");
 
-function modQty(index, delta) {
-  initAudio();
-  const item = state.cart[index];
-  if (!item) return;
-  
-  item.qty += delta;
-  if (item.qty <= 0) {
-    state.cart.splice(index, 1);
-  }
-  
-  playSound("click");
-  saveCart();
-}
+    const dots = finalList.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`).join("");
 
-function renderCartList() {
-  const container = $("#cartItems");
-  if (!container) return;
-  container.innerHTML = "";
-  
-  if (state.cart.length === 0) {
-    container.innerHTML = "<div style='text-align:center; padding:30px; opacity:0.6;'>Tu carrito está vacío.<br>¡Equípate para la carrera!</div>";
-    $("#cartTotal").textContent = "$0.00";
-    return;
-  }
-  
-  let subtotal = 0;
-  state.cart.forEach((item, idx) => {
-    subtotal += item.price * item.qty;
-    container.innerHTML += `
-      <div class="cartRow">
-        <img src="${item.img}" alt="${item.name}">
-        <div style="flex:1;">
-          <div style="font-weight:800; font-size:13px; margin-bottom:4px;">${item.name}</div>
-          <div style="font-size:11px; opacity:0.8; margin-bottom:4px;">Talla: ${item.size}</div>
-          <div style="color:#E10600; font-weight:900;">${fmtMoney(item.price)}</div>
+    return `
+      <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
+        <div class="carousel" data-pid="${pid}" style="scroll-snap-type:x mandatory; overflow:auto; display:flex;">
+          ${slides}
         </div>
-        <div class="qty-ctrl">
-           <button onclick="window.modQty(${idx}, -1)">-</button>
-           <span>${item.qty}</span>
-           <button onclick="window.modQty(${idx}, 1)">+</button>
+        <div class="carousel-dots" id="dots-${pid}">
+          ${dots}
         </div>
       </div>
     `;
+  }
+
+  const src = finalList[0] || CONFIG.fallbackImg;
+  return `
+    <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
+      <img src="${src}" class="prodImg" loading="lazy" alt="${nameSafe}" width="420" height="525" style="width:100%;height:auto;object-fit:cover;">
+    </div>
+  `;
+}
+
+function updateDots(carousel, pid) {
+  const width = carousel.getBoundingClientRect().width || carousel.clientWidth || 1;
+  const idx = Math.round((carousel.scrollLeft || 0) / width);
+  const dotsContainer = document.getElementById(`dots-${pid}`);
+  if (!dotsContainer) return;
+  const dots = dotsContainer.querySelectorAll(".dot");
+  dots.forEach((d, i) => (i === idx ? d.classList.add("active") : d.classList.remove("active")));
+}
+
+/* -----------------------
+   11) CART
+------------------------ */
+function cartCountTotal() {
+  return (state.cart || []).reduce((a, b) => a + clampQty(b.qty), 0);
+}
+
+function cartSubtotal() {
+  return (state.cart || []).reduce((a, b) => a + Number(b.price || 0) * clampQty(b.qty), 0);
+}
+
+function saveCart() {
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
+
+  const qty = cartCountTotal();
+  const cc = $("#cartCount");
+  if (cc) cc.textContent = String(qty);
+  $$(".cartCount").forEach((el) => (el.textContent = String(qty)));
+
+  updateDrawerUI();
+}
+
+function addToCart(id) {
+  const p = (state.products || []).find((x) => String(x.id) === String(id));
+  if (!p) return toast("Producto no disponible", "error");
+
+  const pid = safeId(p.id);
+  const size = $(`#size-${pid}`)?.value || "Unitalla";
+  const key = `${p.id}-${size}`;
+
+  const ex = state.cart.find((i) => i.key === key);
+
+  const thumbCandidate =
+    (Array.isArray(p.images) && p.images[0]) ? p.images[0] : p.img;
+
+  // thumb “seguro” (si está en cache ok)
+  const thumb = urlEncodePathIfNeeded(safeUrl(thumbCandidate) || CONFIG.fallbackImg);
+
+  if (ex) ex.qty = clampQty(ex.qty + 1);
+  else {
+    state.cart.push({
+      key,
+      id: p.id,
+      name: p.name, // ✅ respeta espacios
+      price: Number(p.baseMXN || 0),
+      img: thumb || CONFIG.fallbackImg,
+      size: String(size),
+      qty: 1,
+    });
+  }
+
+  if (state.shipping.mode !== "pickup") {
+    state.shipping.quote = 0;
+    state.shipping.label = "Recotizar envío";
+  }
+
+  playSound("success");
+  saveCart();
+  openDrawer();
+  toast("Agregado al carrito", "success");
+  requestMiniQuote();
+}
+
+function modQty(idx, delta) {
+  if (!state.cart[idx]) return;
+
+  const next = Number(state.cart[idx].qty) + Number(delta);
+  if (next <= 0) state.cart.splice(idx, 1);
+  else state.cart[idx].qty = clampQty(next);
+
+  if (state.shipping.mode !== "pickup") {
+    state.shipping.quote = 0;
+    state.shipping.label = "Recotizar envío";
+  }
+
+  saveCart();
+  requestMiniQuote();
+}
+
+function updateDrawerUI() {
+  const box = $("#cartItems");
+  if (!box) return;
+
+  box.innerHTML = "";
+  (state.cart || []).forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "cart-card cartRow";
+
+    row.innerHTML = `
+      <img src="${urlEncodePathIfNeeded(safeUrl(item.img) || CONFIG.fallbackImg)}" alt="" style="width:60px; height:70px; object-fit:contain; background:#fff; border-radius:6px;">
+      <div style="flex:1; margin-left:10px;">
+        <div style="color:#fff; font-weight:900; font-size:14px;">${escapeHtml(item.name)}</div>
+        <div style="color:#aaa; font-size:12px;">Talla: ${escapeHtml(item.size)}</div>
+        <div style="color:var(--score-red); font-weight:900;">${fmtMXN(item.price)}</div>
+        <div class="qty-ctrl" style="margin-top:5px; display:flex; gap:10px; align-items:center;">
+           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Menos">-</button>
+           <span style="color:#fff; font-weight:900;">${clampQty(item.qty)}</span>
+           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Más">+</button>
+        </div>
+      </div>
+    `;
+
+    const btns = row.querySelectorAll(".qtyBtn");
+    btns[0]?.addEventListener("click", () => modQty(i, -1));
+    btns[1]?.addEventListener("click", () => modQty(i, +1));
+    box.appendChild(row);
   });
-  
-  // Calcular total con envío si aplica
-  const total = subtotal + (state.shipping.cost || 0);
-  $("#cartTotal").textContent = fmtMoney(total);
-  $("#cartShipLabel").textContent = state.shipping.label;
-}
 
-/* ---------------------------------------------------------
-   8. CHECKOUT & SHIPPING (API CALLS ROBUSTAS)
-   --------------------------------------------------------- */
-async function quoteShippingUI() {
-  const zipInput = $("#shipZip");
-  const countryInput = $("#shipCountry");
-  const resultBox = $("#shipQuote");
-  
-  const zip = zipInput.value.replace(/\D/g, "");
-  const country = countryInput.value;
-  
-  if (zip.length < 4) {
-    resultBox.innerHTML = "<span style='color:red'>Ingresa un CP válido (5 dígitos).</span>";
-    playSound("error");
-    return;
+  const sub = cartSubtotal();
+  const ship = Number(state.shipping.quote || 0);
+  const total = sub + ship;
+
+  if ($("#cartSubtotal")) $("#cartSubtotal").textContent = fmtMXN(sub);
+
+  if ($("#cartShipping")) {
+    $("#cartShipping").textContent =
+      state.shipping.mode === "pickup" ? "Gratis" : ship > 0 ? fmtMXN(ship) : "Pendiente";
   }
-  
-  resultBox.innerHTML = "<i><i class='fa-solid fa-spinner fa-spin'></i> Cotizando con Envia.com...</i>";
-  playSound("click");
-  
-  try {
-    const res = await fetch(CONFIG.endpoints.quote, {
-      method: "POST",
-      body: JSON.stringify({ zip, country, items: [{qty: 1}] }) 
-    });
-    const data = await res.json();
-    
-    if (data.ok) {
-      resultBox.innerHTML = `<b>${data.label}:</b> <span style="color:#003087; font-weight:800;">${fmtMoney(data.cost)}</span>`;
-      state.shipping.zip = zip; // Guardar contexto
-      playSound("success");
-    } else {
-      resultBox.innerHTML = "<span style='color:red'>Sin cobertura o error. Intenta otro CP.</span>";
-      playSound("error");
-    }
-  } catch (e) {
-    resultBox.innerHTML = "<span style='color:red'>Error de conexión.</span>";
+
+  const shipLabel = $("#cartShipLabel") || $("#miniShipLabel");
+  if (shipLabel) {
+    if (state.shipping.mode === "pickup") shipLabel.textContent = "Pickup Gratis";
+    else shipLabel.textContent = state.shipping.label || (ship > 0 ? fmtMXN(ship) : "Cotiza envío");
   }
+
+  const totalEl = $("#cartTotal");
+  if (totalEl) totalEl.textContent = fmtMXN(total);
 }
 
-async function doCheckout() {
-  initAudio();
-  if (state.cart.length === 0) return toast("Tu carrito está vacío");
-  
-  const btn = $("#checkoutBtn");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
-  btn.disabled = true;
-  
-  try {
-    initStripe();
-    const res = await fetch(CONFIG.endpoints.checkout, {
-      method: "POST",
-      body: JSON.stringify({
-        cart: state.cart,
-        shipping: state.shipping,
-        shippingMode: state.shipping.mode
-      })
-    });
-    
-    const data = await res.json();
-    if (data.sessionId) {
-      await stripeInstance.redirectToCheckout({ sessionId: data.sessionId });
-    } else {
-      throw new Error(data.error || "Error al iniciar sesión de pago");
-    }
-  } catch (e) {
-    console.error(e);
-    toast("Error en el checkout. Intenta de nuevo.");
-    playSound("error");
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
+/* -----------------------
+   12) DRAWER OPEN/CLOSE
+------------------------ */
+function openDrawer() {
+  $("#cartDrawer")?.classList.add("active", "open");
+  $("#pageOverlay")?.classList.add("active", "show");
+  $(".page-overlay")?.classList.add("active", "show");
+  $("#backdrop")?.classList.add("active", "show");
+  document.body.classList.add("noScroll", "modalOpen");
+  document.body.style.overflow = "hidden";
+  saveCart();
 }
-
-/* ---------------------------------------------------------
-   9. SOCIAL PROOF (NOTIFICACIONES DE VENTA)
-   --------------------------------------------------------- */
-const FAKE_NAMES = ["Carlos de TJ", "Miguel de Ensenada", "Sarah de San Diego", "Jorge de La Paz", "Ana de Mexicali", "Roberto de AZ", "Mike de CA", "Luis de BCS"];
-const FAKE_ITEMS = ["Hoodie Oficial", "Gorra Baja 1000", "Camiseta Score", "Chamarra Oficial", "Jersey Baja 500", "Tank Top San Felipe"];
-
-function initSocialProof() {
-  // Retraso inicial de 10s para no molestar al entrar
-  setTimeout(() => {
-    setInterval(() => {
-      // 40% de probabilidad de mostrar
-      if (Math.random() > 0.6) return; 
-      
-      const name = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
-      const item = FAKE_ITEMS[Math.floor(Math.random() * FAKE_ITEMS.length)];
-      toast(`🔥 ${name} acaba de comprar ${item}`);
-    }, CONFIG.socialProofInterval);
-  }, 10000);
+function closeDrawer() {
+  $("#cartDrawer")?.classList.remove("active", "open");
+  $("#pageOverlay")?.classList.remove("active", "show");
+  $(".page-overlay")?.classList.remove("active", "show");
+  $("#backdrop")?.classList.remove("active", "show");
+  document.body.classList.remove("noScroll", "modalOpen");
+  document.body.style.overflow = "";
 }
+function openCart(){ openDrawer(); }
+function closeCart(){ closeDrawer(); }
 
-/* ---------------------------------------------------------
-   10. INTERFAZ DE USUARIO (DRAWER, TOAST, AI)
-   --------------------------------------------------------- */
-function toast(msg) {
-  const t = $("#toast");
-  if (!t) return;
-  t.innerHTML = msg;
-  t.classList.add("show");
-  playSound("click");
-  setTimeout(() => t.classList.remove("show"), 3500);
-}
-
-function openDrawer() { 
-  $("#cartDrawer").classList.add("open"); 
-  $("#pageOverlay").classList.add("show");
-  document.body.classList.add("noScroll");
-}
-
-function closeDrawer() { 
-  $("#cartDrawer").classList.remove("open"); 
-  $("#pageOverlay").classList.remove("show");
-  document.body.classList.remove("noScroll");
+/* -----------------------
+   13) SHIPPING
+------------------------ */
+function getShipModeFromUI() {
+  const sel = $("#shippingMode");
+  if (sel) return String(sel.value || "pickup");
+  const checked = document.querySelector('input[name="shipMode"]:checked');
+  return String(checked?.value || "pickup");
 }
 
 function toggleShipping(mode) {
-  state.shipping.mode = mode;
-  playSound("click");
-  // Lógica visual del drawer
-  if (mode === 'pickup') {
-    state.shipping.cost = 0;
+  const m = String(mode || getShipModeFromUI() || "pickup").toLowerCase();
+  state.shipping.mode = m;
+
+  const zip = $("#miniZip");
+  if (m === "pickup") {
+    state.shipping.quote = 0;
     state.shipping.label = "Pickup Tijuana (Gratis)";
-    $("#miniZip").style.display = "none";
+    if (zip) zip.style.display = "none";
   } else {
-    state.shipping.label = "Se cotizará en el Checkout";
-    state.shipping.cost = 0; 
-    $("#miniZip").style.display = "block";
+    state.shipping.quote = 0;
+    state.shipping.label = "Ingresa CP y cotiza";
+    if (zip) {
+      zip.style.display = "block";
+      zip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
+    }
   }
-  updateCartUI();
+
+  saveCart();
+  requestMiniQuote();
 }
 
-// Chatbot IA (Gemini Integration)
-async function sendAiMessage() {
-  const input = $("#aiInput");
-  const box = $("#aiMessages");
-  const text = input.value.trim();
-  if (!text) return;
+function cartItemsForQuote() {
+  const items = (state.cart || []).map((i) => ({ qty: clampQty(i.qty) }));
+  return items.length ? items : [{ qty: 1 }];
+}
+function modeToCountry(mode) {
+  return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
+}
 
-  // Mensaje Usuario
-  const userDiv = document.createElement("div");
-  userDiv.className = "ai-bubble user";
-  userDiv.textContent = text;
-  box.appendChild(userDiv);
-  input.value = "";
-  box.scrollTop = box.scrollHeight;
+function requestMiniQuote() {
+  clearTimeout(state.__quoteTimer);
+  state.__quoteTimer = setTimeout(() => {
+    const mode = getShipModeFromUI();
+    const zip = digitsOnly($("#miniZip")?.value || "");
+    if (mode === "pickup") return;
+    if (zip.length < 4) return;
+    quoteShippingMini().catch(() => {});
+  }, 450);
+}
 
-  // Loader Bot
-  const botDiv = document.createElement("div");
-  botDiv.className = "ai-bubble bot";
-  botDiv.innerHTML = '<i class="fa-solid fa-ellipsis fa-bounce"></i>';
-  box.appendChild(botDiv);
-  box.scrollTop = box.scrollHeight;
+async function quoteShippingMini() {
+  if (state.__quoteInFlight) return;
+
+  const mode = getShipModeFromUI();
+  const zip = digitsOnly($("#miniZip")?.value || "");
+
+  if (mode === "pickup") return;
+  if (zip.length < 4) return toast("Ingresa un CP válido", "error");
+
+  state.__quoteInFlight = true;
+  const lbl = $("#miniShipLabel") || $("#cartShipLabel");
+  if (lbl) lbl.textContent = "Cotizando...";
 
   try {
-    const res = await fetch(CONFIG.endpoints.chat, {
-      method: "POST",
-      body: JSON.stringify({ message: text })
-    });
-    const data = await res.json();
-    
-    // Reemplazar loader con respuesta
-    botDiv.textContent = data.reply || "Soy Score AI, ¿en qué te ayudo?";
-    playSound("click");
+    const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
+
+    let res, data;
+    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
+
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
+
+    const cost = Number(data.cost || 0);
+    const label = String(data.label || "Envío estimado");
+    if (!cost) throw new Error("QUOTE_ZERO");
+
+    state.shipping = { mode, quote: cost, label };
+    saveCart();
+    toast("Envío actualizado", "success");
+    playSound("success");
   } catch (e) {
-    botDiv.textContent = "Error de conexión con el asistente.";
+    console.warn("[quote] fallback:", e);
+    const fallbackCost = mode === "us" ? CONFIG.fallbackShippingUS : CONFIG.fallbackShippingMX;
+    state.shipping.quote = fallbackCost;
+    state.shipping.label = "Envío (Estimación)";
+    saveCart();
+    toast("No se pudo cotizar en vivo. Usando estimación.", "info");
+  } finally {
+    state.__quoteInFlight = false;
   }
 }
 
-/* ---------------------------------------------------------
-   11. BINDINGS & ARRANQUE
-   --------------------------------------------------------- */
-function bindUI() {
-  // Chips de filtro
-  $$(".chip").forEach(c => c.addEventListener("click", () => {
-    $$(".chip").forEach(ch => ch.classList.remove("active"));
-    c.classList.add("active");
-    state.filter = c.dataset.filter;
-    playSound("click");
-    renderGrid();
-  }));
+async function quoteShippingUI() {
+  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
+  const zip = digitsOnly($("#shipZip")?.value || "");
+  const out = $("#shipQuote");
 
-  // Cierres de modales
-  $(".drawerClose").addEventListener("click", closeDrawer);
-  $("#pageOverlay").addEventListener("click", closeDrawer);
+  if (zip.length < 4) {
+    if (out) out.textContent = "Ingresa un código postal válido.";
+    return;
+  }
+  if (out) out.textContent = "Cotizando...";
+
+  try {
+    const payload = { zip, country, items: cartItemsForQuote() };
+    let res, data;
+    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
+
+    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
+
+    const cost = Number(data.cost || 0);
+    const label = String(data.label || "Envío estimado");
+    if (!cost) throw new Error("QUOTE_ZERO");
+
+    if (out) out.innerHTML = `<b>${escapeHtml(label)}</b> · ${fmtMXN(cost)}`;
+    playSound("success");
+  } catch (e) {
+    console.warn("[quote-ui] fail:", e);
+    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // 1. Iniciar servicios críticos
-  initStripe();
-  initIntroSplash();
-  initServiceWorker();
-  
-  // 2. Carga asíncrona del catálogo
-  await loadCatalog();
-  
-  // 3. UI y Eventos
-  bindUI();
-  updateCartUI();
-  initSocialProof();
-  
-  // 4. Manejo de URL Params (Stripe Return)
+/* -----------------------
+   14) CHECKOUT (create_checkout)
+------------------------ */
+async function doCheckout() {
+  if (!state.cart.length) return toast("Carrito vacío", "error");
+
+  const mode = state.shipping.mode || getShipModeFromUI();
+  const zip = digitsOnly($("#miniZip")?.value || "");
+
+  if (mode !== "pickup") {
+    if (zip.length < 4) return toast("Ingresa tu CP/ZIP", "error");
+    if (!state.shipping.quote) return toast("Cotiza el envío primero", "error");
+  }
+
+  const btn = $("#checkoutBtn");
+  const original = btn?.innerHTML || "PAGAR AHORA";
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESANDO...';
+    btn.disabled = true;
+  }
+
+  try {
+    initStripe();
+
+    const payload = {
+      cart: state.cart,
+      shipping: state.shipping,
+      shippingMode: mode,
+      shippingData: { postal_code: zip },
+      cancel_url: window.location.href,
+      success_url: window.location.origin + "/?status=success",
+      promoCode: "",
+    };
+
+    let res, data;
+    ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 20000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
+
+    if (!res.ok) throw new Error(data?.error || "CHECKOUT_HTTP_" + res.status);
+
+    const directUrl = data?.url ? String(data.url) : "";
+    const sessionId = data?.id || data?.sessionId;
+
+    if (directUrl) {
+      window.location.href = directUrl;
+      return;
+    }
+    if (sessionId && stripe) {
+      const result = await stripe.redirectToCheckout({ sessionId: String(sessionId) });
+      if (result?.error) throw new Error(result.error.message);
+      return;
+    }
+
+    throw new Error(data?.error || "CHECKOUT_FAILED");
+  } catch (e) {
+    console.error(e);
+    toast("Error en pago. Intenta de nuevo.", "error");
+    if (btn) {
+      btn.innerHTML = original;
+      btn.disabled = false;
+    }
+  }
+}
+
+/* -----------------------
+   15) AI (chat)
+------------------------ */
+function toggleAiAssistant() {
+  const modal = $("#aiChatModal") || $(".ai-chat-modal");
+  if (!modal) return;
+  modal.classList.toggle("active");
+  modal.classList.toggle("show");
+}
+
+async function sendAiMessage() {
+  const input = $("#aiInput") || $(".ai-input");
+  const box = $("#aiMessages") || document.querySelector(".ai-body");
+  if (!input || !box) return;
+
+  const text = String(input.value || "").trim();
+  if (!text) return;
+
+  const me = document.createElement("div");
+  me.className = "ai-bubble user ai-msg ai-me";
+  me.textContent = text;
+  box.appendChild(me);
+  box.scrollTop = box.scrollHeight;
+  input.value = "";
+
+  try {
+    let res, data;
+    ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
+    const reply = String(data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?");
+
+    const bot = document.createElement("div");
+    bot.className = "ai-bubble bot ai-msg ai-bot";
+    bot.textContent = reply;
+    box.appendChild(bot);
+    box.scrollTop = box.scrollHeight;
+  } catch {
+    const bot = document.createElement("div");
+    bot.className = "ai-bubble bot ai-msg ai-bot";
+    bot.textContent = "Estoy en modo offline. Conecta el endpoint AI para respuestas en vivo.";
+    box.appendChild(bot);
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+function bindAiEnter() {
+  const input = $("#aiInput") || $(".ai-input");
+  if (!input) return;
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendAiMessage();
+    }
+  });
+}
+
+/* -----------------------
+   16) LEGAL
+------------------------ */
+function openLegal(type) {
+  const modal = $("#legalModal");
+  if (!modal) return;
+
+  const title = $("#legalTitle");
+  const body = $("#legalBody");
+
+  const lib = window.LEGAL_CONTENT || {};
+  const FALLBACK = {
+    privacy: { title: "AVISO DE PRIVACIDAD", html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>" },
+    terms: { title: "TÉRMINOS Y CONDICIONES", html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>" },
+    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>" },
+  };
+
+  const key = String(type || "privacy").trim();
+  const item = lib[key] || FALLBACK[key] || FALLBACK.privacy;
+
+  if (title) title.textContent = item.title || "Info";
+  if (body) body.innerHTML = item.html || "<p>Contenido no disponible.</p>";
+
+  modal.classList.add("active", "show");
+  document.body.classList.add("modalOpen", "noScroll");
+}
+
+function closeLegal() {
+  $("#legalModal")?.classList.remove("active", "show");
+  document.body.classList.remove("modalOpen", "noScroll");
+}
+
+/* -----------------------
+   17) COOKIES
+------------------------ */
+function acceptCookies() {
+  const b = $("#cookieBanner") || $(".cookieBanner");
+  if (b) b.style.display = "none";
+  localStorage.setItem("score_cookies", "accepted");
+  localStorage.setItem("score_cookie_consent", "all");
+}
+
+/* -----------------------
+   18) INTRO/SPLASH + SOCIAL + SW
+------------------------ */
+function initIntroSplash() {
+  const intro = $("#intro");
+  const skip = $("#introSkip");
+  if (intro) {
+    const hide = () => {
+      if (state.__introDone) return;
+      state.__introDone = true;
+      intro.classList.add("hide");
+      setTimeout(() => intro.remove(), 420);
+    };
+    skip?.addEventListener("click", hide);
+    setTimeout(hide, 1200);
+  }
+
+  const splash = $("#splash-screen");
+  const bar = $(".rpm-bar");
+  const rpm = $("#revCounter");
+  if (splash && bar) {
+    let p = 0;
+    const tick = setInterval(() => {
+      p = Math.min(100, p + (Math.random() * 14 + 6));
+      bar.style.width = p.toFixed(0) + "%";
+      if (rpm) rpm.textContent = Math.min(9000, Math.floor(p * 90)) + " RPM";
+      if (p >= 100) {
+        clearInterval(tick);
+        splash.style.opacity = "0";
+        splash.style.visibility = "hidden";
+        setTimeout(() => splash.remove?.(), 600);
+      }
+    }, 120);
+  }
+}
+
+function initSocialProof() {
+  const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
+  const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "Rosarito", "Tecate"];
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  const show = () => {
+    const cartOpen = $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
+    const aiOpen = $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
+    if (cartOpen || aiOpen) return;
+    toast(`🏁 ${pick(names)} de ${pick(locs)} armó su pedido oficial.`, "info");
+  };
+
+  clearInterval(state.__socialTimer);
+  setTimeout(show, 18000);
+  state.__socialTimer = setInterval(show, 42000);
+}
+
+function initServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  if (location.protocol !== "https:" && location.hostname !== "localhost") return;
+  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_360").catch(() => {});
+}
+
+/* -----------------------
+   19) BOOT (continuación)
+------------------------ */
+function bindUI() {
+  $(".cartBtn")?.addEventListener("click", openDrawer);
+  $("#cartBtn")?.addEventListener("click", openDrawer);
+
+  $(".page-overlay")?.addEventListener("click", closeDrawer);
+  $("#pageOverlay")?.addEventListener("click", closeDrawer);
+  $("#backdrop")?.addEventListener("click", closeDrawer);
+
+  $(".closeBtn")?.addEventListener("click", closeDrawer);
+  $(".drawerClose")?.addEventListener("click", closeDrawer);
+
+  // ✅ checkout
+  $("#checkoutBtn")?.addEventListener("click", doCheckout);
+
+  // ✅ AI
+  $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
+  $(".ai-send")?.addEventListener("click", sendAiMessage);
+  bindAiEnter();
+
+  // ✅ Legal
+  $$(".jsLegalLink").forEach((btn) =>
+    btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"))
+  );
+  $("#legalClose")?.addEventListener("click", closeLegal);
+  $("#legalBackdrop")?.addEventListener("click", closeLegal);
+
+  // ✅ Chips (si existen; y si se agregaron dinámicamente ya tienen handler)
+  $$(".chip").forEach((c) => {
+    if (c.__bound) return;
+    c.__bound = true;
+    c.addEventListener("click", () => {
+      $$(".chip").forEach((ch) => ch.classList.remove("active"));
+      c.classList.add("active");
+      state.filter = c.dataset.filter || "ALL";
+      // renderGrid es async
+      renderGrid(getFilteredProducts());
+      playSound("click");
+    });
+  });
+
+  // ✅ Shipping
+  $("#shippingMode")?.addEventListener("change", (e) => toggleShipping(e.target.value));
+  $("#miniZip")?.addEventListener("input", requestMiniQuote);
+
+  document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
+    r.addEventListener("change", () => toggleShipping(r.value));
+  });
+
+  // ✅ Envíos landing cotizador
+  $("#shipZip")?.addEventListener("input", () => {
+    const v = digitsOnly($("#shipZip")?.value || "");
+    if (v.length >= 4) {
+      // no spamear requests: mini debounce simple
+      clearTimeout(window.__shipUiDeb);
+      window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 450);
+    }
+  });
+  $("#shipCountry")?.addEventListener("change", () => {
+    const v = digitsOnly($("#shipZip")?.value || "");
+    if (v.length >= 4) quoteShippingUI().catch?.(() => {});
+  });
+
+  // ✅ Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    closeLegal();
+    const ai = $("#aiChatModal") || $(".ai-chat-modal");
+    ai?.classList.remove("active", "show");
+    closeDrawer();
+  });
+
+  // ✅ Cookies persist
+  if (localStorage.getItem("score_cookies") === "accepted" || localStorage.getItem("score_cookie_ok") === "1") {
+    const b = $("#cookieBanner") || $(".cookieBanner");
+    if (b) b.style.display = "none";
+  }
+
+  // ✅ Success/cancel params
   const params = new URLSearchParams(window.location.search);
-  if (params.get("success")) {
-    toast("✅ ¡Pago Exitoso! Gracias por tu compra.");
+  if (params.get("status") === "success") {
+    toast("¡Pago confirmado! 🏁", "success");
     state.cart = [];
     saveCart();
-    window.history.replaceState({}, document.title, "/");
-  } else if (params.get("cancel")) {
-    toast("⚠️ Pago cancelado. Intenta de nuevo.");
-    window.history.replaceState({}, document.title, "/");
+    history.replaceState({}, document.title, "/");
+  } else if (params.get("status") === "cancel") {
+    toast("Pago cancelado", "info");
+    history.replaceState({}, document.title, "/");
   }
+}
+
+/* -----------------------
+   20) DOM READY
+------------------------ */
+document.addEventListener("DOMContentLoaded", async () => {
+  initStripe();
+  initIntroSplash();
+
+  // Carga catálogo + chips
+  await loadCatalog();
+
+  // Mantén coherencia shipping UI
+  toggleShipping(getShipModeFromUI());
+
+  // Bind UI + render inicial
+  bindUI();
+  saveCart();
+
+  // Social proof + SW
+  initSocialProof();
+  initServiceWorker();
 });
 
-/* ---------------------------------------------------------
-   12. EXPORTACIONES GLOBALES (CRÍTICO PARA HTML ONCLICK)
-   --------------------------------------------------------- */
-// Estas asignaciones son obligatorias para que los botones en index.html funcionen
+/* -----------------------
+   21) EXPORTS legacy (para compat layer)
+------------------------ */
 window.addToCart = addToCart;
 window.modQty = modQty;
+
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
-window.quoteShippingUI = quoteShippingUI;
-window.doCheckout = doCheckout;
-window.toggleShipping = toggleShipping;
-window.sendAiMessage = sendAiMessage;
-window.handleScroll = window.handleScroll; // Carrusel handler
+window.openCart = openCart;
+window.closeCart = closeCart;
 
-// Helpers UI
-window.toggleAiAssistant = () => { 
-    $("#aiChatModal").classList.toggle("show"); 
-    playSound("click"); 
-};
-window.openLegal = (type) => {
-    $("#legalModal").classList.add("show");
-    const title = type === 'privacy' ? 'AVISO DE PRIVACIDAD' : 'TÉRMINOS Y CONDICIONES';
-    $("#legalTitle").textContent = title;
-};
-window.closeLegal = () => $("#legalModal").classList.remove("show");
-window.acceptCookies = () => { 
-    $("#cookieBanner").style.display='none'; 
-    localStorage.setItem("score_cookies","1"); 
-};
+window.toggleShipping = toggleShipping;
+window.quoteShipping = quoteShippingMini;
+window.quoteShippingMini = quoteShippingMini;
+window.quoteShippingUI = quoteShippingUI;
+
+window.doCheckout = doCheckout;
+window.checkout = doCheckout;
+
+window.toggleAiAssistant = toggleAiAssistant;
+window.sendAiMessage = sendAiMessage;
+
+window.openLegal = openLegal;
+window.closeLegal = closeLegal;
+
+window.acceptCookies = acceptCookies;
+
+// helpers opcionales expuestos
+window.__score_encodePath = urlEncodePathIfNeeded;
+window.__score_probeImage = probeImage;
