@@ -1,7 +1,7 @@
 /* =========================================================
    SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (360) — UPDATED (PROD)
    ✅ Netlify Functions: create_checkout / quote_shipping / chat
-   ✅ Alineado con tu catálogo oficial (sections + subSection) + UI chips
+   ✅ Catálogo: prioriza Supabase VIEW public.catalog_products (RLS+grants safe)
    ✅ Detecta imágenes existentes y omite las que no (sin romper carousel)
    ✅ NO cambia nombres de productos (respeta espacios en name)
    ✅ Soporta rutas con espacios (las encodea al cargar imágenes)
@@ -19,6 +19,9 @@ const CONFIG = {
   supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
   supabaseKey:
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+
+  // ✅ IMPORTANTE: lee la VIEW hardened (no la tabla products)
+  supabaseCatalogView: "catalog_products",
 
   endpoints: {
     checkout: "/.netlify/functions/create_checkout",
@@ -81,7 +84,6 @@ function urlEncodePathIfNeeded(url) {
   const raw = String(url || "").trim();
   if (!raw) return "";
   if (raw.startsWith("/")) {
-    // encode solo cada segmento (no rompas /)
     return raw
       .split("/")
       .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
@@ -169,9 +171,7 @@ const state = {
   __quoteInFlight: false,
   __socialTimer: null,
   __introDone: false,
-
-  // cache para no “probar” imágenes cada vez
-  __imgOkCache: new Map(), // url -> true/false
+  __imgOkCache: new Map(),
 };
 
 /* -----------------------
@@ -290,13 +290,11 @@ async function getProductImagesSafe(p) {
 
   const ok = await filterExistingImages(candidates);
   if (ok.length) return ok;
-
-  // si no existe nada, usa fallback global (debe existir)
   return [CONFIG.fallbackImg];
 }
 
 /* -----------------------
-   8) CATALOGO (Supabase -> /data/catalog.json -> local)
+   8) CATALOGO (Supabase VIEW -> /data/catalog.json -> local)
 ------------------------ */
 async function loadCatalog() {
   const grid = $("#productsGrid");
@@ -305,9 +303,11 @@ async function loadCatalog() {
       "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
   }
 
-  // 1) Supabase REST (si tu tabla coincide)
+  // 1) Supabase REST (VIEW hardened)
   try {
-    const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*`, {
+    const viewName = CONFIG.supabaseCatalogView || "catalog_products";
+    const url = `${CONFIG.supabaseUrl}/rest/v1/${encodeURIComponent(viewName)}?select=*`;
+    const res = await fetch(url, {
       headers: {
         apikey: CONFIG.supabaseKey,
         Authorization: `Bearer ${CONFIG.supabaseKey}`,
@@ -322,7 +322,7 @@ async function loadCatalog() {
       }
     }
   } catch (e) {
-    console.warn("[catalog] supabase fail:", e);
+    console.warn("[catalog] supabase view fail:", e);
   }
 
   // 2) catálogo oficial /data/catalog.json (sections + products)
@@ -333,7 +333,6 @@ async function loadCatalog() {
       if (Array.isArray(data?.sections)) state.sections = data.sections;
       if (list.length) {
         state.products = normalizeProducts(list);
-        // ✅ opcional: si faltan chips BAJA_400 / SF_250, se agregan solos
         ensureSectionChipsFromCatalog();
         renderGrid(getFilteredProducts());
         return;
@@ -348,7 +347,7 @@ async function loadCatalog() {
   renderGrid(getFilteredProducts());
 }
 
-/* ✅ Backfill para carrito viejo: añade sku si no venía (para envío real) */
+/* ✅ Backfill para carrito viejo: añade sku si no venía */
 function syncCartSkusFromCatalog() {
   try {
     if (!Array.isArray(state.cart) || !state.cart.length) return;
@@ -375,8 +374,6 @@ function syncCartSkusFromCatalog() {
 function normalizeProducts(list) {
   return (list || []).map((p, idx) => {
     const id = p?.id ?? p?.sku ?? `p${idx + 1}`;
-
-    // ✅ respeta name con espacios: NO lo tocamos
     const name = String(p?.name || p?.title || "Producto");
 
     const rawImages = Array.isArray(p?.images) && p.images.length ? p.images : (p?.img ? [p.img] : []);
@@ -385,10 +382,10 @@ function normalizeProducts(list) {
     return {
       id: String(id),
       sku: String(p?.sku || ""),
-      sectionId: String(p?.sectionId || p?.category || "ALL").toUpperCase(),
-      subSection: String(p?.subSection || p?.type || "").trim(), // ✅ para chips HOODIES/TEES/CAPS
+      sectionId: String(p?.sectionId || p?.section_id || p?.category || "ALL").toUpperCase(),
+      subSection: String(p?.subSection || p?.sub_section || p?.type || "").trim(),
       name,
-      baseMXN: Number(p?.baseMXN ?? p?.price ?? 0),
+      baseMXN: Number(p?.baseMXN ?? p?.base_mxn ?? p?.price ?? 0),
       img: safeUrl(p?.img) || safeUrl(images[0]) || CONFIG.fallbackImg,
       images,
       sizes: Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["Unitalla"],
@@ -405,23 +402,21 @@ function getLocalCatalog() {
 }
 
 /* -----------------------
-   9) FILTERS (ALINEADOS con chips del index + catálogo real)
-   Chips actuales: ALL / HOODIES / TEES / CAPS / BAJA_1000 / BAJA_500 (+ opcional auto BAJA_400 / SF_250)
+   9) FILTERS
 ------------------------ */
 function normalizeStr(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // sin acentos
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function matchesFilter(p, filter) {
   const f = String(filter || "ALL").toUpperCase();
   if (f === "ALL") return true;
 
-  // eventos
-  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(f)) {
+  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250", "SF_250"].includes(f)) {
     return String(p.sectionId || "").toUpperCase() === f;
   }
 
@@ -437,7 +432,6 @@ function getFilteredProducts() {
   return (state.products || []).filter((p) => matchesFilter(p, state.filter));
 }
 
-/* ✅ si el catálogo trae secciones extra y no tienes chip en el HTML, lo agrega */
 function ensureSectionChipsFromCatalog() {
   const filtersWrap = document.querySelector(".filters");
   if (!filtersWrap) return;
@@ -445,13 +439,10 @@ function ensureSectionChipsFromCatalog() {
 
   const existing = new Set([...filtersWrap.querySelectorAll(".chip")].map((c) => String(c.dataset.filter || "").toUpperCase()));
 
-  // solo agrega secciones que falten (BAJA_400 / SF_250)
   state.sections.forEach((s) => {
     const id = String(s?.id || "").toUpperCase();
     const title = String(s?.title || id).toUpperCase();
     if (!id || existing.has(id)) return;
-
-    // agrega chips solo para secciones “evento”
     if (!["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(id)) return;
 
     const btn = document.createElement("button");
@@ -474,7 +465,7 @@ function ensureSectionChipsFromCatalog() {
 }
 
 /* -----------------------
-   10) RENDER GRID (ahora async por imágenes seguras)
+   10) RENDER GRID
 ------------------------ */
 async function renderGrid(list) {
   const grid = $("#productsGrid");
@@ -488,7 +479,6 @@ async function renderGrid(list) {
     return;
   }
 
-  // render progresivo sin congelar la UI
   for (const p of list) {
     const card = await buildProductCard(p);
     grid.appendChild(card);
@@ -500,10 +490,9 @@ async function buildProductCard(p) {
   const card = document.createElement("div");
   card.className = "champItem card";
 
-  const nameSafe = escapeHtml(p.name); // NO cambia name, solo escapa HTML
+  const nameSafe = escapeHtml(p.name);
   const price = fmtMXN(p.baseMXN);
 
-  // ✅ imágenes existentes (ignora faltantes)
   const images = await getProductImagesSafe(p);
   const media = buildMediaHTML(images, nameSafe, pid);
 
@@ -618,7 +607,6 @@ function addToCart(id) {
   const thumbCandidate =
     (Array.isArray(p.images) && p.images[0]) ? p.images[0] : p.img;
 
-  // thumb “seguro”
   const thumb = urlEncodePathIfNeeded(safeUrl(thumbCandidate) || CONFIG.fallbackImg);
 
   if (ex) ex.qty = clampQty(ex.qty + 1);
@@ -626,8 +614,8 @@ function addToCart(id) {
     state.cart.push({
       key,
       id: p.id,
-      sku: p.sku || "",          // ✅ NUEVO: sku para envío real / ÚNICO OS
-      name: p.name,              // ✅ respeta espacios
+      sku: p.sku || "",
+      name: p.name,
       price: Number(p.baseMXN || 0),
       img: thumb || CONFIG.fallbackImg,
       size: String(size),
@@ -736,7 +724,6 @@ function closeDrawer() {
 function openCart(){ openDrawer(); }
 function closeCart(){ closeDrawer(); }
 
-/* ✅ PWA: start_url /?openCart=1 */
 function handleOpenCartQuery() {
   try {
     const v = String(new URLSearchParams(window.location.search).get("openCart") || "").toLowerCase();
@@ -779,7 +766,6 @@ function toggleShipping(mode) {
   requestMiniQuote();
 }
 
-/* ✅ ahora manda id/sku/qty (ÚNICO OS ready) */
 function cartItemsForQuote() {
   const items = (state.cart || []).map((i) => ({
     id: String(i.id || ""),
@@ -878,7 +864,7 @@ async function quoteShippingUI() {
 }
 
 /* -----------------------
-   14) CHECKOUT (create_checkout)
+   14) CHECKOUT
 ------------------------ */
 async function doCheckout() {
   if (!state.cart.length) return toast("Carrito vacío", "error");
@@ -942,7 +928,7 @@ async function doCheckout() {
 }
 
 /* -----------------------
-   15) AI (chat)
+   15) AI
 ------------------------ */
 function toggleAiAssistant() {
   const modal = $("#aiChatModal") || $(".ai-chat-modal");
@@ -1099,7 +1085,7 @@ function initServiceWorker() {
 }
 
 /* -----------------------
-   19) BOOT (continuación)
+   19) BOOT
 ------------------------ */
 function bindUI() {
   $(".cartBtn")?.addEventListener("click", openDrawer);
@@ -1112,22 +1098,18 @@ function bindUI() {
   $(".closeBtn")?.addEventListener("click", closeDrawer);
   $(".drawerClose")?.addEventListener("click", closeDrawer);
 
-  // ✅ checkout
   $("#checkoutBtn")?.addEventListener("click", doCheckout);
 
-  // ✅ AI
   $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
   $(".ai-send")?.addEventListener("click", sendAiMessage);
   bindAiEnter();
 
-  // ✅ Legal
   $$(".jsLegalLink").forEach((btn) =>
     btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"))
   );
   $("#legalClose")?.addEventListener("click", closeLegal);
   $("#legalBackdrop")?.addEventListener("click", closeLegal);
 
-  // ✅ Chips (si existen; y si se agregaron dinámicamente ya tienen handler)
   $$(".chip").forEach((c) => {
     if (c.__bound) return;
     c.__bound = true;
@@ -1135,13 +1117,11 @@ function bindUI() {
       $$(".chip").forEach((ch) => ch.classList.remove("active"));
       c.classList.add("active");
       state.filter = c.dataset.filter || "ALL";
-      // renderGrid es async
       renderGrid(getFilteredProducts());
       playSound("click");
     });
   });
 
-  // ✅ Shipping
   $("#shippingMode")?.addEventListener("change", (e) => toggleShipping(e.target.value));
   $("#miniZip")?.addEventListener("input", requestMiniQuote);
 
@@ -1149,7 +1129,6 @@ function bindUI() {
     r.addEventListener("change", () => toggleShipping(r.value));
   });
 
-  // ✅ Envíos landing cotizador
   $("#shipZip")?.addEventListener("input", () => {
     const v = digitsOnly($("#shipZip")?.value || "");
     if (v.length >= 4) {
@@ -1162,7 +1141,6 @@ function bindUI() {
     if (v.length >= 4) quoteShippingUI().catch?.(() => {});
   });
 
-  // ✅ Escape
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     closeLegal();
@@ -1171,13 +1149,11 @@ function bindUI() {
     closeDrawer();
   });
 
-  // ✅ Cookies persist
   if (localStorage.getItem("score_cookies") === "accepted" || localStorage.getItem("score_cookie_ok") === "1") {
     const b = $("#cookieBanner") || $(".cookieBanner");
     if (b) b.style.display = "none";
   }
 
-  // ✅ Success/cancel params
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago confirmado! 🏁", "success");
@@ -1197,27 +1173,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   initStripe();
   initIntroSplash();
 
-  // Carga catálogo + chips
   await loadCatalog();
   syncCartSkusFromCatalog();
 
-  // Mantén coherencia shipping UI
   toggleShipping(getShipModeFromUI());
 
-  // Bind UI + render inicial
   bindUI();
   saveCart();
 
-  // ✅ PWA openCart shortcut
   handleOpenCartQuery();
 
-  // Social proof + SW
   initSocialProof();
   initServiceWorker();
 });
 
 /* -----------------------
-   21) EXPORTS legacy (para compat layer)
+   21) EXPORTS legacy
 ------------------------ */
 window.addToCart = addToCart;
 window.modQty = modQty;
@@ -1243,6 +1214,5 @@ window.closeLegal = closeLegal;
 
 window.acceptCookies = acceptCookies;
 
-// helpers opcionales expuestos
 window.__score_encodePath = urlEncodePathIfNeeded;
 window.__score_probeImage = probeImage;
