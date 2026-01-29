@@ -5,14 +5,14 @@
     <loc>https://scorestore.netlify.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.00</priority>
-    <lastmod>2026-01-27</lastmod>
+    <lastmod>2026-01-29</lastmod>
   </url>
 
   <url>
     <loc>https://scorestore.netlify.app/legal.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
-    <lastmod>2026-01-27</lastmod>
+    <lastmod>2026-01-29</lastmod>
   </url>
 
 </urlset>
