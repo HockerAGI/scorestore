@@ -1,10 +1,4 @@
-// SCORE STORE — Stripe Webhook (PROD · UNIFIED)
-// - Verifica firma con RAW body (soporta base64 de Netlify)
-// - Maneja: checkout.session.completed
-// - Opcional: crea guía Envia.com
-// - Opcional: guarda order en Supabase (service role)
-// - Opcional: notifica a Telegram (HTML)
-
+/* netlify/functions/stripe_webhook.js */
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const axios = require("axios");
 
@@ -14,6 +8,7 @@ const {
   createEnviaLabel,
   normalizeQty,
   digitsOnly,
+  handleOptions,
 } = require("./_shared");
 
 function escapeHtml(str) {
@@ -33,12 +28,7 @@ async function notifyTelegramHTML(html) {
   try {
     await axios.post(
       `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        chat_id: chatId,
-        text: html,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      },
+      { chat_id: chatId, text: html, parse_mode: "HTML", disable_web_page_preview: true },
       { timeout: 12000 }
     );
   } catch (e) {
@@ -48,9 +38,7 @@ async function notifyTelegramHTML(html) {
 
 function getRawBody(event) {
   let rawBody = event?.body || "";
-  if (event?.isBase64Encoded) {
-    rawBody = Buffer.from(rawBody, "base64").toString("utf8");
-  }
+  if (event?.isBase64Encoded) rawBody = Buffer.from(rawBody, "base64").toString("utf8");
   return rawBody;
 }
 
@@ -66,7 +54,9 @@ async function getItemsQtyFromStripe(sessionId) {
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
+  const pre = handleOptions(event);
+  if (pre) return pre;
+
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method Not Allowed" });
 
   const sig =
@@ -97,12 +87,10 @@ exports.handler = async (event) => {
       const zip = digitsOnly(meta.customer_zip || meta.customer_cp || "");
       const promo = String(meta.promo_code || "").trim();
 
-      let itemsQty = Number(String(meta.items_qty || meta.score_items || "").replace(/\D+/g, "")) || 0;
+      let itemsQty = Number(String(meta.score_items || meta.items_qty || "").replace(/\D+/g, "")) || 0;
       if (!itemsQty) itemsQty = await getItemsQtyFromStripe(session.id);
 
-      const customerName = escapeHtml(
-        session.customer_details?.name || session.shipping_details?.name || "Cliente"
-      );
+      const customerName = escapeHtml(session.customer_details?.name || session.shipping_details?.name || "Cliente");
       const customerEmail = escapeHtml(session.customer_details?.email || "");
       const customerPhone = escapeHtml(session.customer_details?.phone || "");
 
@@ -115,7 +103,7 @@ exports.handler = async (event) => {
       let carrierName = "";
       const shippingDetails = session.shipping_details;
 
-      if (mode !== "pickup" && createEnviaLabel && shippingDetails?.address) {
+      if (mode !== "pickup" && shippingDetails?.address) {
         try {
           const customerData = {
             name: shippingDetails?.name || session.customer_details?.name || "Cliente",
@@ -127,7 +115,7 @@ exports.handler = async (event) => {
           const qtyNum = Math.max(1, Number(itemsQty) || 1);
           const shipment = await createEnviaLabel(customerData, qtyNum);
 
-          if (shipment) {
+          if (shipment?.ok) {
             trackingInfo = shipment.tracking || "";
             labelUrl = shipment.labelUrl || "";
             carrierName = shipment.carrier || "";
@@ -145,20 +133,16 @@ exports.handler = async (event) => {
               total: Number(session.amount_total || 0) / 100,
               currency: String(session.currency || "mxn"),
               status: "paid",
-
               shipping_mode: mode,
               customer_cp: zip || null,
               promo_code: promo || null,
               items_qty: Number(itemsQty) || null,
-
               customer_name: session.customer_details?.name || shippingDetails?.name || null,
               customer_email: session.customer_details?.email || null,
               customer_phone: session.customer_details?.phone || null,
-
               tracking_number: trackingInfo || null,
               label_url: labelUrl || null,
               carrier: carrierName || null,
-
               raw_meta: meta ? JSON.stringify(meta) : null,
             },
           ]);
