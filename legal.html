@@ -5,25 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>SCORE STORE | Aviso Legal y Términos</title>
-
   <meta name="description" content="Aviso legal, términos y políticas de SCORE STORE. Tienda oficial de mercancía SCORE International." />
   <meta name="theme-color" content="#E10600" />
 
+  <link rel="canonical" href="/legal.html" />
+
+  <!-- PWA (alineado a index) -->
+  <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD" />
+
+  <!-- Fonts (alineado a tu CSS v2026: Inter + Teko) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS (MISMA versión que index) -->
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_360" />
 </head>
 
-<body>
+<body class="appBg">
 
-  <!-- TOPBAR SIMPLE -->
-  <header class="topbar">
+  <!-- TOPBAR (alineado: solo logo, sin texto) -->
+  <header class="topbar" role="banner">
     <div class="container topInner">
-      <a href="/" class="brand">
-        <img src="/assets/logo-score.webp" class="brandLogo" alt="SCORE Logo">
-        <span class="brandText">SCORE STORE</span>
-      </a>
+      <div class="brand" aria-label="SCORE Store">
+        <a href="/" aria-label="Ir al inicio">
+          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="64" height="64" decoding="async" />
+        </a>
+      </div>
 
-      <nav class="nav">
+      <nav class="nav" aria-label="Navegación">
         <a href="/">INICIO</a>
         <a href="/#catalogo">CATÁLOGO</a>
       </nav>
@@ -31,7 +42,7 @@
   </header>
 
   <!-- CONTENT -->
-  <section class="section">
+  <section class="section" aria-label="Legal">
     <div class="container">
 
       <div class="sectionHead">
@@ -58,7 +69,7 @@
         </p>
         <p>
           El uso indebido del sitio, intentos de fraude, manipulación de precios, o abuso de sistemas
-          de pago o envío resultará en la cancelación inmediata de la orden.
+          de pago o envío puede resultar en la cancelación de la orden.
         </p>
 
         <h3>3. Productos</h3>
@@ -89,12 +100,12 @@
 
         <h3>5. Envíos</h3>
         <p>
-          Los envíos se cotizan y generan de forma automática mediante <strong>Envia.com</strong>,
-          utilizando transportistas como FedEx.
+          Los envíos se cotizan y pueden generarse mediante <strong>Envia.com</strong> y/o transportistas disponibles
+          según destino y cobertura.
         </p>
         <p>
           Las tarifas y tiempos de entrega dependen del código postal, país de destino y
-          características físicas del producto.
+          características físicas del paquete.
         </p>
         <p>
           También existe la opción de <strong>pickup local en Tijuana</strong> cuando esté disponible.
@@ -102,8 +113,7 @@
 
         <h3>6. Devoluciones y cambios</h3>
         <p>
-          Por tratarse de mercancía personalizada o de edición limitada, no se aceptan devoluciones
-          salvo por defectos de fabricación comprobables.
+          No se aceptan devoluciones salvo por defectos de fabricación comprobables.
         </p>
         <p>
           Cualquier aclaración deberá realizarse dentro de los primeros 7 días naturales
@@ -112,8 +122,8 @@
 
         <h3>7. Cancelaciones</h3>
         <p>
-          Las órdenes no pueden cancelarse una vez que el pago ha sido confirmado y el proceso
-          de producción o envío ha iniciado.
+          Las órdenes pueden no ser cancelables una vez confirmado el pago y/o iniciado el proceso
+          de producción o envío.
         </p>
 
         <h3>8. Propiedad intelectual</h3>
@@ -137,47 +147,48 @@
 
         <h3>10. Protección de datos</h3>
         <p>
-          Los datos personales proporcionados son utilizados únicamente para la gestión de pedidos,
+          Los datos personales proporcionados se utilizan únicamente para la gestión de pedidos,
           envíos y atención al cliente.
-        </p>
-        <p>
-          SCORE STORE cumple con las disposiciones aplicables en materia de protección de datos.
         </p>
 
         <h3>11. Modificaciones</h3>
         <p>
-          SCORE STORE se reserva el derecho de modificar estos términos en cualquier momento.
+          SCORE STORE puede modificar estos términos en cualquier momento.
           Las modificaciones entrarán en vigor una vez publicadas en el sitio.
         </p>
 
         <h3>12. Contacto</h3>
-        <p>
-          Para dudas o aclaraciones:
-        </p>
         <ul>
           <li>Email: <strong>ventas.unicotextil@gmail.com</strong></li>
-          <li>Fabricación y operación: Único Uniformes · Tijuana, BC</li>
+          <li>Operación y fabricación: Único Uniformes · Tijuana, BC</li>
         </ul>
 
       </div>
-
     </div>
   </section>
 
-  <!-- FOOTER SIMPLE -->
-  <footer class="footer">
+  <!-- FOOTER (alineado a tu estilo general; sin inventar otro sistema) -->
+  <footer class="footer" aria-label="Footer">
     <div class="container footerInner">
       <div class="fCol">
-        <div class="footerBrandName">SCORE STORE</div>
-        <p>Operado por Único Uniformes (BAJATEX).<br>Tijuana, Baja California.</p>
+        <div class="footerBrandName">SCORE<br>STORE</div>
+        <p class="footerDesc">
+          Operado por <strong>Único Uniformes</strong> (BAJATEX).<br>
+          Tijuana, Baja California.
+        </p>
       </div>
       <div class="fCol">
         <h4>ENLACES</h4>
-        <a href="/">Inicio</a><br>
-        <a href="/#catalogo">Catálogo</a>
+        <div class="f-links">
+          <a href="/">Inicio</a>
+          <a href="/#catalogo">Catálogo</a>
+        </div>
       </div>
     </div>
-    <div class="copy">© 2026 SCORE STORE · Todos los derechos reservados</div>
+
+    <div class="copy">
+      &copy; 2026 SCORE INTERNATIONAL. TODOS LOS DERECHOS RESERVADOS.
+    </div>
   </footer>
 
 </body>
