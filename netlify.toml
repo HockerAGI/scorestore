@@ -11,7 +11,7 @@
   included_files = ["data/**"]
 
 # -----------------------
-# CACHE: HTML corto, assets largos, JS/CSS razonable
+# CACHE: HTML corto, assets largos
 # SW + manifest sin cache
 # -----------------------
 
@@ -30,7 +30,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# ✅ JS/CSS: NO immutable si NO versionas el archivo en el HTML
+# ✅ JS/CSS: NO immutable si no versionas archivo
 [[headers]]
   for = "/css/*"
   [headers.values]
@@ -41,13 +41,13 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# Catálogo y promos: NO cache (siempre fresco)
+# Catálogo y promos: siempre fresco
 [[headers]]
   for = "/data/*"
   [headers.values]
     Cache-Control = "no-store"
 
-# PWA críticos: no cache para que actualice rápido
+# PWA críticos
 [[headers]]
   for = "/sw.js"
   [headers.values]
@@ -59,8 +59,9 @@
     Cache-Control = "no-store"
 
 # -----------------------
-# Redirects (alineado a tu main.js fallbacks /api/*)
+# Redirects /api/* -> functions (alineado a main.js)
 # -----------------------
+
 [[redirects]]
   from = "/api/checkout"
   to = "/.netlify/functions/create_checkout"
