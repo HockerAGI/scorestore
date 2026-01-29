@@ -40,7 +40,6 @@ const PRECACHE = [
   "/assets/icons/icon-512.png",
 ];
 
-// ✅ ahora también cubre webmanifest/txt/xml
 const STATIC_EXT = /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|woff2?|webmanifest|txt|xml)$/i;
 const DATA_EXT   = /\.(?:json)$/i;
 
@@ -70,10 +69,32 @@ function pathnameOf(url) {
 function stripSearch(url) {
   try {
     const u = new URL(url);
-    return u.origin + u.pathname; // ✅ evita cache-bloat por ?v=
+    return u.origin + u.pathname;
   } catch {
     return url;
   }
+}
+
+async function matchSmart(cache, reqOrUrl) {
+  // intenta exacto
+  let hit = await cache.match(reqOrUrl);
+  if (hit) return hit;
+
+  // intenta ignorando query
+  try {
+    if (reqOrUrl instanceof Request) {
+      hit = await cache.match(reqOrUrl, { ignoreSearch: true });
+      if (hit) return hit;
+    }
+  } catch {}
+
+  // intenta versión sin query (si viene como string)
+  if (typeof reqOrUrl === "string") {
+    hit = await cache.match(stripSearch(reqOrUrl));
+    if (hit) return hit;
+  }
+
+  return null;
 }
 
 self.addEventListener("install", (event) => {
@@ -112,19 +133,27 @@ self.addEventListener("fetch", (event) => {
   // HTML: network-first
   if (isHTML(req)) {
     event.respondWith((async () => {
-      const cache = await caches.open(CACHE_PAGES);
+      const pages = await caches.open(CACHE_PAGES);
       try {
         const fresh = await fetch(req);
-        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        if (fresh && fresh.ok) {
+          // ✅ cachea sin query para evitar duplicados (/?source=pwa)
+          await pages.put(stripSearch(url), fresh.clone());
+        }
         return fresh;
       } catch {
-        // intenta cache exacto, luego fallback a homepage
-        const cached = await cache.match(req);
-        if (cached) return cached;
+        // intenta cache de páginas
+        const cachedPage =
+          (await matchSmart(pages, req)) ||
+          (await matchSmart(pages, stripSearch(url)));
+        if (cachedPage) return cachedPage;
 
-        const home = (await cache.match("/")) || (await cache.match("/index.html"));
+        // ✅ BUGFIX: homepage viene del CACHE_STATIC (precached)
+        const stat = await caches.open(CACHE_STATIC);
+        const home = (await matchSmart(stat, "/")) || (await matchSmart(stat, "/index.html"));
         if (home) return home;
 
+        // fallback final
         return new Response(
 `<!doctype html>
 <html lang="es">
@@ -162,17 +191,19 @@ self.addEventListener("fetch", (event) => {
 
   const pathname = pathnameOf(url);
 
-  // JSON data: stale-while-revalidate (ideal: /data/*.json)
+  // JSON data: stale-while-revalidate
   if (DATA_EXT.test(pathname)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_DATA);
-      const cached = await cache.match(req, { ignoreSearch: true });
+
+      const cached =
+        (await cache.match(req, { ignoreSearch: true })) ||
+        (await cache.match(stripSearch(url)));
 
       const fetchPromise = (async () => {
         try {
           const fresh = await fetch(req);
           if (fresh && fresh.ok) {
-            // ✅ guarda sin query para no duplicar
             await cache.put(stripSearch(url), fresh.clone());
           }
           return fresh;
@@ -189,20 +220,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first (ignorando query)
+  // Static assets: cache-first
   if (STATIC_EXT.test(pathname) || STATIC_EXT.test(url)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_STATIC);
 
-      let cached = await cache.match(req);
-      if (!cached) cached = await cache.match(req, { ignoreSearch: true });
+      const cached =
+        (await cache.match(req)) ||
+        (await cache.match(req, { ignoreSearch: true })) ||
+        (await cache.match(stripSearch(url)));
+
       if (cached) return cached;
 
       try {
         const fresh = await fetch(req);
         if (fresh && fresh.ok) {
-          // ✅ guarda sin query para evitar bloat por ?v=
-          cache.put(stripSearch(url), fresh.clone());
+          await cache.put(stripSearch(url), fresh.clone());
         }
         return fresh;
       } catch {
