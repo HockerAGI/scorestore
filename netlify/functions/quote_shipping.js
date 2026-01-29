@@ -1,11 +1,4 @@
-/* =========================================================
-   SCORE STORE — QUOTE SHIPPING (2026_PROD_UNIFIED · REAL)
-   - PRIORIDAD: Envia Rate API (/ship/rate)
-   - Validación ZIP: Envia Geocodes (/zipcode) si hay ENVIA_API_KEY
-   - Fallback: SOLO estimación (FALLBACK_MX_PRICE / FALLBACK_US_PRICE)
-   - Label neutro
-   ========================================================= */
-
+/* netlify/functions/quote_shipping.js */
 const {
   jsonResponse,
   safeJsonParse,
@@ -15,6 +8,7 @@ const {
   FALLBACK_US_PRICE,
   normalizeQty,
   digitsOnly,
+  handleOptions,
 } = require("./_shared");
 
 function countryFromBody(body) {
@@ -25,12 +19,10 @@ function countryFromBody(body) {
 }
 
 function buildLabel(country, days, source) {
-  const isUS = country === "US";
   const d = Number(days);
   const eta = Number.isFinite(d) && d > 0 ? ` · ${d} días` : "";
-
   if (source === "envia") return `Envío estimado${eta}`;
-  return isUS ? `Envío internacional${eta}` : `Envío nacional${eta}`;
+  return country === "US" ? `Envío internacional${eta}` : `Envío nacional${eta}`;
 }
 
 function zipFromBody(body) {
@@ -43,12 +35,13 @@ function totalQtyFromBody(body) {
 }
 
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
+  const pre = handleOptions(event);
+  if (pre) return pre;
+
   if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
 
   try {
     const body = safeJsonParse(event.body);
-
     const country = countryFromBody(body);
     const zip = zipFromBody(body);
     const qty = Math.max(1, totalQtyFromBody(body));
@@ -58,18 +51,15 @@ exports.handler = async (event) => {
     const v = await validateZip(country, zip);
     if (!v?.ok) return jsonResponse(200, { ok: false, error: v?.error || "ZIP_NOT_FOUND" });
 
-    const estWeightKg = Math.max(0.5, qty * 0.5);
-    const L = 30;
-    const W = 25;
-    const H = Math.min(60, 10 + qty * 2);
+    const estWeightKg = Math.max(1, qty * 0.6);
+    const L = 30, W = 20, H = Math.min(60, 5 + Math.ceil(qty * 3));
 
     const quote = await getEnviaQuote(zip, qty, country, estWeightKg, L, H, W);
 
     if (quote?.mxn && Number(quote.mxn) > 0) {
-      const cost = Number(quote.mxn);
       return jsonResponse(200, {
         ok: true,
-        cost,
+        cost: Number(quote.mxn),
         label: buildLabel(country, quote.days, "envia"),
         source: "envia",
         meta: { days: quote.days || null, zip_validated: v.source || "geocodes", qty },
@@ -77,7 +67,6 @@ exports.handler = async (event) => {
     }
 
     const fallbackCost = country === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-
     return jsonResponse(200, {
       ok: true,
       cost: fallbackCost,
