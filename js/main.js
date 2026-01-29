@@ -8,6 +8,8 @@
    ✅ FIX: bindUI duplicado / cortado (tu main venía roto)
    ✅ FIX: quote realtime robusto + parsing seguro
    ✅ FIX: evita double-trigger de eventos (bindOnce)
+   ✅ FIX: shippingMode radios vs select (prioridad + sync)
+   ✅ FIX: múltiples .cartBtn (abre desde cualquier botón)
    ========================================================= */
 
 /* -----------------------
@@ -115,7 +117,6 @@ async function fetchJSON(url, options = {}, timeoutMs = 12000) {
       data = await res.json().catch(() => ({}));
     } else {
       const txt = await res.text().catch(() => "");
-      // intenta parsear si viene JSON pero con mal header
       data = (() => {
         try {
           return JSON.parse(txt);
@@ -152,12 +153,16 @@ function bindOnce(el, evt, fn, opts) {
   el.addEventListener(evt, fn, opts);
 }
 
+/* helper para bindear listas */
+function bindAll(selector, evt, fn, opts) {
+  $$(selector).forEach((el) => bindOnce(el, evt, fn, opts));
+}
+
 /* -----------------------
    3) Stripe Init (Live)
 ------------------------ */
 let stripe = null;
 
-// Stripe puede tardar (script async). Hacemos retry suave.
 function initStripe() {
   if (stripe) return stripe;
   if (window.Stripe && CONFIG.stripeKey) stripe = window.Stripe(CONFIG.stripeKey);
@@ -170,7 +175,7 @@ function initStripeRetry() {
   const timer = setInterval(() => {
     tries++;
     initStripe();
-    if (stripe || tries >= 20) clearInterval(timer); // ~4s max
+    if (stripe || tries >= 20) clearInterval(timer);
   }, 200);
 }
 
@@ -189,7 +194,7 @@ const state = {
   __socialTimer: null,
   __introDone: false,
 
-  __imgOkCache: new Map(), // url -> true/false
+  __imgOkCache: new Map(),
 };
 
 /* -----------------------
@@ -760,18 +765,39 @@ function openCart() { openDrawer(); }
 function closeCart() { closeDrawer(); }
 
 /* -----------------------
-   13) SHIPPING
+   13) SHIPPING (FIX radios/select)
 ------------------------ */
 function getShipModeFromUI() {
+  // ✅ PRIORIDAD: radio (lo que el usuario toca)
+  const checked = document.querySelector('input[name="shipMode"]:checked');
+  if (checked?.value) return String(checked.value);
+
+  // fallback: select
   const sel = $("#shippingMode");
   if (sel) return String(sel.value || "pickup");
-  const checked = document.querySelector('input[name="shipMode"]:checked');
-  return String(checked?.value || "pickup");
+
+  return "pickup";
+}
+
+function syncShipControls(mode) {
+  const m = String(mode || "pickup").toLowerCase();
+
+  // sync radios
+  document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
+    r.checked = String(r.value || "").toLowerCase() === m;
+  });
+
+  // sync select
+  const sel = $("#shippingMode");
+  if (sel) sel.value = m;
 }
 
 function toggleShipping(mode) {
   const m = String(mode || getShipModeFromUI() || "pickup").toLowerCase();
   state.shipping.mode = m;
+
+  // ✅ mantiene UI coherente
+  syncShipControls(m);
 
   const zip = $("#miniZip");
   if (m === "pickup") {
@@ -799,7 +825,6 @@ function modeToCountry(mode) {
   return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
 }
 
-/* ✅ debounce real para no spamear requests */
 function requestMiniQuote() {
   clearTimeout(state.__quoteTimer);
   state.__quoteTimer = setTimeout(() => {
@@ -1103,7 +1128,6 @@ function initSocialProof() {
       $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
     if (cartOpen || aiOpen) return;
 
-    // ✅ copy más “ventas”, cero genérico
     toast(`🏁 ${pick(names)} (${pick(locs)}) agregó ${pick(items)} a su carrito.`, "info");
   };
 
@@ -1122,18 +1146,18 @@ function initServiceWorker() {
    19) BOOT / BIND UI (FIXED)
 ------------------------ */
 function bindUI() {
-  // Drawer open
-  bindOnce($(".cartBtn"), "click", openDrawer);
+  // Drawer open (✅ TODOS los botones)
+  bindAll(".cartBtn", "click", openDrawer);
   bindOnce($("#cartBtn"), "click", openDrawer);
 
   // Overlay click close
-  bindOnce($(".page-overlay"), "click", closeDrawer);
+  bindAll(".page-overlay", "click", closeDrawer);
   bindOnce($("#pageOverlay"), "click", closeDrawer);
   bindOnce($("#backdrop"), "click", closeDrawer);
 
-  // Drawer close btn
-  bindOnce($(".closeBtn"), "click", closeDrawer);
-  bindOnce($(".drawerClose"), "click", closeDrawer);
+  // Drawer close btn (✅ TODOS)
+  bindAll(".closeBtn", "click", closeDrawer);
+  bindAll(".drawerClose", "click", closeDrawer);
 
   // Checkout
   bindOnce($("#checkoutBtn"), "click", (e) => {
@@ -1145,6 +1169,12 @@ function bindUI() {
   bindOnce($(".ai-btn-float"), "click", toggleAiAssistant);
   bindOnce($(".ai-send"), "click", sendAiMessage);
   bindAiEnter();
+
+  // ✅ opcional: cerrar AI sin depender del onclick inline
+  bindOnce(document.querySelector(".ai-close"), "click", () => {
+    const m = $("#aiChatModal") || $(".ai-chat-modal");
+    m?.classList.remove("active", "show");
+  });
 
   // Legal
   $$(".jsLegalLink").forEach((btn) => {
@@ -1164,7 +1194,7 @@ function bindUI() {
     });
   });
 
-  // Shipping
+  // Shipping (select + radios)
   bindOnce($("#shippingMode"), "change", (e) => toggleShipping(e.target.value));
   bindOnce($("#miniZip"), "input", requestMiniQuote);
 
@@ -1222,6 +1252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadCatalog();
 
+  // ✅ asegura que UI y estado arranquen sincronizados
   toggleShipping(getShipModeFromUI());
 
   bindUI();
