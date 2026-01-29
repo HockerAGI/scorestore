@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <title>SCORE STORE | Mercancía Oficial Off-Road</title>
   <meta name="description" content="Tienda oficial de mercancía SCORE International. Fabricado por Único Uniformes. Envíos a México y USA." />
   <meta name="theme-color" content="#E10600" />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta name="robots" content="index,follow" />
 
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
@@ -32,6 +34,7 @@
   <script src="https://js.stripe.com/v3/" async></script>
 
   <!-- Meta Pixel -->
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin>
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -44,7 +47,7 @@
   </script>
 </head>
 
-<body class="appBg">
+<body>
   <!-- =========================
        SPLASH (RPM Engine)
        ========================= -->
@@ -71,7 +74,7 @@
        PROMO BAR
        ========================= -->
   <div class="promo-bar" role="status" aria-live="polite">
-    PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA EN TIEMPO REAL
+    PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA · CHECKOUT SEGURO
   </div>
 
   <!-- =========================
@@ -220,13 +223,13 @@
         </p>
 
         <div class="social-center" style="justify-content:flex-start; margin-top:16px;">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener" class="fSocial" aria-label="Facebook">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener noreferrer" class="fSocial" aria-label="Facebook">
             <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
           </a>
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener" class="fSocial" aria-label="Instagram">
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener noreferrer" class="fSocial" aria-label="Instagram">
             <i class="fa-brands fa-instagram" aria-hidden="true"></i>
           </a>
-          <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="fSocial" aria-label="WhatsApp">
+          <a href="https://wa.me/526642368701" target="_blank" rel="noopener noreferrer" class="fSocial" aria-label="WhatsApp">
             <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
           </a>
         </div>
@@ -395,6 +398,16 @@
        - NO pisa funciones reales de main.js
        ========================= -->
   <script>
+    // Toast compat (expuesto)
+    window.showToastCompat = function(msg){
+      const t = document.getElementById("toast");
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
+    };
+
     // Drawer compat
     window.openDrawerCompat = function(){
       if (typeof window.openDrawer === "function") return window.openDrawer();
@@ -437,13 +450,13 @@
     window.checkoutCompat = function(){
       if (typeof window.doCheckout === "function") return window.doCheckout();
       if (typeof window.checkout === "function") return window.checkout();
-      showToastCompat("Checkout no configurado en main.js");
+      window.showToastCompat("Checkout no configurado en main.js");
     };
 
     // Shipping quote UI compat
     window.quoteShippingUICompat = function(){
       if (typeof window.quoteShippingUI === "function") return window.quoteShippingUI();
-      showToastCompat("Cotizador no configurado en main.js");
+      window.showToastCompat("Cotizador no configurado en main.js");
     };
 
     // Legal compat
@@ -472,8 +485,7 @@
       const data = map[which] || map.privacy;
       title.textContent = data.t;
       body.innerHTML = data.b;
-      modal.classList.add("show");
-      modal.classList.add("active");
+      modal.classList.add("show","active");
       document.body.classList.add("modalOpen","noScroll");
     };
 
@@ -484,7 +496,14 @@
       document.body.classList.remove("modalOpen","noScroll");
     };
 
-    // ✅ AI: NO pisar si ya existe en main.js
+    // Close legal on backdrop click
+    (function(){
+      const bd = document.getElementById("legalBackdrop");
+      if (!bd) return;
+      bd.addEventListener("click", () => window.closeLegalCompat());
+    })();
+
+    // ✅ AI: no pisar si ya existe en main.js
     if (typeof window.toggleAiAssistant !== "function") {
       window.toggleAiAssistant = function(){
         const m = document.getElementById("aiChatModal");
@@ -494,8 +513,11 @@
       };
     }
 
+    // Si main.js define sendAiMessageReal, úsalo. Si no, fallback.
     if (typeof window.sendAiMessage !== "function") {
       window.sendAiMessage = function(){
+        if (typeof window.sendAiMessageReal === "function") return window.sendAiMessageReal();
+
         const input = document.getElementById("aiInput");
         const box = document.getElementById("aiMessages");
         if (!input || !box) return;
@@ -524,16 +546,6 @@
       if (b) b.style.display = "none";
       try { localStorage.setItem("score_cookie_ok","1"); } catch(e){}
     };
-
-    // Toast compat
-    function showToastCompat(msg){
-      const t = document.getElementById("toast");
-      if (!t) return;
-      t.textContent = msg;
-      t.classList.add("show");
-      clearTimeout(window.__toastTimer);
-      window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
-    }
 
     // Splash fallback (si main ya lo hace, no estorba)
     (function(){
