@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>SCORE STORE | Mercancía Oficial Off-Road</title>
-  <meta name="description" content="Tienda oficial SCORE International. Fabricado por Único Uniformes. Envíos a México y USA." />
+  <meta name="description" content="Tienda oficial de mercancía SCORE International. Fabricado por Único Uniformes. Envíos a México y USA." />
   <meta name="theme-color" content="#E10600" />
   
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+  <meta name="robots" content="index,follow" />
+  
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -16,7 +18,7 @@
     n.queue=[];t=b.createElement(e);t.async=!0;
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init','4249947775334413'); 
+    fbq('init','4249947775334413');
     fbq('track','PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=4249947775334413&ev=PageView&noscript=1"/></noscript>
@@ -27,39 +29,49 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Teko:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FINAL" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_FULL_V2" />
+
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" /></noscript>
 
   <script src="https://js.stripe.com/v3/" async></script>
 </head>
 
 <body>
-  <div id="splash-screen">
+  <div id="splash-screen" aria-label="Cargando">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE" width="160" height="160">
+      <img src="/assets/logo-score.webp" class="splash-logo" alt="SCORE" width="160" height="160" decoding="async">
       <div class="rpm-wrapper"><div class="rpm-bar-container"><div class="rpm-bar"></div></div></div>
       <div class="rev-counter" id="revCounter">0 RPM</div>
       <div class="splash-text">LOADING ENGINE...</div>
     </div>
   </div>
 
-  <div class="promo-bar">
+  <noscript>
+    <div style="padding:12px; background:#000; color:#fff; font-weight:900; text-align:center;">
+      Esta tienda requiere JavaScript para funcionar correctamente.
+    </div>
+  </noscript>
+
+  <div class="promo-bar" role="status">
     PICKUP TIJUANA <b>GRATIS</b> · ENVÍOS MX/USA · CHECKOUT SEGURO
   </div>
 
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="container topInner">
-      <div class="brand">
+      <div class="brand" aria-label="SCORE Store">
         <a href="#top">
-          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="72" height="72" />
+          <img src="/assets/logo-score.webp" class="brandLogoBig" alt="SCORE" width="72" height="72" decoding="async" />
         </a>
       </div>
+
       <nav class="nav">
         <a href="#catalogo">CATÁLOGO</a>
         <a href="#envios">ENVÍOS</a>
         <a href="#partners">PARTNERS</a>
       </nav>
+
       <button id="cartBtn" class="cartBtn" type="button" aria-label="Abrir carrito">
         <i class="fa-solid fa-cart-shopping"></i>
         <span id="cartCount" class="cartCount">0</span>
@@ -69,14 +81,14 @@
 
   <div class="wrap">
     <section class="hero" id="top">
-      <img class="heroBgImg" src="/assets/hero.webp" alt="Score Hero" width="1920" height="1080" />
+      <img class="heroBgImg" src="/assets/hero.webp" alt="" width="1920" height="1080" decoding="async" />
       <div class="heroOverlayDark"></div>
 
       <div class="container heroInner">
         <h1 class="hero-title">SCORE <span class="accent">INTERNATIONAL</span></h1>
 
         <div class="hero-logos" style="background:transparent; border:none; backdrop-filter:none;">
-          <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="180" height="180" />
+          <img src="/assets/logo-world-desert.webp" class="heroDesertBig" alt="World Desert Championship" width="180" height="180" decoding="async" />
         </div>
 
         <p class="hero-copy">
@@ -85,7 +97,14 @@
 
         <div class="ctaRow">
           <a href="#catalogo" class="btn primary pulse-btn">VER CATÁLOGO</a>
-          <button class="btn ghost" type="button" onclick="window.openDrawer()">MI CARRITO</button>
+          <button class="btn ghost" type="button" onclick="openDrawerCompat()">MI CARRITO</button>
+        </div>
+
+        <div class="heroLogos" aria-label="Eventos SCORE">
+          <img src="/assets/logo-baja1000.webp" alt="Baja 1000" width="120" height="44" loading="lazy" />
+          <img src="/assets/logo-baja500.webp" alt="Baja 500" width="120" height="44" loading="lazy" />
+          <img src="/assets/logo-baja400.webp" alt="Baja 400" width="120" height="44" loading="lazy" />
+          <img src="/assets/logo-sf250.webp" alt="San Felipe 250" width="120" height="44" loading="lazy" />
         </div>
       </div>
     </section>
@@ -94,21 +113,19 @@
       <div class="container">
         <div class="sectionHead">
           <h2>RACE <span class="accent">GEAR</span></h2>
-          <p>Selecciona tu categoría oficial.</p>
+          <p>Selecciona tu categoría y agrégalo al carrito.</p>
         </div>
 
         <div class="filters">
-          <button class="chip active" data-filter="ALL">TODO</button>
-          <button class="chip" data-filter="HOODIES">HOODIES</button>
-          <button class="chip" data-filter="TEES">PLAYERAS</button>
-          <button class="chip" data-filter="CAPS">GORRAS</button>
-          <button class="chip" data-filter="BAJA_1000">BAJA 1000</button>
-          <button class="chip" data-filter="BAJA_500">BAJA 500</button>
+          <button class="chip active" data-filter="ALL" type="button">TODO</button>
+          <button class="chip" data-filter="HOODIES" type="button">HOODIES</button>
+          <button class="chip" data-filter="TEES" type="button">PLAYERAS</button>
+          <button class="chip" data-filter="CAPS" type="button">GORRAS</button>
+          <button class="chip" data-filter="BAJA_1000" type="button">BAJA 1000</button>
+          <button class="chip" data-filter="BAJA_500" type="button">BAJA 500</button>
         </div>
 
-        <div id="productsGrid" class="grid">
-            <div style="grid-column:1/-1;text-align:center;padding:40px;">Cargando catálogo...</div>
-        </div>
+        <div id="productsGrid" class="grid" aria-live="polite"></div>
       </div>
     </section>
 
@@ -116,7 +133,7 @@
       <div class="container">
         <div class="sectionHead">
           <h2>LLEGA A TU PUERTA</h2>
-          <p>Cotiza en tiempo real (Envia.com Integrado)</p>
+          <p>Cotiza en tiempo real por código postal (México y USA).</p>
         </div>
 
         <div class="shippingBox">
@@ -129,10 +146,10 @@
           </div>
           <div class="shipRow">
             <label for="shipZip">Código Postal</label>
-            <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" />
+            <input id="shipZip" placeholder="Ej. 22000" inputmode="numeric" autocomplete="postal-code" />
           </div>
           <button class="btn primary full" type="button" onclick="window.quoteShippingUI()">COTIZAR ENVÍO</button>
-          <div id="shipQuote" class="shipQuote"></div>
+          <div id="shipQuote" class="shipQuote" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -141,10 +158,10 @@
       <div class="container">
         <h3>OFFICIAL PARTNERS</h3>
         <div class="partnersGrid">
-          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford">
-          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich">
-          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR">
-          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes">
+          <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy">
+          <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy">
+          <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR" loading="lazy">
+          <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" loading="lazy">
         </div>
       </div>
     </section>
@@ -158,34 +175,39 @@
           Tienda oficial operada por <strong>Único Uniformes</strong>.<br>
           Envíos a todo México y Estados Unidos.
         </p>
+        <div class="social-center" style="justify-content:flex-start; margin-top:16px;">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" class="fSocial"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" class="fSocial"><i class="fa-brands fa-instagram"></i></a>
+        </div>
       </div>
       <div class="fCol">
         <h4>NAVEGACIÓN</h4>
         <div class="f-links">
           <a href="#catalogo">Catálogo</a>
-          <a href="#" onclick="window.openDrawer(); return false;">Carrito</a>
-          <a href="#" onclick="window.openLegal('privacy'); return false;">Privacidad</a>
+          <a href="#" onclick="openDrawerCompat(); return false;">Carrito de Compras</a>
+          <a href="#" onclick="openLegalCompat('privacy'); return false;">Aviso de Privacidad</a>
         </div>
       </div>
       <div class="fCol">
         <h4>CONTACTO</h4>
-        <p>ventas.unicotextil@gmail.com</p>
+        <p><i class="fa-solid fa-envelope" style="color:var(--score-red)"></i> ventas.unicotextil@gmail.com</p>
+        <p><i class="fa-brands fa-whatsapp" style="color:var(--score-red)"></i> +52 664 123 4567</p>
       </div>
     </div>
-    <div class="copy">&copy; 2026 SCORE INTERNATIONAL.</div>
+    <div class="copy">&copy; 2026 SCORE INTERNATIONAL. TODOS LOS DERECHOS RESERVADOS.</div>
   </footer>
 
   <aside id="cartDrawer" class="drawer">
     <div class="d-header">
       <h3>CARRITO</h3>
-      <button class="closeBtn drawerClose" type="button">✕</button>
+      <button class="closeBtn" type="button" onclick="closeDrawerCompat()">✕</button>
     </div>
     <div id="cartItems" class="d-body"></div>
     <div class="d-footer">
       <div class="shipSelector">
         <label class="radio-option">
           <input type="radio" name="shipMode" value="pickup" checked onchange="window.toggleShipping('pickup')">
-          <div><span>📍 Pickup Tijuana</span><small style="color:var(--neon-green)">GRATIS</small></div>
+          <div><span>📍 Pickup Tijuana</span><small style="color:var(--neon-green); font-weight:900;">GRATIS</small></div>
         </label>
         <label class="radio-option">
           <input type="radio" name="shipMode" value="mx" onchange="window.toggleShipping('mx')">
@@ -196,29 +218,30 @@
           <div><span>🇺🇸 USA Shipping</span><small>Quote</small></div>
         </label>
       </div>
-      <input type="text" id="miniZip" class="inputField" placeholder="CP / ZIP Code" style="display:none;">
+      <input type="text" id="miniZip" class="inputField" placeholder="Código Postal / ZIP Code" style="display:none;" inputmode="numeric">
       <div class="summary-total">
         <span>TOTAL</span>
         <div style="text-align:right">
-          <div id="cartShipLabel" style="font-size:12px;color:#aaa">Pickup Gratis</div>
+          <div id="cartShipLabel" style="font-size:12px; color:#aaa; font-weight:400;">Pickup Gratis</div>
           <strong id="cartTotal">$0.00</strong>
         </div>
       </div>
       <button id="checkoutBtn" class="btn primary full" type="button" onclick="window.doCheckout()">
-        PAGAR AHORA <i class="fa-solid fa-lock"></i>
+        PAGAR AHORA <i class="fa-solid fa-lock" style="margin-left:8px;"></i>
       </button>
+      <div style="text-align:center; margin-top:10px; font-size:10px; color:#666;">Pagos procesados por <b>Stripe</b>.</div>
     </div>
   </aside>
-  <div id="pageOverlay" class="page-overlay"></div>
+  <div id="pageOverlay" class="page-overlay" onclick="closeDrawerCompat()"></div>
 
-  <button class="ai-btn-float" onclick="window.toggleAiAssistant()"><i class="fa-solid fa-robot"></i></button>
+  <button class="ai-btn-float" type="button" onclick="toggleAiAssistant()"><i class="fa-solid fa-robot"></i></button>
   <div id="aiChatModal" class="ai-chat-modal">
     <div class="ai-box">
-      <div class="ai-header">SCORE AI <button onclick="window.toggleAiAssistant()">✕</button></div>
-      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¿En qué puedo ayudarte?</div></div>
+      <div class="ai-header">SCORE AI ASSISTANT <button type="button" onclick="toggleAiAssistant()">✕</button></div>
+      <div id="aiMessages" class="ai-body"><div class="ai-bubble bot">¡Hola! ¿Dudas sobre tallas o envíos?</div></div>
       <div class="ai-input-bar">
-        <input id="aiInput" class="ai-input" placeholder="Pregunta..." />
-        <button class="ai-send" onclick="window.sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        <input id="aiInput" class="ai-input" type="text" placeholder="Escribe aquí..." autocomplete="off" />
+        <button class="ai-send" type="button" onclick="sendAiMessage()"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
@@ -226,13 +249,33 @@
   <div id="legalModal" class="legalModal">
     <div class="legalBackdrop" id="legalBackdrop"></div>
     <div class="legalCard">
-      <div class="legalHead"><h3 id="legalTitle">LEGAL</h3><button id="legalClose">✕</button></div>
+      <div class="legalHead"><h3 id="legalTitle">INFORMACIÓN LEGAL</h3><button id="legalClose" type="button" onclick="closeLegalCompat()">✕</button></div>
       <div class="legalBody" id="legalBody"></div>
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="cookieBanner" class="cookieBanner">
+    <div class="cookieText">Usamos cookies para mejorar tu experiencia.</div>
+    <div class="cookieActions">
+      <div class="cookieBtn ghost" onclick="acceptCookiesCompat()">Cerrar</div>
+      <div class="cookieBtn primary" onclick="acceptCookiesCompat()">ACEPTAR</div>
+    </div>
+  </div>
 
-  <script type="module" src="/js/main.js?v=2026_PROD_FINAL"></script>
+  <script type="module" src="/js/main.js?v=2026_PROD_FULL_V2"></script>
+
+  <script>
+    window.openDrawerCompat = function(){ if(window.openDrawer) window.openDrawer(); else document.getElementById('cartDrawer').classList.add('open'); };
+    window.closeDrawerCompat = function(){ if(window.closeDrawer) window.closeDrawer(); else document.getElementById('cartDrawer').classList.remove('open'); };
+    window.toggleAiAssistant = function(){ var m=document.getElementById('aiChatModal'); if(m) m.classList.toggle('show'); };
+    window.closeLegalCompat = function(){ document.getElementById('legalModal').classList.remove('show'); };
+    window.openLegalCompat = function(t){ 
+        document.getElementById('legalTitle').innerText = t==='privacy'?'AVISO DE PRIVACIDAD':'TÉRMINOS';
+        document.getElementById('legalBody').innerHTML = t==='privacy'?'<p>Tus datos son seguros con Único Uniformes.</p>':'<p>Al comprar aceptas las condiciones.</p>';
+        document.getElementById('legalModal').classList.add('show'); 
+    };
+    window.acceptCookiesCompat = function(){ document.getElementById('cookieBanner').style.display='none'; localStorage.setItem('score_cookies','accepted'); };
+  </script>
 </body>
 </html>
