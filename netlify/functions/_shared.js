@@ -1,26 +1,80 @@
+// netlify/functions/_shared.js
 /* =========================================================
-   SCORE STORE — SHARED KERNEL (PROD 2026)
-   - Centraliza: Envia.com, Supabase, CORS, Validaciones.
-   - ORIGEN: Único Uniformes, Tijuana (Para cotizaciones reales)
+   SCORE STORE — SHARED HELPERS (UNIFIED 360 · v2026)
+   ✅ HTTP helpers (CORS + JSON) + OPTIONS support
+   ✅ Qty/ZIP sanitizers
+   ✅ Envia.com:
+      - validateZip (geocodes)
+      - quote (rate)
+      - label (generate)
+   ✅ Package specs centralizados (peso/dimensiones/valor declarado)
+   ✅ Promo rules
+   ✅ Supabase opcional (no rompe si falta @supabase/supabase-js)
+   ✅ Fallback shipping coherente (si Envia falla o no hay key)
    ========================================================= */
 
 const axios = require("axios");
-const { createClient } = require("@supabase/supabase-js");
 
-// 1. CONFIGURACIÓN SEGURA
-const HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, Stripe-Signature",
-  "Access-Control-Allow-Methods": "POST, OPTIONS, GET"
-};
+// -------------------------
+// OPTIONAL: Supabase (no rompe si falta dependencia)
+// -------------------------
+let createClient = null;
+try {
+  ({ createClient } = require("@supabase/supabase-js"));
+} catch (_) {
+  createClient = null;
+}
 
-// CONSTANTES DE ENVÍO
-const FALLBACK_MX_PRICE = 280; // Precio de seguridad MX
-const FALLBACK_US_PRICE = 900; // Precio de seguridad USA
-const SAFETY_MARGIN = 1.10;    // +10% sobre cotización real (colchón operativo)
+// -------------------------
+// ENV (NO hardcodear secretos)
+// -------------------------
+const ENVIA_KEY = process.env.ENVIA_API_KEY || ""; // ✅ set en Netlify env vars (secreto)
 
-// Origen de envío: FÁBRICA ÚNICO UNIFORMES (Tijuana)
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "";
+
+const SUPABASE_ANON =
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "";
+
+const SUPABASE_SERVICE =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "";
+
+// -------------------------
+// Supabase clients (si están configurados)
+// -------------------------
+const supabase =
+  (createClient && SUPABASE_URL && SUPABASE_ANON)
+    ? createClient(SUPABASE_URL, SUPABASE_ANON)
+    : null;
+
+const supabaseAdmin =
+  (createClient && SUPABASE_URL && SUPABASE_SERVICE)
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE, { auth: { persistSession: false } })
+    : null;
+
+// -------------------------
+// Shipping fallbacks (MXN)
+// -------------------------
+const FALLBACK_MX_PRICE = 250;
+const FALLBACK_US_PRICE = 800;
+
+// -------------------------
+// Origen (Único Uniformes · Tijuana)
+// - Unificado: sirve para rate + generate label (completo)
+// -------------------------
 const FACTORY_ORIGIN = {
+  // Para cotización rápida
+  postal_code: "22614",
+  country_code: "MX",
+  state_code: "BC",
+  city: "Tijuana",
+
+  // Para generación de guía (label)
   name: "Score Store / Único Uniformes",
   company: "BAJATEX S DE RL DE CV",
   email: "ventas.unicotextil@gmail.com",
@@ -28,171 +82,409 @@ const FACTORY_ORIGIN = {
   street: "Palermo",
   number: "6106",
   district: "Anexa Roma",
-  city: "Tijuana",
   state: "BC",
   country: "MX",
-  postalCode: "22614", // Tu CP real
+  postalCode: "22614",
   reference: "Interior JK",
 };
 
-// Keys
-const ENVIA_KEY = process.env.ENVIA_API_KEY || ""; 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || ""; 
-
-// 2. SUPABASE ADMIN
-const supabaseAdmin = (SUPABASE_URL && SUPABASE_SERVICE) 
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE, { auth: { persistSession: false } }) 
-  : null;
-
-// 3. HELPERS HTTP
-const jsonResponse = (status, body) => ({
-  statusCode: status,
-  headers: HEADERS,
-  body: JSON.stringify(body)
-});
-
-const handleOptions = (event) => {
-  if (event.httpMethod === "OPTIONS") return jsonResponse(200, "ok");
-  return null;
+// -------------------------
+// Promo rules (si tu checkout decide usarlas)
+// -------------------------
+const PROMO_RULES = {
+  SCORE25: { type: "percent", value: 0.25, label: "25% OFF" },
+  BAJA25: { type: "percent", value: 0.25, label: "25% OFF" },
+  SCORE10: { type: "percent", value: 0.10, label: "10% OFF" },
+  BAJA200: { type: "fixed_mxn", value: 200, label: "$200 MXN OFF" },
+  ENVIOFREE: { type: "free_shipping", value: 0, label: "ENVÍO GRATIS" },
 };
 
-// Utils
-function digitsOnly(str) { return String(str || "").replace(/\D/g, ""); }
-function normalizeQty(n) { return Math.max(1, Math.round(Number(n) || 1)); }
+// -------------------------
+// CORS/Headers
+// -------------------------
+const HEADERS = {
+  "Content-Type": "application/json; charset=utf-8",
+  "Access-Control-Allow-Origin": "*", // si quieres, pon tu dominio en prod
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, Stripe-Signature, stripe-signature",
+  "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+};
 
-// 4. LÓGICA DE PAQUETERÍA (Cálculo volumétrico)
-function getPackageSpecs(qty) {
-  const q = normalizeQty(qty);
-  // Estimado: Hoodie (0.6kg) vs Playera (0.2kg) -> Promedio 0.5kg
-  const weight = Math.max(1, q * 0.5); 
-  // Caja crece según cantidad
-  const height = Math.min(60, 5 + (q * 3)); 
-  
+function jsonResponse(statusCode, data, extraHeaders = {}) {
   return {
-    weight,
-    dimensions: { length: 30, width: 20, height }, // Caja estándar 30x20
-    content: "Ropa Deportiva Score International",
-    declaredValue: q * 400 // Valor promedio para seguro
+    statusCode,
+    headers: { ...HEADERS, ...extraHeaders },
+    body: JSON.stringify(data),
   };
 }
 
-// 5. API ENVIA: COTIZAR (Rate)
-async function getEnviaQuote(zip, qty, countryCode = "MX") {
-  if (!ENVIA_KEY) return null;
-  const specs = getPackageSpecs(qty);
-  
-  try {
-    const payload = {
-      origin: {
-        country_code: "MX",
-        postal_code: FACTORY_ORIGIN.postalCode
-      },
-      destination: {
-        country_code: countryCode,
-        postal_code: digitsOnly(zip)
-      },
-      packages: [{
-        content: specs.content,
-        amount: 1,
-        type: "box",
-        weight: specs.weight,
-        weight_unit: "KG",
-        length_unit: "CM",
-        dimensions: specs.dimensions,
-        insurance: 0,
-        declared_value: specs.declaredValue
-      }],
-      shipment: { carrier: "fedex" } // Preferencia
-    };
+function handleOptions(event) {
+  if (event?.httpMethod === "OPTIONS") return jsonResponse(200, { ok: true });
+  return null;
+}
 
-    const { data } = await axios.post("https://api.envia.com/ship/rate", payload, {
-      headers: { Authorization: `Bearer ${ENVIA_KEY}` }
+function safeJsonParse(body) {
+  try {
+    if (!body) return {};
+    if (typeof body === "object") return body;
+    return JSON.parse(body);
+  } catch (e) {
+    return {};
+  }
+}
+
+// -------------------------
+// Utils
+// -------------------------
+function normalizeQty(n) {
+  const q = Number(n || 0);
+  if (!Number.isFinite(q)) return 1;
+  return Math.max(1, Math.min(99, Math.round(q)));
+}
+
+function digitsOnly(s) {
+  return String(s || "").replace(/\D+/g, "");
+}
+
+function normalizeZip(zip) {
+  const z = String(zip || "").trim();
+  return z.length >= 4 ? z : "";
+}
+
+function baseUrl(event) {
+  const envUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || process.env.SITE_URL;
+  if (envUrl) return envUrl;
+
+  const host =
+    event?.headers?.["x-forwarded-host"] ||
+    event?.headers?.host ||
+    "localhost:8888";
+
+  const proto = event?.headers?.["x-forwarded-proto"] || "https";
+  return `${proto}://${host}`;
+}
+
+// -------------------------
+// Package Specs (centralizado)
+// - Unifica “estimateParcel” + “getPackageSpecs”
+// -------------------------
+function getPackageSpecs(itemsQty, weightKg, lengthCm, heightCm, widthCm) {
+  const q = normalizeQty(itemsQty);
+
+  // Default por ítem (promedio): 0.6kg (hoodie) / 0.2kg (tee) => promedio operativo 0.5-0.6
+  const perItemWeight =
+    Number(weightKg) > 0
+      ? Number(weightKg) / Math.max(1, q)
+      : 0.6;
+
+  // Carriers muchas veces penalizan peso mínimo; aquí dejamos mínimo 1kg para estabilidad
+  const totalWeight = Math.max(1, perItemWeight * q);
+
+  // Caja base (CM)
+  const L = Number(lengthCm) > 0 ? Number(lengthCm) : 30;
+  const W = Number(widthCm) > 0 ? Number(widthCm) : 20;
+  // Altura crece con qty (limite razonable)
+  const H = Number(heightCm) > 0 ? Number(heightCm) : Math.min(60, 5 + Math.ceil(q * 3));
+
+  // Valor declarado: consistente con tu lógica anterior
+  const declared_value = 400 * q;
+
+  return {
+    qty: q,
+    weight: Number(totalWeight.toFixed(2)),
+    dimensions: { length: L, width: W, height: H },
+    declared_value,
+  };
+}
+
+// Alias para compat con código viejo
+function estimateParcel(qty) {
+  const specs = getPackageSpecs(qty);
+  return {
+    weight: specs.weight,
+    length: specs.dimensions.length,
+    width: specs.dimensions.width,
+    height: specs.dimensions.height,
+  };
+}
+
+// -------------------------
+// ZIP validation (Envia Geocodes API)
+// - Si no hay ENVIA_KEY: NO bloquea (ok:true)
+// -------------------------
+async function validateZip(countryCode, zip) {
+  if (!ENVIA_KEY) return { ok: true, source: "no_key" };
+
+  const cc = String(countryCode || "MX").toUpperCase();
+  const z = digitsOnly(zip);
+
+  if (!z || z.length < 4) return { ok: false, error: "ZIP_INVALID" };
+
+  try {
+    const url = `https://geocodes.envia.com/zipcode/${cc}/${z}`;
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${ENVIA_KEY}` },
+      timeout: 12000,
     });
 
-    const rates = data.data || [];
-    // Buscar la mejor opción económica
-    const best = rates.sort((a, b) => a.totalPrice - b.totalPrice)[0];
-
-    if (best) {
-      // Aplicar margen de seguridad
-      const finalCost = Math.ceil(best.totalPrice * SAFETY_MARGIN);
-      return {
-        cost: finalCost,
-        carrier: best.carrier,
-        days: best.deliveryEstimate,
-        currency: best.currency
-      };
-    }
-    return null;
+    return { ok: true, source: "geocodes", data: res?.data || null, zip: z, country: cc };
   } catch (e) {
-    console.error("Envia Quote Error:", e.response?.data || e.message);
+    return { ok: false, error: "ZIP_NOT_FOUND" };
+  }
+}
+
+// -------------------------
+// Envia quote (Ship Rate API) — PRIORIDAD
+// Firma flexible: (zip, qty, countryCode, weightKg?, lengthCm?, heightCm?, widthCm?)
+// Devuelve: { price, currency, carrier, service, days, mxn, raw }
+// -------------------------
+async function getEnviaQuote(zip, itemsQty, countryCode = "MX", weightKg, lengthCm, heightCm, widthCm) {
+  if (!ENVIA_KEY) return null;
+
+  const destinationZip = digitsOnly(zip);
+  const cc = String(countryCode || "MX").toUpperCase();
+  if (!destinationZip || destinationZip.length < 4) return null;
+
+  const specs = getPackageSpecs(itemsQty, weightKg, lengthCm, heightCm, widthCm);
+
+  try {
+    const url = "https://api.envia.com/ship/rate/";
+    const headers = {
+      Authorization: `Bearer ${ENVIA_KEY}`,
+      "Content-Type": "application/json",
+    };
+
+    const payload = {
+      origin: { country_code: "MX", postal_code: FACTORY_ORIGIN.postal_code },
+      destination: { country_code: cc, postal_code: String(destinationZip) },
+      // Mantiene compat con tu lógica anterior; si envía devuelve varias, igual elegimos la mejor
+      shipment: { carrier: "fedex", type: 1 },
+      packages: [
+        {
+          content: "Merchandise SCORE International",
+          amount: 1,
+          type: "box",
+          weight: specs.weight,
+          weight_unit: "KG",
+          length_unit: "CM",
+          dimensions: specs.dimensions,
+          insurance: 0,
+          declared_value: specs.declared_value,
+        },
+      ],
+      settings: {
+        currency: "MXN",
+        print_format: "PDF",
+      },
+    };
+
+    const res = await axios.post(url, payload, { headers, timeout: 15000 });
+
+    const rates = res?.data?.data || res?.data || [];
+    const arr = Array.isArray(rates) ? rates : [];
+    if (!arr.length) return null;
+
+    // Normaliza campos comunes y toma la tarifa más barata
+    const mapped = arr
+      .map((r) => {
+        const price =
+          Number(r?.totalPrice) ||
+          Number(r?.total_price) ||
+          Number(r?.price) ||
+          Number(r?.amount) ||
+          0;
+
+        const days =
+          Number(r?.deliveryTime) ||
+          Number(r?.delivery_time) ||
+          Number(r?.deliveryEstimate) ||
+          Number(r?.delivery_estimate) ||
+          Number(r?.delivery_min) ||
+          Number(r?.days) ||
+          null;
+
+        const carrier = r?.carrier || r?.carrier_name || null;
+        const service = r?.service || r?.service_name || null;
+
+        return { price, days, carrier, service, raw: r };
+      })
+      .filter((x) => Number.isFinite(x.price) && x.price > 0)
+      .sort((a, b) => a.price - b.price);
+
+    if (!mapped.length) return null;
+
+    // Margen operativo +5% (seguridad)
+    const best = mapped[0];
+    const mxn = Math.ceil(best.price * 1.05);
+
+    return {
+      ok: true,
+      price: Number(best.price),
+      currency: "MXN",
+      carrier: best.carrier,
+      service: best.service,
+      days: best.days,
+      mxn,
+      raw: best.raw,
+    };
+  } catch (e) {
     return null;
   }
 }
 
-// 6. API ENVIA: GENERAR GUÍA (Label)
-async function createEnviaLabel(customer, qty) {
-  if (!ENVIA_KEY) return { ok: false, error: "No API Key" };
-  const specs = getPackageSpecs(qty);
+// -------------------------
+// Envia label (Ship Generate API) — PRIORIDAD
+// Devuelve: { tracking, labelUrl, carrier, raw }
+// -------------------------
+async function createEnviaLabel(customer, itemsQty, carrier = "fedex", type = 1, weightKg, lengthCm, heightCm, widthCm) {
+  if (!ENVIA_KEY) return null;
 
-  try {
-    const payload = {
-      origin: { ...FACTORY_ORIGIN }, // Spread de la constante de fábrica
-      destination: {
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        street: customer.address?.line1 || "",
-        number: customer.address?.line2 || "S/N", // Stripe a veces manda numero en line2 o mezclado
-        district: customer.address?.city || "",
-        city: customer.address?.city,
-        state: customer.address?.state,
-        country: customer.address?.country || "MX",
-        postal_code: customer.address?.postal_code
-      },
-      packages: [{
-        content: specs.content,
+  const q = normalizeQty(itemsQty);
+  const specs = getPackageSpecs(q, weightKg, lengthCm, heightCm, widthCm);
+
+  const payload = {
+    origin: {
+      company: FACTORY_ORIGIN.company,
+      name: FACTORY_ORIGIN.name,
+      email: FACTORY_ORIGIN.email,
+      phone: FACTORY_ORIGIN.phone,
+      street: FACTORY_ORIGIN.street,
+      number: FACTORY_ORIGIN.number,
+      district: FACTORY_ORIGIN.district,
+      city: FACTORY_ORIGIN.city,
+      state: FACTORY_ORIGIN.state,
+      country: FACTORY_ORIGIN.country,
+      postal_code: FACTORY_ORIGIN.postalCode,
+      reference: FACTORY_ORIGIN.reference || "",
+    },
+    destination: {
+      name: customer?.name || "Cliente",
+      email: customer?.email || "cliente@scorestore.com",
+      phone: customer?.phone || "0000000000",
+      street: customer?.address?.line1 || "",
+      number: customer?.address?.number || "",
+      district: customer?.address?.line2 || "",
+      city: customer?.address?.city || "",
+      state: customer?.address?.state || "",
+      country: customer?.address?.country || "MX",
+      postal_code: customer?.address?.postal_code || "",
+      reference: customer?.address?.reference || "",
+    },
+    packages: [
+      {
+        content: "Merchandise SCORE International",
         amount: 1,
         type: "box",
         weight: specs.weight,
         dimensions: specs.dimensions,
-        declared_value: specs.declaredValue
-      }],
-      shipment: { carrier: "fedex", type: 1 },
-      settings: { print_format: "PDF" }
+        declared_value: specs.declared_value,
+      },
+    ],
+    shipment: { carrier, type },
+    settings: { print_format: "PDF", print_size: "STOCK_4X6" },
+  };
+
+  try {
+    const url = "https://api.envia.com/ship/generate/";
+    const headers = { Authorization: `Bearer ${ENVIA_KEY}` };
+
+    const res = await axios.post(url, payload, { headers, timeout: 20000 });
+    const result = res?.data || null;
+
+    const row = result?.data?.[0] || null;
+    if (!row) return null;
+
+    return {
+      ok: true,
+      tracking: row.tracking_number || row.tracking || null,
+      labelUrl: row.label || row.label_url || null,
+      carrier: row.carrier || carrier,
+      raw: row,
     };
-
-    const { data } = await axios.post("https://api.envia.com/ship/generate", payload, {
-      headers: { Authorization: `Bearer ${ENVIA_KEY}` }
-    });
-
-    const result = data.data?.[0];
-    if (result) {
-      return {
-        ok: true,
-        tracking: result.trackingNumber,
-        labelUrl: result.label,
-        carrier: result.carrier
-      };
-    }
-    return { ok: false, error: "No label data" };
-
   } catch (e) {
-    console.error("Envia Label Error:", e.response?.data || e.message);
-    return { ok: false, error: "API Error" };
+    console.error("Envia Generate Error:", e?.response?.data || e?.message || e);
+    return null;
   }
+}
+
+// -------------------------
+// Products (Supabase) — opcional
+// -------------------------
+async function getProductsFromDb({ orgSlug = "score-store" } = {}) {
+  if (!supabaseAdmin && !supabase) {
+    return { ok: false, reason: "Supabase client not configured", orgId: null, products: [] };
+  }
+
+  const client = supabaseAdmin || supabase;
+
+  const { data: org, error: orgErr } = await client
+    .from("organizations")
+    .select("id")
+    .eq("slug", orgSlug)
+    .single();
+
+  if (orgErr || !org) {
+    return { ok: false, reason: "Organization not found", orgId: null, products: [] };
+  }
+
+  const { data: products, error: prodErr } = await client
+    .from("products")
+    .select("id, org_id, name, price, image_url, active, sku")
+    .eq("org_id", org.id);
+
+  if (prodErr || !products) {
+    return { ok: false, reason: "Products query failed", orgId: org.id, products: [] };
+  }
+
+  const filtered = products.filter((p) => p.active !== false);
+  return { ok: true, orgId: org.id, products: filtered };
+}
+
+// -------------------------
+// Fallback helpers
+// -------------------------
+function getFallbackShipping(countryCode = "MX") {
+  const cc = String(countryCode || "MX").toUpperCase();
+  return cc === "US" ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
 }
 
 module.exports = {
+  // ✅ Headers / preflight
   HEADERS,
-  jsonResponse,
   handleOptions,
+
+  // Supabase
+  supabase,
   supabaseAdmin,
+  SUPABASE_URL,
+
+  // HTTP + parsing
+  jsonResponse,
+  safeJsonParse,
+  baseUrl,
+
+  // utils
+  normalizeQty,
+  digitsOnly,
+  normalizeZip,
+  getPackageSpecs,
+  estimateParcel,
+
+  // shipping constants
+  FALLBACK_MX_PRICE,
+  FALLBACK_US_PRICE,
+  getFallbackShipping,
+
+  // promos
+  PROMO_RULES,
+
+  // Envia priority
+  validateZip,
   getEnviaQuote,
   createEnviaLabel,
-  digitsOnly,
-  normalizeQty,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE
+
+  // optional DB
+  getProductsFromDb,
+
+  // origin
+  FACTORY_ORIGIN,
 };
