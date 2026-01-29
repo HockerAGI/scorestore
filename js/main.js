@@ -1,10 +1,13 @@
 /* =========================================================
-   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (360) — UPDATED (PROD)
+   SCORE STORE — UNIFIED PRODUCTION ENGINE v2026 (361) — UPDATED (PROD)
    ✅ Netlify Functions: create_checkout / quote_shipping / chat
-   ✅ Alineado con tu catálogo oficial (sections + subSection) + UI chips
-   ✅ Detecta imágenes existentes y omite las que no (sin romper carousel)
-   ✅ NO cambia nombres de productos (respeta espacios en name)
-   ✅ Soporta rutas con espacios (las encodea al cargar imágenes)
+   ✅ Catálogo oficial (sections + subSection) + UI chips
+   ✅ Detecta imágenes existentes y omite faltantes (sin romper carousel)
+   ✅ NO cambia nombres de productos (respeta espacios)
+   ✅ Soporta rutas con espacios (encode por segmento)
+   ✅ FIX: bindUI duplicado / cortado (tu main venía roto)
+   ✅ FIX: quote realtime robusto + parsing seguro
+   ✅ FIX: evita double-trigger de eventos (bindOnce)
    ========================================================= */
 
 /* -----------------------
@@ -33,13 +36,9 @@ const CONFIG = {
   fallbackShippingMX: 250,
   fallbackShippingUS: 800,
 
-  // catálogo oficial en JSON
   catalogUrl: "/data/catalog.json",
-
-  // imagen fallback global (debe existir)
   fallbackImg: "/assets/hero.webp",
 
-  // timeouts
   imgProbeTimeoutMs: 2200,
 };
 
@@ -74,12 +73,11 @@ function safeUrl(u) {
   return "";
 }
 
-// ✅ Maneja espacios en rutas (/assets/..../cafe oscuro.webp)
+// ✅ Maneja espacios en rutas (/assets/.../cafe oscuro.webp)
 function urlEncodePathIfNeeded(url) {
   const raw = String(url || "").trim();
   if (!raw) return "";
   if (raw.startsWith("/")) {
-    // encode solo cada segmento (no rompas /)
     return raw
       .split("/")
       .map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg)))
@@ -100,12 +98,33 @@ function urlEncodePathIfNeeded(url) {
   return raw;
 }
 
+/** fetch JSON robusto:
+ * - si el server devuelve HTML/texto, no truena
+ * - te deja data.__rawText para debug
+ */
 async function fetchJSON(url, options = {}, timeoutMs = 12000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { ...options, signal: ctrl.signal });
-    const data = await res.json().catch(() => ({}));
+
+    let data = {};
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+
+    if (ct.includes("application/json")) {
+      data = await res.json().catch(() => ({}));
+    } else {
+      const txt = await res.text().catch(() => "");
+      // intenta parsear si viene JSON pero con mal header
+      data = (() => {
+        try {
+          return JSON.parse(txt);
+        } catch {
+          return { __rawText: txt };
+        }
+      })();
+    }
+
     return { res, data };
   } finally {
     clearTimeout(t);
@@ -124,14 +143,35 @@ async function postJSON(url, payload, timeoutMs = 15000) {
   );
 }
 
+/* bindOnce para evitar double trigger (inline onclick + addEventListener) */
+function bindOnce(el, evt, fn, opts) {
+  if (!el) return;
+  const key = `__bound_${evt}`;
+  if (el[key]) return;
+  el[key] = true;
+  el.addEventListener(evt, fn, opts);
+}
+
 /* -----------------------
    3) Stripe Init (Live)
 ------------------------ */
 let stripe = null;
+
+// Stripe puede tardar (script async). Hacemos retry suave.
 function initStripe() {
   if (stripe) return stripe;
   if (window.Stripe && CONFIG.stripeKey) stripe = window.Stripe(CONFIG.stripeKey);
   return stripe;
+}
+function initStripeRetry() {
+  initStripe();
+  if (stripe) return;
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    initStripe();
+    if (stripe || tries >= 20) clearInterval(timer); // ~4s max
+  }, 200);
 }
 
 /* -----------------------
@@ -143,12 +183,12 @@ const state = {
   sections: [],
   filter: "ALL",
   shipping: { mode: "pickup", quote: 0, label: "Pickup Tijuana (Gratis)" },
+
   __quoteTimer: null,
   __quoteInFlight: false,
   __socialTimer: null,
   __introDone: false,
 
-  // cache para no “probar” imágenes cada vez
   __imgOkCache: new Map(), // url -> true/false
 };
 
@@ -254,22 +294,21 @@ function probeImage(url, timeoutMs = CONFIG.imgProbeTimeoutMs) {
 }
 
 async function filterExistingImages(urls) {
-  const unique = [...new Set((urls || []).map(safeUrl).filter(Boolean))].map(urlEncodePathIfNeeded);
+  const unique = [...new Set((urls || []).map(safeUrl).filter(Boolean))].map(
+    urlEncodePathIfNeeded
+  );
   if (!unique.length) return [];
   const checks = await Promise.all(unique.map((u) => probeImage(u)));
   return unique.filter((u, i) => checks[i]);
 }
 
 async function getProductImagesSafe(p) {
-  const candidates = [
-    ...(Array.isArray(p.images) ? p.images : []),
-    p.img,
-  ].map(safeUrl).filter(Boolean);
+  const candidates = [...(Array.isArray(p.images) ? p.images : []), p.img]
+    .map(safeUrl)
+    .filter(Boolean);
 
   const ok = await filterExistingImages(candidates);
   if (ok.length) return ok;
-
-  // si no existe nada, usa fallback global (debe existir)
   return [CONFIG.fallbackImg];
 }
 
@@ -283,7 +322,7 @@ async function loadCatalog() {
       "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
   }
 
-  // 1) Supabase REST (si tu tabla coincide)
+  // 1) Supabase REST
   try {
     const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/products?select=*`, {
       headers: {
@@ -303,15 +342,18 @@ async function loadCatalog() {
     console.warn("[catalog] supabase fail:", e);
   }
 
-  // 2) catálogo oficial /data/catalog.json (sections + products)
+  // 2) /data/catalog.json
   try {
     const { res, data } = await fetchJSON(CONFIG.catalogUrl, { cache: "no-store" }, 12000);
     if (res.ok) {
-      const list = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
+      const list = Array.isArray(data?.products)
+        ? data.products
+        : Array.isArray(data)
+        ? data
+        : [];
       if (Array.isArray(data?.sections)) state.sections = data.sections;
       if (list.length) {
         state.products = normalizeProducts(list);
-        // ✅ opcional: si faltan chips BAJA_400 / SF_250, se agregan solos
         ensureSectionChipsFromCatalog();
         renderGrid(getFilteredProducts());
         return;
@@ -321,7 +363,7 @@ async function loadCatalog() {
     console.warn("[catalog] /data/catalog.json fail:", e);
   }
 
-  // 3) local fallback
+  // 3) fallback local
   state.products = normalizeProducts(getLocalCatalog());
   renderGrid(getFilteredProducts());
 }
@@ -329,59 +371,90 @@ async function loadCatalog() {
 function normalizeProducts(list) {
   return (list || []).map((p, idx) => {
     const id = p?.id ?? p?.sku ?? `p${idx + 1}`;
+    const name = String(p?.name || p?.title || "Producto"); // ✅ no tocar espacios
 
-    // ✅ respeta name con espacios: NO lo tocamos
-    const name = String(p?.name || p?.title || "Producto");
-
-    const rawImages = Array.isArray(p?.images) && p.images.length ? p.images : (p?.img ? [p.img] : []);
+    const rawImages =
+      Array.isArray(p?.images) && p.images.length ? p.images : p?.img ? [p.img] : [];
     const images = rawImages.map(safeUrl).filter(Boolean);
 
     return {
       id: String(id),
       sku: String(p?.sku || ""),
       sectionId: String(p?.sectionId || p?.category || "ALL").toUpperCase(),
-      subSection: String(p?.subSection || p?.type || "").trim(), // ✅ para chips HOODIES/TEES/CAPS
+      subSection: String(p?.subSection || p?.type || "").trim(),
       name,
       baseMXN: Number(p?.baseMXN ?? p?.price ?? 0),
       img: safeUrl(p?.img) || safeUrl(images[0]) || CONFIG.fallbackImg,
       images,
-      sizes: Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["Unitalla"],
+      sizes:
+        Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["Unitalla"],
     };
   });
 }
 
 function getLocalCatalog() {
   return [
-    { id: "p1", sectionId: "BAJA_1000", subSection: "Hoodies", name: "Baja 1000 Legacy Hoodie", baseMXN: 1200, img: "/assets/prod1.webp", images: ["/assets/prod1.webp"], sizes: ["S","M","L","XL"] },
-    { id: "p2", sectionId: "BAJA_1000", subSection: "Camisetas", name: "Score International Tee", baseMXN: 650, img: "/assets/prod2.webp", images: ["/assets/prod2.webp"], sizes: ["S","M","L","XL"] },
-    { id: "p3", sectionId: "BAJA_500", subSection: "Gorras", name: "Trophy Truck Cap", baseMXN: 800, img: "/assets/prod3.webp", images: ["/assets/prod3.webp"], sizes: ["Unitalla"] },
+    {
+      id: "p1",
+      sectionId: "BAJA_1000",
+      subSection: "Hoodies",
+      name: "Baja 1000 Legacy Hoodie",
+      baseMXN: 1200,
+      img: "/assets/prod1.webp",
+      images: ["/assets/prod1.webp"],
+      sizes: ["S", "M", "L", "XL"],
+    },
+    {
+      id: "p2",
+      sectionId: "BAJA_1000",
+      subSection: "Camisetas",
+      name: "Score International Tee",
+      baseMXN: 650,
+      img: "/assets/prod2.webp",
+      images: ["/assets/prod2.webp"],
+      sizes: ["S", "M", "L", "XL"],
+    },
+    {
+      id: "p3",
+      sectionId: "BAJA_500",
+      subSection: "Gorras",
+      name: "Trophy Truck Cap",
+      baseMXN: 800,
+      img: "/assets/prod3.webp",
+      images: ["/assets/prod3.webp"],
+      sizes: ["Unitalla"],
+    },
   ];
 }
 
 /* -----------------------
-   9) FILTERS (ALINEADOS con chips del index + catálogo real)
-   Chips actuales: ALL / HOODIES / TEES / CAPS / BAJA_1000 / BAJA_500 (+ opcional auto BAJA_400 / SF_250)
+   9) FILTERS
 ------------------------ */
 function normalizeStr(s) {
   return String(s || "")
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // sin acentos
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function matchesFilter(p, filter) {
   const f = String(filter || "ALL").toUpperCase();
   if (f === "ALL") return true;
 
-  // eventos
   if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(f)) {
     return String(p.sectionId || "").toUpperCase() === f;
   }
 
   const sub = normalizeStr(p.subSection);
   if (f === "HOODIES") return sub.includes("hoodie") || sub.includes("sudadera");
-  if (f === "TEES") return sub.includes("camiseta") || sub.includes("playera") || sub.includes("tee") || sub.includes("tank");
+  if (f === "TEES")
+    return (
+      sub.includes("camiseta") ||
+      sub.includes("playera") ||
+      sub.includes("tee") ||
+      sub.includes("tank")
+    );
   if (f === "CAPS") return sub.includes("gorra") || sub.includes("cap");
 
   return true;
@@ -391,21 +464,21 @@ function getFilteredProducts() {
   return (state.products || []).filter((p) => matchesFilter(p, state.filter));
 }
 
-/* ✅ si el catálogo trae secciones extra y no tienes chip en el HTML, lo agrega */
 function ensureSectionChipsFromCatalog() {
   const filtersWrap = document.querySelector(".filters");
   if (!filtersWrap) return;
   if (!Array.isArray(state.sections) || !state.sections.length) return;
 
-  const existing = new Set([...filtersWrap.querySelectorAll(".chip")].map((c) => String(c.dataset.filter || "").toUpperCase()));
+  const existing = new Set(
+    [...filtersWrap.querySelectorAll(".chip")].map((c) =>
+      String(c.dataset.filter || "").toUpperCase()
+    )
+  );
 
-  // solo agrega secciones que falten (BAJA_400 / SF_250)
   state.sections.forEach((s) => {
     const id = String(s?.id || "").toUpperCase();
     const title = String(s?.title || id).toUpperCase();
     if (!id || existing.has(id)) return;
-
-    // agrega chips solo para secciones “evento”
     if (!["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(id)) return;
 
     const btn = document.createElement("button");
@@ -428,7 +501,7 @@ function ensureSectionChipsFromCatalog() {
 }
 
 /* -----------------------
-   10) RENDER GRID (ahora async por imágenes seguras)
+   10) RENDER GRID (async por imágenes seguras)
 ------------------------ */
 async function renderGrid(list) {
   const grid = $("#productsGrid");
@@ -442,7 +515,6 @@ async function renderGrid(list) {
     return;
   }
 
-  // render progresivo sin congelar la UI
   for (const p of list) {
     const card = await buildProductCard(p);
     grid.appendChild(card);
@@ -454,10 +526,9 @@ async function buildProductCard(p) {
   const card = document.createElement("div");
   card.className = "champItem card";
 
-  const nameSafe = escapeHtml(p.name); // NO cambia name, solo escapa HTML
+  const nameSafe = escapeHtml(p.name);
   const price = fmtMXN(p.baseMXN);
 
-  // ✅ imágenes existentes (ignora faltantes)
   const images = await getProductImagesSafe(p);
   const media = buildMediaHTML(images, nameSafe, pid);
 
@@ -465,7 +536,9 @@ async function buildProductCard(p) {
 
   const sizeSelectHTML = `
     <select id="size-${pid}" class="size-selector">
-      ${sizes.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}
+      ${sizes
+        .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+        .join("")}
     </select>
   `;
 
@@ -569,10 +642,7 @@ function addToCart(id) {
 
   const ex = state.cart.find((i) => i.key === key);
 
-  const thumbCandidate =
-    (Array.isArray(p.images) && p.images[0]) ? p.images[0] : p.img;
-
-  // thumb “seguro” (si está en cache ok)
+  const thumbCandidate = Array.isArray(p.images) && p.images[0] ? p.images[0] : p.img;
   const thumb = urlEncodePathIfNeeded(safeUrl(thumbCandidate) || CONFIG.fallbackImg);
 
   if (ex) ex.qty = clampQty(ex.qty + 1);
@@ -580,7 +650,7 @@ function addToCart(id) {
     state.cart.push({
       key,
       id: p.id,
-      name: p.name, // ✅ respeta espacios
+      name: p.name,
       price: Number(p.baseMXN || 0),
       img: thumb || CONFIG.fallbackImg,
       size: String(size),
@@ -686,8 +756,8 @@ function closeDrawer() {
   document.body.classList.remove("noScroll", "modalOpen");
   document.body.style.overflow = "";
 }
-function openCart(){ openDrawer(); }
-function closeCart(){ closeDrawer(); }
+function openCart() { openDrawer(); }
+function closeCart() { closeDrawer(); }
 
 /* -----------------------
    13) SHIPPING
@@ -729,6 +799,7 @@ function modeToCountry(mode) {
   return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
 }
 
+/* ✅ debounce real para no spamear requests */
 function requestMiniQuote() {
   clearTimeout(state.__quoteTimer);
   state.__quoteTimer = setTimeout(() => {
@@ -737,7 +808,7 @@ function requestMiniQuote() {
     if (mode === "pickup") return;
     if (zip.length < 4) return;
     quoteShippingMini().catch(() => {});
-  }, 450);
+  }, 520);
 }
 
 async function quoteShippingMini() {
@@ -747,7 +818,7 @@ async function quoteShippingMini() {
   const zip = digitsOnly($("#miniZip")?.value || "");
 
   if (mode === "pickup") return;
-  if (zip.length < 4) return toast("Ingresa un CP válido", "error");
+  if (zip.length < 4) return toast("Ingresa un CP/ZIP válido", "error");
 
   state.__quoteInFlight = true;
   const lbl = $("#miniShipLabel") || $("#cartShipLabel");
@@ -757,9 +828,10 @@ async function quoteShippingMini() {
     const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
 
     let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
+    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 17000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 17000));
 
+    if (!res.ok) throw new Error(data?.error || "QUOTE_HTTP_" + res.status);
     if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
     const cost = Number(data.cost || 0);
@@ -796,9 +868,10 @@ async function quoteShippingUI() {
   try {
     const payload = { zip, country, items: cartItemsForQuote() };
     let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
+    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 17000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 17000));
 
+    if (!res.ok) throw new Error(data?.error || "QUOTE_HTTP_" + res.status);
     if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
 
     const cost = Number(data.cost || 0);
@@ -814,7 +887,7 @@ async function quoteShippingUI() {
 }
 
 /* -----------------------
-   14) CHECKOUT (create_checkout)
+   14) CHECKOUT
 ------------------------ */
 async function doCheckout() {
   if (!state.cart.length) return toast("Carrito vacío", "error");
@@ -835,21 +908,21 @@ async function doCheckout() {
   }
 
   try {
-    initStripe();
+    initStripeRetry();
 
     const payload = {
       cart: state.cart,
       shipping: state.shipping,
       shippingMode: mode,
       shippingData: { postal_code: zip },
-      cancel_url: window.location.href,
+      cancel_url: window.location.origin + "/?status=cancel",
       success_url: window.location.origin + "/?status=success",
       promoCode: "",
     };
 
     let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 20000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
+    ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 22000));
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 22000));
 
     if (!res.ok) throw new Error(data?.error || "CHECKOUT_HTTP_" + res.status);
 
@@ -860,6 +933,7 @@ async function doCheckout() {
       window.location.href = directUrl;
       return;
     }
+    initStripe();
     if (sessionId && stripe) {
       const result = await stripe.redirectToCheckout({ sessionId: String(sessionId) });
       if (result?.error) throw new Error(result.error.message);
@@ -868,7 +942,7 @@ async function doCheckout() {
 
     throw new Error(data?.error || "CHECKOUT_FAILED");
   } catch (e) {
-    console.error(e);
+    console.error("[checkout] error:", e);
     toast("Error en pago. Intenta de nuevo.", "error");
     if (btn) {
       btn.innerHTML = original;
@@ -906,17 +980,25 @@ async function sendAiMessage() {
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
     if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
-    const reply = String(data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?");
+
+    if (!res.ok) throw new Error(data?.error || "AI_HTTP_" + res.status);
+    const reply = String(
+      data?.reply ||
+        data?.message ||
+        "Listo. Dime tu talla, tu código postal y qué producto quieres."
+    );
 
     const bot = document.createElement("div");
     bot.className = "ai-bubble bot ai-msg ai-bot";
     bot.textContent = reply;
     box.appendChild(bot);
     box.scrollTop = box.scrollHeight;
-  } catch {
+  } catch (e) {
+    console.warn("[ai] offline:", e);
     const bot = document.createElement("div");
     bot.className = "ai-bubble bot ai-msg ai-bot";
-    bot.textContent = "Estoy en modo offline. Conecta el endpoint AI para respuestas en vivo.";
+    bot.textContent =
+      "Ahora mismo estoy sin respuesta en vivo. Si quieres, dime: producto + talla + CP y te calculo total (estimación) aquí mismo.";
     box.appendChild(bot);
     box.scrollTop = box.scrollHeight;
   }
@@ -925,7 +1007,7 @@ async function sendAiMessage() {
 function bindAiEnter() {
   const input = $("#aiInput") || $(".ai-input");
   if (!input) return;
-  input.addEventListener("keydown", (e) => {
+  bindOnce(input, "keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       sendAiMessage();
@@ -945,9 +1027,18 @@ function openLegal(type) {
 
   const lib = window.LEGAL_CONTENT || {};
   const FALLBACK = {
-    privacy: { title: "AVISO DE PRIVACIDAD", html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>" },
-    terms: { title: "TÉRMINOS Y CONDICIONES", html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>" },
-    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>" },
+    privacy: {
+      title: "AVISO DE PRIVACIDAD",
+      html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>",
+    },
+    terms: {
+      title: "TÉRMINOS Y CONDICIONES",
+      html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>",
+    },
+    contact: {
+      title: "CONTACTO",
+      html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>",
+    },
   };
 
   const key = String(type || "privacy").trim();
@@ -959,7 +1050,6 @@ function openLegal(type) {
   modal.classList.add("active", "show");
   document.body.classList.add("modalOpen", "noScroll");
 }
-
 function closeLegal() {
   $("#legalModal")?.classList.remove("active", "show");
   document.body.classList.remove("modalOpen", "noScroll");
@@ -979,22 +1069,10 @@ function acceptCookies() {
    18) INTRO/SPLASH + SOCIAL + SW
 ------------------------ */
 function initIntroSplash() {
-  const intro = $("#intro");
-  const skip = $("#introSkip");
-  if (intro) {
-    const hide = () => {
-      if (state.__introDone) return;
-      state.__introDone = true;
-      intro.classList.add("hide");
-      setTimeout(() => intro.remove(), 420);
-    };
-    skip?.addEventListener("click", hide);
-    setTimeout(hide, 1200);
-  }
-
   const splash = $("#splash-screen");
   const bar = $(".rpm-bar");
   const rpm = $("#revCounter");
+
   if (splash && bar) {
     let p = 0;
     const tick = setInterval(() => {
@@ -1005,7 +1083,8 @@ function initIntroSplash() {
         clearInterval(tick);
         splash.style.opacity = "0";
         splash.style.visibility = "hidden";
-        setTimeout(() => splash.remove?.(), 600);
+        splash.setAttribute("aria-hidden", "true");
+        setTimeout(() => splash.remove?.(), 650);
       }
     }, 120);
   }
@@ -1014,13 +1093,18 @@ function initIntroSplash() {
 function initSocialProof() {
   const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
   const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "Rosarito", "Tecate"];
+  const items = ["HOODIE", "TEE", "CAP", "JERSEY", "HOODIE BAJA", "TEE SCORE"];
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   const show = () => {
-    const cartOpen = $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
-    const aiOpen = $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
+    const cartOpen =
+      $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
+    const aiOpen =
+      $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
     if (cartOpen || aiOpen) return;
-    toast(`🏁 ${pick(names)} de ${pick(locs)} armó su pedido oficial.`, "info");
+
+    // ✅ copy más “ventas”, cero genérico
+    toast(`🏁 ${pick(names)} (${pick(locs)}) agregó ${pick(items)} a su carrito.`, "info");
   };
 
   clearInterval(state.__socialTimer);
@@ -1031,98 +1115,78 @@ function initSocialProof() {
 function initServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_360").catch(() => {});
+  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_361").catch(() => {});
 }
 
 /* -----------------------
-   19) BOOT
+   19) BOOT / BIND UI (FIXED)
 ------------------------ */
 function bindUI() {
-  $(".cartBtn")?.addEventListener("click", openDrawer);
-  $("#cartBtn")?.addEventListener("click", openDrawer);
+  // Drawer open
+  bindOnce($(".cartBtn"), "click", openDrawer);
+  bindOnce($("#cartBtn"), "click", openDrawer);
 
-  $(".page-overlay")?.addEventListener("click", closeDrawer);
-  $("#pageOverlay")?.addEventListener("click", closeDrawer);
-  $("#backdrop")?.addEventListener("click", closeDrawer);
+  // Overlay click close
+  bindOnce($(".page-overlay"), "click", closeDrawer);
+  bindOnce($("#pageOverlay"), "click", closeDrawer);
+  bindOnce($("#backdrop"), "click", closeDrawer);
 
-  $(".closeBtn")?.addEventListener("click", closeDrawer);
-  $(".drawerClose")?.addEventListener("click", closeDrawer);
+  // Drawer close btn
+  bindOnce($(".closeBtn"), "click", closeDrawer);
+  bindOnce($(".drawerClose"), "click", closeDrawer);
 
-  $("#checkoutBtn")?.addEventListener("click", doCheckout);
+  // Checkout
+  bindOnce($("#checkoutBtn"), "click", (e) => {
+    e.preventDefault();
+    doCheckout();
+  });
 
-  $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
-  $(".ai-send")?.addEventListener("click", sendAiMessage);
+  // AI
+  bindOnce($(".ai-btn-float"), "click", toggleAiAssistant);
+  bindOnce($(".ai-send"), "click", sendAiMessage);
   bindAiEnter();
 
-  $$(".jsLegalLink").forEach((btn) => btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy")));
-  $("#legalClose")?.addEventListener("click",
-/* -----------------------
-   19) BOOT (continuación)
------------------------- */
-function bindUI() {
-  $(".cartBtn")?.addEventListener("click", openDrawer);
-  $("#cartBtn")?.addEventListener("click", openDrawer);
+  // Legal
+  $$(".jsLegalLink").forEach((btn) => {
+    bindOnce(btn, "click", () => openLegal(btn.dataset.legal || "privacy"));
+  });
+  bindOnce($("#legalClose"), "click", closeLegal);
+  bindOnce($("#legalBackdrop"), "click", closeLegal);
 
-  $(".page-overlay")?.addEventListener("click", closeDrawer);
-  $("#pageOverlay")?.addEventListener("click", closeDrawer);
-  $("#backdrop")?.addEventListener("click", closeDrawer);
-
-  $(".closeBtn")?.addEventListener("click", closeDrawer);
-  $(".drawerClose")?.addEventListener("click", closeDrawer);
-
-  // ✅ checkout
-  $("#checkoutBtn")?.addEventListener("click", doCheckout);
-
-  // ✅ AI
-  $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
-  $(".ai-send")?.addEventListener("click", sendAiMessage);
-  bindAiEnter();
-
-  // ✅ Legal
-  $$(".jsLegalLink").forEach((btn) =>
-    btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"))
-  );
-  $("#legalClose")?.addEventListener("click", closeLegal);
-  $("#legalBackdrop")?.addEventListener("click", closeLegal);
-
-  // ✅ Chips (si existen; y si se agregaron dinámicamente ya tienen handler)
+  // Chips
   $$(".chip").forEach((c) => {
-    if (c.__bound) return;
-    c.__bound = true;
-    c.addEventListener("click", () => {
+    bindOnce(c, "click", () => {
       $$(".chip").forEach((ch) => ch.classList.remove("active"));
       c.classList.add("active");
       state.filter = c.dataset.filter || "ALL";
-      // renderGrid es async
       renderGrid(getFilteredProducts());
       playSound("click");
     });
   });
 
-  // ✅ Shipping
-  $("#shippingMode")?.addEventListener("change", (e) => toggleShipping(e.target.value));
-  $("#miniZip")?.addEventListener("input", requestMiniQuote);
+  // Shipping
+  bindOnce($("#shippingMode"), "change", (e) => toggleShipping(e.target.value));
+  bindOnce($("#miniZip"), "input", requestMiniQuote);
 
   document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
-    r.addEventListener("change", () => toggleShipping(r.value));
+    bindOnce(r, "change", () => toggleShipping(r.value));
   });
 
-  // ✅ Envíos landing cotizador
-  $("#shipZip")?.addEventListener("input", () => {
+  // Landing quote UI
+  bindOnce($("#shipZip"), "input", () => {
     const v = digitsOnly($("#shipZip")?.value || "");
     if (v.length >= 4) {
-      // no spamear requests: mini debounce simple
       clearTimeout(window.__shipUiDeb);
-      window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 450);
+      window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 520);
     }
   });
-  $("#shipCountry")?.addEventListener("change", () => {
+  bindOnce($("#shipCountry"), "change", () => {
     const v = digitsOnly($("#shipZip")?.value || "");
     if (v.length >= 4) quoteShippingUI().catch?.(() => {});
   });
 
-  // ✅ Escape
-  document.addEventListener("keydown", (e) => {
+  // Escape
+  bindOnce(document, "keydown", (e) => {
     if (e.key !== "Escape") return;
     closeLegal();
     const ai = $("#aiChatModal") || $(".ai-chat-modal");
@@ -1130,13 +1194,13 @@ function bindUI() {
     closeDrawer();
   });
 
-  // ✅ Cookies persist
+  // Cookies persist
   if (localStorage.getItem("score_cookies") === "accepted" || localStorage.getItem("score_cookie_ok") === "1") {
     const b = $("#cookieBanner") || $(".cookieBanner");
     if (b) b.style.display = "none";
   }
 
-  // ✅ Success/cancel params
+  // Success/cancel params
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago confirmado! 🏁", "success");
@@ -1153,26 +1217,22 @@ function bindUI() {
    20) DOM READY
 ------------------------ */
 document.addEventListener("DOMContentLoaded", async () => {
-  initStripe();
+  initStripeRetry();
   initIntroSplash();
 
-  // Carga catálogo + chips
   await loadCatalog();
 
-  // Mantén coherencia shipping UI
   toggleShipping(getShipModeFromUI());
 
-  // Bind UI + render inicial
   bindUI();
   saveCart();
 
-  // Social proof + SW
   initSocialProof();
   initServiceWorker();
 });
 
 /* -----------------------
-   21) EXPORTS legacy (para compat layer)
+   21) EXPORTS legacy (compat)
 ------------------------ */
 window.addToCart = addToCart;
 window.modQty = modQty;
@@ -1198,6 +1258,5 @@ window.closeLegal = closeLegal;
 
 window.acceptCookies = acceptCookies;
 
-// helpers opcionales expuestos
 window.__score_encodePath = urlEncodePathIfNeeded;
 window.__score_probeImage = probeImage;
