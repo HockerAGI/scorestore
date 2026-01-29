@@ -20,11 +20,11 @@ const CONFIG = {
   supabaseKey:
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
 
-  // Endpoints (prefer Netlify Functions)
+  // Endpoints (prefer Netlify Functions) — OPCIÓN B (nombres reales)
   endpoints: {
-    checkout: "/.netlify/functions/stripe-checkout",
-    quote: "/.netlify/functions/envia-quote",
-    ai: "/.netlify/functions/gemini-chat",
+    checkout: "/.netlify/functions/create_checkout",
+    quote: "/.netlify/functions/quote_shipping",
+    ai: "/.netlify/functions/chat", // 👈 tu chat es chat.js
 
     // fallback APIs (si existen en tu backend)
     apiCheckout: "/api/checkout",
@@ -159,7 +159,6 @@ function playSound(type) {
     osc.start(now);
     osc.stop(now + 0.29);
   } else {
-    // pop default
     osc.type = "sine";
     osc.frequency.setValueAtTime(720, now);
     g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
@@ -255,42 +254,10 @@ function normalizeProducts(list) {
 // Fallback local alineado a tus assets
 function getLocalCatalog() {
   return [
-    {
-      id: "p1",
-      sectionId: "HOODIES",
-      name: "Baja 1000 Legacy Hoodie",
-      baseMXN: 1200,
-      img: "/assets/prod1.webp",
-      images: ["/assets/prod1.webp"],
-      sizes: ["S", "M", "L", "XL"],
-    },
-    {
-      id: "p2",
-      sectionId: "TEES",
-      name: "Score International Tee",
-      baseMXN: 650,
-      img: "/assets/prod2.webp",
-      images: ["/assets/prod2.webp"],
-      sizes: ["S", "M", "L", "XL"],
-    },
-    {
-      id: "p3",
-      sectionId: "CAPS",
-      name: "Trophy Truck Cap",
-      baseMXN: 800,
-      img: "/assets/prod3.webp",
-      images: ["/assets/prod3.webp"],
-      sizes: ["Unitalla"],
-    },
-    {
-      id: "p4",
-      sectionId: "ACCESORIOS",
-      name: "Sticker Pack Oficial",
-      baseMXN: 250,
-      img: "/assets/prod4.webp",
-      images: ["/assets/prod4.webp"],
-      sizes: ["Pack"],
-    },
+    { id: "p1", sectionId: "HOODIES", name: "Baja 1000 Legacy Hoodie", baseMXN: 1200, img: "/assets/prod1.webp", images: ["/assets/prod1.webp"], sizes: ["S", "M", "L", "XL"] },
+    { id: "p2", sectionId: "TEES", name: "Score International Tee", baseMXN: 650, img: "/assets/prod2.webp", images: ["/assets/prod2.webp"], sizes: ["S", "M", "L", "XL"] },
+    { id: "p3", sectionId: "CAPS", name: "Trophy Truck Cap", baseMXN: 800, img: "/assets/prod3.webp", images: ["/assets/prod3.webp"], sizes: ["Unitalla"] },
+    { id: "p4", sectionId: "ACCESORIOS", name: "Sticker Pack Oficial", baseMXN: 250, img: "/assets/prod4.webp", images: ["/assets/prod4.webp"], sizes: ["Pack"] },
   ];
 }
 
@@ -301,7 +268,7 @@ function getFilteredProducts() {
 }
 
 /* -----------------------
-   8) RENDER GRID (soporta: champItem + card + carousel)
+   8) RENDER GRID
 ------------------------ */
 function renderGrid(list) {
   const grid = $("#productsGrid");
@@ -318,9 +285,6 @@ function renderGrid(list) {
   list.forEach((p) => {
     const pid = safeId(p.id);
     const card = document.createElement("div");
-
-    // Preferimos la clase que ya tienes para “card única no plano”
-    // Si tu CSS es champItem, queda perfecto; si es card, también.
     card.className = "champItem card";
 
     const nameSafe = escapeHtml(p.name);
@@ -333,16 +297,12 @@ function renderGrid(list) {
     const media = buildMediaHTML(images, nameSafe, pid);
     const sizes = (p.sizes && p.sizes.length ? p.sizes : ["Unitalla"]).map(String);
 
-    // Selector talla compatible con ambos estilos
     const sizeSelectHTML = `
       <select id="size-${pid}" class="size-selector">
         ${sizes.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("")}
       </select>
     `;
 
-    // Botón compatible:
-    // - HTML A: onclick addToCart('id')
-    // - HTML B: listener interno
     card.innerHTML = `
       <div class="card-texture"></div>
       ${media}
@@ -358,10 +318,8 @@ function renderGrid(list) {
     `;
 
     grid.appendChild(card);
-
     card.querySelector(`[data-add="${pid}"]`)?.addEventListener("click", () => addToCart(p.id));
 
-    // carousel dots update (si existe)
     const car = card.querySelector(".carousel");
     if (car) {
       car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
@@ -413,7 +371,7 @@ function updateDots(carousel, pid) {
 }
 
 /* -----------------------
-   9) CART (single source of truth)
+   9) CART
 ------------------------ */
 function cartCountTotal() {
   return (state.cart || []).reduce((a, b) => a + clampQty(b.qty), 0);
@@ -426,7 +384,6 @@ function cartSubtotal() {
 function saveCart() {
   localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
 
-  // update badges (soporta #cartCount y .cartCount)
   const qty = cartCountTotal();
   const cc = $("#cartCount");
   if (cc) cc.textContent = String(qty);
@@ -459,7 +416,6 @@ function addToCart(id) {
     });
   }
 
-  // invalida envío si no pickup
   if (state.shipping.mode !== "pickup") {
     state.shipping.quote = 0;
     state.shipping.label = "Recotizar envío";
@@ -495,8 +451,6 @@ function updateDrawerUI() {
   box.innerHTML = "";
   (state.cart || []).forEach((item, i) => {
     const row = document.createElement("div");
-
-    // compatible con ambos estilos
     row.className = "cart-card cartRow";
 
     row.innerHTML = `
@@ -524,7 +478,6 @@ function updateDrawerUI() {
   const ship = Number(state.shipping.quote || 0);
   const total = sub + ship;
 
-  // Totales: soporta ambos HTML
   if ($("#cartSubtotal")) $("#cartSubtotal").textContent = fmtMXN(sub);
   if ($("#cartShipping")) {
     $("#cartShipping").textContent =
@@ -533,11 +486,8 @@ function updateDrawerUI() {
 
   const shipLabel = $("#cartShipLabel") || $("#miniShipLabel");
   if (shipLabel) {
-    if (state.shipping.mode === "pickup") {
-      shipLabel.textContent = "Pickup Gratis";
-    } else {
-      shipLabel.textContent = state.shipping.label || (ship > 0 ? fmtMXN(ship) : "Cotiza envío");
-    }
+    if (state.shipping.mode === "pickup") shipLabel.textContent = "Pickup Gratis";
+    else shipLabel.textContent = state.shipping.label || (ship > 0 ? fmtMXN(ship) : "Cotiza envío");
   }
 
   const totalEl = $("#cartTotal");
@@ -551,7 +501,6 @@ function openDrawer() {
   const drawer = $("#cartDrawer");
   drawer?.classList.add("active", "open");
 
-  // overlay variants
   $("#pageOverlay")?.classList.add("active", "show");
   $(".page-overlay")?.classList.add("active", "show");
   $("#backdrop")?.classList.add("active", "show");
@@ -574,42 +523,21 @@ function closeDrawer() {
   document.body.style.overflow = "";
 }
 
-// Aliases (por si tu HTML usa openCart/closeCart)
-function openCart() {
-  openDrawer();
-}
-function closeCart() {
-  closeDrawer();
-}
+function openCart() { openDrawer(); }
+function closeCart() { closeDrawer(); }
 
 /* -----------------------
-   11) SHIPPING (mini drawer + landing)
+   11) SHIPPING
 ------------------------ */
 function getShipModeFromUI() {
-  // A) Radio group (shipMode) o B) select#shippingMode
   const sel = $("#shippingMode");
   if (sel) return String(sel.value || "pickup");
-
   const checked = document.querySelector('input[name="shipMode"]:checked');
   return String(checked?.value || "pickup");
 }
 
-function setShipModeToUI(mode) {
-  const sel = $("#shippingMode");
-  if (sel) sel.value = mode;
-
-  const radios = document.querySelectorAll('input[name="shipMode"]');
-  radios.forEach((r) => {
-    r.checked = String(r.value) === String(mode);
-  });
-
-  const zip = $("#miniZip");
-  if (zip) zip.style.display = mode === "pickup" ? "none" : "block";
-}
-
 function toggleShipping(mode) {
   const m = String(mode || getShipModeFromUI() || "pickup").toLowerCase();
-
   state.shipping.mode = m;
 
   const zip = $("#miniZip");
@@ -631,7 +559,6 @@ function toggleShipping(mode) {
 }
 
 function cartItemsForQuote() {
-  // backend puede cotizar por qty
   const items = (state.cart || []).map((i) => ({ qty: clampQty(i.qty) }));
   return items.length ? items : [{ qty: 1 }];
 }
@@ -656,7 +583,6 @@ async function quoteShippingMini() {
 
   const mode = getShipModeFromUI();
   const zip = digitsOnly($("#miniZip")?.value || "");
-
   if (mode === "pickup") return;
   if (zip.length < 4) return toast("Ingresa un CP válido", "error");
 
@@ -665,24 +591,12 @@ async function quoteShippingMini() {
   if (lbl) lbl.textContent = "Cotizando...";
 
   try {
-    const payload = {
-      zip,
-      country: modeToCountry(mode),
-      items: cartItemsForQuote(),
-    };
+    const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
 
-    // Prefer Netlify function
     let res, data;
-
     ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) {
-      // fallback API
-      ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
-    }
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
 
-    // Accepted shapes:
-    // - { price, carrier }  (netlify)
-    // - { ok:true, cost, label } (api)
     let cost = 0;
     let label = "";
 
@@ -698,23 +612,15 @@ async function quoteShippingMini() {
 
     if (!cost) throw new Error("QUOTE_ZERO");
 
-    state.shipping = {
-      mode,
-      quote: cost,
-      label,
-    };
-
+    state.shipping = { mode, quote: cost, label };
     saveCart();
     toast("Envío actualizado", "success");
     playSound("success");
   } catch (e) {
     console.warn("[quote] fallback:", e);
-
-    // Fallback fijo realista (solo si backend no responde)
     const fallbackCost = mode === "us" ? 450 : 180;
     state.shipping.quote = fallbackCost;
     state.shipping.label = "Envío Fijo (Fallback)";
-
     saveCart();
     toast("No se pudo cotizar en vivo. Usando fallback.", "info");
   } finally {
@@ -722,51 +628,8 @@ async function quoteShippingMini() {
   }
 }
 
-async function quoteShippingUI() {
-  // Landing section #envios
-  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
-  const zip = digitsOnly($("#shipZip")?.value || "");
-  const out = $("#shipQuote");
-
-  if (zip.length < 4) {
-    if (out) out.textContent = "Ingresa un código postal válido.";
-    return;
-  }
-
-  if (out) out.textContent = "Cotizando...";
-
-  try {
-    const payload = { zip, country, items: cartItemsForQuote() };
-    let res, data;
-
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) {
-      ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
-    }
-
-    let cost = 0;
-    let label = "";
-
-    if (data?.price) {
-      cost = Number(data.price || 0);
-      label = String(data.carrier || "Tarifa");
-    } else if (data?.ok) {
-      cost = Number(data.cost || 0);
-      label = String(data.label || "Tarifa");
-    } else {
-      throw new Error(data?.error || "QUOTE_FAILED");
-    }
-
-    if (out) out.innerHTML = `<b>${escapeHtml(label)}</b> · ${fmtMXN(cost)}`;
-    playSound("success");
-  } catch (e) {
-    console.warn("[quote-ui] fail:", e);
-    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
-  }
-}
-
 /* -----------------------
-   12) CHECKOUT (Netlify -> API -> Stripe redirect)
+   12) CHECKOUT
 ------------------------ */
 async function doCheckout() {
   if (!state.cart.length) return toast("Carrito vacío", "error");
@@ -799,21 +662,12 @@ async function doCheckout() {
       promoCode: "",
     };
 
-    // 1) Netlify checkout preferred
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 20000));
-
-    // 2) Fallback API
-    if (!res.ok) {
-      ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
-    }
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
 
     if (!res.ok) throw new Error(data?.error || "CHECKOUT_HTTP_" + res.status);
 
-    // Accepted shapes:
-    // - { id: "cs_test|cs_live..." } for Stripe session
-    // - { sessionId: "..." }
-    // - { url: "https://checkout.stripe.com/..." } direct url
     const directUrl = data?.url ? String(data.url) : "";
     const sessionId = data?.id || data?.sessionId;
 
@@ -840,7 +694,7 @@ async function doCheckout() {
 }
 
 /* -----------------------
-   13) AI (Netlify -> API -> offline)
+   13) AI (chat.js)
 ------------------------ */
 function toggleAiAssistant() {
   const modal = $("#aiChatModal") || $(".ai-chat-modal");
@@ -867,9 +721,7 @@ async function sendAiMessage() {
   try {
     let res, data;
     ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
-    if (!res.ok) {
-      ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
-    }
+    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
     if (!res.ok) throw new Error("AI_HTTP_" + res.status);
 
     const reply = String(data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?");
@@ -899,10 +751,9 @@ function bindAiEnter() {
 }
 
 /* -----------------------
-   14) LEGAL (openLegal + .jsLegalLink)
+   14) LEGAL
 ------------------------ */
 function openLegal(type) {
-  // compat: legacy modal (#legalModal .active) + new modal (#legalModal .show)
   const modal = $("#legalModal");
   if (!modal) return;
 
@@ -911,19 +762,9 @@ function openLegal(type) {
 
   const lib = window.LEGAL_CONTENT || {};
   const FALLBACK = {
-    privacy: {
-      title: "AVISO DE PRIVACIDAD",
-      html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>",
-    },
-    terms: {
-      title: "TÉRMINOS Y CONDICIONES",
-      html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>",
-    },
-    contact: {
-      title: "CONTACTO",
-      html:
-        "<p><b>Email:</b> ventas.unicotextil@gmail.com<br><b>WhatsApp:</b> +52 664 123 4567</p>",
-    },
+    privacy: { title: "AVISO DE PRIVACIDAD", html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>" },
+    terms: { title: "TÉRMINOS Y CONDICIONES", html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>" },
+    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com<br><b>WhatsApp:</b> +52 664 123 4567</p>" },
   };
 
   const key = String(type || "privacy").trim();
@@ -932,15 +773,13 @@ function openLegal(type) {
   if (title) title.textContent = item.title || "Info";
   if (body) body.innerHTML = item.html || "<p>Contenido no disponible.</p>";
 
-  modal.classList.add("active");
-  modal.classList.add("show");
+  modal.classList.add("active", "show");
   document.body.classList.add("modalOpen", "noScroll");
 }
 
 function closeLegal() {
   const modal = $("#legalModal");
-  modal?.classList.remove("active");
-  modal?.classList.remove("show");
+  modal?.classList.remove("active", "show");
   document.body.classList.remove("modalOpen", "noScroll");
 }
 
@@ -955,10 +794,9 @@ function acceptCookies() {
 }
 
 /* -----------------------
-   16) INTRO + SPLASH (soporta ambos)
+   16) INTRO + SPLASH
 ------------------------ */
 function initIntroSplash() {
-  // Intro (FINAL_AUDIT)
   const intro = $("#intro");
   const skip = $("#introSkip");
   if (intro) {
@@ -972,7 +810,6 @@ function initIntroSplash() {
     setTimeout(hide, 1200);
   }
 
-  // Splash RPM
   const splash = $("#splash-screen");
   const bar = $(".rpm-bar");
   const rpm = $("#revCounter");
@@ -993,7 +830,7 @@ function initIntroSplash() {
 }
 
 /* -----------------------
-   17) Social Proof (no invasivo)
+   17) Social Proof
 ------------------------ */
 function initSocialProof() {
   const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
@@ -1016,7 +853,7 @@ function initSocialProof() {
 }
 
 /* -----------------------
-   18) Service Worker (si existe /sw.js)
+   18) Service Worker
 ------------------------ */
 function initServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -1031,7 +868,6 @@ function initServiceWorker() {
    19) BOOT
 ------------------------ */
 function bindUI() {
-  // Drawer triggers
   $(".cartBtn")?.addEventListener("click", openDrawer);
   $("#cartBtn")?.addEventListener("click", openDrawer);
 
@@ -1039,27 +875,20 @@ function bindUI() {
   $("#pageOverlay")?.addEventListener("click", closeDrawer);
   $("#backdrop")?.addEventListener("click", closeDrawer);
 
-  // Drawer close buttons
   $(".closeBtn")?.addEventListener("click", closeDrawer);
   $(".drawerClose")?.addEventListener("click", closeDrawer);
 
-  // AI button
   $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
-
-  // AI send (si existe botón)
   $(".ai-send")?.addEventListener("click", sendAiMessage);
   bindAiEnter();
 
-  // Legal buttons (.jsLegalLink)
   $$(".jsLegalLink").forEach((btn) => {
     btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"));
   });
 
-  // Legal close/backdrop
   $("#legalClose")?.addEventListener("click", closeLegal);
   $("#legalBackdrop")?.addEventListener("click", closeLegal);
 
-  // Filters
   $$(".chip").forEach((c) => {
     c.addEventListener("click", () => {
       $$(".chip").forEach((ch) => ch.classList.remove("active"));
@@ -1070,16 +899,15 @@ function bindUI() {
     });
   });
 
-  // Shipping UI (mini)
   $("#shippingMode")?.addEventListener("change", (e) => toggleShipping(e.target.value));
   $("#miniZip")?.addEventListener("input", requestMiniQuote);
 
-  // Shipping UI (radio)
   document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
     r.addEventListener("change", () => toggleShipping(r.value));
   });
 
-  // Escape close all
+  $("#checkoutBtn")?.addEventListener("click", doCheckout);
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     closeLegal();
@@ -1088,13 +916,11 @@ function bindUI() {
     closeDrawer();
   });
 
-  // Cookie banner auto-hide if accepted
   if (localStorage.getItem("score_cookies") === "accepted") {
     const b = $("#cookieBanner") || $(".cookieBanner");
     if (b) b.style.display = "none";
   }
 
-  // Success param
   const params = new URLSearchParams(window.location.search);
   if (params.get("status") === "success") {
     toast("¡Pago confirmado! 🏁", "success");
@@ -1111,40 +937,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initStripe();
   initIntroSplash();
   loadCatalog();
-  // aplica modo shipping desde UI actual
   toggleShipping(getShipModeFromUI());
   bindUI();
   saveCart();
-
   initSocialProof();
-initServiceWorker();
+  initServiceWorker();
 });
-
-/* -----------------------
-   20) EXPORTS (para onclick legacy en HTML)
------------------------- */
-window.addToCart = addToCart;
-window.modQty = modQty;
-
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-
-// aliases por si tu HTML usa openCart/closeCart
-window.openCart = openCart;
-window.closeCart = closeCart;
-
-window.toggleShipping = toggleShipping;
-window.quoteShipping = quoteShippingMini; // compat con tu HTML 1 (debounce ya está)
-window.quoteShippingMini = quoteShippingMini;
-window.quoteShippingUI = quoteShippingUI;
-
-window.doCheckout = doCheckout;
-window.checkout = doCheckout; // compat con HTML 2
-
-window.toggleAiAssistant = toggleAiAssistant;
-window.sendAiMessage = sendAiMessage;
-
-window.openLegal = openLegal;
-window.closeLegal = closeLegal;
-
-window.acceptCookies = acceptCookies;
