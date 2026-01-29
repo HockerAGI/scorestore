@@ -1,7 +1,7 @@
 /* =========================================================
    SCORE STORE — Service Worker (PWA) · UNIFICADO (PROD)
-   - Cache-first: assets estáticos (CSS/JS/IMG/FONTS)
-   - Stale-while-revalidate: JSON de catálogo/promos
+   - Cache-first: assets estáticos (CSS/JS/IMG/FONTS + webmanifest/txt/xml)
+   - Stale-while-revalidate: JSON de catálogo/promos (ideal: /data/*.json)
    - Network-first: HTML (para no quedarse viejo)
    - NO cachea /api/* ni /.netlify/functions/*
    ========================================================= */
@@ -14,7 +14,7 @@ const CACHE_DATA   = `scorestore_data_${VERSION}`;
 const PRECACHE = [
   "/",
   "/index.html",
-  "/legal.html",
+  "/legal.html",          // ✅ confirma que exista en tu deploy
 
   "/css/styles.css",
   "/js/main.js",
@@ -40,8 +40,9 @@ const PRECACHE = [
   "/assets/icons/icon-512.png",
 ];
 
-const STATIC_EXT = /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|woff2?)$/i;
-const DATA_EXT = /\.(?:json)$/i;
+// ✅ ahora también cubre webmanifest/txt/xml
+const STATIC_EXT = /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|woff2?|webmanifest|txt|xml)$/i;
+const DATA_EXT   = /\.(?:json)$/i;
 
 function isAPI(url) {
   try {
@@ -64,6 +65,15 @@ function isHTML(req) {
 
 function pathnameOf(url) {
   try { return new URL(url).pathname; } catch { return ""; }
+}
+
+function stripSearch(url) {
+  try {
+    const u = new URL(url);
+    return u.origin + u.pathname; // ✅ evita cache-bloat por ?v=
+  } catch {
+    return url;
+  }
 }
 
 self.addEventListener("install", (event) => {
@@ -93,6 +103,9 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = req.url;
 
+  // ✅ Solo GET
+  if (req.method !== "GET") return;
+
   // Nunca cachear API / functions
   if (isAPI(url)) return;
 
@@ -105,8 +118,12 @@ self.addEventListener("fetch", (event) => {
         if (fresh && fresh.ok) cache.put(req, fresh.clone());
         return fresh;
       } catch {
+        // intenta cache exacto, luego fallback a homepage
         const cached = await cache.match(req);
         if (cached) return cached;
+
+        const home = (await cache.match("/")) || (await cache.match("/index.html"));
+        if (home) return home;
 
         return new Response(
 `<!doctype html>
@@ -145,7 +162,7 @@ self.addEventListener("fetch", (event) => {
 
   const pathname = pathnameOf(url);
 
-  // JSON data: stale-while-revalidate (catálogo/promos)
+  // JSON data: stale-while-revalidate (ideal: /data/*.json)
   if (DATA_EXT.test(pathname)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_DATA);
@@ -154,15 +171,20 @@ self.addEventListener("fetch", (event) => {
       const fetchPromise = (async () => {
         try {
           const fresh = await fetch(req);
-          if (fresh && fresh.ok) await cache.put(req, fresh.clone());
+          if (fresh && fresh.ok) {
+            // ✅ guarda sin query para no duplicar
+            await cache.put(stripSearch(url), fresh.clone());
+          }
           return fresh;
         } catch {
           return null;
         }
       })();
 
-      // Devuelve cache rápido, actualiza en background
-      return cached || (await fetchPromise) || new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+      return cached || (await fetchPromise) || new Response("{}", {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
     })());
     return;
   }
@@ -178,7 +200,10 @@ self.addEventListener("fetch", (event) => {
 
       try {
         const fresh = await fetch(req);
-        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        if (fresh && fresh.ok) {
+          // ✅ guarda sin query para evitar bloat por ?v=
+          cache.put(stripSearch(url), fresh.clone());
+        }
         return fresh;
       } catch {
         return new Response("", { status: 504 });
