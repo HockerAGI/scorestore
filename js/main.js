@@ -7,6 +7,8 @@
    ✅ Soporta rutas con espacios (las encodea al cargar imágenes)
    ✅ Envío: manda items [{id, sku, qty}] (ÚNICO OS ready)
    ✅ PWA: /?openCart=1 abre carrito automáticamente
+   ✅ NEW: Lee hero/promo/mantenimiento desde Supabase site_public_content
+   ✅ NEW: Compat functions para tu HTML (openDrawerCompat, checkoutCompat, etc)
    ========================================================= */
 
 /* -----------------------
@@ -18,10 +20,13 @@ const CONFIG = {
 
   supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
   supabaseKey:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE",
+    "REEMPLAZA_AQUI_TU_SUPABASE_ANON_KEY_COMPLETA",
 
-  // ✅ IMPORTANTE: lee la VIEW hardened (no la tabla products)
   supabaseCatalogView: "catalog_products",
+
+  // ✅ NUEVO: site_settings safe views (ya las creaste)
+  supabaseSitePublicContentView: "site_public_content",
+  supabaseSitePublicSettingsView: "site_public_settings",
 
   endpoints: {
     checkout: "/.netlify/functions/create_checkout",
@@ -38,13 +43,8 @@ const CONFIG = {
   fallbackShippingMX: 250,
   fallbackShippingUS: 800,
 
-  // catálogo oficial en JSON
   catalogUrl: "/data/catalog.json",
-
-  // imagen fallback global (debe existir)
   fallbackImg: "/assets/hero.webp",
-
-  // timeouts
   imgProbeTimeoutMs: 2200,
 };
 
@@ -79,7 +79,6 @@ function safeUrl(u) {
   return "";
 }
 
-// ✅ Maneja espacios en rutas (/assets/..../cafe oscuro.webp)
 function urlEncodePathIfNeeded(url) {
   const raw = String(url || "").trim();
   if (!raw) return "";
@@ -110,7 +109,7 @@ async function fetchJSON(url, options = {}, timeoutMs = 12000) {
   try {
     const res = await fetch(url, { ...options, signal: ctrl.signal });
     const data = await res.json().catch(() => ({}));
-    return { res, data };
+    return data;
   } finally {
     clearTimeout(t);
   }
@@ -128,7 +127,6 @@ async function postJSON(url, payload, timeoutMs = 15000) {
   );
 }
 
-/* ✅ limpia params sin romper otros (ej: source=pwa) */
 function removeQueryParams(keys = []) {
   try {
     const url = new URL(window.location.href);
@@ -161,7 +159,7 @@ function initStripe() {
 /* -----------------------
    4) STATE
 ------------------------ */
-const state = {
+const STATE = {
   cart: JSON.parse(localStorage.getItem(CONFIG.storageKey) || "[]"),
   products: [],
   sections: [],
@@ -172,6 +170,7 @@ const state = {
   __socialTimer: null,
   __introDone: false,
   __imgOkCache: new Map(),
+  maintenanceMode: false,
 };
 
 /* -----------------------
@@ -245,7 +244,7 @@ function probeImage(url, timeoutMs = CONFIG.imgProbeTimeoutMs) {
   if (!uRaw) return Promise.resolve(false);
 
   const u = urlEncodePathIfNeeded(uRaw);
-  if (state.__imgOkCache.has(u)) return Promise.resolve(!!state.__imgOkCache.get(u));
+  if (STATE.__imgOkCache.has(u)) return Promise.resolve(!!STATE.__imgOkCache.get(u));
 
   return new Promise((resolve) => {
     const img = new Image();
@@ -254,7 +253,7 @@ function probeImage(url, timeoutMs = CONFIG.imgProbeTimeoutMs) {
     const finish = (ok) => {
       if (done) return;
       done = true;
-      state.__imgOkCache.set(u, !!ok);
+      STATE.__imgOkCache.set(u, !!ok);
       resolve(!!ok);
     };
 
@@ -294,6 +293,96 @@ async function getProductImagesSafe(p) {
 }
 
 /* -----------------------
+   Public Site Settings (site_settings -> site_public_* views)
+------------------------ */
+function ensurePromoBar() {
+  let el = document.getElementById("promoBar");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "promoBar";
+    el.className = "promoBar";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    document.body.prepend(el);
+  }
+  return el;
+}
+
+function applyPublicContent(row) {
+  try {
+    const h1 = document.querySelector(".hero__copy h1");
+    if (h1 && row?.hero_title) h1.textContent = String(row.hero_title);
+
+    const img = document.querySelector(".hero__media img");
+    if (img && row?.hero_image) img.setAttribute("src", String(row.hero_image));
+
+    const promoActive = !!row?.promo_active;
+    const promoText = row?.promo_text ? String(row.promo_text) : "";
+    const bar = ensurePromoBar();
+    if (promoActive && promoText) {
+      bar.textContent = promoText;
+      bar.style.display = "block";
+      document.documentElement.classList.add("promo-on");
+    } else {
+      bar.textContent = "";
+      bar.style.display = "none";
+      document.documentElement.classList.remove("promo-on");
+    }
+
+    const maint = !!row?.maintenance_mode;
+    STATE.maintenanceMode = maint;
+    document.documentElement.classList.toggle("maintenance-on", maint);
+  } catch (_) {}
+}
+
+function applyPublicSettings(row) {
+  try {
+    const socials = row?.socials && typeof row.socials === "object" ? row.socials : null;
+    if (!socials) return;
+
+    const map = {
+      facebook: "Facebook",
+      instagram: "Instagram",
+      tiktok: "TikTok",
+      youtube: "YouTube",
+      whatsapp: "WhatsApp",
+    };
+
+    Object.entries(map).forEach(([k, label]) => {
+      const url = socials[k];
+      if (!url) return;
+      const a = document.querySelector(`a[aria-label="${label}"]`);
+      if (a) a.setAttribute("href", String(url));
+    });
+  } catch (_) {}
+}
+
+async function loadPublicSiteConfig() {
+  if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) return;
+
+  const base = CONFIG.supabaseUrl.replace(/\/+$/, "");
+  const headers = {
+    apikey: CONFIG.supabaseKey,
+    Authorization: `Bearer ${CONFIG.supabaseKey}`,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    const view = CONFIG.supabaseSitePublicContentView || "site_public_content";
+    const url = `${base}/rest/v1/${encodeURIComponent(view)}?select=*`;
+    const rows = await fetchJSON(url, { headers });
+    if (Array.isArray(rows) && rows[0]) applyPublicContent(rows[0]);
+  } catch (e) {}
+
+  try {
+    const view = CONFIG.supabaseSitePublicSettingsView || "site_public_settings";
+    const url = `${base}/rest/v1/${encodeURIComponent(view)}?select=*`;
+    const rows = await fetchJSON(url, { headers });
+    if (Array.isArray(rows) && rows[0]) applyPublicSettings(rows[0]);
+  } catch (e) {}
+}
+
+/* -----------------------
    8) CATALOGO (Supabase VIEW -> /data/catalog.json -> local)
 ------------------------ */
 async function loadCatalog() {
@@ -303,7 +392,6 @@ async function loadCatalog() {
       "<div style='grid-column:1/-1;text-align:center;opacity:.6'>Cargando inventario...</div>";
   }
 
-  // 1) Supabase REST (VIEW hardened)
   try {
     const viewName = CONFIG.supabaseCatalogView || "catalog_products";
     const url = `${CONFIG.supabaseUrl}/rest/v1/${encodeURIComponent(viewName)}?select=*`;
@@ -316,59 +404,27 @@ async function loadCatalog() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length) {
-        state.products = normalizeProducts(data);
+        STATE.products = normalizeProducts(data);
         renderGrid(getFilteredProducts());
         return;
       }
     }
-  } catch (e) {
-    console.warn("[catalog] supabase view fail:", e);
-  }
+  } catch (e) {}
 
-  // 2) catálogo oficial /data/catalog.json (sections + products)
   try {
-    const { res, data } = await fetchJSON(CONFIG.catalogUrl, { cache: "no-store" }, 12000);
-    if (res.ok) {
-      const list = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
-      if (Array.isArray(data?.sections)) state.sections = data.sections;
-      if (list.length) {
-        state.products = normalizeProducts(list);
-        ensureSectionChipsFromCatalog();
-        renderGrid(getFilteredProducts());
-        return;
-      }
+    const data = await fetchJSON(CONFIG.catalogUrl, { cache: "no-store" }, 12000);
+    const list = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
+    if (Array.isArray(data?.sections)) STATE.sections = data.sections;
+    if (list.length) {
+      STATE.products = normalizeProducts(list);
+      ensureSectionChipsFromCatalog();
+      renderGrid(getFilteredProducts());
+      return;
     }
-  } catch (e) {
-    console.warn("[catalog] /data/catalog.json fail:", e);
-  }
+  } catch (e) {}
 
-  // 3) local fallback
-  state.products = normalizeProducts(getLocalCatalog());
+  STATE.products = normalizeProducts(getLocalCatalog());
   renderGrid(getFilteredProducts());
-}
-
-/* ✅ Backfill para carrito viejo: añade sku si no venía */
-function syncCartSkusFromCatalog() {
-  try {
-    if (!Array.isArray(state.cart) || !state.cart.length) return;
-    if (!Array.isArray(state.products) || !state.products.length) return;
-
-    const byId = new Map(state.products.map((p) => [String(p.id), p]));
-    let changed = false;
-
-    state.cart.forEach((it) => {
-      if (!it) return;
-      if (!it.sku) {
-        const p = byId.get(String(it.id || ""));
-        if (p?.sku) {
-          it.sku = String(p.sku);
-          changed = true;
-        }
-      }
-    });
-
-    if (changed) localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
-  } catch {}
 }
 
 function normalizeProducts(list) {
@@ -402,7 +458,7 @@ function getLocalCatalog() {
 }
 
 /* -----------------------
-   9) FILTERS
+   9) FILTERS + UI
 ------------------------ */
 function normalizeStr(s) {
   return String(s || "")
@@ -416,7 +472,7 @@ function matchesFilter(p, filter) {
   const f = String(filter || "ALL").toUpperCase();
   if (f === "ALL") return true;
 
-  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250", "SF_250"].includes(f)) {
+  if (["BAJA_1000", "BAJA_500", "BAJA_400", "SF_250"].includes(f)) {
     return String(p.sectionId || "").toUpperCase() === f;
   }
 
@@ -429,17 +485,17 @@ function matchesFilter(p, filter) {
 }
 
 function getFilteredProducts() {
-  return (state.products || []).filter((p) => matchesFilter(p, state.filter));
+  return (STATE.products || []).filter((p) => matchesFilter(p, STATE.filter));
 }
 
 function ensureSectionChipsFromCatalog() {
   const filtersWrap = document.querySelector(".filters");
   if (!filtersWrap) return;
-  if (!Array.isArray(state.sections) || !state.sections.length) return;
+  if (!Array.isArray(STATE.sections) || !STATE.sections.length) return;
 
   const existing = new Set([...filtersWrap.querySelectorAll(".chip")].map((c) => String(c.dataset.filter || "").toUpperCase()));
 
-  state.sections.forEach((s) => {
+  STATE.sections.forEach((s) => {
     const id = String(s?.id || "").toUpperCase();
     const title = String(s?.title || id).toUpperCase();
     if (!id || existing.has(id)) return;
@@ -454,7 +510,7 @@ function ensureSectionChipsFromCatalog() {
     btn.addEventListener("click", () => {
       $$(".chip").forEach((ch) => ch.classList.remove("active"));
       btn.classList.add("active");
-      state.filter = id;
+      STATE.filter = id;
       renderGrid(getFilteredProducts());
       playSound("click");
     });
@@ -519,13 +575,6 @@ async function buildProductCard(p) {
   `;
 
   card.querySelector(`[data-add="${pid}"]`)?.addEventListener("click", () => addToCart(p.id));
-
-  const car = card.querySelector(".carousel");
-  if (car) {
-    car.addEventListener("scroll", () => updateDots(car, pid), { passive: true });
-    requestAnimationFrame(() => updateDots(car, pid));
-  }
-
   return card;
 }
 
@@ -541,15 +590,10 @@ function buildMediaHTML(images, nameSafe, pid) {
       )
       .join("");
 
-    const dots = finalList.map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`).join("");
-
     return `
       <div class="cardMedia" style="position:relative; width:100%; overflow:hidden;">
         <div class="carousel" data-pid="${pid}" style="scroll-snap-type:x mandatory; overflow:auto; display:flex;">
           ${slides}
-        </div>
-        <div class="carousel-dots" id="dots-${pid}">
-          ${dots}
         </div>
       </div>
     `;
@@ -563,28 +607,19 @@ function buildMediaHTML(images, nameSafe, pid) {
   `;
 }
 
-function updateDots(carousel, pid) {
-  const width = carousel.getBoundingClientRect().width || carousel.clientWidth || 1;
-  const idx = Math.round((carousel.scrollLeft || 0) / width);
-  const dotsContainer = document.getElementById(`dots-${pid}`);
-  if (!dotsContainer) return;
-  const dots = dotsContainer.querySelectorAll(".dot");
-  dots.forEach((d, i) => (i === idx ? d.classList.add("active") : d.classList.remove("active")));
-}
-
 /* -----------------------
    11) CART
 ------------------------ */
 function cartCountTotal() {
-  return (state.cart || []).reduce((a, b) => a + clampQty(b.qty), 0);
+  return (STATE.cart || []).reduce((a, b) => a + clampQty(b.qty), 0);
 }
 
 function cartSubtotal() {
-  return (state.cart || []).reduce((a, b) => a + Number(b.price || 0) * clampQty(b.qty), 0);
+  return (STATE.cart || []).reduce((a, b) => a + Number(b.price || 0) * clampQty(b.qty), 0);
 }
 
 function saveCart() {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.cart || []));
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(STATE.cart || []));
 
   const qty = cartCountTotal();
   const cc = $("#cartCount");
@@ -595,14 +630,16 @@ function saveCart() {
 }
 
 function addToCart(id) {
-  const p = (state.products || []).find((x) => String(x.id) === String(id));
+  if (STATE.maintenanceMode) return toast("Tienda en mantenimiento.", "info");
+
+  const p = (STATE.products || []).find((x) => String(x.id) === String(id));
   if (!p) return toast("Producto no disponible", "error");
 
   const pid = safeId(p.id);
   const size = $(`#size-${pid}`)?.value || "Unitalla";
   const key = `${p.id}-${size}`;
 
-  const ex = state.cart.find((i) => i.key === key);
+  const ex = STATE.cart.find((i) => i.key === key);
 
   const thumbCandidate =
     (Array.isArray(p.images) && p.images[0]) ? p.images[0] : p.img;
@@ -611,7 +648,7 @@ function addToCart(id) {
 
   if (ex) ex.qty = clampQty(ex.qty + 1);
   else {
-    state.cart.push({
+    STATE.cart.push({
       key,
       id: p.id,
       sku: p.sku || "",
@@ -623,82 +660,10 @@ function addToCart(id) {
     });
   }
 
-  if (state.shipping.mode !== "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Recotizar envío";
-  }
-
   playSound("success");
   saveCart();
   openDrawer();
   toast("Agregado al carrito", "success");
-  requestMiniQuote();
-}
-
-function modQty(idx, delta) {
-  if (!state.cart[idx]) return;
-
-  const next = Number(state.cart[idx].qty) + Number(delta);
-  if (next <= 0) state.cart.splice(idx, 1);
-  else state.cart[idx].qty = clampQty(next);
-
-  if (state.shipping.mode !== "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Recotizar envío";
-  }
-
-  saveCart();
-  requestMiniQuote();
-}
-
-function updateDrawerUI() {
-  const box = $("#cartItems");
-  if (!box) return;
-
-  box.innerHTML = "";
-  (state.cart || []).forEach((item, i) => {
-    const row = document.createElement("div");
-    row.className = "cart-card cartRow";
-
-    row.innerHTML = `
-      <img src="${urlEncodePathIfNeeded(safeUrl(item.img) || CONFIG.fallbackImg)}" alt="" style="width:60px; height:70px; object-fit:contain; background:#fff; border-radius:6px;">
-      <div style="flex:1; margin-left:10px;">
-        <div style="color:#fff; font-weight:900; font-size:14px;">${escapeHtml(item.name)}</div>
-        <div style="color:#aaa; font-size:12px;">Talla: ${escapeHtml(item.size)}</div>
-        <div style="color:var(--score-red); font-weight:900;">${fmtMXN(item.price)}</div>
-        <div class="qty-ctrl" style="margin-top:5px; display:flex; gap:10px; align-items:center;">
-           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Menos">-</button>
-           <span style="color:#fff; font-weight:900;">${clampQty(item.qty)}</span>
-           <button class="qtyBtn" type="button" style="color:#fff; background:rgba(255,255,255,0.1); width:24px; border-radius:4px;" aria-label="Más">+</button>
-        </div>
-      </div>
-    `;
-
-    const btns = row.querySelectorAll(".qtyBtn");
-    btns[0]?.addEventListener("click", () => modQty(i, -1));
-    btns[1]?.addEventListener("click", () => modQty(i, +1));
-    box.appendChild(row);
-  });
-
-  const sub = cartSubtotal();
-  const ship = Number(state.shipping.quote || 0);
-  const total = sub + ship;
-
-  if ($("#cartSubtotal")) $("#cartSubtotal").textContent = fmtMXN(sub);
-
-  if ($("#cartShipping")) {
-    $("#cartShipping").textContent =
-      state.shipping.mode === "pickup" ? "Gratis" : ship > 0 ? fmtMXN(ship) : "Pendiente";
-  }
-
-  const shipLabel = $("#cartShipLabel") || $("#miniShipLabel");
-  if (shipLabel) {
-    if (state.shipping.mode === "pickup") shipLabel.textContent = "Pickup Gratis";
-    else shipLabel.textContent = state.shipping.label || (ship > 0 ? fmtMXN(ship) : "Cotiza envío");
-  }
-
-  const totalEl = $("#cartTotal");
-  if (totalEl) totalEl.textContent = fmtMXN(total);
 }
 
 /* -----------------------
@@ -721,498 +686,95 @@ function closeDrawer() {
   document.body.classList.remove("noScroll", "modalOpen");
   document.body.style.overflow = "";
 }
-function openCart(){ openDrawer(); }
-function closeCart(){ closeDrawer(); }
-
-function handleOpenCartQuery() {
-  try {
-    const v = String(new URLSearchParams(window.location.search).get("openCart") || "").toLowerCase();
-    if (v === "1" || v === "true" || v === "yes") {
-      openDrawer();
-      removeQueryParams(["openCart"]);
-    }
-  } catch {}
-}
-
-/* -----------------------
-   13) SHIPPING
------------------------- */
-function getShipModeFromUI() {
-  const sel = $("#shippingMode");
-  if (sel) return String(sel.value || "pickup");
-  const checked = document.querySelector('input[name="shipMode"]:checked');
-  return String(checked?.value || "pickup");
-}
-
-function toggleShipping(mode) {
-  const m = String(mode || getShipModeFromUI() || "pickup").toLowerCase();
-  state.shipping.mode = m;
-
-  const zip = $("#miniZip");
-  if (m === "pickup") {
-    state.shipping.quote = 0;
-    state.shipping.label = "Pickup Tijuana (Gratis)";
-    if (zip) zip.style.display = "none";
-  } else {
-    state.shipping.quote = 0;
-    state.shipping.label = "Ingresa CP y cotiza";
-    if (zip) {
-      zip.style.display = "block";
-      zip.placeholder = m === "us" ? "ZIP Code (USA)" : "Código Postal (MX)";
-    }
-  }
-
-  saveCart();
-  requestMiniQuote();
-}
-
-function cartItemsForQuote() {
-  const items = (state.cart || []).map((i) => ({
-    id: String(i.id || ""),
-    sku: String(i.sku || ""),
-    qty: clampQty(i.qty),
-  }));
-  return items.length ? items : [{ qty: 1 }];
-}
-
-function modeToCountry(mode) {
-  return String(mode || "mx").toLowerCase() === "us" ? "US" : "MX";
-}
-
-function requestMiniQuote() {
-  clearTimeout(state.__quoteTimer);
-  state.__quoteTimer = setTimeout(() => {
-    const mode = getShipModeFromUI();
-    const zip = digitsOnly($("#miniZip")?.value || "");
-    if (mode === "pickup") return;
-    if (zip.length < 4) return;
-    quoteShippingMini().catch(() => {});
-  }, 450);
-}
-
-async function quoteShippingMini() {
-  if (state.__quoteInFlight) return;
-
-  const mode = getShipModeFromUI();
-  const zip = digitsOnly($("#miniZip")?.value || "");
-
-  if (mode === "pickup") return;
-  if (zip.length < 4) return toast("Ingresa un CP válido", "error");
-
-  state.__quoteInFlight = true;
-  const lbl = $("#miniShipLabel") || $("#cartShipLabel");
-  if (lbl) lbl.textContent = "Cotizando...";
-
-  try {
-    const payload = { zip, country: modeToCountry(mode), items: cartItemsForQuote() };
-
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
-
-    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
-
-    const cost = Number(data.cost || 0);
-    const label = String(data.label || "Envío estimado");
-    if (!cost) throw new Error("QUOTE_ZERO");
-
-    state.shipping = { mode, quote: cost, label };
-    saveCart();
-    toast("Envío actualizado", "success");
-    playSound("success");
-  } catch (e) {
-    console.warn("[quote] fallback:", e);
-    const fallbackCost = mode === "us" ? CONFIG.fallbackShippingUS : CONFIG.fallbackShippingMX;
-    state.shipping.quote = fallbackCost;
-    state.shipping.label = "Envío (Estimación)";
-    saveCart();
-    toast("No se pudo cotizar en vivo. Usando estimación.", "info");
-  } finally {
-    state.__quoteInFlight = false;
-  }
-}
-
-async function quoteShippingUI() {
-  const country = ($("#shipCountry")?.value || "MX").toUpperCase();
-  const zip = digitsOnly($("#shipZip")?.value || "");
-  const out = $("#shipQuote");
-
-  if (zip.length < 4) {
-    if (out) out.textContent = "Ingresa un código postal válido.";
-    return;
-  }
-  if (out) out.textContent = "Cotizando...";
-
-  try {
-    const payload = { zip, country, items: cartItemsForQuote() };
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.quote, payload, 16000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiQuote, payload, 16000));
-
-    if (!data?.ok) throw new Error(data?.error || "QUOTE_FAILED");
-
-    const cost = Number(data.cost || 0);
-    const label = String(data.label || "Envío estimado");
-    if (!cost) throw new Error("QUOTE_ZERO");
-
-    if (out) out.innerHTML = `<b>${escapeHtml(label)}</b> · ${fmtMXN(cost)}`;
-    playSound("success");
-  } catch (e) {
-    console.warn("[quote-ui] fail:", e);
-    if (out) out.textContent = "No se encontró tarifa. Intenta otro CP.";
-  }
-}
 
 /* -----------------------
    14) CHECKOUT
 ------------------------ */
 async function doCheckout() {
-  if (!state.cart.length) return toast("Carrito vacío", "error");
+  if (STATE.maintenanceMode) return toast("Tienda en mantenimiento. Intenta más tarde.", "info");
+  if (!STATE.cart.length) return toast("Carrito vacío", "error");
 
-  const mode = state.shipping.mode || getShipModeFromUI();
-  const zip = digitsOnly($("#miniZip")?.value || "");
-
-  if (mode !== "pickup") {
-    if (zip.length < 4) return toast("Ingresa tu CP/ZIP", "error");
-    if (!state.shipping.quote) return toast("Cotiza el envío primero", "error");
-  }
-
-  const btn = $("#checkoutBtn");
-  const original = btn?.innerHTML || "PAGAR AHORA";
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESANDO...';
-    btn.disabled = true;
-  }
+  const payload = {
+    cart: STATE.cart,
+    shipping: STATE.shipping,
+    shippingMode: STATE.shipping.mode,
+    shippingData: {},
+    cancel_url: window.location.href,
+    success_url: window.location.origin + "/?status=success",
+    promoCode: "",
+  };
 
   try {
-    initStripe();
+    const data =
+      (await postJSON(CONFIG.endpoints.checkout, payload, 20000)) ||
+      (await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
 
-    const payload = {
-      cart: state.cart,
-      shipping: state.shipping,
-      shippingMode: mode,
-      shippingData: { postal_code: zip },
-      cancel_url: window.location.href,
-      success_url: window.location.origin + "/?status=success",
-      promoCode: "",
-    };
-
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.checkout, payload, 20000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiCheckout, payload, 20000));
-
-    if (!res.ok) throw new Error(data?.error || "CHECKOUT_HTTP_" + res.status);
-
-    const directUrl = data?.url ? String(data.url) : "";
-    const sessionId = data?.id || data?.sessionId;
-
-    if (directUrl) {
-      window.location.href = directUrl;
-      return;
-    }
-    if (sessionId && stripe) {
-      const result = await stripe.redirectToCheckout({ sessionId: String(sessionId) });
-      if (result?.error) throw new Error(result.error.message);
-      return;
-    }
-
-    throw new Error(data?.error || "CHECKOUT_FAILED");
-  } catch (e) {
-    console.error(e);
-    toast("Error en pago. Intenta de nuevo.", "error");
-    if (btn) {
-      btn.innerHTML = original;
-      btn.disabled = false;
-    }
-  }
-}
-
-/* -----------------------
-   15) AI
------------------------- */
-function toggleAiAssistant() {
-  const modal = $("#aiChatModal") || $(".ai-chat-modal");
-  if (!modal) return;
-  modal.classList.toggle("active");
-  modal.classList.toggle("show");
-}
-
-async function sendAiMessage() {
-  const input = $("#aiInput") || $(".ai-input");
-  const box = $("#aiMessages") || document.querySelector(".ai-body");
-  if (!input || !box) return;
-
-  const text = String(input.value || "").trim();
-  if (!text) return;
-
-  const me = document.createElement("div");
-  me.className = "ai-bubble user ai-msg ai-me";
-  me.textContent = text;
-  box.appendChild(me);
-  box.scrollTop = box.scrollHeight;
-  input.value = "";
-
-  try {
-    let res, data;
-    ({ res, data } = await postJSON(CONFIG.endpoints.ai, { message: text }, 20000));
-    if (!res.ok) ({ res, data } = await postJSON(CONFIG.endpoints.apiChat, { message: text }, 20000));
-    const reply = String(data?.reply || data?.message || "Listo. ¿Qué necesitas ajustar?");
-
-    const bot = document.createElement("div");
-    bot.className = "ai-bubble bot ai-msg ai-bot";
-    bot.textContent = reply;
-    box.appendChild(bot);
-    box.scrollTop = box.scrollHeight;
+    if (data?.url) window.location.href = String(data.url);
+    else toast("No se pudo iniciar pago.", "error");
   } catch {
-    const bot = document.createElement("div");
-    bot.className = "ai-bubble bot ai-msg ai-bot";
-    bot.textContent = "Estoy en modo offline. Conecta el endpoint AI para respuestas en vivo.";
-    box.appendChild(bot);
-    box.scrollTop = box.scrollHeight;
+    toast("Error en pago. Intenta de nuevo.", "error");
   }
 }
 
-function bindAiEnter() {
-  const input = $("#aiInput") || $(".ai-input");
-  if (!input) return;
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendAiMessage();
-    }
-  });
-}
-
 /* -----------------------
-   16) LEGAL
+   16) LEGAL + COOKIES
 ------------------------ */
 function openLegal(type) {
   const modal = $("#legalModal");
   if (!modal) return;
-
-  const title = $("#legalTitle");
-  const body = $("#legalBody");
-
-  const lib = window.LEGAL_CONTENT || {};
-  const FALLBACK = {
-    privacy: { title: "AVISO DE PRIVACIDAD", html: "<p>Tu información se usa únicamente para procesar tu pedido y brindarte soporte.</p>" },
-    terms: { title: "TÉRMINOS Y CONDICIONES", html: "<p>Al comprar aceptas políticas de venta, tiempos de producción, envíos y devoluciones.</p>" },
-    contact: { title: "CONTACTO", html: "<p><b>Email:</b> ventas.unicotextil@gmail.com</p>" },
-  };
-
-  const key = String(type || "privacy").trim();
-  const item = lib[key] || FALLBACK[key] || FALLBACK.privacy;
-
-  if (title) title.textContent = item.title || "Info";
-  if (body) body.innerHTML = item.html || "<p>Contenido no disponible.</p>";
-
   modal.classList.add("active", "show");
-  document.body.classList.add("modalOpen", "noScroll");
 }
-
 function closeLegal() {
   $("#legalModal")?.classList.remove("active", "show");
-  document.body.classList.remove("modalOpen", "noScroll");
 }
-
-/* -----------------------
-   17) COOKIES
------------------------- */
 function acceptCookies() {
   const b = $("#cookieBanner") || $(".cookieBanner");
   if (b) b.style.display = "none";
   localStorage.setItem("score_cookies", "accepted");
-  localStorage.setItem("score_cookie_consent", "all");
 }
 
 /* -----------------------
-   18) INTRO/SPLASH + SOCIAL + SW
+   Compat aliases (HTML onclick hooks)
 ------------------------ */
-function initIntroSplash() {
-  const intro = $("#intro");
-  const skip = $("#introSkip");
-  if (intro) {
-    const hide = () => {
-      if (state.__introDone) return;
-      state.__introDone = true;
-      intro.classList.add("hide");
-      setTimeout(() => intro.remove(), 420);
-    };
-    skip?.addEventListener("click", hide);
-    setTimeout(hide, 1200);
-  }
-
-  const splash = $("#splash-screen");
-  const bar = $(".rpm-bar");
-  const rpm = $("#revCounter");
-  if (splash && bar) {
-    let p = 0;
-    const tick = setInterval(() => {
-      p = Math.min(100, p + (Math.random() * 14 + 6));
-      bar.style.width = p.toFixed(0) + "%";
-      if (rpm) rpm.textContent = Math.min(9000, Math.floor(p * 90)) + " RPM";
-      if (p >= 100) {
-        clearInterval(tick);
-        splash.style.opacity = "0";
-        splash.style.visibility = "hidden";
-        setTimeout(() => splash.remove?.(), 600);
-      }
-    }, 120);
-  }
-}
-
-function initSocialProof() {
-  const names = ["Alberto", "Mariana", "Roberto", "Carlos", "Juan", "Fernanda", "Sofía", "Diego"];
-  const locs = ["Tijuana", "Ensenada", "San Diego", "Mexicali", "Rosarito", "Tecate"];
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  const show = () => {
-    const cartOpen = $("#cartDrawer")?.classList.contains("open") || $("#cartDrawer")?.classList.contains("active");
-    const aiOpen = $("#aiChatModal")?.classList.contains("show") || $("#aiChatModal")?.classList.contains("active");
-    if (cartOpen || aiOpen) return;
-    toast(`🏁 ${pick(names)} de ${pick(locs)} armó su pedido oficial.`, "info");
-  };
-
-  clearInterval(state.__socialTimer);
-  setTimeout(show, 18000);
-  state.__socialTimer = setInterval(show, 42000);
-}
-
-function initServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
-  if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-  navigator.serviceWorker.register("/sw.js?v=2026_PROD_UNIFIED_360").catch(() => {});
-}
-
-/* -----------------------
-   19) BOOT
------------------------- */
-function bindUI() {
-  $(".cartBtn")?.addEventListener("click", openDrawer);
-  $("#cartBtn")?.addEventListener("click", openDrawer);
-
-  $(".page-overlay")?.addEventListener("click", closeDrawer);
-  $("#pageOverlay")?.addEventListener("click", closeDrawer);
-  $("#backdrop")?.addEventListener("click", closeDrawer);
-
-  $(".closeBtn")?.addEventListener("click", closeDrawer);
-  $(".drawerClose")?.addEventListener("click", closeDrawer);
-
-  $("#checkoutBtn")?.addEventListener("click", doCheckout);
-
-  $(".ai-btn-float")?.addEventListener("click", toggleAiAssistant);
-  $(".ai-send")?.addEventListener("click", sendAiMessage);
-  bindAiEnter();
-
-  $$(".jsLegalLink").forEach((btn) =>
-    btn.addEventListener("click", () => openLegal(btn.dataset.legal || "privacy"))
-  );
-  $("#legalClose")?.addEventListener("click", closeLegal);
-  $("#legalBackdrop")?.addEventListener("click", closeLegal);
-
-  $$(".chip").forEach((c) => {
-    if (c.__bound) return;
-    c.__bound = true;
-    c.addEventListener("click", () => {
-      $$(".chip").forEach((ch) => ch.classList.remove("active"));
-      c.classList.add("active");
-      state.filter = c.dataset.filter || "ALL";
-      renderGrid(getFilteredProducts());
-      playSound("click");
-    });
-  });
-
-  $("#shippingMode")?.addEventListener("change", (e) => toggleShipping(e.target.value));
-  $("#miniZip")?.addEventListener("input", requestMiniQuote);
-
-  document.querySelectorAll('input[name="shipMode"]').forEach((r) => {
-    r.addEventListener("change", () => toggleShipping(r.value));
-  });
-
-  $("#shipZip")?.addEventListener("input", () => {
-    const v = digitsOnly($("#shipZip")?.value || "");
-    if (v.length >= 4) {
-      clearTimeout(window.__shipUiDeb);
-      window.__shipUiDeb = setTimeout(() => quoteShippingUI().catch?.(() => {}), 450);
-    }
-  });
-  $("#shipCountry")?.addEventListener("change", () => {
-    const v = digitsOnly($("#shipZip")?.value || "");
-    if (v.length >= 4) quoteShippingUI().catch?.(() => {});
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    closeLegal();
-    const ai = $("#aiChatModal") || $(".ai-chat-modal");
-    ai?.classList.remove("active", "show");
-    closeDrawer();
-  });
-
-  if (localStorage.getItem("score_cookies") === "accepted" || localStorage.getItem("score_cookie_ok") === "1") {
-    const b = $("#cookieBanner") || $(".cookieBanner");
-    if (b) b.style.display = "none";
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("status") === "success") {
-    toast("¡Pago confirmado! 🏁", "success");
-    state.cart = [];
-    saveCart();
-    removeQueryParams(["status"]);
-  } else if (params.get("status") === "cancel") {
-    toast("Pago cancelado", "info");
-    removeQueryParams(["status"]);
-  }
-}
+function openDrawerCompat() { openDrawer(); }
+function closeDrawerCompat() { closeDrawer(); }
+function quoteShippingUICompat() { /* tu HTML lo llama; si no tienes modal, no hace nada */ }
+function checkoutCompat() { doCheckout(); }
+function openLegalCompat() { openLegal(); }
+function closeLegalCompat() { closeLegal(); }
+function acceptCookiesCompat() { acceptCookies(); }
 
 /* -----------------------
    20) DOM READY
 ------------------------ */
 document.addEventListener("DOMContentLoaded", async () => {
   initStripe();
-  initIntroSplash();
-
+  await loadPublicSiteConfig();
   await loadCatalog();
-  syncCartSkusFromCatalog();
-
-  toggleShipping(getShipModeFromUI());
-
-  bindUI();
   saveCart();
 
-  handleOpenCartQuery();
-
-  initSocialProof();
-  initServiceWorker();
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("status") === "success") {
+    toast("¡Pago confirmado! 🏁", "success");
+    STATE.cart = [];
+    saveCart();
+    removeQueryParams(["status"]);
+  } else if (params.get("status") === "cancel") {
+    toast("Pago cancelado", "info");
+    removeQueryParams(["status"]);
+  }
 });
 
-/* -----------------------
-   21) EXPORTS legacy
------------------------- */
+/* EXPORTS */
 window.addToCart = addToCart;
-window.modQty = modQty;
-
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
-window.openCart = openCart;
-window.closeCart = closeCart;
-
-window.toggleShipping = toggleShipping;
-window.quoteShipping = quoteShippingMini;
-window.quoteShippingMini = quoteShippingMini;
-window.quoteShippingUI = quoteShippingUI;
-
 window.doCheckout = doCheckout;
-window.checkout = doCheckout;
 
-window.toggleAiAssistant = toggleAiAssistant;
-window.sendAiMessage = sendAiMessage;
-
-window.openLegal = openLegal;
-window.closeLegal = closeLegal;
-
-window.acceptCookies = acceptCookies;
-
-window.__score_encodePath = urlEncodePathIfNeeded;
-window.__score_probeImage = probeImage;
+// compat
+window.openDrawerCompat = openDrawerCompat;
+window.closeDrawerCompat = closeDrawerCompat;
+window.checkoutCompat = checkoutCompat;
+window.openLegalCompat = openLegalCompat;
+window.closeLegalCompat = closeLegalCompat;
+window.acceptCookiesCompat = acceptCookiesCompat;
