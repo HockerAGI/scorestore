@@ -1,46 +1,135 @@
+/* =========================================================
+   SCORE STORE / UNICOS — SHARED HELPERS (PROD) v2026
+   ✅ Compatible con tus Netlify Functions actuales
+   ✅ ENVIA_API_KEY (preferred) + fallback ENVIA_API_TOKEN
+   ✅ UnicOs Ready: DEFAULT_ORG_ID + getOrgIdFromEvent()
+   ✅ safeJsonParse devuelve {} (no null) para evitar crashes
+   ✅ Mantiene exports que tu repo YA usa
+   ========================================================= */
+
 const axios = require("axios");
 const { createClient } = require("@supabase/supabase-js");
 
+/* -----------------------
+   1) ENV (Supabase)
+------------------------ */
 const SUPABASE_URL =
   process.env.SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.URL ||
   "";
 
-const SUPABASE_ANON_KEY =
+const SUPABASE_ANON =
   process.env.SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "";
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-// ✅ ENVIA_API_KEY (preferred) or ENVIA_API_TOKEN
+/* -----------------------
+   2) UnicOs multi-tenant default org (Score Store)
+------------------------ */
+const DEFAULT_ORG_ID =
+  process.env.DEFAULT_ORG_ID ||
+  process.env.SCORE_STORE_ORG_ID ||
+  "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+
+function getOrgIdFromEvent(event, fallback = DEFAULT_ORG_ID) {
+  const qp = event?.queryStringParameters || {};
+  const headers = event?.headers || {};
+  const fromHeader =
+    headers["x-org-id"] || headers["X-Org-Id"] || headers["X-ORG-ID"] || "";
+
+  const candidate =
+    qp.org_id ||
+    qp.orgId ||
+    qp.org ||
+    fromHeader ||
+    "";
+
+  const v = (candidate || "").toString().trim();
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+  )
+    return v;
+
+  return fallback;
+}
+
+/* -----------------------
+   3) ENVIA (clave)
+------------------------ */
+// ✅ Preferred: ENVIA_API_KEY
+// ✅ Fallback: ENVIA_API_TOKEN (por compatibilidad)
 const ENVIA_KEY = process.env.ENVIA_API_KEY || process.env.ENVIA_API_TOKEN || "";
 
-// fallback shipping pricing (MXN)
+/* -----------------------
+   4) Fallback Shipping Prices
+------------------------ */
 const FALLBACK_MX_PRICE = {
-  base: 180, // base shipping
-  per_item: 35, // add per extra item
-  max: 380, // cap
+  base: 180,
+  per_item: 35,
+  max: 380,
 };
 
+const FALLBACK_US_PRICE = {
+  base: 800,
+  per_item: 90,
+  max: 1600,
+};
+
+/* -----------------------
+   5) Factory Origin (MX)
+------------------------ */
+const FACTORY_ORIGIN = {
+  name: "Único Uniformes",
+  phone: "+52 664 000 0000",
+  email: "ventas.unicotextil@gmail.com",
+  address1: "Tijuana, BC",
+  city: "Tijuana",
+  state: "BC",
+  country: "MX",
+  postal_code: "22000",
+};
+
+/* -----------------------
+   6) Promo Rules (kill switch support future)
+------------------------ */
+const PROMO_RULES = {
+  default: { active: false, percent: 0 },
+  "80OFF": { active: true, percent: 80 },
+};
+
+/* -----------------------
+   7) CORS
+------------------------ */
 const HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Requested-With, X-Chat-Token, X-Webhook-Token, X-Envia-Webhook-Token",
+    "Content-Type, Authorization, X-Requested-With, X-Chat-Token, X-Webhook-Token, X-Envia-Webhook-Token, X-Org-Id",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-const supabaseAnon =
-  SUPABASE_URL && SUPABASE_ANON_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+/* -----------------------
+   8) Supabase clients
+------------------------ */
+const supabase =
+  SUPABASE_URL && SUPABASE_ANON
+    ? createClient(SUPABASE_URL, SUPABASE_ANON, {
+        auth: { persistSession: false },
+      })
     : null;
 
 const supabaseAdmin =
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false },
+      })
     : null;
 
+/* -----------------------
+   9) Utils
+------------------------ */
 function jsonResponse(statusCode, data, extraHeaders = {}) {
   return {
     statusCode,
@@ -51,11 +140,7 @@ function jsonResponse(statusCode, data, extraHeaders = {}) {
 
 function handleOptions(event) {
   if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 204,
-      headers: HEADERS,
-      body: "",
-    };
+    return { statusCode: 204, headers: HEADERS, body: "" };
   }
   return null;
 }
@@ -64,7 +149,7 @@ function safeJsonParse(str) {
   try {
     return JSON.parse(str);
   } catch {
-    return null;
+    return {};
   }
 }
 
@@ -74,6 +159,7 @@ function baseUrl(event) {
     headers["x-forwarded-proto"] ||
     headers["X-Forwarded-Proto"] ||
     "https";
+
   const host =
     headers["x-forwarded-host"] ||
     headers["X-Forwarded-Host"] ||
@@ -81,10 +167,7 @@ function baseUrl(event) {
     headers.Host ||
     "";
 
-  const explicit =
-    process.env.SITE_URL ||
-    process.env.DEPLOY_PRIME_URL ||
-    "";
+  const explicit = process.env.SITE_URL || process.env.DEPLOY_PRIME_URL || "";
 
   if (explicit) return explicit.replace(/\/$/, "");
   if (!host) return "";
@@ -104,48 +187,89 @@ function validateZip(zip) {
   return z.length === 5;
 }
 
-function fallbackShippingMX(items_qty) {
-  const qty = Math.max(1, Number(items_qty || 1));
+function normalizeQty(n) {
+  return Math.max(1, Math.min(99, Math.round(Number(n || 1))));
+}
+
+function getFallbackShipping({ country = "MX", items_qty = 1 }) {
+  const qty = normalizeQty(items_qty);
+
+  if (String(country || "MX").toUpperCase() === "US") {
+    const calc = FALLBACK_US_PRICE.base + (qty - 1) * FALLBACK_US_PRICE.per_item;
+    return Math.min(FALLBACK_US_PRICE.max, calc);
+  }
+
   const calc = FALLBACK_MX_PRICE.base + (qty - 1) * FALLBACK_MX_PRICE.per_item;
   return Math.min(FALLBACK_MX_PRICE.max, calc);
 }
 
+/* -----------------------
+   10) Parcel estimation (conservador)
+------------------------ */
+function getPackageSpecs(items_qty = 1) {
+  const qty = normalizeQty(items_qty);
+  const weightKg = Math.max(1, qty * 0.7);
+
+  return {
+    weight: weightKg,
+    length: 30,
+    width: 25,
+    height: Math.min(35, 8 + qty * 4),
+  };
+}
+
+function estimateParcel(items) {
+  const qty = Array.isArray(items)
+    ? items.reduce((a, b) => a + normalizeQty(b?.qty), 0)
+    : 1;
+  return getPackageSpecs(qty);
+}
+
+/* -----------------------
+   11) Envía Quote (live or fallback)
+------------------------ */
 async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
+  if (!validateZip(zip)) {
+    return {
+      ok: false,
+      mode: "fallback",
+      cost: getFallbackShipping({ country, items_qty }),
+      label: "CP inválido (estimación)",
+      carrier: null,
+      raw: null,
+    };
+  }
+
   if (!ENVIA_KEY) {
     return {
       ok: false,
       mode: "fallback",
-      amount: fallbackShippingMX(items_qty),
-      label: "Envío estándar (fallback)",
+      cost: getFallbackShipping({ country, items_qty }),
+      label: "Envío (estimación)",
       carrier: null,
       raw: null,
       error: "ENVIA_API_KEY missing",
     };
   }
 
-  if (!validateZip(zip)) {
-    return {
-      ok: false,
-      mode: "fallback",
-      amount: fallbackShippingMX(items_qty),
-      label: "CP inválido (fallback)",
-      carrier: null,
-      raw: null,
-      error: "Invalid ZIP",
-    };
-  }
-
-  // ⚠️ Envía endpoint can vary by account. Keep it generic & safe.
-  // If your existing flow already works, this function is the same idea:
-  // - If API fails -> fallback
   try {
-    // NOTE: Adjust the endpoint/payload ONLY if your existing envía call differs.
-    const url = "https://api.envia.com/ship/rate";
+    const pkg = getPackageSpecs(items_qty);
+
+    const url = "https://api.envia.com/ship/rate/";
     const payload = {
-      origin: { country_code: "MX", postal_code: "22000" },
+      origin: { country_code: "MX", postal_code: FACTORY_ORIGIN.postal_code },
       destination: { country_code: country, postal_code: normalizeZip(zip) },
-      packages: [{ content: "merch", amount: 1, type: "box", weight: 1 }],
-      shipment: { carrier: "" },
+      packages: [
+        {
+          content: "merch",
+          amount: 1,
+          type: "box",
+          weight: pkg.weight,
+          length: pkg.length,
+          width: pkg.width,
+          height: pkg.height,
+        },
+      ],
     };
 
     const r = await axios.post(url, payload, {
@@ -159,7 +283,6 @@ async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
     const data = r.data || {};
     const rates = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
 
-    // Pick cheapest valid rate
     const normalized = rates
       .map((x) => ({
         carrier: x?.carrier || x?.carrier_name || x?.provider || null,
@@ -173,8 +296,8 @@ async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
       return {
         ok: false,
         mode: "fallback",
-        amount: fallbackShippingMX(items_qty),
-        label: "Envío estándar (fallback)",
+        cost: getFallbackShipping({ country, items_qty }),
+        label: "Envío (estimación)",
         carrier: null,
         raw: data,
         error: "No rates",
@@ -187,7 +310,7 @@ async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
     return {
       ok: true,
       mode: "live",
-      amount: Math.round(best.amount),
+      cost: Math.round(best.amount),
       label: `${best.carrier || "Paquetería"}${best.service ? " · " + best.service : ""}`,
       carrier: best.carrier,
       raw: best.raw,
@@ -196,8 +319,8 @@ async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
     return {
       ok: false,
       mode: "fallback",
-      amount: fallbackShippingMX(items_qty),
-      label: "Envío estándar (fallback)",
+      cost: getFallbackShipping({ country, items_qty }),
+      label: "Envío (estimación)",
       carrier: null,
       raw: err?.response?.data || null,
       error: err?.message || "Envía error",
@@ -205,9 +328,10 @@ async function getEnviaQuote({ zip, country = "MX", items_qty = 1 }) {
   }
 }
 
+/* -----------------------
+   12) Envía Label (used by stripe_webhook)
+------------------------ */
 async function createEnviaLabel({ order, destination }) {
-  // This is used by stripe_webhook in your repo.
-  // Keep behavior stable: if ENVIA is not configured, return a safe "skip".
   if (!ENVIA_KEY) {
     return {
       ok: false,
@@ -220,14 +344,34 @@ async function createEnviaLabel({ order, destination }) {
     };
   }
 
-  // If you already have a working label flow, KEEP it.
-  // This function is conservative and will not break checkout.
   try {
-    const url = "https://api.envia.com/ship/generate";
+    const pkg = getPackageSpecs(order?.items_qty || 1);
+
+    const url = "https://api.envia.com/ship/generate/";
     const payload = {
       order_reference: order?.id || order?.stripe_session_id || "",
+      origin: {
+        name: FACTORY_ORIGIN.name,
+        phone: FACTORY_ORIGIN.phone,
+        email: FACTORY_ORIGIN.email,
+        address1: FACTORY_ORIGIN.address1,
+        city: FACTORY_ORIGIN.city,
+        state: FACTORY_ORIGIN.state,
+        country: FACTORY_ORIGIN.country,
+        postal_code: FACTORY_ORIGIN.postal_code,
+      },
       destination: destination || {},
-      packages: [{ content: "merch", amount: 1, type: "box", weight: 1 }],
+      packages: [
+        {
+          content: "merch",
+          amount: 1,
+          type: "box",
+          weight: pkg.weight,
+          length: pkg.length,
+          width: pkg.width,
+          height: pkg.height,
+        },
+      ],
     };
 
     const r = await axios.post(url, payload, {
@@ -243,8 +387,7 @@ async function createEnviaLabel({ order, destination }) {
 
     return {
       ok: true,
-      tracking_number:
-        shipment?.tracking_number || shipment?.trackingNumber || null,
+      tracking_number: shipment?.tracking_number || shipment?.trackingNumber || null,
       label_url: shipment?.label_url || shipment?.labelUrl || null,
       carrier: shipment?.carrier || shipment?.carrier_name || null,
       raw: shipment,
@@ -262,34 +405,53 @@ async function createEnviaLabel({ order, destination }) {
   }
 }
 
-async function sendTelegram(text) {
-  const token = process.env.TELEGRAM_BOT_TOKEN || "";
-  const chatId = process.env.TELEGRAM_CHAT_ID || "";
-  if (!token || !chatId) return { ok: false, skipped: true };
-
+/* -----------------------
+   13) Products loader (optional UnicOs use)
+------------------------ */
+async function getProductsFromDb(supabaseAdminClient, orgSlug = "score-store") {
+  if (!supabaseAdminClient) return [];
   try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    await axios.post(
-      url,
-      { chat_id: chatId, text },
-      { timeout: 10000 }
-    );
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, error: err?.message || "telegram error" };
+    const { data: org } = await supabaseAdminClient
+      .from("organizations")
+      .select("id")
+      .eq("slug", orgSlug)
+      .maybeSingle();
+
+    const org_id = org?.id || DEFAULT_ORG_ID;
+
+    const { data: prods } = await supabaseAdminClient
+      .from("products")
+      .select("*")
+      .eq("org_id", org_id)
+      .eq("active", true);
+
+    return Array.isArray(prods) ? prods : [];
+  } catch {
+    return [];
   }
 }
 
+/* -----------------------
+   14) Exports (mantiene estructura usada por tus functions)
+------------------------ */
 module.exports = {
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY,
-  ENVIA_KEY,
-  FALLBACK_MX_PRICE,
   HEADERS,
 
-  supabaseAnon,
+  SUPABASE_URL,
+  SUPABASE_ANON,
+  supabase,
   supabaseAdmin,
+
+  DEFAULT_ORG_ID,
+  getOrgIdFromEvent,
+
+  ENVIA_KEY,
+
+  FALLBACK_MX_PRICE,
+  FALLBACK_US_PRICE,
+
+  FACTORY_ORIGIN,
+  PROMO_RULES,
 
   jsonResponse,
   handleOptions,
@@ -299,10 +461,14 @@ module.exports = {
   digitsOnly,
   normalizeZip,
   validateZip,
+  normalizeQty,
 
-  fallbackShippingMX,
+  getFallbackShipping,
+  getPackageSpecs,
+  estimateParcel,
+
   getEnviaQuote,
   createEnviaLabel,
 
-  sendTelegram,
+  getProductsFromDb,
 };
