@@ -1,768 +1,710 @@
-/* =========================================================
-   SCORE STORE — MASTER JS PROD 2026 (UNIFIED 360)
-   FIXES:
-   - Catálogo robusto + chips dinámicos (BAJA 400 / SF 250)
-   - Carrito + Totales correctos (Subtotal + Envío)
-   - Envío: Pickup / MX / USA + cotizador real (/.netlify/functions/quote_shipping)
-   - Checkout: envía shipping data al backend (create_checkout)
-   - Legal modal: Terms + Privacy (fetch /legal.html con fallback)
-   - Cookie banner (persistente)
-   - AI chat UI (Gemini endpoint /chat) con fallback
-   - PWA: registra sw.js + soporta openCart=1 y status=success/cancel
-   ========================================================= */
+/* SCORE STORE — FRONTEND LOGIC (UNIFIED) v2026_PROD_UNIFIED_361 */
 
-const CONFIG = {
-  // Stripe publishable (NO se usa directo; checkout redirige por URL del backend)
-  stripeKey: "pk_live_51STepg1ExTx11WqTGdkk68CLhZHqnBkIAzE2EacmhSR336HvR9nQY5dskyPWotJ6AExFjstC7C7wUTsOIIzRGols00hFSwI8yp",
+// === Public Supabase (anon) ===
+const SUPABASE_URL = "https://lpbzndnavkbpxwnlbqgb.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE";
 
-  // Integraciones server-side (Netlify functions)
-  endpoints: {
-    checkout: "/api/checkout", // redirect a /.netlify/functions/create_checkout
-    quote: "/api/quote",       // redirect a /.netlify/functions/quote_shipping
-    ai: "/api/chat"            // redirect a /.netlify/functions/chat
-  },
+// === API routing (Netlify redirects: /api/* -> functions) ===
+const API_CANDIDATES = ["/api", "/.netlify/functions"];
+let API_BASE = API_CANDIDATES[0];
 
-  storageKey: "score_cart_2026",
-  catalogUrl: "/data/catalog.json",
-  promosUrl: "/data/promos.json", // future
-  cookieKey: "cookieConsent"
+const APP_VER = "2026_PROD_UNIFIED_361";
+const CART_KEY = "score_cart_prod_v5";
+
+let cart = [];
+let catalogData = { products: [], sections: [] };
+let selectedSizeByProduct = {};
+let PROMO_ACTIVE = false;
+let FAKE_MARKUP_FACTOR = 1.0;
+let supabase = null;
+
+let shippingState = {
+  mode: "pickup",
+  cost: 0,
+  label: "Gratis (Fábrica TJ)",
 };
 
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => document.querySelectorAll(q);
+const $ = (id) => document.getElementById(id);
+const money = (n) =>
+  new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  }).format(Number(n || 0));
 
-const fmtMXN = (n) =>
-  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
-
-const STATE = {
-  cart: safeJson(localStorage.getItem(CONFIG.storageKey), []),
-  products: [],
-  sections: [],
-  filter: "ALL",
-
-  shipping: {
-    mode: "pickup",    // pickup | mx | us
-    country: "MX",     // MX | US
-    zip: "",
-    amount: 0,
-    label: "Pickup Gratis",
-    quoted: true
-  },
-
-  legalCacheHtml: null
+const cleanUrl = (url) => {
+  if (!url) return "";
+  return encodeURI(String(url).trim());
 };
 
-/* =========================================================
-   UTIL
-   ========================================================= */
-function safeJson(str, fallback) {
+function safeJsonParse(str, fallback) {
   try {
-    const v = JSON.parse(str);
-    return v ?? fallback;
+    return JSON.parse(str);
   } catch {
     return fallback;
   }
 }
 
-function toast(msg) {
-  if (typeof window.showToastCompat === "function") return window.showToastCompat(msg);
-  const el = $("#toast");
-  if (!el) return;
-  el.textContent = String(msg || "");
-  el.classList.add("show");
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
-}
-
-async function postJSON(url, payload) {
-  const res = await fetch(url, {
+async function apiJson(fnName, payload) {
+  const body = JSON.stringify(payload || {});
+  const opts = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload || {})
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const err = data?.error || data?.message || `HTTP ${res.status}`;
-    throw new Error(err);
+    body,
+  };
+
+  // 1) try cached base
+  let res = await fetch(`${API_BASE}/${fnName}`, opts);
+
+  // 2) fallback if 404 or method mismatch
+  if (!res.ok && (res.status === 404 || res.status === 405)) {
+    for (const base of API_CANDIDATES) {
+      if (base === API_BASE) continue;
+      const rr = await fetch(`${base}/${fnName}`, opts);
+      if (rr.ok) {
+        API_BASE = base;
+        res = rr;
+        break;
+      }
+    }
   }
+
+  const txt = await res.text();
+  const data = safeJsonParse(txt, { ok: false, error: txt });
+  if (!res.ok) throw new Error(data?.error || `API ${fnName} (${res.status})`);
   return data;
 }
 
-function qtyInCart() {
-  return (STATE.cart || []).reduce((a, b) => a + Number(b.qty || 0), 0);
+function toast(msg) {
+  const t = $("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-function subtotalCart() {
-  return (STATE.cart || []).reduce((a, b) => a + Number(b.price || 0) * Number(b.qty || 0), 0);
+function loadCart() {
+  const saved = localStorage.getItem(CART_KEY);
+  if (saved) {
+    const parsed = safeJsonParse(saved, null);
+    if (Array.isArray(parsed)) cart = parsed;
+  }
 }
 
-function setText(sel, value) {
-  const el = typeof sel === "string" ? $(sel) : sel;
-  if (!el) return;
-  el.textContent = value;
-}
-
-function setHTML(sel, value) {
-  const el = typeof sel === "string" ? $(sel) : sel;
-  if (!el) return;
-  el.innerHTML = value;
-}
-
-/* =========================================================
-   CART
-   ========================================================= */
 function saveCart() {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(STATE.cart || []));
-  const qty = qtyInCart();
-  $$(".cartCount").forEach((el) => (el.textContent = qty));
-  updateDrawerUI();
-  updateTotalsUI();
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-function updateDrawerUI() {
-  const container = $("#cartItems");
-  if (!container) return;
-
-  container.innerHTML = (STATE.cart && STATE.cart.length)
-    ? ""
-    : "<p style='text-align:center;padding:20px;opacity:0.6;'>Tu carrito está vacío</p>";
-
-  (STATE.cart || []).forEach((item, idx) => {
-    const row = document.createElement("div");
-    row.className = "cartRow";
-    row.innerHTML = `
-      <div class="cartThumb"><img src="${escapeAttr(item.img)}" alt=""></div>
-      <div class="cartInfo">
-        <div class="name">${escapeHtml(item.name)}</div>
-        <div class="price">${fmtMXN(item.price)} x ${Number(item.qty || 1)}</div>
-        <div style="font-size:10px;opacity:0.6;">Talla: ${escapeHtml(item.size || "Unitalla")}</div>
-      </div>
-      <button class="removeBtn" type="button" aria-label="Eliminar" onclick="removeFromCart(${idx})"
-        style="color:var(--score-red);font-weight:bold;padding:5px;">✕</button>
-    `;
-    container.appendChild(row);
-  });
+function findProduct(id) {
+  return catalogData.products.find((p) => String(p.id) === String(id));
 }
 
-function updateTotalsUI() {
-  const sub = subtotalCart();
-  const ship = Number(STATE.shipping.amount || 0);
-  const total = sub + ship;
-
-  setText("#cartSubtotal", fmtMXN(sub));
-  setText("#cartShipping", fmtMXN(ship));
-  setText("#cartTotal", fmtMXN(total));
-
-  // label
-  setText("#cartShipLabel", STATE.shipping.label || "Envío");
-  // hero quote label
-  const shipQuote = $("#shipQuote");
-  if (shipQuote) shipQuote.textContent = STATE.shipping.quoted
-    ? `${STATE.shipping.label}: ${fmtMXN(ship)}`
-    : "";
+function cartQty() {
+  return cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0);
 }
 
-window.removeFromCart = (idx) => {
-  STATE.cart.splice(idx, 1);
-  // si el carrito quedó vacío, reset shipping a pickup
-  if (!STATE.cart.length) setShippingMode("pickup", { silent: true });
-  saveCart();
+function cartSubtotal() {
+  let total = 0;
+  for (const i of cart) {
+    const p = findProduct(i.id);
+    if (!p) continue;
+    total += Number(p.baseMXN || 0) * (Number(i.qty) || 0);
+  }
+  return total;
+}
+
+function setOverlay(on) {
+  const overlay = $("overlay");
+  if (overlay) overlay.classList.toggle("active", !!on);
+  document.body.classList.toggle("modalOpen", !!on);
+}
+
+function openModal(id) {
+  const el = $(id);
+  if (!el) return;
+  el.classList.add("active");
+  setOverlay(true);
+}
+
+function closeModal(id) {
+  const el = $(id);
+  if (!el) return;
+  el.classList.remove("active");
+}
+
+function openDrawer() {
+  const d = $("drawer");
+  if (!d) return;
+  d.classList.add("active");
+  setOverlay(true);
+}
+
+function closeDrawer() {
+  const d = $("drawer");
+  if (!d) return;
+  d.classList.remove("active");
+}
+
+// Expose for inline handlers
+window.openDrawer = openDrawer;
+
+window.closeAll = () => {
+  closeModal("modalCatalog");
+  closeDrawer();
+
+  // If nothing is open, turn overlay off
+  const anyOpen =
+    $("modalCatalog")?.classList.contains("active") ||
+    $("drawer")?.classList.contains("active");
+
+  if (!anyOpen) setOverlay(false);
 };
 
-function addToCart(id) {
-  const p = (STATE.products || []).find((x) => x.id === id);
-  if (!p) return;
-
-  const safeId = String(p.id || "").replace(/[^a-z0-9]/gi, "");
-  const size = $(`#size-${safeId}`)?.value || "Unitalla";
-
-  const key = `${id}-${size}`;
-  const ex = (STATE.cart || []).find((i) => i.key === key);
-
-  if (ex) ex.qty = Number(ex.qty || 1) + 1;
-  else {
-    STATE.cart.push({
-      key,
-      id: p.id,
-      name: p.name,
-      price: Number(p.baseMXN || 0),
-      img: p.img,
-      size,
-      qty: 1
-    });
+window.emptyCart = (silent) => {
+  if (silent || confirm("¿Vaciar carrito?")) {
+    cart = [];
+    saveCart();
+    updateCartUI();
   }
+};
 
-  // shipping quote queda stale si cambió qty
-  if (STATE.shipping.mode !== "pickup") STATE.shipping.quoted = false;
+window.removeFromCart = (idx) => {
+  cart.splice(idx, 1);
+  saveCart();
+  updateCartUI();
+};
+
+window.incQty = (idx) => {
+  if (!cart[idx]) return;
+  cart[idx].qty = (Number(cart[idx].qty) || 0) + 1;
+  saveCart();
+  updateCartUI();
+};
+
+window.decQty = (idx) => {
+  if (!cart[idx]) return;
+  cart[idx].qty = Math.max(1, (Number(cart[idx].qty) || 1) - 1);
+  saveCart();
+  updateCartUI();
+};
+
+window.addToCart = (id, size) => {
+  const pid = String(id);
+  const p = findProduct(pid);
+  if (!p) return toast("Producto no disponible");
+
+  const sizes = p.sizes?.length ? p.sizes : ["Unitalla"];
+  const sz = size || selectedSizeByProduct[pid] || sizes[0];
+
+  const existing = cart.find((i) => String(i.id) === pid && String(i.size) === String(sz));
+  if (existing) existing.qty = (Number(existing.qty) || 0) + 1;
+  else cart.push({ id: pid, size: sz, qty: 1 });
 
   saveCart();
+  updateCartUI();
+  toast("Agregado");
   openDrawer();
-}
-window.addToCart = addToCart;
 
-/* =========================================================
-   DRAWER
-   ========================================================= */
-function openDrawer() {
-  $("#cartDrawer")?.classList.add("open");
-  $("#pageOverlay")?.classList.add("show");
-  document.body.classList.add("no-scroll");
-}
-function closeDrawer() {
-  $("#cartDrawer")?.classList.remove("open");
-  $("#pageOverlay")?.classList.remove("show");
-  document.body.classList.remove("no-scroll");
-}
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
+  if (typeof fbq === "function") {
+    fbq("track", "AddToCart", { content_ids: [pid], content_type: "product" });
+  }
+};
 
-/* =========================================================
-   CATALOGO + FILTROS
-   ========================================================= */
-function normalizeSectionTitle(t) {
-  return String(t || "").replace(/\s+/g, " ").trim();
-}
+function renderProductSlider(images, dotsId) {
+  const imgs = (images || []).filter(Boolean);
+  if (imgs.length <= 1) {
+    return {
+      sliderHtml: `<div class="prod-slider"><div class="prod-slide"><img src="${cleanUrl(imgs[0] || "/assets/logo-score.webp")}" class="prodImg" loading="lazy"></div></div>`,
+      dotsHtml: "",
+      dotsId: null,
+    };
+  }
 
-function ensureSectionChips() {
-  const host = $(".filters");
-  if (!host || !Array.isArray(STATE.sections)) return;
+  const slides = imgs
+    .map(
+      (src) =>
+        `<div class="prod-slide"><img src="${cleanUrl(src)}" class="prodImg" loading="lazy"></div>`
+    )
+    .join("");
 
-  const existing = new Set(
-    Array.from($$(".chip"))
-      .map((b) => String(b.dataset.filter || "").toUpperCase())
-      .filter(Boolean)
-  );
+  const dots = imgs
+    .map((_, i) => `<span class="slider-dot ${i === 0 ? "active" : ""}" data-dot="${i}"></span>`)
+    .join("");
 
-  // Agrega chips para cada sección del JSON si no existe
-  STATE.sections.forEach((s) => {
-    const id = String(s.id || "").toUpperCase();
-    if (!id || existing.has(id)) return;
-    const btn = document.createElement("button");
-    btn.className = "chip";
-    btn.type = "button";
-    btn.dataset.filter = id;
-    btn.textContent = normalizeSectionTitle(s.title || id.replaceAll("_", " "));
-    host.appendChild(btn);
-    existing.add(id);
-  });
-
-  bindChipEvents(); // re-bind (incluye nuevos)
+  return {
+    sliderHtml: `<div class="prod-slider" data-dots="${dotsId}">${slides}</div>`,
+    dotsHtml: `<div class="slider-dots" id="${dotsId}">${dots}</div>`,
+    dotsId,
+  };
 }
 
-function bindChipEvents() {
-  $$(".chip").forEach((btn) => {
-    if (btn.__bound) return;
-    btn.__bound = true;
-    btn.addEventListener("click", () => {
-      $$(".chip").forEach((c) => c.classList.remove("active"));
-      btn.classList.add("active");
-      STATE.filter = String(btn.dataset.filter || "ALL").toUpperCase();
-      renderGrid();
+function wireSliders(rootEl) {
+  rootEl.querySelectorAll(".prod-slider[data-dots]").forEach((slider) => {
+    const dotsId = slider.getAttribute("data-dots");
+    const dotsWrap = dotsId ? document.getElementById(dotsId) : null;
+    if (!dotsWrap) return;
+
+    const onScroll = () => {
+      const idx = Math.round(slider.scrollLeft / Math.max(1, slider.clientWidth));
+      dotsWrap.querySelectorAll(".slider-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+    };
+
+    slider.addEventListener("scroll", () => {
+      window.requestAnimationFrame(onScroll);
+    });
+
+    // Tap on dots
+    dotsWrap.addEventListener("click", (e) => {
+      const dot = e.target.closest("[data-dot]");
+      if (!dot) return;
+      const i = Number(dot.getAttribute("data-dot"));
+      slider.scrollTo({ left: i * slider.clientWidth, behavior: "smooth" });
     });
   });
 }
 
-function renderGrid() {
-  const grid = $("#productsGrid");
-  if (!grid) return;
+window.openCatalog = (sectionId, titleFallback) => {
+  const sid = String(sectionId || "");
 
-  const list = Array.isArray(STATE.products) ? STATE.products : [];
-  const filtered = list.filter((p) => {
-    const section = String(p.sectionId || "").toUpperCase();
-    if (STATE.filter === "ALL") return true;
+  const sectionInfo = catalogData.sections.find((s) => String(s.id) === sid);
+  const titleEl = $("catTitle");
+  if (titleEl) {
+    if (sectionInfo?.logo) {
+      titleEl.innerHTML = `<img src="${cleanUrl(sectionInfo.logo)}" style="height:80px;width:auto;">`;
+    } else {
+      titleEl.textContent = titleFallback || "COLECCIÓN";
+    }
+  }
 
-    // chips fijas por categoría
-    if (STATE.filter === "HOODIES") return p.subSection === "Hoodies";
-    if (STATE.filter === "TEES") return p.subSection === "Camisetas";
-    if (STATE.filter === "CAPS") return p.subSection === "Gorras";
+  const items = catalogData.products.filter((p) => String(p.sectionId) === sid);
+  const container = $("catContent");
+  if (!container) return;
 
-    // chips por evento
-    return section === STATE.filter;
+  container.innerHTML = "";
+
+  if (!items.length) {
+    container.innerHTML = `<div style="text-align:center;padding:50px;color:#666;">Próximamente...</div>`;
+    openModal("modalCatalog");
+    return;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "catGrid";
+
+  items.forEach((p) => {
+    const sizes = p.sizes?.length ? p.sizes : ["Unitalla"];
+    if (!selectedSizeByProduct[p.id]) selectedSizeByProduct[p.id] = sizes[0];
+
+    const sizesHtml = sizes
+      .map((sz) => {
+        const active = selectedSizeByProduct[p.id] === sz ? "active" : "";
+        return `<button class="size-pill ${active}" data-pid="${p.id}" data-size="${sz}">${sz}</button>`;
+      })
+      .join("");
+
+    const sellPrice = Number(p.baseMXN || 0);
+    const fakeOldPrice = Math.round(sellPrice * (PROMO_ACTIVE ? FAKE_MARKUP_FACTOR : 1));
+    const priceHtml = PROMO_ACTIVE
+      ? `<div class="price-container"><span class="old-price">${money(fakeOldPrice)}</span><span class="new-price">${money(sellPrice)}</span></div>`
+      : `<div class="price-container"><span class="new-price">${money(sellPrice)}</span></div>`;
+
+    const images = (p.images && p.images.length ? p.images : [p.img]).filter(Boolean);
+    const dotsId = `dots_${String(p.id).replace(/[^a-z0-9_\-]/gi, "_")}`;
+    const { sliderHtml, dotsHtml } = renderProductSlider(images, dotsId);
+
+    const el = document.createElement("div");
+    el.className = "prodCard";
+
+    el.innerHTML = `
+      <div class="metallic-frame">
+        ${PROMO_ACTIVE ? '<div class="promo-badge">OFERTA</div>' : ''}
+        ${sliderHtml}
+        ${dotsHtml}
+      </div>
+      <div class="prodName">${p.name}</div>
+      ${priceHtml}
+      <div class="sizeRow">${sizesHtml}</div>
+      <button class="btn-add" data-add="${p.id}">AGREGAR</button>
+    `;
+
+    grid.appendChild(el);
   });
 
-  if (!filtered.length) {
-    grid.innerHTML = `
-      <div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(0,0,0,.2); border-radius:16px; background:rgba(255,255,255,.7)">
-        <b>No hay productos en este filtro.</b>
-        <div style="opacity:.7; margin-top:6px">Prueba con “Todo”.</div>
-      </div>
-    `;
-    return;
-  }
+  container.appendChild(grid);
 
-  grid.innerHTML = "";
-  filtered.forEach((p) => {
-    const safeId = String(p.id || "").replace(/[^a-z0-9]/gi, "");
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `
-      <div class="p-media"><img src="${escapeAttr(p.img)}" alt="${escapeAttr(p.name)}" loading="lazy"></div>
-      <div class="p-body">
-        <div class="p-top">
-          <h3 class="p-name">${escapeHtml(p.name)}</h3>
-          <span class="p-price">${fmtMXN(p.baseMXN)}</span>
-        </div>
-        <select id="size-${safeId}" class="p-size-sel" aria-label="Talla">
-          ${(p.sizes || ["Unitalla"]).map((s) => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join("")}
-        </select>
-        <button class="p-btn-add" type="button" onclick="addToCart('${escapeAttr(p.id)}')">AGREGAR AL CARRITO</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-/* =========================================================
-   SHIPPING UI
-   ========================================================= */
-function normalizeZip(input) {
-  return String(input || "").replace(/[^\d]/g, "").slice(0, 5);
-}
-
-function syncZipInputs(zip) {
-  const z = normalizeZip(zip);
-  const a = $("#shipZip");
-  const b = $("#miniZip");
-  if (a) a.value = z;
-  if (b) b.value = z;
-}
-
-function syncShipRadios(mode) {
-  // hero radios
-  const hero = $$("input[name='shipModeHero']");
-  hero.forEach((r) => (r.checked = r.value === mode));
-
-  // drawer radios
-  const dr = $$("input[name='shipMode']");
-  dr.forEach((r) => (r.checked = r.value === mode));
-}
-
-function setShippingMode(mode, opts = {}) {
-  const m = (mode || "pickup").toLowerCase();
-
-  STATE.shipping.mode = m;
-  STATE.shipping.quoted = (m === "pickup");
-
-  if (m === "us") STATE.shipping.country = "US";
-  else STATE.shipping.country = "MX";
-
-  if (m === "pickup") {
-    STATE.shipping.amount = 0;
-    STATE.shipping.label = "Pickup Gratis";
-  } else {
-    STATE.shipping.amount = 0;
-    STATE.shipping.label = (m === "us") ? "Cotiza envío (USA)" : "Cotiza envío (MX)";
-  }
-
-  syncShipRadios(m);
-
-  // zip inputs show/hide
-  const zipWrap = $("#shipZipWrap");
-  const zipRow = $("#zipRow");
-  if (zipWrap) zipWrap.style.display = (m === "pickup") ? "none" : "block";
-  if (zipRow) zipRow.style.display = (m === "pickup") ? "none" : "flex";
-
-  if (!opts.silent) updateTotalsUI();
-}
-window.toggleShipping = (mode) => setShippingMode(mode);
-
-/**
- * Cotiza shipping y actualiza:
- * - hero quote
- * - drawer label + amount
- * - totals
- */
-async function quoteShippingUI() {
-  if (!STATE.cart.length) {
-    toast("Tu carrito está vacío.");
-    return;
-  }
-
-  const mode = STATE.shipping.mode;
-
-  if (mode === "pickup") {
-    STATE.shipping.amount = 0;
-    STATE.shipping.label = "Pickup Gratis";
-    STATE.shipping.quoted = true;
-    updateTotalsUI();
-    toast("Pickup seleccionado.");
-    return;
-  }
-
-  // toma zip desde el input que tenga valor
-  const zip = normalizeZip($("#miniZip")?.value || $("#shipZip")?.value || STATE.shipping.zip);
-  if (zip.length !== 5) {
-    toast("Pon un CP/ZIP de 5 dígitos.");
-    return;
-  }
-
-  // guarda zip en state + inputs
-  STATE.shipping.zip = zip;
-  syncZipInputs(zip);
-
-  const items = (STATE.cart || []).map((it) => ({ id: it.id, qty: Number(it.qty || 1) }));
-
-  try {
-    const data = await postJSON(CONFIG.endpoints.quote, {
-      zip,
-      country: STATE.shipping.country,
-      items
-    });
-
-    const amount = Number(data.amount || 0);
-    const label = String(data.label || "Envío");
-
-    STATE.shipping.amount = Math.max(0, Math.round(amount));
-    STATE.shipping.label = label;
-    STATE.shipping.quoted = true;
-
-    updateTotalsUI();
-    toast(`${label}: ${fmtMXN(STATE.shipping.amount)}`);
-  } catch (e) {
-    console.error("[quote] error:", e);
-    STATE.shipping.amount = 0;
-    STATE.shipping.label = (STATE.shipping.country === "US") ? "Envío (USA)" : "Envío (MX)";
-    STATE.shipping.quoted = false;
-    updateTotalsUI();
-    toast("No pude cotizar ahorita. Intenta otra vez.");
-  }
-}
-window.quoteShippingUI = quoteShippingUI;
-
-/* =========================================================
-   CHECKOUT
-   ========================================================= */
-window.doCheckout = async () => {
-  const btn = $("#checkoutBtn");
-  if (!STATE.cart.length) return toast("Agrega productos al carrito.");
-
-  // si no es pickup y no está cotizado, intenta cotizar (obligatorio)
-  if (STATE.shipping.mode !== "pickup" && !STATE.shipping.quoted) {
-    await quoteShippingUI();
-    if (!STATE.shipping.quoted) return; // no avanzamos si no hay quote
-  }
-
-  const shippingData = {
-    zip: STATE.shipping.zip || "",
-    postal_code: STATE.shipping.zip || "",
-    country: STATE.shipping.country || "MX"
-  };
-
-  const payload = {
-    cart: STATE.cart,
-    shipping: Number(STATE.shipping.amount || 0),
-    shippingLabel: STATE.shipping.label,
-    shippingMode: STATE.shipping.mode,
-    shippingData
-  };
-
-  try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "PROCESANDO...";
+  // Wire size + add
+  container.onclick = (e) => {
+    const btnSize = e.target.closest("[data-size]");
+    if (btnSize) {
+      const pid = btnSize.getAttribute("data-pid");
+      const size = btnSize.getAttribute("data-size");
+      selectedSizeByProduct[pid] = size;
+      btnSize.parentElement.querySelectorAll(".size-pill").forEach((b) => b.classList.remove("active"));
+      btnSize.classList.add("active");
+      return;
     }
 
-    const data = await postJSON(CONFIG.endpoints.checkout, payload);
+    const btnAdd = e.target.closest("[data-add]");
+    if (btnAdd) {
+      const pid = btnAdd.getAttribute("data-add");
+      addToCart(pid, selectedSizeByProduct[pid]);
+    }
+  };
+
+  // sliders
+  wireSliders(container);
+
+  openModal("modalCatalog");
+};
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          observer.unobserve(e.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  document.querySelectorAll(".scroll-reveal").forEach((el) => observer.observe(el));
+}
+
+function initSplash() {
+  const splash = $("splash-screen");
+  if (splash) setTimeout(() => splash.classList.add("hidden"), 2000);
+  setTimeout(() => {
+    if (splash && !splash.classList.contains("hidden")) splash.classList.add("hidden");
+  }, 4500);
+}
+
+async function loadCatalogLocal() {
+  const res = await fetch(`/data/catalog.json?v=${APP_VER}`);
+  if (!res.ok) throw new Error("catalog.json no disponible");
+  const data = await res.json();
+  if (!data?.products?.length) throw new Error("catalog vacío");
+  catalogData = data;
+}
+
+async function loadCatalogFromDB() {
+  if (!supabase) throw new Error("No supabase client");
+
+  const { data: org, error: orgErr } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("slug", "score-store")
+    .single();
+
+  if (orgErr || !org?.id) throw new Error("org no disponible");
+
+  const { data: products, error: pErr } = await supabase
+    .from("products")
+    .select("id, name, price, category, image_url, sku")
+    .eq("org_id", org.id)
+    .eq("active", true);
+
+  if (pErr || !Array.isArray(products) || !products.length) throw new Error("products no disponible");
+
+  catalogData.products = products.map((p) => ({
+    id: p.id,
+    sku: p.sku || null,
+    name: p.name,
+    baseMXN: Number(p.price || 0),
+    sectionId: p.category || "BAJA_1000",
+    img: p.image_url || "/assets/logo-score.webp",
+    images: [p.image_url || "/assets/logo-score.webp"],
+    sizes: ["S", "M", "L", "XL", "2XL"],
+  }));
+
+  // Sections are static (UI)
+  catalogData.sections = [
+    { id: "BAJA_1000", title: "BAJA 1000", logo: "/assets/logo-baja1000.webp" },
+    { id: "BAJA_500", title: "BAJA 500", logo: "/assets/logo-baja500.webp" },
+    { id: "BAJA_400", title: "BAJA 400", logo: "/assets/logo-baja400.webp" },
+    { id: "SF_250", title: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp" },
+  ];
+}
+
+async function loadSiteConfig() {
+  if (!supabase) return;
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("slug", "score-store")
+    .single();
+
+  if (!org?.id) return;
+
+  const { data: config } = await supabase
+    .from("site_settings")
+    .select("*")
+    .eq("org_id", org.id)
+    .single();
+
+  if (!config) return;
+
+  const h1 = $("hero-title");
+  if (h1 && config.hero_title) h1.textContent = config.hero_title;
+
+  if (config.promo_active) {
+    PROMO_ACTIVE = true;
+    FAKE_MARKUP_FACTOR = 1.3;
+    const bar = $("promo-bar");
+    const txt = $("promo-text");
+    if (bar) bar.style.display = "flex";
+    if (txt) txt.innerHTML = config.promo_text || "🔥 OFERTA ACTIVA 🔥";
+  }
+
+  // Optional Pixel injection
+  if (config.pixel_id && typeof window.fbq !== "function") {
+    /* eslint-disable */
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', config.pixel_id);
+    fbq('track', 'PageView');
+    /* eslint-enable */
+  }
+}
+
+function updateCartUI() {
+  const countEl = $("cartCount");
+  if (countEl) countEl.textContent = String(cartQty());
+
+  const itemsEl = $("cartItems");
+  const emptyEl = $("cartEmpty");
+
+  if (emptyEl) emptyEl.style.display = cart.length ? "none" : "block";
+
+  if (itemsEl) {
+    itemsEl.innerHTML = cart
+      .map((i, idx) => {
+        const p = findProduct(i.id);
+        if (!p) return "";
+        const qty = Number(i.qty) || 1;
+        const line = Number(p.baseMXN || 0) * qty;
+        const img = cleanUrl(p.img || "/assets/logo-score.webp");
+
+        return `
+          <div class="cartItem">
+            <img src="${img}" alt="${p.name}" style="width:70px;height:70px;object-fit:contain;background:#fff;border-radius:10px;border:1px solid #eee;padding:6px;" loading="lazy" />
+            <div>
+              <div style="font-weight:900; color:#111;">${p.name}</div>
+              <div style="color:#666; font-size:12px; margin-top:2px;">Talla: <b>${i.size || "—"}</b></div>
+              <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                <button onclick="decQty(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">−</button>
+                <b style="min-width:18px;text-align:center;">${qty}</b>
+                <button onclick="incQty(${idx})" style="width:28px;height:28px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;">+</button>
+                <span style="margin-left:auto; font-weight:900; color:#111;">${money(line)}</span>
+              </div>
+            </div>
+            <button onclick="removeFromCart(${idx})" style="background:none;border:none;color:#E10600;font-size:18px;cursor:pointer;">✕</button>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  const sub = cartSubtotal();
+  const ship = Number(shippingState.cost || 0);
+  const grand = sub + ship;
+
+  const subEl = $("subTotal");
+  const shipEl = $("shipTotal");
+  const grandEl = $("grandTotal");
+
+  if (subEl) subEl.textContent = money(sub);
+  if (shipEl) shipEl.textContent = shippingState.label || money(ship);
+  if (grandEl) grandEl.textContent = money(grand);
+}
+
+function handleShipModeChange(mode) {
+  shippingState.mode = mode;
+
+  const shipForm = $("shipForm");
+  if (shipForm) shipForm.style.display = mode === "pickup" ? "none" : "block";
+
+  if (mode === "pickup") {
+    shippingState.cost = 0;
+    shippingState.label = "Gratis (Fábrica TJ)";
+  } else if (mode === "tj") {
+    shippingState.cost = 200;
+    shippingState.label = money(200) + " Local Express";
+  } else if (mode === "mx") {
+    shippingState.cost = 0;
+    shippingState.label = "Cotizar (CP)";
+  } else if (mode === "us") {
+    shippingState.cost = 0;
+    shippingState.label = "Cotizar (ZIP)";
+  }
+
+  // Re-quote if cp already set
+  const cp = $("cp")?.value?.trim();
+  if (cp && (mode === "mx" || mode === "us")) {
+    quoteShipping(cp, mode === "us" ? "US" : "MX");
+  }
+
+  updateCartUI();
+}
+
+let quoteTimer = null;
+async function quoteShipping(zip, country) {
+  if (!zip) return;
+
+  shippingState.label = "Cotizando…";
+  updateCartUI();
+
+  const qty = cartQty();
+  const itemsPayload = cart.map((i) => ({ id: i.id, qty: i.qty }));
+
+  try {
+    const data = await apiJson("quote_shipping", {
+      zip,
+      country,
+      items: itemsPayload,
+      items_qty: qty,
+    });
+
+    const cost = Number(data.cost ?? data.amount_mxn ?? 0);
+    shippingState.cost = cost;
+    shippingState.label = data.label || money(cost);
+  } catch (e) {
+    // Fallback
+    const fallback = country === "US" ? 800 : 250;
+    shippingState.cost = fallback;
+    shippingState.label = money(fallback) + " Estándar";
+  }
+
+  updateCartUI();
+}
+
+function setupListeners() {
+  // Shipping radio
+  document.getElementsByName("shipMode").forEach((r) => {
+    r.addEventListener("change", (e) => handleShipModeChange(e.target.value));
+  });
+
+  // CP / ZIP input
+  const cpInput = $("cp");
+  if (cpInput) {
+    cpInput.addEventListener("input", (e) => {
+      const mode = shippingState.mode;
+      const raw = String(e.target.value || "");
+      const val = raw.replace(/[^0-9-]/g, "").slice(0, 10);
+      e.target.value = val;
+
+      if (!(mode === "mx" || mode === "us")) return;
+
+      clearTimeout(quoteTimer);
+      quoteTimer = setTimeout(() => {
+        if (mode === "mx" && val.length === 5) quoteShipping(val, "MX");
+        if (mode === "us" && val.length >= 5) quoteShipping(val, "US");
+      }, 350);
+    });
+  }
+
+  // ESC closes
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") window.closeAll();
+  });
+}
+
+window.checkout = async () => {
+  const btn = $("checkoutBtn");
+  if (!btn) return;
+
+  if (!cart.length) return toast("Carrito vacío");
+
+  const mode = shippingState.mode;
+  const name = $("name")?.value?.trim() || "";
+  const addr = $("addr")?.value?.trim() || "";
+  const cp = $("cp")?.value?.trim() || "";
+
+  const country = mode === "us" ? "US" : "MX";
+
+  if (mode !== "pickup") {
+    if (!name || !addr || !cp) return toast("Faltan datos de envío");
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Procesando…";
+
+  if (typeof fbq === "function") {
+    fbq("track", "InitiateCheckout", {
+      num_items: cartQty(),
+      currency: "MXN",
+      value: 0,
+    });
+  }
+
+  try {
+    const payload = {
+      items: cart,
+      shipping: {
+        mode,
+        cost: Number(shippingState.cost || 0),
+        label: shippingState.label,
+        postal_code: cp,
+        country,
+      },
+      customer: {
+        name,
+        address: addr,
+        postal_code: cp,
+        country,
+      },
+      promo: PROMO_ACTIVE,
+    };
+
+    const data = await apiJson("create_checkout", payload);
 
     if (data?.url) {
       window.location.href = data.url;
       return;
     }
 
-    throw new Error("No se recibió URL de pago.");
-  } catch (e) {
-    console.error("[checkout] error:", e);
-    toast(`Checkout falló: ${e.message || "Error"}`);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "PAGAR AHORA";
-    }
+    throw new Error(data?.error || "No se recibió URL de pago");
+  } catch (err) {
+    toast("Error: " + (err?.message || String(err)));
+    btn.disabled = false;
+    btn.textContent = "PAGAR AHORA";
   }
 };
 
-/* =========================================================
-   LEGAL MODAL (fetch legal.html, extrae secciones #terms/#privacy)
-   ========================================================= */
-function buildLegalFallback(which) {
-  if (which === "privacy") {
-    return {
-      title: "AVISO DE PRIVACIDAD",
-      body: `
-        <p><b>Responsable:</b> BAJATEX S. DE R.L. DE C.V. (Único Uniformes), Tijuana, BC.</p>
-        <p><b>Uso:</b> Datos para procesar compra, envío, facturación (si aplica) y soporte.</p>
-        <p><b>Compartición:</b> Solo con proveedores necesarios (Stripe, paquetería/Envia.com) para completar tu pedido.</p>
-        <p><b>Derechos:</b> Puedes solicitar acceso/rectificación/cancelación al correo: <b>ventas.unicotextil@gmail.com</b>.</p>
-      `
-    };
+async function init() {
+  if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
-  return {
-    title: "TÉRMINOS Y CONDICIONES",
-    body: `
-      <p><b>Operación/Fabricación:</b> Único Uniformes (BAJATEX S. de R.L. de C.V.) bajo licencia oficial de SCORE International.</p>
-      <p><b>Pagos:</b> Procesados por Stripe (tarjeta) y OXXO cuando esté disponible.</p>
-      <p><b>Envíos:</b> Cotización estimada o en vivo según disponibilidad. Pickup Tijuana disponible cuando aplique.</p>
-      <p><b>Devoluciones:</b> Cambios por defecto de fábrica dentro de 15 días naturales (aplica evidencia).</p>
-    `
-  };
-}
 
-async function loadLegalHtmlOnce() {
-  if (STATE.legalCacheHtml) return STATE.legalCacheHtml;
+  initSplash();
+  loadCart();
+
+  // Load catalog + config
   try {
-    const res = await fetch("/legal.html", { cache: "no-store" });
-    const html = await res.text();
-    STATE.legalCacheHtml = html;
-    return html;
-  } catch {
-    return null;
-  }
-}
-
-function extractSectionFromLegal(html, which) {
-  try {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const id = (which === "privacy") ? "privacy" : "terms";
-    const node = doc.getElementById(id);
-    const title = node?.querySelector("h2,h1")?.textContent || (which === "privacy" ? "AVISO DE PRIVACIDAD" : "TÉRMINOS Y CONDICIONES");
-    const body = node ? node.innerHTML : "";
-    return { title, body };
-  } catch {
-    return null;
-  }
-}
-
-function openLegal(which) {
-  const modal = $("#legalModal");
-  const body = $("#legalBody");
-  const title = $("#legalTitle");
-  if (!modal || !body || !title) return;
-
-  // show now (luego llenamos)
-  modal.classList.add("show", "active");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("no-scroll");
-
-  // fill async
-  (async () => {
-    const html = await loadLegalHtmlOnce();
-    const extracted = html ? extractSectionFromLegal(html, which) : null;
-    const fallback = buildLegalFallback(which);
-
-    title.textContent = extracted?.title || fallback.title;
-    body.innerHTML = extracted?.body || fallback.body;
-  })();
-}
-
-function closeLegal() {
-  const modal = $("#legalModal");
-  if (!modal) return;
-  modal.classList.remove("show", "active");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("no-scroll");
-}
-
-window.openLegal = openLegal;
-window.closeLegal = closeLegal;
-window.openLegalCompat = window.openLegalCompat || openLegal;
-window.closeLegalCompat = window.closeLegalCompat || closeLegal;
-
-/* =========================================================
-   COOKIES
-   ========================================================= */
-function acceptCookies() {
-  try { localStorage.setItem(CONFIG.cookieKey, "1"); } catch {}
-  const b = $("#cookieBanner");
-  if (b) b.style.display = "none";
-}
-window.acceptCookies = acceptCookies;
-window.acceptCookiesCompat = window.acceptCookiesCompat || acceptCookies;
-
-function initCookieBanner() {
-  const b = $("#cookieBanner");
-  if (!b) return;
-  let ok = false;
-  try { ok = localStorage.getItem(CONFIG.cookieKey) === "1"; } catch {}
-  b.style.display = ok ? "none" : "flex";
-}
-
-/* =========================================================
-   AI CHAT UI
-   ========================================================= */
-function aiAddMessage(role, text) {
-  const wrap = $("#aiMsgs");
-  if (!wrap) return;
-
-  const item = document.createElement("div");
-  item.className = `ai-msg ${role === "user" ? "ai-me" : "ai-bot"}`;
-  item.textContent = String(text || "");
-  wrap.appendChild(item);
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-async function aiSend() {
-  const input = $("#aiInput");
-  const msg = String(input?.value || "").trim();
-  if (!msg) return;
-
-  if (input) input.value = "";
-  aiAddMessage("user", msg);
-
-  try {
-    const data = await postJSON(CONFIG.endpoints.ai, { message: msg });
-    aiAddMessage("bot", data?.reply || "Listo. ¿Qué talla y a dónde lo enviamos?");
+    await loadCatalogFromDB();
+    await loadSiteConfig();
   } catch (e) {
-    console.error("[ai] error:", e);
-    aiAddMessage("bot", "Ahorita no puedo consultar el asistente en vivo. Dime tu talla + CP/ZIP + país y te cierro la compra.");
+    console.warn("Fallback local catalog", e);
+    await loadCatalogLocal();
+  }
+
+  setupListeners();
+  updateCartUI();
+  initScrollReveal();
+
+  // Checkout return
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("status") === "success") {
+    toast("¡Pago exitoso! Gracias.");
+    if (typeof fbq === "function") fbq("track", "Purchase", { currency: "MXN", value: 0 });
+    window.emptyCart(true);
+    window.history.replaceState({}, document.title, "/");
   }
 }
 
-function initAIChat() {
-  const sendBtn = $("#aiSend");
-  const input = $("#aiInput");
-
-  if (sendBtn && !sendBtn.__bound) {
-    sendBtn.__bound = true;
-    sendBtn.addEventListener("click", aiSend);
-  }
-  if (input && !input.__bound) {
-    input.__bound = true;
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") aiSend();
-    });
-  }
-}
-
-/* =========================================================
-   PWA: service worker + query params
-   ========================================================= */
-function registerSW() {
-  if (!("serviceWorker" in navigator)) return;
-  if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-
-  navigator.serviceWorker.register("/sw.js").catch((e) => {
-    console.warn("[sw] register fail:", e?.message || e);
-  });
-}
-
-function handleQueryParams() {
-  const qs = new URLSearchParams(location.search);
-
-  // open cart (PWA shortcut)
-  if (qs.get("openCart") === "1") {
-    setTimeout(() => openDrawer(), 250);
-  }
-
-  // stripe result
-  const status = qs.get("status");
-  if (status === "success") {
-    toast("✅ Pago confirmado. Gracias. Te contactamos para seguimiento.");
-    STATE.cart = [];
-    saveCart();
-    // limpia param sin recargar
-    qs.delete("status");
-    history.replaceState({}, "", `${location.pathname}${qs.toString() ? "?" + qs.toString() : ""}${location.hash || ""}`);
-  } else if (status === "cancel") {
-    toast("Pago cancelado. Tu carrito sigue listo.");
-    qs.delete("status");
-    history.replaceState({}, "", `${location.pathname}${qs.toString() ? "?" + qs.toString() : ""}${location.hash || ""}`);
-  }
-}
-
-/* =========================================================
-   SECURITY HELPERS (simple)
-   ========================================================= */
-function escapeHtml(s) {
-  return String(s || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-function escapeAttr(s) {
-  return escapeHtml(String(s || "")).replace(/`/g, "&#096;");
-}
-
-/* =========================================================
-   INIT
-   ========================================================= */
-document.addEventListener("DOMContentLoaded", async () => {
-  // Splash removal
-  const splash = $("#splash");
-  if (splash) {
-    setTimeout(() => {
-      splash.style.transition = "opacity 0.5s ease";
-      splash.style.opacity = "0";
-      setTimeout(() => (splash.style.display = "none"), 500);
-    }, 800);
-  }
-
-  // Cookie banner
-  initCookieBanner();
-
-  // Bind shipping radios (hero + drawer)
-  $$("input[name='shipModeHero']").forEach((r) => {
-    r.addEventListener("change", () => setShippingMode(r.value));
-  });
-  $$("input[name='shipMode']").forEach((r) => {
-    r.addEventListener("change", () => setShippingMode(r.value));
-  });
-
-  // Bind quote buttons (hero + drawer)
-  $("#shipQuoteBtn")?.addEventListener("click", quoteShippingUI);
-  $("#miniZip")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") quoteShippingUI();
-  });
-  $("#shipZip")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") quoteShippingUI();
-  });
-
-  // Init AI
-  initAIChat();
-
-  // Load catalog
-  try {
-    const res = await fetch(CONFIG.catalogUrl, { cache: "no-store" });
-    const data = await res.json();
-
-    STATE.sections = Array.isArray(data.sections) ? data.sections : [];
-    STATE.products = Array.isArray(data.products)
-      ? data.products.map((p) => ({
-          ...p,
-          sectionId: String(p.sectionId || "").toUpperCase()
-        }))
-      : [];
-
-    ensureSectionChips();
-    bindChipEvents();
-    renderGrid();
-  } catch (e) {
-    console.error("[catalog] Error loading catalog", e);
-    setHTML(
-      "#productsGrid",
-      `<div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(0,0,0,.2); border-radius:16px; background:rgba(255,255,255,.7)">
-        <b>Catálogo no disponible.</b>
-        <div style="opacity:.7; margin-top:6px">Revisa /data/catalog.json y la consola.</div>
-      </div>`
-    );
-  }
-
-  // Restore cart count & totals
-  saveCart();
-
-  // Default shipping is pickup
-  setShippingMode("pickup", { silent: true });
-  updateTotalsUI();
-
-  // PWA
-  registerSW();
-  handleQueryParams();
-
-  // ESC close legal / drawer
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    closeLegal();
-    closeDrawer();
-  });
-});
+document.addEventListener("DOMContentLoaded", init);
