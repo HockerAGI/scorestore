@@ -10,6 +10,15 @@ const {
   isUuid,
 } = require("./_shared");
 
+// =========================================================
+// SCORE STORE — create_checkout (PROD)
+// FIXES:
+// - Respeta pickup (no re-cotiza ni agrega envío)
+// - Shipping address collection en Stripe Checkout (MX + US)
+// - Images absolutas (Stripe requiere URLs públicas)
+// - Soporta payload del front: shippingMode, shippingLabel, shippingData
+// =========================================================
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2023-10-16",
 });
@@ -22,6 +31,11 @@ function money(n) {
   return Math.round(Number(n || 0));
 }
 
+function clampInt(n, min, max) {
+  const v = Math.round(Number(n || 0));
+  return Math.max(min, Math.min(max, v));
+}
+
 function pickShippingAmount(shipping) {
   // soporta número o objeto {amount|cost|quote}
   if (typeof shipping === "number") return money(shipping);
@@ -29,6 +43,20 @@ function pickShippingAmount(shipping) {
     return money(shipping.amount ?? shipping.cost ?? shipping.quote ?? 0);
   }
   return 0;
+}
+
+function toAbsoluteImageUrl(origin, img) {
+  if (!img) return "";
+  const s = String(img);
+  // ya absoluto
+  if (/^https?:\/\//i.test(s)) return s;
+  if (!origin) return s;
+  // relativo
+  try {
+    return new URL(s, origin).href;
+  } catch {
+    return s;
+  }
 }
 
 exports.handler = async (event) => {
@@ -50,7 +78,7 @@ exports.handler = async (event) => {
     cart = [],
     shipping = 0,
     shippingLabel = "Envío",
-    shippingMode = "fallback",
+    shippingMode = "pickup", // pickup | mx | us | fallback
     shippingData = {},
     cancel_url,
     success_url,
@@ -72,28 +100,37 @@ exports.handler = async (event) => {
   // shipping parse
   let shippingAmount = pickShippingAmount(shipping);
   let shipping_label = String(shippingLabel || "Envío");
-  let shipping_mode = String(shippingMode || "fallback");
+  let shipping_mode = String(shippingMode || "fallback").toLowerCase();
 
-  // if shipping is missing or zero, re-quote safely
-  if (!shippingAmount || shippingAmount < 1) {
+  // ✅ pickup: envío 0 y no re-quote
+  const isPickup = shipping_mode === "pickup";
+  if (isPickup) {
+    shippingAmount = 0;
+    shipping_label = "Pickup Gratis";
+  }
+
+  // if shipping is missing or zero (y no pickup), re-quote safely
+  if (!isPickup && (!shippingAmount || shippingAmount < 1)) {
     const q = await getEnviaQuote({ zip, country, items_qty });
     shippingAmount = money(q.amount);
     shipping_label = q.label || shipping_label;
     shipping_mode = q.mode || shipping_mode;
   }
 
+  const origin = baseUrl(event) || "";
+
   // Build line items
   const line_items = cart.map((it) => {
-    const unit = money(it.price);
-    const qty = money(it.qty);
+    const unit = clampInt(it.price, 1, 999999);
+    const qty = clampInt(it.qty, 1, 99);
     const img = it.img || it.image || "";
 
     return {
       price_data: {
         currency: "mxn",
         product_data: {
-          name: it.name || "Producto",
-          images: img ? [String(img)] : [],
+          name: String(it.name || "Producto").slice(0, 200),
+          images: img ? [toAbsoluteImageUrl(origin, img)] : [],
         },
         unit_amount: unit * 100,
       },
@@ -102,24 +139,35 @@ exports.handler = async (event) => {
   });
 
   // Add shipping as line item (simple)
-  if (shippingAmount > 0) {
+  if (!isPickup && shippingAmount > 0) {
     line_items.push({
       price_data: {
         currency: "mxn",
-        product_data: { name: shipping_label },
-        unit_amount: shippingAmount * 100,
+        product_data: { name: String(shipping_label || "Envío").slice(0, 200) },
+        unit_amount: money(shippingAmount) * 100,
       },
       quantity: 1,
     });
   }
 
-  const origin = baseUrl(event) || "";
-  const okSuccess = (success_url && String(success_url)) || (origin ? `${origin}/?status=success` : "");
-  const okCancel = (cancel_url && String(cancel_url)) || (origin ? `${origin}/?status=cancel` : "");
+  const okSuccess =
+    (success_url && String(success_url)) ||
+    (origin ? `${origin}/?status=success` : "");
+
+  const okCancel =
+    (cancel_url && String(cancel_url)) ||
+    (origin ? `${origin}/?status=cancel` : "");
 
   // payments
   const payment_method_types = ["card"];
   if (process.env.STRIPE_ENABLE_OXXO === "1") payment_method_types.push("oxxo");
+
+  // shipping address collection (solo si NO pickup)
+  const shipping_address_collection = isPickup
+    ? undefined
+    : {
+        allowed_countries: ["MX", "US"],
+      };
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -130,6 +178,7 @@ exports.handler = async (event) => {
       cancel_url: okCancel,
       customer_email: email || undefined,
       phone_number_collection: { enabled: true },
+      shipping_address_collection,
       metadata: {
         org_id: orgId,
         items_qty: String(items_qty),
@@ -138,8 +187,8 @@ exports.handler = async (event) => {
         customer_email: email || "",
         customer_cp: zip || "",
         customer_country: country || "MX",
-        shipping_mode: shipping_mode || "fallback",
-        shipping_label: shipping_label || "Envío",
+        shipping_mode: shipping_mode || (isPickup ? "pickup" : "fallback"),
+        shipping_label: shipping_label || (isPickup ? "Pickup Gratis" : "Envío"),
       },
     });
 
@@ -151,8 +200,9 @@ exports.handler = async (event) => {
         status: "pending",
         currency: "MXN",
         total: money(session.amount_total ? session.amount_total / 100 : 0),
-        shipping_mode,
+        shipping_mode: shipping_mode || (isPickup ? "pickup" : null),
         customer_cp: zip || null,
+        customer_country: country || null,
         items_qty,
         raw_meta: JSON.stringify({
           cart,
@@ -163,6 +213,7 @@ exports.handler = async (event) => {
           phone,
           name,
           country,
+          zip,
         }),
       });
     }
