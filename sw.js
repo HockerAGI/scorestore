@@ -1,91 +1,96 @@
-/* ================================
-   SERVICE WORKER — SCORE STORE PWA
-   Version: 2026_PROD_UNIFIED_360_R2
-   ================================ */
+// SCORE STORE SERVICE WORKER — UNIFIED v2026_PROD_UNIFIED_361
 
-const VERSION = "2026_PROD_UNIFIED_360_R2";
-const STATIC_CACHE = `score-static-${VERSION}`;
-const RUNTIME_CACHE = `score-runtime-${VERSION}`;
+const VERSION = "2026_PROD_UNIFIED_361";
+const CACHE_NAME = `score-store-${VERSION}`;
 
-const STATIC_ASSETS = [
-  "/", 
+const PRECACHE = [
+  "/",
   "/index.html",
+  "/legal.html",
   "/css/styles.css",
   "/js/main.js",
-  "/site.webmanifest",
+
+  // Brand / hero
+  "/assets/logo-score.webp",
+  "/assets/logo-world-desert.webp",
+  "/assets/hero.webp",
+  "/assets/fondo-pagina-score.webp",
+
+  // Partners
+  "/assets/logo-ford.webp",
+  "/assets/logo-rzr.webp",
+  "/assets/logo-bfgodrich.webp",
+  "/assets/logo-unico.webp",
+
+  // Events
+  "/assets/logo-baja1000.webp",
+  "/assets/logo-baja500.webp",
+  "/assets/logo-baja400.webp",
+  "/assets/logo-sf250.webp",
+
+  // Icons
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
-  "/assets/LOGO SCORE 2025 PNG.png",
-  "/assets/Patrocinador oficial.png",
-  "/assets/bg-desert.jpg",
-  "/assets/bg-mountains.jpg",
-  "/assets/bg-tire.jpg",
+  "/assets/icons/maskable-192.png",
+  "/assets/icons/maskable-512.png",
+
+  // Data
   "/data/catalog.json",
-  "/data/promos.json",
-  "/legal.html"
 ];
 
-// Install: pre-cache core assets
+const stripSearch = (urlStr) => {
+  try {
+    const u = new URL(urlStr);
+    u.search = "";
+    return u.toString();
+  } catch {
+    return urlStr;
+  }
+};
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
-// Activate: cleanup old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      const kill = keys.filter((k) => k.startsWith("score-") && k !== STATIC_CACHE && k !== RUNTIME_CACHE);
-      return Promise.all(kill.map((k) => caches.delete(k)));
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
+      )
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch: cache-first for static, network-first for html, stale-while-revalidate for runtime
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only handle same-origin
-  if (url.origin !== location.origin) return;
-
-  // Network-first for navigations (fresh HTML)
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() =>
-        caches.match(req).then((cached) => cached || caches.match("/index.html"))
-      )
-    );
+  // Don't cache API calls / functions
+  if (url.pathname.startsWith("/.netlify/functions/") || url.pathname.startsWith("/api/")) {
     return;
   }
 
-  // Cache-first for known static assets
-  if (STATIC_ASSETS.includes(url.pathname)) {
-    event.respondWith(
-      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
-        return res;
-      }))
-    );
-    return;
-  }
+  if (req.method !== "GET") return;
 
-  // Stale-while-revalidate for everything else
   event.respondWith(
-    caches.match(req).then((cached) => {
-      const fetchPromise = fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
+    caches.match(stripSearch(req.url)).then((cached) => {
+      if (cached) return cached;
+      return fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(stripSearch(req.url), copy);
+          });
+          return res;
+        })
+        .catch(() => cached);
     })
   );
 });
