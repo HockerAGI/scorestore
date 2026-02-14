@@ -5,19 +5,16 @@
 const CONFIG = {
   stripeKey: "pk_live_51STepg1ExTx11WqTGdkk68CLhZHqnBkIAzE2EacmhSR336HvR9nQY5dskyPWotJ6AExFjstC7C7wUTsOIIzRGols00hFSwI8yp",
   supabaseUrl: "https://lpbzndnavkbpxwnlbqgb.supabase.co",
-  // ⚠️ REEMPLAZA ESTA LLAVE CON TU 'ANON KEY' DE SUPABASE
+  // Esta llave es pública (Anon Key), es seguro tenerla aquí
   supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYnpuZG5hdmticHh3bmxicWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2ODAxMzMsImV4cCI6MjA4NDI1NjEzM30.YWmep-xZ6LbCBlhgs29DvrBafxzd-MN6WbhvKdxEeqE", 
   supabaseCatalogView: "catalog_products",
-  supabaseSitePublicContentView: "site_public_content",
-  supabaseSitePublicSettingsView: "site_public_settings",
   endpoints: {
     checkout: "/.netlify/functions/create_checkout",
     quote: "/.netlify/functions/quote_shipping",
     ai: "/.netlify/functions/chat"
   },
   storageKey: "score_cart_2026",
-  catalogUrl: "/data/catalog.json",
-  fallbackImg: "/assets/hero.webp"
+  catalogUrl: "/data/catalog.json"
 };
 
 const $ = (q) => document.querySelector(q);
@@ -62,7 +59,7 @@ function updateDrawerUI() {
   });
 
   $("#cartSubtotal").textContent = fmtMXN(subtotal);
-  $("#cartTotal").textContent = fmtMXN(subtotal); // Se actualiza dinámicamente con shipping si aplica
+  $("#cartTotal").textContent = fmtMXN(subtotal);
 }
 
 window.removeFromCart = (idx) => {
@@ -125,9 +122,9 @@ async function renderGrid() {
   });
 }
 
-// --- INIT ---
+// --- INIT & SPLASH REMOVAL ---
 document.addEventListener("DOMContentLoaded", async () => {
-  // Cargar Catálogo
+  // 1. Cargar datos
   try {
     const res = await fetch(CONFIG.catalogUrl);
     const data = await res.json();
@@ -136,9 +133,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       sectionId: p.sectionId.toUpperCase()
     }));
     renderGrid();
-  } catch (e) { console.error("Error loading catalog", e); }
+  } catch (e) { 
+    console.error("Error loading catalog", e); 
+  }
 
-  // Filtros
+  // 2. Eventos de Filtros
   $$(".chip").forEach(btn => {
     btn.addEventListener("click", () => {
       $$(".chip").forEach(c => c.classList.remove("active"));
@@ -148,9 +147,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  // 3. Restaurar carrito
   saveCart();
+
+  // 4. ELIMINAR SPLASH SCREEN (ESTO FALTABA)
+  const splash = document.getElementById("splash");
+  if(splash) {
+    // Le damos un pequeño delay para que se vea la marca
+    setTimeout(() => {
+      splash.style.transition = "opacity 0.5s ease";
+      splash.style.opacity = "0";
+      setTimeout(() => {
+        splash.style.display = "none";
+      }, 500);
+    }, 800);
+  }
 });
 
+// --- GLOBAL EXPORTS ---
 function openDrawer() {
   $("#cartDrawer").classList.add("open");
   $("#pageOverlay").classList.add("show");
@@ -165,6 +179,7 @@ function closeDrawer() {
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
 window.addToCart = addToCart;
+
 window.doCheckout = async () => {
   const btn = $("#checkoutBtn");
   btn.disabled = true;
@@ -176,7 +191,11 @@ window.doCheckout = async () => {
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-  } catch (e) { alert("Error al conectar con Stripe."); }
+    else alert("Error: No se recibió URL de pago.");
+  } catch (e) { 
+    console.error(e);
+    alert("Error al conectar con Stripe. Revisa la consola."); 
+  }
   btn.disabled = false;
   btn.textContent = "PAGAR AHORA";
 };
