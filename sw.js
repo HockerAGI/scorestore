@@ -1,246 +1,91 @@
-/* =========================================================
-   SCORE STORE — Service Worker (PWA) · UNIFICADO (PROD)
-   - Cache-first: assets estáticos (CSS/JS/IMG/FONTS + webmanifest/txt/xml)
-   - Stale-while-revalidate: JSON de catálogo/promos (ideal: /data/*.json)
-   - Network-first: HTML (para no quedarse viejo)
-   - NO cachea /api/* ni /.netlify/functions/*
-   ========================================================= */
+/* ================================
+   SERVICE WORKER — SCORE STORE PWA
+   Version: 2026_PROD_UNIFIED_360_R2
+   ================================ */
 
-const VERSION = "2026_PROD_UNIFIED_360";
-const CACHE_STATIC = `scorestore_static_${VERSION}`;
-const CACHE_PAGES  = `scorestore_pages_${VERSION}`;
-const CACHE_DATA   = `scorestore_data_${VERSION}`;
+const VERSION = "2026_PROD_UNIFIED_360_R2";
+const STATIC_CACHE = `score-static-${VERSION}`;
+const RUNTIME_CACHE = `score-runtime-${VERSION}`;
 
-const PRECACHE = [
-  "/",
+const STATIC_ASSETS = [
+  "/", 
   "/index.html",
-  "/legal.html",          // ✅ confirma que exista en tu deploy
-
   "/css/styles.css",
   "/js/main.js",
-
-  "/data/catalog.json",
-  "/data/promos.json",
-
   "/site.webmanifest",
-  "/robots.txt",
-  "/sitemap.xml",
-
-  "/assets/hero.webp",
-  "/assets/fondo-pagina-score.webp",
-  "/assets/baja1000-texture.webp",
-  "/assets/logo-score.webp",
-  "/assets/logo-world-desert.webp",
-  "/assets/logo-baja1000.webp",
-  "/assets/logo-baja500.webp",
-  "/assets/logo-baja400.webp",
-  "/assets/logo-sf250.webp",
-
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
+  "/assets/LOGO SCORE 2025 PNG.png",
+  "/assets/Patrocinador oficial.png",
+  "/assets/bg-desert.jpg",
+  "/assets/bg-mountains.jpg",
+  "/assets/bg-tire.jpg",
+  "/data/catalog.json",
+  "/data/promos.json",
+  "/legal.html"
 ];
 
-const STATIC_EXT = /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|woff2?|webmanifest|txt|xml)$/i;
-const DATA_EXT   = /\.(?:json)$/i;
-
-function isAPI(url) {
-  try {
-    const u = new URL(url);
-    return (
-      u.pathname.startsWith("/api/") ||
-      u.pathname.startsWith("/.netlify/functions/")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isHTML(req) {
-  return (
-    req.mode === "navigate" ||
-    (req.headers.get("accept") || "").includes("text/html")
-  );
-}
-
-function pathnameOf(url) {
-  try { return new URL(url).pathname; } catch { return ""; }
-}
-
-function stripSearch(url) {
-  try {
-    const u = new URL(url);
-    return u.origin + u.pathname;
-  } catch {
-    return url;
-  }
-}
-
-async function matchSmart(cache, reqOrUrl) {
-  // intenta exacto
-  let hit = await cache.match(reqOrUrl);
-  if (hit) return hit;
-
-  // intenta ignorando query
-  try {
-    if (reqOrUrl instanceof Request) {
-      hit = await cache.match(reqOrUrl, { ignoreSearch: true });
-      if (hit) return hit;
-    }
-  } catch {}
-
-  // intenta versión sin query (si viene como string)
-  if (typeof reqOrUrl === "string") {
-    hit = await cache.match(stripSearch(reqOrUrl));
-    if (hit) return hit;
-  }
-
-  return null;
-}
-
+// Install: pre-cache core assets
 self.addEventListener("install", (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_STATIC);
-    await Promise.allSettled(PRECACHE.map((u) => cache.add(u)));
-    self.skipWaiting();
-  })());
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+  );
 });
 
+// Activate: cleanup old caches
 self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys.map((k) => {
-        if (![CACHE_STATIC, CACHE_PAGES, CACHE_DATA].includes(k)) {
-          return caches.delete(k);
-        }
-        return Promise.resolve();
-      })
-    );
-    self.clients.claim();
-  })());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      const kill = keys.filter((k) => k.startsWith("score-") && k !== STATIC_CACHE && k !== RUNTIME_CACHE);
+      return Promise.all(kill.map((k) => caches.delete(k)));
+    }).then(() => self.clients.claim())
+  );
 });
 
+// Fetch: cache-first for static, network-first for html, stale-while-revalidate for runtime
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = req.url;
+  const url = new URL(req.url);
 
-  // ✅ Solo GET
-  if (req.method !== "GET") return;
+  // Only handle same-origin
+  if (url.origin !== location.origin) return;
 
-  // Nunca cachear API / functions
-  if (isAPI(url)) return;
-
-  // HTML: network-first
-  if (isHTML(req)) {
-    event.respondWith((async () => {
-      const pages = await caches.open(CACHE_PAGES);
-      try {
-        const fresh = await fetch(req);
-        if (fresh && fresh.ok) {
-          // ✅ cachea sin query para evitar duplicados (/?source=pwa)
-          await pages.put(stripSearch(url), fresh.clone());
-        }
-        return fresh;
-      } catch {
-        // intenta cache de páginas
-        const cachedPage =
-          (await matchSmart(pages, req)) ||
-          (await matchSmart(pages, stripSearch(url)));
-        if (cachedPage) return cachedPage;
-
-        // ✅ BUGFIX: homepage viene del CACHE_STATIC (precached)
-        const stat = await caches.open(CACHE_STATIC);
-        const home = (await matchSmart(stat, "/")) || (await matchSmart(stat, "/index.html"));
-        if (home) return home;
-
-        // fallback final
-        return new Response(
-`<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>SCORE STORE — Offline</title>
-  <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#fff;color:#111}
-    .wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .card{max-width:520px;width:100%;border:1px solid #eee;border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
-    h1{margin:0 0 8px;font-size:22px}
-    p{margin:0 0 12px;color:#444;line-height:1.4}
-    a{color:#e10600;text-decoration:none;font-weight:800}
-    .tag{display:inline-flex;gap:8px;align-items:center;background:#ffe5e3;color:#111;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <div class="tag">🏁 SCORE STORE</div>
-      <h1>Estás sin conexión</h1>
-      <p>Cuando recuperes señal, recarga para ver el catálogo actualizado.</p>
-      <p><a href="/">Reintentar</a></p>
-    </div>
-  </div>
-</body>
-</html>`,
-          { headers: { "Content-Type": "text/html; charset=utf-8" } }
-        );
-      }
-    })());
+  // Network-first for navigations (fresh HTML)
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() =>
+        caches.match(req).then((cached) => cached || caches.match("/index.html"))
+      )
+    );
     return;
   }
 
-  const pathname = pathnameOf(url);
-
-  // JSON data: stale-while-revalidate
-  if (DATA_EXT.test(pathname)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_DATA);
-
-      const cached =
-        (await cache.match(req, { ignoreSearch: true })) ||
-        (await cache.match(stripSearch(url)));
-
-      const fetchPromise = (async () => {
-        try {
-          const fresh = await fetch(req);
-          if (fresh && fresh.ok) {
-            await cache.put(stripSearch(url), fresh.clone());
-          }
-          return fresh;
-        } catch {
-          return null;
-        }
-      })();
-
-      return cached || (await fetchPromise) || new Response("{}", {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      });
-    })());
+  // Cache-first for known static assets
+  if (STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
+        return res;
+      }))
+    );
     return;
   }
 
-  // Static assets: cache-first
-  if (STATIC_EXT.test(pathname) || STATIC_EXT.test(url)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_STATIC);
+  // Stale-while-revalidate for everything else
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const fetchPromise = fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => cached);
 
-      const cached =
-        (await cache.match(req)) ||
-        (await cache.match(req, { ignoreSearch: true })) ||
-        (await cache.match(stripSearch(url)));
-
-      if (cached) return cached;
-
-      try {
-        const fresh = await fetch(req);
-        if (fresh && fresh.ok) {
-          await cache.put(stripSearch(url), fresh.clone());
-        }
-        return fresh;
-      } catch {
-        return new Response("", { status: 504 });
-      }
-    })());
-  }
+      return cached || fetchPromise;
+    })
+  );
 });
