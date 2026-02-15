@@ -156,3 +156,154 @@
       <div id="productsGrid" class="productsGrid"></div>
     </div>
   </section>
+  <!-- PARTNERS -->
+  <section id="partners" class="section alt">
+    <div class="wrap">
+      <div class="sectionHead">
+        <h2 class="sectionTitle">Partners</h2>
+        <p class="sectionSub">Patrocinadores y aliados oficiales.</p>
+      </div>
+
+      <div class="partnersGrid">
+        <img class="pLogo" src="/assets/partners/ford.webp" alt="Ford" />
+        <img class="pLogo" src="/assets/partners/gofasracing.webp" alt="Go Fast Racing" />
+        <img class="pLogo" src="/assets/partners/rzr.webp" alt="RZR" />
+        <img class="pLogo" src="/assets/partners/roodrigch.webp" alt="Roodrigch" />
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section">
+    <div class="wrap">
+      <div class="sectionHead">
+        <h2 class="sectionTitle">FAQ</h2>
+        <p class="sectionSub">Lo esencial, sin vueltas.</p>
+      </div>
+
+      <div class="faqGrid">
+        <details class="faq">
+          <summary>¿Cómo compro?</summary>
+          <p>Agrega productos al carrito, elige talla y finaliza el pago con Stripe.</p>
+        </details>
+        <details class="faq">
+          <summary>¿Envíos?</summary>
+          <p>Pickup gratis o cotización por CP (MX/USA). Si una foto no está lista, verás “Foto en proceso”.</p>
+        </details>
+        <details class="faq">
+          <summary>¿Cambios / devoluciones?</summary>
+          <p>Consulta términos en Legal. Productos de drop pueden tener condiciones especiales.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footerInner">
+      <div class="footerCol">
+        <div class="footerBrand">
+          <img src="/assets/logo-score.webp" alt="SCORE" />
+          <div>
+            <div class="footerTitle">SCORE STORE</div>
+            <div class="footerSub">Fabricado por Único Uniformes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footerCol">
+        <div class="footerLinks">
+          <a href="#catalogo">Catálogo</a>
+          <a href="#partners">Partners</a>
+          <a href="#faq">FAQ</a>
+          <a href="javascript:void(0)" onclick="openLegalCompat()">Legal</a>
+        </div>
+      </div>
+
+      <div class="footerCol">
+        <button class="btn ghost" type="button" onclick="openDrawerCompat()">
+          <i class="fa-solid fa-bag-shopping"></i> Ver carrito
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- OVERLAY + DRAWER -->
+  <div id="pageOverlay" class="overlay" onclick="closeDrawerCompat()" aria-hidden="true"></div>
+
+  <aside id="cartDrawer" class="drawer" aria-hidden="true">
+    <div class="drawerHead">
+      <div class="drawerTitle">Tu carrito</div>
+      <button class="iconBtn" type="button" onclick="closeDrawerCompat()" aria-label="Cerrar">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div id="drawerBody" class="drawerBody">
+      <!-- JS -->
+    </div>
+
+    <div class="drawerFoot">
+      <div class="totalsRow">
+        <span>Subtotal</span>
+        <b id="subtotalLabel">$0</b>
+      </div>
+
+      <div class="totalsRow">
+        <span>Envío</span>
+        <b id="shipLabel">$0</b>
+      </div>
+
+      <div class="totalsRow total">
+        <span>Total</span>
+        <b id="totalLabel">$0</b>
+      </div>
+
+      <button class="btn primary full" type="button" onclick="checkoutCompat()">
+        Pagar con Stripe
+      </button>
+    </div>
+  </aside>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- COOKIE -->
+  <div id="cookieBanner" class="cookieBanner" aria-hidden="true">
+    <div class="cookieText">
+      Usamos cookies para mejorar tu experiencia. Al continuar, aceptas el uso de cookies.
+    </div>
+    <button class="btn small" type="button" onclick="acceptCookiesCompat()">Aceptar</button>
+  </div>
+
+  <!-- LEGAL MODAL -->
+  <div id="legalModal" class="modal" aria-hidden="true">
+    <div class="modalInner">
+      <div class="modalHead">
+        <div class="modalTitle">Legal</div>
+        <button class="iconBtn" type="button" onclick="closeLegalCompat()" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="legalBody" class="modalBody">
+        <!-- JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPAT HELPERS (para no romper UI si cambias internals) -->
+  <script>
+    window.showToastCompat = (msg)=>{ try{ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(window.__toastT); window.__toastT=setTimeout(()=>t.classList.remove('show'),2200);}catch(e){} };
+    window.openDrawerCompat = ()=> (window.openDrawer ? window.openDrawer() : null);
+    window.closeDrawerCompat = ()=> (window.closeDrawer ? window.closeDrawer() : null);
+    window.toggleShippingCompat = (m)=> (window.toggleShipping ? window.toggleShipping(m) : null);
+    window.quoteShippingUICompat = ()=> (window.quoteShippingUI ? window.quoteShippingUI() : null);
+    window.checkoutCompat = ()=> (window.doCheckout ? window.doCheckout() : null);
+    window.openLegalCompat = ()=> (window.openLegal ? window.openLegal() : null);
+    window.closeLegalCompat = ()=> (window.closeLegal ? window.closeLegal() : null);
+    window.acceptCookiesCompat = ()=> (window.acceptCookies ? window.acceptCookies() : null);
+  </script>
+
+  <script src="/js/main.js?v=2026_PROD_UNIFIED_362"></script>
+</body>
+</html>
