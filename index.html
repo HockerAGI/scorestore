@@ -1,361 +1,158 @@
 <!doctype html>
-<html lang="es-MX">
+<html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SCORE STORE | Tienda Oficial</title>
-
-  <meta name="description" content="Merchandise oficial de SCORE International. Fabricado por Único Uniformes." />
-  <meta name="theme-color" content="#E10600" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#e10600" />
+  <meta name="description" content="SCORE STORE — Merch oficial y drops por carrera. Fabricado por Único Uniformes." />
+  <meta property="og:title" content="SCORE STORE" />
+  <meta property="og:description" content="Merch oficial y drops por carrera. Fabricado por Único Uniformes." />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="SCORE STORE | Tienda Oficial" />
-  <meta property="og:description" content="Merchandise oficial de SCORE International. Fabricado por Único Uniformes." />
   <meta property="og:image" content="/assets/hero.webp" />
+  <meta property="og:locale" content="es_MX" />
+  <meta name="twitter:card" content="summary_large_image" />
 
-  <link rel="icon" href="/icons-score.svg" type="image/svg+xml" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preload" href="/css/styles.css?v=2026_PROD_UNIFIED_362" as="style">
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_362" />
 
   <link rel="preload" href="/assets/hero.webp" as="image" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
+  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
 
-  <!-- ✅ cache-bust (360 → 361) -->
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_361" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 
-  <!-- Inline mínimos para que NUNCA se quede pegado si el CSS tarda -->
-  <style>
-    :root { --score-red:#E10600; }
-    body.no-scroll { overflow: hidden; }
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-    /* Splash */
-    #splash{
-      position:fixed; inset:0; z-index:9999;
-      display:grid; place-items:center;
-      background:#0b0b0c;
-      transition: opacity .35s ease;
-    }
-    #splash.hidden{ opacity:0; pointer-events:none; }
-    .splashBox{ text-align:center; padding:24px; }
-    .splashLogo{ width:min(240px,70vw); height:auto; filter: drop-shadow(0 10px 35px rgba(0,0,0,.6)); }
-    .splashTxt{ margin-top:14px; font-family:Inter,system-ui; font-size:12px; letter-spacing:.14em; color:rgba(255,255,255,.7); }
-    .splashBar{ margin:18px auto 0; width:min(320px,78vw); height:4px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; }
-    .splashBar > i{ display:block; height:100%; width:40%; background:var(--score-red); border-radius:999px; animation: spl 1s infinite ease-in-out; }
-    @keyframes spl{ 0%{ transform: translateX(-120%);} 100%{ transform: translateX(260%);} }
+  <script src="https://js.stripe.com/v3"></script>
 
-    /* Overlay */
-    #pageOverlay{
-      position:fixed; inset:0; z-index:3000;
-      background:rgba(0,0,0,.5);
-      opacity:0; pointer-events:none;
-      transition: opacity .2s ease;
-    }
-    #pageOverlay.show{ opacity:1; pointer-events:auto; }
+  <!-- Meta Pixel Code (ya lo tenías) -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '000000000000000'); // <- deja tu ID real aquí
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=000000000000000&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
 
-    /* Drawer (si tu CSS ya lo define, esto solo ayuda de fallback) */
-    #cartDrawer{
-      position:fixed; top:0; right:0; height:100vh; width:min(420px,92vw);
-      background:#fff; z-index:3500;
-      transform:translateX(110%);
-      transition:transform .25s ease;
-      display:flex; flex-direction:column;
-      box-shadow:-20px 0 60px rgba(0,0,0,.25);
-    }
-    #cartDrawer.open{ transform:translateX(0); }
-    .drawerHead{ padding:14px 14px 10px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; gap:10px;}
-    .drawerTitle{ font-family:Teko,system-ui; font-size:26px; letter-spacing:.02em; margin:0; }
-    .drawerClose{ border:none; background:transparent; font-size:22px; cursor:pointer; }
-    .drawerBody{ padding:14px; overflow:auto; flex:1; }
-    .drawerFoot{ border-top:1px solid #eee; padding:14px; }
-    .sumRow{ display:flex; align-items:center; justify-content:space-between; margin:8px 0; font-family:Inter,system-ui; }
-    .sumRow strong{ font-weight:900; }
-    .btnPrimary{
-      width:100%; border:none; cursor:pointer;
-      background:var(--score-red); color:#fff;
-      border-radius:14px; padding:14px 16px;
-      font-family:Teko,system-ui; font-size:22px; letter-spacing:.02em;
-    }
-    .btnGhost{
-      border:1px solid #ddd; background:#fff; color:#111;
-      border-radius:14px; padding:10px 12px; cursor:pointer;
-      font-family:Inter,system-ui; font-weight:700;
-    }
-
-    /* Toast */
-    #toast{
-      position:fixed; left:16px; bottom:16px; z-index:5000;
-      background:rgba(0,0,0,.9); color:#fff;
-      padding:10px 12px; border-radius:12px;
-      font-family:Inter,system-ui; font-size:13px;
-      transform:translateY(20px); opacity:0;
-      transition:.2s ease;
-      max-width:min(520px,90vw);
-    }
-    #toast.show{ transform:translateY(0); opacity:1; }
-
-    /* Cookie banner */
-    #cookieBanner{
-      position:fixed; left:16px; right:16px; bottom:16px; z-index:4500;
-      max-width:980px; margin:0 auto;
-      background:rgba(255,255,255,.98);
-      border:1px solid #eee; border-left:6px solid var(--score-red);
-      border-radius:16px; padding:12px;
-      box-shadow:0 20px 60px rgba(0,0,0,.16);
-    }
-    .cookieRow{ display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-    .cookieTxt{ font-family:Inter,system-ui; font-size:13px; color:#222; flex:1; }
-    .cookieBtn{ border:none; cursor:pointer; border-radius:999px; padding:10px 14px; font-family:Teko,system-ui; font-size:18px; background:var(--score-red); color:#fff; }
-  </style>
+  <title>SCORE STORE</title>
 </head>
 
 <body>
 
-  <!-- ✅ Splash/Intro (id=“splash”) -->
-  <div id="splash" aria-hidden="false">
-    <div class="splashBox">
-      <img class="splashLogo" src="/assets/logo-score.webp" alt="SCORE" />
-      <div class="splashBar"><i></i></div>
-      <div class="splashTxt">INICIANDO MOTORES...</div>
+  <!-- SPLASH -->
+  <div id="splash" class="splash" aria-hidden="false">
+    <div class="splashInner">
+      <img class="splashLogo" src="/assets/logo-score.webp" alt="SCORE STORE" />
+      <div class="splashBar"><span></span></div>
+      <div class="splashHint">Cargando…</div>
     </div>
   </div>
 
-  <!-- Overlay para drawer -->
-  <div id="pageOverlay" aria-hidden="true" onclick="closeDrawer()"></div>
-
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="topbar">
-    <div class="container topbarInner">
-      <a href="/" class="brand" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE STORE" class="brandLogo" />
+    <div class="wrap topbarInner">
+      <a class="brand" href="#top" aria-label="SCORE STORE">
+        <img class="brandMark" src="/assets/logo-score.webp" alt="SCORE" />
+        <span class="brandText">SCORE STORE</span>
       </a>
 
-      <nav class="navRight">
-        <a href="/legal.html" class="navLink">Legal</a>
-
-        <button class="cartBtn" onclick="openDrawer()" aria-label="Carrito">
-          <span class="cartIcon">🛒</span>
-          <span class="cartCount">0</span>
-        </button>
+      <nav class="topNav">
+        <a href="#catalogo" class="navLink">Catálogo</a>
+        <a href="#partners" class="navLink">Partners</a>
+        <a href="#faq" class="navLink">FAQ</a>
       </nav>
+
+      <div class="topActions">
+        <button class="iconBtn" type="button" onclick="openDrawerCompat()" aria-label="Abrir carrito">
+          <i class="fa-solid fa-bag-shopping"></i>
+          <span id="cartCount" class="badge">0</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Hero -->
-  <main class="wrap">
-    <section class="hero" id="top">
-      <div class="heroBg" style="background-image:url('/assets/hero.webp');"></div>
-      <div class="heroOverlay"></div>
+  <!-- HERO -->
+  <main id="top" class="hero">
+    <div class="heroBg"></div>
 
-      <div class="heroContent">
-        <div class="tagline">
-          <span class="tag-pill">TIENDA OFICIAL</span>
-          <span class="tag-pill" style="background:#fff;color:#111;border:1px solid #eee;">2026</span>
-        </div>
+    <div class="wrap heroInner">
+      <div class="heroCopy">
+        <div class="heroKicker">SCORE INTERNATIONAL</div>
 
-        <h1 class="hero-title">SCORE STORE</h1>
+        <h1 class="heroTitle">
+          Merch oficial y drops por carrera.
+        </h1>
 
-        <div class="logos-row">
-          <img src="/assets/logo-score.webp" alt="SCORE" class="hero-main-logo" />
-          <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-desert-seal" />
-        </div>
-
-        <p class="marketing-copy">
-          <strong>TIENDA OFICIAL DE SCORE INTERNATIONAL</strong><br />
-          Fabricado por <strong>Único Uniformes</strong>, <strong>Patrocinador oficial</strong>.
+        <p class="heroSub">
+          Fabricado por <b>Único Uniformes</b>, patrocinador oficial.
         </p>
 
-        <!-- Shipping quick selector (Hero) -->
-        <div class="shipHero">
-          <div class="shipModes">
+        <div class="heroCtas">
+          <a href="#catalogo" class="btn primary">Ver catálogo</a>
+          <button type="button" class="btn ghost" onclick="openDrawerCompat()">Ver carrito</button>
+        </div>
+
+        <div class="shipPanel" aria-label="Opciones de entrega">
+          <div class="shipRow">
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="pickup" checked onchange="toggleShipping('pickup')" />
-              <span>Pickup TJ</span>
+              <input type="radio" name="shipModeHero" value="pickup" checked onchange="toggleShippingCompat('pickup')">
+              <span>Pickup</span>
             </label>
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="mx" onchange="toggleShipping('mx')" />
+              <input type="radio" name="shipModeHero" value="mx" onchange="toggleShippingCompat('mx')">
               <span>México</span>
             </label>
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="us" onchange="toggleShipping('us')" />
+              <input type="radio" name="shipModeHero" value="us" onchange="toggleShippingCompat('us')">
               <span>USA</span>
             </label>
           </div>
 
-          <div id="shipZipWrap" style="display:none; margin-top:10px;">
-            <div class="zipLine">
-              <input id="shipZip" inputmode="numeric" maxlength="5" placeholder="CP/ZIP (5 dígitos)" class="inputZip" />
-              <button class="btnGhost" onclick="quoteShippingUI()">Cotizar</button>
-            </div>
-            <div id="shipQuote" style="margin-top:8px;font-family:Inter,system-ui;font-size:12px;opacity:.8;">
-              Ingresa tu CP/ZIP para cotizar.
-            </div>
+          <div id="zipWrapHero" class="zipWrap" style="display:none">
+            <input id="zipInputHero" class="zipInput" inputmode="numeric" placeholder="Código postal" />
+            <button class="btn small" type="button" onclick="quoteShippingUICompat()">Cotizar envío</button>
+          </div>
+
+          <div class="shipHint">
+            <span id="shipLabelHero">Pickup Gratis</span>
           </div>
         </div>
+      </div>
 
-        <div class="ctaRow">
-          <button class="btn primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">
-            VER CATÁLOGO
-          </button>
-          <button class="btn secondary" onclick="openDrawer()">MI PEDIDO (<span class="cartCount">0</span>)</button>
+      <div class="heroVisual">
+        <img class="heroImg" src="/assets/hero.webp" alt="SCORE STORE hero" />
+        <div class="heroBadges">
+          <img class="heroBadge" src="/assets/logo-world-desert.webp" alt="World Desert Championship" />
+          <img class="heroBadge" src="/assets/logo-baja1000.webp" alt="Baja 1000" />
+          <img class="heroBadge" src="/assets/logo-baja500.webp" alt="Baja 500" />
+          <img class="heroBadge" src="/assets/logo-baja400.webp" alt="Baja 400" />
+          <img class="heroBadge" src="/assets/logo-sf250.webp" alt="San Felipe 250" />
         </div>
       </div>
-    </section>
-
-    <!-- Filters / Chips -->
-    <section class="section" id="shop">
-      <div class="sectionHead">
-        <h2>CATÁLOGO <span>OFICIAL</span></h2>
-        <p>Selecciona un filtro (o deja “Todo”).</p>
-      </div>
-
-      <div class="chipsRow">
-        <button class="chip active" data-filter="ALL">TODO</button>
-        <button class="chip" data-filter="BAJA_1000">BAJA 1000</button>
-        <button class="chip" data-filter="BAJA_500">BAJA 500</button>
-        <button class="chip" data-filter="BAJA_400">BAJA 400</button>
-        <button class="chip" data-filter="SF_250">SAN FELIPE 250</button>
-      </div>
-
-      <!-- Products grid (MAIN.JS espera #productsGrid) -->
-      <div id="productsGrid" class="productsGrid"></div>
-    </section>
-
-    <!-- Partners -->
-    <section class="partners">
-      <h3>PATROCINADORES OFICIALES</h3>
-      <div class="partnersGrid">
-        <img src="/assets/logo-ford.webp" class="pLogo" alt="Ford" loading="lazy" />
-        <img src="/assets/logo-rzr.webp" class="pLogo" alt="Polaris RZR" loading="lazy" />
-        <img src="/assets/logo-bfgodrich.webp" class="pLogo" alt="BFGoodrich" loading="lazy" />
-        <img src="/assets/logo-unico.webp" class="pLogo" alt="Único Uniformes" loading="lazy" />
-      </div>
-    </section>
-
-    <!-- AI Chat -->
-    <section class="aiSection" id="ai">
-      <div class="sectionHead">
-        <h2>ASISTENTE <span>ÚNICO OS</span></h2>
-        <p>Pregúntale por tallas, disponibilidad, envío y cierre.</p>
-      </div>
-
-      <div class="aiCard">
-        <div id="aiMsgs" class="aiMsgs" aria-live="polite">
-          <div class="ai-msg ai-bot">¿Qué buscas hoy? Dime producto + talla y tu CP/ZIP + país.</div>
-        </div>
-
-        <div class="aiComposer">
-          <input id="aiInput" class="aiInput" placeholder="Escribe aquí..." />
-          <button id="aiSend" class="aiSend">Enviar</button>
-        </div>
-      </div>
-    </section>
-
+    </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container footerInner">
-      <div class="fCol">
-        <div class="footerBrandName">BAJATEX</div>
-        <p class="fText">Operador oficial de merchandise SCORE International.<br />Por <strong>Único Uniformes</strong>.</p>
-        <a href="https://wa.me/526642368701" target="_blank" rel="noopener" class="whatsapp-btn">WhatsApp Oficial</a>
+  <!-- CATALOGO -->
+  <section id="catalogo" class="section">
+    <div class="wrap">
+      <div class="sectionHead">
+        <h2 class="sectionTitle">Catálogo</h2>
+        <p class="sectionSub">Colecciones por carrera y drops limitados.</p>
       </div>
 
-      <div class="fCol">
-        <h4>ATENCIÓN</h4>
-        <div class="footerLinks">
-          <a href="/legal.html#envios">Envíos</a>
-          <a href="/legal.html#devoluciones">Devoluciones</a>
-          <a href="/legal.html#facturacion">Facturación</a>
-        </div>
-      </div>
+      <div id="chips" class="chips"></div>
 
-      <div class="fCol">
-        <h4>LEGAL</h4>
-        <div class="footerLinks">
-          <a href="/legal.html#terminos">Términos</a>
-          <a href="/legal.html#privacidad">Privacidad</a>
-        </div>
-      </div>
-
-      <div class="fCol">
-        <h4>INFO</h4>
-        <div class="footerLinks">
-          <a href="/legal.html#contacto">Contacto</a>
-          <a href="#top" onclick="document.getElementById('top').scrollIntoView({behavior:'smooth'}); return false;">Volver arriba</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="copy">SCORE Store © <span id="year"></span> · Powered by Único OS</div>
-  </footer>
-
-  <!-- Drawer / Cart (MAIN.JS espera IDs exactos) -->
-  <aside id="cartDrawer" aria-hidden="true">
-    <div class="drawerHead">
-      <h3 class="drawerTitle">TU PEDIDO</h3>
-      <button class="drawerClose" onclick="closeDrawer()" aria-label="Cerrar">✕</button>
-    </div>
-
-    <div class="drawerBody">
-      <div id="cartItems"></div>
-    </div>
-
-    <div class="drawerFoot">
-
-      <!-- Shipping selector (Drawer) -->
-      <div class="shipModes" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <label class="radioPill">
-          <input type="radio" name="shipMode" value="pickup" checked onchange="toggleShipping('pickup')" />
-          <span>Pickup</span>
-        </label>
-        <label class="radioPill">
-          <input type="radio" name="shipMode" value="mx" onchange="toggleShipping('mx')" />
-          <span>México</span>
-        </label>
-        <label class="radioPill">
-          <input type="radio" name="shipMode" value="us" onchange="toggleShipping('us')" />
-          <span>USA</span>
-        </label>
-      </div>
-
-      <div id="zipRow" style="display:none; gap:10px; align-items:center; margin-bottom:10px;">
-        <input id="miniZip" inputmode="numeric" maxlength="5" placeholder="CP/ZIP" class="inputZip" style="flex:1;" />
-        <button class="btnGhost" onclick="quoteShippingUI()">Cotizar</button>
-      </div>
-
-      <div class="sumRow"><span>Subtotal</span><strong id="cartSubtotal">$0.00</strong></div>
-      <div class="sumRow"><span id="cartShipLabel">Pickup Gratis</span><strong id="cartShipping">$0.00</strong></div>
-      <div class="sumRow" style="font-size:18px;"><span>TOTAL</span><strong id="cartTotal">$0.00</strong></div>
-
-      <button id="checkoutBtn" class="btnPrimary" onclick="doCheckout()">PAGAR AHORA</button>
-      <div style="margin-top:10px; font-family:Inter,system-ui; font-size:11px; opacity:.65; line-height:1.35;">
-        Al pagar aceptas los términos y políticas indicadas en <a href="/legal.html" style="color:var(--score-red);font-weight:800;">Legal</a>.
-      </div>
-    </div>
-  </aside>
-
-  <!-- Toast -->
-  <div id="toast" role="status" aria-live="polite">Listo</div>
-
-  <!-- Cookie banner -->
-  <section id="cookieBanner">
-    <div class="cookieRow">
-      <div class="cookieTxt">
-        Usamos cookies esenciales para que la tienda funcione y cookies opcionales para mejorar tu experiencia.
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="cookieBtn" onclick="acceptCookies()">Aceptar</button>
-      </div>
+      <div id="productsGrid" class="productsGrid"></div>
     </div>
   </section>
-
-  <!-- ✅ JS (360 → 361) -->
-  <script src="/js/main.js?v=2026_PROD_UNIFIED_361" defer></script>
-</body>
-</html>
