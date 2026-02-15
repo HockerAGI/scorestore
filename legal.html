@@ -1,410 +1,119 @@
-<!DOCTYPE html>
-<html lang="es-MX">
+<!doctype html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Legal & Privacidad | SCORE STORE</title>
-  <meta name="robots" content="noindex, follow" />
-  <meta name="theme-color" content="#e10600" />
-
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_362" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0c10" />
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_401" />
+  <title>Legal — SCORE STORE</title>
   <style>
-    /* Legal page formatting that plays nice standalone AND inside your modal */
-    .legalWrap{padding:34px 0 70px}
-    .legalDoc{
-      max-width:920px;margin:0 auto;
-      border:1px solid rgba(11,12,16,.10);
-      background:rgba(255,255,255,.92);
-      border-radius:22px;
-      padding:26px;
-      box-shadow:0 18px 40px rgba(0,0,0,.08);
-    }
-    .legalTop{
-      display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
-      margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(11,12,16,.10);
-    }
-    .legalTitle{margin:0;font-size:30px;letter-spacing:-.01em}
-    .legalMeta{margin:4px 0 0;color:rgba(11,12,16,.65);font-size:13px;line-height:1.35}
-    .legalBadge{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      border:1px solid rgba(225,6,0,.25);
-      background:rgba(225,6,0,.08);
-      font-weight:900;font-size:12px;color:#0b0c10;
-      white-space:nowrap;
-    }
-    .legalToc{
-      display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px
-    }
-    .legalToc a{
-      display:inline-flex;gap:8px;align-items:center;
-      padding:10px 12px;border-radius:999px;
-      border:1px solid rgba(11,12,16,.10);
-      background:#fff;
-      color:rgba(11,12,16,.82);
-      font-weight:900;font-size:13px;
-      text-decoration:none;
-    }
-    .legalToc a:hover{background:rgba(0,0,0,.03)}
-    .legalDoc h2{margin:22px 0 10px;font-size:18px}
-    .legalDoc h3{margin:16px 0 8px;font-size:15px}
-    .legalDoc p{margin:0 0 10px;color:rgba(11,12,16,.72);line-height:1.65}
-    .legalDoc li{color:rgba(11,12,16,.72);line-height:1.65;margin:6px 0}
-    .legalDoc ul{margin:0 0 12px;padding-left:18px}
-    .legalHr{height:1px;background:rgba(11,12,16,.10);margin:18px 0}
-    .legalCallout{
-      border:1px solid rgba(11,12,16,.10);
-      background:rgba(0,0,0,.02);
-      border-radius:18px;
-      padding:14px;
-      margin:12px 0 16px;
-    }
-    .legalSmall{font-size:12px;color:rgba(11,12,16,.62);line-height:1.55}
-    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    /* micro ajustes para legal */
+    .legalShell { padding: 22px; border-radius: 18px; border: 1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.28); }
+    .legalShell h1 { margin: 0 0 8px; font-size: 22px; }
+    .legalShell h2 { margin: 18px 0 8px; font-size: 16px; letter-spacing: .02em; }
+    .legalShell p, .legalShell li { color: rgba(255,255,255,.78); line-height: 1.5; font-size: 14px; }
+    .legalShell a { text-decoration: underline; }
+    .legalGrid { display: grid; gap: 12px; }
+    .legalNotice { padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06); }
+    .legalSmall { color: rgba(255,255,255,.64); font-size: 12px; }
   </style>
 </head>
+<body style="background:#0b0c10;color:#fff;">
+  <main class="legalShell">
+    <h1>Legal — SCORE STORE</h1>
+    <div class="legalSmall">Versión: 2026_PROD_UNIFIED_401 • Última actualización: 2026-02-15</div>
 
-<body>
-  <main class="legalWrap">
-    <div class="wrap">
-      <article class="legalDoc">
+    <div class="legalNotice" style="margin-top:12px">
+      <b>Importante:</b>
+      <div class="legalSmall" style="margin-top:6px">
+        Este documento incluye campos <b>[POR COMPLETAR]</b> para que NO inventemos razón social, domicilio fiscal o responsables ARCO.
+        Completa esos datos antes de producción final.
+      </div>
+    </div>
 
-        <div class="legalTop">
-          <div>
-            <h1 class="legalTitle">Legal, Términos & Privacidad</h1>
-            <p class="legalMeta">
-              SCORE STORE es un sitio de e-commerce para compra de mercancía (merch) por colección, drop o carrera.
-              Este documento integra: <b>Términos y Condiciones</b>, <b>Política de Envíos</b>, <b>Devoluciones</b>,
-              <b>Aviso de Privacidad</b>, y <b>Cookies</b>.
-            </p>
-            <p class="legalMeta legalSmall">Última actualización: <span class="mono">2026-02-15</span></p>
-          </div>
-          <div class="legalBadge"><i class="fa-solid fa-shield-halved"></i> Cumplimiento & Transparencia</div>
-        </div>
+    <div class="legalGrid" style="margin-top:12px">
+      <div class="legalNotice">
+        <b>Datos del responsable</b>
+        <ul>
+          <li><b>Razón Social:</b> [POR COMPLETAR]</li>
+          <li><b>Nombre comercial:</b> SCORE STORE</li>
+          <li><b>Domicilio:</b> [POR COMPLETAR]</li>
+          <li><b>RFC:</b> [POR COMPLETAR]</li>
+          <li><b>Contacto:</b> contacto@hockerads.com / WhatsApp +52 1 664 238 1072</li>
+        </ul>
+      </div>
 
-        <nav class="legalToc" aria-label="Contenido legal">
-          <a href="#operador"><i class="fa-solid fa-building"></i> Operador</a>
-          <a href="#tyc"><i class="fa-solid fa-file-contract"></i> Términos</a>
-          <a href="#envios"><i class="fa-solid fa-truck-fast"></i> Envíos</a>
-          <a href="#devoluciones"><i class="fa-solid fa-rotate-left"></i> Devoluciones</a>
-          <a href="#pagos"><i class="fa-solid fa-credit-card"></i> Pagos</a>
-          <a href="#privacidad"><i class="fa-solid fa-user-shield"></i> Privacidad</a>
-          <a href="#cookies"><i class="fa-solid fa-cookie-bite"></i> Cookies</a>
-          <a href="#propiedad"><i class="fa-solid fa-copyright"></i> Propiedad</a>
-          <a href="#contacto"><i class="fa-solid fa-envelope"></i> Contacto</a>
-        </nav>
+      <div class="legalNotice">
+        <b>Fabricación y marca</b>
+        <ul>
+          <li>Productos fabricados por <b>Único Uniformes</b> (patrocinador oficial).</li>
+          <li>Las marcas, nombres y logotipos mencionados pertenecen a sus respectivos propietarios.</li>
+          <li>Ediciones limitadas: algunos drops pueden ser <b>venta final</b> (según disponibilidad).</li>
+        </ul>
+      </div>
+    </div>
 
-        <section id="operador">
-          <h2>1) Datos del Responsable / Operador del sitio</h2>
+    <h2>Términos y Condiciones</h2>
+    <p>Al usar este sitio y/o comprar en SCORE STORE, aceptas estos términos. Si no estás de acuerdo, no utilices el sitio.</p>
 
-          <div class="legalCallout">
-            <p><b>Razón social:</b> BAJATEX S. DE R.L. DE C.V.</p>
-            <p><b>Domicilio:</b> Blvd. Industrial, Otay, Tijuana, Baja California, C.P. 22614, México.</p>
-            <p><b>Correo de contacto:</b> <span class="mono">ventas.unicotextil@gmail.com</span></p>
-            <p class="legalSmall">
-              “Único Uniformes” y “SCORE STORE” pueden operar como <b>nombres comerciales</b> y/o líneas de negocio del Responsable.
-            </p>
-          </div>
+    <h2>Precios, disponibilidad y drops</h2>
+    <ul>
+      <li>Los precios se muestran en <b>MXN</b> salvo que se indique lo contrario.</li>
+      <li>La disponibilidad puede cambiar sin aviso por tratarse de <b>drops por edición</b>.</li>
+      <li>Nos reservamos el derecho de cancelar pedidos por error evidente de inventario o precio.</li>
+    </ul>
 
-          <p>
-            Al acceder y/o comprar en este sitio, aceptas los presentes Términos, así como las políticas incluidas.
-            Si no estás de acuerdo, por favor no uses el sitio ni completes una compra.
-          </p>
-        </section>
+    <h2>Pagos</h2>
+    <ul>
+      <li>El pago se procesa mediante <b>Stripe Checkout</b>. No almacenamos tu información completa de tarjeta.</li>
+      <li>Podemos solicitar validación adicional en casos de riesgo (fraude, contracargos, etc.).</li>
+    </ul>
 
-        <div class="legalHr"></div>
+    <h2>Envíos y entrega</h2>
+    <ul>
+      <li>Opciones: <b>Pickup</b> (gratis) o envío cotizado por CP/ZIP (MX/USA).</li>
+      <li>La cotización es estimada y puede variar por disponibilidad del carrier o zona extendida.</li>
+      <li>Si proporcionas un CP/ZIP incorrecto, puede haber retrasos o costos extra.</li>
+    </ul>
 
-        <section id="tyc">
-          <h2>2) Términos y Condiciones de Uso y Compra</h2>
+    <h2>Cambios y devoluciones</h2>
+    <ul>
+      <li>Si el producto llega defectuoso o incorrecto, repórtalo dentro de <b>[POR COMPLETAR] días</b> con evidencia (foto/video).</li>
+      <li>En drops limitados, cambios por talla/color pueden depender de stock. Algunos productos pueden ser venta final.</li>
+      <li>Devoluciones: aplican según legislación vigente y el estado del producto (sin uso, etiquetas, empaque, etc.).</li>
+    </ul>
 
-          <h3>2.1 Elegibilidad</h3>
-          <p>
-            Para comprar, debes tener capacidad legal para contratar. Si eres menor de edad, debes contar con autorización
-            de tu madre/padre/tutor.
-          </p>
+    <h2>Privacidad (México)</h2>
+    <p>Tratamos tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP).
+      La finalidad es: procesar pedidos, entregar productos, soporte, y prevención de fraude.</p>
 
-          <h3>2.2 Información de productos</h3>
-          <ul>
-            <li>Las fotos son representativas. Tonos y detalles pueden variar por iluminación, lote y pantalla.</li>
-            <li>La disponibilidad se actualiza constantemente, pero puede haber diferencias por inventario, drops o preventa.</li>
-            <li>Si una imagen aún no está lista, el sitio puede mostrar “Foto en proceso” sin afectar la compra del producto.</li>
-          </ul>
+    <h2>Derechos ARCO</h2>
+    <p>Para ejercer Acceso, Rectificación, Cancelación u Oposición (ARCO), escribe a: <b>[POR COMPLETAR EMAIL ARCO]</b> e incluye:</p>
+    <ul>
+      <li>Nombre y medio para comunicar respuesta</li>
+      <li>Documentos que acrediten identidad</li>
+      <li>Descripción clara de la solicitud</li>
+    </ul>
 
-          <h3>2.3 Precios y moneda</h3>
-          <p>
-            Los precios se muestran principalmente en <b>pesos mexicanos (MXN)</b>. Impuestos, costos de envío y/o cargos adicionales
-            (por ejemplo, conversión bancaria) pueden aplicar según tu método de pago y ubicación.
-          </p>
+    <h2>Cookies</h2>
+    <ul>
+      <li>Usamos cookies técnicas para carrito/experiencia.</li>
+      <li>Cookies de medición (ej. Pixel) solo se activan con tu consentimiento.</li>
+    </ul>
 
-          <h3>2.4 Confirmación de compra</h3>
-          <p>
-            Al finalizar el pago, recibirás una confirmación (en pantalla y/o por el medio disponible).
-            Una compra puede considerarse aceptada cuando se confirme el pago y el pedido sea registrado en nuestros sistemas.
-          </p>
+    <h2>Limitación de responsabilidad</h2>
+    <ul>
+      <li>El sitio se proporciona “tal cual”. Podemos actualizar o modificar funciones y contenido.</li>
+      <li>No somos responsables por fallas ajenas (proveedores, carriers, servicios de pago, conectividad, etc.).</li>
+    </ul>
 
-          <h3>2.5 Cancelación por seguridad / fraude</h3>
-          <p>
-            Para protegerte y proteger el negocio, podemos retener, cancelar o solicitar verificación adicional si detectamos
-            actividad inusual, datos inconsistentes, o señales de fraude. Si se cancela un pedido ya pagado, se gestiona reembolso
-            conforme al método de pago, sujeto a validaciones del procesador.
-          </p>
+    <h2>Jurisdicción</h2>
+    <p>Este sitio opera desde México. Las controversias se resolverán conforme a <b>[POR COMPLETAR: Estado/Juzgado]</b>.</p>
 
-          <h3>2.6 Uso del sitio</h3>
-          <ul>
-            <li>No uses el sitio para actividades ilegales, fraude, scraping agresivo o ataques.</li>
-            <li>No intentes manipular precios, cupones o el checkout.</li>
-            <li>No interfieras con el funcionamiento (bots maliciosos, exploits, etc.).</li>
-          </ul>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="envios">
-          <h2>3) Política de Envíos</h2>
-
-          <h3>3.1 Modalidades</h3>
-          <ul>
-            <li><b>Pickup</b>: entrega sin costo en punto acordado en Tijuana (cuando esté disponible).</li>
-            <li><b>México</b>: envío nacional a través de paqueterías y/o agregadores logísticos.</li>
-            <li><b>USA</b>: envío internacional sujeto a validación de destino.</li>
-          </ul>
-
-          <h3>3.2 Cotización y costos</h3>
-          <p>
-            Cuando el sitio muestre una cotización por CP/ZIP, el monto se calcula en función del destino y el contenido del carrito.
-            Los costos pueden cambiar si cambias productos, cantidades o destino.
-          </p>
-
-          <h3>3.3 Tiempos</h3>
-          <p>
-            Los tiempos de entrega son <b>estimados</b> y dependen del operador logístico, destino, temporadas, aduanas (si aplica)
-            y disponibilidad real. No garantizamos tiempos exactos, pero sí el seguimiento y soporte razonable.
-          </p>
-
-          <h3>3.4 Aduanas, impuestos y cargos en USA</h3>
-          <p>
-            En envíos internacionales, pueden aplicar cargos de importación, impuestos o gestión aduanal.
-            Estos cargos (si existen) normalmente son responsabilidad del comprador.
-          </p>
-
-          <h3>3.5 Dirección incorrecta / entrega fallida</h3>
-          <p>
-            Si el pedido se retrasa o regresa por dirección incorrecta, incompleta o ausencia, pueden existir costos extra
-            para reenvío. Te contactaremos para resolverlo.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="devoluciones">
-          <h2>4) Devoluciones, Cambios y Reembolsos</h2>
-
-          <div class="legalCallout">
-            <p><b>Regla de oro:</b> Si el producto llega con defecto de fabricación o error atribuible al Responsable, lo resolvemos.</p>
-            <p class="legalSmall">Para agilizar: conserva empaque, guía, y evidencia (fotos/video) al abrir el paquete.</p>
-          </div>
-
-          <h3>4.1 Casos que sí aplican</h3>
-          <ul>
-            <li>Defecto de fabricación (costura, impresión, daño no atribuible a uso).</li>
-            <li>Producto incorrecto vs. lo comprado (modelo/talla/variante equivocada).</li>
-            <li>Daño por transporte (sujeto a evidencia y reporte oportuno).</li>
-          </ul>
-
-          <h3>4.2 Casos que pueden no aplicar</h3>
-          <ul>
-            <li>Desgaste por uso normal, mal lavado, químicos, calor excesivo, plancha directa en impresión, etc.</li>
-            <li>Variaciones menores de tono por pantalla/iluminación.</li>
-            <li>Productos “drop”, “edición limitada” o “preventa” con condiciones especiales publicadas (si aplica).</li>
-          </ul>
-
-          <h3>4.3 Ventana de reporte</h3>
-          <p>
-            Te pedimos reportar incidencias <b>tan pronto como sea posible</b> tras la entrega.
-            Entre más rápido, más fácil resolver con paquetería y trazabilidad.
-          </p>
-
-          <h3>4.4 Proceso</h3>
-          <ol>
-            <li>Escríbenos a <span class="mono">ventas.unicotextil@gmail.com</span> con asunto: <span class="mono">“SCORE STORE — Soporte Pedido”</span>.</li>
-            <li>Incluye: nombre, número de pedido (si lo tienes), descripción, fotos/video, y solución deseada (cambio/reembolso).</li>
-            <li>Te indicaremos los siguientes pasos (recolección, envío, o validación).</li>
-          </ol>
-
-          <h3>4.5 Reembolsos</h3>
-          <p>
-            Si procede un reembolso, se gestiona preferentemente al mismo método de pago, sujeto a tiempos del procesador bancario.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="pagos">
-          <h2>5) Pagos, Seguridad y Procesadores</h2>
-
-          <h3>5.1 Procesamiento de pagos</h3>
-          <p>
-            Los pagos se procesan mediante <b>terceros</b> (por ejemplo, Stripe). Al pagar, podrías ser redirigido a una página segura del procesador.
-            El Responsable <b>no almacena</b> números completos de tarjetas; esos datos los gestiona el procesador conforme a sus estándares.
-          </p>
-
-          <h3>5.2 Contracargos (chargebacks)</h3>
-          <p>
-            Si inicias un contracargo sin primero contactarnos para soporte, el procesador podría solicitar evidencia (confirmación de compra,
-            guías, trazabilidad, etc.). Siempre es mejor resolver directo para evitar bloqueos y demoras.
-          </p>
-
-          <h3>5.3 Seguridad del sitio</h3>
-          <p>
-            Implementamos medidas razonables para proteger el sitio y la información. Aun así, ningún sistema es 100% infalible.
-            Si detectas algo raro, repórtalo de inmediato.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="privacidad">
-          <h2>6) Aviso de Privacidad (México)</h2>
-
-          <p>
-            En cumplimiento de la legislación mexicana aplicable en materia de protección de datos personales, el Responsable pone a tu disposición
-            este Aviso de Privacidad para informarte sobre el tratamiento de tus datos.
-          </p>
-
-          <h3>6.1 Datos personales que podemos recabar</h3>
-          <ul>
-            <li>Identificación y contacto: nombre, correo, teléfono (si se proporciona).</li>
-            <li>Datos de envío: dirección, código postal, ciudad, estado, país.</li>
-            <li>Datos de compra: productos, cantidades, historial de pedidos, confirmaciones.</li>
-            <li>Datos técnicos: IP aproximada, dispositivo/navegador, eventos de navegación (cookies/píxeles).</li>
-          </ul>
-
-          <h3>6.2 Finalidades del tratamiento</h3>
-          <ul>
-            <li><b>Primarias:</b> procesar compras, gestionar envíos, soporte, devoluciones, facturación cuando aplique, prevención de fraude.</li>
-            <li><b>Secundarias (opcionales):</b> marketing, remarketing, promociones, medición de campañas y mejora de experiencia.</li>
-          </ul>
-          <p class="legalSmall">
-            Si no deseas que tus datos se utilicen para finalidades secundarias, puedes solicitarlo al correo de contacto.
-          </p>
-
-          <h3>6.3 Transferencias y encargados</h3>
-          <p>
-            Tus datos pueden compartirse con proveedores necesarios para operar el servicio (por ejemplo: procesadores de pago, paqueterías,
-            plataformas de hosting/base de datos, herramientas de analítica/marketing), únicamente para cumplir las finalidades descritas.
-          </p>
-          <p class="legalSmall">
-            Ejemplos típicos: procesadores de pago (p. ej. Stripe), logística/paquetería, y sistemas de administración (p. ej. panel interno UnicOs / base de datos).
-          </p>
-
-          <h3>6.4 Derechos ARCO y revocación</h3>
-          <p>
-            Puedes ejercer tus derechos de <b>Acceso, Rectificación, Cancelación u Oposición</b> (ARCO), así como revocar tu consentimiento,
-            enviando solicitud al correo: <span class="mono">ventas.unicotextil@gmail.com</span>.
-          </p>
-          <p class="legalSmall">
-            Incluye: (1) nombre completo, (2) datos para responderte, (3) descripción clara del derecho a ejercer, y (4) documentación para acreditar identidad.
-          </p>
-
-          <h3>6.5 Conservación</h3>
-          <p>
-            Conservamos los datos por el tiempo necesario para cumplir finalidades, soporte, y obligaciones aplicables (por ejemplo fiscales/contables),
-            y posteriormente los eliminamos o anonimizamos conforme sea razonable.
-          </p>
-
-          <h3>6.6 Medidas de seguridad</h3>
-          <p>
-            Aplicamos medidas administrativas, técnicas y físicas razonables para proteger los datos contra daño, pérdida, alteración, destrucción
-            o acceso no autorizado.
-          </p>
-
-          <h3>6.7 Cambios al Aviso</h3>
-          <p>
-            Este Aviso puede actualizarse. Publicaremos cambios en esta misma sección con fecha de actualización.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="cookies">
-          <h2>7) Cookies, Píxeles y Tecnologías de rastreo</h2>
-
-          <p>
-            El sitio puede usar cookies o tecnologías similares para: recordar preferencias, mantener carrito, medir rendimiento,
-            y apoyar campañas (por ejemplo, pixel/medición publicitaria).
-          </p>
-
-          <h3>7.1 Tipos comunes</h3>
-          <ul>
-            <li><b>Necesarias:</b> funcionamiento del carrito, navegación y seguridad.</li>
-            <li><b>Preferencias:</b> recordar elecciones como modo de entrega.</li>
-            <li><b>Medición / marketing:</b> métricas de campañas y remarketing (si están habilitadas).</li>
-          </ul>
-
-          <h3>7.2 Cómo gestionarlas</h3>
-          <p>
-            Puedes deshabilitar cookies desde tu navegador. Algunas funciones (como carrito) podrían verse afectadas.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="propiedad">
-          <h2>8) Propiedad Intelectual y Marcas</h2>
-          <p>
-            Los contenidos del sitio (textos, diseños, fotografías, gráficos y código) están protegidos por derechos de propiedad intelectual.
-            Las marcas, nombres y logotipos de terceros (incluyendo referencias a eventos/series) pertenecen a sus respectivos titulares.
-          </p>
-          <p class="legalSmall">
-            Si detectas contenido que consideres indebido, repórtalo a <span class="mono">ventas.unicotextil@gmail.com</span> para revisión.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="limitacion">
-          <h2>9) Limitación de responsabilidad</h2>
-          <p>
-            En la medida permitida por la ley, el Responsable no será responsable por daños indirectos derivados del uso del sitio,
-            interrupciones por terceros, o demoras atribuibles a paqueterías/aduanas. Esto no limita garantías o derechos irrenunciables del consumidor.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="ley">
-          <h2>10) Ley aplicable y jurisdicción</h2>
-          <p>
-            Este documento se rige por las leyes de los Estados Unidos Mexicanos. Para interpretación y cumplimiento, las partes se someten,
-            en la medida legal aplicable, a las autoridades competentes en Baja California, México, sin perjuicio de derechos del consumidor.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <section id="contacto">
-          <h2>11) Contacto</h2>
-          <p>
-            Para soporte, envíos, devoluciones, privacidad o ARCO:
-            <b><span class="mono">ventas.unicotextil@gmail.com</span></b>
-          </p>
-          <p class="legalSmall">
-            Recomendación: incluye evidencia y datos del pedido para respuesta más rápida.
-          </p>
-        </section>
-
-        <div class="legalHr"></div>
-
-        <p class="legalSmall">
-          <b>Nota:</b> Este documento es informativo y busca transparencia operativa. Para una auditoría legal específica
-          (por ejemplo, cláusulas exactas de garantías, avisos comerciales, o condiciones por preventa/drops), se recomienda revisión con asesoría legal local.
-        </p>
-
-      </article>
+    <div class="legalNotice" style="margin-top:14px">
+      <b>Contacto</b>
+      <p style="margin:8px 0 0">contacto@hockerads.com • WhatsApp +52 1 664 238 1072</p>
     </div>
   </main>
 </body>
