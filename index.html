@@ -1,309 +1,348 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#e10600" />
-  <meta name="description" content="SCORE STORE — Merch oficial y drops por carrera. Fabricado por Único Uniformes." />
-  <meta property="og:title" content="SCORE STORE" />
-  <meta property="og:description" content="Merch oficial y drops por carrera. Fabricado por Único Uniformes." />
-  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0b0c10" />
+
+  <title>SCORE STORE — Merch Oficial</title>
+  <meta name="description" content="Merch oficial por edición. Fabricado por Único Uniformes, patrocinador oficial." />
+
+  <link rel="icon" href="/assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
+  <link rel="manifest" href="/site.webmanifest?v=2026_PROD_UNIFIED_401" />
+  <link rel="preload" as="image" href="/assets/hero.webp" imagesrcset="/assets/hero.webp" />
+
+  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_401" />
+
+  <!-- PWA iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="SCORE STORE — Merch Oficial" />
+  <meta property="og:description" content="Merch oficial por edición. Fabricado por Único Uniformes, patrocinador oficial." />
   <meta property="og:image" content="/assets/hero.webp" />
-  <meta property="og:locale" content="es_MX" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:type" content="website" />
 
-  <link rel="preload" href="/css/styles.css?v=2026_PROD_UNIFIED_362" as="style">
-  <link rel="stylesheet" href="/css/styles.css?v=2026_PROD_UNIFIED_362" />
-
-  <link rel="preload" href="/assets/hero.webp" as="image" />
-  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
-  <link rel="preload" href="/assets/baja1000-texture.webp" as="image" />
-
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-  <script src="https://js.stripe.com/v3"></script>
-
-  <!-- Meta Pixel Code (ya lo tenías) -->
+  <!-- Performance: no bloquear render -->
   <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '000000000000000'); // <- deja tu ID real aquí
-    fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=000000000000000&ev=PageView&noscript=1"
-  /></noscript>
-  <!-- End Meta Pixel Code -->
+    // Splash kill-switch (no bloquea LCP)
+    window.addEventListener('load', () => {
+      const s = document.getElementById('splash');
+      if (s) s.classList.add('hide');
+    });
 
-  <title>SCORE STORE</title>
+    // Register SW
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js?v=2026_PROD_UNIFIED_401').catch(()=>{});
+      });
+    }
+  </script>
 </head>
 
 <body>
-
-  <!-- SPLASH -->
+  <!-- Splash / Intro -->
   <div id="splash" class="splash" aria-hidden="false">
     <div class="splashInner">
-      <img class="splashLogo" src="/assets/logo-score.webp" alt="SCORE STORE" />
-      <div class="splashBar"><span></span></div>
-      <div class="splashHint">Cargando…</div>
+      <div class="splashBadge">
+        <span class="dot"></span>
+        <span>DROP EN VIVO</span>
+      </div>
+
+      <div class="splashTitle">
+        <img src="/assets/logo-score.webp" alt="SCORE" width="140" height="56" decoding="async" />
+        <div class="splashLines">
+          <div class="line1">SCORE STORE</div>
+          <div class="line2">Motorsport Merch</div>
+        </div>
+      </div>
+
+      <div class="splashPulse" aria-hidden="true"></div>
+      <div class="splashHint">Cargando ediciones…</div>
     </div>
   </div>
 
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="wrap topbarInner">
-      <a class="brand" href="#top" aria-label="SCORE STORE">
-        <img class="brandMark" src="/assets/logo-score.webp" alt="SCORE" />
-        <span class="brandText">SCORE STORE</span>
+  <!-- Cookie banner -->
+  <div id="cookieBanner" class="cookieBanner" aria-hidden="true">
+    <div class="cookieCard">
+      <div class="cookieTitle">Cookies</div>
+      <div class="cookieText">
+        Usamos cookies técnicas para carrito/experiencia. Analítica (Pixel) solo con tu permiso.
+      </div>
+      <div class="cookieActions">
+        <button id="cookieRejectBtn" class="btn small ghost" type="button">Rechazar</button>
+        <button id="cookieAcceptBtn" class="btn small primary" type="button">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar" id="top">
+    <div class="topbarInner">
+      <a class="brand" href="#top" aria-label="Ir al inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE STORE" width="112" height="44" decoding="async" />
       </a>
 
-      <nav class="topNav">
-        <a href="#catalogo" class="navLink">Catálogo</a>
-        <a href="#partners" class="navLink">Partners</a>
-        <a href="#faq" class="navLink">FAQ</a>
+      <nav class="nav">
+        <a href="#catalogos" class="navLink">Catálogos</a>
+        <button id="openAiBtn" class="navBtn" type="button">SCORE AI</button>
+        <button id="openLegalBtn" class="navBtn ghost" type="button">Legal</button>
       </nav>
 
-      <div class="topActions">
-        <button class="iconBtn" type="button" onclick="openDrawerCompat()" aria-label="Abrir carrito">
-          <i class="fa-solid fa-bag-shopping"></i>
-          <span id="cartCount" class="badge">0</span>
-        </button>
-      </div>
+      <button id="openCartBtn" class="cartBtn" type="button" aria-label="Abrir carrito">
+        <span class="cartIcon" aria-hidden="true">🛒</span>
+        <span class="cartLabel">Carrito</span>
+        <span id="cartCount" class="cartCount">0</span>
+      </button>
     </div>
   </header>
 
-  <!-- HERO -->
-  <main id="top" class="hero">
-    <div class="heroBg"></div>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="heroBg" aria-hidden="true"></div>
 
-    <div class="wrap heroInner">
-      <div class="heroCopy">
-        <div class="heroKicker">SCORE INTERNATIONAL</div>
+    <div class="heroInner">
+      <div class="heroLeft">
+        <div class="heroKicker">
+          <span class="pill red">SCORE INTERNATIONAL</span>
+          <span class="pill dark">DROP OFICIAL</span>
+        </div>
 
         <h1 class="heroTitle">
-          Merch oficial y drops por carrera.
+          Merch por edición, sin rollo.
         </h1>
 
-        <p class="heroSub">
-          Fabricado por <b>Único Uniformes</b>, patrocinador oficial.
+        <p class="heroCopy">
+          <b>Fabricado por Único Uniformes, Patrocinador oficial.</b>
         </p>
 
         <div class="heroCtas">
-          <a href="#catalogo" class="btn primary">Ver catálogo</a>
-          <button type="button" class="btn ghost" onclick="openDrawerCompat()">Ver carrito</button>
+          <a id="heroCtaCatalogos" class="btn primary" href="#catalogos">Ver catálogos</a>
+          <button id="heroCtaAi" class="btn ghost" type="button">Hablar con SCORE AI</button>
         </div>
 
-        <div class="shipPanel" aria-label="Opciones de entrega">
-          <div class="shipRow">
+        <div class="heroShipping">
+          <div class="heroShipTitle">Entrega</div>
+
+          <div class="heroShipModes">
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="pickup" checked onchange="toggleShippingCompat('pickup')">
+              <input type="radio" name="shipModeHero" value="pickup" checked />
               <span>Pickup</span>
             </label>
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="mx" onchange="toggleShippingCompat('mx')">
+              <input type="radio" name="shipModeHero" value="mx" />
               <span>México</span>
             </label>
             <label class="radioPill">
-              <input type="radio" name="shipModeHero" value="us" onchange="toggleShippingCompat('us')">
+              <input type="radio" name="shipModeHero" value="us" />
               <span>USA</span>
             </label>
           </div>
 
           <div id="zipWrapHero" class="zipWrap" style="display:none">
-            <input id="zipInputHero" class="zipInput" inputmode="numeric" placeholder="Código postal" />
-            <button class="btn small" type="button" onclick="quoteShippingUICompat()">Cotizar envío</button>
+            <input id="zipInputHero" class="zipInput" inputmode="numeric" placeholder="Código postal / ZIP" />
+            <button id="quoteShipHeroBtn" class="btn small" type="button">Cotizar</button>
           </div>
 
-          <div class="shipHint">
+          <div class="heroShipSummary">
             <span id="shipLabelHero">Pickup Gratis</span>
           </div>
         </div>
-      </div>
 
-      <div class="heroVisual">
-        <img class="heroImg" src="/assets/hero.webp" alt="SCORE STORE hero" />
-        <div class="heroBadges">
-          <img class="heroBadge" src="/assets/logo-world-desert.webp" alt="World Desert Championship" />
-          <img class="heroBadge" src="/assets/logo-baja1000.webp" alt="Baja 1000" />
-          <img class="heroBadge" src="/assets/logo-baja500.webp" alt="Baja 500" />
-          <img class="heroBadge" src="/assets/logo-baja400.webp" alt="Baja 400" />
-          <img class="heroBadge" src="/assets/logo-sf250.webp" alt="San Felipe 250" />
+        <div class="heroNote">
+          Drops por evento: Baja 1000, Baja 500, Baja 400, SF 250.
         </div>
       </div>
-    </div>
-  </main>
 
-  <!-- CATALOGO -->
-  <section id="catalogo" class="section">
-    <div class="wrap">
-      <div class="sectionHead">
-        <h2 class="sectionTitle">Catálogo</h2>
-        <p class="sectionSub">Colecciones por carrera y drops limitados.</p>
-      </div>
-
-      <div id="chips" class="chips"></div>
-
-      <div id="productsGrid" class="productsGrid"></div>
-    </div>
-  </section>
-  <!-- PARTNERS -->
-  <section id="partners" class="section alt">
-    <div class="wrap">
-      <div class="sectionHead">
-        <h2 class="sectionTitle">Partners</h2>
-        <p class="sectionSub">Patrocinadores y aliados oficiales.</p>
-      </div>
-
-      <div class="partnersGrid">
-        <img class="pLogo" src="/assets/partners/ford.webp" alt="Ford" />
-        <img class="pLogo" src="/assets/partners/gofasracing.webp" alt="Go Fast Racing" />
-        <img class="pLogo" src="/assets/partners/rzr.webp" alt="RZR" />
-        <img class="pLogo" src="/assets/partners/roodrigch.webp" alt="Roodrigch" />
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section id="faq" class="section">
-    <div class="wrap">
-      <div class="sectionHead">
-        <h2 class="sectionTitle">FAQ</h2>
-        <p class="sectionSub">Lo esencial, sin vueltas.</p>
-      </div>
-
-      <div class="faqGrid">
-        <details class="faq">
-          <summary>¿Cómo compro?</summary>
-          <p>Agrega productos al carrito, elige talla y finaliza el pago con Stripe.</p>
-        </details>
-        <details class="faq">
-          <summary>¿Envíos?</summary>
-          <p>Pickup gratis o cotización por CP (MX/USA). Si una foto no está lista, verás “Foto en proceso”.</p>
-        </details>
-        <details class="faq">
-          <summary>¿Cambios / devoluciones?</summary>
-          <p>Consulta términos en Legal. Productos de drop pueden tener condiciones especiales.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="wrap footerInner">
-      <div class="footerCol">
-        <div class="footerBrand">
-          <img src="/assets/logo-score.webp" alt="SCORE" />
-          <div>
-            <div class="footerTitle">SCORE STORE</div>
-            <div class="footerSub">Fabricado por Único Uniformes.</div>
+      <div class="heroRight">
+        <div class="heroFrame">
+          <img
+            src="/assets/hero.webp"
+            alt="Merch oficial SCORE"
+            width="980"
+            height="1225"
+            decoding="async"
+            fetchpriority="high"
+          />
+          <div class="heroFrameBadge">
+            <span class="badgeDot"></span>
+            <span>Ediciones oficiales</span>
           </div>
         </div>
-      </div>
 
-      <div class="footerCol">
-        <div class="footerLinks">
-          <a href="#catalogo">Catálogo</a>
-          <a href="#partners">Partners</a>
-          <a href="#faq">FAQ</a>
-          <a href="javascript:void(0)" onclick="openLegalCompat()">Legal</a>
+        <div class="heroMiniRow">
+          <img src="/assets/logo-unico-h.webp" alt="Único Uniformes" width="120" height="28" loading="lazy" decoding="async" />
+          <span class="divider"></span>
+          <img src="/assets/logo-world-desert.webp" alt="World Desert" width="120" height="28" loading="lazy" decoding="async" />
         </div>
       </div>
-
-      <div class="footerCol">
-        <button class="btn ghost" type="button" onclick="openDrawerCompat()">
-          <i class="fa-solid fa-bag-shopping"></i> Ver carrito
-        </button>
-      </div>
     </div>
-  </footer>
+  </section>
 
-  <!-- OVERLAY + DRAWER -->
-  <div id="pageOverlay" class="overlay" onclick="closeDrawerCompat()" aria-hidden="true"></div>
+  <!-- Catalogs -->
+  <main class="main">
+    <section id="catalogos" class="section">
+      <div class="sectionHead">
+        <h2 class="sectionTitle">Catálogos por edición</h2>
+        <p class="sectionSub">Toca una edición para ver productos. (Carga rápida: no render masivo.)</p>
+      </div>
+
+      <div id="editionGrid" class="editionGrid" aria-hidden="false"></div>
+
+      <!-- Products View -->
+      <div id="productsView" class="productsView" aria-hidden="true">
+        <div class="productsTop">
+          <div class="productsTopLeft">
+            <div class="productsBackRow">
+              <button id="backToEditionsBtn" class="btn small ghost" type="button">← Volver</button>
+              <button id="openAllBtn" class="btn small" type="button">Ver todo</button>
+            </div>
+            <h3 id="editionTitle" class="productsTitle">Edición</h3>
+            <div id="editionMeta" class="productsMeta">Drop oficial</div>
+          </div>
+
+          <div class="productsTopRight">
+            <button id="productsAiBtn" class="btn small ghost" type="button">SCORE AI</button>
+            <button id="productsCartBtn" class="btn small primary" type="button">Carrito</button>
+          </div>
+        </div>
+
+        <div id="chips" class="chips"></div>
+
+        <div id="productsGrid" class="productsGrid"></div>
+      </div>
+    </section>
+
+    <!-- Partners -->
+    <section class="section">
+      <div class="sectionHead">
+        <h2 class="sectionTitle">Partners</h2>
+        <p class="sectionSub">Marcas y aliados del universo off-road.</p>
+      </div>
+
+      <div class="partners">
+        <div class="partnerCard">
+          <img src="/assets/logo-ford.webp" alt="Ford" width="140" height="54" loading="lazy" decoding="async" />
+        </div>
+        <div class="partnerCard">
+          <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" width="140" height="54" loading="lazy" decoding="async" />
+        </div>
+        <div class="partnerCard">
+          <img src="/assets/logo-rzr.webp" alt="RZR" width="140" height="54" loading="lazy" decoding="async" />
+        </div>
+        <div class="partnerCard">
+          <img src="/assets/logo-unico-h.webp" alt="Único Uniformes" width="140" height="54" loading="lazy" decoding="async" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footerInner">
+        <div class="footerLeft">
+          <div class="footerBrand">
+            <img src="/assets/logo-score.webp" alt="SCORE" width="120" height="46" loading="lazy" decoding="async" />
+            <div>
+              <div class="footerTitle">SCORE STORE</div>
+              <div class="footerSub">Merch oficial por edición</div>
+            </div>
+          </div>
+
+          <div class="footerFine">
+            Fabricado por <b>Único Uniformes</b> • Patrocinador oficial.<br/>
+            © <span id="year"></span> SCORE STORE. Todos los derechos reservados.
+          </div>
+        </div>
+
+        <div class="footerRight">
+          <button id="footerAiBtn" class="btn small ghost" type="button">SCORE AI</button>
+          <button id="footerCartBtn" class="btn small primary" type="button">Carrito</button>
+          <a id="footerLegalLink" class="footerLink" href="/legal.html">Legal</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Cart Drawer -->
+  <div id="pageOverlay" class="overlay" aria-hidden="true"></div>
 
   <aside id="cartDrawer" class="drawer" aria-hidden="true">
     <div class="drawerHead">
-      <div class="drawerTitle">Tu carrito</div>
-      <button class="iconBtn" type="button" onclick="closeDrawerCompat()" aria-label="Cerrar">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <div>
+        <div class="drawerTitle">Carrito</div>
+        <div class="drawerSub">Checkout Stripe + Envío Envia</div>
+      </div>
+      <button id="closeCartBtn" class="iconBtn" type="button" aria-label="Cerrar">✕</button>
     </div>
 
-    <div id="drawerBody" class="drawerBody">
-      <!-- JS -->
-    </div>
+    <div id="drawerBody" class="drawerBody"></div>
 
-    <div class="drawerFoot">
-      <div class="totalsRow">
+    <div class="drawerTotals">
+      <div class="row">
         <span>Subtotal</span>
         <b id="subtotalLabel">$0</b>
       </div>
-
-      <div class="totalsRow">
+      <div class="row">
         <span>Envío</span>
         <b id="shipLabel">$0</b>
       </div>
-
-      <div class="totalsRow total">
+      <div class="row total">
         <span>Total</span>
         <b id="totalLabel">$0</b>
       </div>
 
-      <button class="btn primary full" type="button" onclick="checkoutCompat()">
+      <button id="checkoutBtn" class="btn primary full" type="button">
         Pagar con Stripe
       </button>
+      <div class="drawerNote">
+        Al pagar aceptas Términos y Privacidad.
+      </div>
     </div>
   </aside>
 
-  <!-- TOAST -->
+  <!-- AI Modal -->
+  <div id="aiModal" class="modal" aria-hidden="true">
+    <div class="modalCard">
+      <div class="modalHead">
+        <div>
+          <div class="modalTitle">SCORE AI</div>
+          <div class="modalSub">Vendedor + soporte (edición, envío, pago)</div>
+        </div>
+        <button id="closeAiBtn" class="iconBtn" type="button" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div id="aiMessages" class="chat"></div>
+
+      <div class="chatBar">
+        <input id="aiInput" class="chatInput" placeholder="Ej: Recomiéndame algo para Baja 1000…" />
+        <button id="aiSendBtn" class="btn small primary" type="button">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legal Modal -->
+  <div id="legalModal" class="modal" aria-hidden="true">
+    <div class="modalCard wide">
+      <div class="modalHead">
+        <div>
+          <div class="modalTitle">Legal</div>
+          <div class="modalSub">Términos • Privacidad • Cookies</div>
+        </div>
+        <button id="closeLegalBtn" class="iconBtn" type="button" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="legalBody" class="legalBody"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <!-- COOKIE -->
-  <div id="cookieBanner" class="cookieBanner" aria-hidden="true">
-    <div class="cookieText">
-      Usamos cookies para mejorar tu experiencia. Al continuar, aceptas el uso de cookies.
-    </div>
-    <button class="btn small" type="button" onclick="acceptCookiesCompat()">Aceptar</button>
-  </div>
-
-  <!-- LEGAL MODAL -->
-  <div id="legalModal" class="modal" aria-hidden="true">
-    <div class="modalInner">
-      <div class="modalHead">
-        <div class="modalTitle">Legal</div>
-        <button class="iconBtn" type="button" onclick="closeLegalCompat()" aria-label="Cerrar">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div id="legalBody" class="modalBody">
-        <!-- JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- COMPAT HELPERS (para no romper UI si cambias internals) -->
   <script>
-    window.showToastCompat = (msg)=>{ try{ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(window.__toastT); window.__toastT=setTimeout(()=>t.classList.remove('show'),2200);}catch(e){} };
-    window.openDrawerCompat = ()=> (window.openDrawer ? window.openDrawer() : null);
-    window.closeDrawerCompat = ()=> (window.closeDrawer ? window.closeDrawer() : null);
-    window.toggleShippingCompat = (m)=> (window.toggleShipping ? window.toggleShipping(m) : null);
-    window.quoteShippingUICompat = ()=> (window.quoteShippingUI ? window.quoteShippingUI() : null);
-    window.checkoutCompat = ()=> (window.doCheckout ? window.doCheckout() : null);
-    window.openLegalCompat = ()=> (window.openLegal ? window.openLegal() : null);
-    window.closeLegalCompat = ()=> (window.closeLegal ? window.closeLegal() : null);
-    window.acceptCookiesCompat = ()=> (window.acceptCookies ? window.acceptCookies() : null);
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 
-  <script src="/js/main.js?v=2026_PROD_UNIFIED_362"></script>
+  <script defer src="/js/main.js?v=2026_PROD_UNIFIED_401"></script>
 </body>
 </html>
