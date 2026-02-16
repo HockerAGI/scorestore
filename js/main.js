@@ -1,1119 +1,768 @@
-/* SCORE STORE — main.js (v2026_PROD_UNIFIED_401)
-   Objetivos:
-   - Home = catálogos por edición (NO render masivo de productos al inicio)
-   - Click catálogo => productos + carrusel tipo FB
-   - Carrito drawer pro + Envia quote + Stripe Checkout (redirect)
-   - SCORE AI (Gemini vía Netlify Function /api/chat)
-   - Performance: splash no bloquea, imágenes optimizadas con Netlify Image CDN
-*/
+/* =========================================================
+   SCORE STORE — MASTER JS PROD 2026 (UNIFIED 360)
+   FIXES:
+   - Catálogo robusto + chips dinámicos (BAJA 400 / SF 250)
+   - Carrito + Totales correctos (Subtotal + Envío)
+   - Envío: Pickup / MX / USA + cotizador real (/.netlify/functions/quote_shipping)
+   - Checkout: envía shipping data al backend (create_checkout)
+   - Legal modal: Terms + Privacy (fetch /legal.html con fallback)
+   - Cookie banner (persistente)
+   - AI chat UI (Gemini endpoint /chat) con fallback
+   - PWA: registra sw.js + soporta openCart=1 y status=success/cancel
+   ========================================================= */
 
-(() => {
-  'use strict';
+const CONFIG = {
+  // Stripe publishable (NO se usa directo; checkout redirige por URL del backend)
+  stripeKey: "pk_live_51STepg1ExTx11WqTGdkk68CLhZHqnBkIAzE2EacmhSR336HvR9nQY5dskyPWotJ6AExFjstC7C7wUTsOIIzRGols00hFSwI8yp",
 
-  const CFG = {
-    currency: 'MXN',
-    endpoints: {
-      quote: '/api/quote',
-      checkout: '/api/checkout',
-      chat: '/api/chat',
-      catalog: ['/data/catalog.json','/data/products.json','/data/catalogo.json']
-    },
-    netlifyImage: {
-      enabled: true,
-      q: 82
-    },
-    ui: {
-      maxSlides: 6
-    }
-  };
+  // Integraciones server-side (Netlify functions)
+  endpoints: {
+    checkout: "/api/checkout", // redirect a /.netlify/functions/create_checkout
+    quote: "/api/quote",       // redirect a /.netlify/functions/quote_shipping
+    ai: "/api/chat"            // redirect a /.netlify/functions/chat
+  },
 
-  // ---------- Helpers ----------
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  storageKey: "score_cart_2026",
+  catalogUrl: "/data/catalog.json",
+  promosUrl: "/data/promos.json", // future
+  cookieKey: "cookieConsent"
+};
 
-  function safeJsonParse(str, fallback) {
-    try { return JSON.parse(str); } catch { return fallback; }
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => document.querySelectorAll(q);
+
+const fmtMXN = (n) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(n || 0));
+
+const STATE = {
+  cart: safeJson(localStorage.getItem(CONFIG.storageKey), []),
+  products: [],
+  sections: [],
+  filter: "ALL",
+
+  shipping: {
+    mode: "pickup",    // pickup | mx | us
+    country: "MX",     // MX | US
+    zip: "",
+    amount: 0,
+    label: "Pickup Gratis",
+    quoted: true
+  },
+
+  legalCacheHtml: null
+};
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+function safeJson(str, fallback) {
+  try {
+    const v = JSON.parse(str);
+    return v ?? fallback;
+  } catch {
+    return fallback;
   }
+}
 
-  function money(n) {
-    const v = Number(n || 0);
-    try {
-      return new Intl.NumberFormat('es-MX', { style:'currency', currency: CFG.currency }).format(v);
-    } catch {
-      return '$' + v.toFixed(2);
-    }
+function toast(msg) {
+  if (typeof window.showToastCompat === "function") return window.showToastCompat(msg);
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = String(msg || "");
+  el.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {})
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = data?.error || data?.message || `HTTP ${res.status}`;
+    throw new Error(err);
   }
+  return data;
+}
 
-  function toast(msg) {
-    const el = $('#toast');
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.remove('show'), 2400);
-  }
+function qtyInCart() {
+  return (STATE.cart || []).reduce((a, b) => a + Number(b.qty || 0), 0);
+}
 
-  function clampInt(x, min, max) {
-    const n = Math.round(Number(x || 0));
-    return Math.min(max, Math.max(min, n));
-  }
+function subtotalCart() {
+  return (STATE.cart || []).reduce((a, b) => a + Number(b.price || 0) * Number(b.qty || 0), 0);
+}
 
-  function encodePath(p) {
-    if (!p) return '';
-    // keep "/" but encode spaces & special chars
-    return String(p).split('/').map(seg => encodeURIComponent(seg)).join('/').replace(/%2F/g,'/');
-  }
+function setText(sel, value) {
+  const el = typeof sel === "string" ? $(sel) : sel;
+  if (!el) return;
+  el.textContent = value;
+}
 
-  function netlifyImg(url, w, q) {
-    if (!url) return '';
-    const clean = (String(url).startsWith('http') ? url : (String(url).startsWith('/') ? url : '/' + url));
-    if (!CFG.netlifyImage.enabled) return clean;
-    const params = new URLSearchParams({ url: clean, w: String(w || 900), q: String(q || CFG.netlifyImage.q) });
-    return `/.netlify/images?${params.toString()}`;
-  }
+function setHTML(sel, value) {
+  const el = typeof sel === "string" ? $(sel) : sel;
+  if (!el) return;
+  el.innerHTML = value;
+}
 
-  async function preload(src) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.decoding = 'async';
-      img.src = src;
+/* =========================================================
+   CART
+   ========================================================= */
+function saveCart() {
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(STATE.cart || []));
+  const qty = qtyInCart();
+  $$(".cartCount").forEach((el) => (el.textContent = qty));
+  updateDrawerUI();
+  updateTotalsUI();
+}
+
+function updateDrawerUI() {
+  const container = $("#cartItems");
+  if (!container) return;
+
+  container.innerHTML = (STATE.cart && STATE.cart.length)
+    ? ""
+    : "<p style='text-align:center;padding:20px;opacity:0.6;'>Tu carrito está vacío</p>";
+
+  (STATE.cart || []).forEach((item, idx) => {
+    const row = document.createElement("div");
+    row.className = "cartRow";
+    row.innerHTML = `
+      <div class="cartThumb"><img src="${escapeAttr(item.img)}" alt=""></div>
+      <div class="cartInfo">
+        <div class="name">${escapeHtml(item.name)}</div>
+        <div class="price">${fmtMXN(item.price)} x ${Number(item.qty || 1)}</div>
+        <div style="font-size:10px;opacity:0.6;">Talla: ${escapeHtml(item.size || "Unitalla")}</div>
+      </div>
+      <button class="removeBtn" type="button" aria-label="Eliminar" onclick="removeFromCart(${idx})"
+        style="color:var(--score-red);font-weight:bold;padding:5px;">✕</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function updateTotalsUI() {
+  const sub = subtotalCart();
+  const ship = Number(STATE.shipping.amount || 0);
+  const total = sub + ship;
+
+  setText("#cartSubtotal", fmtMXN(sub));
+  setText("#cartShipping", fmtMXN(ship));
+  setText("#cartTotal", fmtMXN(total));
+
+  // label
+  setText("#cartShipLabel", STATE.shipping.label || "Envío");
+  // hero quote label
+  const shipQuote = $("#shipQuote");
+  if (shipQuote) shipQuote.textContent = STATE.shipping.quoted
+    ? `${STATE.shipping.label}: ${fmtMXN(ship)}`
+    : "";
+}
+
+window.removeFromCart = (idx) => {
+  STATE.cart.splice(idx, 1);
+  // si el carrito quedó vacío, reset shipping a pickup
+  if (!STATE.cart.length) setShippingMode("pickup", { silent: true });
+  saveCart();
+};
+
+function addToCart(id) {
+  const p = (STATE.products || []).find((x) => x.id === id);
+  if (!p) return;
+
+  const safeId = String(p.id || "").replace(/[^a-z0-9]/gi, "");
+  const size = $(`#size-${safeId}`)?.value || "Unitalla";
+
+  const key = `${id}-${size}`;
+  const ex = (STATE.cart || []).find((i) => i.key === key);
+
+  if (ex) ex.qty = Number(ex.qty || 1) + 1;
+  else {
+    STATE.cart.push({
+      key,
+      id: p.id,
+      name: p.name,
+      price: Number(p.baseMXN || 0),
+      img: p.img,
+      size,
+      qty: 1
     });
   }
 
-  async function postJson(url, body) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
-    });
-    const text = await res.text();
-    const json = safeJsonParse(text, null);
-    if (!res.ok) {
-      const msg = (json && (json.error || json.message)) || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-    return json ?? {};
-  }
+  // shipping quote queda stale si cambió qty
+  if (STATE.shipping.mode !== "pickup") STATE.shipping.quoted = false;
 
-  // Fallback to direct function path if redirect is missing
-  async function postSmart(url, body) {
-    try {
-      return await postJson(url, body);
-    } catch (e) {
-      if (!String(url).includes('/.netlify/functions/')) {
-        const name = String(url).replace('/api/', '');
-        return await postJson(`/.netlify/functions/${name}`, body);
-      }
-      throw e;
-    }
-  }
+  saveCart();
+  openDrawer();
+}
+window.addToCart = addToCart;
 
-  async function getJson(url) {
-    const res = await fetch(url, { cache: 'no-cache' });
-    const text = await res.text();
-    const json = safeJsonParse(text, null);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return json;
-  }
+/* =========================================================
+   DRAWER
+   ========================================================= */
+function openDrawer() {
+  $("#cartDrawer")?.classList.add("open");
+  $("#pageOverlay")?.classList.add("show");
+  document.body.classList.add("no-scroll");
+}
+function closeDrawer() {
+  $("#cartDrawer")?.classList.remove("open");
+  $("#pageOverlay")?.classList.remove("show");
+  document.body.classList.remove("no-scroll");
+}
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
 
-  function normalizeCatalog(raw) {
-    // Accepts:
-    // - {sections:[...], products:[...]}
-    // - {products:[...]} (sections will be inferred)
-    // - [...] (array of products)
-    const obj = raw;
-    let products = [];
-    let sections = [];
+/* =========================================================
+   CATALOGO + FILTROS
+   ========================================================= */
+function normalizeSectionTitle(t) {
+  return String(t || "").replace(/\s+/g, " ").trim();
+}
 
-    if (Array.isArray(obj)) {
-      products = obj;
-    } else if (obj && Array.isArray(obj.products)) {
-      products = obj.products;
-      if (Array.isArray(obj.sections)) sections = obj.sections;
-    } else if (obj && Array.isArray(obj.items)) {
-      products = obj.items;
-      if (Array.isArray(obj.sections)) sections = obj.sections;
-    }
+function ensureSectionChips() {
+  const host = $(".filters");
+  if (!host || !Array.isArray(STATE.sections)) return;
 
-    // Normalize product fields
-    products = (products || []).map((p, idx) => ({
-      id: p.id || p.pid || p.sku || `p_${idx}`,
-      sku: p.sku || p.id || "",
-      name: p.name || p.title || p.product || "Producto",
-      price: Number(p.price || p.amount || p.cost || 0),
-      section: (p.section || p.edition || p.catalog || p.drop || "GENERAL").toString().toUpperCase(),
-      subSection: (p.subSection || p.sub || p.category || p.type || "").toString(),
-      img: p.img || p.image || p.cover || "",
-      images: p.images || p.gallery || []
-    }));
+  const existing = new Set(
+    Array.from($$(".chip"))
+      .map((b) => String(b.dataset.filter || "").toUpperCase())
+      .filter(Boolean)
+  );
 
-    // Infer sections if missing
-    if (!sections || !sections.length) {
-      const ids = Array.from(new Set(products.map(p => p.section).filter(Boolean)));
-      sections = ids.map(id => ({
-        id,
-        title: id.replace(/_/g,' '),
-        desc: 'Drop por edición',
-        logo: '/assets/logo-score.webp',
-        tag: 'EDICIÓN'
-      }));
-    } else {
-      sections = sections.map(s => ({
-        id: (s.id || s.section || s.edition || '').toString().toUpperCase(),
-        title: s.title || s.name || s.id,
-        desc: s.desc || s.description || 'Drop por edición',
-        logo: s.logo || s.image || '/assets/logo-score.webp',
-        tag: s.tag || 'EDICIÓN'
-      }));
-    }
-
-    return { sections, products };
-  }
-
-
-  // ---------- State ----------
-  const STATE = {
-    catalog: null,
-    activeEdition: null,
-    activeFilter: 'ALL',
-    cart: safeJsonParse(localStorage.getItem('score_cart_v1') || '[]', []),
-    shipMode: localStorage.getItem('score_ship_mode') || 'pickup', // pickup | mx | us
-    shipQuote: safeJsonParse(localStorage.getItem('score_ship_quote') || 'null', null),
-    consent: safeJsonParse(localStorage.getItem('score_cookie_consent') || 'null', null) // {analytics:boolean}
-  };
-
-  function saveCart() {
-    localStorage.setItem('score_cart_v1', JSON.stringify(STATE.cart));
-    updateCartBadge();
-  }
-  function saveShip() {
-    localStorage.setItem('score_ship_mode', STATE.shipMode);
-    localStorage.setItem('score_ship_quote', JSON.stringify(STATE.shipQuote));
-  }
-
-  function cartCount() {
-    return STATE.cart.reduce((a, it) => a + (it.qty || 0), 0);
-  }
-  function cartSubtotal() {
-    return STATE.cart.reduce((a, it) => a + (Number(it.price)||0) * (Number(it.qty)||0), 0);
-  }
-
-  // ---------- DOM refs ----------
-  const UI = {
-    editionGrid: null,
-    productsView: null,
-    productsGrid: null,
-    chips: null,
-    editionTitle: null,
-    editionMeta: null,
-
-    cartCount: null,
-    drawer: null,
-    overlay: null,
-    drawerBody: null,
-    subtotalLabel: null,
-    shipLabel: null,
-    totalLabel: null,
-
-    aiModal: null,
-    aiMessages: null,
-    aiInput: null,
-
-    legalModal: null,
-    legalBody: null,
-
-    cookieBanner: null,
-    shipHero: {
-      zipWrap: null,
-      zipInput: null,
-      quoteBtn: null,
-      shipLabel: null
-    }
-  };
-
-  // ---------- Init ----------
-  document.addEventListener('DOMContentLoaded', () => {
-    bindDom();
-    bindTopbar();
-    bindCookie();
-    bindHeroShipping();
-    bindCart();
-    bindAI();
-    bindLegal();
-
-    // Splash is killed by inline script. We *do not* wait for data.
-    // Load catalog async.
-    loadCatalog().catch(err => {
-      console.error(err);
-      toast('No se pudo cargar el catálogo.');
-    });
+  // Agrega chips para cada sección del JSON si no existe
+  STATE.sections.forEach((s) => {
+    const id = String(s.id || "").toUpperCase();
+    if (!id || existing.has(id)) return;
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.type = "button";
+    btn.dataset.filter = id;
+    btn.textContent = normalizeSectionTitle(s.title || id.replaceAll("_", " "));
+    host.appendChild(btn);
+    existing.add(id);
   });
 
-  function bindDom() {
-    UI.editionGrid = $('#editionGrid');
-    UI.productsView = $('#productsView');
-    UI.productsGrid = $('#productsGrid');
-    UI.chips = $('#chips');
-    UI.editionTitle = $('#editionTitle');
-    UI.editionMeta = $('#editionMeta');
+  bindChipEvents(); // re-bind (incluye nuevos)
+}
 
-    UI.cartCount = $('#cartCount');
-    UI.drawer = $('#cartDrawer');
-    UI.overlay = $('#pageOverlay');
-    UI.drawerBody = $('#drawerBody');
-    UI.subtotalLabel = $('#subtotalLabel');
-    UI.shipLabel = $('#shipLabel');
-    UI.totalLabel = $('#totalLabel');
-
-    UI.aiModal = $('#aiModal');
-    UI.aiMessages = $('#aiMessages');
-    UI.aiInput = $('#aiInput');
-
-    UI.legalModal = $('#legalModal');
-    UI.legalBody = $('#legalBody');
-
-    UI.cookieBanner = $('#cookieBanner');
-
-    UI.shipHero.zipWrap = $('#zipWrapHero');
-    UI.shipHero.zipInput = $('#zipInputHero');
-    UI.shipHero.quoteBtn = $('#quoteShipHeroBtn');
-    UI.shipHero.shipLabel = $('#shipLabelHero');
-
-    updateCartBadge();
-  }
-
-  // ---------- Cookie / Analytics ----------
-  function bindCookie() {
-    const acceptBtn = $('#cookieAcceptBtn');
-    const rejectBtn = $('#cookieRejectBtn');
-
-    const hasConsent = STATE.consent && typeof STATE.consent.analytics === 'boolean';
-    if (!hasConsent) {
-      UI.cookieBanner?.classList.add('active');
-      UI.cookieBanner?.setAttribute('aria-hidden','false');
-    } else {
-      if (STATE.consent.analytics) initAnalytics();
-    }
-
-    acceptBtn?.addEventListener('click', () => {
-      STATE.consent = { analytics: true };
-      localStorage.setItem('score_cookie_consent', JSON.stringify(STATE.consent));
-      UI.cookieBanner?.classList.remove('active');
-      initAnalytics();
-      toast('Cookies aceptadas.');
+function bindChipEvents() {
+  $$(".chip").forEach((btn) => {
+    if (btn.__bound) return;
+    btn.__bound = true;
+    btn.addEventListener("click", () => {
+      $$(".chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      STATE.filter = String(btn.dataset.filter || "ALL").toUpperCase();
+      renderGrid();
     });
-
-    rejectBtn?.addEventListener('click', () => {
-      STATE.consent = { analytics: false };
-      localStorage.setItem('score_cookie_consent', JSON.stringify(STATE.consent));
-      UI.cookieBanner?.classList.remove('active');
-      toast('Cookies rechazadas.');
-    });
-  }
-
-  function initAnalytics() {
-    // Meta Pixel (deferred + con consentimiento)
-    if (window.__pixelLoaded) return;
-    window.__pixelLoaded = true;
-    const PIXEL_ID = '331564696669571';
-    try {
-      !(function(f,b,e,v,n,t,s) {
-        if(f.fbq) return; n=f.fbq=function(){ n.callMethod ? n.callMethod.apply(n,arguments) : n.queue.push(arguments) };
-        if(!f._fbq) f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0'; n.queue=[];
-        t=b.createElement(e); t.async=!0; t.src=v;
-        s=b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t,s);
-      })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-      window.fbq('init', PIXEL_ID);
-      window.fbq('track', 'PageView');
-    } catch(e) {
-      console.warn('Pixel error', e);
-    }
-  }
-
-  // ---------- Topbar / Nav ----------
-  function bindTopbar() {
-    $('#openCartBtn')?.addEventListener('click', openCart);
-    $('#footerCartBtn')?.addEventListener('click', openCart);
-
-    $('#openAiBtn')?.addEventListener('click', () => openAI());
-    $('#footerAiBtn')?.addEventListener('click', () => openAI());
-
-    $('#heroCtaAi')?.addEventListener('click', () => openAI('Quiero comprar merch. Recomiéndame algo 🔥'));
-    $('#productsAiBtn')?.addEventListener('click', () => openAI(`Estoy viendo la edición ${STATE.activeEdition || ''}. Recomiéndame productos.`));
-
-    $('#openLegalBtn')?.addEventListener('click', openLegal);
-    $('#footerLegalLink')?.addEventListener('click', openLegal);
-
-    $('#heroCtaCatalogos')?.addEventListener('click', () => {
-      // anchor only
-    });
-  }
-
-  // ---------- Legal ----------
-  function bindLegal() {
-    $('#closeLegalBtn')?.addEventListener('click', closeLegal);
-    UI.legalModal?.addEventListener('click', (e) => {
-      if (e.target === UI.legalModal) closeLegal();
-    });
-
-    $('#openLegalBtn')?.addEventListener('click', openLegal);
-    $('#footerLegalLink')?.addEventListener('click', openLegal);
-  }
-
-  async function openLegal() {
-    if (!UI.legalModal || !UI.legalBody) return;
-    UI.legalModal.classList.add('active');
-    UI.legalModal.setAttribute('aria-hidden','false');
-    UI.legalBody.innerHTML = '<div style="opacity:.8">Cargando…</div>';
-    try {
-      const res = await fetch('/legal.html', { cache: 'no-cache' });
-      const html = await res.text();
-      // Extract <main> only
-      const match = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-      UI.legalBody.innerHTML = match ? match[1] : html;
-    } catch (e) {
-      UI.legalBody.innerHTML = '<div style="opacity:.8">No se pudo cargar Legal. Abre /legal.html</div>';
-    }
-  }
-
-  function closeLegal() {
-    UI.legalModal?.classList.remove('active');
-    UI.legalModal?.setAttribute('aria-hidden','true');
-  }
-
-  // ---------- Catalog / Editions ----------
-  async function loadCatalog() {
-    const urls = Array.isArray(CFG.endpoints.catalog) ? CFG.endpoints.catalog : [CFG.endpoints.catalog];
-    let raw = null;
-    let lastErr = null;
-
-    for (const u of urls) {
-      try {
-        raw = await getJson(u);
-        if (raw) break;
-      } catch (e) { lastErr = e; }
-    }
-    if (!raw) throw (lastErr || new Error("No catalog source"));
-
-    STATE.catalog = normalizeCatalog(raw);
-
-    renderEditions();
-    bindEditionRouting();
-    syncHeroShipUI();
-
-    // If URL hash includes edition, open it
-    const hash = String(location.hash || '');
-    const m = hash.match(/ed=([A-Z0-9_]+)/i);
-    if (m && m[1]) openEdition(m[1].toUpperCase());
-  }
-
-  function bindEditionRouting() {
-    window.addEventListener('hashchange', () => {
-      const h = String(location.hash || '');
-      const m = h.match(/ed=([A-Z0-9_]+)/i);
-      if (m && m[1]) openEdition(m[1].toUpperCase());
-    });
-
-    $('#openAllBtn')?.addEventListener('click', () => {
-      STATE.activeEdition = null;
-      STATE.activeFilter = 'ALL';
-      showAllEditions();
-      location.hash = '#catalogos';
-    });
-
-    $('#backToEditionsBtn')?.addEventListener('click', () => {
-      STATE.activeEdition = null;
-      STATE.activeFilter = 'ALL';
-      showAllEditions();
-      const base = location.href.split('#')[0];
-      history.replaceState(null, '', `${base}#catalogos`);
-    });
-  }
-
-  function renderEditions() {
-    if (!UI.editionGrid || !STATE.catalog) return;
-
-    const sections = Array.isArray(STATE.catalog.sections) ? STATE.catalog.sections : [];
-    const products = Array.isArray(STATE.catalog.products) ? STATE.catalog.products : [];
-
-    UI.editionGrid.innerHTML = '';
-    const frag = document.createDocumentFragment();
-
-    for (const s of sections) {
-      const count = products.filter(p => String(p.section).toUpperCase() === String(s.id).toUpperCase()).length;
-      const logo = s.logo || '';
-      const title = s.title || s.id;
-      const desc = s.desc || 'Drop por edición';
-      const tag = s.tag || 'EDICIÓN';
-
-      const card = document.createElement('article');
-      card.className = 'editionCard';
-      card.tabIndex = 0;
-      card.setAttribute('role','button');
-      card.setAttribute('aria-label', `Abrir edición ${title}`);
-
-      card.innerHTML = `
-        <div class="editionCardInner">
-          <div class="editionTop">
-            <img class="editionLogo" src="${encodePath(logo)}" alt="${escapeHtml(title)}" loading="lazy" decoding="async" />
-            <div class="editionTag">${escapeHtml(tag)}</div>
-          </div>
-          <h3 class="editionTitle">${escapeHtml(title)}</h3>
-          <p class="editionDesc">${escapeHtml(desc)}</p>
-          <div class="editionMeta">
-            <span class="editionPill">${count} productos</span>
-            <span class="editionPill">Carrusel</span>
-            <span class="editionPill">Checkout</span>
-            <span class="editionArrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M13 5 20 12l-7 7-1.41-1.41L16.17 13H4v-2h12.17l-4.58-4.59L13 5Z"/></svg>
-            </span>
-          </div>
-        </div>
-      `;
-
-      const open = () => openEdition(String(s.id || '').toUpperCase());
-      card.addEventListener('click', open);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-      });
-
-      frag.appendChild(card);
-    }
-
-    UI.editionGrid.appendChild(frag);
-  }
-
-  function showAllEditions() {
-    UI.editionGrid?.classList.remove('hidden');
-    UI.productsView?.classList.remove('active');
-    UI.productsView?.setAttribute('aria-hidden','true');
-    UI.editionGrid?.setAttribute('aria-hidden','false');
-  }
-
-  function openEdition(id) {
-    if (!STATE.catalog) return;
-    const sections = Array.isArray(STATE.catalog.sections) ? STATE.catalog.sections : [];
-    const s = sections.find(x => String(x.id).toUpperCase() === String(id).toUpperCase());
-
-    const editionId = String(id || '').toUpperCase();
-    STATE.activeEdition = editionId;
-    STATE.activeFilter = 'ALL';
-
-    // Update URL
-    try {
-      const base = location.href.split('#')[0];
-      history.replaceState(null, '', `${base}#catalogos&ed=${editionId}`);
-    } catch {}
-
-    // UI swap
-    UI.editionGrid?.classList.add('hidden');
-    UI.editionGrid?.setAttribute('aria-hidden','true');
-    UI.productsView?.classList.add('active');
-    UI.productsView?.setAttribute('aria-hidden','false');
-
-    UI.editionTitle.textContent = s?.title || editionId;
-    UI.editionMeta.textContent = s?.desc || 'Drop oficial';
-    renderChipsForEdition(editionId);
-    renderProducts(editionId);
-
-    setTimeout(() => {
-      $('#productsView')?.scrollIntoView({ behavior:'smooth', block:'start' });
-    }, 50);
-  }
-
-  function renderChipsForEdition(editionId) {
-    if (!UI.chips || !STATE.catalog) return;
-    const products = (STATE.catalog.products || []).filter(p => String(p.section).toUpperCase() === editionId);
-    const subs = Array.from(new Set(products.map(p => p.subSection).filter(Boolean)));
-
-    UI.chips.innerHTML = '';
-    const mk = (label, value) => {
-      const b = document.createElement('button');
-      b.className = 'chip' + (STATE.activeFilter === value ? ' active' : '');
-      b.type = 'button';
-      b.textContent = label;
-      b.addEventListener('click', () => {
-        STATE.activeFilter = value;
-        $$('.chip', UI.chips).forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        renderProducts(editionId);
-      });
-      return b;
-    };
-
-    UI.chips.appendChild(mk('Todo', 'ALL'));
-    for (const s of subs) UI.chips.appendChild(mk(s, s));
-  }
-
-  // ---------- Products + Carousel ----------
-  function renderProducts(editionId) {
-    if (!UI.productsGrid || !STATE.catalog) return;
-    const all = (STATE.catalog.products || []).filter(p => String(p.section).toUpperCase() === editionId);
-    const products = (STATE.activeFilter === 'ALL') ? all : all.filter(p => String(p.subSection) === String(STATE.activeFilter));
-
-    UI.productsGrid.innerHTML = '';
-    if (!products.length) {
-      UI.productsGrid.innerHTML = '<div style="grid-column: 1 / -1; padding: 12px; opacity:.8">No hay productos en esta sección.</div>';
-      return;
-    }
-
-    const frag = document.createDocumentFragment();
-
-    for (const p of products) {
-      const card = document.createElement('article');
-      card.className = 'productCard';
-      card.dataset.pid = p.id || '';
-
-      const imgList = [p.img, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean);
-      const slides = imgList.slice(0, CFG.ui.maxSlides);
-
-      const price = Number(p.price || 0);
-      const meta = [p.subSection, p.sku].filter(Boolean).join(' • ');
-
-      card.innerHTML = `
-        <div class="productMedia">
-          <div class="carouselTrack" data-track="1" aria-label="Galería del producto"></div>
-          <div class="carouselControls" aria-hidden="false">
-            <button class="cArrow" type="button" data-prev aria-label="Anterior">‹</button>
-            <div class="cDots" data-dots></div>
-            <button class="cArrow" type="button" data-next aria-label="Siguiente">›</button>
-          </div>
-        </div>
-
-        <div class="productBody">
-          <h4 class="productName">${escapeHtml(p.name || 'Producto')}</h4>
-          <div class="productMetaRow">
-            <span class="price">${money(price)}</span>
-            <span class="meta">${escapeHtml(meta)}</span>
-          </div>
-
-          <div class="productActions">
-            <button class="btn small primary" type="button" data-add>Agregar</button>
-            <div class="qty" aria-label="Cantidad">
-              <button type="button" data-minus aria-label="Menos">−</button>
-              <span data-qty>1</span>
-              <button type="button" data-plus aria-label="Más">+</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // qty controls
-      const qtyEl = $('[data-qty]', card);
-      let qty = 1;
-      const setQty = (n) => {
-        qty = clampInt(n, 1, 99);
-        qtyEl.textContent = String(qty);
-      };
-      $('[data-minus]', card).addEventListener('click', () => setQty(qty - 1));
-      $('[data-plus]', card).addEventListener('click', () => setQty(qty + 1));
-      $('[data-add]', card).addEventListener('click', () => {
-        addToCart(p, qty);
-        toast('Agregado al carrito.');
-      });
-
-      // Lazy-hydrate carousel only when visible (perf)
-      card.dataset.slides = JSON.stringify(slides);
-      frag.appendChild(card);
-    }
-
-    UI.productsGrid.appendChild(frag);
-    hydrateVisibleCarousels();
-  }
-
-  function hydrateVisibleCarousels() {
-    const cards = $$('.productCard', UI.productsGrid);
-    if (!cards.length) return;
-
-    const io = new IntersectionObserver((entries) => {
-      for (const ent of entries) {
-        if (!ent.isIntersecting) continue;
-        const card = ent.target;
-        io.unobserve(card);
-        hydrateCarousel(card).catch(console.warn);
-      }
-    }, {
-      root: null,
-      threshold: 0.25
-    });
-
-    cards.forEach(c => io.observe(c));
-  }
-
-  async function hydrateCarousel(card) {
-    const track = $('.carouselTrack', card);
-    const dots = $('[data-dots]', card);
-    const prev = $('[data-prev]', card);
-    const next = $('[data-next]', card);
-
-    if (!track || track.dataset.ready === '1') return;
-    track.dataset.ready = '1';
-
-    const raw = safeJsonParse(card.dataset.slides || '[]', []);
-    const slides = Array.isArray(raw) ? raw : [];
-    if (!slides.length) {
-      track.innerHTML = `<div class="slide"><img src="/assets/hero.webp" alt="Producto" loading="lazy" decoding="async"></div>`;
-      dots.innerHTML = `<span class="dot active"></span>`;
-      prev.style.display = 'none';
-      next.style.display = 'none';
-      return;
-    }
-
-    // Build slides only for images that exist (avoid blank)
-    const okImgs = [];
-    for (const s of slides) {
-      const cleaned = encodePath(s);
-      const candidate = netlifyImg(cleaned, 900, 82);
-      const exists = await preload(candidate);
-      if (exists) okImgs.push({ raw: cleaned, cdn: candidate });
-      if (okImgs.length >= CFG.ui.maxSlides) break;
-    }
-
-    if (!okImgs.length) {
-      track.innerHTML = `<div class="slide"><img src="/assets/hero.webp" alt="Producto" loading="lazy" decoding="async"></div>`;
-      dots.innerHTML = `<span class="dot active"></span>`;
-      prev.style.display = 'none';
-      next.style.display = 'none';
-      return;
-    }
-
-    track.innerHTML = '';
-    dots.innerHTML = '';
-
-    okImgs.forEach((img, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'slide';
-      slide.innerHTML = `
-        <img
-          src="${img.cdn}"
-          srcset="${netlifyImg(img.raw, 520, 80)} 520w, ${netlifyImg(img.raw, 760, 82)} 760w, ${netlifyImg(img.raw, 980, 84)} 980w"
-          sizes="(max-width: 680px) 92vw, (max-width: 1020px) 45vw, 320px"
-          width="980"
-          height="1225"
-          alt="Producto"
-          loading="lazy"
-          decoding="async"
-        />
-      `;
-      track.appendChild(slide);
-
-      const d = document.createElement('span');
-      d.className = 'dot' + (i === 0 ? ' active' : '');
-      dots.appendChild(d);
-    });
-
-    let index = 0;
-    const setActive = (i) => {
-      index = clampInt(i, 0, okImgs.length - 1);
-      track.scrollTo({ left: track.clientWidth * index, behavior:'smooth' });
-      $$('.dot', dots).forEach((d, di) => d.classList.toggle('active', di === index));
-    };
-
-    prev.addEventListener('click', () => setActive(index - 1));
-    next.addEventListener('click', () => setActive(index + 1));
-
-    track.addEventListener('scroll', () => {
-      const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
-      if (i !== index) {
-        index = clampInt(i, 0, okImgs.length - 1);
-        $$('.dot', dots).forEach((d, di) => d.classList.toggle('active', di === index));
-      }
-    }, { passive: true });
-  }
-
-  // ---------- Cart ----------
-  function bindCart() {
-    $('#openCartBtn')?.addEventListener('click', openCart);
-    $('#productsCartBtn')?.addEventListener('click', openCart);
-    $('#closeCartBtn')?.addEventListener('click', closeCart);
-    UI.overlay?.addEventListener('click', closeCart);
-
-    $('#checkoutBtn')?.addEventListener('click', checkout);
-
-    updateTotals();
-  }
-
-  function updateCartBadge() {
-    if (UI.cartCount) UI.cartCount.textContent = String(cartCount());
-  }
-
-  function openCart() {
-    UI.overlay?.classList.add('active');
-    UI.drawer?.classList.add('active');
-    UI.drawer?.setAttribute('aria-hidden','false');
-    UI.overlay?.setAttribute('aria-hidden','false');
-    renderCart();
-  }
-
-  function closeCart() {
-    UI.overlay?.classList.remove('active');
-    UI.drawer?.classList.remove('active');
-    UI.drawer?.setAttribute('aria-hidden','true');
-    UI.overlay?.setAttribute('aria-hidden','true');
-  }
-
-  function addToCart(p, qty) {
-    const id = String(p.id || p.sku || p.name || Math.random());
-    const existing = STATE.cart.find(it => it.id === id);
-    if (existing) {
-      existing.qty = clampInt((existing.qty || 0) + qty, 1, 99);
-    } else {
-      STATE.cart.push({
-        id,
-        name: p.name || 'Producto',
-        sku: p.sku || '',
-        section: p.section || '',
-        subSection: p.subSection || '',
-        price: Number(p.price || 0),
-        img: p.img || '',
-        qty: clampInt(qty, 1, 99)
-      });
-    }
-    saveCart();
-    renderCart();
-  }
-
-  function removeFromCart(id) {
-    STATE.cart = STATE.cart.filter(it => it.id !== id);
-    saveCart();
-    renderCart();
-  }
-
-  function changeQty(id, delta) {
-    const it = STATE.cart.find(x => x.id === id);
-    if (!it) return;
-    it.qty = clampInt((it.qty || 1) + delta, 1, 99);
-    saveCart();
-    renderCart();
-  }
-
-  function renderCart() {
-    if (!UI.drawerBody) return;
-    if (!STATE.cart.length) {
-      UI.drawerBody.innerHTML = '<div style="opacity:.8">Tu carrito está vacío.</div>';
-      updateTotals();
-      return;
-    }
-
-    UI.drawerBody.innerHTML = '';
-
-    // Shipping controls
-    const shipCard = document.createElement('div');
-    shipCard.className = 'cartItem';
-    shipCard.innerHTML = `
-      <div class="cartThumb"><img src="/assets/fondo-pagina-score.webp" alt="Entrega" loading="lazy" decoding="async"></div>
-      <div class="cartInfo">
-        <p class="cartName">Entrega</p>
-        <div class="cartSmall">Selecciona pickup o cotiza envío por CP/ZIP.</div>
-        <div class="cartRow">
-          <div>
-            <label class="radioPill"><input type="radio" name="shipMode" value="pickup"><span>Pickup</span></label>
-            <label class="radioPill"><input type="radio" name="shipMode" value="mx"><span>México</span></label>
-            <label class="radioPill"><input type="radio" name="shipMode" value="us"><span>USA</span></label>
-          </div>
-        </div>
-        <div class="cartRow" id="shipZipRow" style="display:none">
-          <input id="shipZipInput" class="zipInput" inputmode="numeric" placeholder="Código postal / ZIP" />
-          <button class="btn small" type="button" id="shipQuoteBtn">Cotizar</button>
-        </div>
-        <div class="cartSmall"><b id="shipSummary"></b></div>
+  });
+}
+
+function renderGrid() {
+  const grid = $("#productsGrid");
+  if (!grid) return;
+
+  const list = Array.isArray(STATE.products) ? STATE.products : [];
+  const filtered = list.filter((p) => {
+    const section = String(p.sectionId || "").toUpperCase();
+    if (STATE.filter === "ALL") return true;
+
+    // chips fijas por categoría
+    if (STATE.filter === "HOODIES") return p.subSection === "Hoodies";
+    if (STATE.filter === "TEES") return p.subSection === "Camisetas";
+    if (STATE.filter === "CAPS") return p.subSection === "Gorras";
+
+    // chips por evento
+    return section === STATE.filter;
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(0,0,0,.2); border-radius:16px; background:rgba(255,255,255,.7)">
+        <b>No hay productos en este filtro.</b>
+        <div style="opacity:.7; margin-top:6px">Prueba con “Todo”.</div>
       </div>
     `;
-    UI.drawerBody.appendChild(shipCard);
+    return;
+  }
 
-    // bind shipping
-    const radios = $$('input[name="shipMode"]', shipCard);
-    radios.forEach(r => r.checked = (r.value === STATE.shipMode));
-    const zipRow = $('#shipZipRow', shipCard);
-    const zipInput = $('#shipZipInput', shipCard);
-    const quoteBtn = $('#shipQuoteBtn', shipCard);
-    const summary = $('#shipSummary', shipCard);
-
-    const sync = () => {
-      zipRow.style.display = (STATE.shipMode === 'pickup') ? 'none' : 'flex';
-      summary.textContent = shippingLabel();
-      saveShip();
-      updateTotals();
-    };
-    radios.forEach(r => r.addEventListener('change', () => {
-      STATE.shipMode = r.value;
-      if (STATE.shipMode === 'pickup') STATE.shipQuote = null;
-      sync();
-      syncHeroShipUI();
-    }));
-    zipInput.value = (STATE.shipQuote && STATE.shipQuote.zip) ? STATE.shipQuote.zip : '';
-    quoteBtn.addEventListener('click', async () => {
-      const zip = String(zipInput.value || '').trim();
-      if (!zip) return toast('Pon tu código postal/ZIP.');
-      try {
-        quoteBtn.disabled = true;
-        quoteBtn.textContent = 'Cotizando…';
-        const payload = buildShippingPayload(zip);
-        const q = await postSmart(CFG.endpoints.quote, payload);
-        if (!q?.ok) throw new Error(q?.error || 'No se pudo cotizar.');
-        STATE.shipQuote = {
-          zip,
-          amount: Number(q.amount || 0),
-          label: String(q.label || ''),
-          carrier: String(q.carrier || '')
-        };
-        saveShip();
-        toast('Envío cotizado.');
-        sync();
-      } catch (e) {
-        console.error(e);
-        toast('No se pudo cotizar envío.');
-      } finally {
-        quoteBtn.disabled = false;
-        quoteBtn.textContent = 'Cotizar';
-      }
-    });
-    sync();
-
-    // Items
-    for (const it of STATE.cart) {
-      const row = document.createElement('div');
-      row.className = 'cartItem';
-      const thumb = netlifyImg(encodePath(it.img || '/assets/hero.webp'), 240, 82);
-      row.innerHTML = `
-        <div class="cartThumb"><img src="${thumb}" alt="${escapeHtml(it.name)}" loading="lazy" decoding="async"></div>
-        <div class="cartInfo">
-          <p class="cartName">${escapeHtml(it.name)}</p>
-          <div class="cartSmall">${escapeHtml([it.section, it.subSection].filter(Boolean).join(' • '))}</div>
-          <div class="cartRow">
-            <div class="qty">
-              <button type="button" data-minus aria-label="Menos">−</button>
-              <span>${it.qty}</span>
-              <button type="button" data-plus aria-label="Más">+</button>
-            </div>
-            <div class="cartSmall"><b>${money((it.price||0)*(it.qty||0))}</b></div>
-            <button class="linkBtn" type="button" data-remove>Quitar</button>
-          </div>
+  grid.innerHTML = "";
+  filtered.forEach((p) => {
+    const safeId = String(p.id || "").replace(/[^a-z0-9]/gi, "");
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <div class="p-media"><img src="${escapeAttr(p.img)}" alt="${escapeAttr(p.name)}" loading="lazy"></div>
+      <div class="p-body">
+        <div class="p-top">
+          <h3 class="p-name">${escapeHtml(p.name)}</h3>
+          <span class="p-price">${fmtMXN(p.baseMXN)}</span>
         </div>
-      `;
-      $('[data-minus]', row).addEventListener('click', () => changeQty(it.id, -1));
-      $('[data-plus]', row).addEventListener('click', () => changeQty(it.id, +1));
-      $('[data-remove]', row).addEventListener('click', () => removeFromCart(it.id));
-      UI.drawerBody.appendChild(row);
+        <select id="size-${safeId}" class="p-size-sel" aria-label="Talla">
+          ${(p.sizes || ["Unitalla"]).map((s) => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join("")}
+        </select>
+        <button class="p-btn-add" type="button" onclick="addToCart('${escapeAttr(p.id)}')">AGREGAR AL CARRITO</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* =========================================================
+   SHIPPING UI
+   ========================================================= */
+function normalizeZip(input) {
+  return String(input || "").replace(/[^\d]/g, "").slice(0, 5);
+}
+
+function syncZipInputs(zip) {
+  const z = normalizeZip(zip);
+  const a = $("#shipZip");
+  const b = $("#miniZip");
+  if (a) a.value = z;
+  if (b) b.value = z;
+}
+
+function syncShipRadios(mode) {
+  // hero radios
+  const hero = $$("input[name='shipModeHero']");
+  hero.forEach((r) => (r.checked = r.value === mode));
+
+  // drawer radios
+  const dr = $$("input[name='shipMode']");
+  dr.forEach((r) => (r.checked = r.value === mode));
+}
+
+function setShippingMode(mode, opts = {}) {
+  const m = (mode || "pickup").toLowerCase();
+
+  STATE.shipping.mode = m;
+  STATE.shipping.quoted = (m === "pickup");
+
+  if (m === "us") STATE.shipping.country = "US";
+  else STATE.shipping.country = "MX";
+
+  if (m === "pickup") {
+    STATE.shipping.amount = 0;
+    STATE.shipping.label = "Pickup Gratis";
+  } else {
+    STATE.shipping.amount = 0;
+    STATE.shipping.label = (m === "us") ? "Cotiza envío (USA)" : "Cotiza envío (MX)";
+  }
+
+  syncShipRadios(m);
+
+  // zip inputs show/hide
+  const zipWrap = $("#shipZipWrap");
+  const zipRow = $("#zipRow");
+  if (zipWrap) zipWrap.style.display = (m === "pickup") ? "none" : "block";
+  if (zipRow) zipRow.style.display = (m === "pickup") ? "none" : "flex";
+
+  if (!opts.silent) updateTotalsUI();
+}
+window.toggleShipping = (mode) => setShippingMode(mode);
+
+/**
+ * Cotiza shipping y actualiza:
+ * - hero quote
+ * - drawer label + amount
+ * - totals
+ */
+async function quoteShippingUI() {
+  if (!STATE.cart.length) {
+    toast("Tu carrito está vacío.");
+    return;
+  }
+
+  const mode = STATE.shipping.mode;
+
+  if (mode === "pickup") {
+    STATE.shipping.amount = 0;
+    STATE.shipping.label = "Pickup Gratis";
+    STATE.shipping.quoted = true;
+    updateTotalsUI();
+    toast("Pickup seleccionado.");
+    return;
+  }
+
+  // toma zip desde el input que tenga valor
+  const zip = normalizeZip($("#miniZip")?.value || $("#shipZip")?.value || STATE.shipping.zip);
+  if (zip.length !== 5) {
+    toast("Pon un CP/ZIP de 5 dígitos.");
+    return;
+  }
+
+  // guarda zip en state + inputs
+  STATE.shipping.zip = zip;
+  syncZipInputs(zip);
+
+  const items = (STATE.cart || []).map((it) => ({ id: it.id, qty: Number(it.qty || 1) }));
+
+  try {
+    const data = await postJSON(CONFIG.endpoints.quote, {
+      zip,
+      country: STATE.shipping.country,
+      items
+    });
+
+    const amount = Number(data.amount || 0);
+    const label = String(data.label || "Envío");
+
+    STATE.shipping.amount = Math.max(0, Math.round(amount));
+    STATE.shipping.label = label;
+    STATE.shipping.quoted = true;
+
+    updateTotalsUI();
+    toast(`${label}: ${fmtMXN(STATE.shipping.amount)}`);
+  } catch (e) {
+    console.error("[quote] error:", e);
+    STATE.shipping.amount = 0;
+    STATE.shipping.label = (STATE.shipping.country === "US") ? "Envío (USA)" : "Envío (MX)";
+    STATE.shipping.quoted = false;
+    updateTotalsUI();
+    toast("No pude cotizar ahorita. Intenta otra vez.");
+  }
+}
+window.quoteShippingUI = quoteShippingUI;
+
+/* =========================================================
+   CHECKOUT
+   ========================================================= */
+window.doCheckout = async () => {
+  const btn = $("#checkoutBtn");
+  if (!STATE.cart.length) return toast("Agrega productos al carrito.");
+
+  // si no es pickup y no está cotizado, intenta cotizar (obligatorio)
+  if (STATE.shipping.mode !== "pickup" && !STATE.shipping.quoted) {
+    await quoteShippingUI();
+    if (!STATE.shipping.quoted) return; // no avanzamos si no hay quote
+  }
+
+  const shippingData = {
+    zip: STATE.shipping.zip || "",
+    postal_code: STATE.shipping.zip || "",
+    country: STATE.shipping.country || "MX"
+  };
+
+  const payload = {
+    cart: STATE.cart,
+    shipping: Number(STATE.shipping.amount || 0),
+    shippingLabel: STATE.shipping.label,
+    shippingMode: STATE.shipping.mode,
+    shippingData
+  };
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "PROCESANDO...";
     }
 
-    updateTotals();
+    const data = await postJSON(CONFIG.endpoints.checkout, payload);
+
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+
+    throw new Error("No se recibió URL de pago.");
+  } catch (e) {
+    console.error("[checkout] error:", e);
+    toast(`Checkout falló: ${e.message || "Error"}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "PAGAR AHORA";
+    }
   }
+};
 
-  function shippingAmount() {
-    if (STATE.shipMode === 'pickup') return 0;
-    return Number(STATE.shipQuote?.amount || 0);
-  }
-
-  function shippingLabel() {
-    if (STATE.shipMode === 'pickup') return 'Pickup Gratis';
-    if (!STATE.shipQuote) return 'Envío sin cotizar';
-    const carrier = STATE.shipQuote.carrier ? ` • ${STATE.shipQuote.carrier}` : '';
-    return `${STATE.shipQuote.label || 'Envío'}: ${money(shippingAmount())}${carrier}`;
-  }
-
-  function updateTotals() {
-    const subtotal = cartSubtotal();
-    const ship = shippingAmount();
-    const total = subtotal + ship;
-
-    UI.subtotalLabel.textContent = money(subtotal);
-    UI.shipLabel.textContent = (STATE.shipMode === 'pickup') ? 'Pickup Gratis' : money(ship);
-    UI.totalLabel.textContent = money(total);
-  }
-
-  // ---------- Hero shipping sync ----------
-  function bindHeroShipping() {
-    const radios = $$('input[name="shipModeHero"]');
-    radios.forEach(r => {
-      r.checked = (r.value === STATE.shipMode);
-      r.addEventListener('change', () => {
-        STATE.shipMode = r.value;
-        if (STATE.shipMode === 'pickup') STATE.shipQuote = null;
-        saveShip();
-        syncHeroShipUI();
-        updateTotals();
-      });
-    });
-
-    UI.shipHero.quoteBtn?.addEventListener('click', async () => {
-      const zip = String(UI.shipHero.zipInput?.value || '').trim();
-      if (!zip) return toast('Pon tu código postal/ZIP.');
-      try {
-        UI.shipHero.quoteBtn.disabled = true;
-        UI.shipHero.quoteBtn.textContent = 'Cotizando…';
-        const payload = buildShippingPayload(zip);
-        const q = await postSmart(CFG.endpoints.quote, payload);
-        if (!q?.ok) throw new Error(q?.error || 'No se pudo cotizar.');
-        STATE.shipQuote = {
-          zip,
-          amount: Number(q.amount || 0),
-          label: String(q.label || ''),
-          carrier: String(q.carrier || '')
-        };
-        saveShip();
-        syncHeroShipUI();
-        toast('Envío cotizado.');
-      } catch (e) {
-        console.error(e);
-        toast('No se pudo cotizar envío.');
-      } finally {
-        UI.shipHero.quoteBtn.disabled = false;
-        UI.shipHero.quoteBtn.textContent = 'Cotizar';
-      }
-    });
-  }
-
-  function syncHeroShipUI() {
-    const wrap = UI.shipHero.zipWrap;
-    if (!wrap) return;
-    wrap.style.display = (STATE.shipMode === 'pickup') ? 'none' : 'flex';
-    if (UI.shipHero.shipLabel) UI.shipHero.shipLabel.textContent = shippingLabel();
-  }
-
-  function buildShippingPayload(zip) {
+/* =========================================================
+   LEGAL MODAL (fetch legal.html, extrae secciones #terms/#privacy)
+   ========================================================= */
+function buildLegalFallback(which) {
+  if (which === "privacy") {
     return {
-      mode: STATE.shipMode,
-      zip,
-      cart: STATE.cart.map(it => ({
-        sku: it.sku || it.id,
-        qty: it.qty,
-        price: it.price
-      })),
-      items: STATE.cart.map(it => ({
-        quantity: it.qty,
-        weight: 0.6,
-        length: 32,
-        height: 6,
-        width: 26
-      }))
+      title: "AVISO DE PRIVACIDAD",
+      body: `
+        <p><b>Responsable:</b> BAJATEX S. DE R.L. DE C.V. (Único Uniformes), Tijuana, BC.</p>
+        <p><b>Uso:</b> Datos para procesar compra, envío, facturación (si aplica) y soporte.</p>
+        <p><b>Compartición:</b> Solo con proveedores necesarios (Stripe, paquetería/Envia.com) para completar tu pedido.</p>
+        <p><b>Derechos:</b> Puedes solicitar acceso/rectificación/cancelación al correo: <b>ventas.unicotextil@gmail.com</b>.</p>
+      `
     };
   }
+  return {
+    title: "TÉRMINOS Y CONDICIONES",
+    body: `
+      <p><b>Operación/Fabricación:</b> Único Uniformes (BAJATEX S. de R.L. de C.V.) bajo licencia oficial de SCORE International.</p>
+      <p><b>Pagos:</b> Procesados por Stripe (tarjeta) y OXXO cuando esté disponible.</p>
+      <p><b>Envíos:</b> Cotización estimada o en vivo según disponibilidad. Pickup Tijuana disponible cuando aplique.</p>
+      <p><b>Devoluciones:</b> Cambios por defecto de fábrica dentro de 15 días naturales (aplica evidencia).</p>
+    `
+  };
+}
 
-  // ---------- Checkout ----------
-  async function checkout() {
-    if (!STATE.cart.length) return toast('Tu carrito está vacío.');
-    if (STATE.shipMode !== 'pickup' && !STATE.shipQuote) return toast('Cotiza el envío antes de pagar.');
-
-    const btn = $('#checkoutBtn');
-    try {
-      btn.disabled = true;
-      btn.textContent = 'Creando checkout…';
-
-      const payload = {
-        cart: STATE.cart,
-        shippingMode: STATE.shipMode,
-        shippingLabel: shippingLabel(),
-        shipping: shippingAmount(),
-        shippingData: {
-          zip: STATE.shipQuote?.zip || '',
-          carrier: STATE.shipQuote?.carrier || '',
-          label: STATE.shipQuote?.label || ''
-        }
-      };
-
-      const res = await postSmart(CFG.endpoints.checkout, payload);
-      const url = res?.url || res?.checkout_url || res?.checkoutUrl;
-      if (!url) throw new Error('Checkout URL no recibido.');
-
-      try { window.fbq && window.fbq('track', 'InitiateCheckout'); } catch {}
-
-      window.location.href = url;
-    } catch (e) {
-      console.error(e);
-      toast('No se pudo iniciar el pago.');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Pagar con Stripe';
-    }
+async function loadLegalHtmlOnce() {
+  if (STATE.legalCacheHtml) return STATE.legalCacheHtml;
+  try {
+    const res = await fetch("/legal.html", { cache: "no-store" });
+    const html = await res.text();
+    STATE.legalCacheHtml = html;
+    return html;
+  } catch {
+    return null;
   }
+}
 
-  // ---------- SCORE AI ----------
-  function bindAI() {
-    $('#openAiBtn')?.addEventListener('click', () => openAI());
-    $('#closeAiBtn')?.addEventListener('click', closeAI);
-    $('#heroCtaAi')?.addEventListener('click', () => openAI('Quiero comprar merch. Recomiéndame algo 🔥'));
-    $('#productsAiBtn')?.addEventListener('click', () => openAI(`Estoy viendo la edición ${STATE.activeEdition || ''}. Recomiéndame productos.`));
-    $('#footerAiBtn')?.addEventListener('click', () => openAI());
+function extractSectionFromLegal(html, which) {
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const id = (which === "privacy") ? "privacy" : "terms";
+    const node = doc.getElementById(id);
+    const title = node?.querySelector("h2,h1")?.textContent || (which === "privacy" ? "AVISO DE PRIVACIDAD" : "TÉRMINOS Y CONDICIONES");
+    const body = node ? node.innerHTML : "";
+    return { title, body };
+  } catch {
+    return null;
+  }
+}
 
-    UI.aiModal?.addEventListener('click', (e) => {
-      if (e.target === UI.aiModal) closeAI();
+function openLegal(which) {
+  const modal = $("#legalModal");
+  const body = $("#legalBody");
+  const title = $("#legalTitle");
+  if (!modal || !body || !title) return;
+
+  // show now (luego llenamos)
+  modal.classList.add("show", "active");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("no-scroll");
+
+  // fill async
+  (async () => {
+    const html = await loadLegalHtmlOnce();
+    const extracted = html ? extractSectionFromLegal(html, which) : null;
+    const fallback = buildLegalFallback(which);
+
+    title.textContent = extracted?.title || fallback.title;
+    body.innerHTML = extracted?.body || fallback.body;
+  })();
+}
+
+function closeLegal() {
+  const modal = $("#legalModal");
+  if (!modal) return;
+  modal.classList.remove("show", "active");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("no-scroll");
+}
+
+window.openLegal = openLegal;
+window.closeLegal = closeLegal;
+window.openLegalCompat = window.openLegalCompat || openLegal;
+window.closeLegalCompat = window.closeLegalCompat || closeLegal;
+
+/* =========================================================
+   COOKIES
+   ========================================================= */
+function acceptCookies() {
+  try { localStorage.setItem(CONFIG.cookieKey, "1"); } catch {}
+  const b = $("#cookieBanner");
+  if (b) b.style.display = "none";
+}
+window.acceptCookies = acceptCookies;
+window.acceptCookiesCompat = window.acceptCookiesCompat || acceptCookies;
+
+function initCookieBanner() {
+  const b = $("#cookieBanner");
+  if (!b) return;
+  let ok = false;
+  try { ok = localStorage.getItem(CONFIG.cookieKey) === "1"; } catch {}
+  b.style.display = ok ? "none" : "flex";
+}
+
+/* =========================================================
+   AI CHAT UI
+   ========================================================= */
+function aiAddMessage(role, text) {
+  const wrap = $("#aiMsgs");
+  if (!wrap) return;
+
+  const item = document.createElement("div");
+  item.className = `ai-msg ${role === "user" ? "ai-me" : "ai-bot"}`;
+  item.textContent = String(text || "");
+  wrap.appendChild(item);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function aiSend() {
+  const input = $("#aiInput");
+  const msg = String(input?.value || "").trim();
+  if (!msg) return;
+
+  if (input) input.value = "";
+  aiAddMessage("user", msg);
+
+  try {
+    const data = await postJSON(CONFIG.endpoints.ai, { message: msg });
+    aiAddMessage("bot", data?.reply || "Listo. ¿Qué talla y a dónde lo enviamos?");
+  } catch (e) {
+    console.error("[ai] error:", e);
+    aiAddMessage("bot", "Ahorita no puedo consultar el asistente en vivo. Dime tu talla + CP/ZIP + país y te cierro la compra.");
+  }
+}
+
+function initAIChat() {
+  const sendBtn = $("#aiSend");
+  const input = $("#aiInput");
+
+  if (sendBtn && !sendBtn.__bound) {
+    sendBtn.__bound = true;
+    sendBtn.addEventListener("click", aiSend);
+  }
+  if (input && !input.__bound) {
+    input.__bound = true;
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") aiSend();
     });
+  }
+}
 
-    $('#aiSendBtn')?.addEventListener('click', sendAI);
-    UI.aiInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendAI();
-    });
+/* =========================================================
+   PWA: service worker + query params
+   ========================================================= */
+function registerSW() {
+  if (!("serviceWorker" in navigator)) return;
+  if (location.protocol !== "https:" && location.hostname !== "localhost") return;
 
-    if (UI.aiMessages && !UI.aiMessages.dataset.ready) {
-      UI.aiMessages.dataset.ready = '1';
-      pushMsg('bot', 'Soy SCORE AI. Te ayudo a elegir merch por edición, tallas, envío y pago. ¿Qué edición quieres?');
-    }
+  navigator.serviceWorker.register("/sw.js").catch((e) => {
+    console.warn("[sw] register fail:", e?.message || e);
+  });
+}
+
+function handleQueryParams() {
+  const qs = new URLSearchParams(location.search);
+
+  // open cart (PWA shortcut)
+  if (qs.get("openCart") === "1") {
+    setTimeout(() => openDrawer(), 250);
   }
 
-  function openAI(prefill) {
-    UI.aiModal?.classList.add('active');
-    UI.aiModal?.setAttribute('aria-hidden','false');
-    if (prefill && UI.aiInput) UI.aiInput.value = prefill;
-    setTimeout(() => UI.aiInput?.focus(), 80);
+  // stripe result
+  const status = qs.get("status");
+  if (status === "success") {
+    toast("✅ Pago confirmado. Gracias. Te contactamos para seguimiento.");
+    STATE.cart = [];
+    saveCart();
+    // limpia param sin recargar
+    qs.delete("status");
+    history.replaceState({}, "", `${location.pathname}${qs.toString() ? "?" + qs.toString() : ""}${location.hash || ""}`);
+  } else if (status === "cancel") {
+    toast("Pago cancelado. Tu carrito sigue listo.");
+    qs.delete("status");
+    history.replaceState({}, "", `${location.pathname}${qs.toString() ? "?" + qs.toString() : ""}${location.hash || ""}`);
+  }
+}
+
+/* =========================================================
+   SECURITY HELPERS (simple)
+   ========================================================= */
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+function escapeAttr(s) {
+  return escapeHtml(String(s || "")).replace(/`/g, "&#096;");
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+document.addEventListener("DOMContentLoaded", async () => {
+  // Splash removal
+  const splash = $("#splash");
+  if (splash) {
+    setTimeout(() => {
+      splash.style.transition = "opacity 0.5s ease";
+      splash.style.opacity = "0";
+      setTimeout(() => (splash.style.display = "none"), 500);
+    }, 800);
   }
 
-  function closeAI() {
-    UI.aiModal?.classList.remove('active');
-    UI.aiModal?.setAttribute('aria-hidden','true');
+  // Cookie banner
+  initCookieBanner();
+
+  // Bind shipping radios (hero + drawer)
+  $$("input[name='shipModeHero']").forEach((r) => {
+    r.addEventListener("change", () => setShippingMode(r.value));
+  });
+  $$("input[name='shipMode']").forEach((r) => {
+    r.addEventListener("change", () => setShippingMode(r.value));
+  });
+
+  // Bind quote buttons (hero + drawer)
+  $("#shipQuoteBtn")?.addEventListener("click", quoteShippingUI);
+  $("#miniZip")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") quoteShippingUI();
+  });
+  $("#shipZip")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") quoteShippingUI();
+  });
+
+  // Init AI
+  initAIChat();
+
+  // Load catalog
+  try {
+    const res = await fetch(CONFIG.catalogUrl, { cache: "no-store" });
+    const data = await res.json();
+
+    STATE.sections = Array.isArray(data.sections) ? data.sections : [];
+    STATE.products = Array.isArray(data.products)
+      ? data.products.map((p) => ({
+          ...p,
+          sectionId: String(p.sectionId || "").toUpperCase()
+        }))
+      : [];
+
+    ensureSectionChips();
+    bindChipEvents();
+    renderGrid();
+  } catch (e) {
+    console.error("[catalog] Error loading catalog", e);
+    setHTML(
+      "#productsGrid",
+      `<div style="grid-column:1/-1; padding:18px; border:1px dashed rgba(0,0,0,.2); border-radius:16px; background:rgba(255,255,255,.7)">
+        <b>Catálogo no disponible.</b>
+        <div style="opacity:.7; margin-top:6px">Revisa /data/catalog.json y la consola.</div>
+      </div>`
+    );
   }
 
-  function pushMsg(who, text) {
-    if (!UI.aiMessages) return;
-    const div = document.createElement('div');
-    div.className = 'msg ' + (who === 'me' ? 'me' : 'bot');
-    div.textContent = text;
-    UI.aiMessages.appendChild(div);
-    UI.aiMessages.scrollTop = UI.aiMessages.scrollHeight;
-  }
+  // Restore cart count & totals
+  saveCart();
 
-  async function sendAI() {
-    const input = UI.aiInput;
-    if (!input) return;
-    const msg = String(input.value || '').trim();
-    if (!msg) return;
-    input.value = '';
-    pushMsg('me', msg);
+  // Default shipping is pickup
+  setShippingMode("pickup", { silent: true });
+  updateTotalsUI();
 
-    try {
-      const ctx = {
-        edition: STATE.activeEdition,
-        filter: STATE.activeFilter,
-        cart: STATE.cart,
-        shippingMode: STATE.shipMode,
-        shippingLabel: shippingLabel(),
-        subtotal: cartSubtotal(),
-        total: cartSubtotal() + shippingAmount()
-      };
+  // PWA
+  registerSW();
+  handleQueryParams();
 
-      const res = await postSmart(CFG.endpoints.chat, {
-        message: msg,
-        context: ctx
-      });
-
-      const answer = res?.text || res?.reply || res?.message || 'Listo. ¿Qué edición quieres?';
-      pushMsg('bot', String(answer));
-    } catch (e) {
-      console.error(e);
-      pushMsg('bot', 'Ahorita traigo tráfico 😅. Intenta otra vez o escríbenos por WhatsApp.');
-    }
-  }
-
-  // ---------- Escape ----------
-  function escapeHtml(s) {
-    return String(s ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
-
-})();
+  // ESC close legal / drawer
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    closeLegal();
+    closeDrawer();
+  });
+});
