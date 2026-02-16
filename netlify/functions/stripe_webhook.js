@@ -2,148 +2,172 @@ const Stripe = require("stripe");
 const {
   jsonResponse,
   handleOptions,
-  supabaseAdmin,
-  createEnviaLabel,
+  readRawBody,
   sendTelegram,
+  isEnviaConfigured,
+  createEnviaLabel,
+  isSupabaseConfigured,
+  supabase,
 } = require("./_shared");
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2023-10-16",
-});
-
-function getRawBody(event) {
-  if (!event.body) return "";
-  if (event.isBase64Encoded) {
-    return Buffer.from(event.body, "base64").toString("utf8");
-  }
-  return event.body;
-}
-
-function pickAddressFromSession(session) {
-  // Si NO recolectas address en checkout, esto vendrá vacío.
-  const addr = session?.customer_details?.address || session?.shipping_details?.address || null;
-  const name = session?.shipping_details?.name || session?.customer_details?.name || session?.metadata?.customer_name || "";
-  const phone = session?.customer_details?.phone || session?.metadata?.customer_phone || "";
-  const email = session?.customer_details?.email || session?.metadata?.customer_email || "";
-
-  if (!addr) return null;
-
-  return {
-    name,
-    phone,
-    email,
-    address1: addr.line1 || "",
-    address2: addr.line2 || "",
-    city: addr.city || "",
-    state: addr.state || "",
-    postal_code: addr.postal_code || session?.metadata?.customer_cp || "",
-    country_code: (addr.country || session?.metadata?.customer_country || "MX").toUpperCase(),
-  };
-}
-
 exports.handler = async (event) => {
-  const opt = handleOptions(event);
-  if (opt) return opt;
-
-  if (event.httpMethod !== "POST") {
-    return jsonResponse(405, { ok: false, error: "Method Not Allowed" });
-  }
-
-  const sig = (event.headers && (event.headers["stripe-signature"] || event.headers["Stripe-Signature"])) || "";
-  const secret = process.env.STRIPE_WEBHOOK_SECRET || "";
-  if (!secret) return jsonResponse(500, { ok: false, error: "STRIPE_WEBHOOK_SECRET missing" });
-
-  let stripeEvent;
   try {
-    stripeEvent = stripe.webhooks.constructEvent(getRawBody(event), sig, secret);
-  } catch (err) {
-    return jsonResponse(400, { ok: false, error: `Webhook Error: ${err.message}` });
-  }
+    if (event.httpMethod === "OPTIONS") return handleOptions();
+    if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
 
-  try {
-    const type = stripeEvent.type;
-    const session = stripeEvent.data.object;
+    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+    const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
-    if (type !== "checkout.session.completed") {
-      return jsonResponse(200, { ok: true, ignored: true, type });
+    if (!STRIPE_SECRET_KEY) return jsonResponse(500, { error: "STRIPE_SECRET_KEY no configurada" });
+    if (!STRIPE_WEBHOOK_SECRET) return jsonResponse(500, { error: "STRIPE_WEBHOOK_SECRET no configurada" });
+
+    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+
+    const sig = event.headers["stripe-signature"];
+    if (!sig) return jsonResponse(400, { error: "Missing stripe-signature" });
+
+    const rawBody = await readRawBody(event);
+
+    let stripeEvent;
+    try {
+      stripeEvent = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+      return jsonResponse(400, { error: "Invalid signature", details: String(err?.message || err) });
     }
 
-    const sessionId = session.id;
+    if (stripeEvent.type === "checkout.session.completed") {
+      const session = stripeEvent.data.object;
+      const meta = session.metadata || {};
+      const shippingMode = String(meta.shipping_mode || "").toLowerCase();
 
-    const org_id = session?.metadata?.org_id || null;
-    const items_qty = Number(session?.metadata?.items_qty || 0) || null;
-    const shipping_mode = session?.metadata?.shipping_mode || null;
+      // Save paid order (optional)
+      try {
+        if (isSupabaseConfigured()) {
+          await supabase.from("orders").insert({
+            created_at: new Date().toISOString(),
+            stripe_session_id: session.id,
+            status: "paid",
+            amount_total: session.amount_total,
+            currency: session.currency,
+            customer_email: session.customer_details?.email || null,
+            customer_phone: session.customer_details?.phone || null,
+            shipping_mode: shippingMode || null,
+            promo_code: meta.promo_code || null,
+            metadata: meta,
+            raw: session,
+          });
+        }
+      } catch (_) {}
 
-    const customer_name = session?.metadata?.customer_name || session?.customer_details?.name || null;
-    const customer_phone = session?.metadata?.customer_phone || session?.customer_details?.phone || null;
-    const customer_email = session?.metadata?.customer_email || session?.customer_details?.email || null;
-    const customer_cp = session?.metadata?.customer_cp || session?.customer_details?.address?.postal_code || null;
-    const customer_country = session?.metadata?.customer_country || session?.customer_details?.address?.country || "MX";
+      // Generate label ONLY for Envia modes
+      let labelResult = null;
+      const shouldGenerateLabel = shippingMode === "envia_mx" || shippingMode === "envia_us";
 
-    const currency = (session.currency || "mxn").toUpperCase();
-    const total = Number(session.amount_total ? session.amount_total / 100 : 0);
+      if (shouldGenerateLabel && isEnviaConfigured()) {
+        try {
+          const address = session.shipping_details?.address;
+          const name = session.shipping_details?.name || session.customer_details?.name || "Cliente";
+          const phone = session.customer_details?.phone || "";
 
-    // Intentar label SOLO si hay address completo
-    const destination = pickAddressFromSession(session);
+          if (address && address.postal_code && address.country) {
+            labelResult = await createEnviaLabel({
+              stripe_session_id: session.id,
+              destination: {
+                name,
+                company: "",
+                email: session.customer_details?.email || "",
+                phone: phone,
+                street: address.line1 || "",
+                number: "",
+                district: address.line2 || "",
+                city: address.city || "",
+                state: address.state || "",
+                country_code: address.country === "US" ? "USA" : "MEX",
+                postal_code: address.postal_code || "",
+                reference: "",
+              },
+              meta: {
+                items_qty: Number(meta.items_qty) || 1,
+              },
+            });
 
-    let label = { ok: false, skipped: true };
-    if (destination) {
-      label = await createEnviaLabel({
-        order: { stripe_session_id: sessionId, items_qty },
-        destination,
-      });
-    }
-
-    const tracking_number = label?.tracking_number || null;
-    const label_url = label?.label_url || null;
-    const carrier = label?.carrier || null;
-
-    if (supabaseAdmin) {
-      const payload = {
-        org_id,
-        stripe_session_id: sessionId,
-        status: "paid",
-        currency,
-        total,
-        shipping_mode,
-        customer_name,
-        customer_phone,
-        customer_email,
-        customer_cp,
-        customer_country,
-        items_qty,
-        tracking_number,
-        label_url,
-        carrier,
-        raw_meta: JSON.stringify({ session, envia: label }),
-      };
-
-      const { data: existing, error: exErr } = await supabaseAdmin
-        .from("orders")
-        .select("id")
-        .eq("stripe_session_id", sessionId)
-        .maybeSingle();
-
-      if (!exErr && existing?.id) {
-        await supabaseAdmin.from("orders").update(payload).eq("id", existing.id);
+            try {
+              if (isSupabaseConfigured() && labelResult?.ok && labelResult?.label?.carrier) {
+                await supabase.from("shipping_labels").insert({
+                  created_at: new Date().toISOString(),
+                  stripe_session_id: session.id,
+                  provider: "envia",
+                  carrier: labelResult.label.carrier || null,
+                  tracking_number: labelResult.label.tracking_number || null,
+                  file: labelResult.label.file || null,
+                  raw: labelResult,
+                });
+              }
+            } catch (_) {}
+          } else {
+            labelResult = { ok: false, error: "Shipping address missing for label generation" };
+          }
+        } catch (e) {
+          labelResult = { ok: false, error: String(e?.message || e) };
+        }
+      } else if (shouldGenerateLabel) {
+        labelResult = { ok: false, error: "Envia not configured" };
       } else {
-        await supabaseAdmin.from("orders").insert(payload);
+        labelResult = { ok: true, skipped: true, reason: "Shipping mode does not require Envia label" };
       }
+
+      // Telegram notify (optional)
+      try {
+        const amount = (session.amount_total || 0) / 100;
+        const deliveryText =
+          shippingMode === "pickup"
+            ? "Pickup en fábrica"
+            : shippingMode === "local_tj"
+              ? "Envío local TJ (Uber/Didi)"
+              : shippingMode === "envia_us"
+                ? "Envío USA (Envia.com)"
+                : shippingMode === "envia_mx"
+                  ? "Envío Nacional (Envia.com)"
+                  : "Entrega";
+
+        const customer = session.customer_details || {};
+        const shipping = session.shipping_details || {};
+        const addr = shipping.address || {};
+
+        const msg =
+          `🧾 *Nuevo pago confirmado (Score Store)*\n\n` +
+          `• Sesión: \`${session.id}\`\n` +
+          `• Total: *$${amount.toFixed(2)} ${String(session.currency || "mxn").toUpperCase()}*\n` +
+          `• Entrega: *${deliveryText}*\n` +
+          (meta.promo_code ? `• Promo: *${meta.promo_code}*\n` : "") +
+          `\n👤 *Cliente*\n` +
+          `• Nombre: ${escapeTg(shipping.name || customer.name || "N/D")}\n` +
+          `• Email: ${escapeTg(customer.email || "N/D")}\n` +
+          `• Tel: ${escapeTg(customer.phone || "N/D")}\n` +
+          (addr && (addr.line1 || addr.postal_code)
+            ? `\n📍 *Dirección*\n` +
+              `• ${escapeTg([addr.line1, addr.line2].filter(Boolean).join(", "))}\n` +
+              `• ${escapeTg([addr.city, addr.state].filter(Boolean).join(", "))}\n` +
+              `• ${escapeTg([addr.postal_code, addr.country].filter(Boolean).join(" "))}\n`
+            : "") +
+          (labelResult?.ok && labelResult?.label?.tracking_number
+            ? `\n🚚 *Guía Envia*\n` +
+              `• Carrier: ${escapeTg(labelResult.label.carrier || "N/D")}\n` +
+              `• Tracking: \`${escapeTg(labelResult.label.tracking_number)}\`\n`
+            : labelResult?.skipped
+              ? `\n🚚 *Guía Envia*: (no aplica)\n`
+              : "");
+
+        await sendTelegram({ text: msg, parse_mode: "Markdown" });
+      } catch (_) {}
     }
 
-    const msg =
-      `✅ Pago confirmado\n` +
-      `Session: ${sessionId}\n` +
-      `Total: ${total} ${currency}\n` +
-      `Cliente: ${customer_name || "-"}\n` +
-      `País: ${String(customer_country || "MX").toUpperCase()}\n` +
-      `CP: ${customer_cp || "-"}\n` +
-      `Tracking: ${tracking_number || "(pendiente)"}`;
-
-    await sendTelegram(msg);
-
-    return jsonResponse(200, { ok: true, label: label?.ok ? "created" : "skipped" });
-  } catch (err) {
-    return jsonResponse(500, { ok: false, error: err?.message || "Webhook handler failed" });
+    return jsonResponse(200, { received: true });
+  } catch (e) {
+    return jsonResponse(500, { error: "Webhook error", details: String(e?.message || e) });
   }
 };
+
+function escapeTg(str) {
+  return String(str || "").replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+}
