@@ -1,76 +1,202 @@
--- ==========================================
--- SCORE STORE DATABASE SCHEMA (Supabase)
--- ==========================================
+-- =========================================================
+-- SCORE STORE / UnicOs — SUPABASE MIGRATION (SAFE + IDEMPOTENT)
+-- No borra datos. Solo crea lo faltante / agrega columnas faltantes /
+-- crea índices y triggers si NO existen.
+-- =========================================================
 
--- 1. Respaldo de seguridad automático (si la tabla ya existe)
-DO $$
-DECLARE
-    ts text := to_char(now(), 'YYYYMMDD_HH24MISS');
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='products') THEN
-        EXECUTE format('ALTER TABLE public.products RENAME TO products__backup_%s', ts);
-    END IF;
-END $$;
+create extension if not exists pgcrypto;
 
--- 2. Extensiones necesarias
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- updated_at helper (seguro: no rompe datos)
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
 
--- 3. Tabla de Organizaciones (Multi-tenant ready)
-CREATE TABLE IF NOT EXISTS public.organizations (
-    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    slug text UNIQUE NOT NULL,
-    name text NOT NULL,
-    created_at timestamptz DEFAULT now()
+-- =========================================================
+-- TABLE: orders
+-- =========================================================
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid null,
+  stripe_session_id text not null,
+  stripe_payment_intent_id text null,
+  status text not null default 'checkout_created',
+  currency text null,
+  amount_total_cents integer null,
+  amount_subtotal_cents integer null,
+  shipping_mode text null,
+  postal_code text null,
+  promo_code text null,
+  items jsonb null,
+  items_qty integer null,
+  customer_email text null,
+  customer_phone text null,
+  shipping_name text null,
+  shipping_address jsonb null,
+  created_at timestamptz not null default now(),
+  paid_at timestamptz null,
+  updated_at timestamptz not null default now(),
+  raw_stripe jsonb null
 );
 
--- 4. Tabla de Productos
-CREATE TABLE IF NOT EXISTS public.products (
-    id text PRIMARY KEY, -- ID tipo 'b1k-jacket'
-    org_id uuid REFERENCES public.organizations(id),
-    sku text,
-    name text NOT NULL,
-    price numeric NOT NULL,
-    image_url text,
-    stock integer DEFAULT 0,
-    active boolean DEFAULT true,
-    created_at timestamptz DEFAULT now()
+-- Agrega columnas faltantes (si tu tabla ya existía con menos campos)
+alter table public.orders add column if not exists org_id uuid;
+alter table public.orders add column if not exists stripe_session_id text;
+alter table public.orders add column if not exists stripe_payment_intent_id text;
+alter table public.orders add column if not exists status text;
+alter table public.orders add column if not exists currency text;
+alter table public.orders add column if not exists amount_total_cents integer;
+alter table public.orders add column if not exists amount_subtotal_cents integer;
+alter table public.orders add column if not exists shipping_mode text;
+alter table public.orders add column if not exists postal_code text;
+alter table public.orders add column if not exists promo_code text;
+alter table public.orders add column if not exists items jsonb;
+alter table public.orders add column if not exists items_qty integer;
+alter table public.orders add column if not exists customer_email text;
+alter table public.orders add column if not exists customer_phone text;
+alter table public.orders add column if not exists shipping_name text;
+alter table public.orders add column if not exists shipping_address jsonb;
+alter table public.orders add column if not exists created_at timestamptz;
+alter table public.orders add column if not exists paid_at timestamptz;
+alter table public.orders add column if not exists updated_at timestamptz;
+alter table public.orders add column if not exists raw_stripe jsonb;
+
+-- Unique index UPSERT (no borra nada)
+create unique index if not exists orders_stripe_session_id_key
+on public.orders (stripe_session_id);
+
+create index if not exists orders_org_id_idx on public.orders (org_id);
+create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_paid_at_idx on public.orders (paid_at);
+
+-- Trigger updated_at SOLO si no existe
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'trg_orders_updated_at') then
+    execute 'create trigger trg_orders_updated_at
+             before update on public.orders
+             for each row execute function public.set_updated_at()';
+  end if;
+end $$;
+
+-- =========================================================
+-- TABLE: shipping_labels
+-- =========================================================
+create table if not exists public.shipping_labels (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid null,
+  stripe_session_id text not null,
+  provider text not null default 'envia',
+  carrier text null,
+  service text null,
+  tracking_number text null,
+  label_url text null,
+  status text null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  raw jsonb null
 );
 
--- 5. Insertar Organización Base
-INSERT INTO public.organizations (slug, name)
-VALUES ('score-store', 'Score Store / Único Uniformes')
-ON CONFLICT (slug) DO NOTHING;
+alter table public.shipping_labels add column if not exists org_id uuid;
+alter table public.shipping_labels add column if not exists stripe_session_id text;
+alter table public.shipping_labels add column if not exists provider text;
+alter table public.shipping_labels add column if not exists carrier text;
+alter table public.shipping_labels add column if not exists service text;
+alter table public.shipping_labels add column if not exists tracking_number text;
+alter table public.shipping_labels add column if not exists label_url text;
+alter table public.shipping_labels add column if not exists status text;
+alter table public.shipping_labels add column if not exists created_at timestamptz;
+alter table public.shipping_labels add column if not exists updated_at timestamptz;
+alter table public.shipping_labels add column if not exists raw jsonb;
 
--- 6. Insertar Productos (Seed Data)
-DO $$
-DECLARE
-    target_org_id uuid;
-BEGIN
-    -- Obtener el ID de la organización recién creada o existente
-    SELECT id INTO target_org_id FROM public.organizations WHERE slug = 'score-store';
+create unique index if not exists shipping_labels_session_provider_key
+on public.shipping_labels (stripe_session_id, provider);
 
-    INSERT INTO public.products (id, org_id, sku, name, price, image_url, stock, active)
-    VALUES
-    ('b1k-jacket', target_org_id, 'B1K-JKT-25', 'Chamarra Oficial Baja 1000', 1890, '/assets/EDICION_2025/chamarra-baja1000.webp', 10, true),
-    ('b1k-hoodie-ng', target_org_id, 'B1K-HOOD-NG', 'Hoodie Oficial Negro / Gris', 1100, '/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp', 10, true),
-    ('b1k-hoodie-blk', target_org_id, 'B1K-HOOD-BLK', 'Hoodie Clásica Negra', 1100, '/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp', 10, true),
-    ('b1k-hoodie-red-blk', target_org_id, 'B1K-HOOD-RB', 'Hoodie Contrast Rojo / Negro', 1100, '/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp', 10, true),
-    ('b1k-tee-black', target_org_id, 'B1K-TEE-BLK', 'Camiseta Negra Oficial Baja 1000', 480, '/assets/EDICION_2025/camiseta-negra-baja1000.webp', 10, true),
-    ('b1k-tee-brown', target_org_id, 'B1K-TEE-BRN', 'Camiseta Café Baja 1000', 480, '/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp', 10, true),
-    ('b1k-shirt-pits-grey', target_org_id, 'B1K-SHIRT-GRY', 'Camisa Pits Gris Baja 1000', 690, '/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp', 10, true),
-    ('b1k-shirt-pits-black', target_org_id, 'B1K-SHIRT-BLK', 'Camisa Pits Negra Baja 1000', 690, '/assets/EDICION_2025/camisa-negra-pits-baja1000.webp', 10, true),
-    ('b1k-cap', target_org_id, 'B1K-CAP-RG', 'Gorra Oficial Roja / Gris', 650, '/assets/EDICION_2025/gorras-roja-gris.webp', 10, true),
-    ('b500-tee-grey', target_org_id, 'B500-TEE-GRY', 'Camiseta Oficial Baja 500', 480, '/assets/BAJA500/camiseta-gris-baja500.webp', 10, true),
-    ('b400-tee-brown', target_org_id, 'B400-TEE-BRN', 'Camiseta Café Baja 400', 480, '/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp', 10, true),
-    ('sf250-tank', target_org_id, 'SF250-TNK-BLK', 'Tank Top San Felipe 250', 440, '/assets/SF250/camiseta-negra-sinmangas-SF250.webp', 10, true)
-    ON CONFLICT (id) DO UPDATE
-    SET price = EXCLUDED.price, name = EXCLUDED.name, stock = 10;
-END $$;
+create index if not exists shipping_labels_tracking_idx
+on public.shipping_labels (tracking_number);
 
--- 7. Índices y Verificación
-CREATE INDEX IF NOT EXISTS idx_products_org_id ON public.products(org_id);
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'trg_shipping_labels_updated_at') then
+    execute 'create trigger trg_shipping_labels_updated_at
+             before update on public.shipping_labels
+             for each row execute function public.set_updated_at()';
+  end if;
+end $$;
 
--- Verificar inserción
-SELECT 'products_count' as label, COUNT(*) as count
-FROM public.products
-WHERE org_id = (SELECT id FROM public.organizations WHERE slug='score-store');
+-- =========================================================
+-- TABLE: shipping_webhooks  (dedupe por hash)
+-- =========================================================
+create table if not exists public.shipping_webhooks (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null,
+  event_type text null,
+  status text null,
+  tracking_number text null,
+  stripe_session_id text null,
+  created_at timestamptz not null default now(),
+  raw jsonb not null,
+  raw_hash text generated always as (md5(raw::text)) stored
+);
+
+alter table public.shipping_webhooks add column if not exists provider text;
+alter table public.shipping_webhooks add column if not exists event_type text;
+alter table public.shipping_webhooks add column if not exists status text;
+alter table public.shipping_webhooks add column if not exists tracking_number text;
+alter table public.shipping_webhooks add column if not exists stripe_session_id text;
+alter table public.shipping_webhooks add column if not exists created_at timestamptz;
+alter table public.shipping_webhooks add column if not exists raw jsonb;
+
+-- raw_hash (solo si no existe; si ya existe, NO lo toca)
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='shipping_webhooks' and column_name='raw_hash'
+  ) then
+    execute 'alter table public.shipping_webhooks
+             add column raw_hash text generated always as (md5(raw::text)) stored';
+  end if;
+end $$;
+
+create unique index if not exists shipping_webhooks_dedupe_key
+on public.shipping_webhooks (provider, raw_hash);
+
+create index if not exists shipping_webhooks_session_idx
+on public.shipping_webhooks (stripe_session_id);
+
+create index if not exists shipping_webhooks_tracking_idx
+on public.shipping_webhooks (tracking_number);
+
+-- =========================================================
+-- RLS (habilita sin destruir policies existentes)
+-- =========================================================
+alter table public.orders enable row level security;
+alter table public.shipping_labels enable row level security;
+alter table public.shipping_webhooks enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='orders' and policyname='orders_no_anon'
+  ) then
+    execute 'create policy orders_no_anon on public.orders for select using (false)';
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='shipping_labels' and policyname='labels_no_anon'
+  ) then
+    execute 'create policy labels_no_anon on public.shipping_labels for select using (false)';
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='shipping_webhooks' and policyname='webhooks_no_anon'
+  ) then
+    execute 'create policy webhooks_no_anon on public.shipping_webhooks for select using (false)';
+  end if;
+end $$;
