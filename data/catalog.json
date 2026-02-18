@@ -1,255 +1,199 @@
 {
-  "brand": "SCORE STORE",
-  "currency": "MXN",
-  "updatedAt": "2026-02-14",
-  "sections": [
+  "categories": [
     {
       "id": "BAJA_1000",
-      "title": "BAJA 1000",
-      "subtitle": "Edición Oficial"
+      "name": "BAJA 1000",
+      "pill": "Edición 2025"
     },
     {
       "id": "BAJA_500",
-      "title": "BAJA 500",
-      "subtitle": "Edición Oficial"
+      "name": "BAJA 500",
+      "pill": "Desert Line"
     },
     {
       "id": "BAJA_400",
-      "title": "BAJA 400",
-      "subtitle": "Edición Oficial"
+      "name": "BAJA 400",
+      "pill": "Coffee Drop"
     },
     {
-      "id": "SF_250",
-      "title": "SAN FELIPE 250",
-      "subtitle": "Edición Oficial"
+      "id": "SF250",
+      "name": "SAN FELIPE 250",
+      "pill": "Heat Series"
     }
   ],
   "products": [
     {
       "id": "b1k-tee-white",
+      "sku": "B1K-TEE-WHT",
       "name": "Camiseta Blanca BAJA 1000",
-      "baseMXN": 450,
+      "price_cents": 89900,
+      "currency": "mxn",
       "sectionId": "BAJA_1000",
-      "subSection": "Camisetas",
-      "tagline": "Edición oficial",
       "sizes": [
         "S",
         "M",
         "L",
         "XL",
-        "XXL"
+        "2XL"
       ],
-      "img": "/assets/EDICION_2025/camiseta-blanca-baja1000.webp",
+      "img": "/assets/placeholder-product.svg",
       "images": [
-        "/assets/EDICION_2025/camiseta-blanca-baja1000.webp",
-        "/assets/EDICION_2025/camiseta-blanca-baja1000-detalle.webp",
-        "/assets/EDICION_2025/camiseta-blanca-baja1000-atras.webp"
+        "/assets/placeholder-product.svg"
       ],
-      "stock": 24
+      "desc": "Edición 2025. Tela premium, impresión durable."
     },
     {
       "id": "b1k-tee-grey",
+      "sku": "B1K-TEE-GRY",
       "name": "Camiseta Gris BAJA 1000",
-      "baseMXN": 450,
+      "price_cents": 89900,
+      "currency": "mxn",
       "sectionId": "BAJA_1000",
-      "subSection": "Camisetas",
-      "tagline": "Edición oficial",
       "sizes": [
         "S",
         "M",
         "L",
         "XL",
-        "XXL"
-      ],
-      "img": "/assets/EDICION_2025/camiseta-gris-baja1000.webp",
-      "images": [
-        "/assets/EDICION_2025/camiseta-gris-baja1000.webp",
-        "/assets/EDICION_2025/camiseta-gris-baja1000-detalle.webp",
-        "/assets/EDICION_2025/camiseta-gris-baja1000-atras.webp"
-      ],
-      "stock": 18
-    },
-    {
-      "id": "b1k-jacket",
-      "name": "Chamarra BAJA 1000",
-      "baseMXN": 1250,
-      "sectionId": "BAJA_1000",
-      "subSection": "Jackets",
-      "tagline": "Corte premium",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
-      ],
-      "img": "/assets/EDICION_2025/chamarra-baja1000.webp",
-      "images": [
-        "/assets/EDICION_2025/chamarra-baja1000.webp",
-        "/assets/EDICION_2025/chamarra-baja1000-detalle.webp"
-      ],
-      "stock": 10
-    },
-    {
-      "id": "b1k-hoodie-blk",
-      "name": "Hoodie Negra BAJA 1000",
-      "baseMXN": 850,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
-      "tagline": "Edición oficial",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
-      ],
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp",
-      "images": [
-        "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"
-      ],
-      "stock": 12
-    },
-    {
-      "id": "b1k-hoodie-red-blk",
-      "name": "Hoodie Negra/Roja BAJA 1000",
-      "baseMXN": 950,
-      "sectionId": "BAJA_1000",
-      "subSection": "Hoodies",
-      "tagline": "Edición especial",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
-      ],
-      "img": "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-      "images": [
-        "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-        "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-detalle.webp"
-      ],
-      "stock": 8
-    },
-    {
-      "id": "b1k-shirt-pits-grey",
-      "name": "Camisa Pits Gris BAJA 1000",
-      "baseMXN": 780,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
-      "tagline": "Look pits / crew",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
+        "2XL"
       ],
       "img": "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
       "images": [
         "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
         "/assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"
       ],
-      "stock": 14
+      "desc": "Edición 2025. Ajuste cómodo, impresión full color."
     },
     {
-      "id": "b1k-shirt-pits-black",
-      "name": "Camisa Pits Negra BAJA 1000",
-      "baseMXN": 780,
-      "sectionId": "BAJA_1000",
-      "subSection": "Camisas",
-      "tagline": "Look pits / crew",
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
-      ],
-      "img": "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-      "images": [
-        "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-        "/assets/EDICION_2025/camisa-negra-pits-baja1000-detalle.webp"
-      ],
-      "stock": 9
-    },
-    {
-      "id": "b1k-cap",
-      "name": "Gorra BAJA 1000 (Roja/Gris)",
-      "baseMXN": 350,
-      "sectionId": "BAJA_1000",
-      "subSection": "Gorras",
-      "tagline": "Edición oficial",
-      "sizes": [
-        "Unitalla"
-      ],
-      "img": "/assets/EDICION_2025/gorras-roja-gris.webp",
-      "images": [
-        "/assets/EDICION_2025/gorras-roja-gris.webp"
-      ],
-      "stock": 30
-    },
-    {
-      "id": "b500-tee-grey",
-      "name": "Camiseta Gris BAJA 500",
-      "baseMXN": 450,
+      "id": "b500-cap-black",
+      "sku": "B500-CAP-BLK",
+      "name": "Gorra Negra BAJA 500",
+      "price_cents": 79900,
+      "currency": "mxn",
       "sectionId": "BAJA_500",
-      "subSection": "Camisetas",
-      "tagline": "Edición oficial",
+      "sizes": [
+        "OS"
+      ],
+      "img": "/assets/BAJA500/gorra-negra-baja500.webp",
+      "images": [
+        "/assets/BAJA500/gorra-negra-baja500.webp"
+      ],
+      "desc": "Gorra estructurada, bordado premium."
+    },
+    {
+      "id": "b500-tee-black",
+      "sku": "B500-TEE-BLK",
+      "name": "Camiseta Negra BAJA 500",
+      "price_cents": 89900,
+      "currency": "mxn",
+      "sectionId": "BAJA_500",
       "sizes": [
         "S",
         "M",
         "L",
         "XL",
-        "XXL"
+        "2XL"
       ],
-      "img": "/assets/BAJA500/camiseta-gris-baja500.webp",
+      "img": "/assets/BAJA500/camiseta-negra-baja500.webp",
       "images": [
-        "/assets/BAJA500/camiseta-gris-baja500.webp",
-        "/assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
-        "/assets/EDICION_2025/camiseta-gris-baja500-atras.webp"
+        "/assets/BAJA500/camiseta-negra-baja500.webp"
       ],
-      "stock": 16
+      "desc": "Tela premium, caída brutal, print durable."
+    },
+    {
+      "id": "b500-hoodie-black",
+      "sku": "B500-HOOD-BLK",
+      "name": "Hoodie Negro BAJA 500",
+      "price_cents": 149900,
+      "currency": "mxn",
+      "sectionId": "BAJA_500",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "2XL"
+      ],
+      "img": "/assets/BAJA500/hoodie-negro-baja500.webp",
+      "images": [
+        "/assets/BAJA500/hoodie-negro-baja500.webp"
+      ],
+      "desc": "Hoodie pesado, suave por dentro, print resistente."
     },
     {
       "id": "b400-tee-brown",
+      "sku": "B400-TEE-BRN",
       "name": "Camiseta Café BAJA 400",
-      "baseMXN": 450,
+      "price_cents": 89900,
+      "currency": "mxn",
       "sectionId": "BAJA_400",
-      "subSection": "Camisetas",
-      "tagline": "Edición oficial",
       "sizes": [
         "S",
         "M",
         "L",
         "XL",
-        "XXL"
+        "2XL"
       ],
-      "img": "/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
+      "img": "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
       "images": [
-        "/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp"
+        "/assets/BAJA400/camiseta-cafe-oscuro-baja400.webp",
+        "/assets/BAJA400/camiseta-cafe-oscuro-baja400-atras.webp",
+        "/assets/BAJA400/camiseta-cafe-oscuro-baja400-detalle.webp"
       ],
-      "stock": 20
+      "desc": "Coffee Drop. Color café oscuro, print premium."
     },
     {
-      "id": "sf250-tee-brown",
-      "name": "Camiseta Café SAN FELIPE 250",
-      "baseMXN": 450,
-      "sectionId": "SF_250",
-      "subSection": "Camisetas",
-      "tagline": "Edición oficial",
+      "id": "b400-cap-brown",
+      "sku": "B400-CAP-BRN",
+      "name": "Gorra Café BAJA 400",
+      "price_cents": 79900,
+      "currency": "mxn",
+      "sectionId": "BAJA_400",
+      "sizes": [
+        "OS"
+      ],
+      "img": "/assets/BAJA400/gorra-cafe-baja400.webp",
+      "images": [
+        "/assets/BAJA400/gorra-cafe-baja400.webp"
+      ],
+      "desc": "Gorra café, bordado premium."
+    },
+    {
+      "id": "sf250-tee-black",
+      "sku": "SF250-TEE-BLK",
+      "name": "Camiseta Negra SF250",
+      "price_cents": 89900,
+      "currency": "mxn",
+      "sectionId": "SF250",
       "sizes": [
         "S",
         "M",
         "L",
         "XL",
-        "XXL"
+        "2XL"
       ],
-      "img": "/assets/SF250/camiseta-cafe-oscuro-sf250.webp",
+      "img": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "images": [
-        "/assets/SF250/camiseta-cafe-oscuro-sf250.webp"
+        "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
+        "/assets/SF250/camiseta-negra-sinmangas-SF250-atras.webp",
+        "/assets/SF250/camiseta-negra-sinmangas-SF250-detalles.webp"
       ],
-      "stock": 22
+      "desc": "Heat Series. Sin mangas, ligera, lista para el desierto."
+    },
+    {
+      "id": "sf250-cap-black",
+      "sku": "SF250-CAP-BLK",
+      "name": "Gorra Negra SF250",
+      "price_cents": 79900,
+      "currency": "mxn",
+      "sectionId": "SF250",
+      "sizes": [
+        "OS"
+      ],
+      "img": "/assets/SF250/gorra-negra-SF250.webp",
+      "images": [
+        "/assets/SF250/gorra-negra-SF250.webp"
+      ],
+      "desc": "Gorra negra, bordado premium."
     }
   ]
 }
