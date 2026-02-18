@@ -544,3 +544,129 @@ button{ font-family: inherit; }
 
 /* If only 1 image */
 .p-carousel.one .p-dots{ display:none; }
+
+/* =========================================================
+   PRODUCT MEDIA (NO placeholder, NO cuadro vacío)
+   ========================================================= */
+
+.p-media,
+.product-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: rgba(255,255,255,.03);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.p-media.no-media,
+.product-media.no-media {
+  display: none !important; /* <- aquí se elimina el cuadro vacío */
+}
+
+/* =========================================================
+   Facebook-style Carousel (swipe + dots + arrows desktop)
+   ========================================================= */
+
+.p-carousel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.p-track {
+  height: 100%;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.p-track::-webkit-scrollbar { display:none; }
+
+.p-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* <- IMAGEN COMPLETA, NO RECORTE */
+  display: block;
+  background: rgba(0,0,0,.02);
+}
+
+/* Dots */
+.p-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(8px);
+}
+.p-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgba(255,255,255,.45);
+  cursor: pointer;
+}
+.p-dot.active { background: #fff; }
+
+/* Arrows (desktop only) */
+.p-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .18s ease;
+  user-select: none;
+}
+.p-nav.prev { left: 10px; }
+.p-nav.next { right: 10px; }
+
+.product-card:hover .p-nav,
+.p-media:hover .p-nav { opacity: 1; }
+
+@media (max-width: 860px){
+  .p-nav { display:none; }
+}
+
+/* Si solo hay 1 imagen, oculta dots */
+.p-carousel.one .p-dots { display:none; }
+
+/* Mini thumb en carrito (si no hay imagen, no deja hueco raro) */
+.cart-item img { object-fit: contain; }
+.cart-thumb-fallback{
+  width: 68px;
+  height: 68px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: rgba(255,255,255,.75);
+  font-weight: 800;
+}
