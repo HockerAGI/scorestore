@@ -6,22 +6,36 @@ export const handler = withCORS(async (event) => {
   try {
     const body = await readJsonBody(event);
 
-    const tracking = body?.tracking_number || body?.tracking || body?.data?.tracking || null;
+    const tracking =
+      body?.tracking_number ||
+      body?.tracking ||
+      body?.data?.tracking ||
+      body?.data?.tracking_number ||
+      null;
+
     const status = body?.status || body?.data?.status || "unknown";
     const stripe_session_id = body?.stripe_session_id || body?.data?.stripe_session_id || null;
+    const event_type = body?.event_type || body?.event || body?.type || null;
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const db = getSupabaseAdmin();
 
-    // Idempotente: dedupe por provider + raw_hash (raw_hash es GENERATED)
-    await supabaseAdmin.from("shipping_webhooks").upsert({
-        created_at: new Date().toISOString(),
+    // Dedupe idempotente por provider + raw_hash (raw_hash es GENERATED en SQL)
+    await db.from("shipping_webhooks").upsert(
+      {
         provider: "envia",
-        event_type: body?.event_type || body?.event || body?.type || null,
+        event_type,
         status: String(status),
         tracking_number: tracking,
         stripe_session_id,
         raw: body,
-      }, { onConflict: "provider,raw_hash", ignoreDuplicates: true });
+      },
+      { onConflict: "provider,raw_hash" }
+    );
+
+    // Opcional: actualiza estado del label por tracking
+    if (tracking) {
+      await db.from("shipping_labels").update({ status: String(status) }).eq("tracking_number", tracking);
+    }
 
     return json(200, { ok: true });
   } catch (err) {
