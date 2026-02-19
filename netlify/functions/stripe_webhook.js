@@ -11,18 +11,20 @@ const {
 } = require("./_shared");
 
 exports.handler = async (event) => {
-  // Stripe no necesita CORS; pero respondemos JSON por consistencia
+  // Ahora capturamos correctamente el origen de la respuesta para seguridad
+  const origin = event?.headers?.origin || event?.headers?.Origin;
+
   try {
-    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" });
+    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
     const stripe = initStripe();
-    const sig = event.headers["stripe-signature"];
+    // Stripe o Netlify pueden bajar a minúsculas, por seguridad buscamos estandarizado
+    const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
     const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!sig || !whSecret) {
-      // Ojo: respondemos 200 para que Stripe no reintente infinito si aún no configuraste el secret
       console.log("[stripe_webhook] missing signature or STRIPE_WEBHOOK_SECRET");
-      return jsonResponse(200, { received: true, warning: "Webhook secret/signature missing" });
+      return jsonResponse(200, { received: true, warning: "Webhook secret/signature missing" }, origin);
     }
 
     const buf = readRawBody(event);
@@ -32,10 +34,9 @@ exports.handler = async (event) => {
       evt = stripe.webhooks.constructEvent(buf, sig, whSecret);
     } catch (err) {
       console.log("[stripe_webhook] signature invalid:", err?.message || err);
-      return jsonResponse(400, { received: false, error: "Invalid signature" });
+      return jsonResponse(400, { received: false, error: "Invalid signature" }, origin);
     }
 
-    // Procesar eventos clave
     if (evt.type === "checkout.session.completed") {
       const session = evt.data.object || {};
       const meta = session.metadata || {};
@@ -45,12 +46,10 @@ exports.handler = async (event) => {
       const items_qty = Number(meta.items_qty || 0) || 0;
       const shipping_amount_cents = Number(meta.shipping_amount_cents || 0) || 0;
 
-      // 1) Guardar orden en Supabase (si hay config). Si no, NO truena.
       if (isSupabaseConfigured()) {
         const sb = supabaseAdmin();
         if (sb) {
           try {
-            // Upsert por stripe_session_id
             const row = {
               stripe_session_id: session.id,
               stripe_payment_intent: session.payment_intent || null,
@@ -72,7 +71,6 @@ exports.handler = async (event) => {
         }
       }
 
-      // 2) Generar guía Envía (solo si es envío)
       if (shipping_mode === "envia_mx" || shipping_mode === "envia_us") {
         try {
           const labelData = await createEnviaLabel({
@@ -81,7 +79,6 @@ exports.handler = async (event) => {
             items_qty,
           });
 
-          // Guardar guía (si Supabase existe)
           if (isSupabaseConfigured()) {
             const sb = supabaseAdmin();
             if (sb) {
@@ -99,7 +96,6 @@ exports.handler = async (event) => {
             }
           }
 
-          // Telegram notify
           await sendTelegram(
             `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada (envía).`
           );
@@ -114,11 +110,9 @@ exports.handler = async (event) => {
       }
     }
 
-    // Responder 200 SIEMPRE si el evento llegó y firma es válida
-    return jsonResponse(200, { received: true });
+    return jsonResponse(200, { received: true }, origin);
   } catch (e) {
     console.log("[stripe_webhook] fatal:", e?.message || e);
-    // Igual 200 para evitar retries infinitos si algo raro pasa (pero queda log)
-    return jsonResponse(200, { received: true, warning: String(e?.message || e) });
+    return jsonResponse(200, { received: true, warning: String(e?.message || e) }, origin);
   }
 };
