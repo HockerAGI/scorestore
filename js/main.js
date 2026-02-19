@@ -5,7 +5,7 @@
    - Carrito + cotización Envía (/api/quote)
    - Checkout real Stripe (/api/checkout)
    - SCORE AI Gemini (/api/chat)
-   - UI Light / Pro (no dark)
+   - UI Light / Pro (Diseño Premium Carrusel Integrado)
    ========================================================= */
 
 (() => {
@@ -38,6 +38,12 @@
   const categoryGrid = $("#categoryGrid");
   const clearCategoryBtn = $("#clearCategoryBtn");
   const categoryHint = $("#categoryHint");
+
+  // Nuevos elementos del Carrusel Pro
+  const catalogCarouselSection = $("#catalogCarouselSection");
+  const carouselTitle = $("#carouselTitle");
+  const scrollLeftBtn = $("#scrollLeftBtn");
+  const scrollRightBtn = $("#scrollRightBtn");
 
   const productGrid = $("#productGrid");
   const statusRow = $("#statusRow");
@@ -97,14 +103,14 @@
   const appVersionLabel = $("#appVersionLabel");
 
   const REQUIRED = [
-    categoryGrid, productGrid, statusRow,
+    categoryGrid, productGrid,
     cartCount, cartItemsEl, cartSubtotalEl, shippingLineEl, cartTotalEl,
     postalWrap, postalCodeInput, quoteBtn,
     checkoutBtn, checkoutMsg,
   ];
   if (REQUIRED.some((x) => !x)) {
     console.error("[ScoreStore] Faltan elementos críticos en el DOM.");
-    return;
+    // No detenemos la ejecución para no romper si algo cambió en HTML
   }
 
   // ---------- CONFIG ----------
@@ -182,9 +188,10 @@
     }
   };
 
+  // FIX CRÍTICO: Decodifica rutas con espacios para que no se rompan las imágenes en el carrusel
   const safeUrl = (p) => {
     try {
-      return encodeURI(String(p || ""));
+      return encodeURI(String(p || "").trim());
     } catch {
       return String(p || "");
     }
@@ -213,7 +220,7 @@
   };
 
   const setStatus = (text) => {
-    statusRow.textContent = text || "";
+    if (statusRow) statusRow.textContent = text || "";
   };
 
   const openSet = new Set(); 
@@ -224,7 +231,7 @@
   };
 
   const refreshOverlay = () => {
-    overlay.hidden = openSet.size === 0;
+    if (overlay) overlay.hidden = openSet.size === 0;
     lockScrollIfNeeded();
   };
 
@@ -335,6 +342,7 @@
   };
 
   const renderCategories = () => {
+    if (!categoryGrid) return;
     const counts = getCategoryCounts();
     categoryGrid.innerHTML = "";
 
@@ -344,30 +352,44 @@
       card.className = "catcard";
       card.setAttribute("data-cat", cat.uiId);
 
+      // Diseño Pro: sin imagen de fondo inline, usa clase CSS
       card.innerHTML = `
-        <div class="catcard__bg" style="background-image:url('${safeUrl(cat.texture)}')"></div>
+        <div class="catcard__bg"></div>
         <div class="catcard__inner">
           <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}">
           <div class="catcard__meta">
             <div class="catcard__name">${escapeHtml(cat.name)}</div>
-            <div class="catcard__count">${counts[cat.uiId] || 0} producto(s)</div>
-            <div class="catcard__tag">● Ver catálogo</div>
+            <div class="catcard__tag">● ${counts[cat.uiId] || 0} producto(s)</div>
           </div>
         </div>
       `;
 
       card.addEventListener("click", () => {
+        // Efecto visual de selección
+        $$('.catcard').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+
         activeCategory = cat.uiId;
-        categoryHint.hidden = true;
+        if (categoryHint) categoryHint.hidden = true;
+        if (carouselTitle) carouselTitle.textContent = `Colección: ${cat.name}`;
+        
         updateFilterUI();
         renderProducts();
-        scrollToEl("#catalog");
+
+        // Mostrar carrusel y scrollear a él
+        if (catalogCarouselSection) {
+          catalogCarouselSection.hidden = false;
+          scrollToEl("#catalogCarouselSection");
+          if (productGrid) productGrid.scrollLeft = 0;
+        } else {
+          scrollToEl("#catalog");
+        }
       });
 
       categoryGrid.appendChild(card);
     }
 
-    categoryHint.hidden = false;
+    if (categoryHint) categoryHint.hidden = false;
   };
 
   const updateFilterUI = () => {
@@ -378,12 +400,14 @@
     }
     if (searchQuery) pieces.push(`Búsqueda: “${searchQuery}”`);
 
-    if (pieces.length) {
-      activeFilterRow.hidden = false;
-      activeFilterLabel.textContent = pieces.join(" · ");
-    } else {
-      activeFilterRow.hidden = true;
-      activeFilterLabel.textContent = "";
+    if (activeFilterRow && activeFilterLabel) {
+      if (pieces.length) {
+        activeFilterRow.hidden = false;
+        activeFilterLabel.textContent = pieces.join(" · ");
+      } else {
+        activeFilterRow.hidden = true;
+        activeFilterLabel.textContent = "";
+      }
     }
   };
 
@@ -413,6 +437,7 @@
   };
 
   const renderProducts = () => {
+    if (!productGrid) return;
     const list = applyFilters(products);
     productGrid.innerHTML = "";
 
@@ -424,7 +449,7 @@
     setStatus(`${list.length} producto(s)`);
 
     if (!list.length) {
-      productGrid.innerHTML = `<div class="hint">Sin resultados. Prueba otra búsqueda.</div>`;
+      productGrid.innerHTML = `<div class="hint" style="padding: 20px;">Sin resultados. Prueba otra búsqueda.</div>`;
       return;
     }
 
@@ -457,6 +482,9 @@
     }
 
     productGrid.appendChild(frag);
+
+    // Asegurarnos que el carrusel se muestre si hay productos
+    if (catalogCarouselSection) catalogCarouselSection.hidden = false;
   };
 
   let currentProduct = null;
@@ -467,30 +495,36 @@
 
     currentProduct = p;
 
-    pmTitle.textContent = p.title;
-    pmPrice.textContent = money(p.priceCents);
-    pmDesc.textContent = p.description || "Merch oficial Score Store.";
+    if (pmTitle) pmTitle.textContent = p.title;
+    if (pmPrice) pmPrice.textContent = money(p.priceCents);
+    if (pmDesc) pmDesc.textContent = p.description || "Merch oficial Score Store. Calidad Único Uniformes.";
 
-    pmChips.innerHTML = "";
-    if (p.uiSection) pmChips.innerHTML += `<span class="pill">${escapeHtml(p.uiSection)}</span>`;
-    if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
-
-    pmSize.innerHTML = "";
-    for (const s of p.sizes) {
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      pmSize.appendChild(opt);
+    if (pmChips) {
+      pmChips.innerHTML = "";
+      if (p.uiSection) pmChips.innerHTML += `<span class="pill">${escapeHtml(p.uiSection)}</span>`;
+      if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
-    pmQty.value = "1";
+    if (pmSize) {
+      pmSize.innerHTML = "";
+      for (const s of p.sizes) {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        pmSize.appendChild(opt);
+      }
+    }
 
-    const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
-    pmCarousel.innerHTML = `
-      <div class="pm__track">
-        ${(imgs || []).map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("")}
-      </div>
-    `;
+    if (pmQty) pmQty.value = "1";
+
+    if (pmCarousel) {
+      const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
+      pmCarousel.innerHTML = `
+        <div class="pm__track">
+          ${(imgs || []).map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("")}
+        </div>
+      `;
+    }
 
     openLayer(productModal);
   };
@@ -563,14 +597,15 @@
   };
 
   const renderCart = () => {
-    cartCount.textContent = String(cart.reduce((s, it) => s + Number(it.qty || 0), 0));
+    if (!cartItemsEl) return;
+    if (cartCount) cartCount.textContent = String(cart.reduce((s, it) => s + Number(it.qty || 0), 0));
     cartItemsEl.innerHTML = "";
 
     if (!cart.length) {
       cartItemsEl.innerHTML = `<div class="hint">Tu carrito está vacío.</div>`;
-      cartSubtotalEl.textContent = money(0);
-      shippingLineEl.textContent = money(0);
-      cartTotalEl.textContent = money(0);
+      if (cartSubtotalEl) cartSubtotalEl.textContent = money(0);
+      if (shippingLineEl) shippingLineEl.textContent = money(0);
+      if (cartTotalEl) cartTotalEl.textContent = money(0);
       return;
     }
 
@@ -584,8 +619,8 @@
         <div class="cartitem__img">
           ${it.img ? `<img src="${safeUrl(it.img)}" alt="${escapeHtml(it.title)}">` : ""}
         </div>
-        <div>
-          <p class="cartitem__title">${escapeHtml(it.title)}</p>
+        <div style="flex-grow:1;">
+          <h4 class="cartitem__title">${escapeHtml(it.title)}</h4>
           <div class="cartitem__meta">Talla: <b>${escapeHtml(it.size)}</b> · ${money(it.priceCents)} c/u</div>
 
           <div class="cartitem__controls">
@@ -615,9 +650,9 @@
 
     const sub = cartSubtotalCents();
     const ship = shippingCents();
-    cartSubtotalEl.textContent = money(sub);
-    shippingLineEl.textContent = money(ship);
-    cartTotalEl.textContent = money(sub + ship);
+    if (cartSubtotalEl) cartSubtotalEl.textContent = money(sub);
+    if (shippingLineEl) shippingLineEl.textContent = money(ship);
+    if (cartTotalEl) cartTotalEl.textContent = money(sub + ship);
   };
 
   const loadShipping = () => {
@@ -659,26 +694,26 @@
   const refreshShippingUI = () => {
     shipping.mode = getSelectedShipMode();
 
-    shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona modo";
+    if (shipHint) shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona modo";
 
     const needsZip = shipping.mode === "envia_mx" || shipping.mode === "envia_us";
-    postalWrap.hidden = !needsZip;
+    if (postalWrap) postalWrap.hidden = !needsZip;
 
     if (!needsZip) {
       shipping.postal_code = "";
       shipping.quote = null;
-      postalCodeInput.value = "";
+      if (postalCodeInput) postalCodeInput.value = "";
       saveShipping();
       renderCart();
       return;
     }
 
-    postalCodeInput.value = shipping.postal_code || "";
+    if (postalCodeInput) postalCodeInput.value = shipping.postal_code || "";
     renderCart();
   };
 
   const quoteShipping = async () => {
-    checkoutMsg.hidden = true;
+    if (checkoutMsg) checkoutMsg.hidden = true;
 
     const mode = getSelectedShipMode();
     if (!(mode === "envia_mx" || mode === "envia_us")) {
@@ -689,7 +724,7 @@
       return;
     }
 
-    const postal_code = String(postalCodeInput.value || "").trim();
+    const postal_code = String(postalCodeInput?.value || "").trim();
     if (postal_code.length < 4) {
       showToast("Ingresa un CP/ZIP válido");
       return;
@@ -700,8 +735,10 @@
       return;
     }
 
-    quoteBtn.disabled = true;
-    quoteBtn.textContent = "Cotizando…";
+    if (quoteBtn) {
+      quoteBtn.disabled = true;
+      quoteBtn.textContent = "Cotizando…";
+    }
 
     try {
       const body = {
@@ -741,13 +778,15 @@
       renderCart();
       showToast(`Error: ${String(e?.message || e)}`);
     } finally {
-      quoteBtn.disabled = false;
-      quoteBtn.textContent = "Cotizar";
+      if (quoteBtn) {
+        quoteBtn.disabled = false;
+        quoteBtn.textContent = "Cotizar";
+      }
     }
   };
 
   const doCheckout = async () => {
-    checkoutMsg.hidden = true;
+    if (checkoutMsg) checkoutMsg.hidden = true;
 
     if (!cart.length) {
       showToast("Tu carrito está vacío");
@@ -756,7 +795,7 @@
 
     const shipping_mode = getSelectedShipMode();
     const promo_code = String(promoCodeInput?.value || "").trim();
-    const postal_code = String(postalCodeInput.value || "").trim();
+    const postal_code = String(postalCodeInput?.value || "").trim();
 
     const needsZip = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
     if (needsZip) {
@@ -770,8 +809,10 @@
       }
     }
 
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = "Creando checkout…";
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.textContent = "Creando checkout…";
+    }
 
     try {
       const payload = {
@@ -798,16 +839,21 @@
 
       window.location.href = data.url;
     } catch (e) {
-      checkoutMsg.hidden = false;
-      checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`;
+      if (checkoutMsg) {
+        checkoutMsg.hidden = false;
+        checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`;
+      }
       showToast("No se pudo iniciar pago");
     } finally {
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = "Pagar (Stripe + OXXO)";
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = "Pagar Seguro";
+      }
     }
   };
 
   const addChatMsg = (who, text) => {
+    if (!aiOutput) return;
     const div = document.createElement("div");
     div.className = `msg ${who === "me" ? "msg--me" : "msg--ai"}`;
     div.innerHTML = `<div>${escapeHtml(text)}</div><div class="msg__meta">${who === "me" ? "Tú" : "SCORE AI"}</div>`;
@@ -816,14 +862,16 @@
   };
 
   const sendAi = async () => {
-    const msg = String(aiInput.value || "").trim();
+    const msg = String(aiInput?.value || "").trim();
     if (!msg) return;
 
-    aiInput.value = "";
+    if (aiInput) aiInput.value = "";
     addChatMsg("me", msg);
 
-    aiSendBtn.disabled = true;
-    aiSendBtn.textContent = "…";
+    if (aiSendBtn) {
+      aiSendBtn.disabled = true;
+      aiSendBtn.textContent = "…";
+    }
 
     try {
       const res = await fetch("/api/chat", {
@@ -839,8 +887,10 @@
     } catch (e) {
       addChatMsg("ai", "Ahorita no puedo responder (API). Intenta de nuevo o contacta soporte.");
     } finally {
-      aiSendBtn.disabled = false;
-      aiSendBtn.textContent = "Enviar";
+      if (aiSendBtn) {
+        aiSendBtn.disabled = false;
+        aiSendBtn.textContent = "Enviar";
+      }
     }
   };
 
@@ -848,7 +898,7 @@
     <h3>Términos y Condiciones</h3>
     <p>Esta tienda es el canal oficial de mercancía (merch) de SCORE STORE. Los pagos se procesan por Stripe. Algunas formas de pago pueden incluir OXXO (según disponibilidad de Stripe en tu región).</p>
     <p>Los tiempos de producción y entrega pueden variar según disponibilidad y logística. Para envíos se utiliza Envía.com como proveedor de cotización/guías (cuando aplique).</p>
-    <p>Si necesitas soporte, contáctanos por los canales oficiales.</p>
+    <p>Si necesitas soporte, contáctanos por los canales oficiales de Único Uniformes.</p>
   `;
 
   const LEGAL_PRIV = `
@@ -858,12 +908,13 @@
   `;
 
   const openLegal = (type) => {
-    legalTitle.textContent = type === "privacy" ? "Privacidad" : "Términos";
-    legalBody.innerHTML = `<div class="legal">${type === "privacy" ? LEGAL_PRIV : LEGAL_TERMS}</div>`;
+    if (legalTitle) legalTitle.textContent = type === "privacy" ? "Privacidad" : "Términos";
+    if (legalBody) legalBody.innerHTML = `<div class="legal">${type === "privacy" ? LEGAL_PRIV : LEGAL_TERMS}</div>`;
     openLayer(legalModal);
   };
 
   const initConsent = () => {
+    if (!cookieBanner) return;
     try {
       const v = localStorage.getItem(STORAGE_KEYS.consent);
       if (v) return;
@@ -877,7 +928,7 @@
     try {
       localStorage.setItem(STORAGE_KEYS.consent, val ? "accept" : "reject");
     } catch {}
-    cookieBanner.hidden = true;
+    if (cookieBanner) cookieBanner.hidden = true;
   };
 
   const registerSW = () => {
@@ -899,7 +950,7 @@
     syncShippingLabelsInUI();
     refreshShippingUI();
 
-    overlay.addEventListener("click", closeAll);
+    if (overlay) overlay.addEventListener("click", closeAll);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
@@ -921,6 +972,14 @@
       renderCart();
     });
 
+    // Controles de scroll del Carrusel Pro
+    scrollLeftBtn?.addEventListener("click", () => {
+      productGrid?.scrollBy({ left: -300, behavior: 'smooth' });
+    });
+    scrollRightBtn?.addEventListener("click", () => {
+      productGrid?.scrollBy({ left: 300, behavior: 'smooth' });
+    });
+
     $$(".navitem[data-scroll]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const sel = btn.getAttribute("data-scroll");
@@ -930,11 +989,19 @@
     });
 
     scrollToCategoriesBtn?.addEventListener("click", () => scrollToEl("#categories"));
-    scrollToCatalogBtn?.addEventListener("click", () => scrollToEl("#catalog"));
+    scrollToCatalogBtn?.addEventListener("click", () => {
+       if (catalogCarouselSection && !catalogCarouselSection.hidden) {
+           scrollToEl("#catalogCarouselSection");
+       } else {
+           scrollToEl("#categories");
+       }
+    });
 
     clearCategoryBtn?.addEventListener("click", () => {
       activeCategory = null;
-      categoryHint.hidden = false;
+      $$('.catcard').forEach(c => c.classList.remove('active'));
+      if (categoryHint) categoryHint.hidden = false;
+      if (carouselTitle) carouselTitle.textContent = "Todos los productos";
       updateFilterUI();
       renderProducts();
       showToast("Mostrando todo");
@@ -943,8 +1010,10 @@
     clearFilterBtn?.addEventListener("click", () => {
       activeCategory = null;
       searchQuery = "";
+      $$('.catcard').forEach(c => c.classList.remove('active'));
       if (searchInput) searchInput.value = "";
-      categoryHint.hidden = false;
+      if (categoryHint) categoryHint.hidden = false;
+      if (carouselTitle) carouselTitle.textContent = "Todos los productos";
       updateFilterUI();
       renderProducts();
       showToast("Filtros limpiados");
@@ -970,8 +1039,8 @@
 
     pmAdd?.addEventListener("click", () => {
       if (!currentProduct) return;
-      const size = String(pmSize.value || "").trim();
-      const qty = clampInt(pmQty.value, 1, 99);
+      const size = String(pmSize?.value || "").trim();
+      const qty = clampInt(pmQty?.value, 1, 99);
       addToCart(currentProduct, size, qty);
       closeLayer(productModal);
       openLayer(cartDrawer);
@@ -1044,7 +1113,7 @@
 
       renderCategories();
       updateFilterUI();
-      renderProducts();
+      renderProducts(); // Esto inyectará los productos en el carrusel de inicio
       setStatus(`${products.length} producto(s) cargados`);
     } catch (e) {
       console.error(e);
