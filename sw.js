@@ -35,8 +35,8 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Nunca caches API
-  if (url.origin === self.location.origin && url.pathname.startsWith("/api/")) return;
+  // Nunca caches API ni funciones netlify directas
+  if (url.origin === self.location.origin && (url.pathname.startsWith("/api/") || url.pathname.includes("/.netlify/"))) return;
 
   // Solo procesar peticiones GET
   if (req.method !== "GET") return;
@@ -48,7 +48,7 @@ self.addEventListener("fetch", (event) => {
         try {
           const fresh = await fetch(req);
           const cache = await caches.open(CACHE_VERSION);
-          cache.put(req, fresh.clone()); // Guardado corregido con req
+          cache.put(req, fresh.clone());
           return fresh;
         } catch {
           const cached = await caches.match("/index.html");
