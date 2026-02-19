@@ -3,7 +3,7 @@
 const { jsonResponse, handleOptions, safeJsonParse, isSupabaseConfigured, supabaseAdmin } = require("./_shared");
 
 exports.handler = async (event) => {
-  const origin = event?.headers?.origin;
+  const origin = event?.headers?.origin || event?.headers?.Origin;
 
   try {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
