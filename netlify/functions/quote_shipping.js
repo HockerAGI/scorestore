@@ -11,14 +11,14 @@ const {
 } = require("./_shared");
 
 exports.handler = async (event) => {
-  const origin = event?.headers?.origin;
+  const origin = event?.headers?.origin || event?.headers?.Origin;
 
   try {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
     if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
     const body = safeJsonParse(event.body) || {};
-    const shipping_mode = String(body.shipping_mode || "").trim(); // pickup | envia_mx | envia_us
+    const shipping_mode = String(body.shipping_mode || "").trim(); 
     const postal_code = String(body.postal_code || "").trim();
 
     if (!shipping_mode) {
@@ -44,7 +44,6 @@ exports.handler = async (event) => {
       const q = await getEnviaQuote({ zip, country, items_qty });
       return jsonResponse(200, q, origin);
     } catch (e) {
-      // fallback (para que NO se rompa el flujo)
       const fb = getFallbackShipping(country, items_qty);
       return jsonResponse(
         200,
