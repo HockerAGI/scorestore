@@ -15,6 +15,7 @@ const {
   initStripe,
   isSupabaseConfigured,
   supabaseAdmin,
+  readJsonFile
 } = require("./_shared");
 
 exports.handler = async (event) => {
@@ -29,14 +30,31 @@ exports.handler = async (event) => {
 
     const body = safeJsonParse(event.body) || {};
     const items = normalizeQty(body.items);
-    const shipping_mode = String(body.shipping_mode || "pickup").trim(); // pickup | envia_mx | envia_us
+    const shipping_mode = String(body.shipping_mode || "pickup").trim();
     const postal_code = String(body.postal_code || "").trim();
-    const promo_code = String(body.promo_code || "").trim();
+    const promo_code = String(body.promo_code || "").trim().toUpperCase();
 
     if (!items.length) return jsonResponse(400, { ok: false, error: "Carrito vacío" }, origin);
 
-    // Cargar catálogo real (server-side) para evitar manipulación de precios
+    // Cargar catálogo y promociones
     const { index } = getCatalogIndex();
+    const promos = readJsonFile("data/promos.json");
+    
+    // Validar cupón si se proporcionó
+    let validPromo = null;
+    let discountPercent = 0;
+    let isFreeShipping = false;
+
+    if (promo_code) {
+      validPromo = promos?.rules?.find(r => r.code.toUpperCase() === promo_code && r.active);
+      if (validPromo) {
+        if (validPromo.type === "percent") {
+          discountPercent = Number(validPromo.value) || 0;
+        } else if (validPromo.type === "free_shipping") {
+          isFreeShipping = true;
+        }
+      }
+    }
 
     const line_items = [];
     for (const it of items) {
@@ -44,11 +62,16 @@ exports.handler = async (event) => {
       if (!p) return jsonResponse(400, { ok: false, error: `SKU inválido: ${it.sku}` }, origin);
 
       const title = String(p?.title || p?.name || "Producto").trim();
-      const priceCents = Number.isFinite(Number(p?.price_cents))
+      let priceCents = Number.isFinite(Number(p?.price_cents))
         ? Math.round(Number(p.price_cents))
         : 0;
 
       if (!priceCents || priceCents < 0) return jsonResponse(400, { ok: false, error: `Precio inválido para ${it.sku}` }, origin);
+
+      // Aplicar descuento de porcentaje si aplica
+      if (discountPercent > 0) {
+        priceCents = Math.round(priceCents * (1 - discountPercent));
+      }
 
       const desc = it.size ? `${title} · Talla ${it.size}` : title;
 
@@ -77,9 +100,15 @@ exports.handler = async (event) => {
       } catch (e) {
         shipping = { ...getFallbackShipping(country, items_qty), warning: String(e?.message || e) };
       }
+      
+      // Aplicar envío gratis si el cupón lo dicta
+      if (isFreeShipping) {
+        shipping.amount_cents = 0;
+        shipping.amount_mxn = 0;
+        shipping.label += " (Cupón: Envío Gratis)";
+      }
     }
 
-    // Stripe Checkout Session
     const sessionPayload = {
       mode: "payment",
       payment_method_types: ["card", "oxxo"],
@@ -89,7 +118,7 @@ exports.handler = async (event) => {
       metadata: {
         shipping_mode,
         postal_code: postal_code || "",
-        promo_code: promo_code || "",
+        promo_code: validPromo ? promo_code : "",
         items_qty: String(items_qty || 0),
         items: JSON.stringify(items).slice(0, 4500),
         shipping_label: String(shipping.label || ""),
@@ -99,14 +128,12 @@ exports.handler = async (event) => {
       },
     };
 
-    // Si es envío, Stripe debe pedir dirección (y el webhook la usa para generar guía)
     if (shipping_mode === "envia_mx") {
       sessionPayload.shipping_address_collection = { allowed_countries: ["MX"] };
     } else if (shipping_mode === "envia_us") {
       sessionPayload.shipping_address_collection = { allowed_countries: ["US"] };
     }
 
-    // Mostrar costo de envío dentro de Stripe
     if ((shipping_mode === "envia_mx" || shipping_mode === "envia_us") && Number(shipping.amount_cents || 0) > 0) {
       sessionPayload.shipping_options = [
         {
@@ -121,7 +148,6 @@ exports.handler = async (event) => {
 
     const session = await stripe.checkout.sessions.create(sessionPayload);
 
-    // (Opcional) guardar “pre-order” como pending (no rompe si no hay tabla)
     if (isSupabaseConfigured()) {
       const sb = supabaseAdmin();
       if (sb) {
