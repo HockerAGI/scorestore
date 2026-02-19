@@ -1,498 +1,508 @@
-/* =========================================================
-   SCORE STORE / UnicOs — SHARED HELPERS (PROD) v2026.02.16
-   Netlify Functions helpers (Stripe, Envia.com, Supabase, Gemini)
-   ========================================================= */
-
 "use strict";
 
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
-const { createClient } = require("@supabase/supabase-js");
 
-// ---- ENV ----
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON =
-  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+// Optional deps (no truena si faltan, pero para prod deben existir)
+let Stripe = null;
+try { Stripe = require("stripe"); } catch {}
+let createClient = null;
+try { ({ createClient } = require("@supabase/supabase-js")); } catch {}
 
-const ENVIA_KEY = process.env.ENVIA_API_KEY || process.env.ENVIA_API_TOKEN || "";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-
-const DEFAULT_ORG_ID =
-  process.env.DEFAULT_ORG_ID ||
-  process.env.SCORE_STORE_ORG_ID ||
-  "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
-
-const FACTORY_ORIGIN = {
-  name: process.env.ENVIA_ORIGIN_NAME || "Unico Uniformes",
-  phone: process.env.ENVIA_ORIGIN_PHONE || "+52 664 000 0000",
-  email: process.env.ENVIA_ORIGIN_EMAIL || "ventas@unico-uniformes.com",
-  address1: process.env.ENVIA_ORIGIN_ADDRESS1 || "Tijuana, B.C.",
-  city: process.env.ENVIA_ORIGIN_CITY || "Tijuana",
-  state: process.env.ENVIA_ORIGIN_STATE || "BC",
-  country: process.env.ENVIA_ORIGIN_COUNTRY || "MX",
-  postal_code: process.env.ENVIA_ORIGIN_POSTAL || "22000",
-};
-
-const FALLBACK_MX_PRICE = { base: 180, per_item: 35, max: 380 };
-const FALLBACK_US_PRICE = { base: 800, per_item: 90, max: 1600 };
-
-// ---- CORS / headers ----
-const HEADERS = {
-  "content-type": "application/json; charset=utf-8",
-  "access-control-allow-origin": "*",
+/* =========================
+   CORS + RESPONSES
+========================= */
+const corsHeaders = (origin) => ({
+  "access-control-allow-origin": origin || "*",
+  "access-control-allow-headers": "content-type, stripe-signature, x-org-id",
   "access-control-allow-methods": "GET,POST,OPTIONS",
-  "access-control-allow-headers": "content-type, x-org-id",
+  "access-control-max-age": "86400",
+});
+
+const jsonResponse = (statusCode, data, origin) => ({
+  statusCode,
+  headers: {
+    "content-type": "application/json; charset=utf-8",
+    ...corsHeaders(origin),
+  },
+  body: JSON.stringify(data ?? {}),
+});
+
+const handleOptions = (event) => ({
+  statusCode: 204,
+  headers: corsHeaders(event?.headers?.origin),
+  body: "",
+});
+
+const safeJsonParse = (raw) => {
+  try {
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 };
 
-function isSupabaseConfigured() {
-  return !!SUPABASE_URL && (!!SUPABASE_SERVICE_ROLE_KEY || !!SUPABASE_ANON);
-}
+const clampInt = (v, min, max) => {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+};
 
-function isEnviaConfigured() {
-  return !!ENVIA_KEY;
-}
+const normalizeQty = (items) => {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((it) => ({
+      sku: String(it?.sku || "").trim(),
+      qty: clampInt(it?.qty, 1, 99),
+      size: it?.size ? String(it.size).trim() : "",
+    }))
+    .filter((it) => it.sku);
+};
 
-// ---- Supabase clients ----
-const supabase =
-  SUPABASE_URL && SUPABASE_ANON
-    ? createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } })
-    : null;
+const itemsQtyFromAny = (items) =>
+  normalizeQty(items).reduce((sum, it) => sum + Number(it.qty || 0), 0);
 
-const supabaseAdmin =
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-        auth: { persistSession: false },
-      })
-    : null;
-
-// ---- org_id (UnicOs multi-tenant) ----
-function isUuid(v) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    String(v || "")
-  );
-}
-
-function getOrgIdFromEvent(event, fallback = DEFAULT_ORG_ID) {
-  const qp = event?.queryStringParameters || {};
+/* =========================
+   URL BASE (Netlify)
+========================= */
+const getBaseUrl = (event) => {
   const headers = event?.headers || {};
-  const fromHeader =
-    headers["x-org-id"] || headers["X-Org-Id"] || headers["X-ORG-ID"] || "";
-  const candidate = qp.org_id || qp.orgId || qp.org || fromHeader || "";
-  const v = String(candidate || "").trim();
-  return isUuid(v) ? v : fallback;
-}
-
-// ---- response helpers ----
-function jsonResponse(statusCode, obj) {
-  return { statusCode, headers: HEADERS, body: JSON.stringify(obj || {}) };
-}
-
-// Backward compatible:
-// - handleOptions() => always returns 204
-// - handleOptions(event) => returns 204 only if OPTIONS, else null
-function handleOptions(event) {
-  if (event && event.httpMethod && event.httpMethod !== "OPTIONS") return null;
-  return { statusCode: 204, headers: HEADERS, body: "" };
-}
-
-function safeJsonParse(body) {
-  try {
-    if (!body) return {};
-    if (typeof body === "object") return body;
-    return JSON.parse(body);
-  } catch {
-    return {};
-  }
-}
-
-async function readRawBody(event) {
-  const b = event?.body || "";
-  if (!b) return Buffer.from("");
-  if (event?.isBase64Encoded) return Buffer.from(b, "base64");
-  return Buffer.from(b, "utf8");
-}
-
-// ---- URL helpers ----
-function baseUrl(event) {
-  const proto = String(event?.headers?.["x-forwarded-proto"] || "https")
-    .split(",")[0]
-    .trim();
-  const host = String(event?.headers?.host || "").trim();
+  const proto = headers["x-forwarded-proto"] || "https";
+  const host = headers["x-forwarded-host"] || headers.host || process.env.URL || process.env.DEPLOY_PRIME_URL;
+  if (!host) return "https://example.com";
+  if (host.startsWith("http")) return host;
   return `${proto}://${host}`;
-}
+};
 
-function encodeUrl(base, p) {
-  const b = String(base || "").replace(/\/+$/, "");
-  const s = String(p || "").replace(/^\/+/, "");
-  return `${b}/${encodeURI(s)}`;
-}
+/* =========================
+   FILE READ (catalog)
+========================= */
+const readJsonFile = (relPath) => {
+  const p = path.join(process.cwd(), relPath);
+  const raw = fs.readFileSync(p, "utf8");
+  return JSON.parse(raw);
+};
 
-function readJson(relPath) {
-  const file = path.join(process.cwd(), relPath);
-  return JSON.parse(fs.readFileSync(file, "utf8"));
-}
-
-// ---- zip / qty ----
-function normalizeZip(zip) {
-  return String(zip || "").replace(/\D+/g, "").slice(0, 10);
-}
-
-function validateZip(zip) {
-  const z = normalizeZip(zip);
-  return z.length >= 4;
-}
-
-function normalizeQty(qty) {
-  const n = Math.floor(Number(qty) || 0);
-  if (n < 1) return 1;
-  if (n > 99) return 99;
-  return n;
-}
-
-function itemsQtyFromAny(itemsOrQty) {
-  if (Array.isArray(itemsOrQty)) {
-    return itemsOrQty.reduce((sum, it) => sum + normalizeQty(it?.qty || 1), 0);
+const getCatalogIndex = () => {
+  const cat = readJsonFile("data/catalog.json");
+  const products = Array.isArray(cat?.products) ? cat.products : [];
+  const idx = new Map();
+  for (const p of products) {
+    const sku = String(p?.sku || p?.id || "").trim();
+    if (!sku) continue;
+    idx.set(sku, p);
   }
-  return normalizeQty(itemsOrQty || 1);
-}
+  return { catalog: cat, index: idx };
+};
 
-// ---- Shipping fallback ----
-function getFallbackShipping(country, items_qty) {
-  const qty = normalizeQty(items_qty);
-  const isUS = String(country || "MX").toUpperCase() === "US";
-  const p = isUS ? FALLBACK_US_PRICE : FALLBACK_MX_PRICE;
-  const mxn = Math.min(p.max, p.base + p.per_item * Math.max(0, qty - 1));
+/* =========================
+   VALIDACIÓN ZIP/CP
+========================= */
+const validateZip = (zip, country) => {
+  const z = String(zip || "").trim();
+  const c = String(country || "").toUpperCase().trim();
+
+  if (c === "US") {
+    // 5 o 5-4
+    if (!/^\d{5}(-\d{4})?$/.test(z)) return null;
+    return z;
+  }
+
+  // MX (y general): mínimo 4 chars (hay países que usan alfanum)
+  if (z.length < 4 || z.length > 10) return null;
+  if (!/^[a-zA-Z0-9\- ]+$/.test(z)) return null;
+  return z;
+};
+
+/* =========================
+   SUPABASE (ADMIN)
+========================= */
+const isSupabaseConfigured = () =>
+  Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && createClient);
+
+const supabaseAdmin = (() => {
+  let client = null;
+  return () => {
+    if (!isSupabaseConfigured()) return null;
+    if (client) return client;
+    client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+      global: { headers: { "x-client-info": "scorestore-netlify-functions" } },
+    });
+    return client;
+  };
+})();
+
+/* =========================
+   TELEGRAM (OPCIONAL)
+========================= */
+const sendTelegram = async (text) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text: String(text || "").slice(0, 3500),
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    });
+  } catch (e) {
+    console.log("[telegram] warn:", e?.response?.data || e?.message || e);
+  }
+};
+
+/* =========================
+   ENVÍA.COM
+========================= */
+const ENVIA_API_URL = (process.env.ENVIA_API_URL || "https://api.envia.com").replace(/\/+$/, "");
+const ENVIA_GEOCODES_URL = (process.env.ENVIA_GEOCODES_URL || "https://geocodes.envia.com").replace(/\/+$/, "");
+
+const requireEnviaKey = () => {
+  const key = process.env.ENVIA_API_KEY;
+  if (!key) throw new Error("ENVIA_API_KEY no configurada");
+  return key;
+};
+
+const enviaHeaders = () => ({
+  authorization: `Bearer ${requireEnviaKey()}`,
+  "content-type": "application/json",
+});
+
+const getOriginByCountry = (country) => {
+  const c = String(country || "MX").toUpperCase();
+  if (c === "US") {
+    return {
+      name: process.env.ORIGIN_US_NAME || "Score Store US",
+      company: process.env.ORIGIN_US_COMPANY || "Score Store",
+      email: process.env.ORIGIN_US_EMAIL || process.env.FACTORY_EMAIL || "ventas@scorestore.com",
+      phone: process.env.ORIGIN_US_PHONE || "8180000000",
+      street: process.env.ORIGIN_US_STREET || "Main St",
+      number: process.env.ORIGIN_US_NUMBER || "1",
+      district: process.env.ORIGIN_US_DISTRICT || "Other",
+      city: process.env.ORIGIN_US_CITY || "San Diego",
+      state: process.env.ORIGIN_US_STATE || "CA",
+      country: "US",
+      postalCode: process.env.ORIGIN_US_POSTAL || "92101",
+      reference: process.env.ORIGIN_US_REFERENCE || "",
+    };
+  }
+
+  // MX
+  return {
+    name: process.env.ORIGIN_MX_NAME || "Score Store MX",
+    company: process.env.ORIGIN_MX_COMPANY || "Único Uniformes",
+    email: process.env.ORIGIN_MX_EMAIL || process.env.FACTORY_EMAIL || "ventas@unico-uniformes.com",
+    phone: process.env.ORIGIN_MX_PHONE || "6640000000",
+    street: process.env.ORIGIN_MX_STREET || "Av. Ejemplo",
+    number: process.env.ORIGIN_MX_NUMBER || "1",
+    district: process.env.ORIGIN_MX_DISTRICT || "Centro",
+    city: process.env.ORIGIN_MX_CITY || "Tijuana",
+    state: process.env.ORIGIN_MX_STATE || "BC",
+    country: "MX",
+    postalCode: process.env.ORIGIN_MX_POSTAL || "22000",
+    reference: process.env.ORIGIN_MX_REFERENCE || "",
+    identificationNumber: process.env.ORIGIN_MX_RFC || undefined,
+  };
+};
+
+const getPackageSpecs = (country, items_qty) => {
+  const qty = clampInt(items_qty || 1, 1, 99);
+  const c = String(country || "MX").toUpperCase();
+
+  // Puedes ajustar por env vars si quieres precisión
+  if (c === "US") {
+    const weightLb = Number(process.env.PACK_WEIGHT_LB || 1) * qty;
+    return {
+      type: "box",
+      content: "Score Store Merch",
+      amount: 1,
+      declaredValue: 0,
+      weightUnit: "LB",
+      lengthUnit: "IN",
+      weight: Number.isFinite(weightLb) ? weightLb : 1,
+      dimensions: {
+        length: Number(process.env.PACK_L_IN || 11),
+        width: Number(process.env.PACK_W_IN || 15),
+        height: Number(process.env.PACK_H_IN || 20),
+      },
+    };
+  }
+
+  const weightKg = Number(process.env.PACK_WEIGHT_KG || 1) * qty;
+  return {
+    type: "box",
+    content: "Score Store Merch",
+    amount: 1,
+    declaredValue: 0,
+    weightUnit: "KG",
+    lengthUnit: "CM",
+    weight: Number.isFinite(weightKg) ? weightKg : 1,
+    dimensions: {
+      length: Number(process.env.PACK_L_CM || 30),
+      width: Number(process.env.PACK_W_CM || 25),
+      height: Number(process.env.PACK_H_CM || 10),
+    },
+  };
+};
+
+const getZipDetails = async (country, zip) => {
+  // Endpoint oficial: geocodes.envia.com/zipcode/{country}/{zipcode}
+  // Si falla, regresamos null y usamos fallback.
+  const c = String(country || "MX").toUpperCase();
+  const z = validateZip(zip, c);
+  if (!z) return null;
+
+  try {
+    const url = `${ENVIA_GEOCODES_URL}/zipcode/${encodeURIComponent(c)}/${encodeURIComponent(z)}`;
+    const res = await axios.get(url, { headers: { authorization: `Bearer ${requireEnviaKey()}` } });
+    const data = res?.data;
+
+    // Respuesta real puede variar; intentamos mapear lo típico
+    // (city/state/state_code)
+    const city =
+      data?.city ||
+      data?.locality ||
+      data?.town ||
+      data?.data?.city ||
+      data?.data?.locality ||
+      (Array.isArray(data?.data) ? data.data[0]?.city : null);
+
+    const state =
+      data?.state ||
+      data?.state_code ||
+      data?.stateCode ||
+      data?.data?.state ||
+      data?.data?.state_code ||
+      (Array.isArray(data?.data) ? (data.data[0]?.state_code || data.data[0]?.state) : null);
+
+    return {
+      city: city ? String(city) : null,
+      state: state ? String(state).toUpperCase() : null,
+      postalCode: z,
+      country: c,
+    };
+  } catch (e) {
+    console.log("[envia][zip] warn:", e?.response?.data || e?.message || e);
+    return null;
+  }
+};
+
+const pickBestRate = (rates) => {
+  const arr = Array.isArray(rates) ? rates : [];
+  // Envia suele regresar basePrice o totalPrice (depende carrier). Elegimos el menor precio disponible.
+  let best = null;
+
+  for (const r of arr) {
+    const price =
+      Number(r?.totalPrice ?? r?.basePrice ?? r?.price ?? r?.amount ?? r?.rate ?? NaN);
+    if (!Number.isFinite(price) || price <= 0) continue;
+
+    if (!best || price < best.price) {
+      best = {
+        carrier: String(r?.carrier || r?.carrierDescription || "carrier"),
+        service: String(r?.serviceDescription || r?.service || "service"),
+        deliveryEstimate: String(r?.deliveryEstimate || ""),
+        price,
+      };
+    }
+  }
+
+  return best;
+};
+
+const getEnviaQuote = async ({ zip, country, items_qty }) => {
+  const c = String(country || "MX").toUpperCase();
+  const z = validateZip(zip, c);
+  if (!z) throw new Error("CP/ZIP inválido");
+
+  const origin = getOriginByCountry(c);
+  const zipInfo = await getZipDetails(c, z);
+
+  const destination = {
+    name: "Cliente",
+    company: "",
+    email: "",
+    phone: "",
+    street: "",
+    number: "",
+    district: "Other",
+    city: zipInfo?.city || "",
+    state: zipInfo?.state || (c === "US" ? "CA" : "BC"),
+    country: c,
+    postalCode: z,
+    reference: "",
+  };
+
+  const pkg = getPackageSpecs(c, items_qty || 1);
+
+  const payload = {
+    origin,
+    destination,
+    packages: [pkg],
+    shipment: {
+      // carrier puede ir vacío para multi-carrier quote
+      carrier: c === "US" ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps") : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      type: 1,
+    },
+    settings: {
+      currency: "MXN", // tienda MXN (Stripe)
+    },
+  };
+
+  const url = `${ENVIA_API_URL}/ship/rate/`;
+  const res = await axios.post(url, payload, { headers: enviaHeaders(), timeout: 20000 });
+
+  const rates = res?.data?.data || res?.data?.rates || res?.data || [];
+  const best = pickBestRate(rates);
+  if (!best) {
+    throw new Error("No se encontró tarifa (envía) para ese CP/ZIP");
+  }
+
+  // Envia regresa precio en currency solicitada (MXN). Si algún carrier manda USD, fuerza conversión por env var:
+  let priceMXN = Number(best.price);
+  if (!Number.isFinite(priceMXN) || priceMXN <= 0) throw new Error("Tarifa inválida");
+  const fx = Number(process.env.FX_USD_TO_MXN || 18);
+  if (String(c) === "US" && String(process.env.ENVIA_FORCE_USD_TO_MXN || "0") === "1") {
+    if (Number.isFinite(fx) && fx > 0) priceMXN = priceMXN * fx;
+  }
+
+  const amount_cents = Math.round(priceMXN * 100);
+
+  return {
+    ok: true,
+    provider: "envia",
+    label: `${best.carrier.toUpperCase()} · ${best.service}`,
+    country: c,
+    amount_cents,
+    amount_mxn: priceMXN,
+  };
+};
+
+const getFallbackShipping = (country, items_qty) => {
+  const c = String(country || "MX").toUpperCase();
+  const qty = clampInt(items_qty || 1, 1, 99);
+
+  const base = c === "US"
+    ? Number(process.env.FALLBACK_US_PRICE_MXN || 450)
+    : Number(process.env.FALLBACK_MX_PRICE_MXN || 250);
+
+  const perItem = Number(process.env.FALLBACK_PER_ITEM_MXN || 0);
+  const price = (Number.isFinite(base) ? base : 0) + (Number.isFinite(perItem) ? perItem * Math.max(0, qty - 1) : 0);
+
+  const priceMXN = Math.max(0, price);
   return {
     ok: true,
     provider: "fallback",
-    country: isUS ? "US" : "MX",
-    items_qty: qty,
-    amount_mxn: mxn,
-    label: "Standard",
-    carrier: null,
-    raw: null,
+    label: c === "US" ? "Envío USA (estimado)" : "Envío MX (estimado)",
+    country: c,
+    amount_cents: Math.round(priceMXN * 100),
+    amount_mxn: priceMXN,
   };
-}
+};
 
-function getPackageSpecs(items_qty) {
-  const qty = normalizeQty(items_qty);
-  if (qty <= 1) return { weight: 1.0, length: 30, width: 25, height: 6 };
-  if (qty <= 3) return { weight: 2.4, length: 40, width: 30, height: 10 };
-  if (qty <= 6) return { weight: 4.5, length: 45, width: 35, height: 14 };
-  return { weight: 7.5, length: 55, width: 40, height: 20 };
-}
+/* =========================
+   STRIPE (INIT)
+========================= */
+const initStripe = () => {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY no configurada");
+  if (!Stripe) throw new Error("Dependencia 'stripe' no instalada");
+  return new Stripe(key, { apiVersion: "2024-06-20" });
+};
 
-// ---- Envia quote ----
-async function getEnviaQuote({ zip, country = "MX", items_qty }) {
-  const z = normalizeZip(zip);
-  const cc = String(country || "MX").toUpperCase();
-  const qty = normalizeQty(items_qty || 1);
+const readRawBody = (event) => {
+  const body = event?.body || "";
+  if (event?.isBase64Encoded) return Buffer.from(body, "base64");
+  return Buffer.from(body, "utf8");
+};
 
-  if (!ENVIA_KEY || !validateZip(z)) return getFallbackShipping(cc, qty);
-
-  try {
-    const pkg = getPackageSpecs(qty);
-    const url = "https://api.envia.com/ship/rate/";
-
-    const payload = {
-      origin: {
-        name: FACTORY_ORIGIN.name,
-        phone: FACTORY_ORIGIN.phone,
-        email: FACTORY_ORIGIN.email,
-        address1: FACTORY_ORIGIN.address1,
-        city: FACTORY_ORIGIN.city,
-        state: FACTORY_ORIGIN.state,
-        country: FACTORY_ORIGIN.country,
-        postal_code: FACTORY_ORIGIN.postal_code,
-      },
-      destination: {
-        name: "Customer",
-        address1: "N/A",
-        city: cc === "US" ? "San Diego" : "Tijuana",
-        state: cc === "US" ? "CA" : "BC",
-        country: cc,
-        postal_code: z,
-        phone: "+1 000 000 0000",
-        email: "customer@example.com",
-      },
-      packages: [
-        {
-          content: "merch",
-          amount: 1,
-          type: "box",
-          weight: pkg.weight,
-          length: pkg.length,
-          width: pkg.width,
-          height: pkg.height,
-        },
-      ],
-    };
-
-    const r = await axios.post(url, payload, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${ENVIA_KEY}`,
-      },
-      timeout: 20000,
-    });
-
-    const data = r.data || {};
-    const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-    if (!list.length) return getFallbackShipping(cc, qty);
-
-    const sorted = list
-      .map((x) => ({
-        raw: x,
-        price: Number(x?.totalPrice || x?.total_price || x?.price || x?.amount || 0) || 0,
-        carrier: x?.carrier || x?.carrier_name || x?.provider || null,
-        service: x?.service || x?.service_name || x?.name || null,
-      }))
-      .filter((x) => x.price > 0)
-      .sort((a, b) => a.price - b.price);
-
-    const best = sorted[0];
-    if (!best) return getFallbackShipping(cc, qty);
-
-    return {
-      ok: true,
-      provider: "envia",
-      country: cc,
-      items_qty: qty,
-      amount_mxn: best.price,
-      label: best.service || "Standard",
-      carrier: best.carrier,
-      raw: best.raw,
-    };
-  } catch (err) {
-    console.error("[envia quote]", err?.message || err);
-    return getFallbackShipping(cc, qty);
-  }
-}
-
-// ---- Envia label ----
-function normalizeDestination(dest) {
-  const d = dest || {};
-  const address1 =
-    d.address1 || [d.street, d.number].filter(Boolean).join(" ").trim() || "";
+/* =========================
+   ENVÍA LABEL (SHIP/GENERATE)
+========================= */
+const stripeShippingToEnviaDestination = (shipping_details) => {
+  const sd = shipping_details || {};
+  const addr = sd.address || {};
+  const country = String(addr.country || "").toUpperCase();
 
   return {
-    name: d.name || "Customer",
-    company: d.company || "",
-    email: d.email || "",
-    phone: d.phone || "",
-    address1,
-    address2: d.address2 || d.district || "",
-    city: d.city || "",
-    state: d.state || "",
-    country_code: (d.country_code || d.country || "MX").toUpperCase(),
-    postal_code: normalizeZip(d.postal_code || d.zip || ""),
-    reference: d.reference || "",
+    name: sd.name || "Cliente",
+    company: "",
+    email: "",
+    phone: "",
+    street: addr.line1 || "",
+    number: addr.line2 || "", // stripe no separa número; si tu UX lo mete aquí, perfecto
+    district: addr.line2 ? "Other" : "Other",
+    city: addr.city || "",
+    state: addr.state || "",
+    country: country || "MX",
+    postalCode: addr.postal_code || "",
+    reference: "",
   };
-}
+};
 
-function isDestinationComplete(dest) {
-  const d = normalizeDestination(dest);
-  return [
-    d.postal_code,
-    d.address1,
-    d.city,
-    d.state,
-    d.country_code,
-    d.name,
-    d.phone,
-  ].every(Boolean);
-}
+const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty }) => {
+  const country = String(shipping_country || "MX").toUpperCase();
 
-async function createEnviaLabel({ order, stripe_session_id, destination, meta }) {
-  if (!ENVIA_KEY) return { ok: false, skipped: true, error: "ENVIA_API_KEY missing" };
+  const origin = getOriginByCountry(country);
+  const destination = stripeShippingToEnviaDestination(stripe_session?.shipping_details);
 
-  const dest = normalizeDestination(destination);
-  if (!isDestinationComplete(dest)) {
-    return { ok: false, skipped: true, error: "Destination incomplete" };
+  if (!destination?.postalCode || !destination?.state || !destination?.country) {
+    throw new Error("Dirección incompleta para generar guía");
   }
 
-  try {
-    const qty = Number(order?.items_qty || meta?.items_qty || 1) || 1;
-    const pkg = getPackageSpecs(qty);
-    const url = "https://api.envia.com/ship/generate/";
+  const pkg = getPackageSpecs(country, items_qty || 1);
 
-    const reference = order?.id || order?.stripe_session_id || stripe_session_id || "";
-
-    const payload = {
-      order_reference: String(reference || "").slice(0, 60),
-      origin: {
-        name: FACTORY_ORIGIN.name,
-        phone: FACTORY_ORIGIN.phone,
-        email: FACTORY_ORIGIN.email,
-        address1: FACTORY_ORIGIN.address1,
-        city: FACTORY_ORIGIN.city,
-        state: FACTORY_ORIGIN.state,
-        country: FACTORY_ORIGIN.country,
-        postal_code: FACTORY_ORIGIN.postal_code,
-      },
-      destination: {
-        name: dest.name,
-        company: dest.company,
-        email: dest.email,
-        phone: dest.phone,
-        address1: dest.address1,
-        address2: dest.address2,
-        city: dest.city,
-        state: dest.state,
-        country: dest.country_code,
-        postal_code: dest.postal_code,
-        reference: dest.reference,
-      },
-      packages: [
-        {
-          content: "merch",
-          amount: 1,
-          type: "box",
-          weight: pkg.weight,
-          length: pkg.length,
-          width: pkg.width,
-          height: pkg.height,
-        },
-      ],
-    };
-
-    const r = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ENVIA_KEY}` },
-      timeout: 20000,
-    });
-
-    const data = r.data || {};
-    const shipment = data?.data || data?.shipment || data;
-
-    return {
-      ok: true,
-      tracking_number: shipment?.tracking_number || shipment?.trackingNumber || null,
-      label_url: shipment?.label_url || shipment?.labelUrl || null,
-      carrier: shipment?.carrier || shipment?.carrier_name || null,
-      raw: shipment,
-    };
-  } catch (err) {
-    return { ok: false, error: err?.message || "Envio label error", raw: err?.response?.data || null };
-  }
-}
-
-// ---- Gemini (Google AI Studio) ----
-async function geminiChat({ message, systemInstruction, model } = {}) {
-  if (!GEMINI_API_KEY) return { ok: false, error: "GEMINI_API_KEY missing" };
-
-  const m = String(model || GEMINI_MODEL || "").trim() || "gemini-2.5-flash";
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    m
-  )}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: String(message || "").slice(0, 8000) }],
-      },
-    ],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
+  const payload = {
+    origin,
+    destination,
+    packages: [pkg],
+    shipment: {
+      carrier: country === "US"
+        ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
+        : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      type: 1,
+    },
+    settings: {
+      printFormat: "PDF",
+      printSize: "STOCK_4X6",
+      currency: "MXN",
+    },
   };
 
-  if (systemInstruction) {
-    body.systemInstruction = {
-      role: "system",
-      parts: [{ text: String(systemInstruction).slice(0, 8000) }],
-    };
-  }
+  const url = `${ENVIA_API_URL}/ship/generate/`;
+  const res = await axios.post(url, payload, { headers: enviaHeaders(), timeout: 25000 });
 
-  try {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: data?.error?.message || `Gemini error (${r.status})` };
-
-    const text =
-      data?.candidates?.[0]?.content?.parts?.map((p) => p?.text).filter(Boolean).join("\n") || "";
-
-    return { ok: true, text: String(text || "").trim(), raw: data };
-  } catch (err) {
-    return { ok: false, error: err?.message || "Gemini request failed" };
-  }
-}
-
-// ---- Telegram notify ----
-async function sendTelegram(payload) {
-  const token = process.env.TELEGRAM_BOT_TOKEN || "";
-  const chatId = process.env.TELEGRAM_CHAT_ID || "";
-  if (!token || !chatId) return { ok: false, skipped: true };
-
-  const text = typeof payload === "string" ? payload : String(payload?.text || "");
-  const parse_mode = typeof payload === "object" ? payload?.parse_mode : undefined;
-
-  try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    const r = await axios.post(
-      url,
-      {
-        chat_id: chatId,
-        text: String(text || "").slice(0, 3900),
-        ...(parse_mode ? { parse_mode } : {}),
-        disable_web_page_preview: true,
-      },
-      { timeout: 12000 }
-    );
-    return { ok: true, raw: r.data };
-  } catch (e) {
-    console.error("[telegram]", e?.message || e);
-    return { ok: false, error: e?.message || "telegram error" };
-  }
-}
+  // Envia suele devolver data con trackingNumber/label/base64 etc (varía por carrier)
+  const data = res?.data?.data || res?.data;
+  return data;
+};
 
 module.exports = {
-  HEADERS,
-
-  SUPABASE_URL,
-  SUPABASE_ANON,
-  supabase,
-  supabaseAdmin,
-
-  DEFAULT_ORG_ID,
-  getOrgIdFromEvent,
-  isUuid,
-
-  ENVIA_KEY,
-  isEnviaConfigured,
-
-  FACTORY_ORIGIN,
-  FALLBACK_MX_PRICE,
-  FALLBACK_US_PRICE,
-
-  isSupabaseConfigured,
-
   jsonResponse,
   handleOptions,
   safeJsonParse,
-  readRawBody,
-
-  baseUrl,
-  encodeUrl,
-  readJson,
-
-  normalizeZip,
-  validateZip,
+  clampInt,
   normalizeQty,
   itemsQtyFromAny,
+  getBaseUrl,
+  validateZip,
 
-  getFallbackShipping,
+  readJsonFile,
+  getCatalogIndex,
+
+  isSupabaseConfigured,
+  supabaseAdmin,
+
+  sendTelegram,
+
   getEnviaQuote,
+  getFallbackShipping,
   createEnviaLabel,
 
-  geminiChat,
-  sendTelegram,
+  initStripe,
+  readRawBody,
 };
