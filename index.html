@@ -4,101 +4,117 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b0b0d" />
-  <meta name="description" content="Score Store — merch oficial. Compra segura con Stripe + OXXO. Envío o pickup." />
+  <meta name="description" content="Score Store — Merch oficial. Pago con Stripe + OXXO. Envío con Envía.com o pickup." />
+
   <title>Score Store</title>
 
-  <link rel="preload" href="css/styles.css" as="style" />
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="icon" href="assets/brand/favicon.png" onerror="this.remove()" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/favicon.png" />
+  <link rel="preload" href="/css/styles.css" as="style" />
+  <link rel="stylesheet" href="/css/styles.css" />
 
   <script>
-    // Cache bust control (útil mientras arreglamos sw.js en Bloque 2)
-    window.__APP_VERSION__ = "2026.02.19.1";
+    // Versiona para evitar “cache fantasma” cuando actualices
+    window.__APP_VERSION__ = "2026.02.19.PROD";
   </script>
 </head>
 
 <body>
-  <a class="skip" href="#catalog">Saltar al catálogo</a>
+  <!-- INTRO -->
+  <div id="intro" class="intro" aria-hidden="true">
+    <div class="intro__inner">
+      <img class="intro__logo" src="/assets/logo-desert.png" alt="Score Desert" />
+      <div class="intro__bar"><span></span></div>
+      <div class="intro__txt">Cargando Score Store…</div>
+    </div>
+  </div>
 
-  <!-- TOP BAR -->
-  <header class="topbar" role="banner">
+  <!-- TOPBAR -->
+  <header class="topbar">
     <div class="wrap topbar__inner">
-      <button id="openMenuBtn" class="iconbtn" aria-label="Abrir menú" type="button">
-        <span class="icon">≡</span>
-      </button>
+      <button id="btnMenu" class="iconbtn" type="button" aria-label="Abrir menú">☰</button>
 
-      <a class="brand" href="#" aria-label="Score Store">
-        <span class="brand__mark">SCORE</span>
+      <a class="brand" href="/" aria-label="Score Store">
+        <span class="brand__title">SCORE</span>
         <span class="brand__sub">STORE</span>
       </a>
 
       <div class="topbar__actions">
         <div class="search">
-          <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar (hoodie, jersey, gorra…)" autocomplete="off" />
+          <span class="search__icon">⌕</span>
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar merch (hoodie, gorra…)" />
         </div>
 
-        <button id="openAiBtn" class="iconbtn" aria-label="Abrir asistente" type="button" title="Asistente">
-          <span class="icon">✦</span>
-        </button>
-
-        <button id="openCartBtn" class="iconbtn iconbtn--accent" aria-label="Abrir carrito" type="button" title="Carrito">
-          <span class="icon">🛒</span>
-          <span id="cartCount" class="badge" aria-label="Artículos en carrito">0</span>
+        <button id="btnCart" class="iconbtn iconbtn--accent" type="button" aria-label="Carrito">
+          🛒 <span id="cartCount" class="badge">0</span>
         </button>
       </div>
     </div>
   </header>
 
+  <!-- MENU -->
+  <div id="overlay" class="overlay" hidden></div>
+  <aside id="drawerMenu" class="drawer" hidden>
+    <div class="drawer__head">
+      <div class="drawer__title">Menú</div>
+      <button id="btnCloseMenu" class="iconbtn" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="drawer__body">
+      <button class="navitem" data-scroll="#catalogos" type="button">Catálogos</button>
+      <button class="navitem" data-scroll="#productos" type="button">Productos</button>
+      <button class="navitem" data-scroll="#partners" type="button">Partners</button>
+      <button class="navitem" id="btnOpenCartFromMenu" type="button">Abrir carrito</button>
+    </div>
+    <div class="drawer__foot">
+      <div class="muted">v<span id="appVersionLabel">—</span></div>
+    </div>
+  </aside>
+
   <!-- HERO -->
-  <section class="hero" aria-label="Intro">
+  <section class="hero" aria-label="Hero">
+    <div class="hero__bg" role="img" aria-label="Hero background"></div>
+
     <div class="wrap hero__inner">
-      <div class="hero__copy">
-        <h1>Merch oficial. Compra rápida. Pago con <span class="accent">tarjeta</span> u <span class="accent">OXXO</span>.</h1>
-        <p>Elige tu edición, agrega al carrito y listo. Envío o pickup.</p>
+      <div class="hero__center">
+        <img class="hero__logo" src="/assets/logo-desert.png" alt="Score Desert Logo" />
+        <h1 class="hero__h1">Merch Oficial de Score International</h1>
+        <p class="hero__h2">Fabricado por <b>UNICO UNIFORMES</b>, patrocinador oficial.</p>
+
         <div class="hero__cta">
-          <button id="scrollToCategoriesBtn" class="btn btn--primary" type="button">Ver ediciones</button>
-          <button id="scrollToCatalogBtn" class="btn btn--ghost" type="button">Ver productos</button>
+          <button id="btnGoCatalogos" class="btn btn--primary" type="button">Ver catálogos</button>
+          <button id="btnGoProductos" class="btn btn--ghost" type="button">Ver productos</button>
         </div>
-        <div class="hero__meta">
+
+        <div class="hero__chips">
           <span class="chip">Stripe Checkout</span>
           <span class="chip">OXXO</span>
           <span class="chip">MXN</span>
-        </div>
-      </div>
-
-      <div class="hero__card" aria-label="Aviso">
-        <div class="notice">
-          <div class="notice__title">Tip rápido</div>
-          <div class="notice__text">
-            Si no ves imágenes o catálogo, es <b>cache/PWA</b>. En Bloque 2 te dejo <b>sw.js</b> versionado.
-          </div>
+          <span class="chip">Envía.com</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CATEGORIES -->
-  <main id="main" class="main" role="main">
-    <section class="wrap section" aria-label="Ediciones">
+  <!-- CATÁLOGOS -->
+  <main class="main">
+    <section id="catalogos" class="wrap section">
       <div class="section__head">
-        <h2 id="categories">Ediciones</h2>
+        <h2>Catálogos</h2>
         <div class="section__tools">
-          <button id="clearCategoryBtn" class="btn btn--tiny" type="button" title="Ver todo">Ver todo</button>
+          <button id="btnAllCatalogs" class="btn btn--tiny" type="button">Ver todo</button>
         </div>
       </div>
 
-      <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint" hidden>Selecciona una edición para filtrar el catálogo.</div>
+      <div id="catalogGrid" class="catalogGrid" aria-live="polite"></div>
+      <div class="hint">Tip: toca un catálogo para filtrar productos.</div>
     </section>
 
-    <!-- CATALOG -->
-    <section id="catalog" class="wrap section" aria-label="Catálogo">
+    <!-- PRODUCTOS -->
+    <section id="productos" class="wrap section">
       <div class="section__head">
         <h2>Productos</h2>
         <div class="section__tools">
-          <select id="sortSelect" class="select" aria-label="Ordenar productos">
+          <select id="sortSelect" class="select" aria-label="Ordenar">
             <option value="featured">Destacados</option>
             <option value="price_asc">Precio: menor a mayor</option>
             <option value="price_desc">Precio: mayor a menor</option>
@@ -109,54 +125,48 @@
 
       <div id="activeFilterRow" class="filterrow" hidden>
         <span id="activeFilterLabel" class="filterrow__label"></span>
-        <button id="clearFilterBtn" class="btn btn--tiny" type="button">Quitar filtro</button>
+        <button id="btnClearFilter" class="btn btn--tiny" type="button">Quitar filtro</button>
       </div>
 
       <div id="statusRow" class="status" aria-live="polite"></div>
-
       <div id="productGrid" class="grid" aria-live="polite"></div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section id="partners" class="wrap section">
+      <div class="section__head">
+        <h2>Partners</h2>
+      </div>
+
+      <div class="partners">
+        <img src="/assets/logo-ford.png" alt="Ford" loading="lazy" />
+        <img src="/assets/logo-rzr.png" alt="RZR" loading="lazy" />
+        <img src="/assets/logo-unico.png" alt="Único Uniformes" loading="lazy" />
+        <img src="/assets/logo-goodrich.png" alt="BFGoodrich" loading="lazy" />
+      </div>
     </section>
   </main>
 
   <!-- FOOTER -->
-  <footer class="footer" role="contentinfo">
+  <footer class="footer">
     <div class="wrap footer__inner">
-      <div class="footer__left">
+      <div>
         <div class="footer__brand">SCORE STORE</div>
-        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · MXN</div>
+        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com</div>
       </div>
-      <div class="footer__right">
-        <button id="openLegalBtn" class="linkbtn" type="button">Términos</button>
-        <button id="openPrivacyBtn" class="linkbtn" type="button">Privacidad</button>
+
+      <div class="footer__links">
+        <button id="btnOpenTerms" class="linkbtn" type="button">Términos</button>
+        <button id="btnOpenPrivacy" class="linkbtn" type="button">Privacidad</button>
       </div>
     </div>
   </footer>
 
-  <!-- OVERLAY -->
-  <div id="overlay" class="overlay" hidden></div>
-
-  <!-- SIDE MENU -->
-  <aside id="sideMenu" class="drawer" aria-label="Menú" hidden>
-    <div class="drawer__head">
-      <div class="drawer__title">Menú</div>
-      <button id="closeMenuBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
-    </div>
-    <div class="drawer__body">
-      <button class="navitem" type="button" data-scroll="#categories">Ediciones</button>
-      <button class="navitem" type="button" data-scroll="#catalog">Catálogo</button>
-      <button class="navitem" type="button" id="navOpenCart">Carrito</button>
-      <button class="navitem" type="button" id="navOpenAi">Asistente</button>
-    </div>
-    <div class="drawer__foot">
-      <div class="muted">v<span id="appVersionLabel">—</span></div>
-    </div>
-  </aside>
-
   <!-- CART DRAWER -->
-  <aside id="cartDrawer" class="drawer drawer--right" aria-label="Carrito" hidden>
+  <aside id="drawerCart" class="drawer drawer--right" hidden aria-label="Carrito">
     <div class="drawer__head">
       <div class="drawer__title">Carrito</div>
-      <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      <button id="btnCloseCart" class="iconbtn" type="button" aria-label="Cerrar">✕</button>
     </div>
 
     <div class="drawer__body">
@@ -171,10 +181,10 @@
         <div class="cartrow cartrow--stack">
           <div class="cartrow__line">
             <span>Entrega</span>
-            <span class="muted" id="shipHint">Selecciona modo</span>
+            <span id="shipHint" class="muted">Pickup seleccionado</span>
           </div>
 
-          <div class="seg" role="group" aria-label="Modo de entrega">
+          <div class="seg" role="group" aria-label="Modo entrega">
             <label class="seg__opt">
               <input type="radio" name="shipMode" value="pickup" checked />
               <span>Pickup</span>
@@ -185,9 +195,12 @@
             </label>
           </div>
 
-          <div id="postalWrap" class="postal" hidden>
-            <input id="postalCode" class="input" inputmode="numeric" maxlength="5" placeholder="Código postal (5 dígitos)" />
-            <button id="quoteBtn" class="btn btn--tiny" type="button">Cotizar</button>
+          <div id="shipForm" class="shipform" hidden>
+            <input id="shipCP" class="input" inputmode="numeric" maxlength="5" placeholder="Código postal (5 dígitos)" />
+            <input id="shipCity" class="input" placeholder="Ciudad (ej. Tijuana)" />
+            <input id="shipState" class="input" placeholder="Estado (ej. Baja California)" />
+            <button id="btnQuote" class="btn btn--tiny" type="button">Cotizar</button>
+            <div id="quoteMsg" class="hint" hidden></div>
           </div>
 
           <div class="cartrow">
@@ -201,31 +214,29 @@
           <b id="cartTotal">$0</b>
         </div>
 
-        <div class="cartrow cartrow--stack">
-          <label class="muted" for="promoCode">Cupón (opcional)</label>
-          <input id="promoCode" class="input" placeholder="PROMO10" />
-        </div>
+        <button id="btnCheckout" class="btn btn--primary btn--block" type="button">
+          Pagar (Stripe + OXXO)
+        </button>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block" type="button">Pagar (Stripe + OXXO)</button>
         <div id="checkoutMsg" class="hint" hidden></div>
       </div>
     </div>
   </aside>
 
   <!-- PRODUCT MODAL -->
-  <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Producto" hidden>
+  <section id="productModal" class="modal" hidden aria-label="Producto" role="dialog" aria-modal="true">
     <div class="modal__panel">
       <div class="modal__head">
-        <div class="modal__title" id="pmTitle">Producto</div>
-        <button id="pmClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+        <div id="pmTitle" class="modal__title">Producto</div>
+        <button id="pmClose" class="iconbtn" type="button" aria-label="Cerrar">✕</button>
       </div>
 
       <div class="modal__body">
         <div id="pmCarousel" class="pm__media"></div>
 
         <div class="pm__info">
-          <div class="pm__price" id="pmPrice">$0</div>
-          <div class="pm__desc" id="pmDesc"></div>
+          <div id="pmPrice" class="pm__price">$0</div>
+          <div id="pmDesc" class="pm__desc">—</div>
 
           <div class="pm__row">
             <div class="pm__col">
@@ -244,31 +255,12 @@
     </div>
   </section>
 
-  <!-- AI MODAL -->
-  <section id="aiModal" class="modal" role="dialog" aria-modal="true" aria-label="Asistente" hidden>
-    <div class="modal__panel modal__panel--tall">
-      <div class="modal__head">
-        <div class="modal__title">Asistente</div>
-        <button id="aiClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
-      </div>
-
-      <div class="modal__body">
-        <div id="aiOutput" class="chat"></div>
-        <div class="chatbar">
-          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos, productos..." />
-          <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
-        </div>
-        <div class="hint">Tip: si tu API de IA está sin key, esto no rompe el catálogo.</div>
-      </div>
-    </div>
-  </section>
-
   <!-- LEGAL MODAL -->
-  <section id="legalModal" class="modal" role="dialog" aria-modal="true" aria-label="Legal" hidden>
+  <section id="legalModal" class="modal" hidden aria-label="Legal" role="dialog" aria-modal="true">
     <div class="modal__panel">
       <div class="modal__head">
-        <div class="modal__title" id="legalTitle">Legal</div>
-        <button id="legalClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+        <div id="legalTitle" class="modal__title">Legal</div>
+        <button id="legalClose" class="iconbtn" type="button" aria-label="Cerrar">✕</button>
       </div>
       <div class="modal__body">
         <div id="legalBody" class="legal"></div>
@@ -276,20 +268,9 @@
     </div>
   </section>
 
-  <!-- COOKIE / PIXEL GATE -->
-  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
-    <div class="cookie__text">
-      Usamos cookies para mejorar la experiencia. Puedes aceptar para habilitar medición (pixel) o continuar sin tracking.
-    </div>
-    <div class="cookie__actions">
-      <button id="cookieReject" class="btn btn--ghost" type="button">Sin tracking</button>
-      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
-    </div>
-  </section>
-
   <!-- TOAST -->
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
-  <script defer src="js/main.js"></script>
+  <script defer src="/js/main.js"></script>
 </body>
 </html>
