@@ -1,24 +1,40 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Tienda oficial de Score International. Baja 1000, Baja 500, San Felipe 250.">
-  
+  <meta name="description" content="Tienda oficial de SCORE International. Baja 1000, Baja 500, San Felipe 250. Fabricado y operado por Único Uniformes.">
+  <meta name="theme-color" content="#E10600">
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SCORE Store | Tienda oficial">
+  <meta property="og:description" content="Merch oficial SCORE International. Calidad Único Uniformes.">
+  <meta property="og:image" content="/assets/hero.webp">
+  <meta property="og:url" content="/">
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Teko:wght@300..700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="icon" href="/assets/icons/icon-192.png">
+  <link rel="preload" href="/assets/hero.webp" as="image">
+
+  <link rel="icon" href="/assets/icons/icon-192-v2.png" sizes="192x192" type="image/png">
 </head>
 <body>
 
-  <div id="splash">
+  <!-- Splash -->
+  <div id="splash" aria-hidden="true">
     <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="Score International" class="splash-logo">
-      <div class="loading-bar">
+      <img src="/assets/logo-score.webp" alt="SCORE International" class="splash-logo">
+      <div class="loading-bar" aria-hidden="true">
         <div class="loading-progress"></div>
       </div>
       <p class="loading-text">PREPARING ENGINE...</p>
@@ -27,138 +43,188 @@
 
   <nav class="navbar">
     <div class="nav-container">
-      <div class="brand">
+      <a class="brand" href="/" aria-label="Inicio">
         <img src="/assets/logo-score.webp" alt="SCORE" class="nav-logo">
-      </div>
+      </a>
+
       <div class="nav-actions">
-        <button class="cart-btn" onclick="openDrawer()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="cart-btn" id="openCartBtn" type="button" aria-label="Abrir carrito">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2zm-2-9V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2"/>
           </svg>
-          <span class="cartCount">0</span>
+          <span class="cartCount" id="cartCount">0</span>
         </button>
       </div>
     </div>
   </nav>
 
-  <header class="hero">
+  <header class="hero" role="banner">
     <div class="hero-overlay">
       <div class="hero-content">
         <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-sublogo">
         <h1 class="hero-title">VIVE LA LEYENDA <span class="text-red">OFF-ROAD</span></h1>
-        <p class="hero-copy">Equípate con la mercancía oficial de las carreras más duras del planeta. Calidad premium para verdaderos fanáticos.</p>
-        <button class="cta-btn" onclick="scrollToCatalog()">VER COLECCIÓN 2026</button>
+        <p class="hero-copy">
+          Equípate con la mercancía oficial de las carreras más duras del planeta. Calidad premium para verdaderos fanáticos.
+        </p>
+        <div class="hero-actions">
+          <button class="cta-btn" id="scrollToCatalogBtn" type="button">VER COLECCIÓN 2026</button>
+          <a class="cta-btn secondary" href="/legal.html">VER POLÍTICAS</a>
+        </div>
       </div>
     </div>
   </header>
 
   <main id="catalog-section" class="main-content">
     <h2 class="section-title">SELECCIONA TU EDICIÓN</h2>
-    
-    <div id="category-view" class="category-grid">
+
+    <section id="category-view" class="category-grid" aria-label="Ediciones">
+      <!-- injected -->
+    </section>
+
+    <section id="product-view" class="product-container hidden" aria-label="Productos">
+      <div class="product-header">
+        <button class="back-btn" id="backToCategoriesBtn" type="button">← VOLVER A EDICIONES</button>
+        <h3 id="current-category-title">—</h3>
       </div>
 
-    <div id="product-view" class="product-container hidden">
-      <div class="product-header">
-        <button class="back-btn" onclick="showCategories()">← VOLVER A EDICIONES</button>
-        <h3 id="current-category-title">BAJA 1000</h3>
-      </div>
       <div id="productsGrid" class="products-grid">
-        </div>
-    </div>
+        <!-- injected -->
+      </div>
+    </section>
   </main>
 
-  <section class="partners">
+  <section class="partners" aria-label="Partners">
     <h3 class="partners-title">OFFICIAL PARTNERS</h3>
     <div class="partners-row">
-      <img src="/assets/logo-ford.webp" alt="Ford">
-      <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich">
-      <img src="/assets/logo-rzr.webp" alt="Polaris RZR">
-      <img src="/assets/logo-unico.webp" alt="Unico Uniformes">
+      <img src="/assets/logo-ford.webp" alt="Ford" loading="lazy">
+      <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" loading="lazy">
+      <img src="/assets/logo-rzr.webp" alt="Polaris RZR" loading="lazy">
+      <img src="/assets/logo-unico.webp" alt="Único Uniformes" loading="lazy">
     </div>
   </section>
 
   <footer>
     <div class="footer-content">
-      <img src="/assets/logo-score.webp" alt="Score Footer" class="footer-logo">
+      <img src="/assets/logo-score.webp" alt="SCORE Footer" class="footer-logo">
       <div class="footer-links">
         <a href="/legal.html">Términos y Condiciones</a>
         <a href="/legal.html">Política de Privacidad</a>
         <a href="/legal.html">Envíos y Devoluciones</a>
       </div>
-      <p class="copyright">© 2026 Score International. Developed by Hocker AGI.</p>
+      <p class="copyright">© 2026 SCORE International. Operación: Único Uniformes. Dev: Hocker.</p>
     </div>
   </footer>
 
-  <div id="pageOverlay" onclick="closeDrawer()"></div>
-  <aside id="cartDrawer" class="cart-drawer">
+  <!-- Overlay (cart) -->
+  <div id="pageOverlay" class="pageOverlay" aria-hidden="true"></div>
+
+  <!-- Cart Drawer -->
+  <aside id="cartDrawer" class="cart-drawer" aria-label="Carrito" aria-hidden="true">
     <div class="cart-header">
       <h3>TU EQUIPO (<span class="cartCount">0</span>)</h3>
-      <button class="close-cart" onclick="closeDrawer()">×</button>
+      <button class="close-cart" id="closeCartBtn" type="button" aria-label="Cerrar carrito">×</button>
     </div>
-    
+
     <div id="cartItems" class="cart-items">
-      </div>
+      <!-- injected -->
+    </div>
 
     <div class="cart-footer">
       <div class="promo-section">
-        <input type="text" id="promoCodeInput" placeholder="Código promocional">
-        <button id="applyPromoBtn" onclick="applyPromo()">APLICAR</button>
+        <input type="text" id="promoCodeInput" placeholder="Código promocional" autocomplete="off" inputmode="latin">
+        <button id="applyPromoBtn" type="button">APLICAR</button>
       </div>
-      <p id="promoMessage" class="promo-msg"></p>
+      <p id="promoMessage" class="promo-msg" role="status" aria-live="polite"></p>
 
       <div class="shipping-section">
         <h4>MÉTODO DE ENTREGA</h4>
-        
-        <label class="shipping-option">
-          <input type="radio" name="shipping" value="pickup" onchange="updateShipping()" checked>
-          <div class="ship-info">
-            <span class="ship-title">Pickup (Fábrica)</span>
-            <span class="ship-desc">Recoger en almacén Tijuana</span>
-          </div>
-          <span class="ship-price">GRATIS</span>
-        </label>
 
-        <label class="shipping-option">
-          <input type="radio" name="shipping" value="local" onchange="updateShipping()">
-          <div class="ship-info">
-            <span class="ship-title">Local Tijuana</span>
-            <span class="ship-desc">Entrega Express (Uber/Didi)</span>
-          </div>
-          <span class="ship-price">$200 MXN</span>
-        </label>
+        <div class="ship-grid">
+          <label class="ship-field">
+            <span class="ship-label">Modo</span>
+            <select id="shipMode">
+              <option value="pickup">Pickup (Fábrica) — GRATIS</option>
+              <option value="local_tj">Local Tijuana — $200 MXN</option>
+              <option value="envia_mx">Nacional MX (Envia.com)</option>
+              <option value="envia_us">USA (Envia.com)</option>
+            </select>
+          </label>
 
-        <label class="shipping-option">
-          <input type="radio" name="shipping" value="national" onchange="updateShipping()">
-          <div class="ship-info">
-            <span class="ship-title">Nacional / USA</span>
-            <span class="ship-desc">Cotización Envía.com</span>
-          </div>
-          <span class="ship-price" id="enviaPrice">Calcular</span>
-        </label>
+          <label class="ship-field" id="shipPostalWrap">
+            <span class="ship-label">Código Postal</span>
+            <input id="shipPostal" type="text" placeholder="Ej: 22000" inputmode="numeric" autocomplete="postal-code" maxlength="10">
+          </label>
 
-        <div id="zipCodeContainer" class="hidden">
-          <input type="text" id="zipCode" placeholder="Ingresa tu Código Postal" onblur="calculateEnvia()">
-          <small>Calculando tarifa en tiempo real...</small>
+          <button class="ship-quote-btn" id="quoteShippingBtn" type="button">
+            COTIZAR ENVÍO
+          </button>
+        </div>
+
+        <div class="ship-quote" id="shipQuoteBox" aria-live="polite">
+          <span class="ship-quote-title">Envío:</span>
+          <span class="ship-quote-price" id="shipQuotePrice">—</span>
+          <span class="ship-quote-meta" id="shipQuoteMeta"></span>
         </div>
       </div>
 
       <div class="cart-totals">
         <div class="row"><span>Subtotal</span> <span id="cartSubtotal">$0.00</span></div>
+        <div class="row hidden" id="cartDiscountRow"><span>Descuento</span> <span id="cartDiscount">-$0.00</span></div>
         <div class="row"><span>Envío</span> <span id="cartShipping">$0.00</span></div>
         <div class="row total"><span>TOTAL</span> <span id="cartTotal">$0.00</span></div>
       </div>
-      
-      <button id="checkoutBtn" class="checkout-btn" onclick="doCheckout()">FINALIZAR COMPRA</button>
-      <p class="secure-badge">🔒 Pago Seguro con Stripe</p>
+
+      <button id="checkoutBtn" class="checkout-btn" type="button">FINALIZAR COMPRA</button>
+      <p class="secure-badge">🔒 Pago seguro con Stripe (Card / OXXO)</p>
+      <p class="cart-error" id="cartError" role="alert"></p>
     </div>
   </aside>
 
-  <button id="scoreAiBtn" class="ai-float-btn" onclick="toggleChat()" aria-label="Score AI Assistant">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+  <!-- AI FAB -->
+  <button id="aiFab" class="ai-float-btn" type="button" aria-label="SCORE AI Assistant">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true">
       <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
     </svg>
   </button>
+
+  <!-- Modal overlay -->
+  <div id="modalOverlay" class="modalOverlay" aria-hidden="true"></div>
+
+  <!-- AI Modal -->
+  <section id="aiModal" class="modal" aria-hidden="true" aria-label="SCORE AI">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <div class="modalTitle">SCORE AI</div>
+        <button class="modalClose" id="aiCloseBtn" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modalBody">
+        <div id="aiOutput" class="chatOutput" aria-live="polite"></div>
+      </div>
+      <div class="modalFooter">
+        <input id="aiInput" class="chatInput" type="text" placeholder="Pregunta por tallas, envíos, productos…" autocomplete="off">
+        <button id="aiSendBtn" class="chatSend" type="button">ENVIAR</button>
+      </div>
+      <p class="modalHint">*La respuesta es informativa. Para pedidos especiales, revisa políticas o contacta soporte.</p>
+    </div>
+  </section>
+
+  <!-- Cookie banner -->
+  <div id="cookieBar" class="cookieBar" role="dialog" aria-live="polite" aria-label="Cookies" aria-hidden="true">
+    <div class="cookieText">
+      Usamos cookies para medición (Meta Pixel) y mejorar tu experiencia. Puedes aceptar o rechazar.
+      <a href="/legal.html">Ver políticas</a>
+    </div>
+    <div class="cookieActions">
+      <button id="cookieRejectBtn" class="cookieBtn ghost" type="button">Rechazar</button>
+      <button id="cookieAcceptBtn" class="cookieBtn" type="button">Aceptar</button>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="noscript">
+      Este sitio necesita JavaScript para el carrito y checkout. Actívalo para comprar.
+    </div>
+  </noscript>
 
   <script src="/js/main.js"></script>
 </body>
