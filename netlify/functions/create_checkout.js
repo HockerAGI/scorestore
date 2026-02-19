@@ -1,283 +1,246 @@
-// netlify/functions/create_checkout.js
-const path = require("path");
-const fs = require("fs");
+/* =========================================================
+   SCORE STORE — Netlify Function: create_checkout
+   Route: /api/checkout  ->  /.netlify/functions/create_checkout
+
+   ✅ Alineado a BLOQUE 1/2/3:
+   - Frontend manda: { items:[{sku,qty,size}], shipping_mode:"pickup|delivery", postal_code:"", promo_code:"" }
+   - Catálogo: data/catalog.json (products[].sku, title, price_cents, images[])
+   - Stripe Checkout: card + oxxo
+
+   ENV:
+   - STRIPE_SECRET_KEY (required)
+   - SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (optional: guardar order)
+   - ENVIA_API_KEY (optional: cotización real Envia; si no existe, usa fallback)
+   ========================================================= */
+
 const Stripe = require("stripe");
-const { createClient } = require("@supabase/supabase-js");
-const { getOrgIdFromEvent, safeJson, json, badRequest } = require("./_shared");
+const {
+  handleOptions,
+  json,
+  readJson,
+  clampInt,
+  getBaseUrl,
+  absImageUrl,
+  supabaseAdmin,
+  getEnviaQuote,
+  getFallbackShipping,
+  isUSZip,
+} = require("./_shared");
 
-// Helpers
-function readCatalog() {
-  const p = path.join(process.cwd(), "data", "catalog.json");
-  const raw = fs.readFileSync(p, "utf-8");
-  return JSON.parse(raw);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2024-06-20",
+});
+
+function normalizeShippingMode(mode) {
+  const m = String(mode || "").toLowerCase();
+  if (m === "delivery") return "delivery";
+  return "pickup";
 }
 
-function findProduct(catalog, sku) {
-  const products = Array.isArray(catalog.products) ? catalog.products : [];
-  return products.find((p) => String(p.sku) === String(sku));
+async function loadCatalog(event) {
+  // 1) Try local file (cuando Netlify incluye el repo completo en build)
+  try {
+    const local = await readJson("data/catalog.json");
+    if (local && Array.isArray(local.products)) return local;
+  } catch (_) {}
+
+  // 2) Fallback: fetch del catálogo desde el sitio (si el bundle no incluye data/)
+  const baseUrl = getBaseUrl(event);
+  const url = `${baseUrl}/data/catalog.json`;
+  const res = await fetch(url, { headers: { "cache-control": "no-store" } });
+  if (!res.ok) throw new Error(`catalog fetch failed (${res.status})`);
+  const data = await res.json();
+  if (!data || !Array.isArray(data.products)) throw new Error("catalog invalid");
+  return data;
 }
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
-
-function computeDiscount(subtotal, promo, promosDb) {
-  if (!promo) return { discount: 0, meta: null, freeShipping: false };
-
-  const code = String(promo).trim().toUpperCase();
-  if (!code) return { discount: 0, meta: null, freeShipping: false };
-
-  const rules = Array.isArray(promosDb?.rules) ? promosDb.rules : (Array.isArray(promosDb?.promos) ? promosDb.promos : []);
-  const rule = rules.find((r) => String(r?.code || "").trim().toUpperCase() === code && (r?.active === true || r?.active === 1));
-  if (!rule) return { discount: 0, meta: null, freeShipping: false };
-
-  const type = String(rule.type || "");
-  const val = Number(rule.value || 0) || 0;
-
-  if (type === "percent") {
-    const pct = val <= 1 ? val : (val / 100);
-    const discount = subtotal * clamp(pct, 0, 1);
-    return { discount, meta: rule, freeShipping: false };
-  }
-
-  if (type === "fixed_mxn") {
-    const discount = clamp(val, 0, subtotal);
-    return { discount, meta: rule, freeShipping: false };
-  }
-
-  if (type === "free_shipping") {
-    return { discount: 0, meta: rule, freeShipping: true };
-  }
-
-  return { discount: 0, meta: rule, freeShipping: false };
-}
-
-async function readPromos() {
-  const p = path.join(process.cwd(), "data", "promos.json");
-  const raw = fs.readFileSync(p, "utf-8");
-  return JSON.parse(raw);
-}
-
-async function quoteShipping({ zip, country, items_qty }) {
-  // We delegate quoting to the existing Netlify function (quote_shipping.js) via internal logic reuse is avoided.
-  // This checkout function uses a simplified shipping calculator:
-  // - pickup: 0
-  // - local_tj: from env var
-  // - envia_*: call ENVIA API directly
-  const ENVIA_API_KEY = process.env.ENVIA_API_KEY;
-  if (!ENVIA_API_KEY) throw new Error("Missing ENVIA_API_KEY");
-
-  const qty = Number(items_qty || 0) || 0;
-  const weightKg = clamp(qty * 0.4, 0.4, 25); // heuristic, same spirit as quote_shipping.js
-  const originZip = String(process.env.FACTORY_ORIGIN_POSTAL || "22000");
-
-  const body = {
-    origin: { zip: originZip, country: "MX" },
-    destination: { zip: String(zip), country: String(country) },
-    packages: [{ content: "merch", amount: 1, type: "box", weight: weightKg, insurance: 0, declaredValue: 0, weightUnit: "KG", lengthUnit: "CM", dimensions: { length: 30, width: 25, height: 8 } }]
-  };
-
-  const res = await fetch("https://api.envia.com/ship/rate/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ENVIA_API_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    throw new Error(data?.message || data?.error || "Envia rate error");
-  }
-
-  // Choose cheapest
-  const rates = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-  if (!rates.length) throw new Error("No shipping rates available");
-
-  rates.sort((a, b) => (Number(a?.totalPrice || a?.total || 1e18) - Number(b?.totalPrice || b?.total || 1e18)));
-  const best = rates[0];
-
-  const mxn = Number(best?.totalPrice || best?.total || 0) || 0;
-  const carrier = String(best?.carrier || best?.carrierName || "").trim();
-  const service = String(best?.service || best?.serviceName || "").trim();
-  const label = [carrier, service].filter(Boolean).join(" ");
-
-  return { amount_mxn: mxn, label };
+function getProductPriceCents(p) {
+  if (Number.isFinite(Number(p.price_cents))) return Math.round(Number(p.price_cents));
+  if (Number.isFinite(Number(p.baseMXN))) return Math.round(Number(p.baseMXN) * 100);
+  if (Number.isFinite(Number(p.priceMXN))) return Math.round(Number(p.priceMXN) * 100);
+  return 0;
 }
 
 exports.handler = async (event) => {
+  const opt = handleOptions(event);
+  if (opt) return opt;
+
   try {
-    const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-    if (!STRIPE_SECRET_KEY) return badRequest("Missing STRIPE_SECRET_KEY");
+    if (event.httpMethod !== "POST") {
+      return json(405, { error: "Method not allowed" }, event);
+    }
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return json(500, { error: "Missing STRIPE_SECRET_KEY" }, event);
+    }
 
-    // OXXO: Stripe supports expires_after_days between 1 and 7 (Checkout)
-    const OXXO_EXPIRES_AFTER_DAYS = (() => {
-      const raw = Number(process.env.OXXO_EXPIRES_AFTER_DAYS || 3);
-      const n = Number.isFinite(raw) ? Math.round(raw) : 3;
-      return Math.max(1, Math.min(7, n));
-    })();
+    const body = JSON.parse(event.body || "{}");
+    const baseUrl = getBaseUrl(event);
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-    const supabase =
-      SUPABASE_URL && SUPABASE_SERVICE_KEY
-        ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } })
-        : null;
+    const itemsIn = Array.isArray(body.items) ? body.items : [];
+    const shipping_mode = normalizeShippingMode(body.shipping_mode);
+    const postal_code = String(body.postal_code || "").trim();
+    const promo_code = String(body.promo_code || "").trim();
 
-    const org_id = getOrgIdFromEvent(event);
+    if (!itemsIn.length) {
+      return json(400, { error: "No items" }, event);
+    }
 
-    const body = safeJson(event.body, {});
-    const items = Array.isArray(body.items) ? body.items : [];
-    const shipping_mode = String(body.shipping_mode || "pickup");
-    const postal_code = String(body.postal_code || "");
-    const promo_code = String(body.promo_code || "").trim().toUpperCase();
+    // Normaliza items
+    const items = itemsIn
+      .map((it) => ({
+        sku: String(it.sku || "").trim(),
+        qty: clampInt(it.qty, 1, 99),
+        size: String(it.size || "").trim(),
+      }))
+      .filter((it) => it.sku);
 
-    if (!items.length) return badRequest("Cart is empty");
+    if (!items.length) {
+      return json(400, { error: "Invalid items" }, event);
+    }
 
-    // catalog lookup
-    const catalog = readCatalog();
-    const promosDb = await readPromos();
+    // Shipping validation
+    if (shipping_mode === "delivery") {
+      if (!/^\d{5}$/.test(postal_code)) {
+        return json(400, { error: "postal_code invalid (5 digits)" }, event);
+      }
+    }
 
-    // compute subtotal & build Stripe line items
-    let amount_subtotal = 0;
+    // Load catalog
+    const catalog = await loadCatalog(event);
+    const products = Array.isArray(catalog.products) ? catalog.products : [];
+
     const line_items = [];
+    let subtotal_cents = 0;
 
     for (const it of items) {
-      const sku = String(it.sku || "");
-      const qty = clamp(Number(it.qty || 1), 1, 99);
-      if (!sku) continue;
+      const p = products.find((x) => x.sku === it.sku || x.id === it.sku);
+      if (!p) {
+        return json(400, { error: `Unknown sku: ${it.sku}` }, event);
+      }
 
-      const p = findProduct(catalog, sku);
-      if (!p) return badRequest(`Unknown sku: ${sku}`);
+      const unit_amount = getProductPriceCents(p);
+      if (!unit_amount || unit_amount < 50) {
+        return json(400, { error: `Invalid price for sku: ${it.sku}` }, event);
+      }
 
-      const name = String(p.name || "Producto");
-      const unit = Number(p.baseMXN || 0) || 0;
-
-      amount_subtotal += unit * qty;
+      const name = String(p.title || p.name || "Producto");
+      const images = Array.isArray(p.images) ? p.images : (p.img ? [p.img] : []);
+      const img0 = images[0] ? absImageUrl(baseUrl, images[0]) : null;
 
       line_items.push({
+        quantity: it.qty,
         price_data: {
           currency: "mxn",
+          unit_amount,
           product_data: {
-            name,
+            name: it.size ? `${name} (${it.size})` : name,
+            images: img0 ? [img0] : [],
             metadata: {
-              sku,
-              size: String(it.size || ""),
+              sku: it.sku,
+              size: it.size || "",
+              section: String(p.sectionId || p.categoryId || ""),
             },
           },
-          unit_amount: Math.round(unit * 100),
         },
-        quantity: qty,
+      });
+
+      subtotal_cents += unit_amount * it.qty;
+    }
+
+    // Shipping quote (delivery)
+    let shipping_amount_mxn = 0;
+    let shipping_provider = "none";
+
+    if (shipping_mode === "delivery") {
+      const to_country = isUSZip(postal_code) ? "US" : "MX";
+
+      let quote = null;
+      if (process.env.ENVIA_API_KEY) {
+        quote = await getEnviaQuote({
+          to_postal_code: postal_code,
+          to_country,
+          items,
+        });
+        shipping_provider = "envia";
+      }
+
+      if (!quote) {
+        quote = getFallbackShipping({ postal_code, items });
+        shipping_provider = "fallback";
+      }
+
+      shipping_amount_mxn = Math.round(quote?.amount_mxn ?? 0);
+
+      if (!shipping_amount_mxn || shipping_amount_mxn < 1) {
+        return json(400, { error: "No se pudo cotizar envío. Intenta de nuevo." }, event);
+      }
+
+      line_items.push({
+        quantity: 1,
+        price_data: {
+          currency: "mxn",
+          unit_amount: shipping_amount_mxn * 100,
+          product_data: {
+            name: "Envío",
+            metadata: {
+              shipping_mode: "delivery",
+              postal_code,
+              provider: shipping_provider,
+            },
+          },
+        },
       });
     }
 
-    if (!line_items.length) return badRequest("No valid items");
+    // Stripe Checkout URLs
+    const success_url = `${baseUrl}/?success=1&session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url = `${baseUrl}/?canceled=1`;
 
-    // promo discount
-    const { discount, meta, freeShipping } = computeDiscount(amount_subtotal, promo_code, promosDb);
-
-    // shipping
-    let amount_shipping = 0;
-    let shipLabel = "";
-
-    if (shipping_mode === "pickup") {
-      amount_shipping = 0;
-      shipLabel = "Pickup";
-    } else if (shipping_mode === "local_tj") {
-      const flat = Number(process.env.LOCAL_TJ_FLAT_MXN || 200);
-      amount_shipping = Number.isFinite(flat) ? flat : 200;
-      shipLabel = "Local TJ";
-    } else if (shipping_mode === "envia_mx" || shipping_mode === "envia_us") {
-      if (!postal_code) return badRequest("postal_code required for envia");
-      const country = shipping_mode === "envia_us" ? "US" : "MX";
-      const items_qty = items.reduce((s, x) => s + clamp(Number(x.qty || 1), 1, 99), 0);
-
-      const q = await quoteShipping({ zip: postal_code, country, items_qty });
-      amount_shipping = Number(q.amount_mxn || 0) || 0;
-      shipLabel = q.label || "Envia";
-    } else {
-      return badRequest("Invalid shipping_mode");
-    }
-
-    if (freeShipping) amount_shipping = 0;
-
-    const amount_total = Math.max(0, amount_subtotal - discount + amount_shipping);
-
-    const baseUrl = (() => {
-      const h = event.headers || {};
-      const proto = h["x-forwarded-proto"] || "https";
-      const host = h.host || h["x-forwarded-host"];
-      return `${proto}://${host}`;
-    })();
-
-    const params = {
+    const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card", "oxxo"],
-      payment_method_options: {
-        oxxo: { expires_after_days: OXXO_EXPIRES_AFTER_DAYS }
-      },
       line_items,
-      success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/cancel.html`,
+      success_url,
+      cancel_url,
+      allow_promotion_codes: true,
       metadata: {
-        org_id: String(org_id || ""),
+        app: "scorestore",
         shipping_mode,
-        postal_code,
-        promo_code,
-        ship_label: shipLabel,
-        amount_subtotal_mxn: String(amount_subtotal),
-        amount_shipping_mxn: String(amount_shipping),
-        amount_discount_mxn: String(discount),
-        amount_total_mxn: String(amount_total),
+        postal_code: shipping_mode === "delivery" ? postal_code : "",
+        promo_code: promo_code || "",
       },
-    };
+    });
 
-    // Add shipping as a separate line to show it clearly in Checkout
-    if (amount_shipping > 0) {
-      params.line_items.push({
-        price_data: {
-          currency: "mxn",
-          product_data: { name: `Envío (${shipLabel || shipping_mode})` },
-          unit_amount: Math.round(amount_shipping * 100),
-        },
-        quantity: 1,
-      });
+    // Save order (best effort)
+    if (supabaseAdmin) {
+      try {
+        const total_cents = subtotal_cents + shipping_amount_mxn * 100;
+        const orderRow = {
+          id: session.id,
+          stripe_session_id: session.id,
+          status: "created",
+          currency: "MXN",
+          amount_total_cents: total_cents,
+          subtotal_cents,
+          shipping_amount_mxn,
+          shipping_provider,
+          shipping_mode,
+          postal_code: shipping_mode === "delivery" ? postal_code : null,
+          promo_code: promo_code || null,
+          items,
+          created_at: new Date().toISOString(),
+        };
+
+        await supabaseAdmin.from("orders").insert(orderRow);
+      } catch (e) {
+        console.warn("orders insert failed:", e?.message || e);
+      }
     }
 
-    // Add discount as negative line (Stripe Checkout doesn't allow arbitrary discount without Coupons unless you create them in Stripe)
-    if (discount > 0) {
-      params.line_items.push({
-        price_data: {
-          currency: "mxn",
-          product_data: { name: `Descuento (${promo_code || "PROMO"})` },
-          unit_amount: -Math.round(discount * 100),
-        },
-        quantity: 1,
-      });
-    }
-
-    const session = await stripe.checkout.sessions.create(params);
-
-    // persist order (best-effort)
-    if (supabase) {
-      await supabase.from("orders").insert({
-        organization_id: org_id || null,
-        email: null,
-        items,
-        amount_total: amount_total,
-        shipping_mode,
-        postal_code,
-        promo_code,
-        stripe_session_id: session.id,
-        status: "pending",
-      });
-    }
-
-    return json({ url: session.url, id: session.id });
+    return json(200, { url: session.url }, event);
   } catch (err) {
-    return json({ error: String(err?.message || err) }, 500);
+    console.error("create_checkout error:", err);
+    return json(500, { error: "Checkout init failed" }, event);
   }
 };
