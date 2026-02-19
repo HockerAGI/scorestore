@@ -30,6 +30,7 @@
       <div class="splash__bar" role="progressbar" aria-label="Cargando">
         <div class="splash__barFill"></div>
       </div>
+      <div class="splash__text">CARGANDO CATÁLOGOS…</div>
     </div>
   </div>
 
@@ -48,7 +49,7 @@
       <div class="topbar__actions">
         <div class="search desktop-only">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar..." autocomplete="off" />
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar (hoodie, gorra, jersey…)" autocomplete="off" />
         </div>
 
         <button id="openAiBtn" class="iconbtn desktop-only" type="button" aria-label="Abrir asistente" title="SCORE AI">
@@ -71,10 +72,16 @@
       <div class="hero__content">
         <img class="hero__desert" src="assets/logo-world-desert.webp" alt="World Desert Championship" />
         <h1 class="hero__title">Merch Oficial <span class="accent">SCORE</span></h1>
-        <p class="hero__hook">Diseñado y fabricado por <b>ÚNICO UNIFORMES</b>.</p>
+        <p class="hero__hook">Diseñado y fabricado por <b>ÚNICO UNIFORMES</b>, patrocinador oficial.</p>
 
         <div class="hero__cta">
           <button id="scrollToCategoriesBtn" class="btn btn--primary btn--large" type="button">Explorar Colecciones</button>
+        </div>
+
+        <div class="hero__meta">
+          <span class="chip">Stripe Checkout</span>
+          <span class="chip">OXXO</span>
+          <span class="chip">Envía.com</span>
         </div>
       </div>
     </div>
@@ -86,14 +93,15 @@
       <div class="section__head">
         <h2 id="categories">Colecciones Oficiales</h2>
         <div class="section__tools">
-          <button id="clearCategoryBtn" class="btn btn--tiny btn--black" type="button" title="Ver todo">Ver todo</button>
+          <button id="clearCategoryBtn" class="btn btn--tiny btn--ghost" type="button" title="Ver todo">Ver todo</button>
         </div>
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
+      <div id="categoryHint" class="hint" hidden>Selecciona un catálogo para filtrar el catálogo de productos.</div>
     </section>
 
-    <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Productos" hidden>
+    <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Catálogo" hidden>
       <div class="carousel-header">
         <h3 id="carouselTitle">Productos</h3>
         <div class="carousel-controls desktop-only">
@@ -101,32 +109,48 @@
           <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Siguiente">→</button>
         </div>
       </div>
-      
-      <div class="carousel-wrapper">
-        <div id="productGrid" class="carousel-track" aria-live="polite">
-          </div>
-      </div>
-    </section>
 
-    <section class="partners" aria-label="Partners">
-      <div class="wrap partners__inner">
-        <div class="partners__title">PARTNERS OFICIALES</div>
-        <div class="partners__row">
-          <img src="assets/logo-ford.webp" alt="Ford" />
-          <img src="assets/logo-rzr.webp" alt="RZR" />
-          <img src="assets/logo-unico.webp" alt="Único Uniformes" />
-          <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich" />
+      <div class="section__head" style="margin-bottom: 10px;">
+        <div class="section__tools" style="margin-left: auto;">
+          <select id="sortSelect" class="select" aria-label="Ordenar productos">
+            <option value="featured">Destacados</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+            <option value="name_asc">Nombre: A→Z</option>
+          </select>
         </div>
       </div>
-    </section>
 
+      <div id="activeFilterRow" class="filterrow" hidden>
+        <span id="activeFilterLabel" class="filterrow__label"></span>
+        <button id="clearFilterBtn" class="btn btn--tiny" type="button">Quitar filtro</button>
+      </div>
+
+      <div id="statusRow" class="status" aria-live="polite"></div>
+      
+      <div class="carousel-wrapper">
+        <div id="productGrid" class="carousel-track" aria-live="polite"></div>
+      </div>
+    </section>
   </main>
+
+  <section class="partners" aria-label="Partners">
+    <div class="wrap partners__inner">
+      <div class="partners__title">OFFICIAL PARTNERS</div>
+      <div class="partners__row">
+        <img src="assets/logo-ford.webp" alt="Ford" />
+        <img src="assets/logo-rzr.webp" alt="RZR" />
+        <img src="assets/logo-unico.webp" alt="Único Uniformes" />
+        <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich" />
+      </div>
+    </div>
+  </section>
 
   <footer class="footer" role="contentinfo">
     <div class="wrap footer__inner">
       <div class="footer__brand-col">
         <div class="footer__brand">SCORE STORE</div>
-        <div class="footer__sub">Operado por Único Uniformes.<br>Envíos seguros a México y USA.</div>
+        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com<br><br>Fabricado y Operado por <b>Único Uniformes</b>.</div>
       </div>
       
       <div class="footer__socials">
@@ -157,11 +181,16 @@
 
     <div class="drawer__body">
       <button class="navitem" type="button" data-scroll="#categories">Catálogos</button>
+      <button class="navitem" type="button" data-scroll="#catalogCarouselSection">Productos</button>
       <button class="navitem" type="button" id="navOpenCart">Carrito</button>
       <button class="navitem" type="button" id="navOpenAi">SCORE AI</button>
       
       <div class="drawer__divider"></div>
-      <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank">Visitar Único Uniformes</a>
+      <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Único Uniformes</a>
+    </div>
+
+    <div class="drawer__foot">
+      <div class="muted">v<span id="appVersionLabel">—</span></div>
     </div>
   </aside>
 
@@ -219,10 +248,10 @@
 
         <div class="cartrow cartrow--stack">
           <label class="muted" for="promoCode">Cupón (opcional)</label>
-          <input id="promoCode" class="input" placeholder="Ej: SCORE25" />
+          <input id="promoCode" class="input" placeholder="PROMO10" />
         </div>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar Seguro</button>
+        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar (Stripe + OXXO)</button>
         <div id="checkoutMsg" class="hint" hidden></div>
       </div>
     </div>
@@ -266,12 +295,14 @@
         <div class="modal__title">SCORE AI</div>
         <button id="aiClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
       </div>
+
       <div class="modal__body">
         <div id="aiOutput" class="chat"></div>
         <div class="chatbar">
-          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos..." />
+          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos, cambios, productos…" />
           <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
         </div>
+        <div class="hint" style="margin-top: 10px;">Si la API de IA no tiene key, no rompe el catálogo.</div>
       </div>
     </div>
   </section>
@@ -285,6 +316,16 @@
       <div class="modal__body">
         <div id="legalBody" class="legal"></div>
       </div>
+    </div>
+  </section>
+
+  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
+    <div class="cookie__text">
+      Usamos cookies para mejorar la experiencia. Puedes aceptar para habilitar medición o continuar sin tracking.
+    </div>
+    <div class="cookie__actions">
+      <button id="cookieReject" class="btn btn--ghost" type="button">Sin tracking</button>
+      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
     </div>
   </section>
 
