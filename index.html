@@ -1,231 +1,295 @@
-<!DOCTYPE html>
-<html lang="es-MX">
+<!doctype html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-  <title>SCORE STORE | Official Merchandise</title>
-  <meta name="description" content="Tienda oficial de SCORE International. Baja 1000, Baja 500, San Felipe 250. Fabricado y operado por Único Uniformes.">
-  <meta name="theme-color" content="#E10600">
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="description" content="Score Store — merch oficial. Compra segura con Stripe + OXXO. Envío o pickup." />
+  <title>Score Store</title>
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="SCORE Store | Tienda oficial">
-  <meta property="og:description" content="Merch oficial SCORE International. Calidad Único Uniformes.">
-  <meta property="og:image" content="/assets/hero.webp">
-  <meta property="og:url" content="/">
+  <link rel="preload" href="css/styles.css" as="style" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="icon" href="assets/brand/favicon.png" onerror="this.remove()" />
 
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@300..700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="preload" href="/assets/hero.webp" as="image">
-
-  <link rel="icon" href="/assets/icons/icon-192-v2.png" sizes="192x192" type="image/png">
+  <script>
+    // Cache bust control (útil mientras arreglamos sw.js en Bloque 2)
+    window.__APP_VERSION__ = "2026.02.19.1";
+  </script>
 </head>
+
 <body>
+  <a class="skip" href="#catalog">Saltar al catálogo</a>
 
-  <!-- Splash -->
-  <div id="splash" aria-hidden="true">
-    <div class="splash-content">
-      <img src="/assets/logo-score.webp" alt="SCORE International" class="splash-logo">
-      <div class="loading-bar" aria-hidden="true">
-        <div class="loading-progress"></div>
-      </div>
-      <p class="loading-text">PREPARING ENGINE...</p>
-    </div>
-  </div>
+  <!-- TOP BAR -->
+  <header class="topbar" role="banner">
+    <div class="wrap topbar__inner">
+      <button id="openMenuBtn" class="iconbtn" aria-label="Abrir menú" type="button">
+        <span class="icon">≡</span>
+      </button>
 
-  <nav class="navbar">
-    <div class="nav-container">
-      <a class="brand" href="/" aria-label="Inicio">
-        <img src="/assets/logo-score.webp" alt="SCORE" class="nav-logo">
+      <a class="brand" href="#" aria-label="Score Store">
+        <span class="brand__mark">SCORE</span>
+        <span class="brand__sub">STORE</span>
       </a>
 
-      <div class="nav-actions">
-        <button class="cart-btn" id="openCartBtn" type="button" aria-label="Abrir carrito">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M9 20a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-7-2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2zm-2-9V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2"/>
-          </svg>
-          <span class="cartCount" id="cartCount">0</span>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <header class="hero" role="banner">
-    <div class="hero-overlay">
-      <div class="hero-content">
-        <img src="/assets/logo-world-desert.webp" alt="World Desert Championship" class="hero-sublogo">
-        <h1 class="hero-title">VIVE LA LEYENDA <span class="text-red">OFF-ROAD</span></h1>
-        <p class="hero-copy">
-          Equípate con la mercancía oficial de las carreras más duras del planeta. Calidad premium para verdaderos fanáticos.
-        </p>
-        <div class="hero-actions">
-          <button class="cta-btn" id="scrollToCatalogBtn" type="button">VER COLECCIÓN 2026</button>
-          <a class="cta-btn secondary" href="/legal.html">VER POLÍTICAS</a>
+      <div class="topbar__actions">
+        <div class="search">
+          <span class="search__icon" aria-hidden="true">⌕</span>
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar (hoodie, jersey, gorra…)" autocomplete="off" />
         </div>
+
+        <button id="openAiBtn" class="iconbtn" aria-label="Abrir asistente" type="button" title="Asistente">
+          <span class="icon">✦</span>
+        </button>
+
+        <button id="openCartBtn" class="iconbtn iconbtn--accent" aria-label="Abrir carrito" type="button" title="Carrito">
+          <span class="icon">🛒</span>
+          <span id="cartCount" class="badge" aria-label="Artículos en carrito">0</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main id="catalog-section" class="main-content">
-    <h2 class="section-title">SELECCIONA TU EDICIÓN</h2>
+  <!-- HERO -->
+  <section class="hero" aria-label="Intro">
+    <div class="wrap hero__inner">
+      <div class="hero__copy">
+        <h1>Merch oficial. Compra rápida. Pago con <span class="accent">tarjeta</span> u <span class="accent">OXXO</span>.</h1>
+        <p>Elige tu edición, agrega al carrito y listo. Envío o pickup.</p>
+        <div class="hero__cta">
+          <button id="scrollToCategoriesBtn" class="btn btn--primary" type="button">Ver ediciones</button>
+          <button id="scrollToCatalogBtn" class="btn btn--ghost" type="button">Ver productos</button>
+        </div>
+        <div class="hero__meta">
+          <span class="chip">Stripe Checkout</span>
+          <span class="chip">OXXO</span>
+          <span class="chip">MXN</span>
+        </div>
+      </div>
 
-    <section id="category-view" class="category-grid" aria-label="Ediciones">
-      <!-- injected -->
+      <div class="hero__card" aria-label="Aviso">
+        <div class="notice">
+          <div class="notice__title">Tip rápido</div>
+          <div class="notice__text">
+            Si no ves imágenes o catálogo, es <b>cache/PWA</b>. En Bloque 2 te dejo <b>sw.js</b> versionado.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <main id="main" class="main" role="main">
+    <section class="wrap section" aria-label="Ediciones">
+      <div class="section__head">
+        <h2 id="categories">Ediciones</h2>
+        <div class="section__tools">
+          <button id="clearCategoryBtn" class="btn btn--tiny" type="button" title="Ver todo">Ver todo</button>
+        </div>
+      </div>
+
+      <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
+      <div id="categoryHint" class="hint" hidden>Selecciona una edición para filtrar el catálogo.</div>
     </section>
 
-    <section id="product-view" class="product-container hidden" aria-label="Productos">
-      <div class="product-header">
-        <button class="back-btn" id="backToCategoriesBtn" type="button">← VOLVER A EDICIONES</button>
-        <h3 id="current-category-title">—</h3>
+    <!-- CATALOG -->
+    <section id="catalog" class="wrap section" aria-label="Catálogo">
+      <div class="section__head">
+        <h2>Productos</h2>
+        <div class="section__tools">
+          <select id="sortSelect" class="select" aria-label="Ordenar productos">
+            <option value="featured">Destacados</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+            <option value="name_asc">Nombre: A→Z</option>
+          </select>
+        </div>
       </div>
 
-      <div id="productsGrid" class="products-grid">
-        <!-- injected -->
+      <div id="activeFilterRow" class="filterrow" hidden>
+        <span id="activeFilterLabel" class="filterrow__label"></span>
+        <button id="clearFilterBtn" class="btn btn--tiny" type="button">Quitar filtro</button>
       </div>
+
+      <div id="statusRow" class="status" aria-live="polite"></div>
+
+      <div id="productGrid" class="grid" aria-live="polite"></div>
     </section>
   </main>
 
-  <section class="partners" aria-label="Partners">
-    <h3 class="partners-title">OFFICIAL PARTNERS</h3>
-    <div class="partners-row">
-      <img src="/assets/logo-ford.webp" alt="Ford" loading="lazy">
-      <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" loading="lazy">
-      <img src="/assets/logo-rzr.webp" alt="Polaris RZR" loading="lazy">
-      <img src="/assets/logo-unico.webp" alt="Único Uniformes" loading="lazy">
-    </div>
-  </section>
-
-  <footer>
-    <div class="footer-content">
-      <img src="/assets/logo-score.webp" alt="SCORE Footer" class="footer-logo">
-      <div class="footer-links">
-        <a href="/legal.html">Términos y Condiciones</a>
-        <a href="/legal.html">Política de Privacidad</a>
-        <a href="/legal.html">Envíos y Devoluciones</a>
+  <!-- FOOTER -->
+  <footer class="footer" role="contentinfo">
+    <div class="wrap footer__inner">
+      <div class="footer__left">
+        <div class="footer__brand">SCORE STORE</div>
+        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · MXN</div>
       </div>
-      <p class="copyright">© 2026 SCORE International. Operación: Único Uniformes. Dev: Hocker.</p>
+      <div class="footer__right">
+        <button id="openLegalBtn" class="linkbtn" type="button">Términos</button>
+        <button id="openPrivacyBtn" class="linkbtn" type="button">Privacidad</button>
+      </div>
     </div>
   </footer>
 
-  <!-- Overlay (cart) -->
-  <div id="pageOverlay" class="pageOverlay" aria-hidden="true"></div>
+  <!-- OVERLAY -->
+  <div id="overlay" class="overlay" hidden></div>
 
-  <!-- Cart Drawer -->
-  <aside id="cartDrawer" class="cart-drawer" aria-label="Carrito" aria-hidden="true">
-    <div class="cart-header">
-      <h3>TU EQUIPO (<span class="cartCount">0</span>)</h3>
-      <button class="close-cart" id="closeCartBtn" type="button" aria-label="Cerrar carrito">×</button>
+  <!-- SIDE MENU -->
+  <aside id="sideMenu" class="drawer" aria-label="Menú" hidden>
+    <div class="drawer__head">
+      <div class="drawer__title">Menú</div>
+      <button id="closeMenuBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
     </div>
-
-    <div id="cartItems" class="cart-items">
-      <!-- injected -->
+    <div class="drawer__body">
+      <button class="navitem" type="button" data-scroll="#categories">Ediciones</button>
+      <button class="navitem" type="button" data-scroll="#catalog">Catálogo</button>
+      <button class="navitem" type="button" id="navOpenCart">Carrito</button>
+      <button class="navitem" type="button" id="navOpenAi">Asistente</button>
     </div>
-
-    <div class="cart-footer">
-      <div class="promo-section">
-        <input type="text" id="promoCodeInput" placeholder="Código promocional" autocomplete="off" inputmode="latin">
-        <button id="applyPromoBtn" type="button">APLICAR</button>
-      </div>
-      <p id="promoMessage" class="promo-msg" role="status" aria-live="polite"></p>
-
-      <div class="shipping-section">
-        <h4>MÉTODO DE ENTREGA</h4>
-
-        <div class="ship-grid">
-          <label class="ship-field">
-            <span class="ship-label">Modo</span>
-            <select id="shipMode">
-              <option value="pickup">Pickup (Fábrica) — GRATIS</option>
-              <option value="local_tj">Local Tijuana — $200 MXN</option>
-              <option value="envia_mx">Nacional MX (Envia.com)</option>
-              <option value="envia_us">USA (Envia.com)</option>
-            </select>
-          </label>
-
-          <label class="ship-field" id="shipPostalWrap">
-            <span class="ship-label">Código Postal</span>
-            <input id="shipPostal" type="text" placeholder="Ej: 22000" inputmode="numeric" autocomplete="postal-code" maxlength="10">
-          </label>
-
-          <button class="ship-quote-btn" id="quoteShippingBtn" type="button">
-            COTIZAR ENVÍO
-          </button>
-        </div>
-
-        <div class="ship-quote" id="shipQuoteBox" aria-live="polite">
-          <span class="ship-quote-title">Envío:</span>
-          <span class="ship-quote-price" id="shipQuotePrice">—</span>
-          <span class="ship-quote-meta" id="shipQuoteMeta"></span>
-        </div>
-      </div>
-
-      <div class="cart-totals">
-        <div class="row"><span>Subtotal</span> <span id="cartSubtotal">$0.00</span></div>
-        <div class="row hidden" id="cartDiscountRow"><span>Descuento</span> <span id="cartDiscount">-$0.00</span></div>
-        <div class="row"><span>Envío</span> <span id="cartShipping">$0.00</span></div>
-        <div class="row total"><span>TOTAL</span> <span id="cartTotal">$0.00</span></div>
-      </div>
-
-      <button id="checkoutBtn" class="checkout-btn" type="button">FINALIZAR COMPRA</button>
-      <p class="secure-badge">🔒 Pago seguro con Stripe (Card / OXXO)</p>
-      <p class="cart-error" id="cartError" role="alert"></p>
+    <div class="drawer__foot">
+      <div class="muted">v<span id="appVersionLabel">—</span></div>
     </div>
   </aside>
 
-  <!-- AI FAB -->
-  <button id="aiFab" class="ai-float-btn" type="button" aria-label="SCORE AI Assistant">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true">
-      <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
-    </svg>
-  </button>
+  <!-- CART DRAWER -->
+  <aside id="cartDrawer" class="drawer drawer--right" aria-label="Carrito" hidden>
+    <div class="drawer__head">
+      <div class="drawer__title">Carrito</div>
+      <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+    </div>
 
-  <!-- Modal overlay -->
-  <div id="modalOverlay" class="modalOverlay" aria-hidden="true"></div>
+    <div class="drawer__body">
+      <div id="cartItems" class="cartitems"></div>
 
-  <!-- AI Modal -->
-  <section id="aiModal" class="modal" aria-hidden="true" aria-label="SCORE AI">
-    <div class="modalCard">
-      <div class="modalHeader">
-        <div class="modalTitle">SCORE AI</div>
-        <button class="modalClose" id="aiCloseBtn" type="button" aria-label="Cerrar">×</button>
+      <div class="cartbox">
+        <div class="cartrow">
+          <span>Subtotal</span>
+          <b id="cartSubtotal">$0</b>
+        </div>
+
+        <div class="cartrow cartrow--stack">
+          <div class="cartrow__line">
+            <span>Entrega</span>
+            <span class="muted" id="shipHint">Selecciona modo</span>
+          </div>
+
+          <div class="seg" role="group" aria-label="Modo de entrega">
+            <label class="seg__opt">
+              <input type="radio" name="shipMode" value="pickup" checked />
+              <span>Pickup</span>
+            </label>
+            <label class="seg__opt">
+              <input type="radio" name="shipMode" value="delivery" />
+              <span>Envío</span>
+            </label>
+          </div>
+
+          <div id="postalWrap" class="postal" hidden>
+            <input id="postalCode" class="input" inputmode="numeric" maxlength="5" placeholder="Código postal (5 dígitos)" />
+            <button id="quoteBtn" class="btn btn--tiny" type="button">Cotizar</button>
+          </div>
+
+          <div class="cartrow">
+            <span>Envío</span>
+            <b id="shippingLine">$0</b>
+          </div>
+        </div>
+
+        <div class="cartrow">
+          <span>Total</span>
+          <b id="cartTotal">$0</b>
+        </div>
+
+        <div class="cartrow cartrow--stack">
+          <label class="muted" for="promoCode">Cupón (opcional)</label>
+          <input id="promoCode" class="input" placeholder="PROMO10" />
+        </div>
+
+        <button id="checkoutBtn" class="btn btn--primary btn--block" type="button">Pagar (Stripe + OXXO)</button>
+        <div id="checkoutMsg" class="hint" hidden></div>
       </div>
-      <div class="modalBody">
-        <div id="aiOutput" class="chatOutput" aria-live="polite"></div>
+    </div>
+  </aside>
+
+  <!-- PRODUCT MODAL -->
+  <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Producto" hidden>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <div class="modal__title" id="pmTitle">Producto</div>
+        <button id="pmClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
       </div>
-      <div class="modalFooter">
-        <input id="aiInput" class="chatInput" type="text" placeholder="Pregunta por tallas, envíos, productos…" autocomplete="off">
-        <button id="aiSendBtn" class="chatSend" type="button">ENVIAR</button>
+
+      <div class="modal__body">
+        <div id="pmCarousel" class="pm__media"></div>
+
+        <div class="pm__info">
+          <div class="pm__price" id="pmPrice">$0</div>
+          <div class="pm__desc" id="pmDesc"></div>
+
+          <div class="pm__row">
+            <div class="pm__col">
+              <label class="muted" for="pmSize">Talla</label>
+              <select id="pmSize" class="select"></select>
+            </div>
+            <div class="pm__col">
+              <label class="muted" for="pmQty">Cantidad</label>
+              <input id="pmQty" class="input" inputmode="numeric" value="1" />
+            </div>
+          </div>
+
+          <button id="pmAdd" class="btn btn--primary btn--block" type="button">Agregar al carrito</button>
+        </div>
       </div>
-      <p class="modalHint">*La respuesta es informativa. Para pedidos especiales, revisa políticas o contacta soporte.</p>
     </div>
   </section>
 
-  <!-- Cookie banner -->
-  <div id="cookieBar" class="cookieBar" role="dialog" aria-live="polite" aria-label="Cookies" aria-hidden="true">
-    <div class="cookieText">
-      Usamos cookies para medición (Meta Pixel) y mejorar tu experiencia. Puedes aceptar o rechazar.
-      <a href="/legal.html">Ver políticas</a>
-    </div>
-    <div class="cookieActions">
-      <button id="cookieRejectBtn" class="cookieBtn ghost" type="button">Rechazar</button>
-      <button id="cookieAcceptBtn" class="cookieBtn" type="button">Aceptar</button>
-    </div>
-  </div>
+  <!-- AI MODAL -->
+  <section id="aiModal" class="modal" role="dialog" aria-modal="true" aria-label="Asistente" hidden>
+    <div class="modal__panel modal__panel--tall">
+      <div class="modal__head">
+        <div class="modal__title">Asistente</div>
+        <button id="aiClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      </div>
 
-  <noscript>
-    <div class="noscript">
-      Este sitio necesita JavaScript para el carrito y checkout. Actívalo para comprar.
+      <div class="modal__body">
+        <div id="aiOutput" class="chat"></div>
+        <div class="chatbar">
+          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos, productos..." />
+          <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
+        </div>
+        <div class="hint">Tip: si tu API de IA está sin key, esto no rompe el catálogo.</div>
+      </div>
     </div>
-  </noscript>
+  </section>
 
-  <script src="/js/main.js"></script>
+  <!-- LEGAL MODAL -->
+  <section id="legalModal" class="modal" role="dialog" aria-modal="true" aria-label="Legal" hidden>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <div class="modal__title" id="legalTitle">Legal</div>
+        <button id="legalClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      </div>
+      <div class="modal__body">
+        <div id="legalBody" class="legal"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COOKIE / PIXEL GATE -->
+  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
+    <div class="cookie__text">
+      Usamos cookies para mejorar la experiencia. Puedes aceptar para habilitar medición (pixel) o continuar sin tracking.
+    </div>
+    <div class="cookie__actions">
+      <button id="cookieReject" class="btn btn--ghost" type="button">Sin tracking</button>
+      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
+    </div>
+  </section>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script defer src="js/main.js"></script>
 </body>
 </html>
