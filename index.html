@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
   <meta name="description" content="Merch Oficial de Score International. Fabricado por UNICO UNIFORMES, patrocinador oficial. Pago seguro con Stripe + OXXO." />
+  
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
   <title>SCORE STORE — Merch Oficial</title>
 
@@ -14,7 +16,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <script>
-    window.__APP_VERSION__ = "2026.02.19.1";
+    window.__APP_VERSION__ = "2026.02.19.PRO";
   </script>
 
   <link rel="preload" href="css/styles.css" as="style" />
@@ -28,11 +30,10 @@
       <div class="splash__bar" role="progressbar" aria-label="Cargando">
         <div class="splash__barFill"></div>
       </div>
-      <div class="splash__text">CARGANDO CATÁLOGOS…</div>
     </div>
   </div>
 
-  <a class="skip" href="#catalog">Saltar al catálogo</a>
+  <a class="skip" href="#categories">Saltar al catálogo</a>
 
   <header class="topbar" role="banner">
     <div class="wrap topbar__inner">
@@ -42,23 +43,19 @@
 
       <a class="brand" href="#" aria-label="Score Store">
         <img class="brand__logo" src="assets/logo-score.webp" alt="SCORE STORE" />
-        <div class="brand__text">
-          <div class="brand__title">SCORE STORE</div>
-          <div class="brand__sub">Merch Oficial</div>
-        </div>
       </a>
 
       <div class="topbar__actions">
-        <div class="search">
+        <div class="search desktop-only">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar (hoodie, gorra, jersey…)" autocomplete="off" />
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar..." autocomplete="off" />
         </div>
 
-        <button id="openAiBtn" class="iconbtn" type="button" aria-label="Abrir asistente" title="SCORE AI">
+        <button id="openAiBtn" class="iconbtn desktop-only" type="button" aria-label="Abrir asistente" title="SCORE AI">
           <span class="icon">✦</span>
         </button>
 
-        <button id="openCartBtn" class="iconbtn iconbtn--accent" type="button" aria-label="Abrir carrito" title="Carrito">
+        <button id="openCartBtn" class="iconbtn iconbtn--dark" type="button" aria-label="Abrir carrito" title="Carrito">
           <span class="icon">🛒</span>
           <span id="cartCount" class="badge" aria-label="Artículos en carrito">0</span>
         </button>
@@ -68,81 +65,81 @@
 
   <section class="hero" aria-label="Intro">
     <div class="hero__bg" aria-hidden="true"></div>
+    <div class="hero__overlay" aria-hidden="true"></div>
 
     <div class="wrap hero__inner">
-      <div class="hero__center">
+      <div class="hero__content">
         <img class="hero__desert" src="assets/logo-world-desert.webp" alt="World Desert Championship" />
-        <h1 class="hero__title">Merch Oficial de <span class="accent">Score International</span></h1>
-        <p class="hero__hook">Fabricado por <b>UNICO UNIFORMES</b>, patrocinador oficial.</p>
+        <h1 class="hero__title">Merch Oficial <span class="accent">SCORE</span></h1>
+        <p class="hero__hook">Diseñado y fabricado por <b>ÚNICO UNIFORMES</b>.</p>
 
         <div class="hero__cta">
-          <button id="scrollToCategoriesBtn" class="btn btn--primary" type="button">Ver catálogos</button>
-          <button id="scrollToCatalogBtn" class="btn btn--ghost" type="button">Ver productos</button>
+          <button id="scrollToCategoriesBtn" class="btn btn--primary btn--large" type="button">Explorar Colecciones</button>
         </div>
-
-        <div class="hero__meta">
-          <span class="chip">Stripe Checkout</span>
-          <span class="chip">OXXO</span>
-          <span class="chip">Envía.com</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="partners" aria-label="Partners">
-    <div class="wrap partners__inner">
-      <div class="partners__title">OFFICIAL PARTNERS</div>
-      <div class="partners__row">
-        <img src="assets/logo-ford.webp" alt="Ford" />
-        <img src="assets/logo-rzr.webp" alt="RZR" />
-        <img src="assets/logo-unico.webp" alt="Único Uniformes" />
-        <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich" />
       </div>
     </div>
   </section>
 
   <main id="main" class="main" role="main">
+    
     <section class="wrap section" aria-label="Catálogos">
       <div class="section__head">
-        <h2 id="categories">Catálogos</h2>
+        <h2 id="categories">Colecciones Oficiales</h2>
         <div class="section__tools">
-          <button id="clearCategoryBtn" class="btn btn--tiny" type="button" title="Ver todo">Ver todo</button>
+          <button id="clearCategoryBtn" class="btn btn--tiny btn--black" type="button" title="Ver todo">Ver todo</button>
         </div>
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint" hidden>Selecciona un catálogo para filtrar el catálogo de productos.</div>
     </section>
 
-    <section id="catalog" class="wrap section" aria-label="Catálogo">
-      <div class="section__head">
-        <h2>Productos</h2>
-        <div class="section__tools">
-          <select id="sortSelect" class="select" aria-label="Ordenar productos">
-            <option value="featured">Destacados</option>
-            <option value="price_asc">Precio: menor a mayor</option>
-            <option value="price_desc">Precio: mayor a menor</option>
-            <option value="name_asc">Nombre: A→Z</option>
-          </select>
+    <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Productos" hidden>
+      <div class="carousel-header">
+        <h3 id="carouselTitle">Productos</h3>
+        <div class="carousel-controls desktop-only">
+          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark" aria-label="Anterior">←</button>
+          <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Siguiente">→</button>
         </div>
       </div>
-
-      <div id="activeFilterRow" class="filterrow" hidden>
-        <span id="activeFilterLabel" class="filterrow__label"></span>
-        <button id="clearFilterBtn" class="btn btn--tiny" type="button">Quitar filtro</button>
+      
+      <div class="carousel-wrapper">
+        <div id="productGrid" class="carousel-track" aria-live="polite">
+          </div>
       </div>
-
-      <div id="statusRow" class="status" aria-live="polite"></div>
-      <div id="productGrid" class="grid" aria-live="polite"></div>
     </section>
+
+    <section class="partners" aria-label="Partners">
+      <div class="wrap partners__inner">
+        <div class="partners__title">PARTNERS OFICIALES</div>
+        <div class="partners__row">
+          <img src="assets/logo-ford.webp" alt="Ford" />
+          <img src="assets/logo-rzr.webp" alt="RZR" />
+          <img src="assets/logo-unico.webp" alt="Único Uniformes" />
+          <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich" />
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer" role="contentinfo">
     <div class="wrap footer__inner">
-      <div class="footer__left">
+      <div class="footer__brand-col">
         <div class="footer__brand">SCORE STORE</div>
-        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com</div>
+        <div class="footer__sub">Operado por Único Uniformes.<br>Envíos seguros a México y USA.</div>
       </div>
+      
+      <div class="footer__socials">
+        <div class="social-title">SÍGUENOS</div>
+        <div class="social-links">
+          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook</a>
+          <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener">YouTube</a>
+          <a href="https://linktr.ee/unicouniformes" target="_blank" rel="noopener">Linktree</a>
+          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Web</a>
+        </div>
+      </div>
+
       <div class="footer__right">
         <button id="openLegalBtn" class="linkbtn" type="button">Términos</button>
         <button id="openPrivacyBtn" class="linkbtn" type="button">Privacidad</button>
@@ -160,13 +157,11 @@
 
     <div class="drawer__body">
       <button class="navitem" type="button" data-scroll="#categories">Catálogos</button>
-      <button class="navitem" type="button" data-scroll="#catalog">Productos</button>
       <button class="navitem" type="button" id="navOpenCart">Carrito</button>
       <button class="navitem" type="button" id="navOpenAi">SCORE AI</button>
-    </div>
-
-    <div class="drawer__foot">
-      <div class="muted">v<span id="appVersionLabel">—</span></div>
+      
+      <div class="drawer__divider"></div>
+      <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank">Visitar Único Uniformes</a>
     </div>
   </aside>
 
@@ -208,7 +203,7 @@
 
           <div id="postalWrap" class="postal" hidden>
             <input id="postalCode" class="input" inputmode="numeric" maxlength="10" placeholder="Código postal / ZIP" />
-            <button id="quoteBtn" class="btn btn--tiny" type="button">Cotizar</button>
+            <button id="quoteBtn" class="btn btn--tiny btn--black" type="button">Cotizar</button>
           </div>
 
           <div class="cartrow">
@@ -218,16 +213,16 @@
         </div>
 
         <div class="cartrow">
-          <span>Total</span>
-          <b id="cartTotal">$0</b>
+          <span class="total-label">Total</span>
+          <b id="cartTotal" class="total-price">$0</b>
         </div>
 
         <div class="cartrow cartrow--stack">
           <label class="muted" for="promoCode">Cupón (opcional)</label>
-          <input id="promoCode" class="input" placeholder="PROMO10" />
+          <input id="promoCode" class="input" placeholder="Ej: SCORE25" />
         </div>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block" type="button">Pagar (Stripe + OXXO)</button>
+        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar Seguro</button>
         <div id="checkoutMsg" class="hint" hidden></div>
       </div>
     </div>
@@ -259,7 +254,7 @@
             </div>
           </div>
 
-          <button id="pmAdd" class="btn btn--primary btn--block" type="button">Agregar al carrito</button>
+          <button id="pmAdd" class="btn btn--primary btn--block btn--large" type="button">Agregar al carrito</button>
         </div>
       </div>
     </div>
@@ -271,14 +266,12 @@
         <div class="modal__title">SCORE AI</div>
         <button id="aiClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
       </div>
-
       <div class="modal__body">
         <div id="aiOutput" class="chat"></div>
         <div class="chatbar">
-          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos, cambios, productos…" />
+          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos..." />
           <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
         </div>
-        <div class="hint">Si la API de IA no tiene key, no rompe el catálogo.</div>
       </div>
     </div>
   </section>
@@ -292,16 +285,6 @@
       <div class="modal__body">
         <div id="legalBody" class="legal"></div>
       </div>
-    </div>
-  </section>
-
-  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
-    <div class="cookie__text">
-      Usamos cookies para mejorar la experiencia. Puedes aceptar para habilitar medición o continuar sin tracking.
-    </div>
-    <div class="cookie__actions">
-      <button id="cookieReject" class="btn btn--ghost" type="button">Sin tracking</button>
-      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
     </div>
   </section>
 
