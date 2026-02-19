@@ -96,7 +96,6 @@
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
 
-  // Guard: si por alguna razón faltan nodos críticos, no revienta todo
   const REQUIRED = [
     categoryGrid, productGrid, statusRow,
     cartCount, cartItemsEl, cartSubtotalEl, shippingLineEl, cartTotalEl,
@@ -104,7 +103,6 @@
     checkoutBtn, checkoutMsg,
   ];
   if (REQUIRED.some((x) => !x)) {
-    // Evita crash silencioso si el HTML fue modificado
     console.error("[ScoreStore] Faltan elementos críticos en el DOM.");
     return;
   }
@@ -154,23 +152,17 @@
   };
 
   // ---------- STATE ----------
-  /** @type {{sections:any[], products:any[]}|null} */
   let catalog = null;
-  /** normalized products */
   let products = [];
-  /** uiId from CATEGORY_CONFIG or null */
   let activeCategory = null;
   let searchQuery = "";
   let sortMode = "featured";
 
-  /** cart items: [{sku,title,priceCents,size,qty,img,uiSection,collection}] */
   let cart = [];
-
-  /** shipping state */
   let shipping = {
     mode: "pickup",
     postal_code: "",
-    quote: null, // {amount_cents, amount_mxn, label, country, provider}
+    quote: null, 
   };
 
   // ---------- UTILS ----------
@@ -224,8 +216,7 @@
     statusRow.textContent = text || "";
   };
 
-  // ---------- OVERLAY / UI LAYERS ----------
-  const openSet = new Set(); // drawers/modals abiertos
+  const openSet = new Set(); 
 
   const lockScrollIfNeeded = () => {
     if (openSet.size > 0) document.body.style.overflow = "hidden";
@@ -265,7 +256,6 @@
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  // ---------- LOAD / NORMALIZE CATALOG ----------
   const normalizeSectionIdToUi = (sectionId) => {
     const sid = String(sectionId || "").trim();
     const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
@@ -273,7 +263,6 @@
   };
 
   const inferCollection = (p) => {
-    // Accept new field "collection" if present, else infer from old section ids
     const c = String(p?.collection || "").trim();
     if (c) return c;
     const sid = String(p?.sectionId || p?.categoryId || "").trim();
@@ -336,7 +325,6 @@
     return data;
   };
 
-  // ---------- RENDER CATEGORIES ----------
   const getCategoryCounts = () => {
     const counts = Object.fromEntries(CATEGORY_CONFIG.map((c) => [c.uiId, 0]));
     for (const p of products) {
@@ -399,7 +387,6 @@
     }
   };
 
-  // ---------- RENDER PRODUCTS ----------
   const applyFilters = (list) => {
     let out = list.slice();
 
@@ -472,7 +459,6 @@
     productGrid.appendChild(frag);
   };
 
-  // ---------- PRODUCT MODAL ----------
   let currentProduct = null;
 
   const openProduct = (sku) => {
@@ -509,7 +495,6 @@
     openLayer(productModal);
   };
 
-  // ---------- CART ----------
   const saveCart = () => {
     try {
       localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
@@ -635,7 +620,6 @@
     cartTotalEl.textContent = money(sub + ship);
   };
 
-  // ---------- SHIPPING MODE / QUOTE ----------
   const loadShipping = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.ship);
@@ -657,7 +641,6 @@
   };
 
   const syncShippingLabelsInUI = () => {
-    // Fuerza texto visible aunque el HTML no se haya actualizado
     const pickupLabelSpan = document.querySelector('input[name="shipMode"][value="pickup"]')?.closest("label")?.querySelector("span");
     if (pickupLabelSpan) pickupLabelSpan.textContent = "Recoger en fábrica (Tijuana)";
 
@@ -690,7 +673,6 @@
       return;
     }
 
-    // restore postal if stored
     postalCodeInput.value = shipping.postal_code || "";
     renderCart();
   };
@@ -764,7 +746,6 @@
     }
   };
 
-  // ---------- CHECKOUT ----------
   const doCheckout = async () => {
     checkoutMsg.hidden = true;
 
@@ -812,13 +793,13 @@
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok || !data?.url) {
-        throw new Error(data?.error || "Checkout error");
+        throw new Error(data?.error || "Checkout error. Posible cupón inválido.");
       }
 
       window.location.href = data.url;
     } catch (e) {
       checkoutMsg.hidden = false;
-      checkoutMsg.textContent = `Error: ${String(e?.message || e)}`;
+      checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`;
       showToast("No se pudo iniciar pago");
     } finally {
       checkoutBtn.disabled = false;
@@ -826,7 +807,6 @@
     }
   };
 
-  // ---------- AI ----------
   const addChatMsg = (who, text) => {
     const div = document.createElement("div");
     div.className = `msg ${who === "me" ? "msg--me" : "msg--ai"}`;
@@ -864,7 +844,6 @@
     }
   };
 
-  // ---------- LEGAL (simple in-app content, no rompe) ----------
   const LEGAL_TERMS = `
     <h3>Términos y Condiciones</h3>
     <p>Esta tienda es el canal oficial de mercancía (merch) de SCORE STORE. Los pagos se procesan por Stripe. Algunas formas de pago pueden incluir OXXO (según disponibilidad de Stripe en tu región).</p>
@@ -884,7 +863,6 @@
     openLayer(legalModal);
   };
 
-  // ---------- COOKIE CONSENT ----------
   const initConsent = () => {
     try {
       const v = localStorage.getItem(STORAGE_KEYS.consent);
@@ -902,7 +880,6 @@
     cookieBanner.hidden = true;
   };
 
-  // ---------- PWA ----------
   const registerSW = () => {
     if (!("serviceWorker" in navigator)) return;
     window.addEventListener("load", () => {
@@ -912,33 +889,26 @@
     });
   };
 
-  // ---------- INIT ----------
   const init = async () => {
-    // version label
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
 
-    // restore state
     loadCart();
     loadShipping();
 
-    // set ship mode on UI from storage
     setShipModeChecked(shipping.mode || "pickup");
     syncShippingLabelsInUI();
     refreshShippingUI();
 
-    // wire UI: overlay / esc
     overlay.addEventListener("click", closeAll);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
 
-    // topbar / drawers
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
 
     openCartBtn?.addEventListener("click", () => {
       openLayer(cartDrawer);
-      // refresca hint (por si cambió radio)
       refreshShippingUI();
       renderCart();
     });
@@ -951,7 +921,6 @@
       renderCart();
     });
 
-    // nav scroll buttons
     $$(".navitem[data-scroll]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const sel = btn.getAttribute("data-scroll");
@@ -960,11 +929,9 @@
       });
     });
 
-    // hero scroll
     scrollToCategoriesBtn?.addEventListener("click", () => scrollToEl("#categories"));
     scrollToCatalogBtn?.addEventListener("click", () => scrollToEl("#catalog"));
 
-    // filters
     clearCategoryBtn?.addEventListener("click", () => {
       activeCategory = null;
       categoryHint.hidden = false;
@@ -983,7 +950,6 @@
       showToast("Filtros limpiados");
     });
 
-    // search / sort
     const onSearch = debounce(() => {
       searchQuery = String(searchInput?.value || "").trim();
       updateFilterUI();
@@ -997,7 +963,6 @@
       renderProducts();
     });
 
-    // product modal
     pmClose?.addEventListener("click", () => closeLayer(productModal));
     productModal?.addEventListener("click", (e) => {
       if (e.target === productModal) closeLayer(productModal);
@@ -1013,7 +978,6 @@
       refreshShippingUI();
     });
 
-    // ai modal
     openAiBtn?.addEventListener("click", () => {
       openLayer(aiModal);
       setTimeout(() => aiInput?.focus(), 30);
@@ -1041,7 +1005,6 @@
       if (e.key === "Enter") sendAi();
     });
 
-    // legal modal
     openLegalBtn?.addEventListener("click", () => openLegal("terms"));
     openPrivacyBtn?.addEventListener("click", () => openLegal("privacy"));
     legalClose?.addEventListener("click", () => closeLayer(legalModal));
@@ -1049,10 +1012,8 @@
       if (e.target === legalModal) closeLayer(legalModal);
     });
 
-    // shipping mode / quote / checkout
     $$('input[name="shipMode"]').forEach((r) => {
       r.addEventListener("change", () => {
-        // si cambian modo, invalida quote si no coincide
         refreshShippingUI();
       });
     });
@@ -1065,21 +1026,17 @@
 
     checkoutBtn?.addEventListener("click", doCheckout);
 
-    // cookie banner
     initConsent();
     cookieAccept?.addEventListener("click", () => setConsent(true));
     cookieReject?.addEventListener("click", () => setConsent(false));
 
-    // paint cart now
     renderCart();
 
-    // load catalog
     try {
       setStatus("Cargando catálogo…");
       catalog = await fetchCatalog();
       products = catalog.products.map(normalizeProduct).filter((p) => p.sku);
 
-      // Reforzar 4 catálogos: si llega algo raro, lo manda a BAJA1000 por seguridad
       products = products.map((p) => {
         if (!CATEGORY_CONFIG.some((c) => c.uiId === p.uiSection)) p.uiSection = "BAJA1000";
         return p;
@@ -1094,7 +1051,6 @@
       setStatus("Error cargando catálogo.");
       showToast("No se pudo cargar el catálogo");
     } finally {
-      // hide splash
       if (splash) {
         splash.style.opacity = "0";
         splash.style.pointerEvents = "none";
@@ -1102,11 +1058,9 @@
       }
     }
 
-    // PWA
     registerSW();
   };
 
-  // start
   init().catch((e) => {
     console.error("[ScoreStore:init]", e);
     try {
