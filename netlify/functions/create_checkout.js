@@ -1,246 +1,204 @@
-/* =========================================================
-   SCORE STORE — Netlify Function: create_checkout
-   Route: /api/checkout  ->  /.netlify/functions/create_checkout
-
-   ✅ Alineado a BLOQUE 1/2/3:
-   - Frontend manda: { items:[{sku,qty,size}], shipping_mode:"pickup|delivery", postal_code:"", promo_code:"" }
-   - Catálogo: data/catalog.json (products[].sku, title, price_cents, images[])
-   - Stripe Checkout: card + oxxo
-
-   ENV:
-   - STRIPE_SECRET_KEY (required)
-   - SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (optional: guardar order)
-   - ENVIA_API_KEY (optional: cotización real Envia; si no existe, usa fallback)
-   ========================================================= */
-
+const fs = require("fs");
+const path = require("path");
 const Stripe = require("stripe");
-const {
-  handleOptions,
-  json,
-  readJson,
-  clampInt,
-  getBaseUrl,
-  absImageUrl,
-  supabaseAdmin,
-  getEnviaQuote,
-  getFallbackShipping,
-  isUSZip,
-} = require("./_shared");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-06-20",
+  apiVersion: "2024-06-20"
 });
 
-function normalizeShippingMode(mode) {
-  const m = String(mode || "").toLowerCase();
-  if (m === "delivery") return "delivery";
-  return "pickup";
-}
-
-async function loadCatalog(event) {
-  // 1) Try local file (cuando Netlify incluye el repo completo en build)
-  try {
-    const local = await readJson("data/catalog.json");
-    if (local && Array.isArray(local.products)) return local;
-  } catch (_) {}
-
-  // 2) Fallback: fetch del catálogo desde el sitio (si el bundle no incluye data/)
-  const baseUrl = getBaseUrl(event);
-  const url = `${baseUrl}/data/catalog.json`;
-  const res = await fetch(url, { headers: { "cache-control": "no-store" } });
-  if (!res.ok) throw new Error(`catalog fetch failed (${res.status})`);
-  const data = await res.json();
-  if (!data || !Array.isArray(data.products)) throw new Error("catalog invalid");
-  return data;
-}
-
-function getProductPriceCents(p) {
-  if (Number.isFinite(Number(p.price_cents))) return Math.round(Number(p.price_cents));
-  if (Number.isFinite(Number(p.baseMXN))) return Math.round(Number(p.baseMXN) * 100);
-  if (Number.isFinite(Number(p.priceMXN))) return Math.round(Number(p.priceMXN) * 100);
-  return 0;
-}
-
 exports.handler = async (event) => {
-  const opt = handleOptions(event);
-  if (opt) return opt;
-
   try {
     if (event.httpMethod !== "POST") {
-      return json(405, { error: "Method not allowed" }, event);
+      return json(405, { error: "Method not allowed" });
     }
-
     if (!process.env.STRIPE_SECRET_KEY) {
-      return json(500, { error: "Missing STRIPE_SECRET_KEY" }, event);
+      return json(500, { error: "STRIPE_SECRET_KEY no configurada" });
     }
 
+    const origin = getOrigin(event);
     const body = JSON.parse(event.body || "{}");
-    const baseUrl = getBaseUrl(event);
 
-    const itemsIn = Array.isArray(body.items) ? body.items : [];
-    const shipping_mode = normalizeShippingMode(body.shipping_mode);
-    const postal_code = String(body.postal_code || "").trim();
-    const promo_code = String(body.promo_code || "").trim();
+    const items = Array.isArray(body.items) ? body.items : [];
+    const shipping_mode = body.shipping_mode === "delivery" ? "delivery" : "pickup";
+    const destination = body.destination || null;
 
-    if (!itemsIn.length) {
-      return json(400, { error: "No items" }, event);
-    }
+    if (!items.length) return json(400, { error: "Carrito vacío" });
 
-    // Normaliza items
-    const items = itemsIn
-      .map((it) => ({
-        sku: String(it.sku || "").trim(),
-        qty: clampInt(it.qty, 1, 99),
-        size: String(it.size || "").trim(),
-      }))
-      .filter((it) => it.sku);
-
-    if (!items.length) {
-      return json(400, { error: "Invalid items" }, event);
-    }
-
-    // Shipping validation
-    if (shipping_mode === "delivery") {
-      if (!/^\d{5}$/.test(postal_code)) {
-        return json(400, { error: "postal_code invalid (5 digits)" }, event);
-      }
-    }
-
-    // Load catalog
-    const catalog = await loadCatalog(event);
+    const catalog = readCatalog();
     const products = Array.isArray(catalog.products) ? catalog.products : [];
 
+    // valida items contra catálogo
     const line_items = [];
-    let subtotal_cents = 0;
-
     for (const it of items) {
-      const p = products.find((x) => x.sku === it.sku || x.id === it.sku);
-      if (!p) {
-        return json(400, { error: `Unknown sku: ${it.sku}` }, event);
-      }
+      const sku = String(it.sku || "").trim();
+      const qty = Math.max(1, Math.min(99, Number(it.qty || 1)));
+      if (!sku) return json(400, { error: "Item sin SKU" });
 
-      const unit_amount = getProductPriceCents(p);
-      if (!unit_amount || unit_amount < 50) {
-        return json(400, { error: `Invalid price for sku: ${it.sku}` }, event);
-      }
+      const p = products.find(x => String(x.sku || x.id) === sku);
+      if (!p) return json(400, { error: `SKU no encontrado: ${sku}` });
 
-      const name = String(p.title || p.name || "Producto");
-      const images = Array.isArray(p.images) ? p.images : (p.img ? [p.img] : []);
-      const img0 = images[0] ? absImageUrl(baseUrl, images[0]) : null;
+      const unit_amount = Number(p.price_cents || 0);
+      if (!unit_amount || unit_amount < 100) return json(400, { error: `Precio inválido para: ${sku}` });
 
       line_items.push({
-        quantity: it.qty,
+        quantity: qty,
         price_data: {
           currency: "mxn",
-          unit_amount,
+          unit_amount: Math.round(unit_amount),
           product_data: {
-            name: it.size ? `${name} (${it.size})` : name,
-            images: img0 ? [img0] : [],
-            metadata: {
-              sku: it.sku,
-              size: it.size || "",
-              section: String(p.sectionId || p.categoryId || ""),
-            },
-          },
-        },
+            name: p.title || "Producto",
+            description: (p.description || "").slice(0, 500)
+          }
+        }
       });
-
-      subtotal_cents += unit_amount * it.qty;
     }
 
-    // Shipping quote (delivery)
-    let shipping_amount_mxn = 0;
-    let shipping_provider = "none";
+    // envío real (si delivery): cotiza server-side para cobrar envío real
+    let shipping_cents = 0;
+    let ship_meta = null;
 
     if (shipping_mode === "delivery") {
-      const to_country = isUSZip(postal_code) ? "US" : "MX";
+      if (!destination) return json(400, { error: "destination requerido para envío" });
 
-      let quote = null;
-      if (process.env.ENVIA_API_KEY) {
-        quote = await getEnviaQuote({
-          to_postal_code: postal_code,
-          to_country,
-          items,
-        });
-        shipping_provider = "envia";
+      const cp = String(destination.postal_code || "").trim();
+      const city = String(destination.city || "").trim();
+      const state = String(destination.state || "").trim();
+
+      if (!/^\d{5}$/.test(cp) || !city || !state) {
+        return json(400, { error: "destination inválido (postal_code/city/state)" });
       }
 
-      if (!quote) {
-        quote = getFallbackShipping({ postal_code, items });
-        shipping_provider = "fallback";
-      }
+      const q = await quoteEnvia({ postal_code: cp, city, state }, items);
+      shipping_cents = q.total_cents;
+      ship_meta = q.meta;
 
-      shipping_amount_mxn = Math.round(quote?.amount_mxn ?? 0);
-
-      if (!shipping_amount_mxn || shipping_amount_mxn < 1) {
-        return json(400, { error: "No se pudo cotizar envío. Intenta de nuevo." }, event);
-      }
-
+      // Agrega envío como line item
       line_items.push({
         quantity: 1,
         price_data: {
           currency: "mxn",
-          unit_amount: shipping_amount_mxn * 100,
-          product_data: {
-            name: "Envío",
-            metadata: {
-              shipping_mode: "delivery",
-              postal_code,
-              provider: shipping_provider,
-            },
-          },
-        },
+          unit_amount: shipping_cents,
+          product_data: { name: "Envío (Envía.com)", description: ship_meta?.service ? `Servicio: ${ship_meta.service}` : "Cotización Envía.com" }
+        }
       });
     }
-
-    // Stripe Checkout URLs
-    const success_url = `${baseUrl}/?success=1&session_id={CHECKOUT_SESSION_ID}`;
-    const cancel_url = `${baseUrl}/?canceled=1`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card", "oxxo"],
       line_items,
-      success_url,
-      cancel_url,
-      allow_promotion_codes: true,
+
+      success_url: `${origin}/?success=1`,
+      cancel_url: `${origin}/?canceled=1`,
+
+      // Stripe puede pedir datos para OXXO
+      customer_creation: "if_required",
+
       metadata: {
-        app: "scorestore",
         shipping_mode,
-        postal_code: shipping_mode === "delivery" ? postal_code : "",
-        promo_code: promo_code || "",
+        envia_service: ship_meta?.service || "",
+        envia_carrier: ship_meta?.carrier || ""
       },
+
+      // Para delivery: deja que Stripe capture dirección (MX)
+      shipping_address_collection: shipping_mode === "delivery"
+        ? { allowed_countries: ["MX"] }
+        : undefined
     });
 
-    // Save order (best effort)
-    if (supabaseAdmin) {
-      try {
-        const total_cents = subtotal_cents + shipping_amount_mxn * 100;
-        const orderRow = {
-          id: session.id,
-          stripe_session_id: session.id,
-          status: "created",
-          currency: "MXN",
-          amount_total_cents: total_cents,
-          subtotal_cents,
-          shipping_amount_mxn,
-          shipping_provider,
-          shipping_mode,
-          postal_code: shipping_mode === "delivery" ? postal_code : null,
-          promo_code: promo_code || null,
-          items,
-          created_at: new Date().toISOString(),
-        };
+    return json(200, { url: session.url });
 
-        await supabaseAdmin.from("orders").insert(orderRow);
-      } catch (e) {
-        console.warn("orders insert failed:", e?.message || e);
-      }
-    }
-
-    return json(200, { url: session.url }, event);
-  } catch (err) {
-    console.error("create_checkout error:", err);
-    return json(500, { error: "Checkout init failed" }, event);
+  } catch (e) {
+    return json(500, { error: "Server error", message: String(e && e.message ? e.message : e) });
   }
 };
+
+function getOrigin(event) {
+  const h = event.headers || {};
+  const proto = h["x-forwarded-proto"] || "https";
+  const host = h["x-forwarded-host"] || h["host"];
+  return `${proto}://${host}`;
+}
+
+function readCatalog() {
+  const p = path.join(process.cwd(), "data", "catalog.json");
+  const raw = fs.readFileSync(p, "utf8");
+  return JSON.parse(raw);
+}
+
+async function quoteEnvia(destination, items) {
+  const apiKey = process.env.ENVIA_API_KEY;
+  if (!apiKey) {
+    // sin key: no rompe, pero no cobramos envío real
+    return { total_cents: 0, meta: null };
+  }
+
+  const origin = {
+    postal_code: String(process.env.ENVIA_ORIGIN_POSTAL || "22000"),
+    city: String(process.env.ENVIA_ORIGIN_CITY || "Tijuana"),
+    state: String(process.env.ENVIA_ORIGIN_STATE || "Baja California"),
+    country_code: String(process.env.ENVIA_ORIGIN_COUNTRY || "MX")
+  };
+
+  const pkg = {
+    content: "Score Store Merch",
+    amount: Math.max(1, items.reduce((a,i)=>a + Number(i.qty||0), 0)),
+    type: "box",
+    dimensions: {
+      length: Number(process.env.ENVIA_PKG_L || 32),
+      width: Number(process.env.ENVIA_PKG_W || 24),
+      height: Number(process.env.ENVIA_PKG_H || 8)
+    },
+    weight: Number(process.env.ENVIA_PKG_WEIGHT || 1.0)
+  };
+
+  const payload = {
+    origin,
+    destination: { ...destination, country_code: "MX" },
+    packages: [pkg]
+  };
+
+  const endpoint = String(process.env.ENVIA_RATE_ENDPOINT || "https://api.envia.com/ship/rate/");
+  const resp = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await resp.json().catch(() => null);
+  if (!resp.ok || !data) return { total_cents: 0, meta: null };
+
+  const rates = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+  const sorted = rates
+    .map(r => ({
+      carrier: r.carrier || r.carrier_name || "Carrier",
+      service: r.service || r.service_name || "Servicio",
+      total: Number(r.total || r.total_amount || r.price || 0)
+    }))
+    .filter(r => Number.isFinite(r.total) && r.total > 0)
+    .sort((a,b)=>a.total-b.total);
+
+  if (!sorted.length) return { total_cents: 0, meta: null };
+
+  const best = sorted[0];
+  return {
+    total_cents: Math.round(best.total * 100),
+    meta: { carrier: best.carrier, service: best.service }
+  };
+}
+
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      "content-type": "application/json",
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-headers": "content-type"
+    },
+    body: JSON.stringify(body)
+  };
+}
