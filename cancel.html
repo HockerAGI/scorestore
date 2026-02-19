@@ -1,35 +1,40 @@
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pago cancelado — SCORE Store</title>
-    <meta name="robots" content="noindex" />
-    <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="icon" href="/assets/favicon.ico" />
-  </head>
-  <body>
-    <div class="topbar">
-      <a class="brand" href="/">
-        <img src="/assets/logo-score.webp" alt="SCORE" />
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#E10600" />
+  <title>Pago cancelado — SCORE STORE</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="statusBody">
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="brand" href="/" aria-label="Inicio">
+        <img src="/assets/logo-score.webp" alt="SCORE" class="nav-logo">
       </a>
-      <div class="topActions">
-        <a class="btn btnGhost" href="/">Volver a la tienda</a>
-      </div>
     </div>
+  </nav>
 
-    <main class="container" style="padding-top: 26px">
-      <div class="heroCard" style="padding: 18px">
-        <h1 style="margin: 0 0 10px">Pago cancelado</h1>
-        <p class="muted" style="margin: 0 0 10px">
-          No pasó nada. Tu carrito sigue listo. Si quieres, intenta de nuevo.
-        </p>
+  <main class="statusWrap">
+    <section class="statusCard">
+      <div class="statusIcon bad">!</div>
+      <h1 class="statusTitle">Pago cancelado</h1>
+      <p class="statusText">
+        No se realizó el cobro. Tu carrito sigue guardado en este dispositivo, puedes intentar de nuevo cuando quieras.
+      </p>
 
-        <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap">
-          <a class="btn" href="/">Regresar</a>
-          <a class="btn btnGhost" href="/legal.html">Ver políticas</a>
-        </div>
+      <div class="statusActions">
+        <a class="cta-btn" href="/">Regresar</a>
+        <a class="cta-btn secondary" href="/legal.html">Ver políticas</a>
       </div>
-    </main>
-  </body>
+
+      <p class="statusHint">
+        Si tu banco rechazó el pago, prueba con otro método (Card u OXXO).
+      </p>
+    </section>
+  </main>
+
+</body>
 </html>
