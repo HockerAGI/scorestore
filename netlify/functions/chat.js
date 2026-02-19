@@ -1,59 +1,52 @@
-/* =========================================================
-   SCORE STORE — Netlify Function: chat
-   Route: /api/chat  ->  /.netlify/functions/chat
+"use strict";
 
-   ✅ Alineado a BLOQUE 1/2/3:
-   Frontend manda:
-     { messages: [{role:"user", content:"..."}] }
-
-   Compat:
-     { message:"..." } o { text:"..." }
-
-   ENV:
-   - GEMINI_API_KEY (si no existe, responde error)
-   ========================================================= */
-
-const { handleOptions, json, geminiChat, rateLimit } = require("./_shared");
-
-function extractMessage(body) {
-  // Nuevo formato
-  if (Array.isArray(body.messages) && body.messages.length) {
-    const lastUser = [...body.messages]
-      .reverse()
-      .find((m) => String(m.role || "").toLowerCase() === "user");
-    const msg = String(lastUser?.content || "").trim();
-    if (msg) return msg;
-  }
-  // Compat
-  if (body.message) return String(body.message).trim();
-  if (body.text) return String(body.text).trim();
-  return "";
-}
+const { jsonResponse, handleOptions, safeJsonParse } = require("./_shared");
+const axios = require("axios");
 
 exports.handler = async (event) => {
-  const opt = handleOptions(event);
-  if (opt) return opt;
+  const origin = event?.headers?.origin;
 
   try {
-    if (event.httpMethod !== "POST") {
-      return json(405, { error: "Method not allowed" }, event);
+    if (event.httpMethod === "OPTIONS") return handleOptions(event);
+    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+
+    const body = safeJsonParse(event.body) || {};
+    const message = String(body.message || "").trim();
+    if (!message) return jsonResponse(400, { ok: false, error: "message requerido" }, origin);
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      // Deja que el frontend haga fallback sin romper catálogo
+      return jsonResponse(200, { ok: false, error: "GEMINI_API_KEY no configurada" }, origin);
     }
 
-    // Rate limit (best effort)
-    const limited = await rateLimit(event, 20, 60);
-    if (limited) return limited;
+    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
-    const body = JSON.parse(event.body || "{}");
-    const msg = extractMessage(body);
+    const sys =
+      "Eres SCORE AI para Score Store (Merch Oficial). Responde en español, directo y útil. " +
+      "Ayuda con tallas, materiales, cambios, envíos (pickup en fábrica Tijuana / Envía México / Envía USA), y pagos (Stripe + OXXO). " +
+      "Si te piden algo fuera de tienda, redirige a soporte.";
 
-    if (!msg) {
-      return json(400, { error: "Empty message" }, event);
-    }
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-    const reply = await geminiChat(msg);
-    return json(200, { reply }, event);
-  } catch (err) {
-    console.error("chat error:", err);
-    return json(500, { error: "Chat failed" }, event);
+    const payload = {
+      systemInstruction: { parts: [{ text: sys }] },
+      contents: [{ role: "user", parts: [{ text: message }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 512,
+      },
+    };
+
+    const res = await axios.post(url, payload, { headers: { "content-type": "application/json" }, timeout: 20000 });
+
+    const reply =
+      res?.data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
+      res?.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Listo.";
+
+    return jsonResponse(200, { ok: true, reply: String(reply || "Listo.").trim() }, origin);
+  } catch (e) {
+    return jsonResponse(200, { ok: false, error: String(e?.message || e) }, origin);
   }
 };
