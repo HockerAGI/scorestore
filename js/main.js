@@ -2,6 +2,7 @@
    SCORE STORE — Frontend (PRO) v2026.02.19 (FULL)
    - Lógica ajustada: Ocultar "Todos los productos"
    - Decodificación robusta para rutas de imágenes
+   - Protección contra datos de carrito corruptos
    ========================================================= */
 
 (() => {
@@ -129,7 +130,6 @@
 
   const safeUrl = (p) => {
     try {
-      // EncodeURI maneja los espacios en las rutas de la DB (ej. camiseta-cafe- oscuro)
       return encodeURI(String(p || "").trim());
     } catch { return String(p || ""); }
   };
@@ -290,7 +290,6 @@
   const renderProducts = () => {
     if (!productGrid || !catalogCarouselSection) return;
     
-    // LOGICA NUEVA: Si no hay categoría seleccionada NI búsqueda, ocultamos productos (No "Todos")
     if (!activeCategory && !searchQuery) {
         catalogCarouselSection.hidden = true;
         return;
@@ -372,7 +371,13 @@
   const loadCart = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
-      if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) cart = parsed; }
+      if (raw) { 
+        const parsed = JSON.parse(raw); 
+        // Filtro de seguridad protector contra info corrupta o vieja en localstorage
+        if (Array.isArray(parsed)) {
+            cart = parsed.filter(it => it && it.sku && typeof it.qty === 'number'); 
+        }
+      }
     } catch {}
   };
 
@@ -478,7 +483,7 @@
 
     try {
       const body = { postal_code, shipping_mode: mode, country: mode === "envia_us" ? "US" : "MX", items: cart.map((it) => ({ sku: it.sku, qty: it.qty })) };
-      const res = await fetch("/api/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const res = await fetch("/.netlify/functions/quote_shipping", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo cotizar");
 
@@ -512,10 +517,12 @@
 
     try {
       const payload = { items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), shipping_mode, postal_code: needsZip ? postal_code : "", promo_code };
-      const res = await fetch("/api/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch("/.netlify/functions/create_checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok || !data?.url) throw new Error(data?.error || "Error al iniciar pago. Intenta de nuevo.");
-      window.location.href = data.url;
+      
+      // Cambio de seguridad: el método .assign preserva mejor el paso del usuario en el historial del dispositivo.
+      window.location.assign(data.url);
     } catch (e) {
       if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`; }
       showToast("Error en checkout");
@@ -539,7 +546,7 @@
     if (aiSendBtn) { aiSendBtn.disabled = true; aiSendBtn.textContent = "…"; }
 
     try {
-      const res = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: msg }) });
+      const res = await fetch("/.netlify/functions/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: msg }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) throw new Error("AI error");
       addChatMsg("ai", String(data.reply || "Listo."));
@@ -582,8 +589,6 @@
 
     searchInput?.addEventListener("input", debounce(() => {
       searchQuery = String(searchInput?.value || "").trim();
-      
-      // Si el usuario busca algo, pero no hay categoría, forzamos la busqueda global
       if(searchQuery !== "") {
           catalogCarouselSection.hidden = false;
       }
@@ -635,10 +640,10 @@
 
       renderCategories();
       updateFilterUI();
-      // renderProducts ya no muestra todo de golpe gracias a la lógica nueva
       renderProducts(); 
     } catch (e) {
       showToast("Error de conexión");
+      console.error(e); // Registro adicional por si el catálogo falla silenciosamente
     } finally {
       if (splash) {
         splash.style.opacity = "0";
@@ -647,5 +652,5 @@
     }
   };
 
-  init().catch(() => { if (splash) splash.hidden = true; });
+  init().catch((e) => { console.error(e); if (splash) splash.hidden = true; });
 })();
