@@ -13,7 +13,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="icon" href="assets/icons/icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <script>
     window.__APP_VERSION__ = "2026.02.19.PRO";
@@ -30,7 +30,7 @@
       <div class="splash__bar" role="progressbar" aria-label="Cargando">
         <div class="splash__barFill"></div>
       </div>
-      <div class="splash__text">CARGANDO CATÁLOGOS…</div>
+      <div class="splash__text">CARGANDO SCORE STORE…</div>
     </div>
   </div>
 
@@ -49,11 +49,11 @@
       <div class="topbar__actions">
         <div class="search desktop-only">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar (hoodie, gorra, jersey…)" autocomplete="off" />
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar productos..." autocomplete="off" />
         </div>
 
-        <button id="openAiBtn" class="iconbtn desktop-only" type="button" aria-label="Abrir asistente" title="SCORE AI">
-          <span class="icon">✦</span>
+        <button id="openAiBtn" class="iconbtn desktop-only tooltip-wrap" type="button" aria-label="Abrir asistente" title="SCORE AI">
+          <span class="icon" style="color: var(--red);">✦</span>
         </button>
 
         <button id="openCartBtn" class="iconbtn iconbtn--dark" type="button" aria-label="Abrir carrito" title="Carrito">
@@ -92,18 +92,15 @@
     <section class="wrap section" aria-label="Catálogos">
       <div class="section__head">
         <h2 id="categories">Colecciones Oficiales</h2>
-        <div class="section__tools">
-          <button id="clearCategoryBtn" class="btn btn--tiny btn--ghost" type="button" title="Ver todo">Ver todo</button>
         </div>
-      </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint" hidden>Selecciona un catálogo para filtrar el catálogo de productos.</div>
+      <div id="categoryHint" class="hint">Selecciona una colección para ver sus productos.</div>
     </section>
 
     <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Catálogo" hidden>
       <div class="carousel-header">
-        <h3 id="carouselTitle">Productos</h3>
+        <h3 id="carouselTitle" style="color: var(--red);">Productos</h3>
         <div class="carousel-controls desktop-only">
           <button id="scrollLeftBtn" class="iconbtn iconbtn--dark" aria-label="Anterior">←</button>
           <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Siguiente">→</button>
@@ -123,7 +120,7 @@
 
       <div id="activeFilterRow" class="filterrow" hidden>
         <span id="activeFilterLabel" class="filterrow__label"></span>
-        <button id="clearFilterBtn" class="btn btn--tiny" type="button">Quitar filtro</button>
+        <button id="clearFilterBtn" class="btn btn--tiny btn--ghost" type="button">Cerrar Catálogo</button>
       </div>
 
       <div id="statusRow" class="status" aria-live="polite"></div>
@@ -149,8 +146,8 @@
   <footer class="footer" role="contentinfo">
     <div class="wrap footer__inner">
       <div class="footer__brand-col">
-        <div class="footer__brand">SCORE STORE</div>
-        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com<br><br>Fabricado y Operado por <b>Único Uniformes</b>.</div>
+        <div class="footer__brand"><span style="color: var(--red);">SCORE</span> STORE</div>
+        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com<br><br>Fabricado y Operado por <b style="color: white;">Único Uniformes</b>.</div>
       </div>
       
       <div class="footer__socials">
@@ -160,13 +157,13 @@
           <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
           <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener">YouTube</a>
           <a href="https://linktr.ee/unicouniformes" target="_blank" rel="noopener">Linktree</a>
-          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Web</a>
+          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Web</a>
         </div>
       </div>
 
       <div class="footer__right">
-        <button id="openLegalBtn" class="linkbtn" type="button">Términos</button>
-        <button id="openPrivacyBtn" class="linkbtn" type="button">Privacidad</button>
+        <button id="openLegalBtn" class="linkbtn" type="button">Términos y Condiciones</button>
+        <button id="openPrivacyBtn" class="linkbtn" type="button">Aviso de Privacidad</button>
       </div>
     </div>
   </footer>
@@ -180,10 +177,9 @@
     </div>
 
     <div class="drawer__body">
-      <button class="navitem" type="button" data-scroll="#categories">Catálogos</button>
-      <button class="navitem" type="button" data-scroll="#catalogCarouselSection">Productos</button>
-      <button class="navitem" type="button" id="navOpenCart">Carrito</button>
-      <button class="navitem" type="button" id="navOpenAi">SCORE AI</button>
+      <button class="navitem" type="button" data-scroll="#categories">Colecciones</button>
+      <button class="navitem" type="button" id="navOpenCart">Ver Carrito</button>
+      <button class="navitem" type="button" id="navOpenAi"><span style="color: var(--red);">✦</span> SCORE AI</button>
       
       <div class="drawer__divider"></div>
       <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Único Uniformes</a>
@@ -196,7 +192,7 @@
 
   <aside id="cartDrawer" class="drawer drawer--right" aria-label="Carrito" hidden>
     <div class="drawer__head">
-      <div class="drawer__title">Carrito</div>
+      <div class="drawer__title">Tu Carrito</div>
       <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
     </div>
 
@@ -251,7 +247,7 @@
           <input id="promoCode" class="input" placeholder="PROMO10" />
         </div>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar (Stripe + OXXO)</button>
+        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar Seguro</button>
         <div id="checkoutMsg" class="hint" hidden></div>
       </div>
     </div>
@@ -269,7 +265,7 @@
 
         <div class="pm__info">
           <div class="pm__chips" id="pmChips"></div>
-          <div class="pm__price" id="pmPrice">$0</div>
+          <div class="pm__price" id="pmPrice" style="color: var(--red);">$0</div>
           <div class="pm__desc" id="pmDesc"></div>
 
           <div class="pm__row">
@@ -279,11 +275,11 @@
             </div>
             <div class="pm__col">
               <label class="muted" for="pmQty">Cantidad</label>
-              <input id="pmQty" class="input" inputmode="numeric" value="1" />
+              <input id="pmQty" class="input" type="number" min="1" max="99" value="1" />
             </div>
           </div>
 
-          <button id="pmAdd" class="btn btn--primary btn--block btn--large" type="button">Agregar al carrito</button>
+          <button id="pmAdd" class="btn btn--black btn--block btn--large" type="button">Agregar al carrito</button>
         </div>
       </div>
     </div>
@@ -291,18 +287,17 @@
 
   <section id="aiModal" class="modal" role="dialog" aria-modal="true" aria-label="SCORE AI" hidden>
     <div class="modal__panel modal__panel--tall">
-      <div class="modal__head">
-        <div class="modal__title">SCORE AI</div>
-        <button id="aiClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      <div class="modal__head" style="background: var(--black-btn); color: white; border-bottom: none;">
+        <div class="modal__title"><span style="color: var(--red);">✦</span> SCORE AI</div>
+        <button id="aiClose" class="iconbtn iconbtn--dark" aria-label="Cerrar" type="button">✕</button>
       </div>
 
-      <div class="modal__body">
+      <div class="modal__body" style="background: var(--bg-alt);">
         <div id="aiOutput" class="chat"></div>
         <div class="chatbar">
-          <input id="aiInput" class="input" placeholder="Pregúntame por tallas, envíos, cambios, productos…" />
+          <input id="aiInput" class="input" placeholder="Escribe tu duda aquí..." />
           <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
         </div>
-        <div class="hint" style="margin-top: 10px;">Si la API de IA no tiene key, no rompe el catálogo.</div>
       </div>
     </div>
   </section>
@@ -321,10 +316,10 @@
 
   <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
     <div class="cookie__text">
-      Usamos cookies para mejorar la experiencia. Puedes aceptar para habilitar medición o continuar sin tracking.
+      Usamos cookies para mejorar tu experiencia de compra.
     </div>
     <div class="cookie__actions">
-      <button id="cookieReject" class="btn btn--ghost" type="button">Sin tracking</button>
+      <button id="cookieReject" class="btn btn--ghost" type="button">Rechazar</button>
       <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
     </div>
   </section>
