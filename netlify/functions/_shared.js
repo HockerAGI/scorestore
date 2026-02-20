@@ -2,7 +2,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios");
 
 let Stripe = null;
 try { Stripe = require("stripe"); } catch {}
@@ -69,10 +68,19 @@ const getBaseUrl = (event) => {
   return `${proto}://${host}`;
 };
 
+// CORRECCIÓN: Manejo seguro de archivos. Si no existe, no rompe el servidor.
 const readJsonFile = (relPath) => {
-  const p = path.join(process.cwd(), relPath);
-  const raw = fs.readFileSync(p, "utf8");
-  return JSON.parse(raw);
+  try {
+    const p = path.join(process.cwd(), relPath);
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, "utf8");
+      return JSON.parse(raw);
+    }
+    return null;
+  } catch (e) {
+    console.warn(`[Sistema] Archivo no encontrado o error de lectura en ${relPath}:`, e.message);
+    return null;
+  }
 };
 
 const getCatalogIndex = () => {
@@ -117,20 +125,25 @@ const supabaseAdmin = (() => {
   };
 })();
 
+// CORRECCIÓN: Telegram ahora usa Fetch Nativo
 const sendTelegram = async (text) => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
   try {
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text: String(text || "").slice(0, 3500),
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: String(text || "").slice(0, 3500),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      })
     });
   } catch (e) {
-    console.log("[telegram] warn:", e?.response?.data || e?.message || e);
+    console.log("[telegram] warn:", e?.message || e);
   }
 };
 
@@ -223,6 +236,7 @@ const getPackageSpecs = (country, items_qty) => {
   };
 };
 
+// CORRECCIÓN: Migración de Envia Geocodes a Fetch Nativo
 const getZipDetails = async (country, zip) => {
   const c = String(country || "MX").toUpperCase();
   const z = validateZip(zip, c);
@@ -230,8 +244,9 @@ const getZipDetails = async (country, zip) => {
 
   try {
     const url = `${ENVIA_GEOCODES_URL}/zipcode/${encodeURIComponent(c)}/${encodeURIComponent(z)}`;
-    const res = await axios.get(url, { headers: { authorization: `Bearer ${requireEnviaKey()}` } });
-    const data = res?.data;
+    const res = await fetch(url, { headers: { authorization: `Bearer ${requireEnviaKey()}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
 
     const city =
       data?.city ||
@@ -256,7 +271,7 @@ const getZipDetails = async (country, zip) => {
       country: c,
     };
   } catch (e) {
-    console.log("[envia][zip] warn:", e?.response?.data || e?.message || e);
+    console.log("[envia][zip] warn:", e?.message || e);
     return null;
   }
 };
@@ -283,6 +298,7 @@ const pickBestRate = (rates) => {
   return best;
 };
 
+// CORRECCIÓN: Migración de Cotización Envia a Fetch Nativo
 const getEnviaQuote = async ({ zip, country, items_qty }) => {
   const c = String(country || "MX").toUpperCase();
   const z = validateZip(zip, c);
@@ -322,9 +338,15 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   };
 
   const url = `${ENVIA_API_URL}/ship/rate/`;
-  const res = await axios.post(url, payload, { headers: enviaHeaders(), timeout: 20000 });
+  const res = await fetch(url, {
+    method: "POST",
+    headers: enviaHeaders(),
+    body: JSON.stringify(payload)
+  });
 
-  const rates = res?.data?.data || res?.data?.rates || res?.data || [];
+  const data = await res.json();
+  const rates = data?.data || data?.rates || data || [];
+  
   const best = pickBestRate(rates);
   if (!best) {
     throw new Error("No se encontró tarifa (envía) para ese CP/ZIP");
@@ -396,7 +418,7 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
     phone: "",
     street: addr.line1 || "",
     number: addr.line2 || "",
-    district: addr.line2 || "Centro", // Removida la redundancia lógica
+    district: addr.line2 || "Centro",
     city: addr.city || "",
     state: addr.state || "",
     country: country || "MX",
@@ -405,6 +427,7 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
   };
 };
 
+// CORRECCIÓN: Migración de Guías Envia a Fetch Nativo
 const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty }) => {
   const country = String(shipping_country || "MX").toUpperCase();
 
@@ -435,10 +458,14 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
   };
 
   const url = `${ENVIA_API_URL}/ship/generate/`;
-  const res = await axios.post(url, payload, { headers: enviaHeaders(), timeout: 25000 });
+  const res = await fetch(url, {
+    method: "POST",
+    headers: enviaHeaders(),
+    body: JSON.stringify(payload)
+  });
 
-  const data = res?.data?.data || res?.data;
-  return data;
+  const data = await res.json();
+  return data?.data || data;
 };
 
 module.exports = {
