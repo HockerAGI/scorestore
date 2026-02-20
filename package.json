@@ -12,7 +12,8 @@
     "@supabase/supabase-js": "^2.39.3",
     "axios": "^1.6.7",
     "dotenv": "^16.4.1",
-    "stripe": "^14.14.0"
+    "stripe": "^14.14.0",
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
