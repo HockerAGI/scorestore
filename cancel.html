@@ -3,25 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>Pago cancelado — SCORE STORE</title>
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>Pago Cancelado — SCORE STORE</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; background: var(--bg-alt);">
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center;">
 
-  <main class="wrap section" style="background: #fff; padding: 40px 20px; border-radius: var(--radius2); box-shadow: var(--shadow2); max-width: 500px;">
-    <div style="font-size: 54px; margin-bottom: 16px;">❌</div>
-    <h1 style="color: var(--black-btn); font-weight: 900; margin-bottom: 16px;">Pago cancelado</h1>
+  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: none; filter: grayscale(1) brightness(0.3);"></div>
+
+  <main class="wrap section" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); padding: 50px 30px; border-radius: var(--radius2); box-shadow: var(--shadow-modal); max-width: 550px; position: relative; z-index: 10; border-top: 5px solid var(--black-btn);">
     
-    <p class="hint" style="max-width: 400px; margin: 0 auto 24px; font-size: 15px;">
-      No se realizó el cobro. Tu carrito sigue guardado en este dispositivo, puedes intentar de nuevo cuando quieras. <br><br>
-      Si tu banco rechazó el pago, prueba con otro método (Tarjeta u OXXO).
+    <img src="assets/logo-score.webp" alt="Score Store" style="height: 50px; margin: 0 auto 20px auto; filter: grayscale(1); opacity: 0.8;">
+
+    <div style="font-size: 54px; margin-bottom: 16px;">⚠️</div>
+    <h1 style="color: var(--black-btn); font-weight: 900; margin-bottom: 16px; font-size: 28px;">Pago Incompleto</h1>
+    
+    <p class="hint" style="max-width: 400px; margin: 0 auto 24px; font-size: 15px; color: var(--text);">
+      No se realizó ningún cobro. Tu carrito de compras sigue guardado en este dispositivo.<br><br>
+      Si tu banco rechazó la transacción, te sugerimos intentar de nuevo con otra tarjeta o seleccionar la opción de <b>Pago en OXXO</b>.
     </p>
 
-    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-      <a class="btn btn--primary" href="/">Regresar al catálogo</a>
-      <a class="btn btn--ghost" href="legal.html">Ver políticas</a>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+      <a class="btn btn--primary cinematic-btn" href="/">Regresar al catálogo</a>
+      <a class="btn btn--ghost" href="legal.html">Ver soporte</a>
     </div>
   </main>
 
