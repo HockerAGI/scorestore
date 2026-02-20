@@ -41,8 +41,6 @@ exports.handler = async (event) => {
 
       const items_qty = Number(meta.items_qty || 0) || 0;
       const shipping_amount_cents = Number(meta.shipping_amount_cents || 0) || 0;
-      
-      // Respaldo de Email por si el usuario pago con métodos como Apple Pay que lo ocultan a veces.
       const customer_email = session.customer_details?.email || session.customer_email || "no-reply@scorestore.com";
 
       if (isSupabaseConfigured()) {
@@ -98,33 +96,32 @@ exports.handler = async (event) => {
             }
           }
 
-          // CORRECCIÓN HOCKER: Manejo seguro para que Telegram no rompa el Webhook
           try {
             await sendTelegram(
-              `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada (envía).`
+              `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada exitosamente en Envía.`
             );
-          } catch(err) { /* ignore telegram fail */ }
+          } catch(err) {}
 
         } catch (e) {
           console.log("[envia] label error:", e?.message || e);
           try {
             await sendTelegram(
-              `⚠️ <b>Pago confirmado</b> pero <b>falló la guía de Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 500)}</code>`
+              `⚠️ <b>Pago confirmado</b> pero <b>falló la guía de Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 500)}</code>\n(Puedes generarla manualmente en el portal).`
             );
-          } catch(err) { /* ignore telegram fail */ }
+          } catch(err) {}
         }
       } else {
         try {
           await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>pickup</b> (Recoger en fábrica)`);
-        } catch(err) { /* ignore telegram fail */ }
+        } catch(err) {}
       }
     }
 
-    // Respuesta rápida y segura a Stripe
+    // Respuesta rápida a Stripe (siempre debe ser 200 si la firma es válida)
     return jsonResponse(200, { received: true }, "*");
   } catch (e) {
     console.log("[stripe_webhook] fatal:", e?.message || e);
-    // CORRECCIÓN HOCKER: Siempre devolver 200 a Stripe para evitar bucles infinitos de reintentos
+    // IMPORTANTE: Devolver 200 en catch fatal para evitar bucle de reintentos infinito de Stripe
     return jsonResponse(200, { received: true, warning: String(e?.message || e) }, "*");
   }
 };
