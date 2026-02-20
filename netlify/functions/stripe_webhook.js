@@ -98,23 +98,33 @@ exports.handler = async (event) => {
             }
           }
 
-          await sendTelegram(
-            `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada (envía).`
-          );
+          // CORRECCIÓN HOCKER: Manejo seguro para que Telegram no rompa el Webhook
+          try {
+            await sendTelegram(
+              `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada (envía).`
+            );
+          } catch(err) { /* ignore telegram fail */ }
+
         } catch (e) {
           console.log("[envia] label error:", e?.message || e);
-          await sendTelegram(
-            `⚠️ <b>Pago confirmado</b> pero <b>falló la guía de Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 500)}</code>`
-          );
+          try {
+            await sendTelegram(
+              `⚠️ <b>Pago confirmado</b> pero <b>falló la guía de Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 500)}</code>`
+            );
+          } catch(err) { /* ignore telegram fail */ }
         }
       } else {
-        await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>pickup</b> (Recoger en fábrica)`);
+        try {
+          await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>pickup</b> (Recoger en fábrica)`);
+        } catch(err) { /* ignore telegram fail */ }
       }
     }
 
+    // Respuesta rápida y segura a Stripe
     return jsonResponse(200, { received: true }, "*");
   } catch (e) {
     console.log("[stripe_webhook] fatal:", e?.message || e);
+    // CORRECCIÓN HOCKER: Siempre devolver 200 a Stripe para evitar bucles infinitos de reintentos
     return jsonResponse(200, { received: true, warning: String(e?.message || e) }, "*");
   }
 };
