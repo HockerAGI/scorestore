@@ -10,7 +10,7 @@ const {
 } = require("./_shared");
 
 exports.handler = async (event) => {
-  const origin = event?.headers?.origin || event?.headers?.Origin;
+  const origin = event?.headers?.origin || event?.headers?.Origin || "*";
 
   try {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
@@ -26,57 +26,60 @@ exports.handler = async (event) => {
       return jsonResponse(400, { ok: false, error: "El carrito está vacío." }, origin);
     }
 
-    // 1. Mapear productos para Stripe Checkout (Alineado a UnicOs)
+    // Calcula el total de prendas reales para el webhook
+    const items_qty = items.reduce((sum, item) => sum + item.qty, 0);
+
     const lineItems = items.map(item => ({
       price_data: {
         currency: 'mxn',
         product_data: {
-          name: `${item.title || item.sku} - Talla: ${item.size}`,
-          metadata: { 
-            sku: item.sku, 
-            size: item.size 
-          }
+          name: `${item.title || item.sku} (Talla: ${item.size})`,
+          metadata: { sku: item.sku, size: item.size }
         },
         unit_amount: item.priceCents || 55000, 
       },
       quantity: item.qty
     }));
 
-    // 2. Configurar costos de envío reales
+    // Configuración dinámica de envíos
     let shipping_options = [];
+    let shipping_amount_cents = 0;
+    let shipping_country = "MX";
+
     if (shipping_mode === "pickup") {
+      shipping_amount_cents = 0;
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
           fixed_amount: { amount: 0, currency: 'mxn' },
           display_name: 'Recoger en Fábrica (Tijuana)',
-          delivery_estimate: { minimum: { unit: 'business_day', value: 1 }, maximum: { unit: 'business_day', value: 3 } }
-        }
-      });
-    } else if (shipping_mode === "envia_mx") {
-      shipping_options.push({
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          fixed_amount: { amount: 18000, currency: 'mxn' }, // Tarifa flat nacional MXN (180 MXN)
-          display_name: 'Envío Nacional (Envía.com)',
-          delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 5 } }
         }
       });
     } else if (shipping_mode === "envia_us") {
+      shipping_amount_cents = 35000;
+      shipping_country = "US";
       shipping_options.push({
         shipping_rate_data: {
           type: 'fixed_amount',
-          fixed_amount: { amount: 35000, currency: 'mxn' }, // Tarifa flat USA MXN (350 MXN)
+          fixed_amount: { amount: shipping_amount_cents, currency: 'mxn' },
           display_name: 'Envío USA (Envía.com)',
-          delivery_estimate: { minimum: { unit: 'business_day', value: 5 }, maximum: { unit: 'business_day', value: 10 } }
+        }
+      });
+    } else {
+      shipping_amount_cents = 18000;
+      shipping_country = "MX";
+      shipping_options.push({
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: shipping_amount_cents, currency: 'mxn' },
+          display_name: 'Envío Nacional (Envía.com)',
         }
       });
     }
 
-    // 3. Crear string de resumen para Metadata (Límite de Stripe: 500 caracteres)
     const orderSummary = items.map(i => `${i.qty}x ${i.sku}[${i.size}]`).join(" | ").substring(0, 490);
 
-    // 4. Crear Sesión en Stripe
+    // Crear Sesión en Stripe con la Metadata EXACTA que UnicOs necesita
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'oxxo'],
       line_items: lineItems,
@@ -84,18 +87,13 @@ exports.handler = async (event) => {
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,
       shipping_options: shipping_options,
-      payment_intent_data: {
-        metadata: {
-          source: "score_store",
-          shipping_mode: shipping_mode,
-          postal_code: postal_code,
-          items_summary: orderSummary
-        }
-      },
       metadata: {
         source: "score_store",
         shipping_mode: shipping_mode,
+        shipping_country: shipping_country, // Vital para el webhook
         postal_code: postal_code,
+        items_qty: items_qty,               // Vital para el peso de la caja
+        shipping_amount_cents: shipping_amount_cents,
         items_summary: orderSummary
       }
     });
@@ -103,7 +101,7 @@ exports.handler = async (event) => {
     return jsonResponse(200, { ok: true, url: session.url }, origin);
 
   } catch (error) {
-    console.error("Stripe Checkout Error:", error);
-    return jsonResponse(500, { ok: false, error: "No se pudo procesar el pago seguro con Stripe." }, origin);
+    console.error("Stripe Error:", error);
+    return jsonResponse(500, { ok: false, error: "No se pudo procesar el pago." }, origin);
   }
 };
