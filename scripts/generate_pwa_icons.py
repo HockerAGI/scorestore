@@ -2,11 +2,6 @@
 # =========================================================
 # generate_pwa_icons.py
 # - Genera icons PNG para PWA (standard + maskable)
-# - Output alineado a site.webmanifest (BLOQUE 2)
-#
-# Uso:
-#   python3 scripts/generate_pwa_icons.py --input assets/brand/logo.png
-#   python3 scripts/generate_pwa_icons.py --input assets/brand/logo.png --out assets/icons
 # =========================================================
 
 import argparse
@@ -26,47 +21,39 @@ def die(msg: str, code: int = 1):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--input", required=True, help="Ruta de imagen fuente (png/jpg/webp). Ideal: PNG con transparencia.")
-    ap.add_argument("--out", default="assets/icons", help="Directorio de salida (default: assets/icons)")
+    ap.add_argument("--input", required=True, help="Ruta de imagen fuente (png/jpg/webp).")
+    ap.add_argument("--out", default="assets/icons", help="Directorio de salida")
     args = ap.parse_args()
 
     if not os.path.exists(args.input):
         die(f"No existe input: {args.input}")
 
     if not ensure_pillow():
-        die("No está instalado Pillow. En Codespace corre: pip install pillow")
+        die("Falta Pillow. Instalar con: pip install pillow")
 
     from PIL import Image
-
     os.makedirs(args.out, exist_ok=True)
-
     src = Image.open(args.input).convert("RGBA")
 
     def make_square(im: Image.Image, size: int, padding_ratio: float):
-        # canvas transparente
         canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-
-        # encaja manteniendo aspecto + padding
         pad = int(size * padding_ratio)
         max_w = size - pad * 2
         max_h = size - pad * 2
-
         w, h = im.size
         scale = min(max_w / w, max_h / h)
         nw = max(1, int(w * scale))
         nh = max(1, int(h * scale))
-
         resized = im.resize((nw, nh), Image.LANCZOS)
-
         x = (size - nw) // 2
         y = (size - nh) // 2
         canvas.alpha_composite(resized, (x, y))
         return canvas
 
     outputs = [
-        ("icon-192.png", 192, 0.08),            # standard (ligero padding)
+        ("icon-192.png", 192, 0.08),
         ("icon-512.png", 512, 0.08),
-        ("icon-192-maskable.png", 192, 0.20),   # maskable necesita zona segura
+        ("icon-192-maskable.png", 192, 0.20),
         ("icon-512-maskable.png", 512, 0.20),
     ]
 
@@ -76,7 +63,7 @@ def main():
         img.save(out_path, format="PNG", optimize=True)
         print(f"OK: {out_path}")
 
-    print("DONE: PWA icons generados y alineados a site.webmanifest")
+    print("DONE: PWA icons generados.")
 
 if __name__ == "__main__":
     main()
