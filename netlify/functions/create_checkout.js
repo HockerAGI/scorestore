@@ -36,16 +36,16 @@ exports.handler = async (event) => {
 
     if (!items.length) return jsonResponse(400, { ok: false, error: "Carrito vacío" }, origin);
 
-    // Cargar catálogo y promociones
+    // Cargar catálogo y promociones de manera segura
     const { index } = getCatalogIndex();
     const promos = readJsonFile("data/promos.json");
     
-    // Validar cupón si se proporcionó
+    // Validar cupón si se proporcionó y el archivo existe
     let validPromo = null;
     let discountPercent = 0;
     let isFreeShipping = false;
 
-    if (promo_code) {
+    if (promo_code && promos) {
       validPromo = promos?.rules?.find(r => r.code.toUpperCase() === promo_code && r.active);
       if (validPromo) {
         if (validPromo.type === "percent") {
@@ -114,7 +114,7 @@ exports.handler = async (event) => {
       payment_method_types: ["card", "oxxo"],
       line_items,
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/index.html#catalog`,
+      cancel_url: `${baseUrl}/index.html#categories`,
       metadata: {
         shipping_mode,
         postal_code: postal_code || "",
