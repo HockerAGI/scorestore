@@ -36,7 +36,6 @@ exports.handler = async (event) => {
       },
     };
 
-    // Utilización de Fetch Nativo para evitar fallos de dependencias (Axios) en Netlify Functions
     const res = await fetch(url, {
       method: 'POST',
       headers: { "Content-Type": "application/json" },
