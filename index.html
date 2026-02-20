@@ -2,16 +2,15 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Merch Oficial de Score International. Fabricado por UNICO UNIFORMES, patrocinador oficial. Pago seguro con Stripe + OXXO." />
-  
+  <meta name="description" content="Merch Oficial de Score International. Fabricado por UNICO UNIFORMES, patrocinador oficial. Pago seguro con Stripe + Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-
   <title>SCORE STORE — Merch Oficial</title>
 
   <link rel="manifest" href="site.webmanifest" />
   <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
@@ -23,6 +22,17 @@
   <link rel="preload" href="assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="assets/hero.webp" as="image" type="image/webp" />
   <link rel="stylesheet" href="css/styles.css" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "Score Store by Único Uniformes",
+      "url": "https://scorestore.netlify.app/",
+      "logo": "https://scorestore.netlify.app/assets/logo-score.webp",
+      "description": "Mercancía oficial de Score International Off-Road Racing."
+    }
+  </script>
 </head>
 
 <body>
@@ -30,8 +40,8 @@
     <div class="splash__bg"></div>
     <div class="splash__inner">
       <img class="splash__logo" src="assets/logo-score.webp" alt="SCORE" width="220" height="88" />
-      <div class="splash__subtitle" style="color: var(--red); font-weight: 900; letter-spacing: 4px; margin-bottom: 20px;">OFFICIAL MERCHANDISE</div>
-      <div class="splash__bar" role="progressbar" aria-label="Cargando">
+      <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
+      <div class="splash__bar" role="progressbar" aria-label="Cargando tienda">
         <div class="splash__barFill"></div>
       </div>
       <div class="splash__text">PREPARANDO MOTORES...</div>
@@ -43,32 +53,32 @@
   <header class="topbar" role="banner">
     <div class="wrap topbar__inner">
       <button id="openMenuBtn" class="iconbtn" type="button" aria-label="Abrir menú">
-        <span class="icon">≡</span>
+        <span class="icon" aria-hidden="true">≡</span>
       </button>
 
-      <a class="brand" href="#" aria-label="Score Store">
+      <a class="brand" href="#" aria-label="Score Store Inicio">
         <img class="brand__logo" src="assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
       </a>
 
       <div class="topbar__actions">
         <div class="search desktop-only">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar productos..." autocomplete="off" />
+          <input id="searchInput" class="search__input" type="search" placeholder="Buscar productos..." autocomplete="off" aria-label="Búsqueda de productos" />
         </div>
 
-        <button id="openAiBtn" class="iconbtn desktop-only tooltip-wrap" type="button" aria-label="Abrir asistente" title="SCORE AI">
-          <span class="icon" style="color: var(--red);">✦</span>
+        <button id="openAiBtn" class="iconbtn desktop-only tooltip-wrap" type="button" aria-label="Abrir asistente de IA" title="SCORE AI">
+          <span class="icon" style="color: var(--red);" aria-hidden="true">✦</span>
         </button>
 
-        <button id="openCartBtn" class="iconbtn iconbtn--dark" type="button" aria-label="Abrir carrito" title="Carrito">
-          <span class="icon">🛒</span>
+        <button id="openCartBtn" class="iconbtn iconbtn--dark" type="button" aria-label="Ver carrito de compras" title="Carrito">
+          <span class="icon" aria-hidden="true">🛒</span>
           <span id="cartCount" class="badge" aria-label="Artículos en carrito">0</span>
         </button>
       </div>
     </div>
   </header>
 
-  <section class="hero" aria-label="Intro">
+  <section class="hero" aria-label="Introducción">
     <div class="hero__bg" aria-hidden="true"></div>
     <div class="hero__overlay" aria-hidden="true"></div>
 
@@ -83,40 +93,39 @@
         </div>
 
         <div class="hero__meta">
-          <span class="chip"><img src="assets/logo-score.webp" alt="Score" style="height:12px; margin-right:5px;"> Stripe / OXXO</span>
-          <span class="chip">📦 Envía.com</span>
+          <span class="chip"><img src="assets/logo-score.webp" alt="Score" style="height:12px; margin-right:5px;"> Pagos Seguros Stripe</span>
+          <span class="chip">📦 Envíos rápidos Envía.com</span>
         </div>
       </div>
     </div>
   </section>
 
   <main id="main" class="main" role="main">
-    
     <section class="wrap section main-card-bg" aria-label="Catálogos">
       <div class="section__head">
-        <h2 id="categories" style="display:flex; align-items:center; gap:10px;">Colecciones Oficiales</h2>
+        <h2 id="categories">Colecciones Oficiales</h2>
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint">Selecciona una colección para ver sus productos.</div>
+      <div id="categoryHint" class="hint">Selecciona una colección para visualizar sus productos exclusivos.</div>
     </section>
 
-    <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Catálogo" hidden>
+    <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Productos de la colección" hidden>
       <div class="carousel-header">
         <h3 id="carouselTitle" style="color: var(--red); display:flex; align-items:center; gap:10px;">Productos</h3>
         <div class="carousel-controls desktop-only">
-          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark" aria-label="Anterior">←</button>
-          <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Siguiente">→</button>
+          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark" aria-label="Desplazar a la izquierda">←</button>
+          <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Desplazar a la derecha">→</button>
         </div>
       </div>
 
       <div class="section__head" style="margin-bottom: 10px;">
         <div class="section__tools" style="margin-left: auto;">
           <select id="sortSelect" class="select" aria-label="Ordenar productos">
-            <option value="featured">Destacados</option>
-            <option value="price_asc">Precio: menor a mayor</option>
-            <option value="price_desc">Precio: mayor a menor</option>
-            <option value="name_asc">Nombre: A→Z</option>
+            <option value="featured">Ordenar: Destacados</option>
+            <option value="price_asc">Precio: Menor a mayor</option>
+            <option value="price_desc">Precio: Mayor a menor</option>
+            <option value="name_asc">Nombre: A → Z</option>
           </select>
         </div>
       </div>
@@ -134,14 +143,14 @@
     </section>
   </main>
 
-  <section class="partners" aria-label="Partners">
+  <section class="partners" aria-label="Nuestros Partners">
     <div class="wrap partners__inner">
       <div class="partners__title">OFFICIAL PARTNERS</div>
       <div class="partners__row">
         <img src="assets/logo-ford.webp" alt="Ford" width="90" height="35" loading="lazy" />
-        <img src="assets/logo-rzr.webp" alt="RZR" width="90" height="35" loading="lazy" />
+        <img src="assets/logo-rzr.webp" alt="Polaris RZR" width="90" height="35" loading="lazy" />
         <img src="assets/logo-unico.webp" alt="Único Uniformes" width="90" height="35" loading="lazy" />
-        <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich" width="90" height="35" loading="lazy" />
+        <img src="assets/logo-bfgodrich.webp" alt="BFGoodrich Tires" width="90" height="35" loading="lazy" />
       </div>
     </div>
   </section>
@@ -150,17 +159,16 @@
     <div class="wrap footer__inner">
       <div class="footer__brand-col">
         <div class="footer__brand"><span style="color: var(--red);">SCORE</span> STORE</div>
-        <div class="footer__sub">Pago seguro con Stripe · OXXO disponible · Envíos con Envía.com<br><br>Fabricado y Operado por <b style="color: white;">Único Uniformes</b>.</div>
+        <div class="footer__sub">Pago cifrado y seguro vía Stripe.<br>OXXO Pay disponible.<br>Logística avanzada con Envía.com.<br><br>Fabricado y Operado por <b style="color: white;">Único Uniformes</b>.</div>
       </div>
       
       <div class="footer__socials">
-        <div class="social-title">SÍGUENOS</div>
+        <div class="social-title">CONÉCTATE</div>
         <div class="social-links">
           <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook</a>
           <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
           <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener">YouTube</a>
-          <a href="https://linktr.ee/unicouniformes" target="_blank" rel="noopener">Linktree</a>
-          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Web</a>
+          <a href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Oficial Único</a>
         </div>
       </div>
 
@@ -170,36 +178,36 @@
     </div>
   </footer>
 
-  <button id="floatingAiBtn" class="floating-ai" aria-label="Abrir SCORE AI" title="Chatea con SCORE AI">
-    <span class="icon">✦</span>
+  <button id="floatingAiBtn" class="floating-ai" aria-label="Abrir asistente inteligente SCORE AI" title="Chatea con SCORE AI">
+    <span class="icon" aria-hidden="true">✦</span>
   </button>
 
   <div id="overlay" class="overlay" hidden></div>
 
-  <aside id="sideMenu" class="drawer" aria-label="Menú" hidden>
+  <aside id="sideMenu" class="drawer" aria-label="Menú principal" hidden>
     <div class="drawer__head">
-      <div class="drawer__title">Menú</div>
-      <button id="closeMenuBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      <div class="drawer__title">Menú Principal</div>
+      <button id="closeMenuBtn" class="iconbtn" aria-label="Cerrar menú" type="button">✕</button>
     </div>
 
     <div class="drawer__body">
-      <button class="navitem" type="button" data-scroll="#categories">Colecciones</button>
-      <button class="navitem" type="button" id="navOpenCart">Ver Carrito</button>
-      <button class="navitem" type="button" id="navOpenAi"><span style="color: var(--red);">✦</span> SCORE AI</button>
+      <button class="navitem" type="button" data-scroll="#categories">Ver Colecciones SCORE</button>
+      <button class="navitem" type="button" id="navOpenCart">Ir a mi Carrito</button>
+      <button class="navitem" type="button" id="navOpenAi"><span style="color: var(--red);">✦</span> Consultar SCORE AI</button>
       
       <div class="drawer__divider"></div>
-      <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank" rel="noopener">Sitio Único Uniformes</a>
+      <a class="navitem navitem--link" href="https://unicouniformes.com/" target="_blank" rel="noopener">Ir a Único Uniformes ↗</a>
     </div>
 
     <div class="drawer__foot">
-      <div class="muted">v<span id="appVersionLabel">—</span></div>
+      <div class="muted">Versión del sistema: <span id="appVersionLabel">—</span></div>
     </div>
   </aside>
 
-  <aside id="cartDrawer" class="drawer drawer--right" aria-label="Carrito" hidden>
+  <aside id="cartDrawer" class="drawer drawer--right" aria-label="Carrito de compras" hidden>
     <div class="drawer__head">
       <div class="drawer__title">Tu Carrito</div>
-      <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+      <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar carrito" type="button">✕</button>
     </div>
 
     <div class="drawer__body">
@@ -207,20 +215,20 @@
 
       <div class="cartbox">
         <div class="cartrow">
-          <span>Subtotal</span>
-          <b id="cartSubtotal">$0</b>
+          <span>Subtotal de productos</span>
+          <b id="cartSubtotal">$0.00</b>
         </div>
 
         <div class="cartrow cartrow--stack">
           <div class="cartrow__line">
-            <span>Entrega</span>
+            <span>Método de entrega</span>
             <span class="muted" id="shipHint">Selecciona modo</span>
           </div>
 
-          <div class="seg" role="group" aria-label="Modo de entrega">
+          <div class="seg" role="group" aria-label="Opciones de entrega">
             <label class="seg__opt">
               <input type="radio" name="shipMode" value="pickup" checked />
-              <span>Recoger en fábrica</span>
+              <span>Recoger en Tienda (TJ)</span>
             </label>
             <label class="seg__opt">
               <input type="radio" name="shipMode" value="envia_mx" />
@@ -233,88 +241,91 @@
           </div>
 
           <div id="postalWrap" class="postal" hidden>
-            <input id="postalCode" class="input" inputmode="numeric" maxlength="10" placeholder="Código postal / ZIP" />
-            <button id="quoteBtn" class="btn btn--tiny btn--black" type="button">Cotizar</button>
+            <input id="postalCode" class="input" inputmode="numeric" maxlength="10" placeholder="Ingresa Código Postal o ZIP" aria-label="Código Postal" />
+            <button id="quoteBtn" class="btn btn--tiny btn--black" type="button">Cotizar Envío</button>
           </div>
 
-          <div class="cartrow">
-            <span>Envío</span>
-            <b id="shippingLine">$0</b>
+          <div class="cartrow" style="margin-top:10px;">
+            <span>Costo de Envío</span>
+            <b id="shippingLine">$0.00</b>
           </div>
         </div>
 
-        <div class="cartrow">
-          <span class="total-label">Total</span>
-          <b id="cartTotal" class="total-price">$0</b>
+        <div class="cartrow" style="border-top: 2px solid var(--border); padding-top: 15px;">
+          <span class="total-label">Total a Pagar</span>
+          <b id="cartTotal" class="total-price">$0.00</b>
         </div>
 
         <div class="cartrow cartrow--stack">
-          <label class="muted" for="promoCode">Cupón (opcional)</label>
-          <input id="promoCode" class="input" placeholder="PROMO10" />
+          <label class="muted" for="promoCode">¿Tienes un cupón de descuento?</label>
+          <input id="promoCode" class="input" placeholder="Ej. SCORE10" aria-label="Código promocional" />
         </div>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Pagar Seguro</button>
-        <div id="checkoutMsg" class="hint" hidden></div>
+        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button">Proceder al Pago Seguro 🔒</button>
+        <div id="checkoutMsg" class="hint" hidden style="margin-top:10px; color:var(--red);"></div>
       </div>
     </div>
   </aside>
 
-  <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Producto" hidden>
+  <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Detalles del Producto" hidden>
     <div class="modal__panel">
       <div class="modal__head">
-        <div class="modal__title" id="pmTitle">Producto</div>
-        <button id="pmClose" class="iconbtn" aria-label="Cerrar" type="button">✕</button>
+        <button id="pmBackBtn" class="iconbtn" aria-label="Volver atrás" type="button" style="margin-right: 15px;">←</button>
+        <div class="modal__title" id="pmTitle" style="flex-grow: 1; text-align: left;">Cargando...</div>
+        <button id="pmClose" class="iconbtn" aria-label="Cerrar detalles" type="button">✕</button>
       </div>
 
       <div class="modal__body" style="padding: 0;">
         <div id="pmCarousel" class="pm__media"></div>
 
-        <div class="pm__info" style="padding: 20px;">
+        <div class="pm__info" style="padding: 24px;">
           <div class="pm__chips" id="pmChips"></div>
-          <div class="pm__price" id="pmPrice" style="color: var(--red);">$0</div>
+          <div class="pm__price" id="pmPrice" style="color: var(--red);">$0.00</div>
           <div class="pm__desc" id="pmDesc"></div>
 
           <div class="pm__row">
             <div class="pm__col">
-              <label class="muted" for="pmSize">Talla</label>
-              <select id="pmSize" class="select"></select>
+              <label class="muted" for="pmSize">Selecciona tu Talla</label>
+              <select id="pmSize" class="select" aria-label="Selector de talla"></select>
             </div>
             <div class="pm__col">
               <label class="muted" for="pmQty">Cantidad</label>
-              <input id="pmQty" class="input" type="number" min="1" max="99" value="1" />
+              <input id="pmQty" class="input" type="number" min="1" max="99" value="1" aria-label="Selector de cantidad" />
             </div>
           </div>
 
-          <button id="pmAdd" class="btn btn--black btn--block btn--large" type="button">Agregar al carrito</button>
+          <button id="pmAdd" class="btn btn--black btn--block btn--large cinematic-btn" type="button">
+            🛒 Agregar al Carrito
+          </button>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="aiModal" class="modal" role="dialog" aria-modal="true" aria-label="SCORE AI" hidden>
+  <section id="aiModal" class="modal" role="dialog" aria-modal="true" aria-label="SCORE AI Assistant" hidden>
     <div class="modal__panel modal__panel--tall">
       <div class="modal__head" style="background: var(--black-btn); color: white; border-bottom: none;">
-        <div class="modal__title"><span style="color: var(--red);">✦</span> SCORE AI</div>
-        <button id="aiClose" class="iconbtn iconbtn--dark" aria-label="Cerrar" type="button">✕</button>
+        <div class="modal__title"><span style="color: var(--red);">✦</span> SCORE AI Assistant</div>
+        <button id="aiClose" class="iconbtn iconbtn--dark" aria-label="Cerrar chat" type="button">✕</button>
       </div>
 
-      <div class="modal__body" style="background: var(--bg-alt);">
-        <div id="aiOutput" class="chat"></div>
+      <div class="modal__body" style="background: var(--bg-alt); display:flex; flex-direction:column;">
+        <div id="aiOutput" class="chat" aria-live="polite"></div>
         <div class="chatbar">
-          <input id="aiInput" class="input" placeholder="Escribe tu duda aquí..." />
+          <input id="aiInput" class="input" placeholder="Pregunta sobre envíos, tallas o pedidos..." aria-label="Mensaje para SCORE AI" />
           <button id="aiSendBtn" class="btn btn--primary" type="button">Enviar</button>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Cookies" hidden>
+  <section id="cookieBanner" class="cookie" role="dialog" aria-label="Aviso de Cookies" hidden>
     <div class="cookie__text">
-      Usamos cookies para asegurar la mejor experiencia Off-Road.
+      <b>Aviso de Privacidad:</b> Utilizamos cookies para optimizar tu experiencia de compra Off-Road. Al continuar, aceptas nuestros términos.
     </div>
     <div class="cookie__actions">
       <button id="cookieReject" class="btn btn--ghost" type="button">Rechazar</button>
-      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar</button>
+      <button id="cookieAccept" class="btn btn--primary" type="button">Aceptar y Continuar</button>
     </div>
   </section>
 
@@ -324,9 +335,9 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registrado con éxito bajo el scope: ', registration.scope);
+          console.log('SCORE PWA Registrada exitosamente.', registration.scope);
         }).catch(error => {
-          console.error('SW fallo en el registro: ', error);
+          console.error('Error al registrar PWA:', error);
         });
       });
     }
