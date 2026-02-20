@@ -114,6 +114,10 @@ ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS tracking_number text
 ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS label_url text NULL;
 ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS raw jsonb NOT NULL DEFAULT '{}'::jsonb;
 
+-- CORRECCIÓN: AGREGADAS COLUMNAS FALTANTES PARA WEBHOOK DE ENVÍA
+ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending';
+ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+
 DO $$
 BEGIN
   IF NOT EXISTS (
