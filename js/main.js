@@ -1,9 +1,7 @@
 /* =========================================================
    SCORE STORE — Frontend (PRO) v2026.02.19 (FULL)
-   - Lógica ajustada: Ocultar "Todos los productos"
+   - Lógica para insertar Logos en vez de texto en UI
    - Decodificación robusta para rutas de imágenes
-   - Tarjetas sin texto con botón "Ver Catálogo" y animación
-   - Botón flotante IA implementado
    ========================================================= */
 
 (() => {
@@ -158,7 +156,6 @@
     el.hidden = false;
     openSet.add(el);
     refreshOverlay();
-    // Previene scroll al top en Safari/iOS al abrir modales
     if(el.classList.contains('drawer')) { el.style.transform = 'none'; }
   };
   const closeLayer = (el) => {
@@ -167,7 +164,7 @@
     refreshOverlay();
     if(el.classList.contains('drawer')) {
       el.style.transform = el.classList.contains('drawer--right') ? 'translateX(100%)' : 'translateX(-100%)';
-      setTimeout(() => el.hidden = true, 400); // Tiempo coincide con CSS transition
+      setTimeout(() => el.hidden = true, 400); 
     } else {
       el.hidden = true;
     }
@@ -181,6 +178,11 @@
     const sid = String(sectionId || "").trim();
     const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
     return found ? found.uiId : null;
+  };
+
+  const getLogoForSection = (uiId) => {
+    const found = CATEGORY_CONFIG.find((c) => c.uiId === uiId);
+    return found ? found.logo : 'assets/logo-score.webp';
   };
 
   const inferCollection = (p) => {
@@ -226,7 +228,6 @@
       card.className = "catcard";
       card.setAttribute("data-cat", cat.uiId);
 
-      // NUEVO DISEÑO: Sin textos, logo centrado (con dimensiones explícitas), textura visible, botón hover
       card.innerHTML = `
         <div class="catcard__bg"></div>
         <div class="catcard__inner">
@@ -314,7 +315,10 @@
       card.className = "card";
       card.setAttribute("data-sku", p.sku);
 
-      const pill = p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : `<span class="pill">${escapeHtml(p.uiSection)}</span>`;
+      // Integración de Logo según la instrucción
+      const logoUrl = getLogoForSection(p.uiSection);
+      const logoPill = `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="${escapeHtml(p.uiSection)}"></span>`;
+      const collectionPill = p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : "";
 
       card.innerHTML = `
         <div class="card__media">
@@ -324,7 +328,9 @@
           <h3 class="card__title">${escapeHtml(p.title)}</h3>
           <div class="card__row">
             <div class="price">${money(p.priceCents)}</div>
-            ${pill}
+            <div style="display:flex; gap:5px; align-items:center;">
+              ${logoPill} ${collectionPill}
+            </div>
           </div>
         </div>
       `;
@@ -349,7 +355,8 @@
 
     if (pmChips) {
       pmChips.innerHTML = "";
-      if (p.uiSection) pmChips.innerHTML += `<span class="pill">${escapeHtml(p.uiSection)}</span>`;
+      const logoUrl = getLogoForSection(p.uiSection);
+      pmChips.innerHTML += `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="${escapeHtml(p.uiSection)}"></span>`;
       if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
@@ -615,7 +622,7 @@
     // Eventos de AI
     openAiBtn?.addEventListener("click", openAiChat);
     navOpenAi?.addEventListener("click", openAiChat);
-    floatingAiBtn?.addEventListener("click", openAiChat); // <-- BOTÓN FLOTANTE
+    floatingAiBtn?.addEventListener("click", openAiChat);
     aiClose?.addEventListener("click", () => closeLayer(aiModal));
     aiSendBtn?.addEventListener("click", sendAi);
     aiInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendAi(); });
