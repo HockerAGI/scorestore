@@ -38,9 +38,9 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Evita cachear el catálogo (para que siempre respete cambios)
+# CORRECCIÓN: Evita cachear CUALQUIER JSON de la carpeta data (catálogo y cupones promocionales)
 [[headers]]
-  for = "/data/catalog.json"
+  for = "/data/*.json"
   [headers.values]
     Cache-Control = "no-store"
 
