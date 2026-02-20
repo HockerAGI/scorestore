@@ -181,7 +181,7 @@ button, input, select { font: inherit; }
 .filterrow__label { font-weight: 900; color: var(--text); }
 .status { color: var(--muted); font-size: 14px; font-weight: bold; }
 
-/* CARRUSEL PRODUCTOS GRID (Modificado para Efecto Isla) */
+/* CARRUSEL PRODUCTOS GRID */
 .carousel-section { 
   background: rgba(235, 235, 240, 0.95); 
   backdrop-filter: blur(10px); 
@@ -198,7 +198,6 @@ button, input, select { font: inherit; }
 .carousel-controls { display: flex; gap: 10px; }
 .carousel-wrapper { position: relative; width: 100%; }
 
-/* GAP AUMENTADO PARA SEPARAR TARJETAS */
 .carousel-track { 
   display: flex; 
   gap: 32px; 
@@ -213,7 +212,7 @@ button, input, select { font: inherit; }
 .carousel-track::-webkit-scrollbar-track { background: #e0e0e5; border-radius: 5px; }
 .carousel-track::-webkit-scrollbar-thumb { background: var(--red); border-radius: 5px; border: 2px solid #e0e0e5; }
 
-/* PRODUCT CARD (REDISEÑADA PARA EFECTO ISLA INDIVIDUAL) */
+/* PRODUCT CARD */
 .card { 
   flex: 0 0 310px; 
   scroll-snap-align: start; 
@@ -233,7 +232,6 @@ button, input, select { font: inherit; }
   border-color: var(--red); 
 }
 
-/* Área de imagen de la tarjeta */
 .card__media { 
   position: relative; 
   aspect-ratio: 4 / 5; 
@@ -246,7 +244,6 @@ button, input, select { font: inherit; }
 .card__track::-webkit-scrollbar { display: none; }
 .card__track img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; scroll-snap-align: start; padding: 20px; }
 
-/* Swipe Hint UX */
 .card__swipe-hint {
   position: absolute; top: 15px; right: 15px;
   background: rgba(0,0,0,0.65); color: #fff;
@@ -263,7 +260,6 @@ button, input, select { font: inherit; }
 .card__nav--prev { left: 10px; }
 .card__nav--next { right: 10px; }
 
-/* Cápsula de Puntos (Dots) */
 .card__dots { 
   position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 8px; z-index: 5; transition: bottom 0.3s; 
@@ -273,13 +269,11 @@ button, input, select { font: inherit; }
 .card__dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: 0.3s; }
 .card__dot.active { background: #fff; transform: scale(1.3); box-shadow: 0 0 5px rgba(255,255,255,0.8); }
 
-/* Quick Add Button */
 .card__quick-add { position: absolute; bottom: -60px; left: 20px; right: 20px; background: var(--red); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: all 0.4s; opacity: 0; z-index: 10; box-shadow: 0 10px 20px rgba(225,6,0,0.4); text-transform: uppercase; letter-spacing: 0.5px; font-size: 14px; }
 .card__quick-add:hover { background: var(--black-btn); transform: translateY(-3px); }
 .card:hover .card__quick-add { bottom: 20px; opacity: 1; }
 .card:hover .card__dots { bottom: 85px; } 
 
-/* Cuerpo de la tarjeta */
 .card__body { padding: 24px; display: flex; flex-direction: column; flex-grow: 1; z-index: 2; position: relative; background: #fff; border-radius: 0 0 var(--radius2) var(--radius2); }
 .card__title { font-weight: 900; font-size: 18px; line-height: 1.3; margin: 0 0 12px 0; color: var(--black-btn); }
 .card__row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 15px; border-top: 1px dashed var(--border); }
