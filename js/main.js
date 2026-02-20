@@ -1,6 +1,7 @@
 /* =========================================================
-   SCORE STORE — Frontend (PRO) v2026.02.19 (FULL)
-   - Lógica de UI / UX / Carrusel FB Style
+   SCORE STORE — Frontend (PRO) v2026.02.20 (FULL UX FIX)
+   - Lógica de UI / UX / Carrusel FB Style Restaurado
+   - Fix de botones atrapados y Selectores
    - Stripe + Envia Checkout Integrations
    ========================================================= */
 
@@ -52,6 +53,7 @@
   const cartTotalEl = $("#cartTotal");
 
   const shipHint = $("#shipHint");
+  const shippingNote = $("#shippingNote");
   const postalWrap = $("#postalWrap");
   const postalCodeInput = $("#postalCode");
   const quoteBtn = $("#quoteBtn");
@@ -62,6 +64,7 @@
 
   const productModal = $("#productModal");
   const pmClose = $("#pmClose");
+  const pmBackBtn = $("#pmBackBtn"); // Restaurado para UX
   const pmTitle = $("#pmTitle");
   const pmCarousel = $("#pmCarousel");
   const pmPrice = $("#pmPrice");
@@ -280,6 +283,7 @@
     return out;
   };
 
+  // RESTAURACIÓN UX: CARRUSEL EN GRID Y QUICK ADD
   const renderProducts = () => {
     if (!productGrid || !catalogCarouselSection) return;
     
@@ -297,7 +301,7 @@
       return;
     }
 
-    setStatus(`Mostrando ${list.length} producto(s)`);
+    setStatus(`Resultados: ${list.length} prendas`);
     const frag = document.createDocumentFragment();
 
     for (const p of list) {
@@ -309,9 +313,18 @@
       const logoPill = `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="Logo"></span>`;
       const collectionPill = p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : "";
 
+      // Restauración del código de carrusel estilo FB/IG
+      const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
+      let trackHtml = imgs.map((src) => `<img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("");
+      let dotsHtml = imgs.length > 1 ? `<div class="card__dots">${imgs.map((_,i)=>`<span class="card__dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
+      let navHtml = imgs.length > 1 ? `<button class="card__nav card__nav--prev" aria-label="Anterior" type="button">‹</button><button class="card__nav card__nav--next" aria-label="Siguiente" type="button">›</button>` : '';
+
       card.innerHTML = `
         <div class="card__media">
-          ${p.img ? `<img loading="lazy" decoding="async" src="${p.img}" alt="${escapeHtml(p.title)}">` : ""}
+          <div class="card__track">${trackHtml}</div>
+          ${navHtml}
+          ${dotsHtml}
+          <button class="card__quick-add" type="button">➕ Agregar Rápido</button>
         </div>
         <div class="card__body">
           <h3 class="card__title">${escapeHtml(p.title)}</h3>
@@ -323,6 +336,41 @@
           </div>
         </div>
       `;
+
+      // Eventos del mini-carrusel
+      const track = card.querySelector('.card__track');
+      const dots = card.querySelectorAll('.card__dot');
+      const btnPrev = card.querySelector('.card__nav--prev');
+      const btnNext = card.querySelector('.card__nav--next');
+      const btnQuickAdd = card.querySelector('.card__quick-add');
+
+      if (track && dots.length > 0) {
+        track.addEventListener('scroll', debounce(() => {
+          let idx = Math.round(track.scrollLeft / track.clientWidth);
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        }, 50));
+        
+        if(btnPrev) {
+          btnPrev.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
+          });
+        }
+        if(btnNext) {
+          btnNext.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+          });
+        }
+      }
+
+      // Evento de Quick Add
+      if(btnQuickAdd) {
+        btnQuickAdd.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addToCart(p, p.sizes?.[0] || "M", 1);
+        });
+      }
 
       card.addEventListener("click", () => openProduct(p.sku));
       frag.appendChild(card);
@@ -350,7 +398,9 @@
     if (pmSize) {
       pmSize.innerHTML = "";
       for (const s of p.sizes) {
-        const opt = document.createElement("option"); opt.value = s; opt.textContent = s;
+        const opt = document.createElement("option"); 
+        opt.value = s; 
+        opt.textContent = `Talla: ${s}`;
         pmSize.appendChild(opt);
       }
     }
@@ -396,14 +446,16 @@
 
   const addToCart = (p, size, qty) => {
     const q = clampInt(qty, 1, 99);
-    const s = String(size || "").trim() || (p.sizes?.[0] || "M");
+    // Limpiamos la palabra "Talla: " si el usuario la seleccionó del dropdown visual
+    const sRaw = String(size || "").trim();
+    const s = sRaw.replace("Talla: ", "") || (p.sizes?.[0] || "M");
     const key = `${p.sku}__${s}`;
     const idx = cart.findIndex((x) => `${x.sku}__${x.size}` === key);
 
     if (idx >= 0) cart[idx].qty = clampInt(cart[idx].qty + q, 1, 99);
     else cart.push({ sku: p.sku, title: p.title, priceCents: p.priceCents, size: s, qty: q, img: p.img || "", uiSection: p.uiSection || "", collection: p.collection || "" });
 
-    saveCart(); renderCart(); showToast("Agregado al carrito");
+    saveCart(); renderCart(); showToast("Agregado al carrito exitosamente");
   };
 
   const removeCartItem = (sku, size) => { cart = cart.filter((x) => !(x.sku === sku && x.size === size)); saveCart(); renderCart(); };
@@ -425,7 +477,7 @@
     cartItemsEl.innerHTML = "";
 
     if (!cart.length) {
-      cartItemsEl.innerHTML = `<div class="hint">Tu carrito está vacío.</div>`;
+      cartItemsEl.innerHTML = `<div class="hint" style="text-align:center; padding: 20px;">🛒 Tu carrito está vacío.<br><br><button class="btn btn--primary" onclick="document.querySelector('#closeCartBtn').click()">Explorar Tienda</button></div>`;
       if (cartSubtotalEl) cartSubtotalEl.textContent = money(0);
       if (shippingLineEl) shippingLineEl.textContent = money(0);
       if (cartTotalEl) cartTotalEl.textContent = money(0);
@@ -439,12 +491,12 @@
         <div class="cartitem__img">${it.img ? `<img src="${safeUrl(it.img)}" alt="${escapeHtml(it.title)}">` : ""}</div>
         <div style="flex-grow:1;">
           <h4 class="cartitem__title">${escapeHtml(it.title)}</h4>
-          <div class="cartitem__meta">Talla: <b>${escapeHtml(it.size)}</b> · ${money(it.priceCents)} c/u</div>
+          <div class="cartitem__meta">Talla: <b style="color:var(--black-btn); font-size:15px;">${escapeHtml(it.size)}</b> · ${money(it.priceCents)} c/u</div>
           <div class="cartitem__controls">
             <div class="qty" aria-label="Cantidad">
               <button type="button" data-act="dec">−</button><span>${it.qty}</span><button type="button" data-act="inc">+</button>
             </div>
-            <button class="trash" type="button">Quitar</button>
+            <button class="trash" type="button">Eliminar</button>
           </div>
         </div>
       `;
@@ -468,14 +520,17 @@
 
   const getSelectedShipMode = () => { const el = document.querySelector('input[name="shipMode"]:checked'); return el ? String(el.value || "pickup") : "pickup"; };
 
-  const syncShippingLabelsInUI = () => {
-    const pickupLabelSpan = document.querySelector('input[name="shipMode"][value="pickup"]')?.closest("label")?.querySelector("span");
-    if (pickupLabelSpan) pickupLabelSpan.textContent = "Recoger en fábrica";
-  };
-
   const refreshShippingUI = () => {
     shipping.mode = getSelectedShipMode();
     if (shipHint) shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona modo";
+    
+    // UI Dinámica para ayudar al usuario
+    if (shippingNote) {
+      if(shipping.mode === 'pickup') shippingNote.textContent = "Recoge gratis en nuestras instalaciones en Tijuana.";
+      else if(shipping.mode === 'envia_mx') shippingNote.textContent = "Envío estándar nacional de 3 a 5 días.";
+      else if(shipping.mode === 'envia_us') shippingNote.textContent = "Envío USA Internacional de 5 a 10 días.";
+    }
+
     const needsZip = shipping.mode === "envia_mx" || shipping.mode === "envia_us";
     if (postalWrap) postalWrap.hidden = !needsZip;
 
@@ -490,23 +545,23 @@
     if (mode === "pickup") { shipping.mode = "pickup"; shipping.quote = null; saveShipping(); renderCart(); return; }
 
     const postal_code = String(postalCodeInput?.value || "").trim();
-    if (postal_code.length < 4) { showToast("Ingresa un CP/ZIP válido"); return; }
-    if (!cart.length) { showToast("Carrito vacío"); return; }
-    if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.textContent = "Cotizando…"; }
+    if (postal_code.length < 4) { showToast("Ingresa un CP o ZIP válido para calcular tu envío."); return; }
+    if (!cart.length) { showToast("El carrito está vacío"); return; }
+    if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.textContent = "Calculando..."; }
 
     try {
       const body = { postal_code, shipping_mode: mode, country: mode === "envia_us" ? "US" : "MX", items: cart.map((it) => ({ sku: it.sku, qty: it.qty })) };
       const res = await fetch("/.netlify/functions/quote_shipping", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo cotizar");
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo cotizar automáticamente.");
 
       shipping.mode = mode; shipping.postal_code = postal_code;
       shipping.quote = { amount_cents: Number(data.amount_cents || 0), amount_mxn: Number(data.amount_mxn || 0), label: String(data.label || "Standard"), country: String(data.country || body.country), provider: String(data.provider || "envia") };
-      saveShipping(); renderCart(); showToast(`Envío calculado`);
+      saveShipping(); renderCart(); showToast(`Costo de envío calculado ✅`);
     } catch (e) {
       shipping.quote = null; saveShipping(); renderCart(); showToast(`Error en cotización, intenta de nuevo.`);
     } finally {
-      if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Cotizar"; }
+      if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Calcular"; }
     }
   };
 
@@ -520,13 +575,13 @@
     const needsZip = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
 
     if (needsZip) {
-      if (postal_code.length < 4) { showToast("Ingresa tu CP/ZIP"); return; }
+      if (postal_code.length < 4) { showToast("Debes ingresar tu CP/ZIP para el envío."); return; }
       if (!shipping.quote || shipping.postal_code !== postal_code || shipping.mode !== shipping_mode) {
         await quoteShipping(); if (!shipping.quote) return;
       }
     }
 
-    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = "Conectando con Stripe..."; }
+    if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = "Conectando con Stripe Seguro 🔒..."; }
 
     try {
       const payload = { items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), shipping_mode, postal_code: needsZip ? postal_code : "", promo_code };
@@ -536,10 +591,10 @@
       
       window.location.assign(data.url);
     } catch (e) {
-      if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`; }
-      showToast("Error en checkout");
+      if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso del sistema: ${String(e?.message || e)}`; }
+      showToast("Hubo un error al procesar el pago.");
     } finally {
-      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = "Pagar Seguro"; }
+      if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = "Proceder al Pago Seguro 🔒"; }
     }
   };
 
@@ -563,21 +618,21 @@
       if (!res.ok || !data?.ok) throw new Error(data?.error || "AI error");
       addChatMsg("ai", String(data.reply || "Listo."));
     } catch (e) {
-      addChatMsg("ai", "Sistemas de AI ocupados, intenta más tarde.");
+      addChatMsg("ai", "Sistemas de SCORE AI ocupados, intenta más tarde.");
     } finally {
-      if (aiSendBtn) { aiSendBtn.disabled = false; aiSendBtn.textContent = "Enviar"; }
+      if (aiSendBtn) { aiSendBtn.disabled = false; aiSendBtn.textContent = "Enviar ➢"; }
     }
   };
 
   const openAiChat = () => {
     closeLayer(sideMenu); openLayer(aiModal);
     setTimeout(() => aiInput?.focus(), 50);
-    if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo con tallas o pedidos?");
+    if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo con tallas o pedidos de tu merch oficial?");
   };
 
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-    loadCart(); loadShipping(); syncShippingLabelsInUI(); refreshShippingUI();
+    loadCart(); loadShipping(); refreshShippingUI();
 
     if (overlay) overlay.addEventListener("click", closeAll);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
@@ -613,12 +668,29 @@
 
     sortSelect?.addEventListener("change", () => { sortMode = String(sortSelect.value || "featured"); renderProducts(); });
 
+    // RESTAURACIÓN UX: Event listeners de la modal
     pmClose?.addEventListener("click", () => closeLayer(productModal));
+    pmBackBtn?.addEventListener("click", () => closeLayer(productModal)); 
 
     pmAdd?.addEventListener("click", () => {
       if (!currentProduct) return;
-      addToCart(currentProduct, String(pmSize?.value || "").trim(), clampInt(pmQty?.value, 1, 99));
-      closeLayer(productModal); openLayer(cartDrawer); refreshShippingUI();
+      
+      // UX Feedback
+      const originalText = pmAdd.innerHTML;
+      pmAdd.innerHTML = "✅ ¡Agregado!";
+      pmAdd.style.backgroundColor = "#28a745"; // Verde de éxito temporal
+      pmAdd.style.borderColor = "#28a745";
+      
+      setTimeout(() => {
+        pmAdd.innerHTML = originalText;
+        pmAdd.style.backgroundColor = "";
+        pmAdd.style.borderColor = "";
+        
+        addToCart(currentProduct, String(pmSize?.value || "").trim(), clampInt(pmQty?.value, 1, 99));
+        closeLayer(productModal); 
+        openLayer(cartDrawer); 
+        refreshShippingUI();
+      }, 600);
     });
 
     openAiBtn?.addEventListener("click", openAiChat);
@@ -647,10 +719,9 @@
       updateFilterUI();
       renderProducts(); 
     } catch (e) {
-      showToast("Error de red");
+      showToast("Error de conexión al catálogo");
       console.error(e); 
     } finally {
-      // Intro Cinemática duración total ~3.5s
       setTimeout(() => {
         if (splash) {
           splash.style.opacity = "0";
