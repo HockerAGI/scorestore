@@ -19,7 +19,6 @@ exports.handler = async (event) => {
       const sb = supabaseAdmin();
       if (sb) {
         try {
-          // 1. Auditoría del webhook
           await sb.from("shipping_webhooks").insert({
             provider: carrier,
             tracking_number: trackingNumber,
@@ -28,7 +27,7 @@ exports.handler = async (event) => {
             created_at: new Date().toISOString(),
           });
 
-          // 2. Actualización para la vista en UnicOs
+          // CORRECCIÓN: Actualización directa ahora que las columnas existen en el schema.sql
           if (trackingNumber) {
             await sb.from("shipping_labels")
               .update({ 
@@ -37,7 +36,6 @@ exports.handler = async (event) => {
               })
               .eq("tracking_number", trackingNumber);
 
-            // 3. Notificación VIP de Entregas
             if (status.toUpperCase() === "DELIVERED" || status.toUpperCase() === "ENTREGADO") {
               try {
                 await sendTelegram(`📦 ✅ <b>Paquete Entregado</b>\nTracking: <code>${trackingNumber}</code>\nCarrier: <b>${carrier.toUpperCase()}</b>\n¡El cliente ya recibió su paquete Oficial!`);
@@ -53,7 +51,6 @@ exports.handler = async (event) => {
     return jsonResponse(200, { ok: true, received: true }, origin);
   } catch (e) {
     console.error("[envia_webhook] fatal:", e);
-    // Devolver 200 para evitar que el servidor de envíos asuma que nos caímos.
     return jsonResponse(200, { ok: true, warning: String(e?.message || e) }, origin);
   }
 };
