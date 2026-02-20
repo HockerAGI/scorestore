@@ -11,7 +11,6 @@ exports.handler = async (event) => {
 
     const payload = safeJsonParse(event.body) || {};
     
-    // Extraer datos clave del Webhook de Envia.com
     const trackingNumber = payload.data?.trackingNumber || payload.tracking_number || null;
     const status = payload.data?.status || payload.status || "UNKNOWN";
     const carrier = payload.data?.carrier || payload.carrier || "envia";
@@ -20,7 +19,7 @@ exports.handler = async (event) => {
       const sb = supabaseAdmin();
       if (sb) {
         try {
-          // 1. Registrar el evento crudo para auditoría
+          // 1. Auditoría del webhook
           await sb.from("shipping_webhooks").insert({
             provider: carrier,
             tracking_number: trackingNumber,
@@ -29,7 +28,7 @@ exports.handler = async (event) => {
             created_at: new Date().toISOString(),
           });
 
-          // 2. Si hay tracking, actualizar la tabla de shipping_labels para UnicOs
+          // 2. Actualización para la vista en UnicOs
           if (trackingNumber) {
             await sb.from("shipping_labels")
               .update({ 
@@ -38,14 +37,13 @@ exports.handler = async (event) => {
               })
               .eq("tracking_number", trackingNumber);
 
-            // 3. Notificar por Telegram si el paquete fue entregado
+            // 3. Notificación VIP de Entregas
             if (status.toUpperCase() === "DELIVERED" || status.toUpperCase() === "ENTREGADO") {
               try {
-                await sendTelegram(`📦 ✅ <b>Paquete Entregado</b>\nTracking: <code>${trackingNumber}</code>\nCarrier: <b>${carrier.toUpperCase()}</b>\n¡El cliente ya tiene su Merch Oficial!`);
-              } catch(e) { /* ignore telegram fail */ }
+                await sendTelegram(`📦 ✅ <b>Paquete Entregado</b>\nTracking: <code>${trackingNumber}</code>\nCarrier: <b>${carrier.toUpperCase()}</b>\n¡El cliente ya recibió su paquete Oficial!`);
+              } catch(e) {}
             }
           }
-
         } catch (e) {
           console.log("[shipping_webhooks] warn Supabase sync:", e?.message || e);
         }
@@ -55,7 +53,7 @@ exports.handler = async (event) => {
     return jsonResponse(200, { ok: true, received: true }, origin);
   } catch (e) {
     console.error("[envia_webhook] fatal:", e);
-    // CORRECCIÓN HOCKER: Asegurar que envia.com recibe el 200 aunque falle algo interno
+    // Devolver 200 para evitar que el servidor de envíos asuma que nos caímos.
     return jsonResponse(200, { ok: true, warning: String(e?.message || e) }, origin);
   }
 };
