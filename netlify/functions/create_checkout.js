@@ -1,13 +1,15 @@
 "use strict";
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const {
   jsonResponse,
   handleOptions,
   safeJsonParse,
   normalizeQty,
   getBaseUrl,
-  readJsonFile
+  readJsonFile,
+  getEnviaQuote,
+  getFallbackShipping,
+  initStripe
 } = require("./_shared");
 
 exports.handler = async (event) => {
@@ -16,6 +18,9 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
     if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+
+    // Inicializar de forma segura
+    const stripe = initStripe();
 
     const baseUrl = getBaseUrl(event);
     const body = safeJsonParse(event.body) || {};
@@ -54,7 +59,6 @@ exports.handler = async (event) => {
             } else if (promo.type === 'free_shipping') {
               freeShippingActive = true;
             } else if (promo.type === 'fixed_mxn') {
-              // Distribuye el descuento fijo proporcionalmente en los items
               const discountRatio = (subtotal_mxn - Number(promo.value)) / subtotal_mxn;
               discountMultiplier = Math.max(0, discountRatio);
             }
@@ -63,7 +67,6 @@ exports.handler = async (event) => {
       }
     }
 
-    // 1. Mapear productos aplicando el descuento si existe
     const lineItems = items.map(item => {
       const originalPrice = item.priceCents || 55000;
       const discountedPrice = Math.round(originalPrice * discountMultiplier);
@@ -81,29 +84,41 @@ exports.handler = async (event) => {
       };
     });
 
-    // 2. Configuración dinámica de envíos respetando Free Shipping
+    // --- LÓGICA DE ENVÍOS BLINDADA ---
     let shipping_options = [];
     let shipping_amount_cents = 0;
-    let shipping_country = "MX";
+    let shipping_country = shipping_mode === "envia_us" ? "US" : "MX";
+    let shipping_display_name = "";
 
     if (shipping_mode === "pickup") {
       shipping_amount_cents = 0;
-      shipping_options.push({
-        shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'mxn' }, display_name: 'Recoger en Fábrica (Tijuana)' }
-      });
-    } else if (shipping_mode === "envia_us") {
-      shipping_amount_cents = freeShippingActive ? 0 : 35000;
-      shipping_country = "US";
-      shipping_options.push({
-        shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shipping_amount_cents, currency: 'mxn' }, display_name: freeShippingActive ? 'Envío USA (GRATIS)' : 'Envío USA (Envía.com)' }
-      });
+      shipping_display_name = "Recoger en Fábrica (Tijuana)";
     } else {
-      shipping_amount_cents = freeShippingActive ? 0 : 18000;
-      shipping_country = "MX";
-      shipping_options.push({
-        shipping_rate_data: { type: 'fixed_amount', fixed_amount: { amount: shipping_amount_cents, currency: 'mxn' }, display_name: freeShippingActive ? 'Envío Nacional (GRATIS)' : 'Envío Nacional (Envía.com)' }
-      });
+      if (freeShippingActive) {
+        shipping_amount_cents = 0;
+        shipping_display_name = shipping_country === "US" ? 'Envío USA (Cupón GRATIS)' : 'Envío Nacional (Cupón GRATIS)';
+      } else {
+        // CORRECCIÓN: Calcular la tarifa real en el backend, no confiar en lo que manda el frontend.
+        try {
+          const quote = await getEnviaQuote({ zip: postal_code, country: shipping_country, items_qty });
+          shipping_amount_cents = quote.amount_cents;
+          shipping_display_name = quote.label;
+        } catch (err) {
+          console.warn("[create_checkout] Falla cotización real, usando fallback de seguridad.", err.message);
+          const fallback = getFallbackShipping(shipping_country, items_qty);
+          shipping_amount_cents = fallback.amount_cents;
+          shipping_display_name = fallback.label;
+        }
+      }
     }
+
+    shipping_options.push({
+      shipping_rate_data: { 
+        type: 'fixed_amount', 
+        fixed_amount: { amount: shipping_amount_cents, currency: 'mxn' }, 
+        display_name: shipping_display_name 
+      }
+    });
 
     const orderSummary = items.map(i => `${i.qty}x ${i.sku}[${i.size}]`).join(" | ").substring(0, 450);
 
@@ -115,6 +130,7 @@ exports.handler = async (event) => {
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,
       shipping_options: shipping_options,
+      shipping_address_collection: shipping_mode !== "pickup" ? { allowed_countries: [shipping_country] } : undefined,
       metadata: {
         source: "score_store",
         shipping_mode: shipping_mode,
@@ -131,6 +147,6 @@ exports.handler = async (event) => {
 
   } catch (error) {
     console.error("Stripe Checkout Error:", error);
-    return jsonResponse(500, { ok: false, error: "No se pudo procesar el pago." }, origin);
+    return jsonResponse(500, { ok: false, error: "No se pudo procesar el pago seguro. Intenta de nuevo." }, origin);
   }
 };
