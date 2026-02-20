@@ -63,12 +63,11 @@ const getBaseUrl = (event) => {
   const headers = event?.headers || {};
   const proto = headers["x-forwarded-proto"] || "https";
   const host = headers["x-forwarded-host"] || headers.host || process.env.URL || process.env.DEPLOY_PRIME_URL;
-  if (!host) return "https://example.com";
+  if (!host) return "https://scorestore.netlify.app";
   if (host.startsWith("http")) return host;
   return `${proto}://${host}`;
 };
 
-// CORRECCIÓN: Manejo seguro de archivos. Si no existe, no rompe el servidor.
 const readJsonFile = (relPath) => {
   try {
     const p = path.join(process.cwd(), relPath);
@@ -125,7 +124,6 @@ const supabaseAdmin = (() => {
   };
 })();
 
-// CORRECCIÓN: Telegram ahora usa Fetch Nativo
 const sendTelegram = async (text) => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -184,14 +182,14 @@ const getOriginByCountry = (country) => {
     name: process.env.ORIGIN_MX_NAME || "Score Store MX",
     company: process.env.ORIGIN_MX_COMPANY || "Único Uniformes",
     email: process.env.ORIGIN_MX_EMAIL || process.env.FACTORY_EMAIL || "ventas@unico-uniformes.com",
-    phone: process.env.ORIGIN_MX_PHONE || "6640000000",
-    street: process.env.ORIGIN_MX_STREET || "Av. Ejemplo",
-    number: process.env.ORIGIN_MX_NUMBER || "1",
-    district: process.env.ORIGIN_MX_DISTRICT || "Centro",
+    phone: process.env.ORIGIN_MX_PHONE || "+52 664 236 8701",
+    street: process.env.ORIGIN_MX_STREET || "Palermo",
+    number: process.env.ORIGIN_MX_NUMBER || "6106 Interior JK",
+    district: process.env.ORIGIN_MX_DISTRICT || "Anexa Roma",
     city: process.env.ORIGIN_MX_CITY || "Tijuana",
-    state: process.env.ORIGIN_MX_STATE || "BC",
+    state: process.env.ORIGIN_MX_STATE || "Baja California",
     country: "MX",
-    postalCode: process.env.ORIGIN_MX_POSTAL || "22000",
+    postalCode: process.env.ORIGIN_MX_POSTAL || "22614",
     reference: process.env.ORIGIN_MX_REFERENCE || "",
     identificationNumber: process.env.ORIGIN_MX_RFC || undefined,
   };
@@ -236,7 +234,6 @@ const getPackageSpecs = (country, items_qty) => {
   };
 };
 
-// CORRECCIÓN: Migración de Envia Geocodes a Fetch Nativo
 const getZipDetails = async (country, zip) => {
   const c = String(country || "MX").toUpperCase();
   const z = validateZip(zip, c);
@@ -298,7 +295,6 @@ const pickBestRate = (rates) => {
   return best;
 };
 
-// CORRECCIÓN: Migración de Cotización Envia a Fetch Nativo
 const getEnviaQuote = async ({ zip, country, items_qty }) => {
   const c = String(country || "MX").toUpperCase();
   const z = validateZip(zip, c);
@@ -376,10 +372,10 @@ const getFallbackShipping = (country, items_qty) => {
   const qty = clampInt(items_qty || 1, 1, 99);
 
   const base = c === "US"
-    ? Number(process.env.FALLBACK_US_PRICE_MXN || 450)
+    ? Number(process.env.FALLBACK_US_PRICE_MXN || 850)
     : Number(process.env.FALLBACK_MX_PRICE_MXN || 250);
 
-  const perItem = Number(process.env.FALLBACK_PER_ITEM_MXN || 0);
+  const perItem = Number(process.env.FALLBACK_PER_ITEM_MXN || 50);
   const price = (Number.isFinite(base) ? base : 0) + (Number.isFinite(perItem) ? perItem * Math.max(0, qty - 1) : 0);
 
   const priceMXN = Math.max(0, price);
@@ -427,7 +423,6 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
   };
 };
 
-// CORRECCIÓN: Migración de Guías Envia a Fetch Nativo
 const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty }) => {
   const country = String(shipping_country || "MX").toUpperCase();
 
