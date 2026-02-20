@@ -52,6 +52,8 @@ const normalizeQty = (items) => {
       sku: String(it?.sku || "").trim(),
       qty: clampInt(it?.qty, 1, 99),
       size: it?.size ? String(it.size).trim() : "",
+      priceCents: it?.priceCents ? Number(it.priceCents) : 55000,
+      title: it?.title ? String(it.title).trim() : ""
     }))
     .filter((it) => it.sku);
 };
@@ -335,7 +337,6 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
 
   const url = `${ENVIA_API_URL}/ship/rate/`;
   
-  // CORRECCIÓN HOCKER: Manejo seguro de fetch por si Envía.com se cae
   let res;
   try {
     res = await fetch(url, {
@@ -347,7 +348,6 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
     throw new Error("No se pudo conectar con los servidores de paquetería.");
   }
 
-  // CORRECCIÓN HOCKER: Evitar crash si Envía responde con HTML (Ej. Cloudflare 502)
   const contentType = res.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
     throw new Error(`Respuesta inválida del servidor de envíos (${res.status}).`);
@@ -415,23 +415,39 @@ const readRawBody = (event) => {
   return Buffer.from(body, "utf8");
 };
 
+// CORRECCIÓN: Extracción Inteligente de Calles y Números
 const stripeShippingToEnviaDestination = (shipping_details) => {
   const sd = shipping_details || {};
   const addr = sd.address || {};
   const country = String(addr.country || "").toUpperCase();
   
-  // Extraer calle inteligentemente
-  let calle = addr.line1 || "Domicilio Conocido";
-  let num = addr.line2 || "S/N";
+  let calle = String(addr.line1 || "Domicilio Conocido").trim();
+  let num = String(addr.line2 || "").trim();
+
+  // Si no hay línea 2, intentamos extraer el número de casa del final de la línea 1
+  if (!num || num.toLowerCase() === "s/n") {
+    const regex = /(.*)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(-\d+)?)$/i;
+    const match = calle.match(regex);
+    if (match) {
+      calle = match[1].trim();
+      num = match[2].trim();
+    } else {
+      num = "S/N"; // Fallback seguro para Envía
+    }
+  }
+
+  // Limpiar el teléfono para evitar que Envía rechace el paquete
+  let telefonoSeguro = String(sd.phone || "").replace(/\D/g, "");
+  if(telefonoSeguro.length < 10) telefonoSeguro = "0000000000";
 
   return {
     name: sd.name || "Cliente Final",
     company: "",
     email: "cliente@scorestore.com", 
-    phone: sd.phone || "0000000000", 
+    phone: telefonoSeguro, 
     street: calle,
     number: num,
-    district: addr.line2 || "Centro",
+    district: addr.line2 || "Centro", // Usualmente la línea 2 es colonia si line 1 tiene el número
     city: addr.city || "",
     state: addr.state || "",
     country: country || "MX",
@@ -447,7 +463,7 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
   const destination = stripeShippingToEnviaDestination(stripe_session?.shipping_details);
 
   if (!destination?.postalCode || !destination?.state || !destination?.country) {
-    throw new Error("Dirección incompleta en Stripe para generar guía");
+    throw new Error("Dirección incompleta en Stripe para generar guía automáticamente");
   }
 
   const pkg = getPackageSpecs(country, items_qty || 1);
@@ -471,7 +487,6 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
 
   const url = `${ENVIA_API_URL}/ship/generate/`;
   
-  // CORRECCIÓN HOCKER: Try/Catch seguro para que no rompa el Webhook
   let res;
   try {
     res = await fetch(url, {
@@ -483,7 +498,6 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
     throw new Error("Conexión fallida al servidor de Envía para generar la guía.");
   }
 
-  // CORRECCIÓN HOCKER: Manejo seguro de JSON.
   const contentType = res.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
     throw new Error(`Respuesta no-JSON de Envía al generar guía (${res.status})`);
