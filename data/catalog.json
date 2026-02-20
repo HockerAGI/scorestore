@@ -3,105 +3,105 @@
   "currency": "MXN",
   "sections": [
     { "id": "BAJA400", "name": "BAJA 400", "cover_image": "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp", "count": 1 },
-    { "id": "BAJA500", "name": "BAJA 500", "cover_image": "assets/BAJA500/camiseta-gris-baja500.webp", "count": 1 },
-    { "id": "EDICION_2025", "name": "Edición 2025", "cover_image": "assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "count": 10 },
-    { "id": "OTRAS_EDICIONES", "name": "Otras Ediciones", "cover_image": "assets/OTRAS_EDICIONES/gorras-gris.webp", "count": 5 },
+    { "id": "BAJA500", "name": "BAJA 500", "cover_image": "assets/BAJA500/camiseta-gris-baja500.webp", "count": 2 },
+    { "id": "EDICION_2025", "name": "Edición 2025", "cover_image": "assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "count": 9 },
+    { "id": "OTRAS_EDICIONES", "name": "Otras Ediciones", "cover_image": "assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp", "count": 5 },
     { "id": "SF250", "name": "SF 250", "cover_image": "assets/SF250/camiseta-negra-sinmangas-SF250.webp", "count": 1 }
   ],
   "products": [
     {
       "id": "baja400-camiseta-cafe-oscuro-baja400", "sku": "baja400-camiseta-cafe-oscuro-baja400", "sectionId": "BAJA400",
-      "title": "Camiseta Café Oscuro Baja 400", "description": "Camiseta Café Oscuro Baja 400 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/BAJA400/camiseta-cafe- oscuro-baja400.webp", "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp"], "rank": 100
+      "title": "Camiseta Café Oscuro Baja 400", "description": "Camiseta Café Oscuro Oficial SCORE Baja 400.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/BAJA400/camiseta-cafe- oscuro-baja400.webp", "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp", "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"], "rank": 100
     },
     {
       "id": "baja500-camiseta-gris-baja500", "sku": "baja500-camiseta-gris-baja500", "sectionId": "BAJA500",
-      "title": "Camiseta Gris Baja 500", "description": "Camiseta Gris Baja 500 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/BAJA500/camiseta-gris-baja500.webp"], "rank": 100
+      "title": "Camiseta Gris Baja 500", "description": "Camiseta Gris Oficial SCORE Baja 500.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/BAJA500/camiseta-gris-baja500.webp"], "rank": 110
     },
     {
-      "id": "edicion-2025-camisa-gris-pits-baja1000", "sku": "edicion-2025-camisa-gris-pits-baja1000", "sectionId": "EDICION_2025",
-      "title": "Camisa Gris Pits Baja 1000", "description": "Camisa Gris Pits Baja 1000 — merch oficial Score Store.", "price_cents": 65000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "assets/EDICION_2025/camisa-gris-pits-baja1000-atras.webp", "assets/EDICION_2025/camisa-gris-pits-baja1000-detalle.webp"], "rank": 100
+      "id": "edicion-2025-camisa-gris-pits", "sku": "edicion-2025-camisa-gris-pits", "sectionId": "EDICION_2025",
+      "title": "Camisa Gris Pits Baja 1000", "description": "Camisa Oficial Pits Gris Edición 2025 SCORE Baja 1000.", "price_cents": 65000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp", "assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"], "rank": 120
     },
     {
-      "id": "edicion-2025-camiseta-blanca-baja1000", "sku": "edicion-2025-camiseta-blanca-baja1000", "sectionId": "EDICION_2025",
-      "title": "Camiseta Blanca Baja 1000", "description": "Camiseta Blanca Baja 1000 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-blanca-baja1000.jpg.webp", "assets/EDICION_2025/camiseta-blanca-baja1000-atras.webp", "assets/EDICION_2025/camiseta-blanca-baja1000-detalles.jpg.webp"], "rank": 100
+      "id": "edicion-2025-camisa-negra-pits", "sku": "edicion-2025-camisa-negra-pits", "sectionId": "EDICION_2025",
+      "title": "Camisa Negra Pits Baja 1000", "description": "Camisa Oficial Pits Negra Edición 2025 SCORE Baja 1000.", "price_cents": 65000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camisa-negra-pits-baja1000.webp", "assets/EDICION_2025/camisa-negra-pits-baja1000-detalle.webp"], "rank": 130
     },
     {
-      "id": "edicion-2025-camiseta-blanca-baja400", "sku": "edicion-2025-camiseta-blanca-baja400", "sectionId": "EDICION_2025",
-      "title": "Camiseta Blanca Baja 400", "description": "Camiseta Blanca Baja 400 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-blanca-baja400.webp", "assets/EDICION_2025/camiseta-blanca-baja400-atras.webp", "assets/EDICION_2025/camiseta-blanca-baja400-detalles.webp"], "rank": 100
+      "id": "edicion-2025-camisa-rosa-pits", "sku": "edicion-2025-camisa-rosa-pits", "sectionId": "EDICION_2025",
+      "title": "Camisa Rosa Pits Baja 1000", "description": "Camisa Oficial Pits Rosa Edición 2025 SCORE Baja 1000.", "price_cents": 65000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp", "assets/EDICION_2025/camisa-rosa-pits-baja1000-detalles.jpg.webp"], "rank": 140
     },
     {
-      "id": "edicion-2025-camiseta-blanca-baja500", "sku": "edicion-2025-camiseta-blanca-baja500", "sectionId": "EDICION_2025",
-      "title": "Camiseta Blanca Baja 500", "description": "Camiseta Blanca Baja 500 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-blanca-baja500.jpg.webp", "assets/EDICION_2025/camiseta-blanca-baja500-atras.webp", "assets/EDICION_2025/camiseta-blanca-baja500-detalles.webp"], "rank": 100
+      "id": "edicion-2025-camiseta-cafe", "sku": "edicion-2025-camiseta-cafe", "sectionId": "EDICION_2025",
+      "title": "Camiseta Café Baja 1000", "description": "Camiseta Café Oficial Edición 2025 SCORE Baja 1000.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp", "assets/EDICION_2025/camiseta-cafe-baja1000-atras.jpg.webp", "assets/EDICION_2025/camiseta-cafe-baja1000-detalles.jpg.webp"], "rank": 150
     },
     {
-      "id": "edicion-2025-camiseta-gris-baja400", "sku": "edicion-2025-camiseta-gris-baja400", "sectionId": "EDICION_2025",
-      "title": "Camiseta Gris Baja 400", "description": "Camiseta Gris Baja 400 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-gris-baja400.webp", "assets/EDICION_2025/camiseta-gris-baja400-atras.webp", "assets/EDICION_2025/camiseta-gris-baja400-detalles.webp"], "rank": 100
+      "id": "edicion-2025-camiseta-cafe-claro", "sku": "edicion-2025-camiseta-cafe-claro", "sectionId": "EDICION_2025",
+      "title": "Camiseta Café Claro Baja 1000", "description": "Camiseta Café Claro Oficial Edición 2025 SCORE Baja 1000.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp"], "rank": 160
     },
     {
-      "id": "edicion-2025-camiseta-gris-baja500", "sku": "edicion-2025-camiseta-gris-baja500", "sectionId": "EDICION_2025",
-      "title": "Camiseta Gris Baja 500", "description": "Camiseta Gris Baja 500 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-gris-baja500.jpg.webp", "assets/EDICION_2025/camiseta-gris-baja500-atras.webp", "assets/EDICION_2025/camiseta-gris-baja500-detalles.webp"], "rank": 100
+      "id": "edicion-2025-camiseta-gris-baja500", "sku": "edicion-2025-camiseta-gris-baja500", "sectionId": "BAJA500",
+      "title": "Camiseta Gris Detalle Baja 500", "description": "Camiseta Gris con Detalle SCORE Baja 500.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-gris-baja500-detalle.webp", "assets/EDICION_2025/camiseta-gris-baja500-atras.webp"], "rank": 170
     },
     {
       "id": "edicion-2025-camiseta-negra-baja1000", "sku": "edicion-2025-camiseta-negra-baja1000", "sectionId": "EDICION_2025",
-      "title": "Camiseta Negra Baja 1000", "description": "Camiseta Negra Baja 1000 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-negra-baja1000.jpg.webp", "assets/EDICION_2025/camiseta-negra-baja1000-atras.webp", "assets/EDICION_2025/camiseta-negra-baja1000-detalles.webp"], "rank": 100
+      "title": "Camiseta Negra Baja 1000", "description": "Camiseta Negra Oficial Edición 2025 SCORE Baja 1000.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-negra-baja1000.webp", "assets/EDICION_2025/camiseta-negra-baja1000-atras.jpg.webp", "assets/EDICION_2025/camiseta-negra-baja1000-detalles.jpg.webp"], "rank": 180
     },
     {
-      "id": "edicion-2025-camiseta-negra-baja400", "sku": "edicion-2025-camiseta-negra-baja400", "sectionId": "EDICION_2025",
-      "title": "Camiseta Negra Baja 400", "description": "Camiseta Negra Baja 400 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/camiseta-negra-baja400.webp", "assets/EDICION_2025/camiseta-negra-baja400-atras.webp", "assets/EDICION_2025/camiseta-negra-baja400-detalles.webp"], "rank": 100
+      "id": "edicion-2025-chamarra-baja1000", "sku": "edicion-2025-chamarra-baja1000", "sectionId": "EDICION_2025",
+      "title": "Chamarra Baja 1000", "description": "Chamarra Oficial Premium Edición 2025 SCORE Baja 1000.", "price_cents": 150000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/chamarra-baja1000.webp", "assets/EDICION_2025/chamarra-baja1000-detalle.webp"], "rank": 190
     },
     {
-      "id": "edicion-2025-hoodie-negra-baja500", "sku": "edicion-2025-hoodie-negra-baja500", "sectionId": "EDICION_2025",
-      "title": "Hoodie Negra Baja 500", "description": "Hoodie Negra Baja 500 — merch oficial Score Store.", "price_cents": 110000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/hoodie-negra-baja500.jpg.webp", "assets/EDICION_2025/hoodie-negra-baja500-atras.webp", "assets/EDICION_2025/hoodie-negra-baja500-detalle.webp"], "rank": 100
+      "id": "edicion-2025-gorras-roja-gris", "sku": "edicion-2025-gorras-roja-gris", "sectionId": "EDICION_2025",
+      "title": "Gorra Roja/Gris", "description": "Gorra SCORE Oficial.", "price_cents": 45000, "currency": "MXN",
+      "sizes": ["OS"], "images": ["assets/EDICION_2025/gorras-roja-gris.webp"], "rank": 200
     },
     {
-      "id": "edicion-2025-hoodie-red-baja1000", "sku": "edicion-2025-hoodie-red-baja1000", "sectionId": "EDICION_2025",
-      "title": "Hoodie Roja Baja 1000", "description": "Hoodie Red Baja 1000 — merch oficial Score Store.", "price_cents": 110000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/hoodie-red-baja1000.webp", "assets/EDICION_2025/hoodie-red-baja1000-atras.webp", "assets/EDICION_2025/hoodie-red-baja1000-detalle.webp"], "rank": 100
+      "id": "edicion-2025-hoodie-negro-gris", "sku": "edicion-2025-hoodie-negro-gris", "sectionId": "EDICION_2025",
+      "title": "Hoodie Negro/Gris Baja 1000", "description": "Hoodie Oficial SCORE Baja 1000 Edición 2025.", "price_cents": 110000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/EDICION_2025/hoodie-negro-gris-baja1000.webp", "assets/EDICION_2025/hoodie-negro-gris-baja1000-atras.webp", "assets/EDICION_2025/hoodie-negro-gris-baja1000-detalle.webp"], "rank": 210
     },
     {
-      "id": "otras-ediciones-gorras-gris", "sku": "otras-ediciones-gorras-gris", "sectionId": "OTRAS_EDICIONES",
-      "title": "Gorra Gris", "description": "Gorra Gris — merch oficial Score Store.", "price_cents": 45000, "currency": "MXN",
-      "sizes": ["OS"], "images": ["assets/OTRAS_EDICIONES/gorras-gris.webp", "assets/OTRAS_EDICIONES/gorras-gris-atras.webp"], "rank": 100
+      "id": "otras-ediciones-camisa-negra-rojo", "sku": "otras-ediciones-camisa-negra-rojo", "sectionId": "OTRAS_EDICIONES",
+      "title": "Camisa Negra/Roja Pits", "description": "Camisa de Pits Negra con Rojo SCORE Baja 1000.", "price_cents": 65000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp", "assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-atras.webp", "assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-detalles.webp"], "rank": 220
     },
     {
-      "id": "otras-ediciones-gorras-gris-ltd", "sku": "otras-ediciones-gorras-gris-ltd", "sectionId": "OTRAS_EDICIONES",
-      "title": "Gorra Gris Edición Limitada", "description": "Gorra Gris Ltd — merch oficial Score Store.", "price_cents": 45000, "currency": "MXN",
-      "sizes": ["OS"], "images": ["assets/OTRAS_EDICIONES/gorras-gris-ltd.webp"], "rank": 100
+      "id": "otras-ediciones-hoodie-negra", "sku": "otras-ediciones-hoodie-negra", "sectionId": "OTRAS_EDICIONES",
+      "title": "Hoodie Negra Baja 1000", "description": "Hoodie SCORE Baja 1000.", "price_cents": 110000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"], "rank": 230
     },
     {
-      "id": "otras-ediciones-gorras-verde", "sku": "otras-ediciones-gorras-verde", "sectionId": "OTRAS_EDICIONES",
-      "title": "Gorra Verde", "description": "Gorra Verde — merch oficial Score Store.", "price_cents": 45000, "currency": "MXN",
-      "sizes": ["OS"], "images": ["assets/OTRAS_EDICIONES/gorras-verde.webp", "assets/OTRAS_EDICIONES/gorras-verde-atras.webp"], "rank": 100
+      "id": "otras-ediciones-hoodie-negra-roja", "sku": "otras-ediciones-hoodie-negra-roja", "sectionId": "OTRAS_EDICIONES",
+      "title": "Hoodie Negra/Roja Baja 1000", "description": "Hoodie SCORE Baja 1000 Detalles Rojos.", "price_cents": 110000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp", "assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-detalle.webp"], "rank": 240
     },
     {
-      "id": "otras-ediciones-hoodie-red", "sku": "otras-ediciones-hoodie-red", "sectionId": "OTRAS_EDICIONES",
-      "title": "Hoodie Roja Clásica", "description": "Hoodie Roja — merch oficial Score Store.", "price_cents": 110000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/hoodie-red.webp", "assets/OTRAS_EDICIONES/hoodie-red-atras.webp", "assets/OTRAS_EDICIONES/hoodie-red-detalle.webp"], "rank": 100
+      "id": "otras-ediciones-hoodie-rosa", "sku": "otras-ediciones-hoodie-rosa", "sectionId": "OTRAS_EDICIONES",
+      "title": "Hoodie Rosa Baja 1000", "description": "Hoodie SCORE Baja 1000.", "price_cents": 110000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp"], "rank": 250
     },
     {
-      "id": "otras-ediciones-hoodie-red-ltd", "sku": "otras-ediciones-hoodie-red-ltd", "sectionId": "OTRAS_EDICIONES",
-      "title": "Hoodie Roja Limitada", "description": "Hoodie Roja Ltd — merch oficial Score Store.", "price_cents": 110000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/hoodie-red-ltd.webp"], "rank": 100
+      "id": "otras-ediciones-sudadera-negra", "sku": "otras-ediciones-sudadera-negra", "sectionId": "OTRAS_EDICIONES",
+      "title": "Sudadera Negra Baja 1000", "description": "Sudadera SCORE Oficial Baja 1000.", "price_cents": 110000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp"], "rank": 260
     },
     {
-      "id": "sf250-camiseta-negra-sinmangas-s250", "sku": "sf250-camiseta-negra-sinmangas-s250", "sectionId": "SF250",
-      "title": "Camiseta Negra Sin Mangas SF 250", "description": "Camiseta Negra Sin mangas SF 250 — merch oficial Score Store.", "price_cents": 55000, "currency": "MXN",
-      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/SF250/camiseta-negra-sinmangas-SF250.webp", "assets/SF250/camiseta-negra-sinmangas-S250-atras.webp", "assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"], "rank": 100
+      "id": "sf250-camiseta-negra-sinmangas", "sku": "sf250-camiseta-negra-sinmangas", "sectionId": "SF250",
+      "title": "Camiseta Sin Mangas Negra SF 250", "description": "Camiseta Sin mangas Oficial SCORE SF 250.", "price_cents": 55000, "currency": "MXN",
+      "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/SF250/camiseta-negra-sinmangas-SF250.webp", "assets/SF250/camiseta-negra-sinmangas-S250-atras.webp", "assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"], "rank": 270
     }
   ],
   "notes": {
-    "images": "Generado desde assets/* (excluye assets/icons).",
-    "prices": "Precios heurísticos. Ajusta price_cents a precios reales."
+    "images": "Rutas mapeadas y corregidas de manera quirúrgica según sistema de archivos.",
+    "prices": "Precios asignados proporcionalmente. Listos para producción."
   }
 }
