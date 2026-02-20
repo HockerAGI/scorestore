@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
 
+# Evitar indexacion de entornos de prueba y webhooks
 Disallow: /deploy-preview-*
 Disallow: /branch-deploys-*
 Disallow: /.netlify/functions/
 Disallow: /api/
+Disallow: /data/
 
-Sitemap: [https://scorestore.netlify.app/sitemap.xml](https://scorestore.netlify.app/sitemap.xml)
+Sitemap: https://scorestore.netlify.app/sitemap.xml
