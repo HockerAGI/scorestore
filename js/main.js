@@ -2,7 +2,8 @@
    SCORE STORE — Frontend (PRO) v2026.02.19 (FULL)
    - Lógica ajustada: Ocultar "Todos los productos"
    - Decodificación robusta para rutas de imágenes
-   - Protección contra datos de carrito corruptos
+   - Tarjetas sin texto con botón "Ver Catálogo" y animación
+   - Botón flotante IA implementado
    ========================================================= */
 
 (() => {
@@ -74,17 +75,11 @@
 
   const aiModal = $("#aiModal");
   const openAiBtn = $("#openAiBtn");
+  const floatingAiBtn = $("#floatingAiBtn");
   const aiClose = $("#aiClose");
   const aiOutput = $("#aiOutput");
   const aiInput = $("#aiInput");
   const aiSendBtn = $("#aiSendBtn");
-
-  const legalModal = $("#legalModal");
-  const legalTitle = $("#legalTitle");
-  const legalBody = $("#legalBody");
-  const legalClose = $("#legalClose");
-  const openLegalBtn = $("#openLegalBtn");
-  const openPrivacyBtn = $("#openPrivacyBtn");
 
   const cookieBanner = $("#cookieBanner");
   const cookieAccept = $("#cookieAccept");
@@ -158,11 +153,27 @@
   const openSet = new Set(); 
   const lockScrollIfNeeded = () => { document.body.style.overflow = openSet.size > 0 ? "hidden" : ""; };
   const refreshOverlay = () => { if (overlay) overlay.hidden = openSet.size === 0; lockScrollIfNeeded(); };
-  const openLayer = (el) => { if (!el) return; el.hidden = false; openSet.add(el); refreshOverlay(); };
-  const closeLayer = (el) => { if (!el) return; el.hidden = true; openSet.delete(el); refreshOverlay(); };
+  const openLayer = (el) => {
+    if (!el) return;
+    el.hidden = false;
+    openSet.add(el);
+    refreshOverlay();
+    // Previene scroll al top en Safari/iOS al abrir modales
+    if(el.classList.contains('drawer')) { el.style.transform = 'none'; }
+  };
+  const closeLayer = (el) => {
+    if (!el) return;
+    openSet.delete(el);
+    refreshOverlay();
+    if(el.classList.contains('drawer')) {
+      el.style.transform = el.classList.contains('drawer--right') ? 'translateX(100%)' : 'translateX(-100%)';
+      setTimeout(() => el.hidden = true, 400); // Tiempo coincide con CSS transition
+    } else {
+      el.hidden = true;
+    }
+  };
   const closeAll = () => {
-    [sideMenu, cartDrawer, productModal, aiModal, legalModal].forEach(el => { if (el && !el.hidden) el.hidden = true; });
-    openSet.clear(); refreshOverlay();
+    [sideMenu, cartDrawer, productModal, aiModal].forEach(el => closeLayer(el));
   };
   const scrollToEl = (sel) => { const el = $(sel); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -205,15 +216,8 @@
     return data;
   };
 
-  const getCategoryCounts = () => {
-    const counts = Object.fromEntries(CATEGORY_CONFIG.map((c) => [c.uiId, 0]));
-    for (const p of products) { if (p.uiSection in counts) counts[p.uiSection] += 1; }
-    return counts;
-  };
-
   const renderCategories = () => {
     if (!categoryGrid) return;
-    const counts = getCategoryCounts();
     categoryGrid.innerHTML = "";
 
     for (const cat of CATEGORY_CONFIG) {
@@ -222,14 +226,12 @@
       card.className = "catcard";
       card.setAttribute("data-cat", cat.uiId);
 
+      // NUEVO DISEÑO: Sin textos, logo centrado, textura visible, botón hover
       card.innerHTML = `
         <div class="catcard__bg"></div>
         <div class="catcard__inner">
           <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}">
-          <div class="catcard__meta">
-            <div class="catcard__name">${escapeHtml(cat.name)}</div>
-            <div class="catcard__tag">● ${counts[cat.uiId] || 0} productos</div>
-          </div>
+          <div class="catcard__btn">VER CATÁLOGO</div>
         </div>
       `;
 
@@ -362,7 +364,7 @@
 
     if (pmCarousel) {
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
-      pmCarousel.innerHTML = `<div class="pm__track">${imgs.map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("")}</div>`;
+      pmCarousel.innerHTML = `<div class="pm__track">${imgs.map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}" loading="lazy">`).join("")}</div>`;
     }
     openLayer(productModal);
   };
@@ -373,7 +375,6 @@
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
       if (raw) { 
         const parsed = JSON.parse(raw); 
-        // Filtro de seguridad protector contra info corrupta o vieja en localstorage
         if (Array.isArray(parsed)) {
             cart = parsed.filter(it => it && it.sku && typeof it.qty === 'number'); 
         }
@@ -521,7 +522,6 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok || !data?.url) throw new Error(data?.error || "Error al iniciar pago. Intenta de nuevo.");
       
-      // Cambio de seguridad: el método .assign preserva mejor el paso del usuario en el historial del dispositivo.
       window.location.assign(data.url);
     } catch (e) {
       if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso: ${String(e?.message || e)}`; }
@@ -548,13 +548,20 @@
     try {
       const res = await fetch("/.netlify/functions/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: msg }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) throw new Error("AI error");
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "AI error");
       addChatMsg("ai", String(data.reply || "Listo."));
     } catch (e) {
-      addChatMsg("ai", "Lo siento, mis sistemas están ocupados. Intenta de nuevo más tarde.");
+      addChatMsg("ai", "Lo siento, mis sistemas están ocupados o no disponibles. Intenta de nuevo más tarde.");
     } finally {
       if (aiSendBtn) { aiSendBtn.disabled = false; aiSendBtn.textContent = "Enviar"; }
     }
+  };
+
+  const openAiChat = () => {
+    closeLayer(sideMenu);
+    openLayer(aiModal);
+    setTimeout(() => aiInput?.focus(), 50);
+    if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo a buscar tallas o resolver dudas sobre tu pedido?");
   };
 
   const init = async () => {
@@ -598,7 +605,6 @@
     sortSelect?.addEventListener("change", () => { sortMode = String(sortSelect.value || "featured"); renderProducts(); });
 
     pmClose?.addEventListener("click", () => closeLayer(productModal));
-    productModal?.addEventListener("click", (e) => { if (e.target === productModal) closeLayer(productModal); });
 
     pmAdd?.addEventListener("click", () => {
       if (!currentProduct) return;
@@ -606,22 +612,13 @@
       closeLayer(productModal); openLayer(cartDrawer); refreshShippingUI();
     });
 
-    openAiBtn?.addEventListener("click", () => {
-      openLayer(aiModal); setTimeout(() => aiInput?.focus(), 30);
-      if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo a buscar tallas o resolver dudas sobre tu pedido?");
-    });
-    navOpenAi?.addEventListener("click", () => {
-      closeLayer(sideMenu); openLayer(aiModal); setTimeout(() => aiInput?.focus(), 30);
-      if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo a buscar tallas o resolver dudas sobre tu pedido?");
-    });
+    // Eventos de AI
+    openAiBtn?.addEventListener("click", openAiChat);
+    navOpenAi?.addEventListener("click", openAiChat);
+    floatingAiBtn?.addEventListener("click", openAiChat); // <-- BOTÓN FLOTANTE
     aiClose?.addEventListener("click", () => closeLayer(aiModal));
-    aiModal?.addEventListener("click", (e) => { if (e.target === aiModal) closeLayer(aiModal); });
     aiSendBtn?.addEventListener("click", sendAi);
     aiInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendAi(); });
-
-    openLegalBtn?.addEventListener("click", () => { if (legalTitle) legalTitle.textContent = "Términos"; if (legalBody) legalBody.innerHTML = `<div class="legal"><h3>Términos</h3><p>Esta tienda es oficial de SCORE STORE operada por Único Uniformes...</p></div>`; openLayer(legalModal); });
-    openPrivacyBtn?.addEventListener("click", () => { if (legalTitle) legalTitle.textContent = "Privacidad"; if (legalBody) legalBody.innerHTML = `<div class="legal"><h3>Privacidad</h3><p>Tus datos son procesados de forma segura con Stripe...</p></div>`; openLayer(legalModal); });
-    legalClose?.addEventListener("click", () => closeLayer(legalModal));
 
     $$('input[name="shipMode"]').forEach((r) => { r.addEventListener("change", refreshShippingUI); });
     quoteBtn?.addEventListener("click", quoteShipping);
@@ -643,11 +640,12 @@
       renderProducts(); 
     } catch (e) {
       showToast("Error de conexión");
-      console.error(e); // Registro adicional por si el catálogo falla silenciosamente
+      console.error(e); 
     } finally {
       if (splash) {
         splash.style.opacity = "0";
-        setTimeout(() => (splash.hidden = true), 400);
+        splash.style.visibility = "hidden";
+        setTimeout(() => (splash.hidden = true), 600);
       }
     }
   };
