@@ -1,9 +1,9 @@
 /* =========================================================
-   SCORE STORE — Frontend (PRO) v2026.02.21 (UX ISLANDS)
+   SCORE STORE — Frontend (PRO) v2026.02.21 (UX ISLANDS + LOGICA AVANZADA)
    - Lógica de UI / UX / Carrusel FB Style Restaurado
    - Fix de botones atrapados y Selectores
    - Efecto Isla Visual y Etiquetas Flotantes
-   - MEJORAS: Loader anti-doble clic en pagos, URLs seguras
+   - MEJORAS: Cupones UI, Cambio de tallas in-cart, Vaciar Carrito
    ========================================================= */
 
 (() => {
@@ -17,7 +17,6 @@
 
   const splash = $("#splash");
   const overlay = $("#overlay");
-  const checkoutLoader = $("#checkoutLoader"); // Novedad: Loader de Pago
   const sideMenu = $("#sideMenu");
   const cartDrawer = $("#cartDrawer");
 
@@ -52,6 +51,8 @@
   const cartItemsEl = $("#cartItems");
   const cartSubtotalEl = $("#cartSubtotal");
   const shippingLineEl = $("#shippingLine");
+  const discountLineWrap = $("#discountLineWrap"); // Se agregará en index.html
+  const discountLineEl = $("#discountLine");       // Se agregará en index.html
   const cartTotalEl = $("#cartTotal");
 
   const shipHint = $("#shipHint");
@@ -61,8 +62,10 @@
   const quoteBtn = $("#quoteBtn");
 
   const promoCodeInput = $("#promoCode");
+  const applyPromoBtn = $("#applyPromoBtn");       // Se agregará en index.html
   const checkoutBtn = $("#checkoutBtn");
   const checkoutMsg = $("#checkoutMsg");
+  const checkoutLoader = $("#checkoutLoader");     // Se agregará en index.html
 
   const productModal = $("#productModal");
   const pmClose = $("#pmClose");
@@ -110,6 +113,8 @@
   // ---------- STATE ----------
   let catalog = null;
   let products = [];
+  let promosData = null; // Guardará las reglas de cupones
+  let activePromo = null; // Guardará el cupón validado activo
   let activeCategory = null; 
   let searchQuery = "";
   let sortMode = "featured";
@@ -126,7 +131,6 @@
     catch { return `$${n.toFixed(2)}`; }
   };
 
-  // Fix: Corrección para rutas con espacios como 'camiseta-cafe- oscuro-baja400.webp'
   const safeUrl = (p) => { try { return encodeURI(String(p || "").trim()); } catch { return String(p || ""); } };
   const clampInt = (v, min, max) => { const n = Math.floor(Number(v || 0)); if (!Number.isFinite(n)) return min; return Math.max(min, Math.min(max, n)); };
 
@@ -212,6 +216,15 @@
     const res = await fetch(url, { headers: { "cache-control": "no-store" } });
     if (!res.ok) throw new Error(`Catálogo HTTP ${res.status}`);
     return await res.json();
+  };
+
+  // Novedad: Cargar promos en segundo plano para cálculo en UI
+  const fetchPromos = async () => {
+    try {
+      const url = `data/promos.json?cv=${encodeURIComponent(APP_VERSION)}`;
+      const res = await fetch(url, { headers: { "cache-control": "no-store" } });
+      if (res.ok) promosData = await res.json();
+    } catch (e) { console.warn("No se pudieron cargar promos locales"); }
   };
 
   const renderCategories = () => {
@@ -352,7 +365,6 @@
         track.addEventListener('scroll', debounce(() => {
           let idx = Math.round(track.scrollLeft / track.clientWidth);
           dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-          
           if(idx > 0 && swipeHintEl) {
              swipeHintEl.style.opacity = '0';
              setTimeout(() => swipeHintEl.remove(), 300);
@@ -440,6 +452,8 @@
     openLayer(productModal);
   };
 
+  // --- LOGICA DE CARRITO MEJORADA ---
+
   const saveCart = () => { try { localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart)); } catch {} };
   const loadCart = () => {
     try {
@@ -461,18 +475,70 @@
     if (idx >= 0) cart[idx].qty = clampInt(cart[idx].qty + q, 1, 99);
     else cart.push({ sku: p.sku, title: p.title, priceCents: p.priceCents, size: s, qty: q, img: p.img || "", uiSection: p.uiSection || "", collection: p.collection || "" });
 
-    saveCart(); renderCart(); showToast("✅ Agregado al carrito exitosamente");
+    saveCart(); validatePromo(); renderCart(); showToast("✅ Agregado al carrito");
   };
 
-  const removeCartItem = (sku, size) => { cart = cart.filter((x) => !(x.sku === sku && x.size === size)); saveCart(); renderCart(); };
+  const removeCartItem = (sku, size) => { cart = cart.filter((x) => !(x.sku === sku && x.size === size)); saveCart(); validatePromo(); renderCart(); };
   const setCartQty = (sku, size, qty) => {
     const it = cart.find((x) => x.sku === sku && x.size === size);
-    if (it) { it.qty = clampInt(qty, 1, 99); saveCart(); renderCart(); }
+    if (it) { it.qty = clampInt(qty, 1, 99); saveCart(); validatePromo(); renderCart(); }
   };
 
-  const cartSubtotalCents = () => cart.reduce((sum, it) => sum + (Number(it.priceCents || 0) * Number(it.qty || 1)), 0);
+  // Novedad: Cambiar talla directamente en el carrito
+  const changeCartItemSize = (sku, oldSize, newSize) => {
+    if(oldSize === newSize) return;
+    const itemIndex = cart.findIndex((x) => x.sku === sku && x.size === oldSize);
+    if(itemIndex === -1) return;
+    
+    // Verificar si la nueva talla ya existe para ese SKU
+    const existingIndex = cart.findIndex((x) => x.sku === sku && x.size === newSize);
+    if (existingIndex >= 0) {
+      // Si existe, sumar cantidad y borrar el viejo
+      cart[existingIndex].qty = clampInt(cart[existingIndex].qty + cart[itemIndex].qty, 1, 99);
+      cart.splice(itemIndex, 1);
+    } else {
+      cart[itemIndex].size = newSize;
+    }
+    saveCart(); renderCart(); showToast("✅ Talla actualizada");
+  };
+
+  // Novedad: Validar Cupón Localmente para UI
+  const validatePromo = () => {
+    const code = String(promoCodeInput?.value || "").trim().toUpperCase();
+    if (!code || !promosData || !promosData.rules) { activePromo = null; return; }
+    
+    const p = promosData.rules.find(x => x.code === code && x.active);
+    if (p) {
+      const now = new Date();
+      const exp = p.expires_at ? new Date(p.expires_at) : null;
+      const subMxn = cartSubtotalCents(false) / 100;
+      if ((!exp || now <= exp) && subMxn >= (p.min_amount_mxn || 0)) {
+        activePromo = p;
+        return;
+      }
+    }
+    activePromo = null;
+  };
+
+  const cartSubtotalCents = (applyDiscount = false) => {
+    const sub = cart.reduce((sum, it) => sum + (Number(it.priceCents || 0) * Number(it.qty || 1)), 0);
+    if(!applyDiscount || !activePromo) return sub;
+
+    const subMxn = sub / 100;
+    let discountMultiplier = 1;
+    if (activePromo.type === 'percent') {
+      discountMultiplier = 1 - (Number(activePromo.value) || 0);
+    } else if (activePromo.type === 'fixed_mxn') {
+      const discountRatio = (subMxn - Number(activePromo.value)) / subMxn;
+      discountMultiplier = Math.max(0, discountRatio);
+    }
+    return Math.round(sub * discountMultiplier);
+  };
+
   const shippingCents = () => {
     if (shipping.mode === "pickup") return 0;
+    if (activePromo && activePromo.type === 'free_shipping') return 0; // Envío gratis en UI
+    
     const cents = Number(shipping.quote?.amount_cents || shipping.quote?.amount || 0);
     return Number.isFinite(cents) ? cents : 0;
   };
@@ -483,7 +549,6 @@
     cartItemsEl.innerHTML = "";
 
     if (!cart.length) {
-      // MEJORA UX: Boton claro para regresar a comprar
       cartItemsEl.innerHTML = `
         <div class="hint" style="text-align:center; padding: 30px 10px;">
           <div style="font-size: 40px; margin-bottom: 10px;">🛒</div>
@@ -492,6 +557,7 @@
         </div>`;
       if (cartSubtotalEl) cartSubtotalEl.textContent = money(0);
       if (shippingLineEl) shippingLineEl.textContent = money(0);
+      if (discountLineWrap) discountLineWrap.hidden = true;
       if (cartTotalEl) cartTotalEl.textContent = money(0);
       return;
     }
@@ -499,30 +565,80 @@
     const frag = document.createDocumentFragment();
     for (const it of cart) {
       const row = document.createElement("div"); row.className = "cartitem";
+      
+      // Obtener el producto real para listar sus tallas en el Select
+      const realProd = products.find(x => x.sku === it.sku);
+      const availableSizes = realProd && realProd.sizes ? realProd.sizes : [it.size];
+      const sizeOptions = availableSizes.map(s => `<option value="${s}" ${s === it.size ? 'selected' : ''}>${s}</option>`).join('');
+
       row.innerHTML = `
         <div class="cartitem__img">${it.img ? `<img src="${safeUrl(it.img)}" alt="${escapeHtml(it.title)}">` : ""}</div>
         <div style="flex-grow:1;">
           <h4 class="cartitem__title">${escapeHtml(it.title)}</h4>
-          <div class="cartitem__meta">Talla: <b style="color:var(--black-btn); font-size:15px;">${escapeHtml(it.size)}</b> · ${money(it.priceCents)} c/u</div>
+          <div class="cartitem__meta" style="display:flex; align-items:center; gap:8px;">
+            Talla: <select class="select cart-size-selector" data-sku="${it.sku}" data-old-size="${it.size}" style="padding: 2px 5px; width:auto; font-size:13px; font-weight:bold; height:auto; border-width:1px;">${sizeOptions}</select> 
+            <span>· ${money(it.priceCents)} c/u</span>
+          </div>
           <div class="cartitem__controls">
             <div class="qty" aria-label="Cantidad">
               <button type="button" data-act="dec">−</button><span>${it.qty}</span><button type="button" data-act="inc">+</button>
             </div>
-            <button class="trash" type="button">Eliminar</button>
+            <button class="trash" type="button" title="Eliminar">🗑️</button>
           </div>
         </div>
       `;
       row.querySelector('[data-act="dec"]').addEventListener("click", (ev) => { ev.stopPropagation(); setCartQty(it.sku, it.size, it.qty - 1); });
       row.querySelector('[data-act="inc"]').addEventListener("click", (ev) => { ev.stopPropagation(); setCartQty(it.sku, it.size, it.qty + 1); });
       row.querySelector(".trash").addEventListener("click", (ev) => { ev.stopPropagation(); removeCartItem(it.sku, it.size); });
+      
+      // Evento para cambio de talla
+      row.querySelector('.cart-size-selector').addEventListener("change", (ev) => {
+        ev.stopPropagation();
+        changeCartItemSize(ev.target.dataset.sku, ev.target.dataset.oldSize, ev.target.value);
+      });
+
       frag.appendChild(row);
     }
+    
+    // Botón para vaciar carrito
+    const clearWrap = document.createElement("div");
+    clearWrap.style.textAlign = "center";
+    clearWrap.style.marginTop = "10px";
+    clearWrap.innerHTML = `<button type="button" class="btn btn--tiny btn--ghost" style="color:var(--red); border-color:var(--red); font-size: 11px;">🧨 Vaciar Carrito</button>`;
+    clearWrap.querySelector("button").addEventListener("click", () => {
+      if(confirm("¿Estás seguro de que deseas vaciar tu carrito?")) {
+        cart = []; saveCart(); validatePromo(); renderCart();
+      }
+    });
+    frag.appendChild(clearWrap);
+
     cartItemsEl.appendChild(frag);
 
-    const sub = cartSubtotalCents(); const ship = shippingCents();
-    if (cartSubtotalEl) cartSubtotalEl.textContent = money(sub);
-    if (shippingLineEl) shippingLineEl.textContent = money(ship);
-    if (cartTotalEl) cartTotalEl.textContent = money(sub + ship);
+    const subGross = cartSubtotalCents(false);
+    const subNet = cartSubtotalCents(true);
+    const ship = shippingCents();
+    
+    if (cartSubtotalEl) cartSubtotalEl.textContent = money(subGross);
+    
+    // Mostrar descuento si aplica
+    if (discountLineWrap && discountLineEl) {
+      if (subNet < subGross && activePromo.type !== 'free_shipping') {
+        discountLineWrap.hidden = false;
+        discountLineEl.textContent = `-${money(subGross - subNet)}`;
+      } else {
+        discountLineWrap.hidden = true;
+      }
+    }
+
+    if (shippingLineEl) {
+      if (activePromo && activePromo.type === 'free_shipping' && shipping.mode !== "pickup") {
+         shippingLineEl.innerHTML = `<span style="text-decoration: line-through; color: var(--muted2); font-size:12px; margin-right:5px;">${money(shipping.quote?.amount_mxn * 100 || 0)}</span> <b style="color:#28a745;">¡GRATIS!</b>`;
+      } else {
+         shippingLineEl.textContent = money(ship);
+      }
+    }
+    
+    if (cartTotalEl) cartTotalEl.textContent = money(subNet + ship);
   };
 
   const loadShipping = () => {
@@ -534,7 +650,12 @@
 
   const refreshShippingUI = () => {
     shipping.mode = getSelectedShipMode();
-    if (shipHint) shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona modo";
+    
+    if (shipHint) {
+      if(shipping.mode === "pickup") shipHint.textContent = "Fábrica";
+      else if(shipping.quote) shipHint.textContent = shipping.quote.label; // Muestra la paquetería cotizada si existe
+      else shipHint.textContent = SHIPPING_LABELS[shipping.mode];
+    }
     
     if (shippingNote) {
       if(shipping.mode === 'pickup') shippingNote.textContent = "Recoge gratis en nuestras instalaciones en Tijuana.";
@@ -569,21 +690,21 @@
 
       shipping.mode = mode; shipping.postal_code = postal_code;
       shipping.quote = { amount_cents: Number(data.amount_cents || 0), amount_mxn: Number(data.amount_mxn || 0), label: String(data.label || "Standard"), country: String(data.country || body.country), provider: String(data.provider || "envia") };
-      saveShipping(); renderCart(); showToast(`✅ Costo de envío calculado`);
+      saveShipping(); refreshShippingUI(); showToast(`✅ Costo de envío calculado`);
     } catch (e) {
-      shipping.quote = null; saveShipping(); renderCart(); showToast(`❌ Error de sistema de envíos. Verifica tu CP.`);
+      shipping.quote = null; saveShipping(); refreshShippingUI(); showToast(`❌ Error de sistema de envíos. Verifica tu CP.`);
     } finally {
       if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Calcular"; }
     }
   };
 
-  // MEJORA: Anti-Dobles cobros.
+  // MEJORA: Anti-Dobles cobros y Checkout Seguro.
   const doCheckout = async () => {
     if (checkoutMsg) checkoutMsg.hidden = true;
     if (!cart.length) { showToast("Tu carrito está vacío"); return; }
 
     const shipping_mode = getSelectedShipMode();
-    const promo_code = String(promoCodeInput?.value || "").trim();
+    const promo_code = String(promoCodeInput?.value || "").trim().toUpperCase();
     const postal_code = String(postalCodeInput?.value || "").trim();
     const needsZip = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
 
@@ -594,9 +715,8 @@
       }
     }
 
-    // UX Mejora: Loader a pantalla completa para evitar que toquen nada mientras cargan los servidores de Stripe.
     if (checkoutBtn) { checkoutBtn.disabled = true; }
-    if (checkoutLoader) { checkoutLoader.hidden = false; }
+    if (checkoutLoader) { checkoutLoader.hidden = false; } // Full Screen Loader
 
     try {
       const payload = { items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), shipping_mode, postal_code: needsZip ? postal_code : "", promo_code };
@@ -611,7 +731,6 @@
       showToast("Hubo un error al procesar el pago seguro.");
     } finally {
       if (checkoutBtn) { checkoutBtn.disabled = false; }
-      // El loader de pantalla completa se queda cargando si hubo éxito porque la página va a saltar a Stripe.
     }
   };
 
@@ -649,7 +768,12 @@
 
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-    loadCart(); loadShipping(); refreshShippingUI();
+    loadCart(); loadShipping(); 
+
+    // Novedad: Carga de promos para aplicar cupones en frontend
+    await fetchPromos(); 
+    validatePromo();
+    refreshShippingUI();
 
     if (overlay) overlay.addEventListener("click", closeAll);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
@@ -718,8 +842,17 @@
     $$('input[name="shipMode"]').forEach((r) => { r.addEventListener("change", refreshShippingUI); });
     quoteBtn?.addEventListener("click", quoteShipping);
     postalCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") quoteShipping(); });
+    
+    // UI Eventos Cupones
+    promoCodeInput?.addEventListener("blur", () => { validatePromo(); renderCart(); });
+    promoCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") { validatePromo(); renderCart(); }});
+    if(applyPromoBtn) { applyPromoBtn.addEventListener("click", () => { validatePromo(); renderCart(); showToast("Verificando cupón..."); }); }
+
     checkoutBtn?.addEventListener("click", doCheckout);
 
+    // FIX COOKIES: Solo mostrar si no hay decisión
+    const consentDecision = localStorage.getItem(STORAGE_KEYS.consent);
+    if (!consentDecision && cookieBanner) { cookieBanner.hidden = false; }
     cookieAccept?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "accept"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
     cookieReject?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "reject"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
 
