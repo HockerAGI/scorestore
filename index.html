@@ -221,6 +221,11 @@
           <span>Subtotal de productos</span>
           <b id="cartSubtotal">$0.00</b>
         </div>
+        
+        <div id="discountLineWrap" class="cartrow" style="color: var(--red);" hidden>
+          <span>Descuento aplicado</span>
+          <b id="discountLine">-$0.00</b>
+        </div>
 
         <div class="cartrow cartrow--stack">
           <div class="cartrow__line">
@@ -267,6 +272,7 @@
           <label class="muted" for="promoCode" style="font-size: 13px;">¿Tienes un cupón de descuento?</label>
           <div style="display: flex; gap: 8px;">
             <input id="promoCode" class="input" placeholder="Ej. SCORE25" aria-label="Código promocional" style="text-transform: uppercase;" />
+            <button id="applyPromoBtn" class="btn btn--black" type="button" style="padding: 0 15px;">Aplicar</button>
           </div>
         </div>
 
