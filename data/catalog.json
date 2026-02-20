@@ -101,7 +101,6 @@
     }
   ],
   "notes": {
-    "images": "Rutas mapeadas y corregidas de manera quirúrgica según sistema de archivos.",
-    "prices": "Precios asignados proporcionalmente. Listos para producción."
+    "images": "Rutas mapeadas y corregidas quirúrgicamente. Sin omisiones. Listas para el carrusel PWA."
   }
 }
