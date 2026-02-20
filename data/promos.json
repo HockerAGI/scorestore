@@ -5,35 +5,45 @@
       "type": "percent",
       "value": 0.25,
       "description": "25% OFF por Inauguración",
-      "active": true
+      "active": true,
+      "min_amount_mxn": 1000,
+      "expires_at": "2026-12-31T23:59:59Z"
     },
     {
       "code": "BAJA25",
       "type": "percent",
       "value": 0.25,
       "description": "25% OFF Cupón Baja",
-      "active": true
+      "active": true,
+      "min_amount_mxn": 0,
+      "expires_at": "2026-12-31T23:59:59Z"
     },
     {
       "code": "SCORE10",
       "type": "percent",
       "value": 0.1,
       "description": "10% OFF Fans",
-      "active": true
+      "active": true,
+      "min_amount_mxn": 500,
+      "expires_at": "2027-01-01T00:00:00Z"
     },
     {
       "code": "BAJA200",
       "type": "fixed_mxn",
       "value": 200,
-      "description": "$200 MXN OFF",
-      "active": true
+      "description": "$200 MXN OFF en tu carrito",
+      "active": true,
+      "min_amount_mxn": 1500,
+      "expires_at": null
     },
     {
       "code": "ENVIOFREE",
       "type": "free_shipping",
       "value": 0,
-      "description": "Envío Gratis",
-      "active": true
+      "description": "Envío Gratis a todo México",
+      "active": true,
+      "min_amount_mxn": 2000,
+      "expires_at": null
     }
   ]
 }
