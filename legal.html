@@ -2,138 +2,90 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>Legal — SCORE STORE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>Políticas y Legal — SCORE STORE</title>
+  <link rel="stylesheet" href="css/styles.css" />
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#f4f4f7;color:#0f1115}
-    .header-legal { background: #0f0f0f; padding: 20px 0; text-align: center; border-bottom: 4px solid #E10600; }
-    .header-legal img { height: 40px; }
-    main{max-width:900px;margin:0 auto;padding:40px 22px}
-    h1{margin:0 0 10px; font-weight: 900; font-size: 32px;}
-    h2{margin:30px 0 15px; font-weight: 900; color: #E10600; font-size: 24px; border-bottom: 2px solid rgba(225,6,0,0.2); padding-bottom: 8px;}
-    h3{margin:20px 0 10px; font-weight: 800; font-size: 18px; color: #0f1115;}
-    p,li{line-height:1.7; font-weight: 500; color: #333;}
-    ul { margin-top: 10px; padding-left: 20px; }
-    .muted{color:#6b6b75; font-size: 14px; font-weight: 600;}
-    a{color:#E10600; text-decoration: none; font-weight: 700;}
-    a:hover{text-decoration: underline;}
-    .box{border:1px solid rgba(5,5,5,.08);border-radius:16px;padding:30px;margin:20px 0;background:#fff; box-shadow: 0 8px 24px rgba(0,0,0,.04);}
-    .btn-back { display: inline-flex; align-items: center; justify-content: center; padding: 14px 28px; background: #0f0f0f; color: white; border-radius: 999px; text-decoration: none; font-weight: 800; transition: all 0.3s; margin-top: 20px;}
-    .btn-back:hover { background: #E10600; transform: translateY(-2px); text-decoration: none; box-shadow: 0 10px 20px rgba(225,6,0,0.3);}
+    .legal-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 50px 40px;
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow-modal);
+      margin: 40px auto;
+      max-width: 900px;
+      position: relative;
+      z-index: 10;
+      border-top: 5px solid var(--red);
+    }
+    .legal-content h1 { font-size: 36px; font-weight: 900; color: var(--black-btn); margin-bottom: 10px; }
+    .legal-content h2 { font-size: 24px; font-weight: 900; color: var(--red); margin: 30px 0 15px; border-bottom: 2px solid rgba(225,6,0,0.2); padding-bottom: 8px; }
+    .legal-content h3 { font-size: 18px; font-weight: 800; color: var(--black-btn); margin: 20px 0 10px; }
+    .legal-content p, .legal-content li { line-height: 1.7; font-weight: 500; color: #333; margin-bottom: 12px; }
+    .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+    .legal-content a { color: var(--red); text-decoration: none; font-weight: 700; }
+    .legal-content a:hover { text-decoration: underline; }
+    .legal-box { border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin: 20px 0; background: #fff; box-shadow: var(--shadow); }
   </style>
 </head>
 <body>
-  <div class="header-legal">
-    <a href="index.html"><img src="assets/logo-score.webp" alt="SCORE STORE" /></a>
-  </div>
-  <main>
-    <h1>Términos, Condiciones y Privacidad</h1>
-    <p class="muted">Última actualización: Febrero de 2026</p>
 
-    <div class="box">
-      <h2>1. Términos y Condiciones de Uso y Compra</h2>
-      <p>Los presentes Términos y Condiciones rigen el uso del sitio web <strong>SCORE Store</strong> (en adelante "el Sitio") y la compra de mercancía oficial de SCORE International. El Sitio es operado legal y comercialmente por <strong>BAJATEX S. de R.L. de C.V.</strong> (comercialmente conocido como "Único Uniformes"), con domicilio en Tijuana, Baja California, México.</p>
-      <p>Al acceder, navegar o realizar una compra en el Sitio, el usuario (en adelante "el Cliente") acepta expresamente los presentes Términos y Condiciones.</p>
+  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: none; filter: brightness(0.6);"></div>
 
-      <h3>1.1. Información de los Productos</h3>
-      <p>Todos los productos ofrecidos en el Sitio son mercancía oficial de SCORE International, fabricada por Único Uniformes. Las fotografías de los productos son ilustrativas. Debido a la naturaleza de la producción textil, pueden existir ligeras variaciones en tonos y medidas entre el producto digital y el físico. El Cliente reconoce que la disponibilidad de los productos está sujeta a existencias limitadas en nuestro almacén.</p>
-
-      <h3>1.2. Precios y Moneda</h3>
-      <p>Todos los precios mostrados en el Sitio están expresados en <strong>Pesos Mexicanos (MXN)</strong> e incluyen el Impuesto al Valor Agregado (IVA) correspondiente, conforme a la legislación fiscal mexicana. Los gastos de envío se calcularán y desglosarán de forma independiente en el proceso de pago (Checkout). BAJATEX S. de R.L. de C.V. se reserva el derecho de modificar los precios en cualquier momento, respetando el precio de las órdenes que ya hayan sido pagadas y confirmadas.</p>
-
-      <h3>1.3. Pagos y Seguridad</h3>
-      <p>El procesamiento de pagos es operado a través de <strong>Stripe</strong>, pasarela de pago certificada bajo los estándares de seguridad PCI-DSS.</p>
-      <ul>
-        <li>Se aceptan pagos con tarjetas de crédito y débito (Visa, Mastercard, American Express).</li>
-        <li>Se aceptan pagos en efectivo a través de la red de tiendas <strong>OXXO</strong>.</li>
-      </ul>
-      <p>BAJATEX S. de R.L. de C.V. no captura, almacena ni procesa directamente los datos financieros ni los números de tarjeta del Cliente. Toda transacción se realiza en un entorno encriptado. En el caso de pagos por OXXO, el Cliente reconoce que el procesamiento de la orden comenzará únicamente hasta que Stripe confirme la recepción de los fondos (lo cual puede demorar hasta 72 horas hábiles).</p>
-
-      <h3>1.4. Facturación</h3>
-      <p>De conformidad con las leyes del Servicio de Administración Tributaria (SAT), el Cliente podrá solicitar la factura fiscal (CFDI) correspondiente a su compra dentro del mismo mes calendario en que se realizó el pago. Para ello, deberá enviar sus datos fiscales (RFC, Razón Social, Régimen Fiscal, Código Postal y Uso de CFDI) al correo oficial de contacto de la tienda, indicando su número de orden.</p>
+  <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000;">
+    <div class="wrap topbar__inner" style="justify-content: center;">
+      <a class="brand" href="index.html" aria-label="Score Store" style="position: relative; left: 0; transform: none;">
+        <img class="brand__logo" src="assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
+      </a>
     </div>
+  </header>
 
-    <div class="box">
-      <h2>2. Políticas de Envío y Entregas</h2>
-      
-      <h3>2.1. Métodos de Entrega</h3>
-      <p>El Cliente puede elegir entre las siguientes modalidades al momento del pago:</p>
-      <ul>
-        <li><strong>Pickup (Recolección en Fábrica):</strong> Sin costo. El Cliente acudirá directamente a las instalaciones de Único Uniformes en Tijuana, Baja California, una vez que reciba la confirmación por correo electrónico de que su pedido está listo para recolección.</li>
-        <li><strong>Envíos Nacionales e Internacionales (México y USA):</strong> Los envíos se gestionan mediante la integración tecnológica de <strong>Envia.com</strong>. El costo del envío se calcula en tiempo real basándose en el código postal (ZIP Code) del destino, el peso y el volumen del paquete.</li>
-      </ul>
+  <main class="wrap">
+    <div class="legal-content">
+      <h1>Términos, Condiciones y Privacidad</h1>
+      <p class="muted" style="margin-bottom: 30px;">Última actualización: Febrero de 2026</p>
 
-      <h3>2.2. Tiempos de Procesamiento y Despacho</h3>
-      <p>Una vez confirmado el pago, el pedido entrará en proceso de empaque. El tiempo de procesamiento interno es de 1 a 3 días hábiles. Posterior a este lapso, el paquete será entregado al proveedor de paquetería (carrier) seleccionado (ej. DHL, FedEx, USPS, Estafeta).</p>
+      <div class="legal-box">
+        <h2>1. Términos y Condiciones de Uso y Compra</h2>
+        <p>Los presentes Términos y Condiciones rigen el uso del sitio web <strong>SCORE Store</strong> y la compra de mercancía oficial. El Sitio es operado legal y comercialmente por <strong>BAJATEX S. de R.L. de C.V.</strong> (Único Uniformes), con domicilio en Tijuana, B.C., México.</p>
+        
+        <h3>1.1. Información de los Productos</h3>
+        <p>Todos los productos son mercancía oficial de SCORE International, fabricada por Único Uniformes. Debido a la naturaleza textil, pueden existir ligeras variaciones entre el producto digital y el físico.</p>
 
-      <h3>2.3. Responsabilidad de Envío</h3>
-      <p>BAJATEX S. de R.L. de C.V. proporcionará al Cliente un número de guía para el rastreo del paquete. El tiempo de tránsito final dependerá exclusivamente de la empresa de paquetería. En caso de retrasos, robos, extravíos o daños causados durante el tránsito, brindaremos el soporte necesario para levantar el reporte correspondiente ante la paquetería, operando bajo las políticas de indemnización de Envia.com y la transportista.</p>
-    </div>
+        <h3>1.2. Precios y Pagos</h3>
+        <p>Precios expresados en <strong>MXN (Pesos Mexicanos)</strong> con IVA incluido. Los pagos son procesados de manera segura por <strong>Stripe</strong>. Aceptamos Tarjetas y OXXO. BAJATEX no almacena datos financieros.</p>
+      </div>
 
-    <div class="box">
-      <h2>3. Políticas de Cambios, Devoluciones y Cancelaciones</h2>
-      <p>En cumplimiento con la Ley Federal de Protección al Consumidor (PROFECO), establecemos las siguientes normativas:</p>
+      <div class="legal-box">
+        <h2>2. Políticas de Envío y Entregas</h2>
+        <h3>2.1. Métodos de Entrega</h3>
+        <ul>
+          <li><strong>Pickup (Recolección en Fábrica):</strong> Sin costo. En instalaciones de Único Uniformes (Tijuana).</li>
+          <li><strong>Envíos Nacionales e Internacionales:</strong> Gestionados vía <strong>Envia.com</strong>. Costo calculado en Checkout.</li>
+        </ul>
+        <h3>2.2. Tiempos</h3>
+        <p>Procesamiento interno de 1 a 3 días hábiles. El tiempo en tránsito depende de la paquetería (FedEx, DHL, USPS, etc.).</p>
+      </div>
 
-      <h3>3.1. Cancelaciones</h3>
-      <p>El Cliente tiene derecho a cancelar su pedido antes de que este haya sido despachado (entregado a la paquetería). Una vez que el paquete tenga una guía de envío generada y en tránsito, no se podrán realizar cancelaciones inmediatas; el Cliente deberá esperar a recibir el producto y solicitar una devolución.</p>
+      <div class="legal-box">
+        <h2>3. Cambios y Devoluciones</h2>
+        <p>El Cliente cuenta con <strong>7 días naturales</strong> a partir de la recepción para notificar defectos de fábrica. BAJATEX cubre el envío en caso de defecto. Si el cambio es por error de talla del cliente, el cliente absorbe los costos de paquetería.</p>
+      </div>
 
-      <h3>3.2. Cambios y Devoluciones por Defecto</h3>
-      <p>El Cliente cuenta con un plazo máximo de <strong>7 días naturales</strong> a partir de la recepción del pedido para notificar cualquier defecto de fabricación, error de talla (enviada por error nuestro) o mercancía dañada.</p>
-      <ul>
-        <li>El Cliente deberá enviar un correo con fotografías de la prenda defectuosa, conservando etiquetas originales y empaque.</li>
-        <li>Si el reclamo procede, BAJATEX S. de R.L. de C.V. cubrirá los gastos de envío para la devolución y reposición de la prenda.</li>
-      </ul>
+      <div class="legal-box">
+        <h2>4. Aviso de Privacidad</h2>
+        <p>Sus datos (Nombre, Dirección, Teléfono, Correo) son recabados exclusivamente para el procesamiento, envío de su pedido y facturación, en cumplimiento con la LFPDPPP de México. Los datos son compartidos únicamente con proveedores logísticos (Envia.com) para generar su guía.</p>
+        <p>Para ejercer sus derechos ARCO, envíe un correo a <em>ventas.unicotextil@gmail.com</em>.</p>
+      </div>
 
-      <h3>3.3. Cambios por Talla (Error del Cliente)</h3>
-      <p>Si el Cliente se equivocó al elegir la talla y desea un cambio, este estará sujeto a disponibilidad de inventario. En este escenario, el Cliente deberá cubrir ambos costos de envío (la devolución del producto a nuestra fábrica en Tijuana y el envío de la nueva prenda). Las prendas devueltas no deben mostrar señales de uso, lavado, o alteraciones. No aplican devoluciones en ediciones limitadas u ofertas especiales a menos que exista un defecto de fábrica.</p>
-    </div>
-
-    <div class="box">
-      <h2>4. Aviso de Privacidad Integral</h2>
-      <p>En estricto cumplimiento con lo dispuesto en la <strong>Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP)</strong>, su Reglamento y los Lineamientos del Aviso de Privacidad, BAJATEX S. de R.L. de C.V. (en lo sucesivo "El Responsable"), con domicilio en Tijuana, Baja California, México, emite el presente Aviso de Privacidad.</p>
-
-      <h3>4.1. Datos Personales Recabados</h3>
-      <p>Para llevar a cabo las finalidades descritas en el presente aviso, recabaremos de forma directa a través de nuestro sitio web los siguientes datos personales:</p>
-      <ul>
-        <li>Nombre completo.</li>
-        <li>Correo electrónico y Teléfono de contacto.</li>
-        <li>Domicilio completo de entrega y facturación.</li>
-        <li>Información de interacción con el sitio (Cookies, dirección IP, tipo de navegador).</li>
-      </ul>
-      <p class="muted">*Nota: Los datos financieros (números de tarjeta) son ingresados y procesados de manera directa por Stripe, por lo que El Responsable no tiene acceso a ellos.*</p>
-
-      <h3>4.2. Finalidades del Tratamiento</h3>
-      <p>Los datos personales que recabamos serán utilizados para las siguientes <strong>finalidades primarias</strong>:</p>
-      <ul>
-        <li>Procesar, autenticar y dar seguimiento a compras realizadas en el sitio.</li>
-        <li>Facturación y cobro.</li>
-        <li>Generación de guías de envío a través de servicios de logística (Envia.com).</li>
-        <li>Atención al cliente y soporte para cambios o devoluciones.</li>
-      </ul>
-      <p>De manera adicional, utilizaremos su información para las siguientes <strong>finalidades secundarias</strong>:</p>
-      <ul>
-        <li>Envío de promociones, boletines y material publicitario sobre SCORE Store.</li>
-        <li>Análisis de métricas comerciales mediante herramientas como el Píxel de Meta para mejorar nuestra oferta de productos.</li>
-      </ul>
-      <p>En caso de que no desee que sus datos personales se utilicen para estos fines secundarios, puede enviar un correo indicando su negativa.</p>
-
-      <h3>4.3. Transferencia de Datos</h3>
-      <p>El Responsable informa que, para cumplir con las finalidades primarias (envío de los productos), sus datos personales serán transferidos y compartidos con terceros proveedores de logística y mensajería (plataforma Envia.com y carriers asociados). Al aceptar los Términos y Condiciones, usted otorga su consentimiento para esta transferencia estrictamente operativa.</p>
-
-      <h3>4.4. Derechos ARCO y Revocación del Consentimiento</h3>
-      <p>Usted tiene en todo momento el derecho de <strong>A</strong>cceder, <strong>R</strong>ectificar, <strong>C</strong>ancelar u <strong>O</strong>ponerse (Derechos ARCO) al tratamiento de sus datos personales, así como a revocar el consentimiento. Para ejercer cualquiera de estos derechos, deberá enviar una solicitud formal al correo electrónico: <em>ventas.unicotextil@gmail.com</em> incluyendo su nombre completo, documento de identidad y la descripción de los datos.</p>
-
-      <h3>4.5. Uso de Tecnologías de Rastreo (Cookies)</h3>
-      <p>Le informamos que en nuestra página de Internet utilizamos cookies, web beacons y otras tecnologías a través de las cuales es posible monitorear su comportamiento como usuario de Internet, así como brindarle un mejor servicio (ej. mantener los artículos en su carrito). Puede desactivar estas tecnologías en la configuración de su navegador web.</p>
-    </div>
-
-    <div style="text-align: center; margin-top: 40px;">
-      <p><strong>Centro de Atención:</strong><br>
-      Razón Social: BAJATEX S. de R.L. de C.V. (Único Uniformes)<br>
-      Ubicación: Tijuana, Baja California, México.<br>
-      Contacto comercial: <a href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a> / WhatsApp: 664 236 8701</p>
-      <a href="index.html" class="btn-back">← Volver a la Tienda</a>
+      <div style="text-align: center; margin-top: 40px;">
+        <p style="margin-bottom: 20px;">
+          <strong>BAJATEX S. de R.L. de C.V. (Único Uniformes)</strong><br>
+          <a href="mailto:contacto.hocker@gmail.com">contacto.hocker@gmail.com</a> | WhatsApp: 664 301 1271
+        </p>
+        <a href="index.html" class="btn btn--primary btn--large cinematic-btn">Volver a la Tienda</a>
+      </div>
     </div>
   </main>
 </body>
