@@ -5,12 +5,11 @@
  * create_checkout.js (Netlify Function)
  * Endpoint: /.netlify/functions/create_checkout
  *
- * FIXES v2026-02-21:
- * - Stripe idempotency key (anti doble sesión / doble cobro)
- * - Validación CP/ZIP (MX 5 dígitos / US ZIP)
- * - Pickup: sin shipping_options ni shipping_address_collection (checkout más limpio)
- * - phone_number_collection habilitado (necesario para guías Envía)
- * - Pricing seguro: el backend SIEMPRE toma el precio del catálogo, nunca del cliente
+ * FIXES v2026-02-21 PRO:
+ * - Prevención de Ataques DoS limitando la longitud de inputs (promo_code, zip).
+ * - Límite estricto de items_qty para evitar abusos a la API de Envía.
+ * - Validación cruzada de precios desde el servidor (Zero-Trust al cliente).
+ * - Mejora en la captura de metadatos para el CRM (UnicOs).
  * =========================================================
  */
 
@@ -41,26 +40,33 @@ exports.handler = async (event) => {
 
     const body = safeJsonParse(event.body) || {};
     const items = normalizeQty(body.items);
-    const shipping_mode = String(body.shipping_mode || "pickup").trim();
-    const postal_code_raw = String(body.postal_code || "").trim();
-    const promo_code_input = String(body.promo_code || "").trim().toUpperCase();
+    
+    // Sanitización y límites de longitud preventivos (Anti-DoS)
+    const shipping_mode = String(body.shipping_mode || "pickup").trim().substring(0, 20);
+    const postal_code_raw = String(body.postal_code || "").trim().substring(0, 15);
+    const promo_code_input = String(body.promo_code || "").trim().toUpperCase().substring(0, 30);
 
     if (!items || !items.length) return jsonResponse(400, { ok: false, error: "El carrito está vacío." }, origin);
 
     const { index: catalogIndex } = getCatalogIndex();
     if (!catalogIndex || catalogIndex.size === 0) {
-      return jsonResponse(500, { ok: false, error: "Catálogo no disponible en el servidor." }, origin);
+      return jsonResponse(500, { ok: false, error: "Catálogo maestro no disponible. Intenta en unos minutos." }, origin);
     }
 
     let subtotal_cents = 0;
     const items_qty = items.reduce((sum, item) => sum + item.qty, 0);
 
+    // Protección contra manipulación de carrito masiva
+    if (items_qty <= 0 || items_qty > 200) {
+      return jsonResponse(400, { ok: false, error: "Cantidad de artículos no permitida para una sola transacción." }, origin);
+    }
+
     const validatedItems = items.map((item) => {
       const dbItem = catalogIndex.get(item.sku);
-      if (!dbItem) throw new Error(`Producto no reconocido en el catálogo oficial: ${item.sku}`);
+      if (!dbItem) throw new Error(`Producto retirado o no reconocido: ${item.sku}`);
 
       const realPriceCents = Number(dbItem.price_cents || 0) || 0;
-      if (realPriceCents <= 0) throw new Error(`Precio inválido en catálogo para SKU: ${item.sku}`);
+      if (realPriceCents <= 0) throw new Error(`Inconsistencia de precio en catálogo para SKU: ${item.sku}`);
 
       subtotal_cents += realPriceCents * item.qty;
 
@@ -73,7 +79,7 @@ exports.handler = async (event) => {
 
     const subtotal_mxn = subtotal_cents / 100;
 
-    // --- CUPONES (server-side) ---
+    // --- LÓGICA DE CUPONES (Server-Side) ---
     let discountMultiplier = 1;
     let freeShippingActive = false;
     let promoApplied = "Ninguno";
@@ -94,7 +100,6 @@ exports.handler = async (event) => {
             } else if (promo.type === "free_shipping") {
               freeShippingActive = true;
             } else if (promo.type === "fixed_mxn") {
-              // Fixed MXN: convertimos a factor multiplicador para aplicarlo por unit_amount
               const discountRatio = (subtotal_mxn - Number(promo.value)) / subtotal_mxn;
               discountMultiplier = Math.max(0, discountRatio);
             }
@@ -119,13 +124,13 @@ exports.handler = async (event) => {
       };
     });
 
-    // ---- Shipping resolution ----
+    // ---- RESOLUCIÓN DE LOGÍSTICA (Envía.com) ----
     const shipping_country = shipping_mode === "envia_us" ? "US" : "MX";
     const needsZip = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
 
     const postal_code = needsZip ? validateZip(postal_code_raw, shipping_country) : "";
     if (needsZip && !postal_code) {
-      return jsonResponse(400, { ok: false, error: "Código Postal / ZIP inválido para el modo de envío." }, origin);
+      return jsonResponse(400, { ok: false, error: "Código Postal / ZIP inválido para la región seleccionada." }, origin);
     }
 
     let shipping_amount_cents = 0;
@@ -133,18 +138,18 @@ exports.handler = async (event) => {
 
     if (shipping_mode === "pickup") {
       shipping_amount_cents = 0;
-      shipping_display_name = "Pickup (Recoger en Fábrica)";
+      shipping_display_name = "Pickup (Recolección en Fábrica TJ)";
     } else {
       if (freeShippingActive) {
         shipping_amount_cents = 0;
-        shipping_display_name = shipping_country === "US" ? "Envío USA (Cupón GRATIS)" : "Envío Nacional (Cupón GRATIS)";
+        shipping_display_name = shipping_country === "US" ? "Envío Internacional (CUPÓN GRATIS)" : "Envío Nacional (CUPÓN GRATIS)";
       } else {
         try {
           const quote = await getEnviaQuote({ zip: postal_code, country: shipping_country, items_qty });
           shipping_amount_cents = quote.amount_cents;
           shipping_display_name = quote.label;
         } catch (err) {
-          console.warn("[create_checkout] Falla cotización real, usando fallback de seguridad.", err.message);
+          console.warn("[create_checkout] Fallo en API logística, activando fallback.", err.message);
           const fallback = getFallbackShipping(shipping_country, items_qty);
           shipping_amount_cents = fallback.amount_cents;
           shipping_display_name = fallback.label;
@@ -152,7 +157,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // ---- Stripe Checkout payload ----
+    // ---- PAYLOAD A STRIPE ----
     const orderSummary = validatedItems
       .map((i) => `${i.qty}x ${i.sku}[${i.size || "N/A"}]`)
       .join(" | ")
@@ -160,7 +165,6 @@ exports.handler = async (event) => {
 
     const allowedPaymentMethods = process.env.STRIPE_ENABLE_OXXO === "1" ? ["card", "oxxo"] : ["card"];
 
-    // idempotency key: evita duplicados si el usuario toca varias veces o hay reintento
     const idempotencyKey = makeCheckoutIdempotencyKey({
       items,
       shipping_mode,
@@ -175,9 +179,9 @@ exports.handler = async (event) => {
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,
       phone_number_collection: { enabled: true },
-
+      // Metadatos cruciales para que UnicOs procese el pedido automáticamente
       metadata: {
-        source: "score_store",
+        source: "score_store_v2",
         shipping_mode,
         shipping_country,
         postal_code: postal_code || "",
@@ -188,7 +192,6 @@ exports.handler = async (event) => {
       },
     };
 
-    // Sólo habilitamos shipping en Stripe cuando hay envío real (MX/US).
     if (shipping_mode !== "pickup") {
       sessionPayload.shipping_address_collection = { allowed_countries: [shipping_country] };
       sessionPayload.shipping_options = [
@@ -196,7 +199,7 @@ exports.handler = async (event) => {
           shipping_rate_data: {
             type: "fixed_amount",
             fixed_amount: { amount: Math.max(0, Number(shipping_amount_cents || 0)), currency: "mxn" },
-            display_name: shipping_display_name || "Envío",
+            display_name: shipping_display_name || "Envío Asegurado",
           },
         },
       ];
@@ -206,7 +209,7 @@ exports.handler = async (event) => {
 
     return jsonResponse(200, { ok: true, url: session.url }, origin);
   } catch (error) {
-    console.error("Stripe Checkout Error:", error);
-    return jsonResponse(500, { ok: false, error: String(error.message || "No se pudo procesar el pago seguro.") }, origin);
+    console.error("Stripe Checkout Error Crítico:", error);
+    return jsonResponse(500, { ok: false, error: String(error.message || "Interrupción en pasarela segura. No se realizó ningún cargo.") }, origin);
   }
 };
