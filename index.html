@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <script>
-    window.__APP_VERSION__ = "2026.02.21.UX.ISLAND.V4-PRO";
+    window.__APP_VERSION__ = "2026.02.21.ULTRA-UX";
   </script>
 
   <link rel="preload" href="css/styles.css" as="style" />
@@ -67,6 +67,10 @@
           <input id="searchInput" class="search__input" type="search" placeholder="Buscar hoodies, gorras, merch..." autocomplete="off" aria-label="Caja de búsqueda de productos" />
         </div>
 
+        <button id="mobileSearchBtn" class="iconbtn hover-fx mobile-only" type="button" aria-label="Buscar productos">
+          <span class="icon" aria-hidden="true">⌕</span>
+        </button>
+
         <button id="openAiBtn" class="iconbtn desktop-only tooltip-wrap hover-fx" type="button" aria-label="Abrir asistente inteligente SCORE AI" title="Pregúntale a SCORE AI">
           <span class="icon" style="color: var(--red);" aria-hidden="true">✦</span>
         </button>
@@ -76,6 +80,11 @@
           <span id="cartCount" class="badge" aria-label="Artículos en tu carrito">0</span>
         </button>
       </div>
+    </div>
+
+    <div id="mobileSearchWrap" class="mobile-search-bar" hidden>
+      <input id="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." />
+      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" style="border:none;">✕</button>
     </div>
   </header>
 
@@ -316,6 +325,7 @@
       <div class="modal__head sticky-header">
         <button id="pmBackBtn" class="iconbtn hover-fx" aria-label="Regresar al catálogo" type="button" style="margin-right: 15px; font-size: 22px;">←</button>
         <div class="modal__title" id="pmTitle" style="flex-grow: 1; text-align: left; font-size: 18px;">Cargando detalles...</div>
+        <button id="pmShareBtn" class="iconbtn btn--ghost hover-fx" style="margin-right: 10px;" title="Compartir"><span aria-hidden="true">↗</span></button>
         <button id="pmClose" class="iconbtn hover-fx" aria-label="Cerrar ventana del producto" type="button">✕</button>
       </div>
 
@@ -334,18 +344,24 @@
           
           <div class="pm__desc" id="pmDesc" style="font-size: 16px; line-height: 1.5; color: #444; margin-bottom: 25px;"></div>
 
-          <div class="pm__row" style="background: var(--bg-alt); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-            <div class="pm__col">
-              <label class="ux-label" for="pmSize">1. Selecciona Talla:</label>
-              <div class="select-wrapper">
-                <select id="pmSize" class="select select--huge hover-fx" aria-label="Desplegable de tallas disponibles"></select>
-                <span class="select-arrow">▼</span>
+          <div class="pm__row" style="background: var(--bg-alt); padding: 15px; border-radius: 8px; border: 1px solid var(--border); display:flex; flex-direction:column; gap:20px;">
+            
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <label class="ux-label" style="margin:0;">1. Selecciona Talla:</label>
+                <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost" style="font-size:11px; padding:4px 8px;">📏 Guía de Tallas</button>
               </div>
-              <a href="#" class="hint" style="display:block; margin-top:8px; font-size:12px; color:var(--red); text-decoration:underline;">📏 Guía de medidas</a>
+              <div id="pmSizePills" class="size-pill-container">
+                </div>
             </div>
-            <div class="pm__col">
-              <label class="ux-label" for="pmQty">2. Cuántas piezas:</label>
-              <input id="pmQty" class="input select--huge hover-fx" type="number" min="1" max="99" value="1" aria-label="Cantidad a comprar" style="text-align:center;" />
+
+            <div>
+              <label class="ux-label">2. Cantidad:</label>
+              <div class="qty-stepper-large">
+                <button type="button" id="pmQtyDec">−</button>
+                <span id="pmQtyDisplay">1</span>
+                <button type="button" id="pmQtyInc">+</button>
+              </div>
             </div>
           </div>
 
@@ -361,6 +377,29 @@
             <div class="trust-item"><span aria-hidden="true">🛡️</span> Checkout con Nivel de Seguridad Bancaria (Stripe)</div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sizeGuideModal" class="modal" style="z-index: 8500;" hidden>
+    <div class="modal__panel" style="width: min(500px, 100%);">
+      <div class="modal__head">
+        <div class="modal__title">📏 Guía de Tallas Oficial</div>
+        <button id="closeSizeGuideBtn" class="iconbtn hover-fx">✕</button>
+      </div>
+      <div class="modal__body" style="padding: 20px;">
+        <p class="hint" style="margin-bottom: 15px;">Medidas estándar en centímetros (Pecho x Largo). Tolerancia de +/- 2cm por proceso de confección.</p>
+        <table class="size-table">
+          <thead><tr><th>Talla</th><th>Pecho (cm)</th><th>Largo (cm)</th></tr></thead>
+          <tbody>
+            <tr><td>S (Chica)</td><td>50</td><td>70</td></tr>
+            <tr><td>M (Mediana)</td><td>53</td><td>72</td></tr>
+            <tr><td>L (Grande)</td><td>56</td><td>74</td></tr>
+            <tr><td>XL (Extra G.)</td><td>59</td><td>76</td></tr>
+            <tr><td>XXL (Doble XL)</td><td>62</td><td>78</td></tr>
+          </tbody>
+        </table>
+        <button id="understandSizeBtn" class="btn btn--black btn--block" style="margin-top:20px;">Entendido</button>
       </div>
     </div>
   </section>
