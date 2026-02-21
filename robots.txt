@@ -1,11 +1,14 @@
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
-# Evitar indexacion de entornos de prueba y webhooks
+# Evitar indexación de entornos de prueba de Netlify
 Disallow: /deploy-preview-*
 Disallow: /branch-deploys-*
+
+# PROTEGER FUNCIONES DEL SERVIDOR Y DATOS CRUDOS DE BOTS
 Disallow: /.netlify/functions/
 Disallow: /api/
-Disallow: /data/
+Disallow: /data/*.json
 
 Sitemap: https://scorestore.netlify.app/sitemap.xml
