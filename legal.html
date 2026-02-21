@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f0f0f" />
+  <meta name="theme-color" content="#0a0a0a" />
   
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
-  <title>Políticas y Legal — SCORE STORE</title>
+  <title>Regulaciones de Pista y Legal — SCORE STORE</title>
   
   <link rel="manifest" href="site.webmanifest" />
   <link rel="icon" href="assets/icons/icon-192.png" />
@@ -17,32 +17,33 @@
 
   <link rel="stylesheet" href="css/styles.css" />
   <style>
+    body { background-color: #050505; }
     .legal-content {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      background: rgba(15, 15, 18, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       padding: 50px 40px;
       border-radius: var(--radius2);
-      box-shadow: var(--shadow-modal);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(225,6,0,0.3);
       margin: 40px auto;
       max-width: 900px;
       position: relative;
       z-index: 10;
-      border-top: 5px solid var(--red);
+      border-top: 4px solid var(--red);
+      color: #e0e0e0;
     }
-    .legal-content h1 { font-size: 36px; font-weight: 900; color: var(--black-btn); margin: 0; line-height: 1.2; }
+    .legal-content h1 { font-size: 36px; font-weight: 900; color: #fff; margin: 0; line-height: 1.2; text-shadow: 0 0 20px rgba(225,6,0,0.4); }
     .legal-content h2 { font-size: 24px; font-weight: 900; color: var(--red); margin: 30px 0 15px; border-bottom: 2px solid rgba(225,6,0,0.2); padding-bottom: 8px; }
-    .legal-content h3 { font-size: 18px; font-weight: 800; color: var(--black-btn); margin: 20px 0 10px; }
-    .legal-content p, .legal-content li { line-height: 1.7; font-weight: 500; color: #333; margin-bottom: 12px; }
+    .legal-content h3 { font-size: 18px; font-weight: 800; color: #fff; margin: 20px 0 10px; }
+    .legal-content p, .legal-content li { line-height: 1.7; font-weight: 500; color: #aaa; margin-bottom: 12px; }
     .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
-    .legal-content a { color: var(--red); text-decoration: none; font-weight: 700; }
-    .legal-content a:hover { text-decoration: underline; }
+    .legal-content a { color: var(--red); text-decoration: none; font-weight: 700; transition: all 0.3s ease; }
+    .legal-content a:hover { text-decoration: underline; text-shadow: 0 0 10px rgba(225,6,0,0.6); }
     
     .legal-content a.btn { color: #ffffff !important; }
     
-    .legal-box { border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin: 20px 0; background: #fff; box-shadow: var(--shadow); }
+    .legal-box { border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; margin: 20px 0; background: rgba(0,0,0,0.5); box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
     
-    /* Responsive Header adjustments */
     .legal-header-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 10px; }
     @media (max-width: 640px) {
       .legal-header-flex { flex-direction: column-reverse; }
@@ -54,9 +55,9 @@
 </head>
 <body>
 
-  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: none; filter: brightness(0.6);"></div>
+  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: none; filter: grayscale(0.8) brightness(0.2);"></div>
 
-  <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000;">
+  <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000; background: rgba(10,10,10,0.8); border-bottom: 1px solid rgba(225,6,0,0.3);">
     <div class="wrap topbar__inner" style="justify-content: center;">
       <a class="brand" href="index.html" aria-label="Score Store" style="position: relative; left: 0; transform: none;">
         <img class="brand__logo" src="assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
@@ -69,76 +70,68 @@
       
       <div class="legal-header-flex">
         <h1>Términos, Condiciones y Privacidad</h1>
-        <a href="index.html" class="iconbtn hover-fx tech-close" style="flex-shrink: 0; text-decoration: none; font-weight: bold; border: 1px solid var(--border);" aria-label="Cerrar y volver a la tienda" title="Cerrar">✕</a>
+        <a href="index.html" class="iconbtn hover-fx tech-close" style="flex-shrink: 0; text-decoration: none; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff;" aria-label="Cerrar y volver a la tienda" title="Cerrar">✕</a>
       </div>
 
-      <p class="muted" style="margin-bottom: 30px;">Última actualización: Febrero de 2026</p>
+      <p class="muted" style="margin-bottom: 30px; font-family: monospace; color: var(--red);">[SISTEMA ACTUALIZADO: FEBRERO 2026]</p>
 
       <div class="legal-box">
-        <h2>1. Términos y Condiciones de Uso y Compra</h2>
-        <p>Los presentes Términos y Condiciones rigen el uso del sitio web <strong>SCORE Store</strong> y la compra de mercancía oficial. El Sitio es operado legal y comercialmente por <strong>BAJATEX S. de R.L. de C.V.</strong> (Único Uniformes), con domicilio en Tijuana, B.C., México.</p>
+        <h2>1. Regulaciones Comerciales de Compra</h2>
+        <p>Los presentes lineamientos rigen la operación táctica del sitio web <strong>SCORE Store</strong> y la adquisición de equipo oficial. El sistema es operado por <strong>BAJATEX S. de R.L. de C.V.</strong> (Único Uniformes), sede en Tijuana, B.C., México.</p>
         
-        <h3>1.1. Información de los Productos</h3>
-        <p>Todos los productos son mercancía oficial de SCORE International, fabricada por Único Uniformes. Debido a la naturaleza textil, pueden existir ligeras variaciones entre el producto digital y el físico.</p>
+        <h3>1.1. Especificaciones de Equipo</h3>
+        <p>Todo el inventario es mercancía oficial de SCORE International, manufacturada con especificaciones premium por Único Uniformes. Debido a la naturaleza de la confección, la telemetría del color puede tener ligeras variaciones físicas respecto al render digital.</p>
 
-        <h3>1.2. Precios y Pagos</h3>
-        <p>Precios expresados en <strong>MXN (Pesos Mexicanos)</strong> con IVA incluido. Los pagos son procesados de manera encriptada y segura por <strong>Stripe Inc</strong>. Aceptamos Tarjetas de Crédito, Débito y OXXO Pay. BAJATEX no procesa ni almacena datos financieros en sus servidores.</p>
+        <h3>1.2. Transacciones y Criptografía</h3>
+        <p>Operaciones expresadas en <strong>MXN (Pesos Mexicanos)</strong> (IVA incluido). La pasarela de pago está encriptada militarmente a 256-bits por <strong>Stripe Inc</strong>. Aceptamos Tarjetas y efectivo vía OXXO Pay. BAJATEX opera bajo arquitectura Zero-Trust; no almacenamos sus credenciales financieras.</p>
       </div>
 
       <div class="legal-box">
-        <h2>2. Políticas de Envío y Entregas</h2>
-        <h3>2.1. Métodos de Entrega</h3>
+        <h2>2. Logística y Despliegue de Envíos</h2>
+        <h3>2.1. Vectores de Entrega</h3>
         <ul>
-          <li><strong>Pickup (Recolección en Fábrica):</strong> Sin costo. En instalaciones de Único Uniformes (Tijuana, B.C.).</li>
-          <li><strong>Envíos Nacionales e Internacionales:</strong> Gestionados vía <strong>Envia.com</strong> (Red DHL, FedEx, USPS). Costo calculado en tiempo real con precisión durante el Checkout.</li>
+          <li><strong>Recolección en Base (Pickup):</strong> Despliegue sin costo desde las instalaciones de Único Uniformes en Tijuana, B.C.</li>
+          <li><strong>Despacho Aéreo/Terrestre (Envia.com):</strong> Ruteo inteligente nacional e internacional (USA) soportado por DHL, FedEx y USPS. Costo calculado en vivo vía satélite según su código postal.</li>
         </ul>
-        <h3>2.2. Tiempos Logísticos</h3>
-        <p>Procesamiento interno de almacén de 1 a 3 días hábiles. El tiempo en tránsito depende exclusivamente de la paquetería seleccionada automáticamente por la plataforma según su Código Postal.</p>
+        <h3>2.2. Tiempos de Operación</h3>
+        <p>Ensamblaje y empaquetado en base: 1 a 3 días hábiles. El tiempo de tránsito es responsabilidad del escuadrón logístico seleccionado por nuestro algoritmo durante el checkout.</p>
       </div>
 
       <div class="legal-box">
-        <h2>3. Cambios y Devoluciones</h2>
-        <p>El Cliente cuenta con <strong>7 días naturales</strong> a partir de la recepción para notificar defectos de fábrica. BAJATEX cubre el envío logístico en caso de defecto comprobable. Si el cambio es por error de selección de talla por parte del cliente, el cliente absorbe los costos de la nueva paquetería.</p>
+        <h2>3. Protocolo de Extracción (Devoluciones)</h2>
+        <p>El piloto (Cliente) tiene <strong>7 días naturales</strong> tras confirmar el arribo para reportar daños estructurales de fábrica. BAJATEX asume la logística inversa por fallos de manufactura. Si requiere cambio de talla por error en la selección, el piloto deberá cubrir los costos de la nueva guía de extracción.</p>
       </div>
 
       <div class="legal-box">
-        <h2>4. Aviso de Privacidad Estricto</h2>
-        <p>Sus datos (Nombre, Dirección de Envío, Teléfono, Correo) son recabados exclusivamente para el procesamiento logístico, despacho de su pedido y facturación, en estricto cumplimiento con la LFPDPPP de México. Los datos son compartidos únicamente mediante conexión API cifrada con proveedores logísticos (Envia.com) para generar su guía oficial.</p>
-        <p>Para ejercer sus derechos ARCO, envíe una solicitud a <em>ventas.unicotextil@gmail.com</em>.</p>
+        <h2>4. Cifrado de Privacidad de Datos</h2>
+        <p>Su información (Identidad, Coordenadas, Frecuencia de Contacto) es procesada estrictamente para la generación de guías logísticas y facturación, cumpliendo con la LFPDPPP de México. Transmitimos los datos únicamente mediante APIs seguras a Envia.com.</p>
+        <p>Para ejecutar protocolos ARCO, envíe sus directivas a <em>ventas.unicotextil@gmail.com</em>.</p>
       </div>
 
-      <div style="text-align: center; margin-top: 40px;">
-        <p style="margin-bottom: 20px; font-weight: 600;">
-          <strong>BAJATEX S. de R.L. de C.V. (Único Uniformes)</strong><br>
-          <a href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a> | Soporte WhatsApp: <a href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
+        <p style="margin-bottom: 20px; font-weight: 600; font-size: 15px;">
+          <strong>BAJATEX S. de R.L. de C.V. (ÚNICO UNIFORMES)</strong><br><br>
+          <span style="color: var(--red);">[COMUNICACIONES OFICIALES]</span><br>
+          Correo: <a href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a><br>
+          Línea Segura WhatsApp: <a href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
         </p>
       </div>
     </div>
   </main>
 
-  <footer class="footer" role="contentinfo">
+  <footer class="footer" role="contentinfo" style="background: #000; border-top: 2px solid var(--red);">
     <div class="wrap footer__inner">
       <div class="footer__brand-col">
-        <div class="footer__brand"><span style="color: var(--red);">SCORE</span> STORE</div>
+        <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
         <div class="footer__sub">
-          <strong>Seguridad Total Garantizada</strong><br>
+          <strong>Sistemas 100% Asegurados</strong><br>
           Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
           Logística inteligente internacional con Envía.com.<br><br>
-          Hecho con pasión. Fabricado y Operado por <b style="color: white;">Único Uniformes</b>.
+          Fabricado y Operado por <b style="color: white;">Único Uniformes</b>.
         </div>
       </div>
-
-      <div class="footer__socials">
-        <div class="social-title">SÍGUENOS EN LA PISTA</div>
-        <div class="social-links">
-          <a href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook</a>
-          <a href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
-          <a href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener">YouTube</a>
-        </div>
-      </div>
-
-      <div class="footer__right">
-        <a href="index.html" class="btn btn--primary hover-fx" style="width: 100%; text-align: center;">← Regresar a la Tienda</a>
+      <div class="footer__right" style="align-items: center; justify-content: center;">
+        <a href="index.html" class="btn btn--primary hover-fx cinematic-btn neon-border" style="width: 100%; text-align: center; padding: 15px;">← Retornar a la Base (Tienda)</a>
       </div>
     </div>
   </footer>
