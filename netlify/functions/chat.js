@@ -28,7 +28,7 @@ exports.handler = async (event) => {
       "2. Los métodos de pago son 100% seguros mediante Stripe (Tarjeta de Crédito/Débito) y OXXO Pay. " +
       "3. Envíos: Ofrecemos entregas por Envia.com a todo México y USA. También existe la opción de Recoger en Fábrica (Pickup en Tijuana) sin costo. " +
       "4. Cambios y devoluciones: 7 días naturales por defectos de fábrica (costo cubierto por nosotros) o cambios de talla (costo de envío cubierto por el cliente). " +
-      "5. No inventes precios ni inventario exacto. Si te piden algo fuera de la tienda o muy específico, sugiere enviar un correo a ventas@unico-uniformes.com " +
+      "5. No inventes precios ni inventario exacto. Si te piden algo fuera de la tienda o muy específico, sugiere contactar el correo de soporte que aparece en el footer de la tienda. " +
       "Responde siempre en español, con respuestas cortas y estructuradas en párrafos pequeños.";
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
