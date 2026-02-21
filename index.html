@@ -75,7 +75,7 @@
       <div class="topbar__actions">
         <div class="search desktop-only glass-panel">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar hoodies, gorras, merch..." autocomplete="off" aria-label="Caja de búsqueda de productos" />
+          <input id="searchInput" name="searchInput" class="search__input" type="search" placeholder="Buscar hoodies, gorras, merch..." autocomplete="off" aria-label="Caja de búsqueda de productos" />
         </div>
 
         <button id="mobileSearchBtn" class="iconbtn hover-fx mobile-only" type="button" aria-label="Buscar productos">
@@ -94,7 +94,7 @@
     </div>
     
     <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
-      <input id="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." />
+      <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." />
       <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" style="border:none;">✕</button>
     </div>
   </header>
@@ -145,7 +145,7 @@
           <span id="statusRow" class="status neon-text-dark" aria-live="polite" style="margin:0; font-weight: 600;"></span>
           <div class="sort-wrapper glass-panel" style="display: flex; align-items: center; gap: 10px; padding: 5px 15px; border-radius: 999px;">
             <label for="sortSelect" style="font-size: 13px; color: var(--muted); font-weight: bold;">Ordenar por:</label>
-            <select id="sortSelect" class="select select--modern tech-select" aria-label="Opciones de ordenamiento de productos">
+            <select id="sortSelect" name="sortSelect" class="select select--modern tech-select" aria-label="Opciones de ordenamiento de productos">
               <option value="featured">★ Relevancia</option>
               <option value="price_asc">Menor Precio</option>
               <option value="price_desc">Mayor Precio</option>
@@ -235,7 +235,7 @@
     <div class="drawer__body">
       <div class="search glass-panel" style="margin-bottom: 20px;">
         <span class="search__icon" aria-hidden="true">⌕</span>
-        <input id="menuSearchInput" class="search__input tech-input" type="search" placeholder="Buscar en la tienda..." autocomplete="off" aria-label="Búsqueda rápida en menú" />
+        <input id="menuSearchInput" name="menuSearchInput" class="search__input tech-input" type="search" placeholder="Buscar en la tienda..." autocomplete="off" aria-label="Búsqueda rápida en menú" />
       </div>
 
       <button class="navitem tech-navitem hover-fx" type="button" data-scroll="#categories">🏁 Ver Todas las Colecciones</button>
@@ -298,7 +298,7 @@
           </div>
 
           <div id="postalWrap" class="postal" hidden>
-            <input id="postalCode" class="input tech-input" inputmode="numeric" maxlength="10" placeholder="Ingresa tu CP / ZIP para calcular..." aria-label="Escribe tu Código Postal" />
+            <input id="postalCode" name="postalCode" class="input tech-input" inputmode="numeric" maxlength="10" placeholder="Ingresa tu CP / ZIP para calcular..." aria-label="Escribe tu Código Postal" />
             <button id="quoteBtn" class="btn btn--tiny btn--black hover-fx neon-border" type="button" aria-label="Cotizar envío a tu código postal">Cotizar</button>
           </div>
 
@@ -316,7 +316,7 @@
         <div class="cartrow cartrow--stack" style="margin-top: 10px;">
           <label class="muted" for="promoCode" style="font-size: 13px; cursor: pointer;">¿Tienes un código de promoción SCORE?</label>
           <div style="display: flex; gap: 8px;">
-            <input id="promoCode" class="input tech-input" placeholder="Ej. SCOREVIP" aria-label="Escribe aquí tu código promocional" style="text-transform: uppercase;" />
+            <input id="promoCode" name="promoCode" class="input tech-input" placeholder="Ej. SCOREVIP" aria-label="Escribe aquí tu código promocional" style="text-transform: uppercase;" />
             <button id="applyPromoBtn" class="btn btn--black hover-fx" type="button" style="padding: 0 15px;">Validar</button>
           </div>
         </div>
@@ -368,7 +368,7 @@
             
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <label class="ux-label tech-label" style="margin:0;">1. Selecciona Talla:</label>
+                <div class="ux-label tech-label" style="margin:0;">1. Selecciona Talla:</div>
                 <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost tech-ghost-btn" style="font-size:11px; padding:4px 8px;">📏 Guía de Tallas</button>
               </div>
               <div id="pmSizePills" class="size-pill-container">
@@ -376,7 +376,7 @@
             </div>
 
             <div>
-              <label class="ux-label tech-label">2. Cantidad:</label>
+              <div class="ux-label tech-label">2. Cantidad:</div>
               <div class="qty-stepper-large tech-stepper">
                 <button type="button" id="pmQtyDec">−</button>
                 <span id="pmQtyDisplay">1</span>
@@ -440,7 +440,7 @@
       <div class="modal__body" style="background: #f5f5f7; display:flex; flex-direction:column; padding: 15px;">
         <div id="aiOutput" class="chat custom-scrollbar tech-chat-box" aria-live="polite"></div>
         <div class="chatbar">
-          <input id="aiInput" class="input tech-input" placeholder="Pregunta por tallas, envíos o modelos..." aria-label="Campo de escritura para el chat" />
+          <input id="aiInput" name="aiInput" class="input tech-input" placeholder="Pregunta por tallas, envíos o modelos..." aria-label="Campo de escritura para el chat" />
           <button id="aiSendBtn" class="btn btn--primary hover-fx neon-border" type="button" aria-label="Enviar mensaje a la IA">Enviar ➢</button>
         </div>
       </div>
