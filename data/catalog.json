@@ -84,7 +84,8 @@
         "S",
         "M",
         "L",
-        "XL"
+        "XL",
+        "XXL"
       ],
       "images": [
         "assets/EDICION_2025/camiseta-negra-baja1000.webp",
@@ -95,7 +96,7 @@
     {
       "sku": "baja1000-camiseta-cafe",
       "title": "Camiseta Café — Baja 1000",
-      "description": "Camiseta premium Baja 1000. Diseño clásico off-road.",
+      "description": "Camiseta café oficial Baja 1000. Ideal para el desierto.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -104,7 +105,8 @@
         "S",
         "M",
         "L",
-        "XL"
+        "XL",
+        "XXL"
       ],
       "images": [
         "assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
@@ -115,7 +117,7 @@
     {
       "sku": "baja1000-camiseta-cafe-claro",
       "title": "Camiseta Café Claro — Baja 1000",
-      "description": "Camiseta edición especial Baja 1000. Ideal para el desierto.",
+      "description": "Camiseta oficial Baja 1000 en tono café claro. Suave y resistente.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -124,40 +126,21 @@
         "S",
         "M",
         "L",
-        "XL"
+        "XL",
+        "XXL"
       ],
       "images": [
         "assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp"
       ]
     },
     {
-      "sku": "baja1000-camisa-pits-gris",
-      "title": "Camisa Pits Gris — Baja 1000",
-      "description": "Camisa de pits oficial Baja 1000. Look pro, resistente.",
-      "price_cents": 65000,
+      "sku": "baja1000-camisa-negra-pits",
+      "title": "Camisa Negra Pits — Baja 1000",
+      "description": "Camisa pits oficial Baja 1000. Estilo racing, detalles premium.",
+      "price_cents": 45000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
       "rank": 6,
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL"
-      ],
-      "images": [
-        "assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-        "assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"
-      ]
-    },
-    {
-      "sku": "baja1000-camisa-pits-negra",
-      "title": "Camisa Pits Negra — Baja 1000",
-      "description": "Camisa pits Baja 1000. Diseño elegante, resistente al uso rudo.",
-      "price_cents": 65000,
-      "sectionId": "EDICION_2025",
-      "collection": "Edición 2025",
-      "rank": 7,
       "sizes": [
         "S",
         "M",
@@ -171,10 +154,30 @@
       ]
     },
     {
-      "sku": "baja1000-camisa-pits-rosa",
-      "title": "Camisa Pits Rosa — Baja 1000",
-      "description": "Camisa pits Baja 1000 edición rosa. Premium y cómoda.",
-      "price_cents": 65000,
+      "sku": "baja1000-camisa-gris-pits",
+      "title": "Camisa Gris Pits — Baja 1000",
+      "description": "Camisa pits oficial Baja 1000. Diseño técnico y cómodo.",
+      "price_cents": 45000,
+      "sectionId": "EDICION_2025",
+      "collection": "Edición 2025",
+      "rank": 7,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "images": [
+        "assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+        "assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"
+      ]
+    },
+    {
+      "sku": "baja1000-camisa-rosa-pits",
+      "title": "Camisa Rosa Pits — Baja 1000",
+      "description": "Camisa pits oficial Baja 1000 en rosa. Para fans con estilo.",
+      "price_cents": 45000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
       "rank": 8,
@@ -192,9 +195,9 @@
     },
     {
       "sku": "baja1000-gorras",
-      "title": "Gorras Roja/Gris — Baja 1000",
-      "description": "Gorras oficiales Baja 1000. Ajuste cómodo. Pack premium.",
-      "price_cents": 28000,
+      "title": "Gorras Oficial — Baja 1000",
+      "description": "Gorras oficiales Baja 1000. Ajuste cómodo, bordado de alta calidad.",
+      "price_cents": 25000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
       "rank": 9,
@@ -206,90 +209,13 @@
       ]
     },
     {
-      "sku": "baja500-camiseta-gris-baja500",
+      "sku": "baja500-camiseta-gris",
       "title": "Camiseta Gris — Baja 500",
-      "description": "Camiseta oficial Baja 500. Tela premium. Edición especial.",
+      "description": "Camiseta oficial Baja 500. Tela premium para el día a día.",
       "price_cents": 35000,
-      "sectionId": "BAJA500",
-      "collection": "Baja 500",
-      "rank": 10,
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
-      "images": [
-        "assets/BAJA500/camiseta-gris-baja500.webp"
-      ]
-    },
-    {
-      "sku": "edicion-2025-camiseta-gris-baja500",
-      "title": "Camiseta Gris (Detalle) — Baja 500",
-      "description": "Camiseta oficial Baja 500. Vista trasera y detalle.",
-      "price_cents": 35000,
-      "sectionId": "BAJA500",
+      "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
-      "rank": 11,
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
-      "images": [
-        "assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
-        "assets/EDICION_2025/camiseta-gris-baja500-atras.webp"
-      ]
-    },
-    {
-      "sku": "baja400-camiseta-cafe-oscuro",
-      "title": "Camiseta Café Oscuro — Baja 400",
-      "description": "Camiseta oficial Baja 400. Diseño único.",
-      "price_cents": 35000,
-      "sectionId": "BAJA400",
-      "collection": "Baja 400",
-      "rank": 12,
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
-      "images": [
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"
-      ]
-    },
-    {
-      "sku": "sf250-sinmangas",
-      "title": "Camiseta Sin Mangas — San Felipe 250",
-      "description": "Camiseta sin mangas oficial San Felipe 250. Fresca y resistente.",
-      "price_cents": 35000,
-      "sectionId": "SF250",
-      "collection": "San Felipe 250",
-      "rank": 13,
-      "sizes": [
-        "S",
-        "M",
-        "L",
-        "XL"
-      ],
-      "images": [
-        "assets/SF250/camiseta-negra-sinmangas-SF250.webp",
-        "assets/SF250/camiseta-negra-sinmangas-S250-atras.webp",
-        "assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"
-      ]
-    },
-    {
-      "sku": "otras-hoodie-negra",
-      "title": "Hoodie Negra — Baja 1000",
-      "description": "Hoodie oficial Baja 1000. Otras ediciones.",
-      "price_cents": 55000,
-      "sectionId": "OTRAS_EDICIONES",
-      "collection": "Otras ediciones",
-      "rank": 14,
+      "rank": 10,
       "sizes": [
         "S",
         "M",
@@ -298,17 +224,79 @@
         "XXL"
       ],
       "images": [
-        "assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"
+        "assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
+        "assets/EDICION_2025/camiseta-gris-baja500-atras.webp"
       ]
     },
     {
-      "sku": "otras-hoodie-negra-roja",
+      "sku": "baja500-camiseta-gris-simple",
+      "title": "Camiseta Gris — Baja 500 (Simple)",
+      "description": "Camiseta oficial Baja 500 (versión simple).",
+      "price_cents": 35000,
+      "sectionId": "BAJA500",
+      "collection": "Baja 500",
+      "rank": 11,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "images": [
+        "assets/BAJA500/camiseta-gris-baja500.webp"
+      ]
+    },
+    {
+      "sku": "baja400-camiseta-cafe-oscuro",
+      "title": "Camiseta Café Oscuro — Baja 400",
+      "description": "Camiseta oficial Baja 400 en café oscuro. Diseño minimal racing.",
+      "price_cents": 35000,
+      "sectionId": "BAJA400",
+      "collection": "Baja 400",
+      "rank": 12,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "images": [
+        "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
+        "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp",
+        "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"
+      ]
+    },
+    {
+      "sku": "sf250-camiseta-negra-sinmangas",
+      "title": "Camiseta Negra Sin Mangas — San Felipe 250",
+      "description": "Camiseta oficial SF250 sin mangas. Ideal para calor y entrenamiento.",
+      "price_cents": 35000,
+      "sectionId": "SF250",
+      "collection": "San Felipe 250",
+      "rank": 13,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "images": [
+        "assets/SF250/camiseta-negra-sinmangas-SF250.webp",
+        "assets/SF250/camiseta-negra-sinmangas-S250-atras.webp",
+        "assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"
+      ]
+    },
+    {
+      "sku": "baja1000-hoodie-negra-roja",
       "title": "Hoodie Negra/Roja — Baja 1000",
-      "description": "Hoodie oficial Baja 1000, versión roja. Otras ediciones.",
+      "description": "Hoodie oficial Baja 1000 en negro/rojo. Tela premium, look racing.",
       "price_cents": 55000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
-      "rank": 15,
+      "rank": 14,
       "sizes": [
         "S",
         "M",
@@ -322,9 +310,28 @@
       ]
     },
     {
-      "sku": "otras-hoodie-rosa",
+      "sku": "baja1000-hoodie-negra",
+      "title": "Hoodie Negra — Baja 1000",
+      "description": "Hoodie oficial Baja 1000 (negra).",
+      "price_cents": 55000,
+      "sectionId": "OTRAS_EDICIONES",
+      "collection": "Otras ediciones",
+      "rank": 15,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "images": [
+        "assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"
+      ]
+    },
+    {
+      "sku": "baja1000-hoodie-rosa",
       "title": "Hoodie Rosa — Baja 1000",
-      "description": "Hoodie edición rosa Baja 1000. Otras ediciones.",
+      "description": "Hoodie oficial Baja 1000 en rosa.",
       "price_cents": 55000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -341,9 +348,9 @@
       ]
     },
     {
-      "sku": "otras-sudadera-negra",
+      "sku": "baja1000-sudadera-negra",
       "title": "Sudadera Negra — Baja 1000",
-      "description": "Sudadera oficial Baja 1000. Otras ediciones.",
+      "description": "Sudadera oficial Baja 1000 (negra).",
       "price_cents": 52000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -360,10 +367,10 @@
       ]
     },
     {
-      "sku": "otras-camisa-negra-rojo",
+      "sku": "baja1000-camisa-negra-rojo",
       "title": "Camisa Negra/Rojo — Baja 1000",
-      "description": "Camisa oficial Baja 1000. Otras ediciones.",
-      "price_cents": 65000,
+      "description": "Camisa oficial Baja 1000 negro/rojo. Estilo pits y off-road.",
+      "price_cents": 45000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
       "rank": 18,
