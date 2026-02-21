@@ -32,7 +32,6 @@ exports.handler = async (event) => {
       return jsonResponse(400, { ok: false, error: "El carrito está vacío." }, origin);
     }
 
-    // CORRECCIÓN: CARGAR CATÁLOGO REAL DEL SERVIDOR (ANTI-FRAUDE)
     const { index: catalogIndex } = getCatalogIndex();
 
     let subtotal_cents = 0;
@@ -100,7 +99,6 @@ exports.handler = async (event) => {
       };
     });
 
-    // --- LÓGICA DE ENVÍOS BLINDADA ---
     let shipping_options = [];
     let shipping_amount_cents = 0;
     let shipping_country = shipping_mode === "envia_us" ? "US" : "MX";
@@ -137,7 +135,6 @@ exports.handler = async (event) => {
 
     const orderSummary = validatedItems.map(i => `${i.qty}x ${i.sku}[${i.size}]`).join(" | ").substring(0, 450);
 
-    // CORRECCIÓN: Configuración OXXO y validación de dirección
     const allowedPaymentMethods = process.env.STRIPE_ENABLE_OXXO === "1" ? ['card', 'oxxo'] : ['card'];
     const addressCollection = shipping_mode !== "pickup" ? { allowed_countries: [shipping_country] } : undefined;
 
