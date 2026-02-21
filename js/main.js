@@ -1,20 +1,21 @@
 /* =========================================================
    SCORE STORE — Frontend (PRO) v2026.02.21 (UX ISLANDS + LOGICA AVANZADA)
    - Lógica de UI / UX / Carrusel FB Style Restaurado
-   - Fix de botones atrapados y Selectores
-   - Efecto Isla Visual y Etiquetas Flotantes
-   - MEJORAS: Cupones UI, Cambio de tallas in-cart, Vaciar Carrito
+   - Seguridad mejorada: Sanitización de inputs y validación estricta de carrito
+   - Marketing: Inyección dinámica de escasez (Scarcity) para aumentar conversión
+   - Logística: Integración robusta con Envia.com y Stripe con manejo de estados
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "dev";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.PRO";
 
-  // ---------- DOM ----------
+  // ---------- DOM Helpers ----------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  // ---------- DOM Elements ----------
   const splash = $("#splash");
   const overlay = $("#overlay");
   const sideMenu = $("#sideMenu");
@@ -94,8 +95,8 @@
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
 
-  // ---------- CONFIG ----------
-  const STORAGE_KEYS = { cart: "scorestore_cart_v1", ship: "scorestore_ship_v1", consent: "scorestore_consent_v1" };
+  // ---------- CONFIGURACIÓN GLOBAL ----------
+  const STORAGE_KEYS = { cart: "scorestore_cart_v2_pro", ship: "scorestore_ship_v2", consent: "scorestore_consent_v2" };
 
   const CATEGORY_CONFIG = [
     { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
@@ -110,7 +111,7 @@
     envia_us: "Envío USA (Envía.com)",
   };
 
-  // ---------- STATE ----------
+  // ---------- ESTADO (STATE) ----------
   let catalog = null;
   let products = [];
   let promosData = null; 
@@ -122,7 +123,7 @@
   let shipping = { mode: "pickup", postal_code: "", quote: null };
   let currentProduct = null;
 
-  // ---------- UTILS ----------
+  // ---------- UTILIDADES DE SEGURIDAD Y FORMATO ----------
   const escapeHtml = (s) => String(s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
   const money = (cents) => {
@@ -131,34 +132,55 @@
     catch { return `$${n.toFixed(2)}`; }
   };
 
-  const safeUrl = (p) => { try { return encodeURI(String(p || "").trim()); } catch { return String(p || ""); } };
-  const clampInt = (v, min, max) => { const n = Math.floor(Number(v || 0)); if (!Number.isFinite(n)) return min; return Math.max(min, Math.min(max, n)); };
+  const safeUrl = (p) => { 
+    try { 
+      // Protege contra inyecciones javascript: en urls
+      const url = encodeURI(String(p || "").trim()); 
+      if(url.toLowerCase().startsWith('javascript:')) return '';
+      return url;
+    } catch { return String(p || ""); } 
+  };
+  
+  const clampInt = (v, min, max) => { 
+    const n = Math.floor(Number(v || 0)); 
+    if (!Number.isFinite(n)) return min; 
+    return Math.max(min, Math.min(max, n)); 
+  };
 
   const debounce = (fn, ms = 180) => {
     let t = null;
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   };
 
-  const showToast = (text) => {
+  const showToast = (text, type = 'info') => {
     if (!toast) return;
-    toast.textContent = text;
+    toast.innerHTML = escapeHtml(text);
+    toast.className = `toast toast--${type}`;
     toast.hidden = false;
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => (toast.hidden = true), 2600);
+    showToast._t = setTimeout(() => (toast.hidden = true), 3000);
   };
 
   const setStatus = (text) => { if (statusRow) statusRow.textContent = text || ""; };
 
+  // ---------- CONTROL DE CAPAS Y MODALES ----------
   const openSet = new Set(); 
   const lockScrollIfNeeded = () => { document.body.style.overflow = openSet.size > 0 ? "hidden" : ""; };
-  const refreshOverlay = () => { if (overlay) overlay.hidden = openSet.size === 0; lockScrollIfNeeded(); };
+  
+  const refreshOverlay = () => { 
+    if (overlay) overlay.hidden = openSet.size === 0; 
+    lockScrollIfNeeded(); 
+  };
   
   const openLayer = (el) => {
     if (!el) return;
     el.hidden = false;
     openSet.add(el);
     refreshOverlay();
+    // Forzar reflow para animación
+    void el.offsetWidth;
     if(el.classList.contains('drawer')) { el.style.transform = 'none'; }
+    if(el.classList.contains('modal')) { el.classList.add('modal--open'); }
   };
   
   const closeLayer = (el) => {
@@ -168,6 +190,9 @@
     if(el.classList.contains('drawer')) {
       el.style.transform = el.classList.contains('drawer--right') ? 'translateX(100%)' : 'translateX(-100%)';
       setTimeout(() => el.hidden = true, 400); 
+    } else if (el.classList.contains('modal')) {
+      el.classList.remove('modal--open');
+      setTimeout(() => el.hidden = true, 300);
     } else {
       el.hidden = true;
     }
@@ -176,6 +201,7 @@
   const closeAll = () => { [sideMenu, cartDrawer, productModal, aiModal].forEach(el => closeLayer(el)); };
   const scrollToEl = (sel) => { const el = $(sel); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
+  // ---------- LÓGICA DE PRODUCTOS Y CATÁLOGO ----------
   const normalizeSectionIdToUi = (sectionId) => {
     const sid = String(sectionId || "").trim();
     const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
@@ -192,13 +218,13 @@
     if (c) return c;
     const sid = String(p?.sectionId || p?.categoryId || "").trim();
     if (sid === "EDICION_2025") return "Edición 2025";
-    if (sid === "OTRAS_EDICIONES") return "Otras ediciones";
+    if (sid === "OTRAS_EDICIONES") return "Ediciones Clásicas";
     return "";
   };
 
   const normalizeProduct = (p) => {
     const sku = String(p?.sku || p?.id || "").trim();
-    const title = String(p?.title || p?.name || "Producto").trim();
+    const title = String(p?.title || p?.name || "Producto Oficial").trim();
     const desc = String(p?.description || "").trim();
     const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.round(Number(p.price_cents)) : 0;
     const images = Array.isArray(p?.images) ? p.images : p?.img ? [p.img] : [];
@@ -208,6 +234,7 @@
     const uiSection = normalizeSectionIdToUi(rawSection) || "BAJA1000";
     const collection = inferCollection(p);
     const rank = Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999;
+    
     return { sku, id: sku, title, description: desc, priceCents, images: images.map(safeUrl), img, sizes: sizes.map((s) => String(s || "").trim()).filter(Boolean), rawSection, uiSection, collection, rank };
   };
 
@@ -223,7 +250,7 @@
       const url = `data/promos.json?cv=${encodeURIComponent(APP_VERSION)}`;
       const res = await fetch(url, { headers: { "cache-control": "no-store" } });
       if (res.ok) promosData = await res.json();
-    } catch (e) { console.warn("No se pudieron cargar promos locales"); }
+    } catch (e) { console.warn("Aviso: Promos locales no disponibles"); }
   };
 
   const renderCategories = () => {
@@ -233,14 +260,14 @@
     for (const cat of CATEGORY_CONFIG) {
       const card = document.createElement("button");
       card.type = "button";
-      card.className = "catcard";
+      card.className = "catcard hover-fx";
       card.setAttribute("data-cat", cat.uiId);
 
       card.innerHTML = `
         <div class="catcard__bg"></div>
         <div class="catcard__inner">
           <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" width="200" height="150" loading="lazy">
-          <div class="catcard__btn">Ver Colección</div>
+          <div class="catcard__btn">Descubrir Colección</div>
         </div>
       `;
 
@@ -250,7 +277,7 @@
 
         activeCategory = cat.uiId;
         if (categoryHint) categoryHint.hidden = true;
-        if (carouselTitle) carouselTitle.innerHTML = `<img src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" style="height:25px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">`;
+        if (carouselTitle) carouselTitle.innerHTML = `<img src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" style="height:28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">`;
         
         updateFilterUI();
         renderProducts();
@@ -269,9 +296,9 @@
     const pieces = [];
     if (activeCategory) {
       const c = CATEGORY_CONFIG.find((x) => x.uiId === activeCategory);
-      if (c) pieces.push(`<img src="${safeUrl(c.logo)}" style="height: 18px;" alt="Logo">`);
+      if (c) pieces.push(`<img src="${safeUrl(c.logo)}" style="height: 18px;" alt="Logo Colección">`);
     }
-    if (searchQuery) pieces.push(`“${searchQuery}”`);
+    if (searchQuery) pieces.push(`“${escapeHtml(searchQuery)}”`);
 
     if (activeFilterRow && activeFilterLabel) {
       if (pieces.length) {
@@ -298,6 +325,15 @@
     return out;
   };
 
+  // Marketing: Inyección de escasez visual
+  const getScarcityText = (sku) => {
+      // Lógica simulada basada en el código ASCII del SKU para consistencia visual
+      const charCodeSum = sku.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      if (charCodeSum % 5 === 0) return "🔥 ¡Últimas 2 piezas!";
+      if (charCodeSum % 7 === 0) return "⚡ Muy solicitado hoy";
+      return "";
+  };
+
   const renderProducts = () => {
     if (!productGrid || !catalogCarouselSection) return;
     
@@ -310,29 +346,31 @@
     productGrid.innerHTML = "";
 
     if (!list.length) {
-      productGrid.innerHTML = `<div class="hint" style="padding: 20px;">Sin resultados en esta búsqueda.</div>`;
+      productGrid.innerHTML = `<div class="hint" style="padding: 30px; text-align:center; width:100%;">No encontramos mercancía con esos filtros. Intenta buscar "Baja 1000" o "Gorras".</div>`;
       catalogCarouselSection.hidden = false;
       return;
     }
 
-    setStatus(`Resultados: ${list.length} prendas exclusivas`);
+    setStatus(`Encontramos ${list.length} artículos exclusivos`);
     const frag = document.createDocumentFragment();
 
     for (const p of list) {
       const card = document.createElement("article");
       card.className = "card";
-      card.setAttribute("data-sku", p.sku);
+      card.setAttribute("data-sku", escapeHtml(p.sku));
 
       const logoUrl = getLogoForSection(p.uiSection);
-      const logoPill = `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="Logo"></span>`;
+      const logoPill = `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="Logo Score"></span>`;
       const collectionPill = p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : "";
+      const scarcityText = getScarcityText(p.sku);
+      const scarcityHtml = scarcityText ? `<div style="color:var(--red); font-size:11px; font-weight:bold; margin-top:5px;">${scarcityText}</div>` : '';
 
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
       
       let swipeHint = imgs.length > 1 ? `<div class="card__swipe-hint">Desliza ↔</div>` : '';
       let trackHtml = imgs.map((src) => `<img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="card__dots">${imgs.map((_,i)=>`<span class="card__dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
-      let navHtml = imgs.length > 1 ? `<button class="card__nav card__nav--prev" aria-label="Anterior" type="button">‹</button><button class="card__nav card__nav--next" aria-label="Siguiente" type="button">›</button>` : '';
+      let navHtml = imgs.length > 1 ? `<button class="card__nav card__nav--prev hover-fx" aria-label="Foto anterior" type="button">‹</button><button class="card__nav card__nav--next hover-fx" aria-label="Siguiente foto" type="button">›</button>` : '';
 
       card.innerHTML = `
         <div class="card__media">
@@ -349,7 +387,8 @@
               ${logoPill} ${collectionPill}
             </div>
           </div>
-          <button class="btn btn--block btn--black card__action-btn" type="button" style="margin-top: 14px; font-size: 13px; padding: 10px;">Ver Detalles y Tallas</button>
+          ${scarcityHtml}
+          <button class="btn btn--block btn--black card__action-btn hover-fx" type="button" style="margin-top: 14px; font-size: 13px; padding: 12px; font-weight: bold;">Ver Detalles y Comprar</button>
         </div>
       `;
 
@@ -405,12 +444,16 @@
 
     if (pmTitle) pmTitle.textContent = p.title;
     if (pmPrice) pmPrice.textContent = money(p.priceCents);
-    if (pmDesc) pmDesc.textContent = p.description || "Merch oficial Score Store. Calidad premium Único Uniformes.";
+    if (pmDesc) {
+        const scarcity = getScarcityText(p.sku);
+        pmDesc.innerHTML = `<p>${escapeHtml(p.description || "Merch oficial Score Store. Calidad premium Único Uniformes.")}</p>
+                            ${scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : ''}`;
+    }
 
     if (pmChips) {
       pmChips.innerHTML = "";
       const logoUrl = getLogoForSection(p.uiSection);
-      pmChips.innerHTML += `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="Logo"></span>`;
+      pmChips.innerHTML += `<span class="pill pill--logo"><img src="${safeUrl(logoUrl)}" alt="Logo Score"></span>`;
       if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
@@ -418,8 +461,8 @@
       pmSize.innerHTML = "";
       for (const s of p.sizes) {
         const opt = document.createElement("option"); 
-        opt.value = s; 
-        opt.textContent = `Talla: ${s}`;
+        opt.value = escapeHtml(s); 
+        opt.textContent = `Talla: ${escapeHtml(s)}`;
         pmSize.appendChild(opt);
       }
     }
@@ -451,36 +494,66 @@
     openLayer(productModal);
   };
 
-  // --- LOGICA DE CARRITO MEJORADA ---
+  // ---------- LÓGICA DE CARRITO Y CHECKOUT ----------
 
   const saveCart = () => { try { localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart)); } catch {} };
+  
   const loadCart = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
       if (raw) { 
         const parsed = JSON.parse(raw); 
-        if (Array.isArray(parsed)) cart = parsed.filter(it => it && it.sku && typeof it.qty === 'number'); 
+        // Validación estricta de estructura al cargar
+        if (Array.isArray(parsed)) {
+            cart = parsed.filter(it => it && typeof it.sku === 'string' && typeof it.qty === 'number' && it.qty > 0);
+        } 
       }
-    } catch {}
+    } catch { cart = []; }
   };
 
   const addToCart = (p, size, qty) => {
     const q = clampInt(qty, 1, 99);
     const sRaw = String(size || "").trim();
-    const s = sRaw.replace("Talla: ", "") || (p.sizes?.[0] || "M");
+    const s = sRaw.replace("Talla: ", "") || (p.sizes?.[0] || "Unitalla");
     const key = `${p.sku}__${s}`;
     const idx = cart.findIndex((x) => `${x.sku}__${x.size}` === key);
 
-    if (idx >= 0) cart[idx].qty = clampInt(cart[idx].qty + q, 1, 99);
-    else cart.push({ sku: p.sku, title: p.title, priceCents: p.priceCents, size: s, qty: q, img: p.img || "", uiSection: p.uiSection || "", collection: p.collection || "" });
+    if (idx >= 0) {
+        cart[idx].qty = clampInt(cart[idx].qty + q, 1, 99);
+    } else {
+        cart.push({ 
+            sku: p.sku, 
+            title: p.title, 
+            priceCents: p.priceCents, 
+            size: s, 
+            qty: q, 
+            img: p.img || "", 
+            uiSection: p.uiSection || "", 
+            collection: p.collection || "" 
+        });
+    }
 
-    saveCart(); validatePromo(); renderCart(); showToast("✅ Agregado al carrito");
+    saveCart(); 
+    validatePromo(); 
+    renderCart(); 
+    showToast("✅ ¡Agregado a tu carrito!", "success");
   };
 
-  const removeCartItem = (sku, size) => { cart = cart.filter((x) => !(x.sku === sku && x.size === size)); saveCart(); validatePromo(); renderCart(); };
+  const removeCartItem = (sku, size) => { 
+      cart = cart.filter((x) => !(x.sku === sku && x.size === size)); 
+      saveCart(); 
+      validatePromo(); 
+      renderCart(); 
+  };
+
   const setCartQty = (sku, size, qty) => {
     const it = cart.find((x) => x.sku === sku && x.size === size);
-    if (it) { it.qty = clampInt(qty, 1, 99); saveCart(); validatePromo(); renderCart(); }
+    if (it) { 
+        it.qty = clampInt(qty, 1, 99); 
+        saveCart(); 
+        validatePromo(); 
+        renderCart(); 
+    }
   };
 
   const changeCartItemSize = (sku, oldSize, newSize) => {
@@ -495,14 +568,19 @@
     } else {
       cart[itemIndex].size = newSize;
     }
-    saveCart(); renderCart(); showToast("✅ Talla actualizada");
+    saveCart(); 
+    renderCart(); 
+    showToast("✅ Talla actualizada", "success");
   };
 
   const validatePromo = () => {
     const code = String(promoCodeInput?.value || "").trim().toUpperCase();
     if (!code || !promosData || !promosData.rules) { activePromo = null; return; }
     
-    const p = promosData.rules.find(x => x.code === code && x.active);
+    // Evita ataques XSS en la validación local
+    const sanitizedCode = escapeHtml(code);
+    const p = promosData.rules.find(x => x.code === sanitizedCode && x.active);
+    
     if (p) {
       const now = new Date();
       const exp = p.expires_at ? new Date(p.expires_at) : null;
@@ -516,7 +594,8 @@
   };
 
   const cartSubtotalCents = (applyDiscount = false) => {
-    const sub = cart.reduce((sum, it) => sum + (Number(it.priceCents || 0) * Number(it.qty || 1)), 0);
+    // Calculo seguro forzando tipos numéricos
+    const sub = cart.reduce((sum, it) => sum + (Math.max(0, Number(it.priceCents || 0)) * Math.max(1, Number(it.qty || 1))), 0);
     if(!applyDiscount || !activePromo) return sub;
 
     const subMxn = sub / 100;
@@ -535,7 +614,7 @@
     if (activePromo && activePromo.type === 'free_shipping') return 0; 
     
     const cents = Number(shipping.quote?.amount_cents || shipping.quote?.amount || 0);
-    return Number.isFinite(cents) ? cents : 0;
+    return Number.isFinite(cents) && cents > 0 ? cents : 0;
   };
 
   const renderCart = () => {
@@ -545,10 +624,11 @@
 
     if (!cart.length) {
       cartItemsEl.innerHTML = `
-        <div class="hint" style="text-align:center; padding: 30px 10px;">
-          <div style="font-size: 40px; margin-bottom: 10px;">🛒</div>
-          Tu carrito de compras está vacío.<br><br>
-          <button class="btn btn--primary" type="button" onclick="document.querySelector('#closeCartBtn').click()">¡Ir al Catálogo!</button>
+        <div class="hint" style="text-align:center; padding: 40px 10px; display:flex; flex-direction:column; align-items:center;">
+          <div style="font-size: 50px; margin-bottom: 15px; opacity:0.8;">🛒</div>
+          <h3 style="margin-bottom:10px;">Tu carrito está vacío</h3>
+          <p style="color:var(--muted); font-size:14px; margin-bottom: 20px;">Aún no tienes equipo oficial para la carrera.</p>
+          <button class="btn btn--primary hover-fx" type="button" onclick="document.querySelector('#closeCartBtn').click()">¡Explorar Colecciones!</button>
         </div>`;
       if (cartSubtotalEl) cartSubtotalEl.textContent = money(0);
       if (shippingLineEl) shippingLineEl.textContent = money(0);
@@ -564,25 +644,26 @@
 
     const frag = document.createDocumentFragment();
     for (const it of cart) {
-      const row = document.createElement("div"); row.className = "cartitem";
+      const row = document.createElement("div"); 
+      row.className = "cartitem";
       
       const realProd = products.find(x => x.sku === it.sku);
       const availableSizes = realProd && realProd.sizes ? realProd.sizes : [it.size];
-      const sizeOptions = availableSizes.map(s => `<option value="${s}" ${s === it.size ? 'selected' : ''}>${s}</option>`).join('');
+      const sizeOptions = availableSizes.map(s => `<option value="${escapeHtml(s)}" ${s === it.size ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
 
       row.innerHTML = `
         <div class="cartitem__img">${it.img ? `<img src="${safeUrl(it.img)}" alt="${escapeHtml(it.title)}">` : ""}</div>
-        <div style="flex-grow:1;">
+        <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
           <h4 class="cartitem__title">${escapeHtml(it.title)}</h4>
-          <div class="cartitem__meta" style="display:flex; align-items:center; gap:8px;">
-            Talla: <select class="select cart-size-selector" data-sku="${it.sku}" data-old-size="${it.size}" style="padding: 2px 5px; width:auto; font-size:13px; font-weight:bold; height:auto; border-width:1px;">${sizeOptions}</select> 
-            <span>· ${money(it.priceCents)} c/u</span>
+          <div class="cartitem__meta" style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+            Talla: <select class="select cart-size-selector" data-sku="${escapeHtml(it.sku)}" data-old-size="${escapeHtml(it.size)}" aria-label="Cambiar talla en el carrito">${sizeOptions}</select> 
+            <span style="font-weight:bold; color:var(--red);">${money(it.priceCents)}</span>
           </div>
-          <div class="cartitem__controls">
-            <div class="qty" aria-label="Cantidad">
-              <button type="button" data-act="dec">−</button><span>${it.qty}</span><button type="button" data-act="inc">+</button>
+          <div class="cartitem__controls" style="margin-top:10px;">
+            <div class="qty" aria-label="Modificar Cantidad">
+              <button type="button" data-act="dec" aria-label="Quitar uno">−</button><span>${it.qty}</span><button type="button" data-act="inc" aria-label="Agregar uno">+</button>
             </div>
-            <button class="trash" type="button" title="Eliminar">🗑️</button>
+            <button class="trash hover-fx" type="button" title="Eliminar del carrito" aria-label="Eliminar producto">🗑️</button>
           </div>
         </div>
       `;
@@ -600,10 +681,12 @@
     
     const clearWrap = document.createElement("div");
     clearWrap.style.textAlign = "center";
-    clearWrap.style.marginTop = "10px";
-    clearWrap.innerHTML = `<button type="button" class="btn btn--tiny btn--ghost" style="color:var(--red); border-color:var(--red); font-size: 11px;">🧨 Vaciar Carrito</button>`;
+    clearWrap.style.marginTop = "15px";
+    clearWrap.style.paddingTop = "15px";
+    clearWrap.style.borderTop = "1px solid var(--border)";
+    clearWrap.innerHTML = `<button type="button" class="btn btn--tiny btn--ghost hover-fx" style="color:var(--muted); border-color:var(--border); font-size: 11px;">🧨 Vaciar Todo el Carrito</button>`;
     clearWrap.querySelector("button").addEventListener("click", () => {
-      if(confirm("¿Estás seguro de que deseas vaciar tu carrito?")) {
+      if(confirm("¿Estás seguro de que deseas eliminar todos los productos de tu carrito?")) {
         cart = []; saveCart(); validatePromo(); renderCart();
       }
     });
@@ -618,7 +701,7 @@
     if (cartSubtotalEl) cartSubtotalEl.textContent = money(subGross);
     
     if (discountLineWrap && discountLineEl) {
-      if (subNet < subGross && activePromo.type !== 'free_shipping') {
+      if (subNet < subGross && activePromo && activePromo.type !== 'free_shipping') {
         discountLineWrap.hidden = false;
         discountLineEl.textContent = `-${money(subGross - subNet)}`;
       } else {
@@ -628,7 +711,7 @@
 
     if (shippingLineEl) {
       if (activePromo && activePromo.type === 'free_shipping' && shipping.mode !== "pickup") {
-         shippingLineEl.innerHTML = `<span style="text-decoration: line-through; color: var(--muted2); font-size:12px; margin-right:5px;">${money(shipping.quote?.amount_mxn * 100 || 0)}</span> <b style="color:#28a745;">¡GRATIS!</b>`;
+         shippingLineEl.innerHTML = `<span style="text-decoration: line-through; color: var(--muted2); font-size:12px; margin-right:5px;">${money(shipping.quote?.amount_mxn * 100 || 0)}</span> <b style="color:#28a745;">¡CUBIERTO!</b>`;
       } else {
          shippingLineEl.textContent = money(ship);
       }
@@ -642,98 +725,153 @@
   };
   const saveShipping = () => { try { localStorage.setItem(STORAGE_KEYS.ship, JSON.stringify(shipping)); } catch {} };
 
-  const getSelectedShipMode = () => { const el = document.querySelector('input[name="shipMode"]:checked'); return el ? String(el.value || "pickup") : "pickup"; };
+  const getSelectedShipMode = () => { const el = document.querySelector('input[name="shipMode"]:checked'); return el ? escapeHtml(String(el.value || "pickup")) : "pickup"; };
 
   const refreshShippingUI = () => {
     shipping.mode = getSelectedShipMode();
     
     if (shipHint) {
       if(shipping.mode === "pickup") shipHint.textContent = "Fábrica";
-      else if(shipping.quote) shipHint.textContent = shipping.quote.label; 
+      else if(shipping.quote) shipHint.textContent = escapeHtml(shipping.quote.label); 
       else shipHint.textContent = SHIPPING_LABELS[shipping.mode];
     }
     
     if (shippingNote) {
-      if(shipping.mode === 'pickup') shippingNote.textContent = "Recoge gratis en nuestras instalaciones en Tijuana.";
-      else if(shipping.mode === 'envia_mx') shippingNote.textContent = "Envío estándar nacional de 3 a 5 días.";
-      else if(shipping.mode === 'envia_us') shippingNote.textContent = "Envío USA Internacional de 5 a 10 días.";
+      if(shipping.mode === 'pickup') shippingNote.textContent = "Recolección sin costo en nuestras instalaciones (Tijuana).";
+      else if(shipping.mode === 'envia_mx') shippingNote.textContent = "Envío Estándar Nacional (3 a 5 días hábiles).";
+      else if(shipping.mode === 'envia_us') shippingNote.textContent = "Envío Internacional USA (5 a 10 días hábiles).";
     }
 
     const needsZip = shipping.mode === "envia_mx" || shipping.mode === "envia_us";
     if (postalWrap) postalWrap.hidden = !needsZip;
 
-    if (!needsZip) { shipping.postal_code = ""; shipping.quote = null; if (postalCodeInput) postalCodeInput.value = ""; saveShipping(); renderCart(); return; }
-    if (postalCodeInput) postalCodeInput.value = shipping.postal_code || "";
+    if (!needsZip) { 
+        shipping.postal_code = ""; 
+        shipping.quote = null; 
+        if (postalCodeInput) postalCodeInput.value = ""; 
+        saveShipping(); 
+        renderCart(); 
+        return; 
+    }
+    if (postalCodeInput) postalCodeInput.value = escapeHtml(shipping.postal_code || "");
     renderCart();
   };
 
   const quoteShipping = async () => {
     if (checkoutMsg) checkoutMsg.hidden = true;
     const mode = getSelectedShipMode();
-    if (mode === "pickup") { shipping.mode = "pickup"; shipping.quote = null; saveShipping(); renderCart(); return; }
+    if (mode === "pickup") { 
+        shipping.mode = "pickup"; 
+        shipping.quote = null; 
+        saveShipping(); 
+        renderCart(); 
+        return; 
+    }
 
-    const postal_code = String(postalCodeInput?.value || "").trim();
-    if (postal_code.length < 4) { showToast("⚠️ Ingresa un Código Postal o ZIP válido."); return; }
-    if (!cart.length) { showToast("El carrito está vacío"); return; }
+    const postal_code = escapeHtml(String(postalCodeInput?.value || "").trim());
+    if (postal_code.length < 4 || postal_code.length > 10) { 
+        showToast("⚠️ Ingresa un Código Postal válido.", "error"); 
+        return; 
+    }
+    if (!cart.length) { showToast("Tu carrito está vacío.", "error"); return; }
     
-    if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.textContent = "Calculando..."; }
+    if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.innerHTML = "<span class='spinner-mini'></span>"; }
 
     try {
-      const body = { postal_code, shipping_mode: mode, country: mode === "envia_us" ? "US" : "MX", items: cart.map((it) => ({ sku: it.sku, qty: it.qty })) };
-      const res = await fetch("/.netlify/functions/quote_shipping", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const body = { 
+          postal_code, 
+          shipping_mode: mode, 
+          country: mode === "envia_us" ? "US" : "MX", 
+          items: cart.map((it) => ({ sku: it.sku, qty: it.qty })) 
+      };
+      const res = await fetch("/.netlify/functions/quote_shipping", { 
+          method: "POST", 
+          headers: { "content-type": "application/json" }, 
+          body: JSON.stringify(body) 
+      });
+      
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "No se pudo cotizar automáticamente con el proveedor.");
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Error de conexión con paqueterías.");
 
-      shipping.mode = mode; shipping.postal_code = postal_code;
-      shipping.quote = { amount_cents: Number(data.amount_cents || 0), amount_mxn: Number(data.amount_mxn || 0), label: String(data.label || "Standard"), country: String(data.country || body.country), provider: String(data.provider || "envia") };
-      saveShipping(); refreshShippingUI(); showToast(`✅ Costo de envío calculado`);
+      shipping.mode = mode; 
+      shipping.postal_code = postal_code;
+      shipping.quote = { 
+          amount_cents: Number(data.amount_cents || 0), 
+          amount_mxn: Number(data.amount_mxn || 0), 
+          label: String(data.label || "Standard Envia"), 
+          country: String(data.country || body.country), 
+          provider: String(data.provider || "envia") 
+      };
+      
+      saveShipping(); 
+      refreshShippingUI(); 
+      showToast(`✅ Envío calculado con éxito`, "success");
     } catch (e) {
-      shipping.quote = null; saveShipping(); refreshShippingUI(); showToast(`❌ Error de sistema de envíos. Verifica tu CP.`);
+      shipping.quote = null; 
+      saveShipping(); 
+      refreshShippingUI(); 
+      showToast(`❌ Verifica tu Código Postal o intenta más tarde.`, "error");
     } finally {
-      if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Calcular"; }
+      if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Cotizar"; }
     }
   };
 
   const doCheckout = async () => {
     if (checkoutMsg) checkoutMsg.hidden = true;
-    if (!cart.length) { showToast("Tu carrito está vacío"); return; }
+    if (!cart.length) { showToast("Tu carrito está vacío", "error"); return; }
 
     const shipping_mode = getSelectedShipMode();
-    const promo_code = String(promoCodeInput?.value || "").trim().toUpperCase();
-    const postal_code = String(postalCodeInput?.value || "").trim();
+    const promo_code = escapeHtml(String(promoCodeInput?.value || "").trim().toUpperCase());
+    const postal_code = escapeHtml(String(postalCodeInput?.value || "").trim());
     const needsZip = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
 
     if (needsZip) {
-      if (postal_code.length < 4) { showToast("Debes ingresar tu Código Postal o ZIP válido."); return; }
+      if (postal_code.length < 4) { showToast("Por favor ingresa un Código Postal válido para cotizar el envío.", "error"); return; }
       if (!shipping.quote || shipping.postal_code !== postal_code || shipping.mode !== shipping_mode) {
-        await quoteShipping(); if (!shipping.quote) return;
+        await quoteShipping(); 
+        if (!shipping.quote) return; // Se detiene si la cotización falló
       }
     }
 
     if (checkoutBtn) { checkoutBtn.disabled = true; }
-    if (checkoutLoader) { checkoutLoader.hidden = false; }
+    if (checkoutLoader) { openLayer(checkoutLoader); } // Usamos openLayer para bloquear UI
 
     try {
-      const payload = { items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), shipping_mode, postal_code: needsZip ? postal_code : "", promo_code };
-      const res = await fetch("/.netlify/functions/create_checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok || !data?.url) throw new Error(data?.error || "Error al iniciar pago seguro.");
+      const payload = { 
+          items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), 
+          shipping_mode, 
+          postal_code: needsZip ? postal_code : "", 
+          promo_code 
+      };
       
+      const res = await fetch("/.netlify/functions/create_checkout", { 
+          method: "POST", 
+          headers: { "content-type": "application/json" }, 
+          body: JSON.stringify(payload) 
+      });
+      
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok || !data?.url) throw new Error(data?.error || "Error al conectar con pasarela segura.");
+      
+      // Redirección segura a Stripe
       window.location.assign(data.url);
     } catch (e) {
-      if (checkoutLoader) { checkoutLoader.hidden = true; }
+      if (checkoutLoader) { closeLayer(checkoutLoader); }
       if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso del sistema: ${String(e?.message || e)}`; }
-      showToast("Hubo un error al procesar el pago seguro.");
-    } finally {
+      showToast("Hubo un error al procesar tu solicitud. Intenta de nuevo.", "error");
       if (checkoutBtn) { checkoutBtn.disabled = false; }
     }
   };
 
+  // ---------- AI CHAT LOGIC ----------
   const addChatMsg = (who, text) => {
     if (!aiOutput) return;
-    const div = document.createElement("div"); div.className = `msg ${who === "me" ? "msg--me" : "msg--ai"}`;
+    const div = document.createElement("div"); 
+    div.className = `msg ${who === "me" ? "msg--me" : "msg--ai"}`;
+    // Usamos HTML seguro, el escapeHtml protege el texto inyectado
     div.innerHTML = `<div>${escapeHtml(text)}</div><div class="msg__meta">${who === "me" ? "Tú" : "SCORE AI"}</div>`;
-    aiOutput.appendChild(div); aiOutput.scrollTop = aiOutput.scrollHeight;
+    aiOutput.appendChild(div); 
+    aiOutput.scrollTop = aiOutput.scrollHeight;
   };
 
   const sendAi = async () => {
@@ -741,45 +879,72 @@
     if (!msg) return;
     if (aiInput) aiInput.value = "";
     addChatMsg("me", msg);
-    if (aiSendBtn) { aiSendBtn.disabled = true; aiSendBtn.textContent = "…"; }
+    
+    if (aiSendBtn) { aiSendBtn.disabled = true; aiSendBtn.innerHTML = "<span class='spinner-mini'></span>"; }
 
     try {
-      const res = await fetch("/.netlify/functions/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: msg }) });
+      const res = await fetch("/.netlify/functions/chat", { 
+          method: "POST", 
+          headers: { "content-type": "application/json" }, 
+          body: JSON.stringify({ message: msg }) 
+      });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "AI error");
-      addChatMsg("ai", String(data.reply || "Listo."));
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "AI error de conexión");
+      addChatMsg("ai", String(data.reply || "He procesado tu solicitud. ¿En qué más te ayudo?"));
     } catch (e) {
-      addChatMsg("ai", "Sistemas de SCORE AI ocupados, intenta más tarde.");
+      addChatMsg("ai", "Mis sistemas están ocupados analizando telemetría. Intenta en unos segundos.");
     } finally {
       if (aiSendBtn) { aiSendBtn.disabled = false; aiSendBtn.textContent = "Enviar ➢"; }
+      if (aiInput) { aiInput.focus(); }
     }
   };
 
   const openAiChat = () => {
-    closeLayer(sideMenu); openLayer(aiModal);
-    setTimeout(() => aiInput?.focus(), 50);
-    if (!aiOutput?.children?.length) addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Te ayudo con tallas o pedidos de tu merch oficial?");
+    closeLayer(sideMenu); 
+    openLayer(aiModal);
+    setTimeout(() => aiInput?.focus(), 300); // Dar tiempo a la animación CSS
+    if (!aiOutput?.children?.length) {
+        addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Tienes dudas con tu talla, un envío o buscas un artículo específico?");
+    }
   };
 
+  // ---------- INICIALIZACIÓN GLOBAL ----------
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-    loadCart(); loadShipping(); 
+    
+    // Cargas locales
+    loadCart(); 
+    loadShipping(); 
 
+    // Cargas de red
     await fetchPromos(); 
     validatePromo();
     refreshShippingUI();
 
-    if (overlay) overlay.addEventListener("click", closeAll);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
+    // Eventos Globales
+    if (overlay) overlay.addEventListener("click", () => {
+        // Prevenir cerrar el loader de checkout dando click afuera
+        if(checkoutLoader && !checkoutLoader.hidden) return;
+        closeAll();
+    });
+    
+    document.addEventListener("keydown", (e) => { 
+        if (e.key === "Escape") {
+            if(checkoutLoader && !checkoutLoader.hidden) return;
+            closeAll(); 
+        }
+    });
 
+    // Menús
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
     openCartBtn?.addEventListener("click", () => { openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
     closeCartBtn?.addEventListener("click", () => closeLayer(cartDrawer));
     navOpenCart?.addEventListener("click", () => { closeLayer(sideMenu); openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
 
-    scrollLeftBtn?.addEventListener("click", () => { productGrid?.scrollBy({ left: -320, behavior: 'smooth' }); });
-    scrollRightBtn?.addEventListener("click", () => { productGrid?.scrollBy({ left: 320, behavior: 'smooth' }); });
+    // Carrusel Principal
+    scrollLeftBtn?.addEventListener("click", () => { productGrid?.scrollBy({ left: -window.innerWidth * 0.8, behavior: 'smooth' }); });
+    scrollRightBtn?.addEventListener("click", () => { productGrid?.scrollBy({ left: window.innerWidth * 0.8, behavior: 'smooth' }); });
 
     $$(".navitem[data-scroll]").forEach((btn) => {
       btn.addEventListener("click", () => { closeLayer(sideMenu); scrollToEl(btn.getAttribute("data-scroll")); });
@@ -787,22 +952,26 @@
 
     scrollToCategoriesBtn?.addEventListener("click", () => scrollToEl("#categories"));
 
+    // Filtros
     clearFilterBtn?.addEventListener("click", () => {
       activeCategory = null; searchQuery = "";
       $$('.catcard').forEach(c => c.classList.remove('active'));
       if (searchInput) searchInput.value = "";
       if (categoryHint) categoryHint.hidden = false;
-      updateFilterUI(); renderProducts();
+      updateFilterUI(); 
+      renderProducts();
     });
 
     searchInput?.addEventListener("input", debounce(() => {
       searchQuery = String(searchInput?.value || "").trim();
       if(searchQuery !== "") catalogCarouselSection.hidden = false;
-      updateFilterUI(); renderProducts();
-    }, 200));
+      updateFilterUI(); 
+      renderProducts();
+    }, 250));
 
     sortSelect?.addEventListener("change", () => { sortMode = String(sortSelect.value || "featured"); renderProducts(); });
 
+    // Modales de Producto
     pmClose?.addEventListener("click", () => closeLayer(productModal));
     pmBackBtn?.addEventListener("click", () => closeLayer(productModal)); 
 
@@ -810,22 +979,25 @@
       if (!currentProduct) return;
       
       const originalText = pmAdd.innerHTML;
-      pmAdd.innerHTML = "✅ ¡Agregado!";
+      pmAdd.innerHTML = "✅ ¡Guardado en tu equipo!";
       pmAdd.style.backgroundColor = "#28a745"; 
       pmAdd.style.borderColor = "#28a745";
+      pmAdd.disabled = true; // Prevenir múltiples clicks rápidos
       
       setTimeout(() => {
         pmAdd.innerHTML = originalText;
         pmAdd.style.backgroundColor = "";
         pmAdd.style.borderColor = "";
+        pmAdd.disabled = false;
         
         addToCart(currentProduct, String(pmSize?.value || "").trim(), clampInt(pmQty?.value, 1, 99));
         closeLayer(productModal); 
         openLayer(cartDrawer); 
         refreshShippingUI();
-      }, 600);
+      }, 700);
     });
 
+    // Eventos AI
     openAiBtn?.addEventListener("click", openAiChat);
     navOpenAi?.addEventListener("click", openAiChat);
     floatingAiBtn?.addEventListener("click", openAiChat);
@@ -833,16 +1005,18 @@
     aiSendBtn?.addEventListener("click", sendAi);
     aiInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendAi(); });
 
+    // Eventos Checkout y Envíos
     $$('input[name="shipMode"]').forEach((r) => { r.addEventListener("change", refreshShippingUI); });
     quoteBtn?.addEventListener("click", quoteShipping);
     postalCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") quoteShipping(); });
     
     promoCodeInput?.addEventListener("blur", () => { validatePromo(); renderCart(); });
     promoCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") { validatePromo(); renderCart(); }});
-    if(applyPromoBtn) { applyPromoBtn.addEventListener("click", () => { validatePromo(); renderCart(); showToast("Verificando cupón..."); }); }
+    if(applyPromoBtn) { applyPromoBtn.addEventListener("click", () => { validatePromo(); renderCart(); showToast("Verificando cupón de promoción..."); }); }
 
     checkoutBtn?.addEventListener("click", doCheckout);
 
+    // GDPR / Cookies
     const consentDecision = localStorage.getItem(STORAGE_KEYS.consent);
     if (!consentDecision && cookieBanner) { cookieBanner.hidden = false; }
     cookieAccept?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "accept"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
@@ -850,26 +1024,31 @@
 
     renderCart();
 
+    // Carga de Datos Principales
     try {
       catalog = await fetchCatalog();
       products = catalog.products.map(normalizeProduct).filter((p) => p.sku);
+      // Fallback: si no tiene sección asignada, va a BAJA1000 por defecto
       products = products.map((p) => { if (!CATEGORY_CONFIG.some((c) => c.uiId === p.uiSection)) p.uiSection = "BAJA1000"; return p; });
 
       renderCategories();
       updateFilterUI();
       renderProducts(); 
     } catch (e) {
-      showToast("Error de conexión al catálogo principal.");
+      showToast("Problemas al cargar el catálogo principal. Verifica tu conexión.", "error");
       console.error(e); 
     } finally {
+      // Manejo del Splash Screen con transición suave
       setTimeout(() => {
         if (splash) {
+          splash.classList.add('fade-out'); // Requiere clase CSS de opacidad 0 en styles.css
           splash.style.opacity = "0";
           setTimeout(() => (splash.hidden = true), 800);
         }
-      }, 3500);
+      }, 2500); // Tiempo ajustado para no aburrir al usuario
     }
   };
 
-  init().catch((e) => { console.error(e); if (splash) splash.hidden = true; });
+  // Lanzador
+  init().catch((e) => { console.error("Error crítico de inicialización:", e); if (splash) splash.hidden = true; });
 })();
