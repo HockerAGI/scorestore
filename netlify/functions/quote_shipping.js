@@ -27,14 +27,12 @@ exports.handler = async (event) => {
     }
 
     try {
-      // Intenta cotizar con tu lógica avanzada de _shared.js
       const quote = await getEnviaQuote({ zip, country, items_qty });
       return jsonResponse(200, quote, origin);
       
     } catch (enviaError) {
       console.warn("[quote_shipping] Envía falló, usando fallback de seguridad:", enviaError.message);
       
-      // Si Envía.com se cae, usamos la función fallback de tu _shared.js
       const fallback = getFallbackShipping(country, items_qty);
       return jsonResponse(200, fallback, origin);
     }
