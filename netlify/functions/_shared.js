@@ -10,7 +10,7 @@ try { ({ createClient } = require("@supabase/supabase-js")); } catch {}
 
 const corsHeaders = (origin) => ({
   "access-control-allow-origin": origin || "*",
-  "access-control-allow-headers": "content-type, stripe-signature, x-org-id",
+  "access-control-allow-headers": "content-type, stripe-signature, x-org-id, x-envia-token",
   "access-control-allow-methods": "GET,POST,OPTIONS",
   "access-control-max-age": "86400",
 });
@@ -70,7 +70,6 @@ const getBaseUrl = (event) => {
   return `${proto}://${host}`;
 };
 
-// Rutas a prueba de fallos Netlify
 const readJsonFile = (relPath) => {
   try {
     let p = path.join(process.cwd(), relPath);
@@ -90,7 +89,6 @@ const readJsonFile = (relPath) => {
 
 const getCatalogIndex = () => {
   const cat = readJsonFile("data/catalog.json");
-  // Actualizado para manejar el nuevo formato V3 de catalog.json
   const products = Array.isArray(cat?.products) ? cat.products : [];
   const idx = new Map();
   for (const p of products) {
@@ -113,6 +111,17 @@ const validateZip = (zip, country) => {
   if (z.length < 4 || z.length > 10) return null;
   if (!/^[a-zA-Z0-9\- ]+$/.test(z)) return null;
   return z;
+};
+
+const makeCheckoutIdempotencyKey = (params) => {
+    // Genera un hash seguro para evitar doble cobro si el usuario da múltiples clics
+    const raw = JSON.stringify(params || {});
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0; 
+    }
+    return `checkout_req_${Math.abs(hash)}_${Date.now()}`;
 };
 
 const isSupabaseConfigured = () =>
@@ -188,7 +197,7 @@ const getOriginByCountry = (country) => {
   return {
     name: process.env.ORIGIN_MX_NAME || "Score Store MX",
     company: process.env.ORIGIN_MX_COMPANY || "Único Uniformes",
-    email: process.env.ORIGIN_MX_EMAIL || process.env.FACTORY_EMAIL || "ventas@unico-uniformes.com",
+    email: process.env.ORIGIN_MX_EMAIL || process.env.FACTORY_EMAIL || "contacto.hocker@gmail.com",
     phone: process.env.ORIGIN_MX_PHONE || "6643011271",
     street: process.env.ORIGIN_MX_STREET || "Palermo",
     number: process.env.ORIGIN_MX_NUMBER || "6106 Interior JK",
@@ -313,7 +322,7 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   const destination = {
     name: "Cliente",
     company: "",
-    email: "contacto.hocker@gmail.com", 
+    email: "ceo@hockerads.com", 
     phone: "0000000000", 
     street: "Stripe Temp",
     number: "1",
@@ -420,7 +429,7 @@ const readRawBody = (event) => {
   return Buffer.from(body, "utf8");
 };
 
-// Extracción Inteligente de Calles y Números
+// Algoritmo de extracción de direcciones blindado para evitar errores de Envía
 const stripeShippingToEnviaDestination = (shipping_details) => {
   const sd = shipping_details || {};
   const addr = sd.address || {};
@@ -429,7 +438,6 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
   let calle = String(addr.line1 || "Domicilio Conocido").trim();
   let num = String(addr.line2 || "").trim();
 
-  // Si no hay línea 2, intentamos extraer el número de casa del final de la línea 1
   if (!num || num.toLowerCase() === "s/n") {
     const regex = /(.*)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(-\d+)?)$/i;
     const match = calle.match(regex);
@@ -521,6 +529,7 @@ module.exports = {
   itemsQtyFromAny,
   getBaseUrl,
   validateZip,
+  makeCheckoutIdempotencyKey,
   readJsonFile,
   getCatalogIndex,
   isSupabaseConfigured,
