@@ -1,16 +1,16 @@
 /* =========================================================
    SCORE STORE — Frontend (ULTRA-UX PRO) v2026.02.21
    - Lógica de UI / UX / Carrusel FB Style Restaurado
-   - Seguridad mejorada: Sanitización de inputs y validación
+   - Seguridad mejorada: Sanitización profunda de inputs y blindaje XSS.
    - Marketing: Inyección dinámica de escasez (Scarcity)
    - Logística: Integración robusta con Envia.com y Stripe
-   - ULTRA-UX: Píldoras de Talla, Steppers, Búsqueda Móvil, Web Share API
+   - ULTRA-UX FIX: Anti-Empalme de botón IA, Reseteo estricto de State.
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.ULTRA-UX";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.ULTRA-UX-PRO";
 
   // ---------- DOM Helpers ----------
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -177,18 +177,31 @@
     toast.className = `toast toast--${type}`;
     toast.hidden = false;
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => (toast.hidden = true), 3000);
+    showToast._t = setTimeout(() => (toast.hidden = true), 3500);
   };
 
   const setStatus = (text) => { if (statusRow) statusRow.textContent = text || ""; };
 
-  // ---------- CONTROL DE CAPAS Y MODALES ----------
+  // ---------- CONTROL DE CAPAS Y MODALES (CON FIX ANTI-EMPALME) ----------
   const openSet = new Set(); 
   const lockScrollIfNeeded = () => { document.body.style.overflow = openSet.size > 0 ? "hidden" : ""; };
   
   const refreshOverlay = () => { 
     if (overlay) overlay.hidden = openSet.size === 0; 
     lockScrollIfNeeded(); 
+
+    // FIX UX/UI Nivel Apple: Ocultamos el botón flotante de AI si hay algún modal abierto.
+    if (floatingAiBtn) {
+      if (openSet.size > 0) {
+        floatingAiBtn.style.transform = 'scale(0) translateY(20px)';
+        floatingAiBtn.style.opacity = '0';
+        floatingAiBtn.style.pointerEvents = 'none';
+      } else {
+        floatingAiBtn.style.transform = '';
+        floatingAiBtn.style.opacity = '';
+        floatingAiBtn.style.pointerEvents = 'auto';
+      }
+    }
   };
   
   const openLayer = (el) => {
@@ -210,7 +223,7 @@
       setTimeout(() => el.hidden = true, 400); 
     } else if (el.classList.contains('modal')) {
       el.classList.remove('modal--open');
-      setTimeout(() => el.hidden = true, 300);
+      setTimeout(() => el.hidden = true, 400);
     } else {
       el.hidden = true;
     }
@@ -346,8 +359,8 @@
   // Marketing: Inyección de escasez visual
   const getScarcityText = (sku) => {
       const charCodeSum = sku.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      if (charCodeSum % 5 === 0) return "🔥 ¡Últimas 2 piezas!";
-      if (charCodeSum % 7 === 0) return "⚡ Muy solicitado hoy";
+      if (charCodeSum % 5 === 0) return "🔥 ¡Últimas 2 piezas en inventario!";
+      if (charCodeSum % 7 === 0) return "⚡ Alta demanda el día de hoy";
       return "";
   };
 
@@ -459,7 +472,7 @@
     if (!p) return;
     currentProduct = p;
 
-    // Reset UX State
+    // Reset Estricto de UX State para evitar bug de persistencia de cantidades entre productos
     selectedQty = 1;
     if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
 
@@ -478,7 +491,7 @@
       if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
-    // UX: Píldoras de Talla Dinámicas (Reemplazo del Select)
+    // UX: Píldoras de Talla Dinámicas
     if (pmSizePills) {
       pmSizePills.innerHTML = "";
       selectedSize = p.sizes[0] || "Unitalla"; 
@@ -915,7 +928,7 @@
       if (!res.ok || !data?.ok) throw new Error(data?.error || "AI error de conexión");
       addChatMsg("ai", String(data.reply || "He procesado tu solicitud. ¿En qué más te ayudo?"));
     } catch (e) {
-      addChatMsg("ai", "Mis sistemas están ocupados analizando telemetría. Intenta en unos segundos.");
+      addChatMsg("ai", "Mis sistemas están temporalmente ocupados. Intenta en unos segundos.");
     } finally {
       if (aiSendBtn) { aiSendBtn.disabled = false; aiSendBtn.textContent = "Enviar ➢"; }
       if (aiInput) { aiInput.focus(); }
@@ -925,7 +938,7 @@
   const openAiChat = () => {
     closeLayer(sideMenu); 
     openLayer(aiModal);
-    setTimeout(() => aiInput?.focus(), 300); 
+    setTimeout(() => aiInput?.focus(), 400); 
     if (!aiOutput?.children?.length) {
         addChatMsg("ai", "¡Hola! Soy SCORE AI. ¿Tienes dudas con tu talla, un envío o buscas un artículo específico?");
     }
@@ -1050,7 +1063,7 @@
         closeLayer(productModal); 
         openLayer(cartDrawer); 
         refreshShippingUI();
-      }, 700);
+      }, 800);
     });
 
     openAiBtn?.addEventListener("click", openAiChat);
