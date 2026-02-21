@@ -3,8 +3,8 @@
    - Lógica de UI / UX / Carrusel FB Style Restaurado
    - Cierre inteligente de modales (Anti-Empalmes)
    - Efecto Isla Visual y Etiquetas Flotantes (.mediaframe)
-   - MEJORAS: Cupones UI, Cambio de tallas in-cart, Vaciar Carrito,
-     Protección Anti-Doble Cobro (Stripe/Envía)
+   - MEJORA UX: Botones de "Ver Detalles y Tallas" siempre visibles.
+   - MEJORAS: Cupones UI, Cambio de tallas in-cart, Vaciar Carrito.
    ========================================================= */
 
 (() => {
@@ -154,7 +154,6 @@
   // ---------- GESTIÓN ANTI-EMPALMES (CAPAS) ----------
   const openSet = new Set();
   const lockScrollIfNeeded = () => { 
-    // Bloquea el scroll de fondo solo si hay modales abiertos
     document.body.style.overflow = openSet.size > 0 ? "hidden" : ""; 
   };
   
@@ -165,7 +164,6 @@
 
   const openLayer = (el) => {
     if (!el) return;
-    // Si se abre una capa, asegurarnos que menús empalmados se cierren
     if (el === cartDrawer && openSet.has(sideMenu)) closeLayer(sideMenu);
     if (el === sideMenu && openSet.has(cartDrawer)) closeLayer(cartDrawer);
     
@@ -344,18 +342,17 @@
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
 
       let swipeHint = imgs.length > 1 ? `<div class="card__swipe-hint">Desliza ↔</div>` : '';
-      // Se utiliza .mediaframe de la nueva versión para el efecto borroso en el fondo
       let trackHtml = imgs.map((src) => `<div class="mediaframe" style="--mf:url('${safeUrl(src)}')"><img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}"></div>`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="card__dots">${imgs.map((_,i)=>`<span class="card__dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
       let navHtml = imgs.length > 1 ? `<button class="card__nav card__nav--prev" aria-label="Anterior" type="button">‹</button><button class="card__nav card__nav--next" aria-label="Siguiente" type="button">›</button>` : '';
 
+      // NOTA UX: Agregamos el botón explícito "Ver Detalles y Tallas" dentro del body de la tarjeta.
       card.innerHTML = `
         <div class="card__media">
           ${swipeHint}
           <div class="card__track">${trackHtml}</div>
           ${navHtml}
           ${dotsHtml}
-          <button class="card__quick-add" type="button">➕ Agregar Rápido</button>
         </div>
         <div class="card__body">
           <h3 class="card__title">${escapeHtml(p.title)}</h3>
@@ -365,6 +362,7 @@
               ${logoPill} ${collectionPill}
             </div>
           </div>
+          <button class="btn btn--block btn--black card__action-btn" type="button" style="margin-top: 14px; font-size: 13px; padding: 10px;">Ver Detalles y Tallas</button>
         </div>
       `;
 
@@ -372,7 +370,7 @@
       const dots = card.querySelectorAll('.card__dot');
       const btnPrev = card.querySelector('.card__nav--prev');
       const btnNext = card.querySelector('.card__nav--next');
-      const btnQuickAdd = card.querySelector('.card__quick-add');
+      const actionBtn = card.querySelector('.card__action-btn');
       const swipeHintEl = card.querySelector('.card__swipe-hint');
 
       if (track && dots.length > 0) {
@@ -399,14 +397,15 @@
         }
       }
 
-      if(btnQuickAdd) {
-        btnQuickAdd.addEventListener('click', (e) => {
+      // Ambos (clic en la foto y clic en el botón nuevo) abren el modal para que elijan talla
+      if(actionBtn) {
+        actionBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            addToCart(p, p.sizes?.[0] || "M", 1);
+            openProduct(p.sku);
         });
       }
-
       card.addEventListener("click", () => openProduct(p.sku));
+      
       frag.appendChild(card);
     }
     productGrid.appendChild(frag);
@@ -442,7 +441,6 @@
 
     if (pmCarousel) {
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
-      // Efecto mediaframe también en el modal del producto
       let trackHtml = imgs.map((src) => `<div class="mediaframe mediaframe--pm" style="--mf:url('${safeUrl(src)}')"><img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}" loading="lazy"></div>`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="pm__dots">${imgs.map((_,i)=>`<span class="pm__dot ${i===0?'active':''}" data-idx="${i}"></span>`).join('')}</div>` : '';
 
