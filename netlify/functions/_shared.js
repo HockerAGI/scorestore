@@ -1,7 +1,24 @@
+/* eslint-disable no-console */
 "use strict";
+
+/**
+ * =========================================================
+ * SCORE STORE / UnicOs — Netlify Functions Shared Utils
+ * v2026-02-21 (PROD-SAFE)
+ *
+ * Fixes applied:
+ * - Envía: soporte PROD/SANDBOX por variables (api-test / geocodes-test)
+ * - Envía: validación CP MX (5 dígitos) y ZIP US (5 o 9)
+ * - Envía: destino/telefono/email sin hardcode (configurable por ENV)
+ * - Envía: parsing de respuestas más tolerante (data/data[0]/labelUrl/label)
+ * - Stripe: helpers para idempotency keys (anti doble sesión / doble cobro)
+ * - Stripe→Envía: extracción robusta de calle/número/distrito (heurística)
+ * =========================================================
+ */
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 let Stripe = null;
 try { Stripe = require("stripe"); } catch {}
@@ -10,7 +27,7 @@ try { ({ createClient } = require("@supabase/supabase-js")); } catch {}
 
 const corsHeaders = (origin) => ({
   "access-control-allow-origin": origin || "*",
-  "access-control-allow-headers": "content-type, stripe-signature, x-org-id",
+  "access-control-allow-headers": "content-type, stripe-signature, x-org-id, x-envia-token",
   "access-control-allow-methods": "GET,POST,OPTIONS",
   "access-control-max-age": "86400",
 });
@@ -52,8 +69,9 @@ const normalizeQty = (items) => {
       sku: String(it?.sku || "").trim(),
       qty: clampInt(it?.qty, 1, 99),
       size: it?.size ? String(it.size).trim() : "",
+      // El frontend NO manda priceCents (por seguridad); este campo sólo sirve como fallback defensivo.
       priceCents: it?.priceCents ? Number(it.priceCents) : 55000,
-      title: it?.title ? String(it.title).trim() : ""
+      title: it?.title ? String(it.title).trim() : "",
     }))
     .filter((it) => it.sku);
 };
@@ -64,19 +82,24 @@ const itemsQtyFromAny = (items) =>
 const getBaseUrl = (event) => {
   const headers = event?.headers || {};
   const proto = headers["x-forwarded-proto"] || "https";
-  const host = headers["x-forwarded-host"] || headers.host || process.env.URL || process.env.DEPLOY_PRIME_URL;
+  const host =
+    headers["x-forwarded-host"] ||
+    headers.host ||
+    process.env.URL ||
+    process.env.DEPLOY_PRIME_URL ||
+    process.env.SITE_URL;
   if (!host) return "https://scorestore.netlify.app";
   if (host.startsWith("http")) return host;
   return `${proto}://${host}`;
 };
 
-// CORRECCIÓN: Resolución de rutas a prueba de fallos para Netlify
+// ============ Files (Netlify prod-safe) ============
 const readJsonFile = (relPath) => {
   try {
-    // Intento 1: Directorio actual (funciona en dev local)
+    // Intento 1: Directorio actual (dev local)
     let p = path.join(process.cwd(), relPath);
     if (!fs.existsSync(p)) {
-      // Intento 2: Relativo a la ubicación de _shared.js (funciona en Netlify prod)
+      // Intento 2: Relativo a /netlify/functions (prod Netlify)
       p = path.join(__dirname, "..", "..", relPath);
     }
     if (fs.existsSync(p)) {
@@ -102,20 +125,30 @@ const getCatalogIndex = () => {
   return { catalog: cat, index: idx };
 };
 
+// ============ Zip/Postal validation ============
 const validateZip = (zip, country) => {
   const z = String(zip || "").trim();
   const c = String(country || "").toUpperCase().trim();
 
+  // US ZIP: 5 o 9 dígitos
   if (c === "US") {
     if (!/^\d{5}(-\d{4})?$/.test(z)) return null;
     return z;
   }
 
+  // MX CP: 5 dígitos exactos
+  if (c === "MX") {
+    if (!/^\d{5}$/.test(z)) return null;
+    return z;
+  }
+
+  // Fallback genérico (si luego agregas otro país)
   if (z.length < 4 || z.length > 10) return null;
   if (!/^[a-zA-Z0-9\- ]+$/.test(z)) return null;
   return z;
 };
 
+// ============ Supabase ============
 const isSupabaseConfigured = () =>
   Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && createClient);
 
@@ -132,6 +165,7 @@ const supabaseAdmin = (() => {
   };
 })();
 
+// ============ Telegram ============
 const sendTelegram = async (text) => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -146,15 +180,28 @@ const sendTelegram = async (text) => {
         text: String(text || "").slice(0, 3500),
         parse_mode: "HTML",
         disable_web_page_preview: true,
-      })
+      }),
     });
   } catch (e) {
     console.log("[telegram] warn:", e?.message || e);
   }
 };
 
-const ENVIA_API_URL = (process.env.ENVIA_API_URL || "https://api.envia.com").replace(/\/+$/, "");
-const ENVIA_GEOCODES_URL = (process.env.ENVIA_GEOCODES_URL || "https://geocodes.envia.com").replace(/\/+$/, "");
+// ============ Envía (Shipping API + Geocodes) ============
+//
+// Envia tiene ambientes distintos para sandbox/producción.
+// Docs indican:
+// - Sandbox: https://api-test.envia.com/ (Shipping) y https://geocodes-test.envia.com/ (Geocodes)
+// - Producción: https://api.envia.com/ y https://geocodes.envia.com/
+// (Se puede sobre-escribir con ENVIA_API_URL / ENVIA_GEOCODES_URL)
+const ENVIA_ENV = String(process.env.ENVIA_ENV || "prod").toLowerCase().trim();
+const DEFAULT_ENVIA_API =
+  ENVIA_ENV === "sandbox" || ENVIA_ENV === "test" ? "https://api-test.envia.com" : "https://api.envia.com";
+const DEFAULT_ENVIA_GEOCODES =
+  ENVIA_ENV === "sandbox" || ENVIA_ENV === "test" ? "https://geocodes-test.envia.com" : "https://geocodes.envia.com";
+
+const ENVIA_API_URL = String(process.env.ENVIA_API_URL || DEFAULT_ENVIA_API).replace(/\/+$/, "");
+const ENVIA_GEOCODES_URL = String(process.env.ENVIA_GEOCODES_URL || DEFAULT_ENVIA_GEOCODES).replace(/\/+$/, "");
 
 const requireEnviaKey = () => {
   const key = process.env.ENVIA_API_KEY;
@@ -207,6 +254,7 @@ const getPackageSpecs = (country, items_qty) => {
   const qty = clampInt(items_qty || 1, 1, 99);
   const c = String(country || "MX").toUpperCase();
 
+  // Nota: para mejorar precisión, en el futuro puedes definir peso/dimensiones por SKU.
   if (c === "US") {
     const weightLb = Number(process.env.PACK_WEIGHT_LB || 1) * qty;
     return {
@@ -242,6 +290,7 @@ const getPackageSpecs = (country, items_qty) => {
   };
 };
 
+// ---- Envía Geocodes: obtiene city/state por CP/ZIP ----
 const getZipDetails = async (country, zip) => {
   const c = String(country || "MX").toUpperCase();
   const z = validateZip(zip, c);
@@ -281,6 +330,7 @@ const getZipDetails = async (country, zip) => {
   }
 };
 
+// ---- Quote parsing ----
 const pickBestRate = (rates) => {
   const arr = Array.isArray(rates) ? rates : [];
   let best = null;
@@ -311,14 +361,16 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   const origin = getOriginByCountry(c);
   const zipInfo = await getZipDetails(c, z);
 
+  // Quote no requiere domicilio real del cliente (Stripe lo pide en Checkout),
+  // pero Envía necesita ciudad/estado para cotizar bien.
   const destination = {
-    name: "Cliente",
+    name: process.env.DEFAULT_CUSTOMER_NAME || "Cliente",
     company: "",
-    email: "contacto.hocker@gmail.com", 
-    phone: "0000000000", 
-    street: "Stripe Temp",
+    email: process.env.DEFAULT_CUSTOMER_EMAIL || "no-reply@scorestore.com",
+    phone: process.env.DEFAULT_CUSTOMER_PHONE || "0000000000",
+    street: "Calle",
     number: "1",
-    district: "Other",
+    district: process.env.DEFAULT_CUSTOMER_DISTRICT || "Centro",
     city: zipInfo?.city || "",
     state: zipInfo?.state || (c === "US" ? "CA" : "BC"),
     country: c,
@@ -333,7 +385,10 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
     destination,
     packages: [pkg],
     shipment: {
-      carrier: c === "US" ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps") : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      // Envia acepta carrier/service según tu cuenta. Aquí damos un default configurable.
+      carrier: c === "US"
+        ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
+        : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
       type: 1,
     },
     settings: {
@@ -342,13 +397,13 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   };
 
   const url = `${ENVIA_API_URL}/ship/rate/`;
-  
+
   let res;
   try {
     res = await fetch(url, {
       method: "POST",
       headers: enviaHeaders(),
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   } catch (fetchErr) {
     throw new Error("No se pudo conectar con los servidores de paquetería.");
@@ -360,17 +415,25 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   }
 
   const data = await res.json();
-  const rates = data?.data || data?.rates || data || [];
-  
+
+  // Envía suele responder { data: [...] } pero hay variantes por carrier/ambiente.
+  const rates =
+    (Array.isArray(data?.data) ? data.data : null) ||
+    (Array.isArray(data?.rates) ? data.rates : null) ||
+    (Array.isArray(data) ? data : null) ||
+    [];
+
   const best = pickBestRate(rates);
   if (!best) {
-    throw new Error("No se encontró tarifa (envía) para ese CP/ZIP");
+    throw new Error("No se encontró tarifa (Envía) para ese CP/ZIP");
   }
 
   let priceMXN = Number(best.price);
   if (!Number.isFinite(priceMXN) || priceMXN <= 0) throw new Error("Tarifa inválida");
-  const fx = Number(process.env.FX_USD_TO_MXN) || 18; 
-  if (String(c) === "US" && String(process.env.ENVIA_FORCE_USD_TO_MXN || "0") === "1") {
+
+  // Si tu cuenta cotiza en USD en rutas US, puedes forzar conversión a MXN.
+  const fx = Number(process.env.FX_USD_TO_MXN) || 18;
+  if (c === "US" && String(process.env.ENVIA_FORCE_USD_TO_MXN || "0") === "1") {
     if (Number.isFinite(fx) && fx > 0) priceMXN = priceMXN * fx;
   }
 
@@ -390,12 +453,15 @@ const getFallbackShipping = (country, items_qty) => {
   const c = String(country || "MX").toUpperCase();
   const qty = clampInt(items_qty || 1, 1, 99);
 
-  const base = c === "US"
-    ? Number(process.env.FALLBACK_US_PRICE_MXN || 850)
-    : Number(process.env.FALLBACK_MX_PRICE_MXN || 250);
+  const base =
+    c === "US"
+      ? Number(process.env.FALLBACK_US_PRICE_MXN || 850)
+      : Number(process.env.FALLBACK_MX_PRICE_MXN || 250);
 
   const perItem = Number(process.env.FALLBACK_PER_ITEM_MXN || 50);
-  const price = (Number.isFinite(base) ? base : 0) + (Number.isFinite(perItem) ? perItem * Math.max(0, qty - 1) : 0);
+  const price =
+    (Number.isFinite(base) ? base : 0) +
+    (Number.isFinite(perItem) ? perItem * Math.max(0, qty - 1) : 0);
 
   const priceMXN = Math.max(0, price);
   return {
@@ -408,6 +474,7 @@ const getFallbackShipping = (country, items_qty) => {
   };
 };
 
+// ============ Stripe ============
 const initStripe = () => {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY no configurada");
@@ -421,52 +488,153 @@ const readRawBody = (event) => {
   return Buffer.from(body, "utf8");
 };
 
-// CORRECCIÓN: Extracción Inteligente de Calles y Números mejorada para Envía
-const stripeShippingToEnviaDestination = (shipping_details) => {
-  const sd = shipping_details || {};
-  const addr = sd.address || {};
-  const country = String(addr.country || "").toUpperCase();
-  
-  let calle = String(addr.line1 || "Domicilio Conocido").trim();
-  let num = String(addr.line2 || "").trim();
+// ---- Stripe idempotency helpers ----
+const stableStringify = (obj) => {
+  const seen = new WeakSet();
+  const sorter = (value) => {
+    if (value && typeof value === "object") {
+      if (seen.has(value)) return null;
+      seen.add(value);
+      if (Array.isArray(value)) return value.map(sorter);
+      const keys = Object.keys(value).sort();
+      const out = {};
+      for (const k of keys) out[k] = sorter(value[k]);
+      return out;
+    }
+    return value;
+  };
+  return JSON.stringify(sorter(obj));
+};
 
-  // Si no hay línea 2, intentamos extraer el número de casa del final de la línea 1
-  if (!num || num.toLowerCase() === "s/n") {
-    const regex = /(.*)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(-\d+)?)$/i;
-    const match = calle.match(regex);
+const sha256 = (input) => crypto.createHash("sha256").update(String(input || "")).digest("hex");
+
+const makeCheckoutIdempotencyKey = ({ items, shipping_mode, postal_code, promo_code }) => {
+  const normalized = {
+    items: normalizeQty(items).map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })).sort((a, b) => a.sku.localeCompare(b.sku)),
+    shipping_mode: String(shipping_mode || "pickup"),
+    postal_code: String(postal_code || ""),
+    promo_code: String(promo_code || "").toUpperCase(),
+  };
+  // Stripe permite idempotency keys de hasta ~255 chars; usamos hash.
+  return `scorestore_checkout_${sha256(stableStringify(normalized)).slice(0, 48)}`;
+};
+
+// ---- Stripe → Envía destination (robusto) ----
+const extractStreetAndNumber = (line1, line2) => {
+  let street = String(line1 || "").trim();
+  let number = String(line2 || "").trim();
+
+  // Si line2 vacío, intentar extraer No/# del final de line1.
+  if (!number || number.toLowerCase() === "s/n") {
+    // Ej: "Av Siempre Viva 742", "Calle 1 #123", "Blvd. Agua Caliente No. 987"
+    const regex = /(.*?)(?:\s+(?:No\.?\s*|#\s*)?(\d+[a-zA-Z]?(-\d+)?))$/i;
+    const match = street.match(regex);
     if (match) {
-      calle = match[1].trim();
-      num = match[2].trim();
+      street = match[1].trim();
+      number = match[2].trim();
     } else {
-      num = "S/N"; // Fallback seguro para Envía
+      number = "S/N";
     }
   }
 
-  // Limpiar el teléfono para evitar que Envía rechace el paquete
-  let telefonoSeguro = String(sd.phone || "").replace(/\D/g, "");
-  if(telefonoSeguro.length < 10) telefonoSeguro = "0000000000";
+  if (!street) street = "Domicilio Conocido";
+  if (!number) number = "S/N";
+
+  return { street, number };
+};
+
+const inferDistrict = (maybeLine2) => {
+  const v = String(maybeLine2 || "").trim();
+  if (!v) return process.env.DEFAULT_CUSTOMER_DISTRICT || "Centro";
+
+  // Heurística: si tiene "col", "colonia", "fracc", "residencial", lo tratamos como distrito/colonia.
+  const lower = v.toLowerCase();
+  const looksLikeDistrict =
+    lower.includes("col") ||
+    lower.includes("col.") ||
+    lower.includes("colonia") ||
+    lower.includes("fracc") ||
+    lower.includes("fraccionamiento") ||
+    lower.includes("residencial") ||
+    lower.includes("barrio") ||
+    lower.includes("deleg");
+
+  // Si parece apt/suite, no sirve como distrito.
+  const looksLikeApt =
+    lower.includes("apt") ||
+    lower.includes("apto") ||
+    lower.includes("depto") ||
+    lower.includes("departamento") ||
+    lower.includes("suite") ||
+    lower.includes("unit") ||
+    lower.includes("piso") ||
+    lower.includes("int") ||
+    lower.includes("interior");
+
+  if (looksLikeDistrict && !looksLikeApt) return v;
+  return process.env.DEFAULT_CUSTOMER_DISTRICT || "Centro";
+};
+
+const stripeSessionToEnviaDestination = (stripeSession) => {
+  const session = stripeSession || {};
+  const sd = session.shipping_details || {};
+  const addr = sd.address || {};
+  const country = String(addr.country || "").toUpperCase();
+
+  const { street, number } = extractStreetAndNumber(addr.line1, addr.line2);
+
+  // Envía rechaza teléfonos con caracteres; pedimos phone_number_collection en Checkout,
+  // pero si no viene, ponemos un fallback.
+  let phone = String(session.customer_details?.phone || sd.phone || "").replace(/\D/g, "");
+  if (phone.length < 10) phone = String(process.env.DEFAULT_CUSTOMER_PHONE || "0000000000").replace(/\D/g, "");
+  if (phone.length < 10) phone = "0000000000";
+
+  const email = session.customer_details?.email || session.customer_email || process.env.DEFAULT_CUSTOMER_EMAIL || "no-reply@scorestore.com";
+  const name = sd.name || session.customer_details?.name || "Cliente Final";
 
   return {
-    name: sd.name || "Cliente Final",
+    name,
     company: "",
-    email: "cliente@scorestore.com", 
-    phone: telefonoSeguro, 
-    street: calle,
-    number: num,
-    district: addr.line2 || "Centro", // Usualmente la línea 2 es colonia si line 1 tiene el número
+    email,
+    phone,
+    street,
+    number,
+    district: inferDistrict(addr.line2),
     city: addr.city || "",
     state: addr.state || "",
     country: country || "MX",
     postalCode: addr.postal_code || "",
-    reference: "Venta Stripe Webhook",
+    reference: "Score Store · Stripe",
   };
+};
+
+const normalizeEnviaLabelResponse = (labelData) => {
+  // Envía puede responder {data:{...}} o {data:[{...}]}
+  const d = labelData?.data ?? labelData;
+  const first = Array.isArray(d) ? d[0] : d;
+
+  const trackingNumber =
+    first?.trackingNumber ||
+    first?.tracking_number ||
+    first?.tracking ||
+    first?.trackingId ||
+    null;
+
+  const labelUrl =
+    first?.labelUrl ||
+    first?.label_url ||
+    first?.label ||
+    first?.labelPDF ||
+    null;
+
+  return { trackingNumber, labelUrl, raw: labelData };
 };
 
 const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty }) => {
   const country = String(shipping_country || "MX").toUpperCase();
 
   const origin = getOriginByCountry(country);
-  const destination = stripeShippingToEnviaDestination(stripe_session?.shipping_details);
+  const destination = stripeSessionToEnviaDestination(stripe_session);
 
   if (!destination?.postalCode || !destination?.state || !destination?.country) {
     throw new Error("Dirección incompleta en Stripe para generar guía automáticamente");
@@ -479,9 +647,10 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
     destination,
     packages: [pkg],
     shipment: {
-      carrier: country === "US"
-        ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
-        : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      carrier:
+        country === "US"
+          ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
+          : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
       type: 1,
     },
     settings: {
@@ -492,13 +661,13 @@ const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty })
   };
 
   const url = `${ENVIA_API_URL}/ship/generate/`;
-  
+
   let res;
   try {
     res = await fetch(url, {
       method: "POST",
       headers: enviaHeaders(),
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   } catch (err) {
     throw new Error("Conexión fallida al servidor de Envía para generar la guía.");
@@ -533,4 +702,7 @@ module.exports = {
   createEnviaLabel,
   initStripe,
   readRawBody,
+  makeCheckoutIdempotencyKey,
+  stripeSessionToEnviaDestination,
+  normalizeEnviaLabelResponse,
 };
