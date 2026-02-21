@@ -6,11 +6,9 @@
  *
  * FIXES v2026-02-21 (PLUS):
  * - Manejo correcto de pagos "delayed" (OXXO): NO generar guía hasta pago confirmado.
- *   Eventos recomendados: checkout.session.completed + checkout.session.async_payment_succeeded
- *   y opcional async_payment_failed.
  * - Persistencia segura en Supabase (orders + shipping_labels) con UPSERT (idempotente).
- * - Prevención de guías duplicadas: si ya existe tracking_number/label_url por stripe_session_id, no re-generar.
- * - Guardado REAL de items (line_items) en orders.items para UnicOs (admin app).
+ * - Prevención de guías duplicadas: si ya existe tracking por sesión, no re-generar.
+ * - Guardado REAL de items (line_items) para UnicOs.
  * =========================================================
  */
 
@@ -21,7 +19,6 @@ const {
   isSupabaseConfigured,
   supabaseAdmin,
   createEnviaLabel,
-  normalizeEnviaLabelResponse,
   sendTelegram,
 } = require("./_shared");
 
@@ -29,8 +26,6 @@ const safeUpper = (v) => String(v || "").toUpperCase().trim();
 const nowIso = () => new Date().toISOString();
 
 const shouldFulfillNow = (eventType, session) => {
-  // Para métodos instantáneos, checkout.session.completed suele llegar con payment_status=paid
-  // Para métodos delayed (OXXO), debe llegar checkout.session.async_payment_succeeded cuando se confirma el pago.
   if (eventType === "checkout.session.async_payment_succeeded") return true;
   if (eventType === "checkout.session.completed") return String(session.payment_status) === "paid";
   return false;
@@ -40,7 +35,6 @@ const fetchAllLineItems = async (stripe, sessionId) => {
   const out = [];
   let starting_after = undefined;
 
-  // Paginar si llega a crecer catálogo
   for (let i = 0; i < 20; i++) {
     const resp = await stripe.checkout.sessions.listLineItems(sessionId, {
       limit: 100,
@@ -138,7 +132,6 @@ const upsertOrder = async (sb, session, status, items) => {
 
     metadata: {
       shipping_address: addr || null,
-      // Para auditoría / soporte (UnicOs): sesión Stripe cruda
       raw_session: session,
     },
   };
@@ -163,15 +156,14 @@ const getExistingLabel = async (sb, sessionId) => {
 };
 
 const upsertLabel = async (sb, sessionId, labelData, status = "created") => {
-  const n = normalizeEnviaLabelResponse(labelData);
   const row = {
     stripe_session_id: sessionId,
     carrier: "envia",
-    tracking_number: n.trackingNumber || null,
-    label_url: n.labelUrl || null,
+    tracking_number: labelData.trackingNumber || labelData[0]?.trackingNumber || null,
+    label_url: labelData.labelUrl || labelData[0]?.label || null,
     status,
     updated_at: nowIso(),
-    raw: n.raw || labelData || {},
+    raw: labelData || {},
   };
   await sb.from("shipping_labels").upsert(row, { onConflict: "stripe_session_id" });
 };
@@ -186,7 +178,6 @@ exports.handler = async (event) => {
 
     if (!sig || !whSecret) {
       console.log("[stripe_webhook] Missing signature or STRIPE_WEBHOOK_SECRET");
-      // Responder 200 para que no reintente infinito en configuraciones incompletas.
       return jsonResponse(200, { received: true, warning: "Webhook secret missing" }, "*");
     }
 
@@ -213,14 +204,12 @@ exports.handler = async (event) => {
     );
     const items_qty = Number(meta.items_qty || 0) || 0;
 
-    // ---- Status mapping ----
     let orderStatus = "pending";
     if (type === "checkout.session.async_payment_failed") orderStatus = "payment_failed";
     else if (type === "checkout.session.async_payment_succeeded") orderStatus = "paid";
     else if (type === "checkout.session.completed") orderStatus = String(session.payment_status) === "paid" ? "paid" : "pending_payment";
     else return jsonResponse(200, { received: true, ignored: true }, "*");
 
-    // ---- Fetch line items (REAL) ----
     let orderItems = [];
     try {
       const lineItems = await fetchAllLineItems(stripe, session.id);
@@ -230,7 +219,6 @@ exports.handler = async (event) => {
       orderItems = [];
     }
 
-    // ---- Persist to Supabase (idempotente) ----
     if (isSupabaseConfigured()) {
       const sb = supabaseAdmin();
       if (sb) {
@@ -242,14 +230,12 @@ exports.handler = async (event) => {
       }
     }
 
-    // ---- Fulfillment (Envía label) ----
     const shouldFulfill = shouldFulfillNow(type, session);
     const needsLabel = shipping_mode === "envia_mx" || shipping_mode === "envia_us";
 
     if (shouldFulfill && needsLabel) {
       const sb = isSupabaseConfigured() ? supabaseAdmin() : null;
 
-      // Evita doble guía por reintentos / duplicados
       if (sb) {
         const existing = await getExistingLabel(sb, session.id);
         if (existing?.tracking_number || existing?.label_url) {
@@ -290,7 +276,6 @@ exports.handler = async (event) => {
         } catch {}
       }
     } else {
-      // Notificaciones: pago confirmado pickup o pago pendiente
       try {
         if (orderStatus === "paid" && shipping_mode === "pickup") {
           await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>pickup</b> (Recoger en fábrica)`);
@@ -305,7 +290,6 @@ exports.handler = async (event) => {
     return jsonResponse(200, { received: true }, "*");
   } catch (e) {
     console.log("[stripe_webhook] fatal:", e?.message || e);
-    // Siempre 200 para evitar reintentos agresivos.
     return jsonResponse(200, { received: true, warning: String(e?.message || e) }, "*");
   }
 };
