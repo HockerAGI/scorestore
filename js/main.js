@@ -29,7 +29,7 @@
   const navOpenAi = $("#navOpenAi");
 
   const scrollToCategoriesBtn = $("#scrollToCategoriesBtn");
-  
+
   const categoryGrid = $("#categoryGrid");
   const categoryHint = $("#categoryHint");
 
@@ -42,6 +42,7 @@
   const statusRow = $("#statusRow");
 
   const searchInput = $("#searchInput");
+  const menuSearchInput = $("#menuSearchInput");
   const sortSelect = $("#sortSelect");
 
   const activeFilterRow = $("#activeFilterRow");
@@ -52,8 +53,8 @@
   const cartItemsEl = $("#cartItems");
   const cartSubtotalEl = $("#cartSubtotal");
   const shippingLineEl = $("#shippingLine");
-  const discountLineWrap = $("#discountLineWrap"); 
-  const discountLineEl = $("#discountLine");       
+  const discountLineWrap = $("#discountLineWrap");
+  const discountLineEl = $("#discountLine");
   const cartTotalEl = $("#cartTotal");
 
   const shipHint = $("#shipHint");
@@ -63,14 +64,14 @@
   const quoteBtn = $("#quoteBtn");
 
   const promoCodeInput = $("#promoCode");
-  const applyPromoBtn = $("#applyPromoBtn");       
+  const applyPromoBtn = $("#applyPromoBtn");
   const checkoutBtn = $("#checkoutBtn");
   const checkoutMsg = $("#checkoutMsg");
-  const checkoutLoader = $("#checkoutLoader");     
+  const checkoutLoader = $("#checkoutLoader");
 
   const productModal = $("#productModal");
   const pmClose = $("#pmClose");
-  const pmBackBtn = $("#pmBackBtn"); 
+  const pmBackBtn = $("#pmBackBtn");
   const pmTitle = $("#pmTitle");
   const pmCarousel = $("#pmCarousel");
   const pmPrice = $("#pmPrice");
@@ -96,7 +97,7 @@
   const appVersionLabel = $("#appVersionLabel");
 
   // ---------- CONFIG ----------
-  const STORAGE_KEYS = { cart: "scorestore_cart_v1", ship: "scorestore_ship_v1", consent: "scorestore_consent_v1" };
+  const STORAGE_KEYS = { cart: "scorestore_cart_v1", ship: "scorestore_ship_v1", consent: "scorestore_consent_v1", checkoutLock: "scorestore_checkout_lock_v1" };
 
   const CATEGORY_CONFIG = [
     { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
@@ -114,9 +115,9 @@
   // ---------- STATE ----------
   let catalog = null;
   let products = [];
-  let promosData = null; 
-  let activePromo = null; 
-  let activeCategory = null; 
+  let promosData = null;
+  let activePromo = null;
+  let activeCategory = null;
   let searchQuery = "";
   let sortMode = "featured";
   let cart = [];
@@ -128,7 +129,7 @@
 
   const money = (cents) => {
     const n = Number(cents || 0) / 100;
-    try { return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" }); } 
+    try { return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" }); }
     catch { return `$${n.toFixed(2)}`; }
   };
 
@@ -150,10 +151,10 @@
 
   const setStatus = (text) => { if (statusRow) statusRow.textContent = text || ""; };
 
-  const openSet = new Set(); 
+  const openSet = new Set();
   const lockScrollIfNeeded = () => { document.body.style.overflow = openSet.size > 0 ? "hidden" : ""; };
   const refreshOverlay = () => { if (overlay) overlay.hidden = openSet.size === 0; lockScrollIfNeeded(); };
-  
+
   const openLayer = (el) => {
     if (!el) return;
     el.hidden = false;
@@ -161,19 +162,19 @@
     refreshOverlay();
     if(el.classList.contains('drawer')) { el.style.transform = 'none'; }
   };
-  
+
   const closeLayer = (el) => {
     if (!el) return;
     openSet.delete(el);
     refreshOverlay();
     if(el.classList.contains('drawer')) {
       el.style.transform = el.classList.contains('drawer--right') ? 'translateX(100%)' : 'translateX(-100%)';
-      setTimeout(() => el.hidden = true, 400); 
+      setTimeout(() => el.hidden = true, 400);
     } else {
       el.hidden = true;
     }
   };
-  
+
   const closeAll = () => { [sideMenu, cartDrawer, productModal, aiModal].forEach(el => closeLayer(el)); };
   const scrollToEl = (sel) => { const el = $(sel); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -252,7 +253,7 @@
         activeCategory = cat.uiId;
         if (categoryHint) categoryHint.hidden = true;
         if (carouselTitle) carouselTitle.innerHTML = `<img src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" style="height:25px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">`;
-        
+
         updateFilterUI();
         renderProducts();
 
@@ -301,7 +302,7 @@
 
   const renderProducts = () => {
     if (!productGrid || !catalogCarouselSection) return;
-    
+
     if (!activeCategory && !searchQuery) {
         catalogCarouselSection.hidden = true;
         return;
@@ -329,7 +330,7 @@
       const collectionPill = p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : "";
 
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
-      
+
       let swipeHint = imgs.length > 1 ? `<div class="card__swipe-hint">Desliza ↔</div>` : '';
       let trackHtml = imgs.map((src) => `<img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="card__dots">${imgs.map((_,i)=>`<span class="card__dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
@@ -370,16 +371,16 @@
              setTimeout(() => swipeHintEl.remove(), 300);
           }
         }, 50));
-        
+
         if(btnPrev) {
           btnPrev.addEventListener('click', (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
           });
         }
         if(btnNext) {
           btnNext.addEventListener('click', (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
           });
         }
@@ -418,8 +419,8 @@
     if (pmSize) {
       pmSize.innerHTML = "";
       for (const s of p.sizes) {
-        const opt = document.createElement("option"); 
-        opt.value = s; 
+        const opt = document.createElement("option");
+        opt.value = s;
         opt.textContent = `Talla: ${s}`;
         pmSize.appendChild(opt);
       }
@@ -430,18 +431,18 @@
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
       let trackHtml = imgs.map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}" loading="lazy">`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="pm__dots">${imgs.map((_,i)=>`<span class="pm__dot ${i===0?'active':''}" data-idx="${i}"></span>`).join('')}</div>` : '';
-      
+
       pmCarousel.innerHTML = `<div class="pm__track" id="pmTrack">${trackHtml}</div>${dotsHtml}`;
-      
+
       const track = pmCarousel.querySelector('#pmTrack');
       const dots = pmCarousel.querySelectorAll('.pm__dot');
-      
+
       if(track && dots.length > 0) {
         track.addEventListener('scroll', debounce(() => {
           let idx = Math.round(track.scrollLeft / track.clientWidth);
           dots.forEach((d, i) => d.classList.toggle('active', i === idx));
         }, 50));
-        
+
         dots.forEach((d, i) => {
           d.addEventListener('click', () => {
             track.scrollTo({ left: track.clientWidth * i, behavior: 'smooth' });
@@ -458,9 +459,9 @@
   const loadCart = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
-      if (raw) { 
-        const parsed = JSON.parse(raw); 
-        if (Array.isArray(parsed)) cart = parsed.filter(it => it && it.sku && typeof it.qty === 'number'); 
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) cart = parsed.filter(it => it && it.sku && typeof it.qty === 'number');
       }
     } catch {}
   };
@@ -488,7 +489,7 @@
     if(oldSize === newSize) return;
     const itemIndex = cart.findIndex((x) => x.sku === sku && x.size === oldSize);
     if(itemIndex === -1) return;
-    
+
     const existingIndex = cart.findIndex((x) => x.sku === sku && x.size === newSize);
     if (existingIndex >= 0) {
       cart[existingIndex].qty = clampInt(cart[existingIndex].qty + cart[itemIndex].qty, 1, 99);
@@ -502,7 +503,7 @@
   const validatePromo = () => {
     const code = String(promoCodeInput?.value || "").trim().toUpperCase();
     if (!code || !promosData || !promosData.rules) { activePromo = null; return; }
-    
+
     const p = promosData.rules.find(x => x.code === code && x.active);
     if (p) {
       const now = new Date();
@@ -533,8 +534,8 @@
 
   const shippingCents = () => {
     if (shipping.mode === "pickup") return 0;
-    if (activePromo && activePromo.type === 'free_shipping') return 0; 
-    
+    if (activePromo && activePromo.type === 'free_shipping') return 0;
+
     const cents = Number(shipping.quote?.amount_cents || shipping.quote?.amount || 0);
     return Number.isFinite(cents) ? cents : 0;
   };
@@ -565,7 +566,7 @@
     const frag = document.createDocumentFragment();
     for (const it of cart) {
       const row = document.createElement("div"); row.className = "cartitem";
-      
+
       const realProd = products.find(x => x.sku === it.sku);
       const availableSizes = realProd && realProd.sizes ? realProd.sizes : [it.size];
       const sizeOptions = availableSizes.map(s => `<option value="${s}" ${s === it.size ? 'selected' : ''}>${s}</option>`).join('');
@@ -575,7 +576,7 @@
         <div style="flex-grow:1;">
           <h4 class="cartitem__title">${escapeHtml(it.title)}</h4>
           <div class="cartitem__meta" style="display:flex; align-items:center; gap:8px;">
-            Talla: <select class="select cart-size-selector" data-sku="${it.sku}" data-old-size="${it.size}" style="padding: 2px 5px; width:auto; font-size:13px; font-weight:bold; height:auto; border-width:1px;">${sizeOptions}</select> 
+            Talla: <select class="select cart-size-selector" data-sku="${it.sku}" data-old-size="${it.size}" style="padding: 2px 5px; width:auto; font-size:13px; font-weight:bold; height:auto; border-width:1px;">${sizeOptions}</select>
             <span>· ${money(it.priceCents)} c/u</span>
           </div>
           <div class="cartitem__controls">
@@ -589,7 +590,7 @@
       row.querySelector('[data-act="dec"]').addEventListener("click", (ev) => { ev.stopPropagation(); setCartQty(it.sku, it.size, it.qty - 1); });
       row.querySelector('[data-act="inc"]').addEventListener("click", (ev) => { ev.stopPropagation(); setCartQty(it.sku, it.size, it.qty + 1); });
       row.querySelector(".trash").addEventListener("click", (ev) => { ev.stopPropagation(); removeCartItem(it.sku, it.size); });
-      
+
       row.querySelector('.cart-size-selector').addEventListener("change", (ev) => {
         ev.stopPropagation();
         changeCartItemSize(ev.target.dataset.sku, ev.target.dataset.oldSize, ev.target.value);
@@ -597,7 +598,7 @@
 
       frag.appendChild(row);
     }
-    
+
     const clearWrap = document.createElement("div");
     clearWrap.style.textAlign = "center";
     clearWrap.style.marginTop = "10px";
@@ -614,9 +615,9 @@
     const subGross = cartSubtotalCents(false);
     const subNet = cartSubtotalCents(true);
     const ship = shippingCents();
-    
+
     if (cartSubtotalEl) cartSubtotalEl.textContent = money(subGross);
-    
+
     if (discountLineWrap && discountLineEl) {
       if (subNet < subGross && activePromo.type !== 'free_shipping') {
         discountLineWrap.hidden = false;
@@ -633,7 +634,7 @@
          shippingLineEl.textContent = money(ship);
       }
     }
-    
+
     if (cartTotalEl) cartTotalEl.textContent = money(subNet + ship);
   };
 
@@ -646,13 +647,13 @@
 
   const refreshShippingUI = () => {
     shipping.mode = getSelectedShipMode();
-    
+
     if (shipHint) {
       if(shipping.mode === "pickup") shipHint.textContent = "Fábrica";
-      else if(shipping.quote) shipHint.textContent = shipping.quote.label; 
+      else if(shipping.quote) shipHint.textContent = shipping.quote.label;
       else shipHint.textContent = SHIPPING_LABELS[shipping.mode];
     }
-    
+
     if (shippingNote) {
       if(shipping.mode === 'pickup') shippingNote.textContent = "Recoge gratis en nuestras instalaciones en Tijuana.";
       else if(shipping.mode === 'envia_mx') shippingNote.textContent = "Envío estándar nacional de 3 a 5 días.";
@@ -661,6 +662,7 @@
 
     const needsZip = shipping.mode === "envia_mx" || shipping.mode === "envia_us";
     if (postalWrap) postalWrap.hidden = !needsZip;
+    if (needsZip) { setTimeout(() => postalCodeInput?.focus(), 50); }
 
     if (!needsZip) { shipping.postal_code = ""; shipping.quote = null; if (postalCodeInput) postalCodeInput.value = ""; saveShipping(); renderCart(); return; }
     if (postalCodeInput) postalCodeInput.value = shipping.postal_code || "";
@@ -675,9 +677,9 @@
     const postal_code = String(postalCodeInput?.value || "").trim();
     if (postal_code.length < 4) { showToast("⚠️ Ingresa un Código Postal o ZIP válido."); return; }
     if (!cart.length) { showToast("El carrito está vacío"); return; }
-    
+
     if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.textContent = "Calculando..."; }
-    if (checkoutBtn) { checkoutBtn.disabled = true; } 
+    if (checkoutBtn) { checkoutBtn.disabled = true; }
 
     try {
       const body = { postal_code, shipping_mode: mode, country: mode === "envia_us" ? "US" : "MX", items: cart.map((it) => ({ sku: it.sku, qty: it.qty })) };
@@ -697,9 +699,57 @@
     }
   };
 
-  const doCheckout = async () => {
+
+
+  // ---------- CHECKOUT LOCK (anti doble intento) ----------
+  // Evita que el usuario genere múltiples sesiones si toca el botón varias veces
+  // o si el dispositivo se laggea y reintenta.
+  const checkoutLockRead = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.checkoutLock);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj.ts !== "number") return null;
+      return obj;
+    } catch { return null; }
+  };
+
+  const checkoutLockWrite = (fingerprint) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.checkoutLock, JSON.stringify({ ts: Date.now(), fp: String(fingerprint || "") }));
+    } catch {}
+  };
+
+  const checkoutLockClear = () => { try { localStorage.removeItem(STORAGE_KEYS.checkoutLock); } catch {} };
+
+  const checkoutFingerprint = () => {
+    try {
+      const items = cart
+        .map((it) => ({ sku: it.sku, size: it.size, qty: Number(it.qty || 0) }))
+        .sort((a, b) => `${a.sku}__${a.size}`.localeCompare(`${b.sku}__${b.size}`));
+      return JSON.stringify({
+        items,
+        ship: getSelectedShipMode(),
+        postal: String(postalCodeInput?.value || "").trim(),
+        promo: String(promoCodeInput?.value || "").trim().toUpperCase(),
+      });
+    } catch {
+      return String(Date.now());
+    }
+  };
+
+const doCheckout = async () => {
     if (checkoutMsg) checkoutMsg.hidden = true;
     if (!cart.length) { showToast("Tu carrito está vacío"); return; }
+
+    // Anti doble checkout (mismo carrito/params en ventana corta)
+    const fp = checkoutFingerprint();
+    const lock = checkoutLockRead();
+    if (lock && lock.fp === fp && (Date.now() - lock.ts) < 120000) {
+      showToast("⏳ Ya estamos procesando tu pago. Espera un momento…");
+      return;
+    }
+    if (lock && (Date.now() - lock.ts) > 600000) checkoutLockClear();
 
     const shipping_mode = getSelectedShipMode();
     const promo_code = String(promoCodeInput?.value || "").trim().toUpperCase();
@@ -713,21 +763,25 @@
       }
     }
 
+    // Bloqueo local para evitar dobles sesiones en Stripe
+    checkoutLockWrite(fp);
+
     if (checkoutBtn) { checkoutBtn.disabled = true; }
-    if (checkoutLoader) { checkoutLoader.hidden = false; } 
+    if (checkoutLoader) { checkoutLoader.hidden = false; }
 
     try {
       const payload = { items: cart.map((it) => ({ sku: it.sku, qty: it.qty, size: it.size })), shipping_mode, postal_code: needsZip ? postal_code : "", promo_code };
       const res = await fetch("/.netlify/functions/create_checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok || !data?.url) throw new Error(data?.error || "Error al iniciar pago seguro.");
-      
+
       window.location.assign(data.url);
     } catch (e) {
+      checkoutLockClear();
       if (checkoutLoader) { checkoutLoader.hidden = true; }
       if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = `Aviso del sistema: ${String(e?.message || e)}`; }
       showToast("Hubo un error al procesar el pago seguro.");
-      if (checkoutBtn) { checkoutBtn.disabled = false; } 
+      if (checkoutBtn) { checkoutBtn.disabled = false; }
     }
   };
 
@@ -765,9 +819,15 @@
 
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-    loadCart(); loadShipping(); 
+    loadCart(); loadShipping();
 
-    await fetchPromos(); 
+    // Limpieza del lock de checkout si quedó colgado (ej. se cerró la app en medio)
+    try {
+      const lock = checkoutLockRead();
+      if (lock && (Date.now() - lock.ts) > 600000) checkoutLockClear();
+    } catch {}
+
+    await fetchPromos();
     validatePromo();
     refreshShippingUI();
 
@@ -793,6 +853,7 @@
       activeCategory = null; searchQuery = "";
       $$('.catcard').forEach(c => c.classList.remove('active'));
       if (searchInput) searchInput.value = "";
+      if (menuSearchInput) menuSearchInput.value = "";
       if (categoryHint) categoryHint.hidden = false;
       updateFilterUI(); renderProducts();
     });
@@ -803,30 +864,38 @@
       updateFilterUI(); renderProducts();
     }, 200));
 
+    // Search input dentro del menú (mobile)
+    menuSearchInput?.addEventListener("input", debounce(() => {
+      searchQuery = String(menuSearchInput?.value || "").trim();
+      if (searchInput) searchInput.value = searchQuery;
+      if(searchQuery !== "") catalogCarouselSection.hidden = false;
+      updateFilterUI(); renderProducts();
+    }, 200));
+
     sortSelect?.addEventListener("change", () => { sortMode = String(sortSelect.value || "featured"); renderProducts(); });
 
     pmClose?.addEventListener("click", () => closeLayer(productModal));
-    pmBackBtn?.addEventListener("click", () => closeLayer(productModal)); 
+    pmBackBtn?.addEventListener("click", () => closeLayer(productModal));
 
     pmAdd?.addEventListener("click", () => {
       if (!currentProduct) return;
       if (pmAdd.disabled) return;
-      
+
       pmAdd.disabled = true;
       const originalText = pmAdd.innerHTML;
       pmAdd.innerHTML = "✅ ¡Agregado!";
-      pmAdd.style.backgroundColor = "#28a745"; 
+      pmAdd.style.backgroundColor = "#28a745";
       pmAdd.style.borderColor = "#28a745";
-      
+
       setTimeout(() => {
         pmAdd.innerHTML = originalText;
         pmAdd.style.backgroundColor = "";
         pmAdd.style.borderColor = "";
         pmAdd.disabled = false;
-        
+
         addToCart(currentProduct, String(pmSize?.value || "").trim(), clampInt(pmQty?.value, 1, 99));
-        closeLayer(productModal); 
-        openLayer(cartDrawer); 
+        closeLayer(productModal);
+        openLayer(cartDrawer);
         refreshShippingUI();
       }, 600);
     });
@@ -841,10 +910,19 @@
     $$('input[name="shipMode"]').forEach((r) => { r.addEventListener("change", refreshShippingUI); });
     quoteBtn?.addEventListener("click", quoteShipping);
     postalCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") quoteShipping(); });
-    
+
     promoCodeInput?.addEventListener("blur", () => { validatePromo(); renderCart(); });
     promoCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") { validatePromo(); renderCart(); }});
-    if(applyPromoBtn) { applyPromoBtn.addEventListener("click", () => { validatePromo(); renderCart(); showToast("Verificando cupón..."); }); }
+    if(applyPromoBtn) {
+      applyPromoBtn.addEventListener("click", () => {
+        validatePromo();
+        renderCart();
+        const raw = String(promoCodeInput?.value || "").trim();
+        if (!raw) { showToast("Ingresa un cupón para aplicar."); return; }
+        if (activePromo) showToast("✅ Cupón aplicado");
+        else showToast("⚠️ Cupón inválido o no aplica");
+      });
+    }
 
     checkoutBtn?.addEventListener("click", doCheckout);
 
@@ -862,10 +940,10 @@
 
       renderCategories();
       updateFilterUI();
-      renderProducts(); 
+      renderProducts();
     } catch (e) {
       showToast("Error de conexión al catálogo principal.");
-      console.error(e); 
+      console.error(e);
     } finally {
       setTimeout(() => {
         if (splash) {
