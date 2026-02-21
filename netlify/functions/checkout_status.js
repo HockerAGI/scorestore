@@ -3,11 +3,10 @@
 /**
  * =========================================================
  * checkout_status.js (Netlify Function)
- * Endpoint: /.netlify/functions/checkout_status?session_id=...
  *
- * Propósito:
- * - Validar el estado REAL del pago en Stripe para mostrarlo en success.html
- * - Refrescar el registro en Supabase para UnicOs de forma redundante.
+ * PRO FIXES: 
+ * - Validación cruzada. Asegura que el Success Page cargue 
+ * bien aunque los webhooks tengan segundos de retraso.
  * =========================================================
  */
 
@@ -48,7 +47,9 @@ exports.handler = async (event) => {
 
     const qs = event.queryStringParameters || {};
     const session_id = String(qs.session_id || "").trim();
-    if (!session_id) return jsonResponse(400, { ok: false, error: "session_id requerido" }, origin);
+    if (!session_id || !session_id.startsWith('cs_')) {
+        return jsonResponse(400, { ok: false, error: "ID de sesión inválido" }, origin);
+    }
 
     const stripe = initStripe();
 
@@ -76,7 +77,8 @@ exports.handler = async (event) => {
           ? "pending_payment"
           : "pending";
 
-    if (isSupabaseConfigured()) {
+    // Backup Save: Si el Webhook falló, Success Page salva el pedido
+    if (isSupabaseConfigured() && items.length > 0) {
       const sb = supabaseAdmin();
       if (sb) {
         try {
@@ -103,7 +105,7 @@ exports.handler = async (event) => {
             { onConflict: "stripe_session_id" }
           );
         } catch (e) {
-          console.log("[checkout_status] warn upsert:", e?.message || e);
+          console.warn("[checkout_status] warn upsert:", e?.message);
         }
       }
     }
@@ -127,7 +129,7 @@ exports.handler = async (event) => {
       origin
     );
   } catch (e) {
-    console.log("[checkout_status] error:", e?.message || e);
-    return jsonResponse(200, { ok: false, error: String(e?.message || e) }, origin);
+    console.error("[checkout_status] error:", e?.message);
+    return jsonResponse(200, { ok: false, error: "No se pudo recuperar el estado del pedido." }, origin);
   }
 };
