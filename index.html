@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <script>
-    window.__APP_VERSION__ = "2026.02.21.UX.ISLAND.V2";
+    window.__APP_VERSION__ = "2026.02.21.UX.ISLAND.V3";
   </script>
 
   <link rel="preload" href="css/styles.css" as="style" />
@@ -113,8 +113,6 @@
     <section id="catalogCarouselSection" class="carousel-section wrap" aria-label="Productos de la colección" hidden>
       <div class="carousel-header">
         <h3 id="carouselTitle" style="color: var(--red); display:flex; align-items:center; gap:10px;">Productos</h3>
-
-        <!-- ✅ Flechas visibles también en móvil (sin desktop-only) -->
         <div class="carousel-controls">
           <button id="scrollLeftBtn" class="iconbtn iconbtn--dark" aria-label="Desplazar a la izquierda">←</button>
           <button id="scrollRightBtn" class="iconbtn iconbtn--dark" aria-label="Desplazar a la derecha">→</button>
@@ -124,8 +122,6 @@
       <div class="section__head" style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
         <div class="section__tools" style="width: 100%; justify-content: space-between;">
           <span id="statusRow" class="status" aria-live="polite" style="margin:0;"></span>
-
-          <!-- ✅ Alineado a main.js (incluye name_asc) -->
           <select id="sortSelect" class="select" aria-label="Ordenar productos" style="width: auto; padding: 8px 12px; font-size: 14px;">
             <option value="featured">★ Relevantes</option>
             <option value="price_asc">Precio: Menor a Mayor</option>
