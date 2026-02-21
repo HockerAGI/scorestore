@@ -1,6 +1,36 @@
 "use strict";
 
-const { jsonResponse, handleOptions, safeJsonParse, isSupabaseConfigured, supabaseAdmin, sendTelegram } = require("./_shared");
+/**
+ * =========================================================
+ * envia_webhook.js (Netlify Function)
+ * Endpoint: /.netlify/functions/envia_webhook
+ *
+ * FIXES v2026-02-21:
+ * - Verificación opcional de token (si configuras ENVIA_WEBHOOK_TOKEN)
+ * - Update de shipping_labels por tracking_number (idempotente)
+ * =========================================================
+ */
+
+const {
+  jsonResponse,
+  handleOptions,
+  safeJsonParse,
+  isSupabaseConfigured,
+  supabaseAdmin,
+  sendTelegram,
+} = require("./_shared");
+
+const getProvidedToken = (event) => {
+  const h = event?.headers || {};
+  return (
+    h["x-envia-token"] ||
+    h["X-Envia-Token"] ||
+    h["x-webhook-token"] ||
+    h["X-Webhook-Token"] ||
+    (event?.queryStringParameters ? event.queryStringParameters.token : null) ||
+    null
+  );
+};
 
 exports.handler = async (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin || "*";
@@ -9,11 +39,20 @@ exports.handler = async (event) => {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
     if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
+    // Token opcional: si está definido, lo exigimos.
+    const required = String(process.env.ENVIA_WEBHOOK_TOKEN || "").trim();
+    if (required) {
+      const provided = String(getProvidedToken(event) || "").trim();
+      if (!provided || provided !== required) {
+        return jsonResponse(401, { ok: false, error: "Unauthorized" }, origin);
+      }
+    }
+
     const payload = safeJsonParse(event.body) || {};
-    
-    const trackingNumber = payload.data?.trackingNumber || payload.tracking_number || null;
-    const status = payload.data?.status || payload.status || "UNKNOWN";
-    const carrier = payload.data?.carrier || payload.carrier || "envia";
+
+    const trackingNumber = payload?.data?.trackingNumber || payload?.tracking_number || payload?.trackingNumber || null;
+    const status = payload?.data?.status || payload?.status || "UNKNOWN";
+    const carrier = payload?.data?.carrier || payload?.carrier || "envia";
 
     if (isSupabaseConfigured()) {
       const sb = supabaseAdmin();
@@ -22,23 +61,26 @@ exports.handler = async (event) => {
           await sb.from("shipping_webhooks").insert({
             provider: carrier,
             tracking_number: trackingNumber,
-            status: status,
+            status,
             raw: payload,
             created_at: new Date().toISOString(),
           });
 
           if (trackingNumber) {
-            await sb.from("shipping_labels")
-              .update({ 
-                status: status, 
-                updated_at: new Date().toISOString() 
+            await sb
+              .from("shipping_labels")
+              .update({
+                status,
+                updated_at: new Date().toISOString(),
               })
               .eq("tracking_number", trackingNumber);
 
-            if (status.toUpperCase() === "DELIVERED" || status.toUpperCase() === "ENTREGADO") {
+            if (String(status).toUpperCase() === "DELIVERED" || String(status).toUpperCase() === "ENTREGADO") {
               try {
-                await sendTelegram(`📦 ✅ <b>Paquete Entregado</b>\nTracking: <code>${trackingNumber}</code>\nCarrier: <b>${carrier.toUpperCase()}</b>\n¡El cliente ya recibió su paquete Oficial!`);
-              } catch(e) {}
+                await sendTelegram(
+                  `📦 ✅ <b>Paquete Entregado</b>\nTracking: <code>${trackingNumber}</code>\nCarrier: <b>${String(carrier).toUpperCase()}</b>\n¡El cliente ya recibió su paquete Oficial!`
+                );
+              } catch {}
             }
           }
         } catch (e) {
