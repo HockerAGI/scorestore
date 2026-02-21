@@ -6,7 +6,7 @@
  * Endpoint: /.netlify/functions/envia_webhook
  *
  * FIXES v2026-02-21:
- * - Verificación opcional de token (si configuras ENVIA_WEBHOOK_TOKEN)
+ * - Verificación opcional de token.
  * - Update de shipping_labels por tracking_number (idempotente)
  * =========================================================
  */
@@ -39,7 +39,6 @@ exports.handler = async (event) => {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
     if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
-    // Token opcional: si está definido, lo exigimos.
     const required = String(process.env.ENVIA_WEBHOOK_TOKEN || "").trim();
     if (required) {
       const provided = String(getProvidedToken(event) || "").trim();
