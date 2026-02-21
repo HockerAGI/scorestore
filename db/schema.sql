@@ -1,6 +1,8 @@
 -- =========================================================
 -- UnicOs / SCORE STORE — SAFE SQL (IDEMPOTENT) v2026-02-21
 -- Target: Supabase Postgres (public schema)
+-- MEJORAS: Índices de alto rendimiento para el panel UnicOs,
+-- tablas de auditoría y roles de administrador.
 -- =========================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -20,6 +22,17 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Tabla preparada para los roles mencionados en el PDF de UnicOs
+CREATE TABLE IF NOT EXISTS public.admin_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NULL REFERENCES public.organizations(id),
+  email text UNIQUE NOT NULL,
+  role text NOT NULL DEFAULT 'staff', -- 'owner', 'marketing', 'inventory'
+  is_active boolean DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  last_login timestamptz NULL
+);
+
 CREATE TABLE IF NOT EXISTS public.orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id uuid NULL REFERENCES public.organizations(id),
@@ -34,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   amount_discount_mxn numeric(12,2) NULL,
   amount_total_mxn numeric(12,2) NULL,
   promo_code text NULL,
-  items_summary text NULL, -- Agregado para UnicOs
+  items_summary text NULL, 
   items jsonb NOT NULL DEFAULT '[]'::jsonb,
   shipping_mode text NULL,
   postal_code text NULL,
@@ -50,6 +63,12 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS items_summary text NULL;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS organization_id uuid NULL;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS stripe_session_id text NULL;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending';
+
+-- ÍNDICES DE ALTO RENDIMIENTO PARA EL PANEL UnicOs (Aceleración de queries)
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_stripe_session ON public.orders(stripe_session_id);
+CREATE INDEX IF NOT EXISTS idx_orders_email ON public.orders(email);
 
 DO $$
 BEGIN
@@ -77,6 +96,9 @@ CREATE TABLE IF NOT EXISTS public.shipping_labels (
 ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending';
 ALTER TABLE public.shipping_labels ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
+CREATE INDEX IF NOT EXISTS idx_shipping_labels_session ON public.shipping_labels(stripe_session_id);
+CREATE INDEX IF NOT EXISTS idx_shipping_labels_tracking ON public.shipping_labels(tracking_number);
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -96,3 +118,5 @@ CREATE TABLE IF NOT EXISTS public.shipping_webhooks (
   stripe_session_id text NULL,
   raw jsonb NOT NULL DEFAULT '{}'::jsonb
 );
+
+CREATE INDEX IF NOT EXISTS idx_shipping_webhooks_tracking ON public.shipping_webhooks(tracking_number);
