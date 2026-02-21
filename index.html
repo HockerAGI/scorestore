@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Merch Oficial de Score International. Fabricado por UNICO UNIFORMES, patrocinador oficial. Pago seguro con Stripe + Envía.com." />
+  <meta name="description" content="Merch Oficial de Score International. Fabricado por Único Uniformes, patrocinador oficial. Pago seguro con Stripe + Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   <title>SCORE STORE — Merch Oficial</title>
 
@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <script>
-    window.__APP_VERSION__ = "2026.02.21.UX.ISLAND";
+    window.__APP_VERSION__ = "2026.02.21.UX.ISLAND.V2";
   </script>
 
   <link rel="preload" href="css/styles.css" as="style" />
@@ -213,8 +213,8 @@
       <button id="closeCartBtn" class="iconbtn" aria-label="Cerrar carrito" type="button">✕</button>
     </div>
 
-    <div class="drawer__body">
-      <div id="cartItems" class="cartitems"></div>
+    <div class="drawer__body" style="display: flex; flex-direction: column; height: 100%;">
+      <div id="cartItems" class="cartitems" style="flex-grow: 1;"></div>
 
       <div class="cartbox">
         <div class="cartrow">
@@ -276,11 +276,14 @@
           </div>
         </div>
 
-        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large" type="button" style="margin-top: 10px;">
+        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large cinematic-btn" type="button" style="margin-top: 10px;">
           Proceder al Pago Seguro 🔒
         </button>
+        <button id="continueShoppingBtn" class="btn btn--ghost btn--block btn--large" type="button" style="margin-top: 10px;" onclick="document.querySelector('#closeCartBtn').click()">
+          Seguir Comprando ⭯
+        </button>
         <div style="text-align: center; margin-top: 10px; font-size: 11px; color: var(--muted);">
-          Aceptamos Tarjetas de Crédito/Débito y OXXO Pay.
+          Aceptamos Tarjetas de Crédito/Débito y OXXO Pay a través de Stripe.
         </div>
         <div id="checkoutMsg" class="hint" hidden style="margin-top:10px; color:var(--red); text-align:center;"></div>
       </div>
