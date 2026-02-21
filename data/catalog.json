@@ -34,7 +34,7 @@
     {
       "sku": "baja1000-hoodie-negro-gris",
       "title": "Hoodie Negro/Gris — Baja 1000",
-      "description": "Hoodie oficial Baja 1000. Algodón premium, impresión de alto detalle.",
+      "description": "Hoodie oficial Baja 1000. Algodón premium, impresión de alto detalle ideal para el frío del desierto.",
       "price_cents": 55000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -49,7 +49,7 @@
     {
       "sku": "baja1000-chamarra",
       "title": "Chamarra Oficial — Baja 1000",
-      "description": "Chamarra premium Baja 1000. Resistente, cómoda, diseñada para fans del off-road.",
+      "description": "Chamarra premium Baja 1000. Resistente, cómoda, diseñada para los verdaderos fans del off-road.",
       "price_cents": 95000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -63,7 +63,7 @@
     {
       "sku": "baja1000-camiseta-negra",
       "title": "Camiseta Negra — Baja 1000",
-      "description": "Camiseta oficial Baja 1000. Ajuste cómodo, tela premium.",
+      "description": "Camiseta oficial Baja 1000. Ajuste cómodo, tela premium transpirable.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -78,7 +78,7 @@
     {
       "sku": "baja1000-camiseta-cafe",
       "title": "Camiseta Café — Baja 1000",
-      "description": "Camiseta café oficial Baja 1000. Ideal para el desierto.",
+      "description": "Camiseta café oficial Baja 1000. Diseño pensado para camuflar el polvo de la ruta.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -93,7 +93,7 @@
     {
       "sku": "baja1000-camiseta-cafe-claro",
       "title": "Camiseta Café Claro — Baja 1000",
-      "description": "Camiseta oficial Baja 1000 en tono café claro. Suave y resistente.",
+      "description": "Camiseta oficial Baja 1000 en tono café claro. Suave, ligera y muy resistente.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -106,7 +106,7 @@
     {
       "sku": "baja1000-camisa-negra-pits",
       "title": "Camisa Negra Pits — Baja 1000",
-      "description": "Camisa pits oficial Baja 1000. Estilo racing, detalles premium.",
+      "description": "Camisa pits oficial Baja 1000. Estilo racing de escudería con detalles bordados premium.",
       "price_cents": 45000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -120,7 +120,7 @@
     {
       "sku": "baja1000-camisa-gris-pits",
       "title": "Camisa Gris Pits — Baja 1000",
-      "description": "Camisa pits oficial Baja 1000. Diseño técnico y cómodo.",
+      "description": "Camisa pits oficial Baja 1000. Tela de rendimiento técnico para máxima comodidad.",
       "price_cents": 45000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -134,7 +134,7 @@
     {
       "sku": "baja1000-camisa-rosa-pits",
       "title": "Camisa Rosa Pits — Baja 1000",
-      "description": "Camisa pits oficial Baja 1000 en rosa. Para fans con estilo.",
+      "description": "Camisa pits oficial Baja 1000 en color rosa. Para fans con un estilo distintivo en la pista.",
       "price_cents": 45000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -147,8 +147,8 @@
     },
     {
       "sku": "baja1000-gorras",
-      "title": "Gorras Oficial — Baja 1000",
-      "description": "Gorras oficiales Baja 1000. Ajuste cómodo, bordado de alta calidad.",
+      "title": "Gorra Oficial — Baja 1000",
+      "description": "Gorra oficial Baja 1000 edición especial. Ajuste cómodo y bordado 3D de alta calidad.",
       "price_cents": 25000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -161,7 +161,7 @@
     {
       "sku": "baja500-camiseta-gris",
       "title": "Camiseta Gris — Baja 500",
-      "description": "Camiseta oficial Baja 500. Tela premium para el día a día.",
+      "description": "Camiseta oficial Baja 500. Tela premium ideal para el uso diario de los apasionados del Score.",
       "price_cents": 35000,
       "sectionId": "EDICION_2025",
       "collection": "Edición 2025",
@@ -174,8 +174,8 @@
     },
     {
       "sku": "baja500-camiseta-gris-simple",
-      "title": "Camiseta Gris — Baja 500 (Simple)",
-      "description": "Camiseta oficial Baja 500 (versión simple).",
+      "title": "Camiseta Gris Clásica — Baja 500",
+      "description": "Edición clásica de la camiseta Baja 500. Minimalista y poderosa.",
       "price_cents": 35000,
       "sectionId": "BAJA500",
       "collection": "Baja 500",
@@ -188,7 +188,7 @@
     {
       "sku": "baja400-camiseta-cafe-oscuro",
       "title": "Camiseta Café Oscuro — Baja 400",
-      "description": "Camiseta oficial Baja 400 en café oscuro. Diseño minimal racing.",
+      "description": "Camiseta oficial Baja 400 en un tono desierto oscuro. Diseño sobrio y elegante.",
       "price_cents": 35000,
       "sectionId": "BAJA400",
       "collection": "Baja 400",
@@ -202,8 +202,8 @@
     },
     {
       "sku": "sf250-camiseta-negra-sinmangas",
-      "title": "Camiseta Negra Sin Mangas — San Felipe 250",
-      "description": "Camiseta oficial SF250 sin mangas. Ideal para calor y entrenamiento.",
+      "title": "Camiseta Sin Mangas — San Felipe 250",
+      "description": "Edición especial San Felipe 250 sin mangas. Máxima frescura para el calor extremo.",
       "price_cents": 35000,
       "sectionId": "SF250",
       "collection": "San Felipe 250",
@@ -218,7 +218,7 @@
     {
       "sku": "baja1000-hoodie-negra-roja",
       "title": "Hoodie Negra/Roja — Baja 1000",
-      "description": "Hoodie oficial Baja 1000 en negro/rojo. Tela premium, look racing.",
+      "description": "Sudadera oficial Baja 1000 combinando negro profundo y detalles en rojo racing.",
       "price_cents": 55000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -231,8 +231,8 @@
     },
     {
       "sku": "baja1000-hoodie-negra",
-      "title": "Hoodie Negra — Baja 1000",
-      "description": "Hoodie oficial Baja 1000 (negra).",
+      "title": "Hoodie Classic Negra — Baja 1000",
+      "description": "El clásico que nunca falla. Hoodie oficial todo en negro con logos de alta visibilidad.",
       "price_cents": 55000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -245,7 +245,7 @@
     {
       "sku": "baja1000-hoodie-rosa",
       "title": "Hoodie Rosa — Baja 1000",
-      "description": "Hoodie oficial Baja 1000 en rosa.",
+      "description": "Sudadera oficial Baja 1000 en un vibrante color rosa. Comodidad absoluta.",
       "price_cents": 55000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -257,8 +257,8 @@
     },
     {
       "sku": "baja1000-sudadera-negra",
-      "title": "Sudadera Negra — Baja 1000",
-      "description": "Sudadera oficial Baja 1000 (negra).",
+      "title": "Sudadera Cuello Redondo — Baja 1000",
+      "description": "Para quienes prefieren sin capucha. Sudadera negra oficial de alto rendimiento.",
       "price_cents": 52000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
@@ -270,8 +270,8 @@
     },
     {
       "sku": "baja1000-camisa-negra-rojo",
-      "title": "Camisa Negra/Rojo — Baja 1000",
-      "description": "Camisa oficial Baja 1000 negro/rojo. Estilo pits y off-road.",
+      "title": "Camisa Pits Negra/Rojo — Baja 1000",
+      "description": "Camisa de pits oficial que impone presencia. Diseño bicromático para el equipo.",
       "price_cents": 45000,
       "sectionId": "OTRAS_EDICIONES",
       "collection": "Otras ediciones",
