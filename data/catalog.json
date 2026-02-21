@@ -11,7 +11,7 @@
   "products": [
     {
       "id": "baja400-camiseta-cafe-oscuro-baja400", "sku": "baja400-camiseta-cafe-oscuro-baja400", "sectionId": "BAJA400",
-      "title": "Camiseta Café Oscuro Baja 400", "description": "Camiseta Café Oscuro Oficial SCORE Baja 400. Calidad premium por Único Uniformes.", "price_cents": 55000, "currency": "MXN",
+      "title": "Camiseta Café Oscuro Baja 400", "description": "Camiseta Café Oscuro Oficial SCORE Baja 400. Calidad premium.", "price_cents": 55000, "currency": "MXN",
       "sizes": ["S", "M", "L", "XL", "2XL"], "images": ["assets/BAJA400/camiseta-cafe- oscuro-baja400.webp", "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp", "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"], "rank": 100
     },
     {
