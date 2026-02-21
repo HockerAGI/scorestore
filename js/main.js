@@ -10,7 +10,7 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.UX.ISLAND.V2";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.UX.ISLAND.V3";
 
   // ---------- DOM ----------
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -332,7 +332,7 @@
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
 
       let swipeHint = imgs.length > 1 ? `<div class="card__swipe-hint">Desliza ↔</div>` : '';
-      let trackHtml = imgs.map((src) => `<img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}">`).join("");
+      let trackHtml = imgs.map((src) => `<div class="mediaframe" style="--mf:url('${safeUrl(src)}')"><img loading="lazy" decoding="async" src="${safeUrl(src)}" alt="${escapeHtml(p.title)}"></div>`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="card__dots">${imgs.map((_,i)=>`<span class="card__dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
       let navHtml = imgs.length > 1 ? `<button class="card__nav card__nav--prev" aria-label="Anterior" type="button">‹</button><button class="card__nav card__nav--next" aria-label="Siguiente" type="button">›</button>` : '';
 
@@ -429,7 +429,7 @@
 
     if (pmCarousel) {
       const imgs = p.images && p.images.length ? p.images : (p.img ? [p.img] : []);
-      let trackHtml = imgs.map((src) => `<img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}" loading="lazy">`).join("");
+      let trackHtml = imgs.map((src) => `<div class="mediaframe mediaframe--pm" style="--mf:url('${safeUrl(src)}')"><img src="${safeUrl(src)}" alt="${escapeHtml(p.title)}" loading="lazy"></div>`).join("");
       let dotsHtml = imgs.length > 1 ? `<div class="pm__dots">${imgs.map((_,i)=>`<span class="pm__dot ${i===0?'active':''}" data-idx="${i}"></span>`).join('')}</div>` : '';
 
       pmCarousel.innerHTML = `<div class="pm__track" id="pmTrack">${trackHtml}</div>${dotsHtml}`;
@@ -698,8 +698,6 @@
       if (checkoutBtn && cart.length > 0) { checkoutBtn.disabled = false; }
     }
   };
-
-
 
   // ---------- CHECKOUT LOCK (anti doble intento) ----------
   // Evita que el usuario genere múltiples sesiones si toca el botón varias veces
