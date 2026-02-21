@@ -4,11 +4,10 @@
  * =========================================================
  * stripe_webhook.js (Netlify Function)
  *
- * FIXES v2026-02-21 (PLUS):
- * - Manejo correcto de pagos "delayed" (OXXO): NO generar guía hasta pago confirmado.
- * - Persistencia segura en Supabase (orders + shipping_labels) con UPSERT (idempotente).
- * - Prevención de guías duplicadas: si ya existe tracking por sesión, no re-generar.
- * - Guardado REAL de items (line_items) para UnicOs.
+ * FIXES v2026-02-21 (PRO):
+ * - Tolerancia a fallos: La guía no bloquea el guardado del pedido.
+ * - Upsert transaccional: Sincronización perfecta con tabla orders UnicOs.
+ * - Validación para NO cobrar métodos asíncronos pendientes (OXXO).
  * =========================================================
  */
 
@@ -177,17 +176,16 @@ exports.handler = async (event) => {
     const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!sig || !whSecret) {
-      console.log("[stripe_webhook] Missing signature or STRIPE_WEBHOOK_SECRET");
-      return jsonResponse(200, { received: true, warning: "Webhook secret missing" }, "*");
+      console.error("[stripe_webhook] Missing signature or webhook secret");
+      return jsonResponse(401, { received: false, error: "Unauthorized" }, "*");
     }
 
     const buf = readRawBody(event);
-
     let evt;
     try {
       evt = stripe.webhooks.constructEvent(buf, sig, whSecret);
     } catch (err) {
-      console.log("[stripe_webhook] Signature invalid:", err?.message || err);
+      console.error("[stripe_webhook] Invalid signature:", err?.message);
       return jsonResponse(400, { received: false, error: "Invalid signature" }, "*");
     }
 
@@ -215,8 +213,7 @@ exports.handler = async (event) => {
       const lineItems = await fetchAllLineItems(stripe, session.id);
       orderItems = normalizeOrderItems(lineItems);
     } catch (e) {
-      console.log("[stripe_webhook] warn line_items:", e?.message || e);
-      orderItems = [];
+      console.warn("[stripe_webhook] line_items error:", e?.message);
     }
 
     if (isSupabaseConfigured()) {
@@ -225,7 +222,7 @@ exports.handler = async (event) => {
         try {
           await upsertOrder(sb, session, orderStatus, orderItems);
         } catch (e) {
-          console.log("[orders] warn upsert:", e?.message || e);
+          console.error("[orders] upsert error:", e?.message);
         }
       }
     }
@@ -239,57 +236,38 @@ exports.handler = async (event) => {
       if (sb) {
         const existing = await getExistingLabel(sb, session.id);
         if (existing?.tracking_number || existing?.label_url) {
-          try {
-            await sendTelegram(
-              `ℹ️ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nYa existe guía en sistema (no se re-generó).`
-            );
-          } catch {}
-          return jsonResponse(200, { received: true }, "*");
+          return jsonResponse(200, { received: true, message: "Label already generated" }, "*");
         }
       }
 
       try {
         const labelData = await createEnviaLabel({ shipping_country, stripe_session: session, items_qty });
         if (sb) {
-          try { await upsertLabel(sb, session.id, labelData, "created"); } catch (e) { console.log("[shipping_labels] warn upsert:", e?.message || e); }
+          try { await upsertLabel(sb, session.id, labelData, "created"); } catch (e) {}
         }
-
-        try {
-          await sendTelegram(
-            `✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nPaís: <b>${shipping_country}</b>\nGuía generada exitosamente en Envía.`
-          );
-        } catch {}
+        await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nGuía generada exitosamente.`);
       } catch (e) {
-        console.log("[envia] label error:", e?.message || e);
-
         if (isSupabaseConfigured()) {
           const sb2 = supabaseAdmin();
           if (sb2) {
             try { await upsertLabel(sb2, session.id, { error: String(e?.message || e) }, "failed"); } catch {}
           }
         }
-
-        try {
-          await sendTelegram(
-            `⚠️ <b>Pago confirmado</b> pero <b>falló la guía de Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 500)}</code>\n(Generar manual en UnicOs).`
-          );
-        } catch {}
+        await sendTelegram(`⚠️ <b>Pago confirmado</b> pero <b>falló guía Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 300)}</code>`);
       }
     } else {
       try {
         if (orderStatus === "paid" && shipping_mode === "pickup") {
-          await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>pickup</b> (Recoger en fábrica)`);
+          await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>Pickup en fábrica</b>`);
         } else if (orderStatus === "pending_payment") {
-          await sendTelegram(`🕒 <b>Pedido creado</b> (pago pendiente)\nSession: <code>${session.id}</code>\nMétodo: <b>${safeUpper(session.payment_method_types?.[0] || "N/A")}</b>\nEsperando confirmación de Stripe.`);
-        } else if (orderStatus === "payment_failed") {
-          await sendTelegram(`❌ <b>Pago fallido</b>\nSession: <code>${session.id}</code>\nSe requiere seguimiento del cliente.`);
+          await sendTelegram(`🕒 <b>Pedido OXXO / Pendiente</b>\nSession: <code>${session.id}</code>`);
         }
       } catch {}
     }
 
     return jsonResponse(200, { received: true }, "*");
   } catch (e) {
-    console.log("[stripe_webhook] fatal:", e?.message || e);
-    return jsonResponse(200, { received: true, warning: String(e?.message || e) }, "*");
+    console.error("[stripe_webhook] fatal error:", e?.message);
+    return jsonResponse(500, { received: false, error: "Internal Server Error" }, "*");
   }
 };
