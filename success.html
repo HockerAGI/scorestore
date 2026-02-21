@@ -29,15 +29,18 @@
     </p>
 
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
-      <a class="btn btn--primary btn--large cinematic-btn" href="/">Regresar a la Tienda</a>
+      <a class="btn btn--primary btn--large cinematic-btn" href="index.html">Regresar a la Tienda</a>
     </div>
   </main>
 
   <script>
-    // Limpieza profunda post-compra para evitar bugs en pedidos futuros
+    // Limpieza profunda y agresiva post-compra
     try { 
       localStorage.removeItem("scorestore_cart_v1"); 
       localStorage.removeItem("scorestore_ship_v1");
+      
+      // Prevenir que el "Back" del navegador reviva el carrito viejo
+      window.history.replaceState(null, '', window.location.href);
     } catch(e) {
       console.error("Error limpiando cache local:", e);
     }
