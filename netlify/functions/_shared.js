@@ -70,9 +70,15 @@ const getBaseUrl = (event) => {
   return `${proto}://${host}`;
 };
 
+// CORRECCIÓN: Resolución de rutas a prueba de fallos para Netlify
 const readJsonFile = (relPath) => {
   try {
-    const p = path.join(process.cwd(), relPath);
+    // Intento 1: Directorio actual (funciona en dev local)
+    let p = path.join(process.cwd(), relPath);
+    if (!fs.existsSync(p)) {
+      // Intento 2: Relativo a la ubicación de _shared.js (funciona en Netlify prod)
+      p = path.join(__dirname, "..", "..", relPath);
+    }
     if (fs.existsSync(p)) {
       const raw = fs.readFileSync(p, "utf8");
       return JSON.parse(raw);
@@ -415,7 +421,7 @@ const readRawBody = (event) => {
   return Buffer.from(body, "utf8");
 };
 
-// CORRECCIÓN: Extracción Inteligente de Calles y Números
+// CORRECCIÓN: Extracción Inteligente de Calles y Números mejorada para Envía
 const stripeShippingToEnviaDestination = (shipping_details) => {
   const sd = shipping_details || {};
   const addr = sd.address || {};
