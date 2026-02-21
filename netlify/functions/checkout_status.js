@@ -7,10 +7,7 @@
  *
  * Propósito:
  * - Validar el estado REAL del pago en Stripe para mostrarlo en success.html
- * - (Opcional) refrescar el registro en Supabase para UnicOs (si está configurado)
- *
- * Nota:
- * - No expone datos sensibles; regresa sólo lo necesario para el cliente.
+ * - Refrescar el registro en Supabase para UnicOs de forma redundante.
  * =========================================================
  */
 
@@ -59,7 +56,6 @@ exports.handler = async (event) => {
       expand: ["customer", "payment_intent", "shipping_details"],
     });
 
-    // Line items no vienen en retrieve; se listan aparte.
     let items = [];
     try {
       const li = await stripe.checkout.sessions.listLineItems(session_id, { limit: 100, expand: ["data.price.product"] });
@@ -80,7 +76,6 @@ exports.handler = async (event) => {
           ? "pending_payment"
           : "pending";
 
-    // Opcional: refrescar/crear registro en Supabase (para UnicOs)
     if (isSupabaseConfigured()) {
       const sb = supabaseAdmin();
       if (sb) {
