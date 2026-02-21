@@ -21,7 +21,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   self.clients.claim();
   event.waitUntil(
-    caches.keys().then((keys) => 
+    caches.keys().then((keys) =>
       Promise.all(keys.map((k) => (k !== CACHE_VERSION ? caches.delete(k) : null)))
     )
   );
@@ -33,9 +33,9 @@ self.addEventListener("fetch", (event) => {
 
   // EXCLUSIÓN QUIRÚRGICA: Ignorar APIs, JSONs dinámicos, Stripe y Supabase
   if (
-    url.pathname.startsWith("/api/") || 
+    url.pathname.startsWith("/api/") ||
     url.pathname.includes("/.netlify/") ||
-    url.pathname.endsWith(".json") || 
+    url.pathname.endsWith(".json") ||
     url.origin.includes("stripe.com") ||
     url.origin.includes("envia.com") ||
     url.origin.includes("supabase.co")
