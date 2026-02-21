@@ -20,7 +20,7 @@ exports.handler = async (event) => {
 
     const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
-    const sys = 
+    const sys =
       "Eres SCORE AI, el asistente virtual oficial de la Score Store (Merch Oficial de SCORE International). " +
       "Tu tono debe ser profesional, directo, amable y con espíritu Off-Road (carreras en el desierto, Baja 1000, etc.). " +
       "REGLAS ESTRICTAS: " +
