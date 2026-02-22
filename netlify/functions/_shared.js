@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto"); // INYECCIÓN DE SEGURIDAD
 
 let Stripe = null;
 try { Stripe = require("stripe"); } catch {}
@@ -113,15 +114,11 @@ const validateZip = (zip, country) => {
   return z;
 };
 
+// FIX CRÍTICO: Idempotencia basada en SHA-256 (Evita colisión de cobros)
 const makeCheckoutIdempotencyKey = (params) => {
-    // Genera un hash seguro para evitar doble cobro si el usuario da múltiples clics
     const raw = JSON.stringify(params || {});
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
-        hash |= 0; 
-    }
-    return `checkout_req_${Math.abs(hash)}_${Date.now()}`;
+    const hash = crypto.createHash('sha256').update(raw).digest('hex');
+    return `checkout_req_${hash}_${Date.now()}`;
 };
 
 const isSupabaseConfigured = () =>
@@ -429,7 +426,6 @@ const readRawBody = (event) => {
   return Buffer.from(body, "utf8");
 };
 
-// Algoritmo de extracción de direcciones blindado para evitar errores de Envía
 const stripeShippingToEnviaDestination = (shipping_details) => {
   const sd = shipping_details || {};
   const addr = sd.address || {};
@@ -438,9 +434,9 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
   let calle = String(addr.line1 || "Domicilio Conocido").trim();
   let num = String(addr.line2 || "").trim();
 
+  // FIX: Prevención de ReDoS (Ataque de denegación de servicio por Expresiones Regulares)
   if (!num || num.toLowerCase() === "s/n") {
-    const regex = /(.*)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(-\d+)?)$/i;
-    const match = calle.match(regex);
+    const match = calle.match(/^(.*?)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(?:-\d+)?)$/i);
     if (match) {
       calle = match[1].trim();
       num = match[2].trim();
@@ -457,11 +453,11 @@ const stripeShippingToEnviaDestination = (shipping_details) => {
     company: "",
     email: "cliente@scorestore.com", 
     phone: telefonoSeguro, 
-    street: calle,
-    number: num,
-    district: addr.line2 || "Centro",
-    city: addr.city || "",
-    state: addr.state || "",
+    street: calle.substring(0, 100),
+    number: num.substring(0, 20),
+    district: String(addr.line2 || "Centro").substring(0, 100),
+    city: String(addr.city || "").substring(0, 50),
+    state: String(addr.state || "").substring(0, 50),
     country: country || "MX",
     postalCode: addr.postal_code || "",
     reference: "Venta Stripe Webhook",
