@@ -2,7 +2,7 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
   
   <meta name="mobile-web-app-capable" content="yes" />
@@ -55,11 +55,9 @@
   </main>
 
   <script>
-    // CORRECCIÓN CRÍTICA: Se actualizaron las llaves de localStorage para empatar con main.js y evitar carritos fantasma.
     try {
       localStorage.removeItem("scorestore_cart_v2_pro");
       localStorage.removeItem("scorestore_ship_v2");
-      // Mantenemos el consentimiento de cookies (scorestore_consent_v2) para no molestar al usuario de nuevo
       window.history.replaceState(null, '', window.location.href);
     } catch (e) { console.warn("Error limpiando cache local", e); }
 
@@ -108,7 +106,7 @@
             title: "¡PAGO EXITOSO!",
             text: "Tu compra ha sido procesada de manera segura por Stripe. <br><br>Si seleccionaste entrega a domicilio, el sistema de Envía.com está generando tu guía y la recibirás por correo electrónico.",
             emoji: "🏆",
-            borderColor: "#28a745" // Verde éxito
+            borderColor: "#28a745"
           });
           $("extraHint").textContent = "Tip: Copia tu ID de pedido por si necesitas soporte técnico. ¡Gracias por adquirir mercancía oficial!";
         } else if (ps === "unpaid") {
