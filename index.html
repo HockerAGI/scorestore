@@ -2,7 +2,7 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
   <meta name="description" content="Merch Oficial de Score International. Fabricado por Único Uniformes, patrocinador oficial. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
@@ -94,8 +94,8 @@
     </div>
     
     <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
-      <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." />
-      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" style="border:none;">✕</button>
+      <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." aria-label="Buscador móvil" />
+      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" type="button" aria-label="Cerrar buscador" style="border:none;">✕</button>
     </div>
   </header>
 
@@ -135,8 +135,8 @@
       <div class="carousel-header">
         <h3 id="carouselTitle" style="color: var(--red); display:flex; align-items:center; gap:10px; margin: 0; text-shadow: 0 2px 10px rgba(225,6,0,0.3);">Catálogo</h3>
         <div class="carousel-controls">
-          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" aria-label="Desplazar carrusel hacia la izquierda" title="Ver anteriores">←</button>
-          <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" aria-label="Desplazar carrusel hacia la derecha" title="Ver siguientes">→</button>
+          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la izquierda" title="Ver anteriores">←</button>
+          <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la derecha" title="Ver siguientes">→</button>
         </div>
       </div>
 
@@ -188,8 +188,8 @@
           Logística inteligente internacional con Envía.com.<br><br>
           Hecho con pasión. Fabricado y Operado por <b style="color: white; text-shadow: 0 0 5px rgba(255,255,255,0.5);">Único Uniformes</b>.<br>
           <div style="margin-top: 10px; font-weight: 600; color: #eee; display: flex; flex-direction: column; gap: 4px;">
-            <span><span style="color: var(--red);">✉️ Soporte:</span> <a href="mailto:ventas.unicotextil@gmail.com" style="text-decoration: underline; color: #fff;">ventas.unicotextil@gmail.com</a></span>
-            <span><span style="color: #25D366;">💬 WhatsApp:</span> <a href="https://wa.me/5216642368701" target="_blank" rel="noopener" style="text-decoration: underline; color: #fff;">664 236 8701</a></span>
+            <span><span style="color: var(--red);">✉️ Soporte:</span> <a href="mailto:ventas.unicotextil@gmail.com" style="text-decoration: underline; color: #fff;" aria-label="Enviar correo a soporte">ventas.unicotextil@gmail.com</a></span>
+            <span><span style="color: #25D366;">💬 WhatsApp:</span> <a href="https://wa.me/5216642368701" target="_blank" rel="noopener" style="text-decoration: underline; color: #fff;" aria-label="Contactar por WhatsApp">664 236 8701</a></span>
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@
     </div>
   </div>
 
-  <button id="floatingAiBtn" class="floating-ai hover-fx neon-glow" aria-label="Hablar con el asistente SCORE AI" title="Chatea con SCORE AI">
+  <button id="floatingAiBtn" class="floating-ai hover-fx neon-glow" type="button" aria-label="Hablar con el asistente SCORE AI" title="Chatea con SCORE AI">
     <span class="icon pulse-icon" aria-hidden="true">✦</span>
   </button>
 
@@ -233,7 +233,7 @@
   <aside id="sideMenu" class="drawer glass-drawer" aria-label="Menú principal de navegación" hidden>
     <div class="drawer__head">
       <div class="drawer__title tech-text">Menú Principal</div>
-      <button id="closeMenuBtn" class="iconbtn hover-fx tech-close" aria-label="Cerrar menú lateral" type="button">✕</button>
+      <button id="closeMenuBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar menú lateral">✕</button>
     </div>
 
     <div class="drawer__body">
@@ -259,7 +259,7 @@
   <aside id="cartDrawer" class="drawer drawer--right glass-drawer" aria-label="Panel de tu carrito de compras" hidden>
     <div class="drawer__head">
       <div class="drawer__title tech-text">🛒 Tu Carrito</div>
-      <button id="closeCartBtn" class="iconbtn hover-fx tech-close" aria-label="Ocultar carrito de compras" type="button">✕</button>
+      <button id="closeCartBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Ocultar carrito de compras">✕</button>
     </div>
 
     <div class="drawer__body" style="display: flex; flex-direction: column; height: 100%;">
@@ -347,10 +347,10 @@
   <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Ficha de detalles completos del Producto" hidden>
     <div class="modal__panel vfx-modal-panel">
       <div class="modal__head sticky-header glass-header">
-        <button id="pmBackBtn" class="iconbtn hover-fx tech-close" aria-label="Regresar al catálogo" type="button" style="margin-right: 15px; font-size: 22px;">←</button>
+        <button id="pmBackBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Regresar al catálogo" style="margin-right: 15px; font-size: 22px;">←</button>
         <div class="modal__title tech-text" id="pmTitle" style="flex-grow: 1; text-align: left; font-size: 18px;">Cargando detalles...</div>
-        <button id="pmShareBtn" class="iconbtn btn--ghost hover-fx" style="margin-right: 10px;" title="Compartir"><span aria-hidden="true">↗</span></button>
-        <button id="pmClose" class="iconbtn hover-fx tech-close" aria-label="Cerrar ventana del producto" type="button">✕</button>
+        <button id="pmShareBtn" class="iconbtn btn--ghost hover-fx" type="button" style="margin-right: 10px;" aria-label="Compartir producto" title="Compartir"><span aria-hidden="true">↗</span></button>
+        <button id="pmClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar ventana del producto">✕</button>
       </div>
 
       <div class="modal__body" style="padding: 0; overflow-y: auto; overflow-x: hidden; position: relative;">
@@ -373,18 +373,17 @@
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <div class="ux-label tech-label" style="margin:0;">1. Selecciona Talla:</div>
-                <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost tech-ghost-btn" style="font-size:11px; padding:4px 8px;">📏 Guía de Tallas</button>
+                <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost tech-ghost-btn" type="button" style="font-size:11px; padding:4px 8px;">📏 Guía de Tallas</button>
               </div>
-              <div id="pmSizePills" class="size-pill-container">
-                </div>
+              <div id="pmSizePills" class="size-pill-container" role="group" aria-label="Opciones de Tallas"></div>
             </div>
 
             <div>
               <div class="ux-label tech-label">2. Cantidad:</div>
               <div class="qty-stepper-large tech-stepper">
-                <button type="button" id="pmQtyDec">−</button>
-                <span id="pmQtyDisplay">1</span>
-                <button type="button" id="pmQtyInc">+</button>
+                <button type="button" id="pmQtyDec" aria-label="Disminuir cantidad">−</button>
+                <span id="pmQtyDisplay" aria-live="polite">1</span>
+                <button type="button" id="pmQtyInc" aria-label="Aumentar cantidad">+</button>
               </div>
             </div>
           </div>
@@ -409,7 +408,7 @@
     <div class="modal__panel vfx-modal-panel" style="width: min(500px, 100%);">
       <div class="modal__head glass-header">
         <div class="modal__title tech-text">📏 Guía de Tallas Oficial</div>
-        <button id="closeSizeGuideBtn" class="iconbtn hover-fx tech-close">✕</button>
+        <button id="closeSizeGuideBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar guía de tallas">✕</button>
       </div>
       <div class="modal__body" style="padding: 20px;">
         <p class="hint" style="margin-bottom: 15px;">Medidas estándar en centímetros (Pecho x Largo). Tolerancia de +/- 2cm por proceso de confección.</p>
@@ -423,7 +422,7 @@
             <tr><td>XXL (Doble XL)</td><td>62</td><td>78</td></tr>
           </tbody>
         </table>
-        <button id="understandSizeBtn" class="btn btn--black btn--block cinematic-btn" style="margin-top:20px;">Entendido</button>
+        <button id="understandSizeBtn" class="btn btn--black btn--block cinematic-btn" type="button" style="margin-top:20px;">Entendido</button>
       </div>
     </div>
   </section>
@@ -438,7 +437,7 @@
              <span style="display:block; font-size:11px; color:#aaa; font-weight:normal;">Asistente Virtual En Línea</span>
            </div>
         </div>
-        <button id="aiClose" class="iconbtn tech-close" aria-label="Minimizar chat" type="button" style="color:white; background: rgba(255,255,255,0.1); border:none;">✕</button>
+        <button id="aiClose" class="iconbtn tech-close" type="button" aria-label="Minimizar chat" style="color:white; background: rgba(255,255,255,0.1); border:none;">✕</button>
       </div>
 
       <div class="modal__body" style="background: #f5f5f7; display:flex; flex-direction:column; padding: 15px;">
