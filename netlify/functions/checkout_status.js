@@ -5,8 +5,7 @@
  * checkout_status.js (Netlify Function)
  *
  * PRO FIXES: 
- * - Validación cruzada. Asegura que el Success Page cargue 
- * bien aunque los webhooks tengan segundos de retraso.
+ * - Validación cruzada estricta de Session_ID (Prevención DoS)
  * =========================================================
  */
 
@@ -46,8 +45,10 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "GET") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
     const qs = event.queryStringParameters || {};
+    
+    // FIX: Sanitización estricta de regex para evitar inyecciones a la API de Stripe
     const session_id = String(qs.session_id || "").trim();
-    if (!session_id || !session_id.startsWith('cs_')) {
+    if (!/^cs_(test|live)_[a-zA-Z0-9]+$/.test(session_id)) {
         return jsonResponse(400, { ok: false, error: "ID de sesión inválido" }, origin);
     }
 
@@ -77,7 +78,7 @@ exports.handler = async (event) => {
           ? "pending_payment"
           : "pending";
 
-    // Backup Save: Si el Webhook falló, Success Page salva el pedido
+    // Backup Save
     if (isSupabaseConfigured() && items.length > 0) {
       const sb = supabaseAdmin();
       if (sb) {
