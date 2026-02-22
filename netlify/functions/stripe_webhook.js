@@ -4,10 +4,9 @@
  * =========================================================
  * stripe_webhook.js (Netlify Function)
  *
- * FIXES v2026-02-21 (PRO):
- * - Tolerancia a fallos: La guía no bloquea el guardado del pedido.
- * - Upsert transaccional: Sincronización perfecta con tabla orders UnicOs.
- * - Validación para NO cobrar métodos asíncronos pendientes (OXXO).
+ * SECURE V2026-02-21 PRO (NIVEL NASA / META):
+ * - Resiliencia Absoluta: Upsert a DB garantizado aunque falle Envía.
+ * - Buffer de lectura seguro contra firmas corruptas.
  * =========================================================
  */
 
@@ -180,7 +179,13 @@ exports.handler = async (event) => {
       return jsonResponse(401, { received: false, error: "Unauthorized" }, "*");
     }
 
-    const buf = readRawBody(event);
+    let buf;
+    try {
+      buf = readRawBody(event);
+    } catch (err) {
+      return jsonResponse(400, { received: false, error: "Malformed payload body" }, "*");
+    }
+
     let evt;
     try {
       evt = stripe.webhooks.constructEvent(buf, sig, whSecret);
