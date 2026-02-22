@@ -20,7 +20,7 @@
     {
       "id": "BAJA400",
       "title": "BAJA 400",
-      "cover_image": "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
+      "cover_image": "assets/BAJA400/camiseta-cafe-%20oscuro-baja400.webp",
       "count": 1
     },
     {
@@ -195,9 +195,9 @@
       "rank": 12,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"
+        "assets/BAJA400/camiseta-cafe-%20oscuro-baja400.webp",
+        "assets/BAJA400/camiseta-cafe-%20oscuro-baja400-atras.webp",
+        "assets/BAJA400/camiseta-cafe-%20oscuro-baja400-detalle.webp"
       ]
     },
     {
