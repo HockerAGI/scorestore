@@ -5,11 +5,10 @@
  * create_checkout.js (Netlify Function)
  * Endpoint: /.netlify/functions/create_checkout
  *
- * FIXES v2026-02-21 PRO:
- * - Prevención de Ataques DoS limitando la longitud de inputs (promo_code, zip).
- * - Límite estricto de items_qty para evitar abusos a la API de Envía.
- * - Validación cruzada de precios desde el servidor (Zero-Trust al cliente).
- * - Mejora en la captura de metadatos para el CRM (UnicOs).
+ * SECURE V2026-02-21 PRO (NIVEL NASA / META):
+ * - Prevención DoS por longitud de inputs.
+ * - Validación cruzada estricta (Zero-Trust) contra catálogo.
+ * - Corrección de Precisión Flotante en Stripe (Evita rechazos por decimales).
  * =========================================================
  */
 
@@ -43,8 +42,8 @@ exports.handler = async (event) => {
     
     // Sanitización y límites de longitud preventivos (Anti-DoS)
     const shipping_mode = String(body.shipping_mode || "pickup").trim().substring(0, 20);
-    const postal_code_raw = String(body.postal_code || "").trim().substring(0, 15);
-    const promo_code_input = String(body.promo_code || "").trim().toUpperCase().substring(0, 30);
+    const postal_code_raw = String(body.postal_code || "").trim().substring(0, 15).replace(/[^a-zA-Z0-9-]/g, '');
+    const promo_code_input = String(body.promo_code || "").trim().toUpperCase().substring(0, 30).replace(/[^A-Z0-9_-]/g, '');
 
     if (!items || !items.length) return jsonResponse(400, { ok: false, error: "El carrito está vacío." }, origin);
 
@@ -74,12 +73,13 @@ exports.handler = async (event) => {
         ...item,
         realPriceCents,
         title: dbItem.title || item.sku,
+        size: String(item.size || "Unitalla").substring(0, 20)
       };
     });
 
     const subtotal_mxn = subtotal_cents / 100;
 
-    // --- LÓGICA DE CUPONES (Server-Side) ---
+    // --- LÓGICA DE CUPONES (Server-Side Segura) ---
     let discountMultiplier = 1;
     let freeShippingActive = false;
     let promoApplied = "Ninguno";
@@ -96,7 +96,7 @@ exports.handler = async (event) => {
             promoApplied = promo.code;
 
             if (promo.type === "percent") {
-              discountMultiplier = 1 - (Number(promo.value) || 0);
+              discountMultiplier = Math.max(0, 1 - (Number(promo.value) || 0));
             } else if (promo.type === "free_shipping") {
               freeShippingActive = true;
             } else if (promo.type === "fixed_mxn") {
@@ -109,16 +109,17 @@ exports.handler = async (event) => {
     }
 
     const lineItems = validatedItems.map((item) => {
-      const discountedPrice = Math.round(item.realPriceCents * discountMultiplier);
+      // FIX CRÍTICO: Math.round evita decimales corruptos que Stripe rechaza
+      const discountedPrice = Math.max(0, Math.round(item.realPriceCents * discountMultiplier));
 
       return {
         price_data: {
           currency: "mxn",
           product_data: {
-            name: `${item.title} (Talla: ${item.size || "N/A"})`,
-            metadata: { sku: item.sku, size: item.size || "" },
+            name: `${item.title} (Talla: ${item.size})`,
+            metadata: { sku: item.sku, size: item.size },
           },
-          unit_amount: Math.max(0, discountedPrice),
+          unit_amount: discountedPrice,
         },
         quantity: item.qty,
       };
@@ -146,20 +147,20 @@ exports.handler = async (event) => {
       } else {
         try {
           const quote = await getEnviaQuote({ zip: postal_code, country: shipping_country, items_qty });
-          shipping_amount_cents = quote.amount_cents;
-          shipping_display_name = quote.label;
+          shipping_amount_cents = Math.round(Number(quote.amount_cents) || 0);
+          shipping_display_name = String(quote.label || "Envío Estándar").substring(0, 50);
         } catch (err) {
           console.warn("[create_checkout] Fallo en API logística, activando fallback.", err.message);
           const fallback = getFallbackShipping(shipping_country, items_qty);
-          shipping_amount_cents = fallback.amount_cents;
-          shipping_display_name = fallback.label;
+          shipping_amount_cents = Math.round(Number(fallback.amount_cents) || 0);
+          shipping_display_name = String(fallback.label || "Envío Asegurado").substring(0, 50);
         }
       }
     }
 
     // ---- PAYLOAD A STRIPE ----
     const orderSummary = validatedItems
-      .map((i) => `${i.qty}x ${i.sku}[${i.size || "N/A"}]`)
+      .map((i) => `${i.qty}x ${i.sku}[${i.size}]`)
       .join(" | ")
       .substring(0, 450);
 
@@ -179,7 +180,6 @@ exports.handler = async (event) => {
       success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cancel.html`,
       phone_number_collection: { enabled: true },
-      // Metadatos cruciales para que UnicOs procese el pedido automáticamente
       metadata: {
         source: "score_store_v2",
         shipping_mode,
@@ -198,7 +198,7 @@ exports.handler = async (event) => {
         {
           shipping_rate_data: {
             type: "fixed_amount",
-            fixed_amount: { amount: Math.max(0, Number(shipping_amount_cents || 0)), currency: "mxn" },
+            fixed_amount: { amount: Math.max(0, shipping_amount_cents), currency: "mxn" },
             display_name: shipping_display_name || "Envío Asegurado",
           },
         },
