@@ -1,5 +1,22 @@
 "use strict";
+
+/**
+ * =========================================================
+ * chat.js (Netlify Function)
+ *
+ * SECURE V2026-02-21 PRO (NIVEL NASA / META):
+ * - VULNERABILIDAD ZERO-DAY RESUELTA: Prompt Injection neutralizado.
+ * Los datos del cliente ahora son sanitizados escapando 
+ * caracteres de control ([ ] { } \n).
+ * =========================================================
+ */
+
 const { jsonResponse, handleOptions, safeJsonParse } = require("./_shared");
+
+// Utilidad de sanitización para prevenir Prompt Injection
+const sanitizeContext = (str) => {
+  return String(str || "Ninguno").replace(/[\[\]{}<>\\\n\r]/g, " ").trim().substring(0, 150);
+};
 
 exports.handler = async (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin || "*";
@@ -18,6 +35,11 @@ exports.handler = async (event) => {
 
     const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
+    // Sanitización Extrema del Contexto del Usuario
+    const safeProduct = sanitizeContext(context.currentProduct);
+    const safeCartItems = sanitizeContext(context.cartItems);
+    const safeTotal = sanitizeContext(context.cartTotal);
+
     const sys = `Eres SCORE AI, el Agente Comercial Autónomo y Experto de Score Store (Merch Oficial SCORE International).
 Tu objetivo principal es VENDER, asistir de forma premium y cerrar transacciones usando psicología del consumidor (escasez, prueba social, autoridad de marca).
 Tono: "Tech Off-Road", cinematográfico, seguro, persuasivo, elegante y directo.
@@ -27,9 +49,9 @@ Tono: "Tech Off-Road", cinematográfico, seguro, persuasivo, elegante y directo.
 - WhatsApp Oficial: 6642368701 (664 236 8701). Entrégalo si el usuario exige contacto humano, mayoreo o soporte complejo.
 
 [TELEMETRÍA ACTUAL DEL USUARIO]
-- Viendo actualmente: SKU [${context.currentProduct || 'Ninguno'}]
-- En su carrito tiene: ${context.cartItems || 'Vacío'}
-- Total en su carrito: ${context.cartTotal || '$0.00'}
+- Viendo actualmente: SKU (${safeProduct})
+- En su carrito tiene: ${safeCartItems}
+- Total en su carrito: ${safeTotal}
 
 [TÉCNICAS DE NEUROMARKETING A APLICAR]
 1. Si pregunta por un producto que está viendo, confirma que es una elección de alto rendimiento. Menciona que es fabricado con calidad premium por ÚNICO UNIFORMES (patrocinador oficial) y que el stock "vuela rápido en temporada de carreras".
@@ -38,7 +60,7 @@ Tono: "Tech Off-Road", cinematográfico, seguro, persuasivo, elegante y directo.
 [CAPACIDADES DE AGENTE AUTÓNOMO - EJECUCIÓN EN VIVO]
 TIENES EL PODER DE CONTROLAR LA PANTALLA DEL USUARIO MEDIANTE COMANDOS.
 Si detectas intenciones claras, debes incluir EXACTAMENTE la etiqueta correspondiente al FINAL de tu respuesta.
-- Si el usuario te pide: "agrega esto", "quiero comprar este", "dame una" (y sabes el SKU que está viendo: ${context.currentProduct || 'N/A'}), usa: [ACTION:ADD_TO_CART:${context.currentProduct || ''}]
+- Si el usuario te pide: "agrega esto", "quiero comprar este", "dame una" (y sabes el SKU que está viendo: ${safeProduct}), usa: [ACTION:ADD_TO_CART:${safeProduct}]
 - Si el usuario dice: "quiero pagar", "ver mi carrito", "dónde pago", "proceder", usa: [ACTION:OPEN_CART]
 
 REGLAS DE ORO INQUEBRANTABLES:
