@@ -10,7 +10,7 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.ULTRA-VFX-PRO-SECURED";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.SCORE STORE";
 
   // ---------- DOM Helpers ----------
   const $ = (sel, root = document) => root.querySelector(sel);
