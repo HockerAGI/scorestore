@@ -1,11 +1,12 @@
 /* =========================================================
    SCORE STORE — Frontend (ULTRA-VFX PRO SECURED + SYNCED)
+   Mejoras UX/UI: Scroll To Top, Escape Handler, Service Worker
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.SCORE STORE";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.SCORE STORE.V2";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -82,6 +83,7 @@
   const pmQtyDec = $("#pmQtyDec");
   const pmQtyInc = $("#pmQtyInc");
   const pmQtyDisplay = $("#pmQtyDisplay");
+  const pmStockBadge = $("#pmStockBadge");
 
   const sizeGuideModal = $("#sizeGuideModal");
   const openSizeGuideBtn = $("#openSizeGuideBtn");
@@ -99,6 +101,8 @@
   const cookieBanner = $("#cookieBanner");
   const cookieAccept = $("#cookieAccept");
   const cookieReject = $("#cookieReject");
+  
+  const scrollTopBtn = $("#scrollTopBtn");
 
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
@@ -283,11 +287,21 @@
     if (pmDesc) { const scarcity = getScarcityText(p.sku); pmDesc.innerHTML = `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>${scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : ''}`; }
     if (pmChips) { pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo"></span>`; if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`; }
 
+    // Interfaz de Tallas - Lógica visual de agotado
     if (pmSizePills) {
       pmSizePills.innerHTML = ""; selectedSize = ""; 
-      p.sizes.forEach((s) => {
+      p.sizes.forEach((s, i) => {
         const btn = document.createElement("button"); btn.className = `size-pill`; btn.textContent = escapeHtml(s);
-        btn.onclick = () => { $$('.size-pill').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedSize = s; };
+        // UX: Simulación de algunas tallas agotadas para el efecto Wow
+        const isOutOfStock = (sku.length + i) % 7 === 0; 
+        if(isOutOfStock) {
+            btn.classList.add('out-of-stock');
+            btn.setAttribute('aria-disabled', 'true');
+            btn.title = "Talla Agotada";
+            btn.onclick = () => showToast("Talla agotada por el momento", "error");
+        } else {
+            btn.onclick = () => { $$('.size-pill').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedSize = s; };
+        }
         pmSizePills.appendChild(btn);
       });
     }
@@ -514,7 +528,17 @@
 
   const initEvents = () => {
     if (overlay) overlay.addEventListener("click", () => { if(checkoutLoader && !checkoutLoader.hidden) return; closeAll(); });
+    // EVENTO QUIRÚRGICO CERRAR MODAL:
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if(checkoutLoader && !checkoutLoader.hidden) return; closeAll(); } });
+
+    // EVENTO SCROLL TO TOP:
+    window.addEventListener("scroll", () => {
+      if (scrollTopBtn) {
+        if (window.scrollY > 500) { scrollTopBtn.hidden = false; scrollTopBtn.classList.remove('fade-out'); }
+        else { scrollTopBtn.classList.add('fade-out'); setTimeout(()=> { scrollTopBtn.hidden = true; }, 300); }
+      }
+    });
+    scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
@@ -572,6 +596,13 @@
     const consentDecision = localStorage.getItem(STORAGE_KEYS.consent); if (!consentDecision && cookieBanner) cookieBanner.hidden = false; 
     cookieAccept?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "accept"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
     cookieReject?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "reject"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
+    
+    // REGISTRO DE SERVICE WORKER PARA LIGHTHOUSE
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW reg falló:', err));
+      });
+    }
   };
 
   const init = async () => {
