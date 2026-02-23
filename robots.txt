@@ -6,9 +6,10 @@ Crawl-delay: 1
 Disallow: /deploy-preview-*
 Disallow: /branch-deploys-*
 
-# PROTEGER FUNCIONES DEL SERVIDOR Y DATOS CRUDOS DE BOTS
+# PROTEGER FUNCIONES DEL SERVIDOR, DATOS CRUDOS Y PANEL UNICOS
 Disallow: /.netlify/functions/
 Disallow: /api/
 Disallow: /data/*.json
+Disallow: /admin/
 
 Sitemap: https://scorestore.netlify.app/sitemap.xml
