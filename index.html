@@ -7,7 +7,7 @@
   <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
   
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co;" />
   
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,7 +21,7 @@
 
   <link rel="preload" href="css/styles.css" as="style" />
   <link rel="preload" href="assets/fondo-pagina-score.webp" as="image" type="image/webp" />
-  <link rel="preload" href="assets/hero.webp" as="image" type="image/webp" />
+  <link rel="preload" href="assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
   <link rel="stylesheet" href="css/styles.css" />
 
   <script type="application/ld+json">
@@ -41,6 +41,7 @@
   <div id="splash" class="splash" aria-hidden="true">
     <div class="splash__bg"></div>
     <div class="splash__vignette"></div>
+    <div class="splash__dust"></div> 
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
@@ -105,7 +106,8 @@
       <div class="hero__content">
         <img class="hero__desert hero-vfx-float" src="assets/logo-world-desert.webp" alt="World Desert Championship" width="280" height="253" />
         <h1 class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
-        <p class="hero__hook">Diseño, pasión y rendimiento en cada hilo. Patrocinador oficial.</p>
+        
+        <p class="hero__hook">Diseño, pasión y rendimiento extremo en cada hilo. <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong></p>
 
         <div class="hero__cta">
           <button id="scrollToCategoriesBtn" class="btn btn--primary btn--large cinematic-btn neon-border" type="button" aria-label="Desplazarse a ver las colecciones de la tienda">Explorar Colecciones ▼</button>
@@ -217,6 +219,10 @@
   <button id="floatingAssistantBtn" class="floating-assistant hover-fx neon-glow" type="button" aria-label="Hablar con el Asistente SCORE" title="Chatea con SCORE">
     <span class="icon pulse-icon" aria-hidden="true">✦</span>
   </button>
+  
+  <button id="scrollTopBtn" class="floating-scroll hover-fx neon-glow" type="button" aria-label="Volver arriba" title="Volver arriba" hidden>
+    <span class="icon" aria-hidden="true">↑</span>
+  </button>
 
   <div id="overlay" class="overlay" hidden aria-hidden="true"></div>
 
@@ -323,7 +329,7 @@
           Proceder al Pago Seguro 🔒
         </button>
         <button id="continueShoppingBtn" class="btn btn--ghost btn--block btn--large hover-fx tech-ghost-btn" type="button" style="margin-top: 10px;">
-          ← Seguir Explorando Tienda
+          ← Volver a la tienda
         </button>
         
         <div style="text-align: center; margin-top: 15px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; align-items: center;">
@@ -357,7 +363,7 @@
           <div class="pm__chips" id="pmChips"></div>
           <div class="pm__price-wrap" style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 15px;">
             <div class="pm__price tech-price-large" id="pmPrice" style="color: var(--red); font-size: 32px; font-weight: 900;">$0.00</div>
-            <span class="stock-badge neon-green-text" style="color: #28a745; font-size: 13px; font-weight: bold;">✓ Stock Disponible</span>
+            <span id="pmStockBadge" class="stock-badge neon-green-text" style="color: #28a745; font-size: 13px; font-weight: bold;">✓ Stock Disponible</span>
           </div>
           
           <div class="pm__desc" id="pmDesc"></div>
