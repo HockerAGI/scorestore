@@ -6,7 +6,7 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.02.21.SCORE STORE.V2";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.02.25.SCORE STORE.V3";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -129,7 +129,20 @@
 
   const escapeHtml = (s) => String(s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
   const money = (cents) => { const n = Number(cents || 0) / 100; try { return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" }); } catch { return `$${n.toFixed(2)}`; } };
-  const safeUrl = (p) => { try { const url = encodeURI(String(p || "").trim()); if(url.toLowerCase().startsWith('javascript:')) return ''; return url; } catch { return String(p || ""); } };
+  
+  // FIX: Prevenir doble encodeURI para archivos que ya tienen %20 o tienen espacios.
+  const safeUrl = (p) => { 
+    try { 
+      let raw = String(p || "").trim();
+      const decoded = decodeURI(raw); 
+      const url = encodeURI(decoded); 
+      if(url.toLowerCase().startsWith('javascript:')) return ''; 
+      return url; 
+    } catch { 
+      return String(p || ""); 
+    } 
+  };
+  
   const clampInt = (v, min, max) => { const n = Math.floor(Number(v || 0)); if (!Number.isFinite(n)) return min; return Math.max(min, Math.min(max, n)); };
   const debounce = (fn, ms = 180) => { let t = null; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; };
 
@@ -287,12 +300,10 @@
     if (pmDesc) { const scarcity = getScarcityText(p.sku); pmDesc.innerHTML = `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>${scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : ''}`; }
     if (pmChips) { pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo"></span>`; if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`; }
 
-    // Interfaz de Tallas - Lógica visual de agotado
     if (pmSizePills) {
       pmSizePills.innerHTML = ""; selectedSize = ""; 
       p.sizes.forEach((s, i) => {
         const btn = document.createElement("button"); btn.className = `size-pill`; btn.textContent = escapeHtml(s);
-        // UX: Simulación de algunas tallas agotadas para el efecto Wow
         const isOutOfStock = (sku.length + i) % 7 === 0; 
         if(isOutOfStock) {
             btn.classList.add('out-of-stock');
@@ -528,10 +539,8 @@
 
   const initEvents = () => {
     if (overlay) overlay.addEventListener("click", () => { if(checkoutLoader && !checkoutLoader.hidden) return; closeAll(); });
-    // EVENTO QUIRÚRGICO CERRAR MODAL:
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if(checkoutLoader && !checkoutLoader.hidden) return; closeAll(); } });
 
-    // EVENTO SCROLL TO TOP:
     window.addEventListener("scroll", () => {
       if (scrollTopBtn) {
         if (window.scrollY > 500) { scrollTopBtn.hidden = false; scrollTopBtn.classList.remove('fade-out'); }
@@ -597,14 +606,35 @@
     cookieAccept?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "accept"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
     cookieReject?.addEventListener("click", () => { try { localStorage.setItem(STORAGE_KEYS.consent, "reject"); } catch {} if(cookieBanner) cookieBanner.hidden = true; });
     
-    // REGISTRO DE SERVICE WORKER (PWA / Lighthouse)
+    // FIX PWA: RECARGA AUTOMÁTICA OBLIGATORIA
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
           const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+          
+          // Agresivo: Detectar si hay un Service Worker nuevo descargándose
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              // Si el nuevo SW se instaló y ya tenemos un controlador viejo
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
           if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
         } catch (err) {
           console.error("SW reg falló:", err);
+        }
+      });
+
+      // Refresco mandatorio para limpiar la "memoria" del viejo intro
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
         }
       });
     }
