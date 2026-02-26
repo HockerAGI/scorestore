@@ -1,10 +1,14 @@
-/* SCORE STORE — Service Worker (PWA producción, resiliente v2.0) */
-const CACHE_VERSION = "scorestore-vfx-pro-v2.0";
+/* SCORE STORE — Service Worker (PWA producción, resiliente v2.1) */
+const CACHE_VERSION = "scorestore-vfx-pro-v2.1";
 const CACHE_NAME = CACHE_VERSION;
 
+// Agregadas las vistas de éxito, cancelación y legales para experiencia PWA completa
 const CORE_ASSETS = [
   "/",
   "/index.html",
+  "/success.html",
+  "/cancel.html",
+  "/legal.html",
   "/css/styles.css",
   "/js/main.js",
   "/js/success.js",
@@ -45,7 +49,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    // Destruye inmediatamente cualquier caché que no sea la versión 2.0
+    // Destruye cualquier caché que no sea la nueva versión
     await Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve())));
     if ("navigationPreload" in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch (_) {}
@@ -77,13 +81,15 @@ self.addEventListener("fetch", (event) => {
         const fresh = await fetch(req);
         if (fresh && fresh.ok && fresh.type === "basic") {
           const cache = await caches.open(CACHE_NAME);
-          cache.put(req, fresh.clone()); // FIX: Antes pisaba siempre index.html
+          cache.put(req, fresh.clone()); 
         }
         return fresh;
       } catch (_) {
-        const cachedPage = await caches.match(req);
+        // FIX ESTRICTO: { ignoreSearch: true } permite cargar success.html en modo offline
+        // ignorando los query strings (?session_id=...) de Stripe.
+        const cachedPage = await caches.match(req, { ignoreSearch: true });
         if (cachedPage) return cachedPage;
-        return (await caches.match("/index.html")) || Response.error();
+        return (await caches.match("/index.html", { ignoreSearch: true })) || Response.error();
       }
     })());
     return;
@@ -92,7 +98,8 @@ self.addEventListener("fetch", (event) => {
   if (isSafeToCache(req.url)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
+      // ignoreSearch protege la lectura general de recursos
+      const cached = await cache.match(req, { ignoreSearch: true });
       const networkPromise = fetch(req)
         .then(async (res) => {
           if (res && res.ok && (res.type === "basic" || res.type === "cors")) {
