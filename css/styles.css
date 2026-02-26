@@ -8,8 +8,8 @@
   --bg-alt: #f0f0f4; 
   --text: #050505;
   --text-inverse: #ffffff;
-  --muted: #6b6b75;
-  --muted2: #8a8a95;
+  --muted: #50505a;
+  --muted2: #656570;
   --red: #E10600;
   --red-hover: #b90400;
   --red-neon: rgba(225, 6, 0, 0.6);
@@ -74,7 +74,6 @@ button, input, select, textarea { font: inherit; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
 
-/* ANIMACIONES WOW CINEMÁTICAS */
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 @keyframes slowPan { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
@@ -87,7 +86,6 @@ button, input, select, textarea { font: inherit; }
 @keyframes particlesDrift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-100vh) rotate(360deg); } }
 @keyframes bounceAnim { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 
-/* Glitch de encendido tipo motor Tech */
 @keyframes techGlitch { 
   0% { transform: skew(0deg); filter: saturate(1); opacity: 1; } 
   20% { transform: skew(-10deg); filter: saturate(3); opacity: 0.8; } 
@@ -96,7 +94,6 @@ button, input, select, textarea { font: inherit; }
   100% { transform: skew(0deg); opacity: 0; } 
 }
 
-/* Efecto tormenta de arena (Dust) */
 @keyframes dustStorm {
   0% { transform: translateY(0) translateX(0); opacity: 0; }
   50% { opacity: 0.6; }
@@ -395,7 +392,6 @@ button, input, select, textarea { font: inherit; }
    PATCH FINAL — FIXES REALES (móvil + clases usadas en HTML)
    ========================================================= */
 
-/* FIX TOPBAR MÓVIL (evita overlaps / tap targets Lighthouse) */
 @media (max-width: 768px) {
   .topbar {
     position: sticky;
@@ -456,7 +452,6 @@ button, input, select, textarea { font: inherit; }
   }
 }
 
-/* ALIASES / CLASES QUE YA USA EL HTML */
 .hero { position: relative; }
 .icon { line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
 .carousel-wrapper { position: relative; }
