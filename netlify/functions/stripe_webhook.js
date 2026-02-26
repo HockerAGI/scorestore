@@ -7,6 +7,7 @@
  * SECURE V2026-02-21 PRO (NIVEL NASA / META):
  * - Resiliencia Absoluta: Upsert a DB garantizado aunque falle Envía.
  * - Estructura de Datos 100% Original para Score Store.
+ * - FIX MULTI-TENANT INCLUIDO PARA COMPATIBILIDAD CON UNICOS
  * =========================================================
  */
 
@@ -102,8 +103,21 @@ const upsertOrder = async (sb, session, status, items) => {
 
   const normalizedItems = Array.isArray(items) ? items : [];
 
-  // DATOS ORIGINALES EXACTOS - Sin inyecciones de UnicOs
+  // ==========================================
+  // 🔥 FIX ARQUITECTURA MULTI-TENANT (UnicOs)
+  // ==========================================
+  // Buscamos el ID de la empresa base (Score Store) para anclar la venta
+  let orgId = null;
+  try {
+    const { data: org } = await sb.from("organizations").select("id").eq("slug", "score-store").limit(1).maybeSingle();
+    if (org) orgId = org.id;
+  } catch (e) {
+    console.error("[orders] Fallo al buscar organization_id:", e?.message);
+  }
+
+  // DATOS ORIGINALES EXACTOS con la inyección de la organización
   const row = {
+    organization_id: orgId, // <--- LA VACUNA: Esto hace que UnicOs pueda ver la venta
     stripe_session_id: session.id,
     stripe_payment_intent_id:
       typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id || null),
