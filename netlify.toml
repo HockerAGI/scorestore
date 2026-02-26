@@ -29,7 +29,6 @@
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Cross-Origin-Resource-Policy = "same-origin"
-    # CIBERSEGURIDAD: CSP Sincronizado. Permite Stripe SDK y Supabase.
     Content-Security-Policy = "default-src 'self'; img-src 'self' data: https:; script-src 'self' https://js.stripe.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;"
 
 [[headers]]
@@ -48,3 +47,18 @@
   for = "/*.webmanifest"
   [headers.values]
     Content-Type = "application/manifest+json; charset=utf-8"
+
+# NUEVO: Forzar actualización inmediata de Service Worker y HTML
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
