@@ -1,8 +1,13 @@
-/* SCORE STORE — Service Worker (PWA producción, resiliente v2.1) */
-const CACHE_VERSION = "scorestore-vfx-pro-v2.1";
-const CACHE_NAME = CACHE_VERSION;
+/* SCORE STORE — Service Worker (PWA producción, auto-update v3)
+   FIX REAL:
+   - Navegación: NETWORK-FIRST (siempre intenta lo último en producción)
+   - Assets: STALE-WHILE-REVALIDATE REAL con event.waitUntil()
+   - Nunca cachea /api ni .netlify functions
+*/
 
-const CORE_ASSETS = [
+const CACHE_NAME = "scorestore-runtime-v3";
+
+const PRECACHE = [
   "/",
   "/index.html",
   "/success.html",
@@ -14,46 +19,111 @@ const CORE_ASSETS = [
   "/site.webmanifest",
   "/assets/logo-score.webp",
   "/assets/logo-world-desert.webp",
-  "/assets/fondo-pagina-score.webp"
+  "/assets/fondo-pagina-score.webp",
 ];
 
-const isSafeToCache = (requestUrl) => {
-  const url = new URL(requestUrl, self.location.origin);
-  if (url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/api/")) return false;
-  if (url.pathname.includes("/.netlify/")) return false;
-  if (url.pathname.startsWith("/admin/")) return false;
-  if (url.pathname.endsWith(".json")) return false;
-  return true;
+const isBypass = (req) => {
+  const url = new URL(req.url);
+  if (req.method !== "GET") return true;
+  if (url.origin !== self.location.origin) return true;
+
+  // Nunca cachear APIs / Netlify / admin / data dinámica
+  if (url.pathname.startsWith("/api/")) return true;
+  if (url.pathname.startsWith("/.netlify/")) return true;
+  if (url.pathname.startsWith("/admin/")) return true;
+  if (url.pathname.endsWith(".json")) return true;
+
+  return false;
 };
+
+const openCache = () => caches.open(CACHE_NAME);
+
+async function safePut(cache, key, res) {
+  try {
+    if (res && res.ok && (res.type === "basic" || res.type === "cors")) {
+      await cache.put(key, res.clone());
+    }
+  } catch (_) {}
+}
+
+async function precacheCore() {
+  const cache = await openCache();
+  await Promise.allSettled(
+    PRECACHE.map(async (path) => {
+      try {
+        const req = new Request(path, { cache: "reload" });
+        const res = await fetch(req);
+        if (res && (res.ok || res.type === "opaque")) {
+          await cache.put(path, res.clone());
+        }
+      } catch (_) {}
+    })
+  );
+}
+
+async function networkFirst(event) {
+  const req = event.request;
+  const cache = await openCache();
+
+  try {
+    const preload = await event.preloadResponse;
+    if (preload) {
+      event.waitUntil(safePut(cache, req, preload));
+      return preload;
+    }
+
+    const fresh = await fetch(req);
+    event.waitUntil(safePut(cache, req, fresh));
+    return fresh;
+  } catch (_) {
+    const cached = await cache.match(req, { ignoreSearch: true });
+    if (cached) return cached;
+
+    // fallback final
+    const fallback = await cache.match("/index.html", { ignoreSearch: true });
+    return fallback || Response.error();
+  }
+}
+
+function staleWhileRevalidate(event) {
+  const req = event.request;
+
+  return (async () => {
+    const cache = await openCache();
+    const cached = await cache.match(req, { ignoreSearch: true });
+
+    const fetchPromise = fetch(req)
+      .then(async (res) => {
+        await safePut(cache, req, res);
+        return res;
+      })
+      .catch(() => null);
+
+    // CLAVE: mantiene vivo el update aunque devolvamos cached
+    event.waitUntil(fetchPromise);
+
+    return cached || (await fetchPromise) || Response.error();
+  })();
+}
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await Promise.allSettled(
-      CORE_ASSETS.map(async (asset) => {
-        try {
-          const req = new Request(asset, { cache: "reload" });
-          const res = await fetch(req);
-          if (res && (res.ok || res.type === "opaque")) {
-            await cache.put(asset, res.clone());
-          }
-        } catch (_) {}
-      })
-    );
-  })());
+  event.waitUntil(precacheCore());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve())));
-    if ("navigationPreload" in self.registration) {
-      try { await self.registration.navigationPreload.enable(); } catch (_) {}
-    }
-    await self.clients.claim();
-  })());
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())));
+
+      if ("navigationPreload" in self.registration) {
+        try { await self.registration.navigationPreload.enable(); } catch (_) {}
+      }
+
+      await self.clients.claim();
+    })()
+  );
 });
 
 self.addEventListener("message", (event) => {
@@ -62,48 +132,15 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
 
-  const url = new URL(req.url);
+  if (isBypass(req)) return;
 
-  if (url.origin.includes("stripe.com") || url.origin.includes("supabase.co") || url.origin.includes("envia.com")) {
+  // Navegación (HTML): SIEMPRE NETWORK-FIRST para evitar “no se actualiza”
+  if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
+    event.respondWith(networkFirst(event));
     return;
   }
 
-  if (req.mode === "navigate") {
-    event.respondWith((async () => {
-      try {
-        const preload = await event.preloadResponse;
-        if (preload) return preload;
-
-        const fresh = await fetch(req);
-        if (fresh && fresh.ok && fresh.type === "basic") {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(req, fresh.clone()); 
-        }
-        return fresh;
-      } catch (_) {
-        const cachedPage = await caches.match(req, { ignoreSearch: true });
-        if (cachedPage) return cachedPage;
-        return (await caches.match("/index.html", { ignoreSearch: true })) || Response.error();
-      }
-    })());
-    return;
-  }
-
-  if (isSafeToCache(req.url)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req, { ignoreSearch: true });
-      const networkPromise = fetch(req)
-        .then(async (res) => {
-          if (res && res.ok && (res.type === "basic" || res.type === "cors")) {
-            await cache.put(req, res.clone());
-          }
-          return res;
-        })
-        .catch(() => null);
-      return cached || (await networkPromise) || Response.error();
-    })());
-  }
+  // Assets / recursos: SWR real
+  event.respondWith(staleWhileRevalidate(event));
 });
