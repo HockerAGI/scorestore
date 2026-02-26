@@ -1,5 +1,5 @@
-/* SCORE STORE — Service Worker (PWA producción, resiliente) */
-const CACHE_VERSION = "scorestore-vfx-pro-v1.3";
+/* SCORE STORE — Service Worker (PWA producción, resiliente v2.0) */
+const CACHE_VERSION = "scorestore-vfx-pro-v2.0";
 const CACHE_NAME = CACHE_VERSION;
 
 const CORE_ASSETS = [
@@ -28,8 +28,6 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-
-    // Precarga tolerante: no rompe instalación si 1 asset falla
     await Promise.allSettled(
       CORE_ASSETS.map(async (asset) => {
         try {
@@ -38,9 +36,7 @@ self.addEventListener("install", (event) => {
           if (res && (res.ok || res.type === "opaque")) {
             await cache.put(asset, res.clone());
           }
-        } catch (_) {
-          // silencio intencional: seguimos instalando SW
-        }
+        } catch (_) {}
       })
     );
   })());
@@ -49,6 +45,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
+    // Destruye inmediatamente cualquier caché que no sea la versión 2.0
     await Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve())));
     if ("navigationPreload" in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch (_) {}
@@ -67,16 +64,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
 
-  // No interceptar terceros críticos (Stripe / Supabase / Envia)
-  if (
-    url.origin.includes("stripe.com") ||
-    url.origin.includes("supabase.co") ||
-    url.origin.includes("envia.com")
-  ) {
+  if (url.origin.includes("stripe.com") || url.origin.includes("supabase.co") || url.origin.includes("envia.com")) {
     return;
   }
 
-  // Navegaciones: network-first + fallback a cache
   if (req.mode === "navigate") {
     event.respondWith((async () => {
       try {
@@ -86,7 +77,7 @@ self.addEventListener("fetch", (event) => {
         const fresh = await fetch(req);
         if (fresh && fresh.ok && fresh.type === "basic") {
           const cache = await caches.open(CACHE_NAME);
-          cache.put("/index.html", fresh.clone());
+          cache.put(req, fresh.clone()); // FIX: Antes pisaba siempre index.html
         }
         return fresh;
       } catch (_) {
@@ -98,12 +89,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Estáticos same-origin: stale-while-revalidate
   if (isSafeToCache(req.url)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
       const cached = await cache.match(req);
-
       const networkPromise = fetch(req)
         .then(async (res) => {
           if (res && res.ok && (res.type === "basic" || res.type === "cors")) {
@@ -112,7 +101,6 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
         .catch(() => null);
-
       return cached || (await networkPromise) || Response.error();
     })());
   }
