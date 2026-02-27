@@ -1,48 +1,65 @@
 /* css/override.css
-   SCORE STORE — UX/UI PRO HOTFIX (non-destructive overrides)
+   SCORE STORE — Overrides NO destructivos (no rompen tu styles.css)
+   Objetivo: icono de Asistente siempre visible + accesibilidad + micro ajustes mobile.
 */
 
 :root{
-  --ai-blue: #0EA5E9;
-  --ai-teal: #14B8A6;
+  --ai-white: #ffffff;
 }
 
-/* Floating assistant: icon visible sí o sí */
-.floating-assistant{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.floating-assistant .assistant-icon{
+/* El SVG siempre visible y consistente */
+.assistant-icon{
   width: 28px;
   height: 28px;
-  display:block;
-  fill: #ffffff;
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+  display: inline-block;
+  fill: var(--ai-white);
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+  transform: translateZ(0);
 }
 
+.assistant-icon--small{
+  width: 22px;
+  height: 22px;
+}
+
+.assistant-icon--menu{
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  fill: var(--red);
+  filter: drop-shadow(0 6px 12px rgba(225,6,0,0.25));
+}
+
+/* Animación tipo “pulse” pero para SVG */
+.pulse-svg{
+  animation: pulseNeonRed 2s infinite;
+}
+
+/* Asegura contraste en el botón flotante */
+.floating-assistant .assistant-icon{
+  fill: #ffffff;
+}
+
+/* Hover conserva tu vibe original */
 .floating-assistant.hover-fx:hover .assistant-icon{
   fill: var(--red);
   filter: drop-shadow(0 10px 18px rgba(225,6,0,0.25));
 }
 
-/* Side menu assistant icon visible */
-#navOpenAssistant .nav-assistant-icon{
-  color: var(--red);
-  font-weight: 900;
-  margin-right: 6px;
-  text-shadow: 0 0 16px rgba(225,6,0,0.35);
+/* Botón de la topbar (openAssistantBtn) */
+#openAssistantBtn .assistant-icon{
+  fill: var(--red);
+  filter: drop-shadow(0 10px 18px rgba(225,6,0,0.25));
 }
 
-/* Focus ring accesible */
+/* Focus accesible sin arruinar tu estética */
 :where(button, a, input, select, textarea):focus-visible{
-  outline: 3px solid rgba(14,165,233,0.45);
+  outline: 3px solid rgba(225,6,0,0.35);
   outline-offset: 3px;
   border-radius: 14px;
 }
 
-/* Mobile spacing: no choque entre botones flotantes */
+/* Mobile: evita choque entre floatingAssistant y scrollTop en pantallas chicas */
 @media (max-width: 520px){
   .floating-assistant{ width: 62px; height: 62px; right: 18px; }
   .floating-scroll{ right: 18px; bottom: max(104px, calc(104px + var(--safe-bottom))); }
