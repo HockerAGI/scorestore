@@ -24,6 +24,50 @@ const {
 const safeUpper = (v) => String(v || "").toUpperCase().trim();
 const nowIso = () => new Date().toISOString();
 
+// -----------------------------------------------------------------------------
+// Multi-tenant: Score Store org resolver (NO depende de slug)
+// - Prioridad: ENV SCORE_ORG_ID / DEFAULT_ORG_ID
+// - Fallback: UUID fijo del schema.sql (Score Store default)
+// - Último recurso: buscar por nombre en organizations
+// -----------------------------------------------------------------------------
+const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+let _cachedScoreOrgId = null;
+
+const isUuid = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s||"").trim());
+
+const resolveScoreOrgId = async (sb) => {
+  if (_cachedScoreOrgId) return _cachedScoreOrgId;
+
+  const envId = process.env.SCORE_ORG_ID || process.env.DEFAULT_ORG_ID;
+  if (envId && isUuid(envId)) {
+    _cachedScoreOrgId = String(envId).trim();
+    return _cachedScoreOrgId;
+  }
+
+  // Fallback garantizado (mismo ID del schema.sql)
+  _cachedScoreOrgId = DEFAULT_SCORE_ORG_ID;
+
+  // Si la tabla tiene este ID, perfecto. Si no, intentamos buscar por nombre.
+  try {
+    const { data: byId } = await sb.from("organizations").select("id").eq("id", _cachedScoreOrgId).limit(1).maybeSingle();
+    if (byId?.id) return _cachedScoreOrgId;
+
+    const { data: byName } = await sb
+      .from("organizations")
+      .select("id")
+      .ilike("name", "%score%")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (byName?.id) _cachedScoreOrgId = byName.id;
+  } catch (e) {
+    // Mantén el fallback fijo.
+  }
+
+  return _cachedScoreOrgId;
+};
+
 const shouldFulfillNow = (eventType, session) => {
   if (eventType === "checkout.session.async_payment_succeeded") return true;
   if (eventType === "checkout.session.completed") return String(session.payment_status) === "paid";
@@ -104,20 +148,14 @@ const upsertOrder = async (sb, session, status, items) => {
   const normalizedItems = Array.isArray(items) ? items : [];
 
   // ==========================================
-  // 🔥 FIX ARQUITECTURA MULTI-TENANT (UnicOs)
+  // 🔥 FIX MULTI-TENANT (UnicOs)
   // ==========================================
-  // Buscamos el ID de la empresa base (Score Store) para anclar la venta
-  let orgId = null;
-  try {
-    const { data: org } = await sb.from("organizations").select("id").eq("slug", "score-store").limit(1).maybeSingle();
-    if (org) orgId = org.id;
-  } catch (e) {
-    console.error("[orders] Fallo al buscar organization_id:", e?.message);
-  }
+  // OrgId real de Score Store (no depende de 'slug')
+  const orgId = await resolveScoreOrgId(sb);
 
   // DATOS ORIGINALES EXACTOS con la inyección de la organización
   const row = {
-    organization_id: orgId, // <--- LA VACUNA: Esto hace que UnicOs pueda ver la venta
+    organization_id: orgId,
     stripe_session_id: session.id,
     stripe_payment_intent_id:
       typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id || null),
@@ -168,8 +206,9 @@ const getExistingLabel = async (sb, sessionId) => {
   }
 };
 
-const upsertLabel = async (sb, sessionId, labelData, status = "created") => {
+const upsertLabel = async (sb, orgId, sessionId, labelData, status = "created") => {
   const row = {
+    org_id: orgId,
     stripe_session_id: sessionId,
     carrier: "envia",
     tracking_number: labelData.trackingNumber || labelData[0]?.trackingNumber || null,
@@ -178,25 +217,29 @@ const upsertLabel = async (sb, sessionId, labelData, status = "created") => {
     updated_at: nowIso(),
     raw: labelData || {},
   };
+
   await sb.from("shipping_labels").upsert(row, { onConflict: "stripe_session_id" });
 };
 
 exports.handler = async (event) => {
   try {
-    if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, "*");
+    if (event.httpMethod !== "POST") return jsonResponse(405, { received: false }, "*");
 
     const stripe = initStripe();
-    const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
-    const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    if (!sig || !whSecret) {
-      console.error("[stripe_webhook] Missing signature or webhook secret");
-      return jsonResponse(401, { received: false, error: "Unauthorized" }, "*");
+    const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!whSecret) {
+      return jsonResponse(500, { received: false, error: "Missing STRIPE_WEBHOOK_SECRET" }, "*");
     }
 
-    let buf;
+    const sig = event.headers["stripe-signature"] || event.headers["Stripe-Signature"];
+    if (!sig) return jsonResponse(400, { received: false, error: "Missing signature" }, "*");
+
+    const buf = readRawBody(event);
+
+    let payload;
     try {
-      buf = readRawBody(event);
+      payload = JSON.parse(buf.toString("utf8"));
     } catch (err) {
       return jsonResponse(400, { received: false, error: "Malformed payload body" }, "*");
     }
@@ -263,14 +306,20 @@ exports.handler = async (event) => {
       try {
         const labelData = await createEnviaLabel({ shipping_country, stripe_session: session, items_qty });
         if (sb) {
-          try { await upsertLabel(sb, session.id, labelData, "created"); } catch (e) {}
+          try {
+            const orgId = await resolveScoreOrgId(sb);
+            await upsertLabel(sb, orgId, session.id, labelData, "created");
+          } catch (e) {}
         }
         await sendTelegram(`✅ <b>Pago confirmado</b>\nSession: <code>${session.id}</code>\nModo: <b>${shipping_mode}</b>\nGuía generada exitosamente.`);
       } catch (e) {
         if (isSupabaseConfigured()) {
           const sb2 = supabaseAdmin();
           if (sb2) {
-            try { await upsertLabel(sb2, session.id, { error: String(e?.message || e) }, "failed"); } catch {}
+            try {
+              const orgId2 = await resolveScoreOrgId(sb2);
+              await upsertLabel(sb2, orgId2, session.id, { error: String(e?.message || e) }, "failed");
+            } catch {}
           }
         }
         await sendTelegram(`⚠️ <b>Pago confirmado</b> pero <b>falló guía Envía</b>\nSession: <code>${session.id}</code>\nError: <code>${String(e?.message || e).slice(0, 300)}</code>`);
