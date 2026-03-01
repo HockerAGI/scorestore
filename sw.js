@@ -1,5 +1,7 @@
-/* SCORE STORE — Service Worker (PWA producción, resiliente v2.2) */
-const CACHE_VERSION = "scorestore-vfx-pro-v2.2";
+/* SCORE STORE — Service Worker (PWA producción, resiliente v2.2.1)
+   Objetivo: evitar “se queda en versión vieja” sin romper offline */
+
+const CACHE_VERSION = "scorestore-vfx-pro-v2.2.1";
 const CACHE_NAME = CACHE_VERSION;
 
 const CORE_ASSETS = [
@@ -27,11 +29,28 @@ const isSafeToCache = (requestUrl) => {
   return true;
 };
 
+async function reloadAllClients() {
+  try {
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    await Promise.all(
+      clients.map((client) => {
+        try {
+          return client.navigate(client.url);
+        } catch {
+          return null;
+        }
+      })
+    );
+  } catch {}
+}
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
+
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
+
       await Promise.allSettled(
         CORE_ASSETS.map(async (asset) => {
           try {
@@ -51,9 +70,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(
-        keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve()))
-      );
+      await Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : null)));
 
       if ("navigationPreload" in self.registration) {
         try {
@@ -62,6 +79,9 @@ self.addEventListener("activate", (event) => {
       }
 
       await self.clients.claim();
+
+      // ✅ Cuando un SW nuevo activa, recarga todos los clientes para aplicar assets nuevos.
+      await reloadAllClients();
     })()
   );
 });
@@ -132,7 +152,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Resto: SWR
+  // Resto: stale-while-revalidate
   if (isSafeToCache(req.url)) {
     event.respondWith(
       (async () => {
@@ -148,9 +168,7 @@ self.addEventListener("fetch", (event) => {
           })
           .catch(() => null);
 
-        // Mantén vivo el fetch aunque devolvamos cached
         event.waitUntil(networkPromise);
-
         return cached || (await networkPromise) || Response.error();
       })()
     );
