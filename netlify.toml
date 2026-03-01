@@ -37,12 +37,12 @@
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/data/*.json"
@@ -59,7 +59,7 @@
 [[headers]]
   for = "/"
   [headers.values]
-    Link = "</css/styles.css>; rel=preload; as=style, </assets/hero.webp>; rel=preload; as=image; fetchpriority=high"
+    Link = "</css/styles.css>; rel=preload; as=style, </assets/fondo-pagina-score.webp>; rel=preload; as=image; fetchpriority=high"
     Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
     Pragma = "no-cache"
     Expires = "0"
