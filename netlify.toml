@@ -13,7 +13,7 @@
   status = 200
   force = true
 
-# ✅ Catálogo/Promos dinámicos (DB) sin tocar el frontend
+# Catálogo / Promos dinámicos (DB) sin tocar el frontend
 [[redirects]]
   from = "/data/catalog.json"
   to = "/.netlify/functions/catalog"
@@ -47,7 +47,7 @@
   [headers.values]
     Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
 
-# ✅ evita JS/CSS viejos
+# Evita JS/CSS viejos (clave para “no actualiza”)
 [[headers]]
   for = "/js/*"
   [headers.values]
@@ -58,7 +58,7 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Nota: /data/*.json será function por redirect, pero esto igual ayuda si algún día sirves JSON estático
+# Si algún día sirves JSON estático, igual no lo caches.
 [[headers]]
   for = "/data/*.json"
   [headers.values]
