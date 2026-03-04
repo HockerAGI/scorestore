@@ -1,14 +1,20 @@
 /* =========================================================
-   SCORE STORE — Frontend (SYNCED + SITE SETTINGS + VFX SAFE)
+   SCORE STORE — Frontend (ULTRA-VFX PRO SECURED + SYNCED)
+   Repo-alineado (2026-03-04):
+   - Shipping quote: /.netlify/functions/quote_shipping (payload real)
+   - Site settings: /.netlify/functions/site_settings (org_id + season_key + theme/home/socials)
+   - Carousel control: snap determinístico + hint "Desliza"
    ========================================================= */
+
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.03.04.SCORESTORE.V3";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.03.04.SCORESTORE";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const debounce = (fn, wait = 150) => {
     let t = null;
     return (...args) => {
@@ -17,15 +23,14 @@
     };
   };
 
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const num = (v) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-
   const money = (cents) => {
-    const v = Number.isFinite(Number(cents)) ? Number(cents) : 0;
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2 }).format(v / 100);
+    const n = Number(cents);
+    const v = Number.isFinite(n) ? n : 0;
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 2,
+    }).format(v / 100);
   };
 
   const safeUrl = (u) => {
@@ -44,9 +49,9 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
 
-  /* =========================================================
-     DOM
-  ========================================================= */
+  // =========================================================
+  // DOM
+  // =========================================================
   const splash = $("#splash");
   const overlay = $("#overlay");
 
@@ -75,6 +80,10 @@
 
   const catalogCarouselSection = $("#catalogCarouselSection");
   const carouselTitle = $("#carouselTitle");
+  const scrollLeftBtn = $("#scrollLeftBtn");
+  const scrollRightBtn = $("#scrollRightBtn");
+  let carouselHint = $("#carouselHint");
+
   const productGrid = $("#productGrid");
   const statusRow = $("#statusRow");
 
@@ -84,6 +93,7 @@
   const mobileSearchInput = $("#mobileSearchInput");
   const closeMobileSearchBtn = $("#closeMobileSearchBtn");
   const sortSelect = $("#sortSelect");
+
   const menuSearchInput = $("#menuSearchInput");
 
   const promoBar = $("#promoBar");
@@ -142,6 +152,7 @@
   const cookieReject = $("#cookieReject");
 
   const scrollTopBtn = $("#scrollTopBtn");
+
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
 
@@ -149,36 +160,43 @@
   const salesName = $("#salesName");
   const salesAction = $("#salesAction");
 
-  /* =========================================================
-     COPY TARGETS (no rompe estructura)
-     Si un elemento no existe, se ignora.
-  ========================================================= */
-  const copyTargets = {
-    hero_title: $("#heroTitle"),
-    hero_subtitle: $("#heroSubtitle"),
-    cta_primary: $("#scrollToCategoriesBtn"),
-    cta_secondary: $("#openCartBtn"),
-    section_categories: $("#categoriesTitle"),
-    section_catalog: $("#catalogTitle"),
-  };
-
-  /* =========================================================
-     Storage
-  ========================================================= */
+  // =========================================================
+  // Storage
+  // =========================================================
   const STORAGE_KEYS = {
-    cart: "scorestore_cart_v3",
-    ship: "scorestore_ship_v3",
-    consent: "scorestore_consent_v3",
+    cart: "scorestore_cart_v2_pro",
+    ship: "scorestore_ship_v2",
+    consent: "scorestore_consent_v2",
   };
 
-  /* =========================================================
-     Category config
-  ========================================================= */
+  // =========================================================
+  // Config
+  // =========================================================
   const CATEGORY_CONFIG = [
-    { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
-    { uiId: "BAJA500", name: "BAJA 500", logo: "assets/logo-baja500.webp", mapFrom: ["BAJA500", "BAJA_500"] },
-    { uiId: "BAJA400", name: "BAJA 400", logo: "assets/logo-baja400.webp", mapFrom: ["BAJA400", "BAJA_400"] },
-    { uiId: "SF250", name: "SAN FELIPE 250", logo: "assets/logo-sf250.webp", mapFrom: ["SF250", "SF_250"] },
+    {
+      uiId: "BAJA1000",
+      name: "BAJA 1000",
+      logo: "assets/logo-baja1000.webp",
+      mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"],
+    },
+    {
+      uiId: "BAJA500",
+      name: "BAJA 500",
+      logo: "assets/logo-baja500.webp",
+      mapFrom: ["BAJA500", "BAJA_500"],
+    },
+    {
+      uiId: "BAJA400",
+      name: "BAJA 400",
+      logo: "assets/logo-baja400.webp",
+      mapFrom: ["BAJA400", "BAJA_400"],
+    },
+    {
+      uiId: "SF250",
+      name: "SAN FELIPE 250",
+      logo: "assets/logo-sf250.webp",
+      mapFrom: ["SF250", "SF_250"],
+    },
   ];
 
   const SHIPPING_LABELS = {
@@ -187,12 +205,12 @@
     envia_us: "Envío USA (Envía.com)",
   };
 
-  /* =========================================================
-     State
-  ========================================================= */
+  // =========================================================
+  // State
+  // =========================================================
   let catalog = null;
   let products = [];
-  let promosData = { rules: [] };
+  let promosData = null;
   let activePromo = null;
 
   let activeCategory = null;
@@ -206,31 +224,24 @@
   let selectedSize = "";
   let selectedQty = 1;
 
-  /* =========================================================
-     Site Settings State
-  ========================================================= */
+  // Site settings
   const siteSettings = {
     season_key: "default",
-    theme: {
-      accent: "#e10600",
-      accent2: "#111827",
-      vfx_level: 0.8,
-      particles: true,
-      bg_glow: true,
-      hero_bg_url: "",
-      logo_url: "",
-      season_badge_url: "",
-    },
-    copy: {},
+    maintenance_mode: false,
+    hero_title: null,
+    hero_image: null,
     promo_active: false,
     promo_text: "",
     pixel_id: "",
-    updated_at: null,
+    contact_email: "",
+    theme: {},
+    home: {},
+    socials: {},
   };
 
-  /* =========================================================
-     UI helpers
-  ========================================================= */
+  // =========================================================
+  // UI
+  // =========================================================
   const showToast = (msg, type = "ok") => {
     if (!toast) return;
     toast.hidden = false;
@@ -245,7 +256,7 @@
   const openLayer = (el) => {
     if (!el) return;
     el.hidden = false;
-    overlay && (overlay.hidden = false);
+    if (overlay) overlay.hidden = false;
     document.documentElement.classList.add("no-scroll");
     setTimeout(() => el.classList.add("is-open"), 0);
   };
@@ -261,17 +272,16 @@
         !assistantModal?.hidden ||
         !productModal?.hidden ||
         !sizeGuideModal?.hidden;
-
       if (!anyOpen) {
-        overlay && (overlay.hidden = true);
+        if (overlay) overlay.hidden = true;
         document.documentElement.classList.remove("no-scroll");
       }
     }, 220);
   };
 
-  /* =========================================================
-     Mapping
-  ========================================================= */
+  // =========================================================
+  // Helpers
+  // =========================================================
   const normalizeSectionIdToUi = (sectionId) => {
     const sid = String(sectionId || "").trim();
     const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
@@ -293,11 +303,15 @@
   const normalizeProduct = (p) => {
     const sku = String(p?.sku || p?.id || "").trim();
     const title = String(p?.title || p?.name || "Producto Oficial").trim();
-    const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.round(Number(p.price_cents)) : Math.round(num(p?.price_mxn) * 100);
+    const priceCents = Number.isFinite(Number(p?.price_cents))
+      ? Math.round(Number(p.price_cents))
+      : Number.isFinite(Number(p?.priceCents))
+        ? Math.round(Number(p.priceCents))
+        : 0;
 
     const images = Array.isArray(p?.images) ? p.images : p?.img ? [p.img] : [];
     const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes : ["S", "M", "L", "XL", "XXL"];
-    const rawSection = String(p?.sectionId || p?.categoryId || p?.section || p?.section_id || "").trim();
+    const rawSection = String(p?.sectionId || p?.categoryId || p?.section || "").trim();
 
     return {
       sku,
@@ -305,7 +319,7 @@
       title,
       description: String(p?.description || "").trim(),
       priceCents,
-      images: images.map(safeUrl),
+      images: images.map(safeUrl).filter(Boolean),
       img: images[0] ? safeUrl(images[0]) : "",
       sizes: sizes.map((s) => String(s || "").trim()).filter(Boolean),
       rawSection,
@@ -316,9 +330,6 @@
     };
   };
 
-  /* =========================================================
-     Fetch helpers
-  ========================================================= */
   const fetchJsonFirstOk = async (urls) => {
     const list = Array.isArray(urls) ? urls : [];
     let lastErr = null;
@@ -353,9 +364,41 @@
     }
   };
 
-  /* =========================================================
-     Pixel
-  ========================================================= */
+  // =========================================================
+  // Theme / Season (NO destructivo)
+  // =========================================================
+  const setCssVar = (k, v) => {
+    try {
+      document.documentElement.style.setProperty(k, String(v));
+    } catch {}
+  };
+
+  const applyTheme = () => {
+    document.documentElement.setAttribute("data-season", String(siteSettings.season_key || "default").toLowerCase());
+
+    const t = siteSettings.theme || {};
+    if (t.accent) setCssVar("--red", t.accent);
+    if (t.accent2) setCssVar("--text", t.accent2);
+
+    const particles = !!t.particles;
+    const heroParticles = $(".hero__particles");
+    if (heroParticles) heroParticles.style.display = particles ? "" : "none";
+
+    const heroBg = String(t.hero_bg_url || "").trim();
+    if (heroBg) {
+      const hero = $(".hero");
+      if (hero) hero.style.backgroundImage = `url('${heroBg.replace(/'/g, "")}')`;
+    }
+
+    const heroImg = String(siteSettings.hero_image || "").trim();
+    const heroImgEl = $("#heroImage");
+    if (heroImgEl && heroImg) {
+      heroImgEl.src = safeUrl(heroImg);
+      heroImgEl.loading = "eager";
+      heroImgEl.decoding = "async";
+    }
+  };
+
   const loadMetaPixel = (pixelId) => {
     const id = String(pixelId || "").trim();
     if (!id) return;
@@ -370,121 +413,68 @@
       n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
       t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
       (window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '${id.replace("'", "")}');
+      fbq('init', '${id.replace(/'/g, "")}');
       fbq('track', 'PageView');
     `;
     document.head.appendChild(script);
 
     const ns = document.createElement("noscript");
-    ns.innerHTML = `<img height="1" width="1" style="display:none" alt=""
-      src="https://www.facebook.com/tr?id=${encodeURIComponent(id)}&ev=PageView&noscript=1"/>`;
+    ns.innerHTML = `<img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=${encodeURIComponent(
+      id
+    )}&ev=PageView&noscript=1"/>`;
     document.body.appendChild(ns);
   };
 
-  /* =========================================================
-     Apply Site Settings (theme + copy + promo)
-  ========================================================= */
-  const applyTheme = (theme, seasonKey) => {
-    const t = theme || {};
-    const root = document.documentElement;
+  const applySiteSettings = (s) => {
+    if (!s || typeof s !== "object") return;
 
-    // CSS vars (suaves)
-    root.style.setProperty("--red", String(t.accent || "#e10600"));
-    root.style.setProperty("--text", String(t.accent2 || "#111827"));
+    siteSettings.season_key = String(s.season_key || "default");
+    siteSettings.maintenance_mode = !!s.maintenance_mode;
+    siteSettings.hero_title = s.hero_title || null;
+    siteSettings.hero_image = s.hero_image || null;
 
-    // VFX level (0..1)
-    const vfx = clamp(num(t.vfx_level), 0, 1);
-    root.style.setProperty("--vfx", String(vfx));
+    siteSettings.promo_active = !!s.promo_active;
+    siteSettings.promo_text = String(s.promo_text || "").trim();
+    siteSettings.pixel_id = String(s.pixel_id || "").trim();
 
-    // Season class
-    document.body.classList.remove("season-default", "season-navidad", "season-halloween", "season-verano");
-    document.body.classList.add(`season-${String(seasonKey || "default").toLowerCase()}`);
+    siteSettings.contact_email = String(s.contact_email || "").trim();
+    siteSettings.theme = s.theme && typeof s.theme === "object" ? s.theme : {};
+    siteSettings.home = s.home && typeof s.home === "object" ? s.home : {};
+    siteSettings.socials = s.socials && typeof s.socials === "object" ? s.socials : {};
 
-    // Hero background (si existe)
-    const bg = String(t.hero_bg_url || "").trim();
-    if (bg) {
-      const hero = $("#hero");
-      if (hero) hero.style.backgroundImage = `url('${bg.replace(/'/g, "")}')`;
-    }
-
-    // Logo swap (opcional)
-    const logoUrl = String(t.logo_url || "").trim();
-    const logoImg = $("#brandLogo");
-    if (logoImg && logoUrl) logoImg.src = logoUrl;
-
-    // Badge temporada (opcional)
-    const badgeUrl = String(t.season_badge_url || "").trim();
-    const badge = $("#seasonBadge");
-    if (badge && badgeUrl) {
-      badge.src = badgeUrl;
-      badge.hidden = false;
-    } else if (badge) {
-      badge.hidden = true;
-    }
-
-    // Partículas (suave)
-    const particles = t.particles !== false;
-    const particlesEl = $(".hero__particles");
-    if (particlesEl) particlesEl.style.display = particles ? "" : "none";
-  };
-
-  const applyCopy = (copy) => {
-    const c = copy || {};
-    for (const key of Object.keys(copyTargets)) {
-      const el = copyTargets[key];
-      if (!el) continue;
-      const val = c[key];
-      if (val === null || val === undefined || String(val).trim() === "") continue;
-
-      // Botones vs textos
-      if (el.tagName === "BUTTON") el.textContent = String(val);
-      else el.textContent = String(val);
-    }
-  };
-
-  const applyPromoBar = (active, text) => {
     const dismissed = localStorage.getItem("scorestore_promo_dismissed") === "1";
-    if (promoBar && promoBarText && active && text && !dismissed) {
-      promoBarText.textContent = String(text);
+    if (promoBar && promoBarText && siteSettings.promo_active && siteSettings.promo_text && !dismissed) {
+      promoBarText.textContent = siteSettings.promo_text;
       promoBar.hidden = false;
     } else if (promoBar) {
       promoBar.hidden = true;
+    }
+
+    if (siteSettings.pixel_id) {
+      const consent = localStorage.getItem(STORAGE_KEYS.consent);
+      if (consent === "accept") loadMetaPixel(siteSettings.pixel_id);
+    }
+
+    applyTheme();
+
+    if (siteSettings.maintenance_mode) {
+      showToast("Estamos en mantenimiento. Algunas funciones pueden estar limitadas.", "error");
     }
   };
 
   const fetchSiteSettings = async () => {
     const cv = encodeURIComponent(APP_VERSION);
     try {
-      const s = await fetchJsonFirstOk([`/.netlify/functions/site_settings?cv=${cv}&t=${Date.now()}`]);
-      if (!s || !s.ok) return;
-
-      // Solo aplica si cambió updated_at (evita parpadeo)
-      const newUpdated = s.updated_at || null;
-      if (siteSettings.updated_at && newUpdated && siteSettings.updated_at === newUpdated) return;
-
-      siteSettings.season_key = s.season_key || "default";
-      siteSettings.theme = s.theme || siteSettings.theme;
-      siteSettings.copy = s.copy || {};
-      siteSettings.promo_active = !!s.promo_active;
-      siteSettings.promo_text = String(s.promo_text || "");
-      siteSettings.pixel_id = String(s.pixel_id || "");
-      siteSettings.updated_at = newUpdated;
-
-      applyTheme(siteSettings.theme, siteSettings.season_key);
-      applyCopy(siteSettings.copy);
-      applyPromoBar(siteSettings.promo_active, siteSettings.promo_text);
-
-      // Pixel: solo si aceptó cookies
-      if (siteSettings.pixel_id) {
-        const consent = localStorage.getItem(STORAGE_KEYS.consent);
-        if (consent === "accept") loadMetaPixel(siteSettings.pixel_id);
-      }
-    } catch {}
+      const j = await fetchJsonFirstOk([`/.netlify/functions/site_settings?cv=${cv}`]);
+      applySiteSettings(j);
+    } catch {
+      // ignore
+    }
   };
 
-  /* =========================================================
-     Categories render
-  ========================================================= */
+  // =========================================================
+  // Render Categories
+  // =========================================================
   const renderCategories = () => {
     if (!categoryGrid) return;
     categoryGrid.innerHTML = "";
@@ -503,11 +493,11 @@
       card.setAttribute("data-cat", cat.uiId);
       card.setAttribute("aria-label", `Explorar ${cat.name}`);
 
-      // ✅ Fix ratio: no height fijo
       card.innerHTML = `
         <div class="catcard__inner">
-          <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}"
-               loading="lazy" decoding="async" style="height:auto; width:auto; max-width:100%; object-fit:contain;">
+          <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(
+        cat.name
+      )}" loading="lazy" decoding="async" style="height:auto">
           <div class="catcard__meta">
             <div class="catcard__title tech-text">${escapeHtml(cat.name)}</div>
             <div class="catcard__sub">${count} productos</div>
@@ -520,6 +510,7 @@
         activeCategory = cat.uiId;
         searchQuery = "";
         sortMode = "featured";
+
         if (searchInput) searchInput.value = "";
         if (mobileSearchInput) mobileSearchInput.value = "";
         if (menuSearchInput) menuSearchInput.value = "";
@@ -539,9 +530,9 @@
     categoryGrid.appendChild(frag);
   };
 
-  /* =========================================================
-     Sorting + filter UI
-  ========================================================= */
+  // =========================================================
+  // Filters / Sorting
+  // =========================================================
   const applySort = (list) => {
     const arr = Array.isArray(list) ? [...list] : [];
     if (sortMode === "price_asc") return arr.sort((a, b) => a.priceCents - b.priceCents);
@@ -551,54 +542,116 @@
   };
 
   const updateFilterUI = () => {
-    const catLabel = activeCategory ? (CATEGORY_CONFIG.find((c) => c.uiId === activeCategory)?.name || activeCategory) : "";
+    const catLabel = activeCategory
+      ? CATEGORY_CONFIG.find((c) => c.uiId === activeCategory)?.name || activeCategory
+      : "";
     const hasSearch = !!String(searchQuery || "").trim();
 
     if (activeFilterRow && activeFilterLabel && clearFilterBtn) {
       if (activeCategory || hasSearch) {
         activeFilterRow.hidden = false;
-        activeFilterLabel.textContent = `${activeCategory ? `Colección: ${catLabel}` : ""}${activeCategory && hasSearch ? " · " : ""}${hasSearch ? `Búsqueda: ${searchQuery}` : ""}`;
+        activeFilterLabel.textContent = `${activeCategory ? `Colección: ${catLabel}` : ""}${
+          activeCategory && hasSearch ? " · " : ""
+        }${hasSearch ? `Búsqueda: ${searchQuery}` : ""}`;
       } else {
         activeFilterRow.hidden = true;
       }
     }
 
-    if (carouselTitle) carouselTitle.textContent = activeCategory ? `Catálogo — ${catLabel}` : "Catálogo";
+    if (carouselTitle) {
+      carouselTitle.textContent = activeCategory ? `Catálogo — ${catLabel}` : "Catálogo";
+    }
   };
 
-  /* =========================================================
-     Carousel control (sin “deslizamiento loco”)
-  ========================================================= */
-  const ensureCarouselUX = () => {
+  // =========================================================
+  // Carousel decor (si el HTML no trae hint/fades)
+  // =========================================================
+  const ensureCarouselDecor = () => {
+    try {
+      if (!document.getElementById("carouselHint") && carouselTitle && carouselTitle.parentElement) {
+        const span = document.createElement("span");
+        span.id = "carouselHint";
+        span.className = "carousel-hint";
+        span.hidden = true;
+        span.innerHTML = `Desliza <span class="carousel-hint__arrow">→</span>`;
+        carouselTitle.parentElement.appendChild(span);
+        carouselHint = document.getElementById("carouselHint");
+      }
+
+      if (catalogCarouselSection && !catalogCarouselSection.querySelector(".carousel-fade--left")) {
+        const left = document.createElement("div");
+        left.className = "carousel-fade carousel-fade--left";
+        const right = document.createElement("div");
+        right.className = "carousel-fade carousel-fade--right";
+        catalogCarouselSection.style.position = "relative";
+        catalogCarouselSection.appendChild(left);
+        catalogCarouselSection.appendChild(right);
+      }
+    } catch {}
+  };
+
+  const getCardSnapOffsets = () => {
+    const cards = productGrid ? $$(".card", productGrid) : [];
+    const offsets = [];
+    for (const c of cards) offsets.push(c.offsetLeft);
+    return offsets;
+  };
+
+  const snapCarouselToNearest = () => {
     if (!productGrid) return;
+    const offsets = getCardSnapOffsets();
+    if (!offsets.length) return;
 
-    // scroll-snap para que “se quede quieto” en cada card
-    productGrid.style.scrollSnapType = "x mandatory";
-    productGrid.style.scrollBehavior = "smooth";
-    productGrid.style.overscrollBehaviorX = "contain";
+    const x = productGrid.scrollLeft;
+    let best = offsets[0];
+    let bestDist = Math.abs(x - best);
 
-    // Indicador visual "Desliza →"
-    let hint = $("#carouselHint");
-    if (!hint && catalogCarouselSection) {
-      hint = document.createElement("div");
-      hint.id = "carouselHint";
-      hint.className = "hint";
-      hint.style.margin = "10px 0 0 0";
-      hint.style.fontWeight = "900";
-      hint.style.opacity = "0.9";
-      hint.style.display = "flex";
-      hint.style.justifyContent = "space-between";
-      hint.innerHTML = `<span>Desliza para ver más</span><span style="font-weight:900;">→</span>`;
-      catalogCarouselSection.appendChild(hint);
+    for (const o of offsets) {
+      const d = Math.abs(x - o);
+      if (d < bestDist) {
+        bestDist = d;
+        best = o;
+      }
     }
 
-    // Evita “inercia” exagerada en iOS
-    productGrid.style.webkitOverflowScrolling = "auto";
+    productGrid.scrollTo({ left: best, behavior: "smooth" });
+
+    try {
+      localStorage.setItem("scorestore_carousel_used", "1");
+    } catch {}
+    if (carouselHint) carouselHint.hidden = true;
   };
 
-  /* =========================================================
-     Render products
-  ========================================================= */
+  const scrollCarouselByCards = (dir) => {
+    if (!productGrid) return;
+    const offsets = getCardSnapOffsets();
+    if (!offsets.length) return;
+
+    const x = productGrid.scrollLeft;
+
+    let idx = 0;
+    for (let i = 0; i < offsets.length; i++) {
+      if (Math.abs(x - offsets[i]) < Math.abs(x - offsets[idx])) idx = i;
+    }
+
+    const next = clamp(idx + dir, 0, offsets.length - 1);
+    productGrid.scrollTo({ left: offsets[next], behavior: "smooth" });
+
+    try {
+      localStorage.setItem("scorestore_carousel_used", "1");
+    } catch {}
+    if (carouselHint) carouselHint.hidden = true;
+  };
+
+  const updateCarouselHint = (listLen) => {
+    if (!carouselHint) return;
+    const used = localStorage.getItem("scorestore_carousel_used") === "1";
+    carouselHint.hidden = used || listLen <= 1;
+  };
+
+  // =========================================================
+  // Render Products
+  // =========================================================
   const renderProducts = () => {
     if (!productGrid) return;
 
@@ -616,37 +669,34 @@
     }
 
     productGrid.innerHTML = "";
+
     if (list.length === 0) {
       productGrid.innerHTML = `<div class="hint" style="padding:18px; text-align:center;">Sin resultados para tu búsqueda.</div>`;
-      catalogCarouselSection && (catalogCarouselSection.hidden = false);
+      if (catalogCarouselSection) catalogCarouselSection.hidden = false;
+      updateCarouselHint(0);
       return;
     }
 
     const frag = document.createDocumentFragment();
-
     for (const p of list) {
       const card = document.createElement("div");
       card.className = "card hover-fx";
-      card.style.scrollSnapAlign = "start";
       card.setAttribute("data-sku", p.sku);
 
       const img = p.img ? safeUrl(p.img) : "";
+
       card.innerHTML = `
         <div class="card__img">
-          ${img ? `<img src="${img}" alt="${escapeHtml(p.title)}" loading="lazy" width="400" height="500" style="object-fit:cover;">` : ""}
+          ${img ? `<img src="${img}" alt="${escapeHtml(p.title)}" loading="lazy" decoding="async" width="400" height="500">` : ""}
         </div>
         <div class="card__body">
           <div class="card__title tech-text">${escapeHtml(p.title)}</div>
           <div class="card__meta">
-            <span class="pill pill--logo">
-              <img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo" width="30" height="16" style="height:auto; width:auto;">
-            </span>
+            <span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo" width="30" height="16"></span>
             ${p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : ""}
           </div>
           <div class="card__price">${money(p.priceCents)}</div>
-          <button class="btn btn--black card__action-btn hover-fx" type="button" aria-label="Ver detalles y comprar">
-            Ver Detalles y Comprar
-          </button>
+          <button class="btn btn--black card__action-btn hover-fx" type="button" aria-label="Ver detalles y comprar">Ver Detalles y Comprar</button>
         </div>
       `;
 
@@ -654,20 +704,23 @@
         e.stopPropagation();
         openProduct(p.sku);
       });
+
       card.addEventListener("click", () => openProduct(p.sku));
 
       frag.appendChild(card);
     }
 
     productGrid.appendChild(frag);
-    catalogCarouselSection && (catalogCarouselSection.hidden = false);
+    if (catalogCarouselSection) catalogCarouselSection.hidden = false;
 
-    ensureCarouselUX();
+    productGrid.scrollLeft = 0;
+
+    updateCarouselHint(list.length);
   };
 
-  /* =========================================================
-     Scarcity
-  ========================================================= */
+  // =========================================================
+  // Scarcity (real)
+  // =========================================================
   const getScarcityText = (p) => {
     const stock = Number(p?.stock);
     if (!Number.isFinite(stock)) return "";
@@ -676,9 +729,9 @@
     return "";
   };
 
-  /* =========================================================
-     Modal
-  ========================================================= */
+  // =========================================================
+  // Product Modal
+  // =========================================================
   const openProduct = (sku) => {
     const p = products.find((x) => x.sku === sku);
     if (!p) return;
@@ -703,17 +756,22 @@
 
     if (pmDesc) {
       const scarcity = getScarcityText(p);
-      pmDesc.innerHTML = `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>${scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : ""}`;
+      const base = `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>`;
+      const extra = scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : "";
+      pmDesc.innerHTML = base + extra;
     }
 
     if (pmChips) {
-      pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" width="30" height="16" alt="Logo" style="height:auto; width:auto;"></span>`;
+      pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(
+        getLogoForSection(p.uiSection)
+      )}" width="30" height="16" alt="Logo"></span>`;
       if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
     if (pmSizePills) {
       pmSizePills.innerHTML = "";
       selectedSize = "";
+
       p.sizes.forEach((s) => {
         const btn = document.createElement("button");
         btn.className = "size-pill";
@@ -726,7 +784,8 @@
           btn.classList.add("out-of-stock");
           btn.setAttribute("aria-disabled", "true");
           btn.title = "Sin stock";
-          btn.onclick = () => showToast("Por ahora no hay stock registrado. Si necesitas apartar, contáctanos por WhatsApp.", "error");
+          btn.onclick = () =>
+            showToast("Por ahora no hay stock registrado. Si necesitas apartar, contáctanos por WhatsApp.", "error");
         } else {
           btn.onclick = () => {
             $$(".size-pill").forEach((b) => b.classList.remove("active"));
@@ -742,16 +801,21 @@
     if (pmCarousel) {
       const imgs = p.images.length ? p.images : p.img ? [p.img] : [];
       pmCarousel.innerHTML = `
-        <div class="pm__track" id="pmTrack" style="scroll-snap-type:x mandatory; overflow-x:auto; display:flex; gap:12px;">
-          ${imgs
-            .map(
-              (src) =>
-                `<img src="${safeUrl(src)}" width="400" height="500" loading="lazy" alt="${escapeHtml(p.title)}"
-                      style="scroll-snap-align:start; flex:0 0 100%; object-fit:cover; border-radius:18px;">`
-            )
-            .join("")}
-        </div>
-        ${imgs.length > 1 ? `<div class="pm__dots">${imgs.map((_, i) => `<span class="pm__dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>` : ""}
+        <div class="pm__track" id="pmTrack">${imgs
+          .map(
+            (src) =>
+              `<img src="${safeUrl(src)}" width="400" height="500" loading="lazy" decoding="async" alt="${escapeHtml(
+                p.title
+              )}">`
+          )
+          .join("")}</div>
+        ${
+          imgs.length > 1
+            ? `<div class="pm__dots">${imgs
+                .map((_, i) => `<span class="pm__dot ${i === 0 ? "active" : ""}"></span>`)
+                .join("")}</div>`
+            : ""
+        }
       `;
 
       const track = pmCarousel.querySelector("#pmTrack");
@@ -773,14 +837,20 @@
         },
         { passive: true }
       );
+
+      const snapPm = debounce(() => {
+        const idx = Math.round((track?.scrollLeft || 0) / (track?.clientWidth || 1));
+        track?.scrollTo({ left: idx * (track?.clientWidth || 1), behavior: "smooth" });
+      }, 120);
+      track?.addEventListener("scroll", snapPm, { passive: true });
     }
 
     openLayer(productModal);
   };
 
-  /* =========================================================
-     Cart
-  ========================================================= */
+  // =========================================================
+  // Cart
+  // =========================================================
   const loadCart = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
@@ -818,18 +888,22 @@
   const computeDiscount = (subtotalCents) => {
     if (!activePromo) return 0;
     const type = String(activePromo.type || "").toLowerCase();
+
     if (type === "percent") {
       const raw = Number(activePromo.value || 0);
       const frac = clamp(raw > 1 ? raw / 100 : raw, 0, 1);
       return Math.round(subtotalCents * frac);
     }
+
     if (type === "fixed_mxn") return Math.round(Number(activePromo.value || 0) * 100);
+
     return 0;
   };
 
   const computeShippingCents = () => {
     if (activePromo && String(activePromo.type || "").toLowerCase() === "free_shipping") return 0;
-    const cents = Number(shipping?.quote?.amount_cents);
+    const q = shipping?.quote;
+    const cents = Number(q?.amount_cents);
     if (shipping.mode === "pickup") return 0;
     return Number.isFinite(cents) ? Math.max(0, Math.round(cents)) : 0;
   };
@@ -841,12 +915,16 @@
     const total = Math.max(0, subtotal - discount + shippingCents);
 
     if (cartSubtotalEl) cartSubtotalEl.textContent = money(subtotal);
+
     if (discountLineWrap && discountLineEl) {
       if (discount > 0) {
         discountLineWrap.hidden = false;
         discountLineEl.textContent = `-${money(discount)}`;
-      } else discountLineWrap.hidden = true;
+      } else {
+        discountLineWrap.hidden = true;
+      }
     }
+
     if (shippingLineEl) shippingLineEl.textContent = money(shippingCents);
     if (cartTotalEl) cartTotalEl.textContent = money(total);
 
@@ -855,6 +933,7 @@
 
   const renderCart = () => {
     if (!cartItemsEl) return;
+
     cartItemsEl.innerHTML = "";
 
     if (cart.length === 0) {
@@ -889,11 +968,13 @@
         saveCart();
         renderCart();
       });
+
       row.querySelector('[data-act="inc"]')?.addEventListener("click", () => {
         it.qty = Math.min(99, Number(it.qty || 1) + 1);
         saveCart();
         renderCart();
       });
+
       row.querySelector('[data-act="del"]')?.addEventListener("click", () => {
         cart = cart.filter((x) => x !== it);
         saveCart();
@@ -907,10 +988,11 @@
     refreshTotals();
   };
 
-  /* =========================================================
-     Promos
-  ========================================================= */
+  // =========================================================
+  // Promos
+  // =========================================================
   const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
+
   const validatePromo = () => {
     const code = normCode(promoCode?.value || "");
     if (!code) {
@@ -921,6 +1003,7 @@
 
     const rules = Array.isArray(promosData?.rules) ? promosData.rules : [];
     const r = rules.find((x) => normCode(x?.code) === code && !!x?.active);
+
     if (!r) {
       activePromo = null;
       showToast("Código inválido o expirado.", "error");
@@ -956,35 +1039,36 @@
     refreshTotals();
   };
 
-  /* =========================================================
-     Shipping quote (usa tu quote_shipping real)
-  ========================================================= */
+  // =========================================================
+  // Shipping quote (REAL)
+  // =========================================================
   const refreshShippingUI = () => {
-    if (!shipHint) return;
-
-    shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona ▼";
+    if (shipHint) shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona ▼";
 
     if (shipping.mode === "pickup") {
-      postalWrap && (postalWrap.hidden = true);
-      shippingNote && (shippingNote.textContent = "Recolección sin costo en nuestras instalaciones (Tijuana).");
+      if (postalWrap) postalWrap.hidden = true;
+      if (shippingNote) shippingNote.textContent = "Recolección sin costo en nuestras instalaciones (Tijuana).";
       shipping.quote = null;
       saveShipping();
       refreshTotals();
       return;
     }
 
-    postalWrap && (postalWrap.hidden = false);
-    shippingNote && (shippingNote.textContent = "Ingresa tu CP/ZIP y cotiza en vivo (Envía.com).");
+    if (postalWrap) postalWrap.hidden = false;
+    if (shippingNote) shippingNote.textContent = "Ingresa tu CP/ZIP y cotiza en vivo (Envía.com).";
     refreshTotals();
   };
 
   const doQuote = async () => {
     const zip = String(postalCode?.value || "").trim();
     if (!zip) return showToast("Escribe tu CP/ZIP.", "error");
+    if (!cart.length) return showToast("Agrega productos antes de cotizar.", "error");
 
     try {
-      quoteBtn && (quoteBtn.disabled = true);
-      quoteBtn && (quoteBtn.textContent = "Cotizando...");
+      if (quoteBtn) {
+        quoteBtn.disabled = true;
+        quoteBtn.textContent = "Cotizando...";
+      }
 
       const res = await fetch("/.netlify/functions/quote_shipping", {
         method: "POST",
@@ -992,31 +1076,35 @@
         body: JSON.stringify({
           postal_code: zip,
           country: shipping.mode === "envia_us" ? "US" : "MX",
-          items: cart.map((it) => ({ qty: Number(it.qty || 1) })),
+          items: cart.map((it) => ({ qty: Math.max(1, Number(it.qty || 1)) })),
         }),
       });
 
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j) throw new Error(j?.error || "No se pudo cotizar.");
+      if (j.ok === false) throw new Error(j.error || "No se pudo cotizar.");
 
       shipping.postal_code = zip;
       shipping.quote = j;
       saveShipping();
+
       showToast("Envío cotizado.", "ok");
       refreshTotals();
     } catch (e) {
       showToast(String(e?.message || e), "error");
     } finally {
-      quoteBtn && (quoteBtn.disabled = false);
-      quoteBtn && (quoteBtn.textContent = "Cotizar");
+      if (quoteBtn) {
+        quoteBtn.disabled = false;
+        quoteBtn.textContent = "Cotizar";
+      }
     }
   };
 
-  /* =========================================================
-     Checkout
-  ========================================================= */
+  // =========================================================
+  // Checkout
+  // =========================================================
   const doCheckout = async () => {
-    if (cart.length === 0) return showToast("Tu carrito está vacío.", "error");
+    if (!cart.length) return showToast("Tu carrito está vacío.", "error");
 
     const needsZip = shipping.mode !== "pickup";
     if (needsZip && !String(shipping.postal_code || "").trim()) {
@@ -1027,8 +1115,8 @@
     const req_id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
     try {
-      checkoutMsg && (checkoutMsg.hidden = true);
-      checkoutLoader && (checkoutLoader.hidden = false);
+      if (checkoutMsg) checkoutMsg.hidden = true;
+      if (checkoutLoader) checkoutLoader.hidden = false;
 
       const payload = {
         req_id,
@@ -1037,7 +1125,7 @@
         promo_code: activePromo?.code || "",
         items: cart.map((it) => ({
           sku: String(it.sku || "").trim(),
-          qty: Number(it.qty || 1),
+          qty: Math.max(1, Number(it.qty || 1)),
           size: it.size || "Unitalla",
         })),
       };
@@ -1053,16 +1141,18 @@
 
       window.location.href = j.url;
     } catch (e) {
-      checkoutLoader && (checkoutLoader.hidden = true);
-      checkoutMsg && (checkoutMsg.hidden = false);
-      checkoutMsg && (checkoutMsg.textContent = String(e?.message || e));
+      if (checkoutLoader) checkoutLoader.hidden = true;
+      if (checkoutMsg) {
+        checkoutMsg.hidden = false;
+        checkoutMsg.textContent = String(e?.message || e);
+      }
       showToast(String(e?.message || e), "error");
     }
   };
 
-  /* =========================================================
-     Assistant
-  ========================================================= */
+  // =========================================================
+  // Assistant
+  // =========================================================
   const appendAssistant = (who, text) => {
     if (!assistantOutput) return;
     const item = document.createElement("div");
@@ -1075,6 +1165,7 @@
   const askAssistant = async () => {
     const q = String(assistantInput?.value || "").trim();
     if (!q) return;
+
     assistantInput.value = "";
     appendAssistant("me", q);
 
@@ -1084,21 +1175,25 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: q }),
       });
+
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j?.ok) throw new Error(j?.error || "No hay respuesta.");
+
       appendAssistant("bot", String(j.reply || "Listo."));
     } catch {
       appendAssistant("bot", "Hubo un problema. Intenta de nuevo.");
     }
   };
 
-  /* =========================================================
-     Neuromarketing toast
-  ========================================================= */
+  // =========================================================
+  // Neuromarketing toast
+  // =========================================================
   const initNeuromarketing = () => {
     if (!salesNotification || !salesName || !salesAction) return;
+
     const names = ["Alex", "María", "Chris", "Fernanda", "Luis", "Sofía", "Diego", "Ana", "Jorge", "Daniela"];
     const actions = ["compró un hoodie", "compró una gorra", "compró una camiseta", "compró una chamarra", "compró mercancía oficial"];
+
     const tick = () => {
       if (document.hidden) return;
       salesName.textContent = names[Math.floor(Math.random() * names.length)];
@@ -1106,15 +1201,24 @@
       salesNotification.hidden = false;
       setTimeout(() => (salesNotification.hidden = true), 3500);
     };
+
     setTimeout(() => {
       tick();
       setInterval(tick, 18000);
     }, 7000);
   };
 
-  /* =========================================================
-     Events
-  ========================================================= */
+  // =========================================================
+  // SW
+  // =========================================================
+  const registerServiceWorker = () => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  };
+
+  // =========================================================
+  // Events
+  // =========================================================
   const initEvents = () => {
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
@@ -1138,13 +1242,13 @@
         appendAssistant("bot", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy? (tallas, envíos, modelos, etc.)");
       }
     };
+
     openAssistantBtn?.addEventListener("click", openAssistant);
     floatingAssistantBtn?.addEventListener("click", openAssistant);
     navOpenAssistant?.addEventListener("click", () => {
       closeLayer(sideMenu);
       openAssistant();
     });
-
     assistantClose?.addEventListener("click", () => closeLayer(assistantModal));
     assistantSendBtn?.addEventListener("click", askAssistant);
     assistantInput?.addEventListener("keydown", (e) => {
@@ -1172,6 +1276,23 @@
       document.querySelector("#categories")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
+    scrollLeftBtn?.addEventListener("click", () => scrollCarouselByCards(-1));
+    scrollRightBtn?.addEventListener("click", () => scrollCarouselByCards(+1));
+
+    const onCarouselScroll = debounce(() => snapCarouselToNearest(), 120);
+    productGrid?.addEventListener("scroll", onCarouselScroll, { passive: true });
+
+    productGrid?.addEventListener(
+      "pointerdown",
+      () => {
+        try {
+          localStorage.setItem("scorestore_carousel_used", "1");
+        } catch {}
+        if (carouselHint) carouselHint.hidden = true;
+      },
+      { passive: true }
+    );
+
     sortSelect?.addEventListener("change", () => {
       sortMode = String(sortSelect.value || "featured");
       renderProducts();
@@ -1189,6 +1310,7 @@
 
     const triggerSearch = debounce(() => {
       searchQuery = String(searchInput?.value || mobileSearchInput?.value || menuSearchInput?.value || "").trim();
+      if (searchQuery !== "" && catalogCarouselSection) catalogCarouselSection.hidden = false;
       updateFilterUI();
       renderProducts();
     }, 250);
@@ -1198,13 +1320,11 @@
       if (menuSearchInput) menuSearchInput.value = searchInput.value;
       triggerSearch();
     });
-
     mobileSearchInput?.addEventListener("input", () => {
       if (searchInput) searchInput.value = mobileSearchInput.value;
       if (menuSearchInput) menuSearchInput.value = mobileSearchInput.value;
       triggerSearch();
     });
-
     menuSearchInput?.addEventListener("input", () => {
       if (searchInput) searchInput.value = menuSearchInput.value;
       if (mobileSearchInput) mobileSearchInput.value = menuSearchInput.value;
@@ -1219,7 +1339,6 @@
       mobileSearchWrap.hidden = false;
       mobileSearchInput?.focus();
     });
-
     closeMobileSearchBtn?.addEventListener("click", () => {
       if (!mobileSearchWrap) return;
       mobileSearchWrap.hidden = true;
@@ -1232,7 +1351,6 @@
       selectedQty = Math.max(1, selectedQty - 1);
       if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
     });
-
     pmQtyInc?.addEventListener("click", () => {
       selectedQty = Math.min(99, selectedQty + 1);
       if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
@@ -1254,7 +1372,10 @@
 
     pmAdd?.addEventListener("click", () => {
       if (!currentProduct) return;
-      if (!selectedSize) return showToast("Selecciona una talla.", "error");
+      if (!selectedSize) {
+        showToast("Selecciona una talla.", "error");
+        return;
+      }
 
       const sku = currentProduct.sku;
       const found = cart.find((x) => x.sku === sku && x.size === selectedSize);
@@ -1268,6 +1389,7 @@
           qty: selectedQty,
         });
       }
+
       saveCart();
       showToast("Agregado al carrito.", "ok");
       closeLayer(productModal);
@@ -1328,29 +1450,26 @@
 
     window.addEventListener("scroll", onScroll, { passive: true });
     scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-    // ✅ real-time: refresh settings on focus
-    window.addEventListener("focus", () => fetchSiteSettings(), { passive: true });
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) fetchSiteSettings();
-    });
   };
 
-  /* =========================================================
-     Init
-  ========================================================= */
+  // =========================================================
+  // Init
+  // =========================================================
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
+
+    registerServiceWorker();
 
     loadCart();
     loadShipping();
     initEvents();
+    ensureCarouselDecor();
 
-    // first settings
-    await fetchSiteSettings();
+    fetchSiteSettings();
 
     await fetchPromos();
     validatePromo();
+
     refreshShippingUI();
     renderCart();
 
@@ -1358,7 +1477,6 @@
       catalog = await fetchCatalog();
       products = (catalog?.products || []).map(normalizeProduct).filter((p) => p.sku);
 
-      // ensure known sections
       products = products.map((p) => {
         if (!CATEGORY_CONFIG.some((c) => c.uiId === p.uiSection)) p.uiSection = "BAJA1000";
         return p;
@@ -1368,7 +1486,6 @@
       updateFilterUI();
       renderProducts();
 
-      // deep link sku
       const qs = new URLSearchParams(window.location.search);
       const deepSku = qs.get("sku");
       if (deepSku && products.some((p) => p.sku === deepSku)) openProduct(deepSku);
@@ -1381,11 +1498,8 @@
           setTimeout(() => (splash.hidden = true), 800);
         }
         initNeuromarketing();
-      }, 1200);
+      }, 1600);
     }
-
-    // ✅ real-time polling: 12s (estable en Netlify)
-    setInterval(() => fetchSiteSettings(), 12000);
   };
 
   init().catch(() => {
