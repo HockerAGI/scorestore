@@ -1,6 +1,12 @@
 /* override.css */
 /* =========================================================
    Override NO destructivo (iconos + fixes móviles)
+   Repo-aligned — v2026-03-04
+   Fixes:
+   - Lighthouse: catcard logos aspect ratio (height auto)
+   - Partners row: prevent distortion
+   - Performance tweaks: reduce blur on mobile, content-visibility
+   - Category meta visibility (porque JS inyecta esos nodos)
    ========================================================= */
 
 /* icono Asistente */
@@ -22,9 +28,6 @@
 
 /* =========================================================
    Performance + Promo Bar (Lighthouse + UX)
-   - Reduce blur on low-end / mobile
-   - content-visibility para secciones fuera de vista
-   - Promo bar (controlado por UnicOs)
    ========================================================= */
 
 :root{
@@ -96,14 +99,39 @@
   .card{
     box-shadow: 0 10px 24px rgba(0,0,0,0.10) !important;
   }
-  .hero__particles{ display:none; } /* keeps hero copy intact, reduces paint */
+  .hero__particles{ display:none; }
 }
 
 /* Prevent image distortion in partner row (layout-stable) */
-.partners__row img{ height: 36px; width: auto; }
+.partners__row img{
+  height: 36px;
+  width: auto;
+}
 
-/* ✅ FIX Lighthouse: category logos aspect ratio (mata height fijo si existe) */
+/* ✅ Lighthouse: prevent category logo distortion even if DOM has width/height attrs */
 .catcard__logo{
   height: auto !important;
+  max-width: 180px;
+  width: min(140px, 70vw);
   object-fit: contain;
+  display: block;
+}
+
+/* Category meta visibility (JS injects these nodes) */
+.catcard__meta{
+  margin-top: 14px;
+  text-align: center;
+  color: #ffffff;
+  font-weight: 900;
+}
+.catcard__title{
+  font-size: 15px;
+  letter-spacing: .4px;
+  line-height: 1.1;
+}
+.catcard__sub{
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.82);
+  font-weight: 800;
 }
