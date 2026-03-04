@@ -1,33 +1,39 @@
 /* =========================================================
-   SCORE STORE — main.js (Repo-aligned) — v2026-03-04
-   Objetivo:
-   - Nada roto: modales, carrito, checkout, cotización real
-   - Assets blindados (BAJA_500 vs BAJA500, etc.)
-   - Carruseles controlados (snap settle + hint)
-========================================================= */
+   SCORE STORE — Frontend (SYNCED + SITE SETTINGS + VFX SAFE)
+   ========================================================= */
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.03.04.SCORESTORE";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.03.04.SCORESTORE.V3";
+
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const debounce = (fn, wait = 160) => {
+
+  const debounce = (fn, wait = 150) => {
     let t = null;
     return (...args) => {
       clearTimeout(t);
       t = setTimeout(() => fn(...args), wait);
     };
   };
+
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const num = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
 
   const money = (cents) => {
-    const n = Number(cents);
-    const v = Number.isFinite(n) ? n : 0;
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 2,
-    }).format(v / 100);
+    const v = Number.isFinite(Number(cents)) ? Number(cents) : 0;
+    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2 }).format(v / 100);
+  };
+
+  const safeUrl = (u) => {
+    const s = String(u || "").trim();
+    if (!s) return "";
+    if (s.startsWith("http://") || s.startsWith("https://")) return s;
+    if (s.startsWith("/")) return s;
+    return s;
   };
 
   const escapeHtml = (s) =>
@@ -38,28 +44,9 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
 
-  // ✅ Normaliza diferencias REALES de carpetas del repo vs DB/JSON
-  const safeUrl = (u) => {
-    const s0 = String(u || "").trim();
-    if (!s0) return "";
-    if (s0.startsWith("http://") || s0.startsWith("https://") || s0.startsWith("data:")) return s0;
-
-    const s1 = s0
-      .replaceAll("assets/BAJA_500/", "assets/BAJA500/")
-      .replaceAll("assets/BAJA_400/", "assets/BAJA400/")
-      .replaceAll("assets/SF_250/", "assets/SF250/")
-      .replaceAll("assets/BAJA_1000/", "assets/EDICION_2025/");
-
-    if (s1.startsWith("/")) return s1;
-    if (s1.startsWith("assets/") || s1.startsWith("css/") || s1.startsWith("js/") || s1.startsWith("data/")) return `/${s1}`;
-    return s1;
-  };
-
-  const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
-
-  // =========================================================
-  // DOM refs (ID’s reales del index)
-  // =========================================================
+  /* =========================================================
+     DOM
+  ========================================================= */
   const splash = $("#splash");
   const overlay = $("#overlay");
 
@@ -88,9 +75,6 @@
 
   const catalogCarouselSection = $("#catalogCarouselSection");
   const carouselTitle = $("#carouselTitle");
-  const scrollLeftBtn = $("#scrollLeftBtn");
-  const scrollRightBtn = $("#scrollRightBtn");
-
   const productGrid = $("#productGrid");
   const statusRow = $("#statusRow");
 
@@ -158,7 +142,6 @@
   const cookieReject = $("#cookieReject");
 
   const scrollTopBtn = $("#scrollTopBtn");
-
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
 
@@ -166,70 +149,47 @@
   const salesName = $("#salesName");
   const salesAction = $("#salesAction");
 
-  // =========================================================
-  // Storage keys
-  // =========================================================
-  const STORAGE_KEYS = {
-    cart: "scorestore_cart_v2_pro",
-    ship: "scorestore_ship_v2",
-    consent: "scorestore_consent_v2",
-    promoDismiss: "scorestore_promo_dismissed",
-    seenSwipe: "scorestore_seen_product_swipe",
+  /* =========================================================
+     COPY TARGETS (no rompe estructura)
+     Si un elemento no existe, se ignora.
+  ========================================================= */
+  const copyTargets = {
+    hero_title: $("#heroTitle"),
+    hero_subtitle: $("#heroSubtitle"),
+    cta_primary: $("#scrollToCategoriesBtn"),
+    cta_secondary: $("#openCartBtn"),
+    section_categories: $("#categoriesTitle"),
+    section_catalog: $("#catalogTitle"),
   };
 
-  // =========================================================
-  // Config / Category mapping (real)
-  // =========================================================
+  /* =========================================================
+     Storage
+  ========================================================= */
+  const STORAGE_KEYS = {
+    cart: "scorestore_cart_v3",
+    ship: "scorestore_ship_v3",
+    consent: "scorestore_consent_v3",
+  };
+
+  /* =========================================================
+     Category config
+  ========================================================= */
   const CATEGORY_CONFIG = [
     { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
     { uiId: "BAJA500", name: "BAJA 500", logo: "assets/logo-baja500.webp", mapFrom: ["BAJA500", "BAJA_500"] },
     { uiId: "BAJA400", name: "BAJA 400", logo: "assets/logo-baja400.webp", mapFrom: ["BAJA400", "BAJA_400"] },
-    { uiId: "SF250",  name: "SAN FELIPE 250", logo: "assets/logo-sf250.webp", mapFrom: ["SF250", "SF_250"] },
+    { uiId: "SF250", name: "SAN FELIPE 250", logo: "assets/logo-sf250.webp", mapFrom: ["SF250", "SF_250"] },
   ];
 
-  const normalizeSectionIdToUi = (sectionId) => {
-    const sid = String(sectionId || "").trim();
-    const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
-    return found ? found.uiId : "BAJA1000";
-  };
-  const getLogoForSection = (uiId) => (CATEGORY_CONFIG.find((c) => c.uiId === uiId)?.logo || "assets/logo-baja1000.webp");
-
-  const inferCollection = (p) => {
-    const sid = String(p?.sectionId || p?.section_id || p?.section || "").trim();
-    if (sid === "EDICION_2025") return "Edición 2025";
-    if (sid === "OTRAS_EDICIONES") return "Ediciones Clásicas";
-    return "";
+  const SHIPPING_LABELS = {
+    pickup: "Recoger en fábrica (Tijuana)",
+    envia_mx: "Envío México (Envía.com)",
+    envia_us: "Envío USA (Envía.com)",
   };
 
-  const normalizeProduct = (p) => {
-    const sku = String(p?.sku || p?.id || "").trim();
-    const title = String(p?.title || p?.name || "Producto Oficial").trim();
-    const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.round(Number(p.price_cents)) : 0;
-
-    const images = Array.isArray(p?.images) ? p.images : (p?.img ? [p.img] : []);
-    const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes : ["S", "M", "L", "XL", "XXL"];
-    const rawSection = String(p?.sectionId || p?.categoryId || p?.section || "").trim();
-    const uiSection = normalizeSectionIdToUi(rawSection);
-
-    return {
-      sku,
-      title,
-      description: String(p?.description || "").trim(),
-      priceCents,
-      images: images.map(safeUrl).filter(Boolean),
-      img: images?.[0] ? safeUrl(images[0]) : "",
-      sizes: sizes.map((s) => String(s || "").trim()).filter(Boolean),
-      rawSection,
-      uiSection,
-      collection: inferCollection(p),
-      rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
-      stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
-    };
-  };
-
-  // =========================================================
-  // State
-  // =========================================================
+  /* =========================================================
+     State
+  ========================================================= */
   let catalog = null;
   let products = [];
   let promosData = { rules: [] };
@@ -246,100 +206,156 @@
   let selectedSize = "";
   let selectedQty = 1;
 
-  // =========================================================
-  // UI helpers
-  // =========================================================
+  /* =========================================================
+     Site Settings State
+  ========================================================= */
+  const siteSettings = {
+    season_key: "default",
+    theme: {
+      accent: "#e10600",
+      accent2: "#111827",
+      vfx_level: 0.8,
+      particles: true,
+      bg_glow: true,
+      hero_bg_url: "",
+      logo_url: "",
+      season_badge_url: "",
+    },
+    copy: {},
+    promo_active: false,
+    promo_text: "",
+    pixel_id: "",
+    updated_at: null,
+  };
+
+  /* =========================================================
+     UI helpers
+  ========================================================= */
   const showToast = (msg, type = "ok") => {
     if (!toast) return;
     toast.hidden = false;
     toast.setAttribute("data-type", type);
     toast.textContent = String(msg || "");
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => (toast.hidden = true), 2800);
+    showToast._t = setTimeout(() => {
+      toast.hidden = true;
+    }, 2800);
   };
-
-  const isModal = (el) => !!el?.classList?.contains("modal");
-  const anyLayerOpen = () =>
-    (!sideMenu?.hidden) ||
-    (!cartDrawer?.hidden) ||
-    (!assistantModal?.hidden) ||
-    (!productModal?.hidden) ||
-    (!sizeGuideModal?.hidden);
 
   const openLayer = (el) => {
     if (!el) return;
     el.hidden = false;
-    if (overlay) overlay.hidden = false;
+    overlay && (overlay.hidden = false);
     document.documentElement.classList.add("no-scroll");
-    if (isModal(el)) requestAnimationFrame(() => el.classList.add("modal--open"));
+    setTimeout(() => el.classList.add("is-open"), 0);
   };
 
   const closeLayer = (el) => {
     if (!el) return;
-    const MODAL_T = 520;
+    el.classList.remove("is-open");
+    setTimeout(() => {
+      el.hidden = true;
+      const anyOpen =
+        !sideMenu?.hidden ||
+        !cartDrawer?.hidden ||
+        !assistantModal?.hidden ||
+        !productModal?.hidden ||
+        !sizeGuideModal?.hidden;
 
-    if (isModal(el)) {
-      el.classList.remove("modal--open");
-      setTimeout(() => {
-        el.hidden = true;
-        if (!anyLayerOpen()) {
-          if (overlay) overlay.hidden = true;
-          document.documentElement.classList.remove("no-scroll");
-        }
-      }, MODAL_T);
-      return;
-    }
-
-    el.hidden = true;
-    if (!anyLayerOpen()) {
-      if (overlay) overlay.hidden = true;
-      document.documentElement.classList.remove("no-scroll");
-    }
+      if (!anyOpen) {
+        overlay && (overlay.hidden = true);
+        document.documentElement.classList.remove("no-scroll");
+      }
+    }, 220);
   };
 
-  // =========================================================
-  // Fetchers
-  // =========================================================
+  /* =========================================================
+     Mapping
+  ========================================================= */
+  const normalizeSectionIdToUi = (sectionId) => {
+    const sid = String(sectionId || "").trim();
+    const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
+    return found ? found.uiId : null;
+  };
+
+  const getLogoForSection = (uiId) => {
+    const found = CATEGORY_CONFIG.find((c) => c.uiId === uiId);
+    return found?.logo || "assets/logo-baja1000.webp";
+  };
+
+  const inferCollection = (p) => {
+    const sid = String(p?.sectionId || p?.section_id || p?.section || "").trim();
+    if (sid === "EDICION_2025") return "Edición 2025";
+    if (sid === "OTRAS_EDICIONES") return "Ediciones Clásicas";
+    return "";
+  };
+
+  const normalizeProduct = (p) => {
+    const sku = String(p?.sku || p?.id || "").trim();
+    const title = String(p?.title || p?.name || "Producto Oficial").trim();
+    const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.round(Number(p.price_cents)) : Math.round(num(p?.price_mxn) * 100);
+
+    const images = Array.isArray(p?.images) ? p.images : p?.img ? [p.img] : [];
+    const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes : ["S", "M", "L", "XL", "XXL"];
+    const rawSection = String(p?.sectionId || p?.categoryId || p?.section || p?.section_id || "").trim();
+
+    return {
+      sku,
+      id: sku,
+      title,
+      description: String(p?.description || "").trim(),
+      priceCents,
+      images: images.map(safeUrl),
+      img: images[0] ? safeUrl(images[0]) : "",
+      sizes: sizes.map((s) => String(s || "").trim()).filter(Boolean),
+      rawSection,
+      uiSection: normalizeSectionIdToUi(rawSection) || "BAJA1000",
+      collection: inferCollection(p),
+      rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
+      stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
+    };
+  };
+
+  /* =========================================================
+     Fetch helpers
+  ========================================================= */
   const fetchJsonFirstOk = async (urls) => {
     const list = Array.isArray(urls) ? urls : [];
     let lastErr = null;
     for (const u of list) {
       try {
         const res = await fetch(u, { headers: { "cache-control": "no-store" } });
-        if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+        if (!res.ok) {
+          lastErr = new Error(`HTTP ${res.status}`);
+          continue;
+        }
         const j = await res.json().catch(() => null);
         if (j) return j;
-      } catch (e) { lastErr = e; }
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw lastErr || new Error("No se pudo cargar JSON");
   };
 
   const fetchCatalog = async () => {
     const cv = encodeURIComponent(APP_VERSION);
-    return await fetchJsonFirstOk([
-      `/.netlify/functions/catalog?cv=${cv}`,
-      `data/catalog.json?cv=${cv}`,
-    ]);
+    return await fetchJsonFirstOk([`/.netlify/functions/catalog?cv=${cv}`, `data/catalog.json?cv=${cv}`]);
   };
 
   const fetchPromos = async () => {
     const cv = encodeURIComponent(APP_VERSION);
     try {
-      promosData = await fetchJsonFirstOk([
-        `/.netlify/functions/promos?cv=${cv}`,
-        `data/promos.json?cv=${cv}`,
-      ]);
+      promosData = await fetchJsonFirstOk([`/.netlify/functions/promos?cv=${cv}`, `data/promos.json?cv=${cv}`]);
       if (!promosData || !Array.isArray(promosData.rules)) promosData = { rules: [] };
     } catch {
       promosData = { rules: [] };
     }
   };
 
-  // =========================================================
-  // Site settings + Pixel + Promo bar (si existe function)
-  // =========================================================
-  const siteSettings = { promo_active: false, promo_text: "", pixel_id: "", hero_title: null, contact: null };
-
+  /* =========================================================
+     Pixel
+  ========================================================= */
   const loadMetaPixel = (pixelId) => {
     const id = String(pixelId || "").trim();
     if (!id) return;
@@ -360,41 +376,115 @@
     document.head.appendChild(script);
 
     const ns = document.createElement("noscript");
-    ns.innerHTML = `<img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=${encodeURIComponent(id)}&ev=PageView&noscript=1"/>`;
+    ns.innerHTML = `<img height="1" width="1" style="display:none" alt=""
+      src="https://www.facebook.com/tr?id=${encodeURIComponent(id)}&ev=PageView&noscript=1"/>`;
     document.body.appendChild(ns);
   };
 
-  const applySiteSettings = (s) => {
-    if (!s) return;
-    siteSettings.promo_active = !!s.promo_active;
-    siteSettings.promo_text = String(s.promo_text || "").trim();
-    siteSettings.pixel_id = String(s.pixel_id || "").trim();
+  /* =========================================================
+     Apply Site Settings (theme + copy + promo)
+  ========================================================= */
+  const applyTheme = (theme, seasonKey) => {
+    const t = theme || {};
+    const root = document.documentElement;
 
-    const dismissed = localStorage.getItem(STORAGE_KEYS.promoDismiss) === "1";
-    if (promoBar && promoBarText && siteSettings.promo_active && siteSettings.promo_text && !dismissed) {
-      promoBarText.textContent = siteSettings.promo_text;
+    // CSS vars (suaves)
+    root.style.setProperty("--red", String(t.accent || "#e10600"));
+    root.style.setProperty("--text", String(t.accent2 || "#111827"));
+
+    // VFX level (0..1)
+    const vfx = clamp(num(t.vfx_level), 0, 1);
+    root.style.setProperty("--vfx", String(vfx));
+
+    // Season class
+    document.body.classList.remove("season-default", "season-navidad", "season-halloween", "season-verano");
+    document.body.classList.add(`season-${String(seasonKey || "default").toLowerCase()}`);
+
+    // Hero background (si existe)
+    const bg = String(t.hero_bg_url || "").trim();
+    if (bg) {
+      const hero = $("#hero");
+      if (hero) hero.style.backgroundImage = `url('${bg.replace(/'/g, "")}')`;
+    }
+
+    // Logo swap (opcional)
+    const logoUrl = String(t.logo_url || "").trim();
+    const logoImg = $("#brandLogo");
+    if (logoImg && logoUrl) logoImg.src = logoUrl;
+
+    // Badge temporada (opcional)
+    const badgeUrl = String(t.season_badge_url || "").trim();
+    const badge = $("#seasonBadge");
+    if (badge && badgeUrl) {
+      badge.src = badgeUrl;
+      badge.hidden = false;
+    } else if (badge) {
+      badge.hidden = true;
+    }
+
+    // Partículas (suave)
+    const particles = t.particles !== false;
+    const particlesEl = $(".hero__particles");
+    if (particlesEl) particlesEl.style.display = particles ? "" : "none";
+  };
+
+  const applyCopy = (copy) => {
+    const c = copy || {};
+    for (const key of Object.keys(copyTargets)) {
+      const el = copyTargets[key];
+      if (!el) continue;
+      const val = c[key];
+      if (val === null || val === undefined || String(val).trim() === "") continue;
+
+      // Botones vs textos
+      if (el.tagName === "BUTTON") el.textContent = String(val);
+      else el.textContent = String(val);
+    }
+  };
+
+  const applyPromoBar = (active, text) => {
+    const dismissed = localStorage.getItem("scorestore_promo_dismissed") === "1";
+    if (promoBar && promoBarText && active && text && !dismissed) {
+      promoBarText.textContent = String(text);
       promoBar.hidden = false;
     } else if (promoBar) {
       promoBar.hidden = true;
-    }
-
-    if (siteSettings.pixel_id) {
-      const consent = localStorage.getItem(STORAGE_KEYS.consent);
-      if (consent === "accept") loadMetaPixel(siteSettings.pixel_id);
     }
   };
 
   const fetchSiteSettings = async () => {
     const cv = encodeURIComponent(APP_VERSION);
     try {
-      const j = await fetchJsonFirstOk([`/.netlify/functions/site_settings?cv=${cv}`]);
-      applySiteSettings(j);
+      const s = await fetchJsonFirstOk([`/.netlify/functions/site_settings?cv=${cv}&t=${Date.now()}`]);
+      if (!s || !s.ok) return;
+
+      // Solo aplica si cambió updated_at (evita parpadeo)
+      const newUpdated = s.updated_at || null;
+      if (siteSettings.updated_at && newUpdated && siteSettings.updated_at === newUpdated) return;
+
+      siteSettings.season_key = s.season_key || "default";
+      siteSettings.theme = s.theme || siteSettings.theme;
+      siteSettings.copy = s.copy || {};
+      siteSettings.promo_active = !!s.promo_active;
+      siteSettings.promo_text = String(s.promo_text || "");
+      siteSettings.pixel_id = String(s.pixel_id || "");
+      siteSettings.updated_at = newUpdated;
+
+      applyTheme(siteSettings.theme, siteSettings.season_key);
+      applyCopy(siteSettings.copy);
+      applyPromoBar(siteSettings.promo_active, siteSettings.promo_text);
+
+      // Pixel: solo si aceptó cookies
+      if (siteSettings.pixel_id) {
+        const consent = localStorage.getItem(STORAGE_KEYS.consent);
+        if (consent === "accept") loadMetaPixel(siteSettings.pixel_id);
+      }
     } catch {}
   };
 
-  // =========================================================
-  // Render: Categories
-  // =========================================================
+  /* =========================================================
+     Categories render
+  ========================================================= */
   const renderCategories = () => {
     if (!categoryGrid) return;
     categoryGrid.innerHTML = "";
@@ -403,6 +493,7 @@
     products.forEach((p) => counts.set(p.uiSection, (counts.get(p.uiSection) || 0) + 1));
 
     const frag = document.createDocumentFragment();
+
     for (const cat of CATEGORY_CONFIG) {
       const count = counts.get(cat.uiId) || 0;
 
@@ -410,23 +501,22 @@
       card.className = "catcard hover-fx";
       card.type = "button";
       card.setAttribute("data-cat", cat.uiId);
+      card.setAttribute("aria-label", `Explorar ${cat.name}`);
 
+      // ✅ Fix ratio: no height fijo
       card.innerHTML = `
-        <div class="catcard__bg" aria-hidden="true"></div>
         <div class="catcard__inner">
-          <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" loading="lazy" decoding="async">
+          <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}"
+               loading="lazy" decoding="async" style="height:auto; width:auto; max-width:100%; object-fit:contain;">
           <div class="catcard__meta">
             <div class="catcard__title tech-text">${escapeHtml(cat.name)}</div>
             <div class="catcard__sub">${count} productos</div>
           </div>
-          <div class="catcard__btn">Explorar</div>
+          <div class="catcard__chev">→</div>
         </div>
       `;
 
       card.addEventListener("click", () => {
-        $$(".catcard").forEach((x) => x.classList.remove("active"));
-        card.classList.add("active");
-
         activeCategory = cat.uiId;
         searchQuery = "";
         sortMode = "featured";
@@ -436,10 +526,10 @@
 
         updateFilterUI();
         renderProducts();
-        ensureProductSwipeHint();
 
         if (categoryHint) categoryHint.hidden = true;
         if (catalogCarouselSection) catalogCarouselSection.hidden = false;
+
         catalogCarouselSection?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
 
@@ -449,9 +539,9 @@
     categoryGrid.appendChild(frag);
   };
 
-  // =========================================================
-  // Render: Products + Product-card carousel (snap settle)
-  // =========================================================
+  /* =========================================================
+     Sorting + filter UI
+  ========================================================= */
   const applySort = (list) => {
     const arr = Array.isArray(list) ? [...list] : [];
     if (sortMode === "price_asc") return arr.sort((a, b) => a.priceCents - b.priceCents);
@@ -464,13 +554,10 @@
     const catLabel = activeCategory ? (CATEGORY_CONFIG.find((c) => c.uiId === activeCategory)?.name || activeCategory) : "";
     const hasSearch = !!String(searchQuery || "").trim();
 
-    if (activeFilterRow && activeFilterLabel) {
+    if (activeFilterRow && activeFilterLabel && clearFilterBtn) {
       if (activeCategory || hasSearch) {
         activeFilterRow.hidden = false;
-        activeFilterLabel.textContent =
-          `${activeCategory ? `Colección: ${catLabel}` : ""}` +
-          `${activeCategory && hasSearch ? " · " : ""}` +
-          `${hasSearch ? `Búsqueda: ${searchQuery}` : ""}`;
+        activeFilterLabel.textContent = `${activeCategory ? `Colección: ${catLabel}` : ""}${activeCategory && hasSearch ? " · " : ""}${hasSearch ? `Búsqueda: ${searchQuery}` : ""}`;
       } else {
         activeFilterRow.hidden = true;
       }
@@ -479,57 +566,39 @@
     if (carouselTitle) carouselTitle.textContent = activeCategory ? `Catálogo — ${catLabel}` : "Catálogo";
   };
 
-  const mountCardCarousel = (cardEl, imgs, title) => {
-    if (!cardEl || !imgs || imgs.length <= 1) return;
+  /* =========================================================
+     Carousel control (sin “deslizamiento loco”)
+  ========================================================= */
+  const ensureCarouselUX = () => {
+    if (!productGrid) return;
 
-    const track = cardEl.querySelector(".card__track");
-    const dots = Array.from(cardEl.querySelectorAll(".card__dot"));
-    const prevBtn = cardEl.querySelector(".card__nav--prev");
-    const nextBtn = cardEl.querySelector(".card__nav--next");
-    if (!track) return;
+    // scroll-snap para que “se quede quieto” en cada card
+    productGrid.style.scrollSnapType = "x mandatory";
+    productGrid.style.scrollBehavior = "smooth";
+    productGrid.style.overscrollBehaviorX = "contain";
 
-    const setActiveDot = (idx) => dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+    // Indicador visual "Desliza →"
+    let hint = $("#carouselHint");
+    if (!hint && catalogCarouselSection) {
+      hint = document.createElement("div");
+      hint.id = "carouselHint";
+      hint.className = "hint";
+      hint.style.margin = "10px 0 0 0";
+      hint.style.fontWeight = "900";
+      hint.style.opacity = "0.9";
+      hint.style.display = "flex";
+      hint.style.justifyContent = "space-between";
+      hint.innerHTML = `<span>Desliza para ver más</span><span style="font-weight:900;">→</span>`;
+      catalogCarouselSection.appendChild(hint);
+    }
 
-    const scrollToIndex = (idx) => {
-      const w = track.clientWidth || 1;
-      track.scrollTo({ left: idx * w, behavior: "smooth" });
-      setActiveDot(idx);
-    };
-
-    prevBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-      scrollToIndex(clamp(idx - 1, 0, imgs.length - 1));
-    });
-
-    nextBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-      scrollToIndex(clamp(idx + 1, 0, imgs.length - 1));
-    });
-
-    dots.forEach((d, i) => d.addEventListener("click", (e) => { e.stopPropagation(); scrollToIndex(i); }));
-
-    track.addEventListener("scroll", debounce(() => {
-      const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-      setActiveDot(clamp(idx, 0, imgs.length - 1));
-    }, 70), { passive: true });
-
-    // ✅ Queda fijo al soltar (evita “entre 2”)
-    const settle = debounce(() => {
-      const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-      scrollToIndex(clamp(idx, 0, imgs.length - 1));
-    }, 90);
-    track.addEventListener("touchend", settle, { passive: true });
-    track.addEventListener("pointerup", settle, { passive: true });
-    track.addEventListener("mouseleave", settle);
-
-    track.querySelectorAll("img").forEach((img) => {
-      img.setAttribute("draggable", "false");
-      img.setAttribute("alt", escapeHtml(title));
-    });
+    // Evita “inercia” exagerada en iOS
+    productGrid.style.webkitOverflowScrolling = "auto";
   };
 
+  /* =========================================================
+     Render products
+  ========================================================= */
   const renderProducts = () => {
     if (!productGrid) return;
 
@@ -538,6 +607,7 @@
 
     if (activeCategory) list = list.filter((p) => p.uiSection === activeCategory);
     if (q) list = list.filter((p) => `${p.title} ${p.sku} ${p.collection}`.toLowerCase().includes(q));
+
     list = applySort(list);
 
     if (statusRow) {
@@ -546,101 +616,58 @@
     }
 
     productGrid.innerHTML = "";
-
     if (list.length === 0) {
       productGrid.innerHTML = `<div class="hint" style="padding:18px; text-align:center;">Sin resultados para tu búsqueda.</div>`;
-      if (catalogCarouselSection) catalogCarouselSection.hidden = false;
+      catalogCarouselSection && (catalogCarouselSection.hidden = false);
       return;
     }
 
     const frag = document.createDocumentFragment();
+
     for (const p of list) {
       const card = document.createElement("div");
       card.className = "card hover-fx";
+      card.style.scrollSnapAlign = "start";
       card.setAttribute("data-sku", p.sku);
-      card.setAttribute("role", "button");
-      card.setAttribute("tabindex", "0");
 
-      const imgs = p.images?.length ? p.images : (p.img ? [p.img] : []);
-      const trackImgs = imgs.map((src) => `<img src="${safeUrl(src)}" width="400" height="500" loading="lazy" decoding="async" alt="${escapeHtml(p.title)}">`).join("");
-      const dots = imgs.length > 1
-        ? `<div class="card__dots">${imgs.map((_, i) => `<span class="card__dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>`
-        : `<div class="card__dots" hidden></div>`;
-
+      const img = p.img ? safeUrl(p.img) : "";
       card.innerHTML = `
-        <div class="card__media">
-          <div class="card__track custom-scrollbar" aria-label="Galería del producto">${trackImgs}</div>
-          <button class="card__nav card__nav--prev" type="button" aria-label="Imagen anterior">←</button>
-          <button class="card__nav card__nav--next" type="button" aria-label="Siguiente imagen">→</button>
-          ${dots}
-          ${imgs.length > 1 ? `<div class="card__swipe-hint">DESLIZA</div>` : `<div class="card__swipe-hint" style="opacity:0;"> </div>`}
+        <div class="card__img">
+          ${img ? `<img src="${img}" alt="${escapeHtml(p.title)}" loading="lazy" width="400" height="500" style="object-fit:cover;">` : ""}
         </div>
-
         <div class="card__body">
           <div class="card__title tech-text">${escapeHtml(p.title)}</div>
-          <div class="card__row">
-            <div class="card__meta" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span class="pill pill--logo">
-                <img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo" width="30" height="16" loading="lazy" decoding="async">
-              </span>
-              ${p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : ""}
-            </div>
-            <div class="price">${money(p.priceCents)}</div>
+          <div class="card__meta">
+            <span class="pill pill--logo">
+              <img src="${safeUrl(getLogoForSection(p.uiSection))}" alt="Logo" width="30" height="16" style="height:auto; width:auto;">
+            </span>
+            ${p.collection ? `<span class="pill pill--red">${escapeHtml(p.collection)}</span>` : ""}
           </div>
-          <button class="btn btn--black card__action-btn hover-fx" type="button" aria-label="Ver detalles y comprar">Ver Detalles y Comprar</button>
+          <div class="card__price">${money(p.priceCents)}</div>
+          <button class="btn btn--black card__action-btn hover-fx" type="button" aria-label="Ver detalles y comprar">
+            Ver Detalles y Comprar
+          </button>
         </div>
       `;
 
-      card.querySelector(".card__action-btn")?.addEventListener("click", (e) => { e.stopPropagation(); openProduct(p.sku); });
+      card.querySelector(".card__action-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProduct(p.sku);
+      });
       card.addEventListener("click", () => openProduct(p.sku));
-      card.addEventListener("keydown", (e) => { if (e.key === "Enter") openProduct(p.sku); });
 
-      mountCardCarousel(card, imgs, p.title);
       frag.appendChild(card);
     }
 
     productGrid.appendChild(frag);
-    if (catalogCarouselSection) catalogCarouselSection.hidden = false;
+    catalogCarouselSection && (catalogCarouselSection.hidden = false);
+
+    ensureCarouselUX();
   };
 
-  // =========================================================
-  // Hint “Desliza para ver más” (se quita al primer scroll)
-  // =========================================================
-  const ensureProductSwipeHint = () => {
-    const wrap = productGrid?.parentElement;
-    if (!wrap) return;
-
-    try {
-      const seen = localStorage.getItem(STORAGE_KEYS.seenSwipe) === "1";
-      if (seen) {
-        document.getElementById("productSwipeHint")?.remove();
-        return;
-      }
-    } catch {}
-
-    if (document.getElementById("productSwipeHint")) return;
-
-    const el = document.createElement("div");
-    el.id = "productSwipeHint";
-    el.className = "product-swipe-hint";
-    el.setAttribute("aria-hidden", "true");
-    el.innerHTML = `<span class="product-swipe-hint__txt">Desliza para ver más</span><span class="product-swipe-hint__arr">→</span>`;
-    wrap.appendChild(el);
-
-    const dismiss = () => {
-      try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {}
-      el.classList.add("is-hide");
-      setTimeout(() => el.remove(), 350);
-      productGrid?.removeEventListener?.("scroll", dismiss);
-    };
-
-    productGrid?.addEventListener?.("scroll", dismiss, { passive: true });
-    setTimeout(() => { if (document.body.contains(el)) el.classList.add("is-pulse"); }, 900);
-  };
-
-  // =========================================================
-  // Stock text (real)
-  // =========================================================
+  /* =========================================================
+     Scarcity
+  ========================================================= */
   const getScarcityText = (p) => {
     const stock = Number(p?.stock);
     if (!Number.isFinite(stock)) return "";
@@ -649,18 +676,17 @@
     return "";
   };
 
-  // =========================================================
-  // Modal: Producto
-  // =========================================================
+  /* =========================================================
+     Modal
+  ========================================================= */
   const openProduct = (sku) => {
     const p = products.find((x) => x.sku === sku);
     if (!p) return;
 
     currentProduct = p;
     selectedQty = 1;
-    selectedSize = "";
 
-    if (pmQtyDisplay) pmQtyDisplay.textContent = String(selectedQty);
+    if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
     if (pmTitle) pmTitle.textContent = p.title;
     if (pmPrice) pmPrice.textContent = money(p.priceCents);
 
@@ -677,30 +703,26 @@
 
     if (pmDesc) {
       const scarcity = getScarcityText(p);
-      pmDesc.innerHTML =
-        `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>` +
-        (scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : "");
+      pmDesc.innerHTML = `<p>${escapeHtml(p.description || "Merch oficial Score Store.")}</p>${scarcity ? `<p style="color:var(--red); font-weight:bold; margin-top:10px;">${scarcity}</p>` : ""}`;
     }
 
     if (pmChips) {
-      pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" width="30" height="16" alt="Logo"></span>`;
+      pmChips.innerHTML = `<span class="pill pill--logo"><img src="${safeUrl(getLogoForSection(p.uiSection))}" width="30" height="16" alt="Logo" style="height:auto; width:auto;"></span>`;
       if (p.collection) pmChips.innerHTML += `<span class="pill pill--red">${escapeHtml(p.collection)}</span>`;
     }
 
     if (pmSizePills) {
       pmSizePills.innerHTML = "";
+      selectedSize = "";
       p.sizes.forEach((s) => {
-        const size = String(s || "").trim();
-        if (!size) return;
-
         const btn = document.createElement("button");
         btn.className = "size-pill";
-        btn.textContent = size;
+        btn.textContent = String(s || "").trim();
 
         const stock = Number(p.stock);
-        const isOut = Number.isFinite(stock) && stock <= 0;
+        const isOutOfStock = Number.isFinite(stock) && stock <= 0;
 
-        if (isOut) {
+        if (isOutOfStock) {
           btn.classList.add("out-of-stock");
           btn.setAttribute("aria-disabled", "true");
           btn.title = "Sin stock";
@@ -709,7 +731,7 @@
           btn.onclick = () => {
             $$(".size-pill").forEach((b) => b.classList.remove("active"));
             btn.classList.add("active");
-            selectedSize = size;
+            selectedSize = String(s || "").trim();
           };
         }
 
@@ -717,59 +739,63 @@
       });
     }
 
-    // Galería dentro del modal (simple y estable)
     if (pmCarousel) {
-      const imgs = p.images?.length ? p.images : (p.img ? [p.img] : []);
+      const imgs = p.images.length ? p.images : p.img ? [p.img] : [];
       pmCarousel.innerHTML = `
-        <div class="pm__track" id="pmTrack">
-          ${imgs.map((src) => `<img src="${safeUrl(src)}" width="400" height="500" loading="lazy" alt="${escapeHtml(p.title)}">`).join("")}
+        <div class="pm__track" id="pmTrack" style="scroll-snap-type:x mandatory; overflow-x:auto; display:flex; gap:12px;">
+          ${imgs
+            .map(
+              (src) =>
+                `<img src="${safeUrl(src)}" width="400" height="500" loading="lazy" alt="${escapeHtml(p.title)}"
+                      style="scroll-snap-align:start; flex:0 0 100%; object-fit:cover; border-radius:18px;">`
+            )
+            .join("")}
         </div>
         ${imgs.length > 1 ? `<div class="pm__dots">${imgs.map((_, i) => `<span class="pm__dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>` : ""}
       `;
 
       const track = pmCarousel.querySelector("#pmTrack");
-      const dots = Array.from(pmCarousel.querySelectorAll(".pm__dot"));
+      const dots = pmCarousel.querySelectorAll(".pm__dot");
 
-      const setDot = (idx) => dots.forEach((d, i) => d.classList.toggle("active", i === idx));
-      const snap = debounce(() => {
-        const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-        const k = clamp(idx, 0, Math.max(0, dots.length - 1));
-        track.scrollTo({ left: k * (track.clientWidth || 1), behavior: "smooth" });
-        setDot(k);
-      }, 90);
+      dots.forEach((d, i) => {
+        d.addEventListener("click", () => {
+          track?.scrollTo({ left: i * track.clientWidth, behavior: "smooth" });
+          dots.forEach((x) => x.classList.remove("active"));
+          d.classList.add("active");
+        });
+      });
 
-      dots.forEach((d, i) => d.addEventListener("click", () => {
-        track.scrollTo({ left: i * (track.clientWidth || 1), behavior: "smooth" });
-        setDot(i);
-      }));
-
-      track?.addEventListener("scroll", debounce(() => {
-        const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-        setDot(clamp(idx, 0, Math.max(0, dots.length - 1)));
-      }, 70), { passive: true });
-
-      track?.addEventListener("touchend", snap, { passive: true });
-      track?.addEventListener("pointerup", snap, { passive: true });
-      track?.addEventListener("mouseleave", snap);
+      track?.addEventListener(
+        "scroll",
+        () => {
+          const idx = Math.round(track.scrollLeft / (track.clientWidth || 1));
+          dots.forEach((x, i) => x.classList.toggle("active", i === idx));
+        },
+        { passive: true }
+      );
     }
 
     openLayer(productModal);
   };
 
-  // =========================================================
-  // Cart + totals
-  // =========================================================
+  /* =========================================================
+     Cart
+  ========================================================= */
   const loadCart = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
       const parsed = raw ? JSON.parse(raw) : null;
       cart = Array.isArray(parsed) ? parsed : [];
-    } catch { cart = []; }
+    } catch {
+      cart = [];
+    }
     if (cartCount) cartCount.textContent = String(cart.reduce((a, it) => a + Number(it.qty || 0), 0));
   };
 
   const saveCart = () => {
-    try { localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
+    } catch {}
     if (cartCount) cartCount.textContent = String(cart.reduce((a, it) => a + Number(it.qty || 0), 0));
   };
 
@@ -782,7 +808,9 @@
   };
 
   const saveShipping = () => {
-    try { localStorage.setItem(STORAGE_KEYS.ship, JSON.stringify(shipping)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEYS.ship, JSON.stringify(shipping));
+    } catch {}
   };
 
   const computeSubtotal = () => cart.reduce((sum, it) => sum + Number(it.priceCents || 0) * Number(it.qty || 0), 0);
@@ -801,23 +829,25 @@
 
   const computeShippingCents = () => {
     if (activePromo && String(activePromo.type || "").toLowerCase() === "free_shipping") return 0;
-    if (shipping.mode === "pickup") return 0;
     const cents = Number(shipping?.quote?.amount_cents);
+    if (shipping.mode === "pickup") return 0;
     return Number.isFinite(cents) ? Math.max(0, Math.round(cents)) : 0;
   };
 
   const refreshTotals = () => {
     const subtotal = computeSubtotal();
     const discount = computeDiscount(subtotal);
-    const ship = computeShippingCents();
-    const total = Math.max(0, subtotal - discount + ship);
+    const shippingCents = computeShippingCents();
+    const total = Math.max(0, subtotal - discount + shippingCents);
 
     if (cartSubtotalEl) cartSubtotalEl.textContent = money(subtotal);
     if (discountLineWrap && discountLineEl) {
-      if (discount > 0) { discountLineWrap.hidden = false; discountLineEl.textContent = `-${money(discount)}`; }
-      else discountLineWrap.hidden = true;
+      if (discount > 0) {
+        discountLineWrap.hidden = false;
+        discountLineEl.textContent = `-${money(discount)}`;
+      } else discountLineWrap.hidden = true;
     }
-    if (shippingLineEl) shippingLineEl.textContent = money(ship);
+    if (shippingLineEl) shippingLineEl.textContent = money(shippingCents);
     if (cartTotalEl) cartTotalEl.textContent = money(total);
 
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
@@ -825,8 +855,8 @@
 
   const renderCart = () => {
     if (!cartItemsEl) return;
-
     cartItemsEl.innerHTML = "";
+
     if (cart.length === 0) {
       cartItemsEl.innerHTML = `<div class="hint" style="padding:14px;">Tu carrito está vacío.</div>`;
       refreshTotals();
@@ -834,6 +864,7 @@
     }
 
     const frag = document.createDocumentFragment();
+
     for (const it of cart) {
       const row = document.createElement("div");
       row.className = "cartitem";
@@ -853,29 +884,57 @@
         </div>
       `;
 
-      row.querySelector('[data-act="dec"]')?.addEventListener("click", () => { it.qty = Math.max(1, Number(it.qty || 1) - 1); saveCart(); renderCart(); });
-      row.querySelector('[data-act="inc"]')?.addEventListener("click", () => { it.qty = Math.min(99, Number(it.qty || 1) + 1); saveCart(); renderCart(); });
-      row.querySelector('[data-act="del"]')?.addEventListener("click", () => { cart = cart.filter((x) => x !== it); saveCart(); renderCart(); });
+      row.querySelector('[data-act="dec"]')?.addEventListener("click", () => {
+        it.qty = Math.max(1, Number(it.qty || 1) - 1);
+        saveCart();
+        renderCart();
+      });
+      row.querySelector('[data-act="inc"]')?.addEventListener("click", () => {
+        it.qty = Math.min(99, Number(it.qty || 1) + 1);
+        saveCart();
+        renderCart();
+      });
+      row.querySelector('[data-act="del"]')?.addEventListener("click", () => {
+        cart = cart.filter((x) => x !== it);
+        saveCart();
+        renderCart();
+      });
 
       frag.appendChild(row);
     }
+
     cartItemsEl.appendChild(frag);
     refreshTotals();
   };
 
-  // =========================================================
-  // Promo codes
-  // =========================================================
+  /* =========================================================
+     Promos
+  ========================================================= */
+  const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
   const validatePromo = () => {
     const code = normCode(promoCode?.value || "");
-    if (!code) { activePromo = null; refreshTotals(); return; }
+    if (!code) {
+      activePromo = null;
+      refreshTotals();
+      return;
+    }
 
     const rules = Array.isArray(promosData?.rules) ? promosData.rules : [];
     const r = rules.find((x) => normCode(x?.code) === code && !!x?.active);
-    if (!r) { activePromo = null; showToast("Código inválido o expirado.", "error"); refreshTotals(); return; }
+    if (!r) {
+      activePromo = null;
+      showToast("Código inválido o expirado.", "error");
+      refreshTotals();
+      return;
+    }
 
     const expOk = !r.expires_at || Date.now() <= new Date(r.expires_at).getTime();
-    if (!expOk) { activePromo = null; showToast("Código expirado.", "error"); refreshTotals(); return; }
+    if (!expOk) {
+      activePromo = null;
+      showToast("Código expirado.", "error");
+      refreshTotals();
+      return;
+    }
 
     activePromo = {
       code: String(r.code || "").trim(),
@@ -897,40 +956,35 @@
     refreshTotals();
   };
 
-  // =========================================================
-  // Shipping quote (REAL): /.netlify/functions/quote_shipping
-  // =========================================================
+  /* =========================================================
+     Shipping quote (usa tu quote_shipping real)
+  ========================================================= */
   const refreshShippingUI = () => {
-    if (shipHint) {
-      shipHint.textContent =
-        shipping.mode === "pickup" ? "Recoger en fábrica (Tijuana)" :
-        shipping.mode === "envia_us" ? "Envío USA (Envía.com)" :
-        "Envío México (Envía.com)";
-    }
+    if (!shipHint) return;
+
+    shipHint.textContent = SHIPPING_LABELS[shipping.mode] || "Selecciona ▼";
 
     if (shipping.mode === "pickup") {
-      if (postalWrap) postalWrap.hidden = true;
-      if (shippingNote) shippingNote.textContent = "Recolección sin costo en nuestras instalaciones (Tijuana).";
+      postalWrap && (postalWrap.hidden = true);
+      shippingNote && (shippingNote.textContent = "Recolección sin costo en nuestras instalaciones (Tijuana).");
       shipping.quote = null;
-      shipping.postal_code = "";
-      if (postalCode) postalCode.value = "";
       saveShipping();
       refreshTotals();
       return;
     }
 
-    if (postalWrap) postalWrap.hidden = false;
-    if (shippingNote) shippingNote.textContent = "Ingresa tu CP/ZIP y cotiza en vivo (Envía.com).";
+    postalWrap && (postalWrap.hidden = false);
+    shippingNote && (shippingNote.textContent = "Ingresa tu CP/ZIP y cotiza en vivo (Envía.com).");
     refreshTotals();
   };
 
   const doQuote = async () => {
     const zip = String(postalCode?.value || "").trim();
     if (!zip) return showToast("Escribe tu CP/ZIP.", "error");
-    if (cart.length === 0) return showToast("Primero agrega productos al carrito.", "error");
 
     try {
-      if (quoteBtn) { quoteBtn.disabled = true; quoteBtn.textContent = "Cotizando..."; }
+      quoteBtn && (quoteBtn.disabled = true);
+      quoteBtn && (quoteBtn.textContent = "Cotizando...");
 
       const res = await fetch("/.netlify/functions/quote_shipping", {
         method: "POST",
@@ -944,40 +998,37 @@
 
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j) throw new Error(j?.error || "No se pudo cotizar.");
-      if (j?.ok === false) throw new Error(j?.error || "No se pudo cotizar.");
 
       shipping.postal_code = zip;
       shipping.quote = j;
       saveShipping();
-
-      if (shippingNote) {
-        const label = String(j?.label || (shipping.mode === "envia_us" ? "Envío USA" : "Envío MX")).trim();
-        const tag = j?.provider === "fallback" ? "estimado" : "en vivo";
-        shippingNote.textContent = `${label}: ${money(Number(j?.amount_cents || 0))} (${tag})`;
-      }
-
-      showToast(j.provider === "fallback" ? "Envío estimado calculado." : "Envío cotizado.", "ok");
+      showToast("Envío cotizado.", "ok");
       refreshTotals();
     } catch (e) {
       showToast(String(e?.message || e), "error");
     } finally {
-      if (quoteBtn) { quoteBtn.disabled = false; quoteBtn.textContent = "Cotizar"; }
+      quoteBtn && (quoteBtn.disabled = false);
+      quoteBtn && (quoteBtn.textContent = "Cotizar");
     }
   };
 
-  // =========================================================
-  // Checkout (REAL): /.netlify/functions/create_checkout
-  // =========================================================
+  /* =========================================================
+     Checkout
+  ========================================================= */
   const doCheckout = async () => {
     if (cart.length === 0) return showToast("Tu carrito está vacío.", "error");
+
     const needsZip = shipping.mode !== "pickup";
-    if (needsZip && !String(shipping.postal_code || "").trim()) return showToast("Cotiza tu envío (CP/ZIP) antes de pagar.", "error");
+    if (needsZip && !String(shipping.postal_code || "").trim()) {
+      showToast("Cotiza tu envío (CP/ZIP) antes de pagar.", "error");
+      return;
+    }
 
     const req_id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
     try {
-      if (checkoutMsg) checkoutMsg.hidden = true;
-      if (checkoutLoader) checkoutLoader.hidden = false;
+      checkoutMsg && (checkoutMsg.hidden = true);
+      checkoutLoader && (checkoutLoader.hidden = false);
 
       const payload = {
         req_id,
@@ -1002,15 +1053,16 @@
 
       window.location.href = j.url;
     } catch (e) {
-      if (checkoutLoader) checkoutLoader.hidden = true;
-      if (checkoutMsg) { checkoutMsg.hidden = false; checkoutMsg.textContent = String(e?.message || e); }
+      checkoutLoader && (checkoutLoader.hidden = true);
+      checkoutMsg && (checkoutMsg.hidden = false);
+      checkoutMsg && (checkoutMsg.textContent = String(e?.message || e));
       showToast(String(e?.message || e), "error");
     }
   };
 
-  // =========================================================
-  // Assistant
-  // =========================================================
+  /* =========================================================
+     Assistant
+  ========================================================= */
   const appendAssistant = (who, text) => {
     if (!assistantOutput) return;
     const item = document.createElement("div");
@@ -1040,9 +1092,9 @@
     }
   };
 
-  // =========================================================
-  // Neuromarketing toast (visual)
-  // =========================================================
+  /* =========================================================
+     Neuromarketing toast
+  ========================================================= */
   const initNeuromarketing = () => {
     if (!salesNotification || !salesName || !salesAction) return;
     const names = ["Alex", "María", "Chris", "Fernanda", "Luis", "Sofía", "Diego", "Ana", "Jorge", "Daniela"];
@@ -1054,39 +1106,50 @@
       salesNotification.hidden = false;
       setTimeout(() => (salesNotification.hidden = true), 3500);
     };
-    setTimeout(() => { tick(); setInterval(tick, 18000); }, 7000);
+    setTimeout(() => {
+      tick();
+      setInterval(tick, 18000);
+    }, 7000);
   };
 
-  // =========================================================
-  // SW
-  // =========================================================
-  const registerServiceWorker = () => {
-    if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  };
-
-  // =========================================================
-  // Events (incluye carrusel de productos “por 1 tarjeta”)
-  // =========================================================
+  /* =========================================================
+     Events
+  ========================================================= */
   const initEvents = () => {
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
 
-    openCartBtn?.addEventListener("click", () => { openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
+    openCartBtn?.addEventListener("click", () => {
+      openLayer(cartDrawer);
+      refreshShippingUI();
+      renderCart();
+    });
     closeCartBtn?.addEventListener("click", () => closeLayer(cartDrawer));
-    navOpenCart?.addEventListener("click", () => { closeLayer(sideMenu); openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
+    navOpenCart?.addEventListener("click", () => {
+      closeLayer(sideMenu);
+      openLayer(cartDrawer);
+      refreshShippingUI();
+      renderCart();
+    });
 
     const openAssistant = () => {
       openLayer(assistantModal);
-      if (assistantOutput && assistantOutput.childElementCount === 0) appendAssistant("bot", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy? (tallas, envíos, modelos, etc.)");
+      if (assistantOutput && assistantOutput.childElementCount === 0) {
+        appendAssistant("bot", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy? (tallas, envíos, modelos, etc.)");
+      }
     };
     openAssistantBtn?.addEventListener("click", openAssistant);
     floatingAssistantBtn?.addEventListener("click", openAssistant);
-    navOpenAssistant?.addEventListener("click", () => { closeLayer(sideMenu); openAssistant(); });
+    navOpenAssistant?.addEventListener("click", () => {
+      closeLayer(sideMenu);
+      openAssistant();
+    });
 
     assistantClose?.addEventListener("click", () => closeLayer(assistantModal));
     assistantSendBtn?.addEventListener("click", askAssistant);
-    assistantInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") askAssistant(); });
+    assistantInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") askAssistant();
+    });
 
     overlay?.addEventListener("click", () => {
       if (!productModal?.hidden) return closeLayer(productModal);
@@ -1105,70 +1168,75 @@
       if (!sideMenu?.hidden) return closeLayer(sideMenu);
     });
 
-    scrollToCategoriesBtn?.addEventListener("click", () => document.querySelector("#categories")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    scrollToCategoriesBtn?.addEventListener("click", () => {
+      document.querySelector("#categories")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
-    // Carrusel productos: avanzar 1 tarjeta + settle
-    const getTrackStep = () => {
-      const card = productGrid?.querySelector?.(".card");
-      const cardW = card ? Math.round(card.getBoundingClientRect().width) : 320;
-      const gapRaw = productGrid ? getComputedStyle(productGrid).gap : "32px";
-      const gap = Math.round(parseFloat(gapRaw) || 32);
-      return Math.max(240, cardW + gap);
-    };
-
-    const settleProductTrack = debounce(() => {
-      if (!productGrid) return;
-      const step = getTrackStep();
-      const idx = Math.round((productGrid.scrollLeft || 0) / step);
-      productGrid.scrollTo({ left: idx * step, behavior: "smooth" });
-    }, 120);
-
-    const scrollProductTrack = (dir) => {
-      if (!productGrid) return;
-      const step = getTrackStep();
-      productGrid.scrollBy({ left: dir * step, behavior: "smooth" });
-      try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {}
-    };
-
-    scrollLeftBtn?.addEventListener("click", () => scrollProductTrack(-1));
-    scrollRightBtn?.addEventListener("click", () => scrollProductTrack(1));
-    productGrid?.addEventListener?.("touchend", settleProductTrack, { passive: true });
-    productGrid?.addEventListener?.("pointerup", settleProductTrack, { passive: true });
-    productGrid?.addEventListener?.("scroll", () => { try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {} }, { passive: true });
-
-    sortSelect?.addEventListener("change", () => { sortMode = String(sortSelect.value || "featured"); renderProducts(); });
+    sortSelect?.addEventListener("change", () => {
+      sortMode = String(sortSelect.value || "featured");
+      renderProducts();
+    });
 
     clearFilterBtn?.addEventListener("click", () => {
       activeCategory = null;
       searchQuery = "";
-      $$(".catcard").forEach((x) => x.classList.remove("active"));
       if (searchInput) searchInput.value = "";
       if (mobileSearchInput) mobileSearchInput.value = "";
       if (menuSearchInput) menuSearchInput.value = "";
       updateFilterUI();
       renderProducts();
-      ensureProductSwipeHint();
     });
 
     const triggerSearch = debounce(() => {
       searchQuery = String(searchInput?.value || mobileSearchInput?.value || menuSearchInput?.value || "").trim();
-      if (searchQuery !== "" && catalogCarouselSection) catalogCarouselSection.hidden = false;
       updateFilterUI();
       renderProducts();
-      ensureProductSwipeHint();
-    }, 220);
+    }, 250);
 
-    searchInput?.addEventListener("input", () => { if (mobileSearchInput) mobileSearchInput.value = searchInput.value; if (menuSearchInput) menuSearchInput.value = searchInput.value; triggerSearch(); });
-    mobileSearchInput?.addEventListener("input", () => { if (searchInput) searchInput.value = mobileSearchInput.value; if (menuSearchInput) menuSearchInput.value = mobileSearchInput.value; triggerSearch(); });
-    menuSearchInput?.addEventListener("input", () => { if (searchInput) searchInput.value = menuSearchInput.value; if (mobileSearchInput) mobileSearchInput.value = menuSearchInput.value; triggerSearch(); try { closeLayer(sideMenu); } catch {} });
+    searchInput?.addEventListener("input", () => {
+      if (mobileSearchInput) mobileSearchInput.value = searchInput.value;
+      if (menuSearchInput) menuSearchInput.value = searchInput.value;
+      triggerSearch();
+    });
 
-    mobileSearchBtn?.addEventListener("click", () => { if (!mobileSearchWrap) return; mobileSearchWrap.hidden = false; mobileSearchInput?.focus(); });
-    closeMobileSearchBtn?.addEventListener("click", () => { if (!mobileSearchWrap) return; mobileSearchWrap.hidden = true; });
+    mobileSearchInput?.addEventListener("input", () => {
+      if (searchInput) searchInput.value = mobileSearchInput.value;
+      if (menuSearchInput) menuSearchInput.value = mobileSearchInput.value;
+      triggerSearch();
+    });
+
+    menuSearchInput?.addEventListener("input", () => {
+      if (searchInput) searchInput.value = menuSearchInput.value;
+      if (mobileSearchInput) mobileSearchInput.value = menuSearchInput.value;
+      triggerSearch();
+      try {
+        closeLayer(sideMenu);
+      } catch {}
+    });
+
+    mobileSearchBtn?.addEventListener("click", () => {
+      if (!mobileSearchWrap) return;
+      mobileSearchWrap.hidden = false;
+      mobileSearchInput?.focus();
+    });
+
+    closeMobileSearchBtn?.addEventListener("click", () => {
+      if (!mobileSearchWrap) return;
+      mobileSearchWrap.hidden = true;
+    });
 
     pmClose?.addEventListener("click", () => closeLayer(productModal));
     pmBackBtn?.addEventListener("click", () => closeLayer(productModal));
-    pmQtyDec?.addEventListener("click", () => { selectedQty = Math.max(1, selectedQty - 1); if (pmQtyDisplay) pmQtyDisplay.textContent = String(selectedQty); });
-    pmQtyInc?.addEventListener("click", () => { selectedQty = Math.min(99, selectedQty + 1); if (pmQtyDisplay) pmQtyDisplay.textContent = String(selectedQty); });
+
+    pmQtyDec?.addEventListener("click", () => {
+      selectedQty = Math.max(1, selectedQty - 1);
+      if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
+    });
+
+    pmQtyInc?.addEventListener("click", () => {
+      selectedQty = Math.min(99, selectedQty + 1);
+      if (pmQtyDisplay) pmQtyDisplay.textContent = selectedQty;
+    });
 
     openSizeGuideBtn?.addEventListener("click", () => openLayer(sizeGuideModal));
     closeSizeGuideBtn?.addEventListener("click", () => closeLayer(sizeGuideModal));
@@ -1188,14 +1256,21 @@
       if (!currentProduct) return;
       if (!selectedSize) return showToast("Selecciona una talla.", "error");
 
-      const found = cart.find((x) => x.sku === currentProduct.sku && x.size === selectedSize);
+      const sku = currentProduct.sku;
+      const found = cart.find((x) => x.sku === sku && x.size === selectedSize);
       if (found) found.qty = Math.min(99, Number(found.qty || 1) + selectedQty);
-      else cart.push({ sku: currentProduct.sku, title: currentProduct.title, priceCents: currentProduct.priceCents, size: selectedSize, qty: selectedQty });
-
+      else {
+        cart.push({
+          sku,
+          title: currentProduct.title,
+          priceCents: currentProduct.priceCents,
+          size: selectedSize,
+          qty: selectedQty,
+        });
+      }
       saveCart();
       showToast("Agregado al carrito.", "ok");
       closeLayer(productModal);
-
       openLayer(cartDrawer);
       refreshShippingUI();
       renderCart();
@@ -1205,7 +1280,6 @@
       radio.addEventListener("change", () => {
         shipping.mode = String(radio.value || "pickup");
         shipping.quote = null;
-        shipping.postal_code = "";
         saveShipping();
         refreshShippingUI();
       });
@@ -1214,7 +1288,9 @@
     quoteBtn?.addEventListener("click", doQuote);
 
     applyPromoBtn?.addEventListener("click", validatePromo);
-    promoCode?.addEventListener("keydown", (e) => { if (e.key === "Enter") validatePromo(); });
+    promoCode?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") validatePromo();
+    });
 
     continueShoppingBtn?.addEventListener("click", () => closeLayer(cartDrawer));
     checkoutBtn?.addEventListener("click", doCheckout);
@@ -1223,18 +1299,24 @@
     if (!consentDecision && cookieBanner) cookieBanner.hidden = false;
 
     cookieAccept?.addEventListener("click", () => {
-      try { localStorage.setItem(STORAGE_KEYS.consent, "accept"); } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEYS.consent, "accept");
+      } catch {}
       if (cookieBanner) cookieBanner.hidden = true;
       if (siteSettings.pixel_id) loadMetaPixel(siteSettings.pixel_id);
     });
 
     cookieReject?.addEventListener("click", () => {
-      try { localStorage.setItem(STORAGE_KEYS.consent, "reject"); } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEYS.consent, "reject");
+      } catch {}
       if (cookieBanner) cookieBanner.hidden = true;
     });
 
     promoBarClose?.addEventListener("click", () => {
-      try { localStorage.setItem(STORAGE_KEYS.promoDismiss, "1"); } catch {}
+      try {
+        localStorage.setItem("scorestore_promo_dismissed", "1");
+      } catch {}
       if (promoBar) promoBar.hidden = true;
     });
 
@@ -1246,46 +1328,67 @@
 
     window.addEventListener("scroll", onScroll, { passive: true });
     scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    // ✅ real-time: refresh settings on focus
+    window.addEventListener("focus", () => fetchSiteSettings(), { passive: true });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) fetchSiteSettings();
+    });
   };
 
-  // =========================================================
-  // Init
-  // =========================================================
+  /* =========================================================
+     Init
+  ========================================================= */
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-
-    registerServiceWorker();
 
     loadCart();
     loadShipping();
     initEvents();
-    fetchSiteSettings();
+
+    // first settings
+    await fetchSiteSettings();
+
     await fetchPromos();
+    validatePromo();
     refreshShippingUI();
     renderCart();
-    refreshTotals();
 
     try {
       catalog = await fetchCatalog();
       products = (catalog?.products || []).map(normalizeProduct).filter((p) => p.sku);
 
+      // ensure known sections
+      products = products.map((p) => {
+        if (!CATEGORY_CONFIG.some((c) => c.uiId === p.uiSection)) p.uiSection = "BAJA1000";
+        return p;
+      });
+
       renderCategories();
       updateFilterUI();
       renderProducts();
-      ensureProductSwipeHint();
 
+      // deep link sku
       const qs = new URLSearchParams(window.location.search);
       const deepSku = qs.get("sku");
-      if (deepSku && products.some((x) => x.sku === deepSku)) openProduct(deepSku);
+      if (deepSku && products.some((p) => p.sku === deepSku)) openProduct(deepSku);
     } catch {
       showToast("Problemas al cargar el catálogo principal. Verifica tu conexión.", "error");
     } finally {
       setTimeout(() => {
-        if (splash) { splash.classList.add("fade-out"); setTimeout(() => (splash.hidden = true), 800); }
+        if (splash) {
+          splash.classList.add("fade-out");
+          setTimeout(() => (splash.hidden = true), 800);
+        }
         initNeuromarketing();
-      }, 2200);
+      }, 1200);
     }
+
+    // ✅ real-time polling: 12s (estable en Netlify)
+    setInterval(() => fetchSiteSettings(), 12000);
   };
 
-  init().catch(() => { if (splash) splash.hidden = true; });
+  init().catch(() => {
+    if (splash) splash.hidden = true;
+  });
 })();
