@@ -78,7 +78,7 @@ exports.handler = async (event) => {
     const { data, error } = await sb
       .from("products")
       .select("sku,name,description,price_cents,price_mxn,images,sizes,section_id,rank,image_url")
-      .eq("organization_id", orgId)
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
       .is("deleted_at", null)
       .eq("is_active", true)
       .order("rank", { ascending: true })
@@ -114,7 +114,7 @@ exports.handler = async (event) => {
       })
       .filter(Boolean);
 
-    // Recalcula counts de secciones para que el UI no “pierda” categorías
+    // Recalcula counts para que el UI no “pierda” categorías
     const countByUi = new Map();
     for (const pr of products) {
       const ui = normalizeSectionIdToUi(pr.sectionId) || pr.sectionId;
