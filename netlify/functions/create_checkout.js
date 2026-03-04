@@ -58,7 +58,21 @@ const loadLocalCatalogIndex = () => {
   for (const p of Array.isArray(cat?.products) ? cat.products : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
-    map.set(sku, p);
+
+    const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.floor(Number(p.price_cents)) : 0;
+    const title = String(p?.title || p?.name || "Producto Oficial").trim();
+    const images = Array.isArray(p?.images) ? p.images.filter(Boolean).map(String) : p?.img ? [String(p.img)] : [];
+    const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["S", "M", "L", "XL", "XXL"];
+
+    map.set(sku, {
+      sku,
+      title,
+      description: String(p?.description || "").trim(),
+      priceCents,
+      sizes,
+      images,
+      stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
+    });
   }
   return map;
 };
@@ -68,16 +82,19 @@ const loadLocalPromos = () => readJsonFile("data/promos.json") || { rules: [] };
 const getProductsFromDB = async (sb, orgId, skus) => {
   const { data, error } = await sb
     .from("products")
-    .select("sku,name,description,price_cents,price_mxn,images,sizes,image_url,stock,is_active,deleted_at")
+    .select(
+      "sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id"
+    )
     .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
     .in("sku", skus)
     .is("deleted_at", null)
-    .eq("is_active", true)
+    .or("active.eq.true,is_active.eq.true")
     .limit(200);
 
   if (error) throw error;
 
   const map = new Map();
+
   for (const p of Array.isArray(data) ? data : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
@@ -87,7 +104,11 @@ const getProductsFromDB = async (sb, orgId, skus) => {
 
     const priceCents = Number.isFinite(Number(p?.price_cents))
       ? Math.max(0, Math.floor(Number(p.price_cents)))
-      : Math.max(0, Math.round(num(p?.price_mxn) * 100));
+      : Number.isFinite(Number(p?.price_mxn)) && num(p.price_mxn) > 0
+        ? Math.max(0, Math.round(num(p.price_mxn) * 100))
+        : Math.max(0, Math.round(num(p?.base_mxn) * 100));
+
+    const primary = (p?.img && String(p.img)) || (p?.image_url && String(p.image_url)) || (images.length ? images[0] : "");
 
     map.set(sku, {
       sku,
@@ -95,10 +116,11 @@ const getProductsFromDB = async (sb, orgId, skus) => {
       description: String(p?.description || "").trim(),
       priceCents,
       sizes: sizes || ["S", "M", "L", "XL", "XXL"],
-      images: images.length ? images : p?.image_url ? [String(p.image_url)] : [],
+      images: images.length ? images : primary ? [primary] : [],
       stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
     });
   }
+
   return map;
 };
 
@@ -106,7 +128,7 @@ const getPromoFromDB = async (sb, orgId, code) => {
   const c = normCode(code);
   if (!c) return null;
 
-  const { data, error } = await sb
+  const { data } = await sb
     .from("promo_rules")
     .select("code,type,value,description,active,min_amount_mxn,expires_at")
     .eq("organization_id", orgId)
@@ -115,7 +137,6 @@ const getPromoFromDB = async (sb, orgId, code) => {
     .limit(1)
     .maybeSingle();
 
-  if (error) return null;
   if (!data?.code) return null;
 
   const expOk = !data.expires_at || Date.now() <= new Date(data.expires_at).getTime();
@@ -148,13 +169,13 @@ const getPromoFromLocal = (promosData, code) => {
   };
 };
 
-// Stripe no acepta unit_amount negativo -> descuento por reducción de unit_amount
 function cloneLineItem(li, unitAmount, qty) {
   const out = JSON.parse(JSON.stringify(li));
   out.price_data.unit_amount = Math.max(0, Math.floor(Number(unitAmount) || 0));
   out.quantity = Math.max(1, Math.floor(Number(qty) || 1));
   return out;
 }
+
 function sumLineItemsCents(items) {
   let s = 0;
   for (const li of Array.isArray(items) ? items : []) {
@@ -164,6 +185,7 @@ function sumLineItemsCents(items) {
   }
   return s;
 }
+
 function applyFixedDiscount(lineItems, discountCents) {
   let remaining = Math.max(0, Math.floor(Number(discountCents) || 0));
   if (!remaining) return { lineItems, discountApplied: 0 };
@@ -172,11 +194,18 @@ function applyFixedDiscount(lineItems, discountCents) {
   let applied = 0;
 
   for (const li of lineItems) {
-    if (remaining <= 0) { out.push(li); continue; }
+    if (remaining <= 0) {
+      out.push(li);
+      continue;
+    }
 
     const u = Number(li?.price_data?.unit_amount || 0) || 0;
     const q = Number(li?.quantity || 0) || 0;
-    if (u <= 0 || q <= 0) { out.push(li); continue; }
+
+    if (u <= 0 || q <= 0) {
+      out.push(li);
+      continue;
+    }
 
     const maxReduce = u * q;
     const take = Math.min(remaining, maxReduce);
@@ -200,11 +229,15 @@ function applyFixedDiscount(lineItems, discountCents) {
 
   return { lineItems: out, discountApplied: applied };
 }
+
 function applyPromoToLineItems(lineItems, promo, subtotalCents) {
   if (!promo) return { lineItems, discountApplied: 0, freeShipping: false };
 
   const type = String(promo.type || "").toLowerCase();
-  if (type === "free_shipping") return { lineItems, discountApplied: 0, freeShipping: true };
+
+  if (type === "free_shipping") {
+    return { lineItems, discountApplied: 0, freeShipping: true };
+  }
 
   if (type === "percent") {
     const raw = num(promo.value);
@@ -228,10 +261,13 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
   const reqOrigin = event?.headers?.origin || event?.headers?.Origin || "";
-  if (reqOrigin && !isAllowedOrigin(reqOrigin)) return jsonResponse(403, { ok: false, error: "Origin no permitido" }, origin);
+  if (reqOrigin && !isAllowedOrigin(reqOrigin)) {
+    return jsonResponse(403, { ok: false, error: "Origin no permitido" }, origin);
+  }
 
   try {
     const body = JSON.parse(event.body || "{}");
+
     const items = Array.isArray(body?.items) ? body.items : [];
     if (!items.length) return jsonResponse(400, { ok: false, error: "Carrito vacío" }, origin);
 
@@ -280,7 +316,9 @@ exports.handler = async (event) => {
       if (!unitPrice) return jsonResponse(400, { ok: false, error: `Precio inválido: ${it.sku}` }, origin);
 
       const stock = Number(p.stock);
-      if (Number.isFinite(stock) && stock <= 0) return jsonResponse(409, { ok: false, error: `Sin stock: ${it.sku}` }, origin);
+      if (Number.isFinite(stock) && stock <= 0) {
+        return jsonResponse(409, { ok: false, error: `Sin stock: ${it.sku}` }, origin);
+      }
 
       itemsQty += it.qty;
 
