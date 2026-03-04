@@ -101,3 +101,9 @@
 
 /* Prevent image distortion in partner row (layout-stable) */
 .partners__row img{ height: 36px; width: auto; }
+
+/* ✅ FIX Lighthouse: category logos aspect ratio (mata height fijo si existe) */
+.catcard__logo{
+  height: auto !important;
+  object-fit: contain;
+}
