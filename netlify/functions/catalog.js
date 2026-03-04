@@ -60,7 +60,9 @@ exports.handler = async (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin || "*";
 
   if (event.httpMethod === "OPTIONS") return handleOptions(event);
-  if (event.httpMethod !== "GET") return withNoStore(jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
+  if (event.httpMethod !== "GET") {
+    return withNoStore(jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
+  }
 
   const fallback =
     readJsonFile("data/catalog.json") || {
@@ -77,10 +79,12 @@ exports.handler = async (event) => {
 
     const { data, error } = await sb
       .from("products")
-      .select("sku,name,description,price_cents,price_mxn,images,sizes,section_id,rank,image_url")
+      .select(
+        "sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,category,sub_section,rank,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
+      )
       .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
       .is("deleted_at", null)
-      .eq("is_active", true)
+      .or("active.eq.true,is_active.eq.true")
       .order("rank", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(800);
@@ -95,40 +99,59 @@ exports.handler = async (event) => {
         if (!sku) return null;
 
         const images = Array.isArray(p?.images) ? p.images.filter(Boolean).map(String) : [];
-        const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["S", "M", "L", "XL", "XXL"];
+        const sizes =
+          Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["S", "M", "L", "XL", "XXL"];
 
         const priceCents = Number.isFinite(Number(p?.price_cents))
           ? Math.max(0, Math.floor(Number(p.price_cents)))
-          : Math.max(0, Math.round(num(p?.price_mxn) * 100));
+          : Number.isFinite(Number(p?.price_mxn)) && num(p.price_mxn) > 0
+            ? Math.max(0, Math.round(num(p.price_mxn) * 100))
+            : Math.max(0, Math.round(num(p?.base_mxn) * 100));
+
+        const sectionId = String(p?.section_id || p?.category || "EDICION_2025").trim();
+
+        const primary =
+          (p?.img && String(p.img)) || (p?.image_url && String(p.image_url)) || (images.length ? images[0] : "");
+
+        const outImages = images.length ? images : primary ? [primary] : [];
 
         return {
           sku,
           title: String(p?.name || "Producto Oficial").trim(),
           description: String(p?.description || "").trim(),
           price_cents: priceCents,
-          sectionId: String(p?.section_id || "EDICION_2025").trim(),
-          images: images.length ? images : p?.image_url ? [String(p.image_url)] : [],
+          sectionId,
+          images: outImages,
           sizes,
           rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
+          stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
         };
       })
       .filter(Boolean);
 
-    // Recalcula counts para que el UI no “pierda” categorías
     const countByUi = new Map();
     for (const pr of products) {
       const ui = normalizeSectionIdToUi(pr.sectionId) || pr.sectionId;
       countByUi.set(ui, (countByUi.get(ui) || 0) + 1);
     }
 
-    const sections = Array.isArray(fallback.sections)
-      ? fallback.sections.map((s) => {
-          const id = String(s?.id || "").trim();
-          return { ...s, count: countByUi.get(id) || 0 };
-        })
-      : [];
+    const sections = CATEGORY_CONFIG.map((c) => ({
+      id: c.uiId,
+      title: c.uiId,
+      count: countByUi.get(c.uiId) || 0,
+    }));
 
-    return withNoStore(jsonResponse(200, { ...fallback, sections, products }, origin));
+    return withNoStore(
+      jsonResponse(
+        200,
+        {
+          store: { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
+          sections,
+          products,
+        },
+        origin
+      )
+    );
   } catch {
     return withNoStore(jsonResponse(200, fallback, origin));
   }
