@@ -3,15 +3,14 @@
 const {
   jsonResponse,
   handleOptions,
+  safeJsonParse,
   readJsonFile,
-  isAllowedOrigin,
-  getStripe,
   getEnviaQuote,
+  initStripe,
   supabaseAdmin,
 } = require("./_shared");
 
 const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
-
 const isUuid = (s) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || "").trim());
 
@@ -53,26 +52,12 @@ const resolveOrgId = async (sb) => {
 };
 
 const loadLocalCatalogIndex = () => {
-  const cat = readJsonFile("data/catalog.json");
+  const cat = readJsonFile("data/catalog.json") || { products: [] };
   const map = new Map();
   for (const p of Array.isArray(cat?.products) ? cat.products : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
-
-    const priceCents = Number.isFinite(Number(p?.price_cents)) ? Math.floor(Number(p.price_cents)) : 0;
-    const title = String(p?.title || p?.name || "Producto Oficial").trim();
-    const images = Array.isArray(p?.images) ? p.images.filter(Boolean).map(String) : p?.img ? [String(p.img)] : [];
-    const sizes = Array.isArray(p?.sizes) && p.sizes.length ? p.sizes.map(String) : ["S", "M", "L", "XL", "XXL"];
-
-    map.set(sku, {
-      sku,
-      title,
-      description: String(p?.description || "").trim(),
-      priceCents,
-      sizes,
-      images,
-      stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
-    });
+    map.set(sku, p);
   }
   return map;
 };
@@ -82,19 +67,16 @@ const loadLocalPromos = () => readJsonFile("data/promos.json") || { rules: [] };
 const getProductsFromDB = async (sb, orgId, skus) => {
   const { data, error } = await sb
     .from("products")
-    .select(
-      "sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id"
-    )
-    .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+    .select("sku,name,description,price_cents,price_mxn,images,sizes,image_url,stock,is_active,deleted_at")
+    .eq("organization_id", orgId)
     .in("sku", skus)
     .is("deleted_at", null)
-    .or("active.eq.true,is_active.eq.true")
+    .eq("is_active", true)
     .limit(200);
 
   if (error) throw error;
 
   const map = new Map();
-
   for (const p of Array.isArray(data) ? data : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
@@ -104,11 +86,7 @@ const getProductsFromDB = async (sb, orgId, skus) => {
 
     const priceCents = Number.isFinite(Number(p?.price_cents))
       ? Math.max(0, Math.floor(Number(p.price_cents)))
-      : Number.isFinite(Number(p?.price_mxn)) && num(p.price_mxn) > 0
-        ? Math.max(0, Math.round(num(p.price_mxn) * 100))
-        : Math.max(0, Math.round(num(p?.base_mxn) * 100));
-
-    const primary = (p?.img && String(p.img)) || (p?.image_url && String(p.image_url)) || (images.length ? images[0] : "");
+      : Math.max(0, Math.round(num(p?.price_mxn) * 100));
 
     map.set(sku, {
       sku,
@@ -116,11 +94,10 @@ const getProductsFromDB = async (sb, orgId, skus) => {
       description: String(p?.description || "").trim(),
       priceCents,
       sizes: sizes || ["S", "M", "L", "XL", "XXL"],
-      images: images.length ? images : primary ? [primary] : [],
+      images: images.length ? images : p?.image_url ? [String(p.image_url)] : [],
       stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
     });
   }
-
   return map;
 };
 
@@ -128,7 +105,7 @@ const getPromoFromDB = async (sb, orgId, code) => {
   const c = normCode(code);
   if (!c) return null;
 
-  const { data } = await sb
+  const { data, error } = await sb
     .from("promo_rules")
     .select("code,type,value,description,active,min_amount_mxn,expires_at")
     .eq("organization_id", orgId)
@@ -137,7 +114,7 @@ const getPromoFromDB = async (sb, orgId, code) => {
     .limit(1)
     .maybeSingle();
 
-  if (!data?.code) return null;
+  if (error || !data?.code) return null;
 
   const expOk = !data.expires_at || Date.now() <= new Date(data.expires_at).getTime();
   if (!expOk) return null;
@@ -235,9 +212,7 @@ function applyPromoToLineItems(lineItems, promo, subtotalCents) {
 
   const type = String(promo.type || "").toLowerCase();
 
-  if (type === "free_shipping") {
-    return { lineItems, discountApplied: 0, freeShipping: true };
-  }
+  if (type === "free_shipping") return { lineItems, discountApplied: 0, freeShipping: true };
 
   if (type === "percent") {
     const raw = num(promo.value);
@@ -260,20 +235,14 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return handleOptions(event);
   if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
 
-  const reqOrigin = event?.headers?.origin || event?.headers?.Origin || "";
-  if (reqOrigin && !isAllowedOrigin(reqOrigin)) {
-    return jsonResponse(403, { ok: false, error: "Origin no permitido" }, origin);
-  }
-
   try {
-    const body = JSON.parse(event.body || "{}");
+    const stripe = initStripe();
+    const body = safeJsonParse(event.body) || {};
 
     const items = Array.isArray(body?.items) ? body.items : [];
     if (!items.length) return jsonResponse(400, { ok: false, error: "Carrito vacío" }, origin);
 
     const reqId = String(body?.req_id || "").trim();
-    if (reqId && reqId.length > 120) return jsonResponse(400, { ok: false, error: "req_id inválido" }, origin);
-
     const shipping_mode = String(body?.shipping_mode || "pickup").trim();
     const postal_code = String(body?.postal_code || "").trim();
     const promo_code = normCode(body?.promo_code);
@@ -365,11 +334,10 @@ exports.handler = async (event) => {
     const freeShipping = !!promoApplied.freeShipping;
     const finalShippingCents = freeShipping ? 0 : shippingCents;
 
+    const SITE_URL = String(process.env.SITE_URL || "https://scorestore.netlify.app").replace(/\/+$/, "");
+
     const pmTypes = ["card"];
     if (String(process.env.STRIPE_ENABLE_OXXO || "0") === "1") pmTypes.push("oxxo");
-
-    const SITE_URL = String(process.env.SITE_URL || "https://scorestore.netlify.app").replace(/\/+$/, "");
-    const stripe = getStripe();
 
     const sessionParams = {
       mode: "payment",
