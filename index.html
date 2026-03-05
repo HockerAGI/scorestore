@@ -6,9 +6,10 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-  
+
+  <!-- CSP: Stripe + Supabase + Meta Pixel (si lo activas por site_settings) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
-  
+
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -31,19 +32,16 @@
   <meta name="twitter:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="twitter:image" content="https://scorestore.netlify.app/assets/hero.webp" />
 
-  <!-- PWA (ya estaba en tu repo original) -->
   <link rel="manifest" href="site.webmanifest" />
   <link rel="icon" href="assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
 
   <link rel="preconnect" href="https://js.stripe.com" crossorigin />
-  <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
   <link rel="preload" href="css/styles.css" as="style" />
   <link rel="preload" href="assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Override NO destructivo (nuevo) -->
-  <link rel="stylesheet" href="css/override.css?v=2026-02-27" />
+  <link rel="stylesheet" href="css/override.css?v=2026-03-05" />
 
   <script type="application/ld+json">
     {
@@ -62,7 +60,7 @@
   <div id="splash" class="splash" aria-hidden="true">
     <div class="splash__bg"></div>
     <div class="splash__vignette"></div>
-    <div class="splash__dust"></div> 
+    <div class="splash__dust"></div>
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
@@ -101,7 +99,6 @@
           <span class="icon" aria-hidden="true">⌕</span>
         </button>
 
-        <!-- CAMBIO: icono Asistente ahora SVG (no depende del carácter ✦) -->
         <button id="openAssistantBtn" class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow" type="button" aria-label="Abrir Asistente Virtual SCORE" title="Pregúntale al Asistente SCORE">
           <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
@@ -116,14 +113,14 @@
         </button>
       </div>
     </div>
-    
+
     <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
       <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." aria-label="Buscador móvil" />
       <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" type="button" aria-label="Cerrar buscador" style="border:none;">✕</button>
     </div>
   </header>
 
-  <!-- Promo Bar (controlado por UnicOs / site_settings) -->
+  <!-- Promo Bar (controlado por site_settings) -->
   <div id="promoBar" class="promo-bar" role="status" aria-live="polite" hidden>
     <div class="wrap promo-bar__inner">
       <span id="promoBarText" class="promo-bar__text"></span>
@@ -139,8 +136,8 @@
     <div class="wrap hero__inner">
       <div class="hero__content">
         <img class="hero__desert hero-vfx-float" src="assets/logo-world-desert.webp" alt="World Desert Championship" width="280" height="253" />
+        <!-- ✅ HERO COPY INTACTO -->
         <h1 class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
-        
         <p class="hero__hook">Diseño, pasión y rendimiento extremo en cada hilo. <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong></p>
 
         <div class="hero__cta">
@@ -162,55 +159,42 @@
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint bounce-anim" style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);">👈 Selecciona una tarjeta para descubrir productos exclusivos.</div>
+      <div id="categoryHint" class="hint bounce-anim" style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);">
+        👈 Selecciona una tarjeta para descubrir productos exclusivos.
+      </div>
     </section>
 
     <section id="catalogCarouselSection" class="carousel-section wrap vfx-glass-container" aria-label="Productos destacados de la colección seleccionada" hidden>
       <div class="carousel-header">
-        <h3 id="carouselTitle" style="color: var(--red); display:flex; align-items:center; gap:10px; margin: 0; text-shadow: 0 2px 10px rgba(225,6,0,0.3);">Catálogo</h3>
-        <div class="carousel-controls">
-          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la izquierda" title="Ver anteriores">←</button>
-          <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la derecha" title="Ver siguientes">→</button>
+        <div class="carousel-header__left">
+          <h3 id="carouselTitle" class="section-title" style="margin:0;">Catálogo</h3>
+          <div id="activeFilterRow" class="hint" hidden style="margin-top:8px;">
+            <span id="activeFilterLabel"></span>
+            <button id="clearFilterBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button" style="margin-left:10px;">Limpiar</button>
+          </div>
         </div>
-      </div>
 
-      <div class="section__head" style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-        <div class="section__tools" style="width: 100%; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <span id="statusRow" class="status neon-text-dark" aria-live="polite" style="margin:0; font-weight: 600;"></span>
-          <div class="sort-wrapper glass-panel" style="display: flex; align-items: center; gap: 10px; padding: 5px 15px; border-radius: 999px;">
-            <label for="sortSelect" style="font-size: 13px; color: var(--muted); font-weight: bold;">Ordenar por:</label>
-            <select id="sortSelect" name="sortSelect" class="select select--modern tech-select" aria-label="Opciones de ordenamiento de productos">
-              <option value="featured">★ Relevancia</option>
-              <option value="price_asc">Menor Precio</option>
-              <option value="price_desc">Mayor Precio</option>
-              <option value="name_asc">Orden Alfabético (A-Z)</option>
-            </select>
+        <div class="carousel-header__right">
+          <select id="sortSelect" class="input tech-input" aria-label="Ordenar productos" style="max-width: 220px;">
+            <option value="featured">Destacados</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+            <option value="name_asc">Nombre: A-Z</option>
+          </select>
+
+          <div class="carousel-controls">
+            <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Ver anterior">←</button>
+            <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Ver siguiente">→</button>
           </div>
         </div>
       </div>
 
-      <div id="activeFilterRow" class="filterrow tech-filter-row" hidden>
-        <span id="activeFilterLabel" class="filterrow__label" style="display:flex; align-items:center; gap:8px;"></span>
-        <button id="clearFilterBtn" class="btn btn--tiny btn--ghost hover-fx tech-clear-btn" type="button" aria-label="Borrar filtros actuales">Quitar Filtros ✕</button>
-      </div>
+      <div id="statusRow" class="hint" style="margin: 6px 0 14px 0;"></div>
 
-      <div class="carousel-wrapper" style="position: relative;">
-        <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
-      </div>
+      <!-- track -->
+      <div id="productGrid" class="product-grid product-grid--carousel" aria-live="polite"></div>
     </section>
   </main>
-
-  <section class="partners" aria-label="Marcas y patrocinadores oficiales">
-    <div class="wrap partners__inner">
-      <div class="partners__title">SCORE INTERNATIONAL OFFICIAL PARTNERS</div>
-      <div class="partners__row">
-        <img src="assets/logo-ford.webp" alt="Socio comercial: Ford" width="90" height="35" loading="lazy" />
-        <img src="assets/logo-rzr.webp" alt="Socio comercial: Polaris RZR" width="90" height="35" loading="lazy" />
-        <img src="assets/logo-bfgodrich.webp" alt="Socio comercial: BFGoodrich Tires" width="90" height="35" loading="lazy" />
-        <img src="assets/logo-bfgodrich.webp" alt="Socio comercial: BFGoodrich Tires" width="90" height="35" loading="lazy" />
-      </div>
-    </div>
-  </section>
 
   <footer class="footer" role="contentinfo" style="background-color: var(--text); color: #ffffff;">
     <div class="wrap footer__inner">
@@ -221,8 +205,12 @@
           Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
           Logística inteligente internacional con Envía.com.<br><br>
           <div style="margin-top: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 8px;">
-            <a href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte"><span class="footer-icon">✉️</span> ventas.unicotextil@gmail.com</a>
-            <a href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp"><span class="footer-icon" style="color:#25D366;">💬</span> 664 236 8701</a>
+            <a href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte">
+              <span class="footer-icon">✉️</span> ventas.unicotextil@gmail.com
+            </a>
+            <a href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp">
+              <span class="footer-icon" style="color:#25D366;">💬</span> 664 236 8701
+            </a>
           </div>
         </div>
       </div>
@@ -251,7 +239,6 @@
     </div>
   </div>
 
-  <!-- CAMBIO: icono flotante SVG -->
   <button id="floatingAssistantBtn" class="floating-assistant hover-fx neon-glow" type="button" aria-label="Hablar con el Asistente SCORE" title="Chatea con SCORE">
     <svg class="assistant-icon pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
@@ -259,14 +246,14 @@
       <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
     </svg>
   </button>
-  
+
   <button id="scrollTopBtn" class="floating-scroll hover-fx neon-glow" type="button" aria-label="Volver arriba" title="Volver arriba" hidden>
     <span class="icon" aria-hidden="true">↑</span>
   </button>
 
-  <div id="overlay" class="overlay" hidden aria-hidden="true"></div>
+  <div id="overlay" class="overlay" hidden></div>
 
-  <div id="checkoutLoader" class="checkout-loader glass-panel" hidden role="alert" aria-live="assertive">
+  <div id="checkoutLoader" class="checkout-loader" hidden>
     <div class="checkout-loader__spinner tech-spinner"></div>
     <div class="checkout-loader__text">Estableciendo conexión encriptada con Stripe...<br><small style="color: var(--red); font-weight:bold;">Por tu seguridad, no actualices ni cierres esta ventana.</small></div>
   </div>
@@ -286,7 +273,6 @@
       <button class="navitem tech-navitem hover-fx" type="button" data-scroll="#categories">🏁 Ver Todas las Colecciones</button>
       <button class="navitem tech-navitem hover-fx" type="button" id="navOpenCart">🛒 Ir a Mi Carrito de Compras</button>
 
-      <!-- CAMBIO: icono asistente SVG dentro del menú -->
       <button class="navitem tech-navitem hover-fx" type="button" id="navOpenAssistant">
         <svg class="assistant-icon assistant-icon--menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
@@ -380,14 +366,15 @@
         <button id="continueShoppingBtn" class="btn btn--ghost btn--block btn--large hover-fx tech-ghost-btn" type="button" style="margin-top: 10px;">
           ← Volver a la tienda
         </button>
-        
+
         <div style="text-align: center; margin-top: 15px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; align-items: center;">
           <span>Pagos respaldados y protegidos por infraestructura Stripe Inc.</span>
           <div style="display:flex; gap: 8px; justify-content:center; align-items:center;">
-             <span>💳 Tarjetas Crédito/Débito</span>
-             <span>🏪 Efectivo en OXXO</span>
+            <span>💳 Tarjetas Crédito/Débito</span>
+            <span>🏪 Efectivo en OXXO</span>
           </div>
         </div>
+
         <div id="checkoutMsg" class="hint" hidden style="margin-top:10px; color:var(--red); text-align:center; font-weight: bold;"></div>
       </div>
     </div>
@@ -420,7 +407,7 @@
     </div>
   </section>
 
-  <!-- Product Modal (RESTORED: requerido por js/main.js) -->
+  <!-- ✅ Product Modal (RESTAURADO: requerido por main.js) -->
   <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Detalles del producto" hidden>
     <div class="modal__panel vfx-modal-panel">
       <div class="modal__head sticky-header glass-header">
@@ -482,7 +469,7 @@
     </div>
   </section>
 
-  <!-- Size Guide Modal (RESTORED) -->
+  <!-- ✅ Size Guide Modal -->
   <section id="sizeGuideModal" class="modal" role="dialog" aria-modal="true" aria-label="Guía de tallas" hidden>
     <div class="modal__panel vfx-modal-panel">
       <div class="modal__head sticky-header glass-header">
@@ -509,7 +496,7 @@
     </div>
   </section>
 
-  <!-- Cookie banner (RESTORED: requerido por js/main.js) -->
+  <!-- ✅ Cookie banner (requerido por main.js) -->
   <div id="cookieBanner" class="cookie glass-panel" role="dialog" aria-label="Preferencias de cookies" hidden>
     <div class="cookie__text">
       Usamos cookies para funcionamiento básico del carrito y para mejorar la experiencia. Puedes aceptar o rechazar.
@@ -522,6 +509,7 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script defer src="js/main.js"></script>
+  <script>window.__APP_VERSION__ = "2026.03.05.SCORESTORE";</script>
+  <script src="js/main.js?v=2026-03-05" defer></script>
 </body>
 </html>
