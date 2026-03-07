@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+  <meta name="description" content="Estado del pedido en SCORE STORE." />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -12,97 +12,238 @@
 
   <title>Estado de Pedido — SCORE STORE</title>
 
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
+
+  <style>
+    .success-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px 40px;
+      position: relative;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 0 26%),
+        linear-gradient(180deg, #090909 0%, #101010 100%);
+    }
+    .success-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(rgba(0,0,0,0.48), rgba(0,0,0,0.82)),
+        url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
+      filter: saturate(1.05) brightness(0.58);
+    }
+    .success-shell {
+      width: 100%;
+      max-width: 760px;
+      position: relative;
+      z-index: 2;
+    }
+    .success-panel {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-radius: 28px;
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.32),
+        inset 0 0 0 1px rgba(255,255,255,0.70);
+      overflow: hidden;
+      padding: 28px 22px;
+    }
+    .success-logo {
+      height: auto;
+      width: min(180px, 45vw);
+      margin: 0 auto 18px;
+      aspect-ratio: 120 / 53;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 24px rgba(225,6,0,0.28));
+    }
+    .success-hero {
+      text-align: center;
+    }
+    .success-emoji {
+      font-size: 58px;
+      line-height: 1;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.28));
+    }
+    .success-title {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 38px);
+      line-height: 1.08;
+      font-weight: 900;
+      color: var(--black-btn);
+    }
+    .success-copy {
+      max-width: 620px;
+      margin: 14px auto 0;
+      font-size: 15px;
+      line-height: 1.72;
+      color: #374151;
+      font-weight: 600;
+    }
+    .success-box {
+      margin-top: 22px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 20px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.74));
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    }
+    .success-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .success-meta {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .success-meta-card {
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .success-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .success-value {
+      font-weight: 900;
+      color: var(--black-btn);
+      word-break: break-word;
+    }
+    .success-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .success-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.04);
+      color: #4b5563;
+      font-size: 13px;
+      line-height: 1.65;
+      font-weight: 700;
+    }
+    .success-support {
+      margin-top: 18px;
+      border-radius: 16px;
+      padding: 16px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .success-support strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    .success-support a {
+      font-weight: 900;
+      color: var(--black-btn);
+      word-break: break-word;
+      text-decoration: none;
+    }
+    .success-support a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; overflow: hidden; background-color: #0f0f0f;">
+<body class="success-page">
+  <div class="success-bg" aria-hidden="true"></div>
 
-  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: slowPan 30s linear infinite alternate; filter: brightness(0.3) blur(2px);"></div>
+  <main class="success-shell">
+    <section class="success-panel">
+      <img
+        src="/assets/logo-score.webp"
+        alt="Score Store"
+        width="120"
+        height="53"
+        class="success-logo"
+        decoding="async"
+      />
 
-  <main class="wrap section vfx-glass-container" style="max-width: 680px; position: relative; z-index: 10; padding: 40px; margin-top: 20px;">
-    <img src="assets/logo-score.webp" alt="Score Store" style="height: 60px; margin: 0 auto 20px auto; filter: drop-shadow(0 5px 15px rgba(225,6,0,0.5)); animation: float 3s infinite ease-in-out;">
-
-    <div id="heroEmoji" style="font-size: 60px; margin-bottom: 10px; animation: scaleIn 0.5s ease; filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));">🏁</div>
-    <h1 id="heroTitle" class="tech-text" style="color: var(--black-btn); font-weight: 900; margin-bottom: 12px; font-size: 32px;">Cargando estado…</h1>
-
-    <p id="heroText" class="hint" style="max-width: 560px; margin: 0 auto 18px; font-size: 16px; color: var(--text);">
-      Estableciendo conexión encriptada para verificar tu pago con Stripe.
-    </p>
-
-    <div class="glass-panel" style="text-align:left; margin: 25px 0; padding: 20px; border-radius: 12px;">
-      <div style="display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-        <div>
-          <div class="muted" style="font-size: 12px; font-weight: bold;">ID de Pedido Oficial</div>
-          <div id="orderId" style="font-weight: 900; font-family: monospace; color: var(--red); font-size: 15px;">—</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="muted" style="font-size: 12px; font-weight: bold;">Total Pagado</div>
-          <div id="orderTotal" class="tech-price" style="font-weight: 900; font-size: 20px; color: var(--black-btn);">—</div>
-        </div>
+      <div class="success-hero">
+        <div id="heroEmoji" class="success-emoji">🏁</div>
+        <h1 id="heroTitle" class="success-title">Cargando estado…</h1>
+        <p id="heroText" class="success-copy">
+          Estableciendo conexión encriptada para verificar tu pago con Stripe.
+        </p>
       </div>
 
-      <div id="orderMetaBox" style="margin-top: 18px; display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 10px;">
-        <div class="glass-panel" style="padding:12px;">
-          <div class="muted" style="font-size:12px; font-weight: bold;">Estado</div>
-          <div id="orderStatusText" style="font-weight:900; color: var(--black-btn);">—</div>
+      <div class="success-box">
+        <div class="success-topline">
+          <div>
+            <div class="success-label">ID de pedido oficial</div>
+            <div id="orderId" class="success-value" style="font-family:monospace; color:var(--red);">—</div>
+          </div>
+
+          <div style="text-align:right;">
+            <div class="success-label">Total</div>
+            <div id="orderTotal" class="success-value" style="font-size:20px;">—</div>
+          </div>
         </div>
-        <div class="glass-panel" style="padding:12px;">
-          <div class="muted" style="font-size:12px; font-weight: bold;">Correo</div>
-          <div id="orderEmail" style="font-weight:900; color: var(--black-btn); word-break: break-word;">—</div>
+
+        <div class="success-meta">
+          <div class="success-meta-card">
+            <div class="success-label">Estado</div>
+            <div id="orderStatusText" class="success-value">—</div>
+          </div>
+          <div class="success-meta-card">
+            <div class="success-label">Correo</div>
+            <div id="orderEmail" class="success-value">—</div>
+          </div>
+          <div class="success-meta-card">
+            <div class="success-label">Entrega</div>
+            <div id="orderShipMode" class="success-value">—</div>
+          </div>
         </div>
-        <div class="glass-panel" style="padding:12px;">
-          <div class="muted" style="font-size:12px; font-weight: bold;">Entrega</div>
-          <div id="orderShipMode" style="font-weight:900; color: var(--black-btn);">—</div>
+
+        <div class="success-actions">
+          <button id="copyBtn" class="btn btn--black btn--tiny hover-fx neon-border" type="button">Copiar ID</button>
+          <a class="btn btn--primary btn--tiny cinematic-btn" href="/index.html">← Volver a la tienda</a>
+        </div>
+
+        <div id="extraHint" class="success-note">
+          Si pagaste en efectivo vía OXXO, la confirmación puede tardar hasta 1 día hábil. Te enviaremos actualizaciones a tu correo.
+        </div>
+
+        <div class="success-support">
+          <strong>Soporte</strong>
+          Correo:
+          <a id="successSupportEmail" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
+          <br />
+          WhatsApp:
+          <a id="successSupportWa" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer">664 236 8701</a>
         </div>
       </div>
-
-      <div style="margin-top: 20px; display:flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-        <button id="copyBtn" class="btn btn--black btn--tiny hover-fx neon-border" type="button">Copiar ID</button>
-        <a class="btn btn--primary btn--tiny cinematic-btn" href="index.html">← Volver a la Tienda</a>
-      </div>
-    </div>
-
-    <div id="extraHint" class="hint" style="font-size: 13px; color: var(--muted); font-weight: bold; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px;">
-      Si pagaste en efectivo vía OXXO, la confirmación puede tardar hasta 1 día hábil. Te enviaremos actualizaciones a tu correo.
-    </div>
-
-    <div class="glass-panel" style="margin-top:18px; padding:16px; border-radius: 12px;">
-      <div style="font-size: 12px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: .08em;">Soporte</div>
-      <div style="margin-top: 8px; font-weight:700; color: var(--text); line-height:1.8;">
-        Correo: <a id="successSupportEmail" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a><br>
-        WhatsApp: <a id="successSupportWa" href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
-      </div>
-    </div>
+    </section>
   </main>
 
-  <script src="js/success.js"></script>
-  <script>
-    (async () => {
-      try {
-        const res = await fetch("/.netlify/functions/site_settings", { cache: "no-store" });
-        const data = await res.json();
-        if (!data || !data.ok) return;
-        const contact = data.contact || {};
-        const email = String(contact.email || "").trim();
-        const waE164 = String(contact.whatsapp_e164 || "").trim();
-        const waDisplay = String(contact.whatsapp_display || "").trim();
-
-        const emailEl = document.getElementById("successSupportEmail");
-        const waEl = document.getElementById("successSupportWa");
-
-        if (email && emailEl) {
-          emailEl.href = `mailto:${email}`;
-          emailEl.textContent = email;
-        }
-        if (waEl) {
-          if (waE164) waEl.href = `https://wa.me/${encodeURIComponent(waE164)}`;
-          if (waDisplay) waEl.textContent = waDisplay;
-        }
-      } catch {}
-    })();
-  </script>
+  <script src="/js/success.js?v=2026-03-07"></script>
 </body>
 </html>
