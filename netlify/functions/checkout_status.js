@@ -7,8 +7,14 @@ const {
   supabaseAdmin,
 } = require("./_shared");
 
+const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+
 const safeUpper = (v) => String(v || "").toUpperCase().trim();
 const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
+const safeNum = (v, d = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+};
 
 const normalizeLineItems = (lineItems) => {
   const arr = Array.isArray(lineItems) ? lineItems : [];
@@ -30,6 +36,11 @@ const normalizeLineItems = (lineItems) => {
 
 function sessionLooksValid(sessionId) {
   return /^cs_(test|live)_[a-zA-Z0-9]+$/.test(String(sessionId || "").trim());
+}
+
+function pickOrgId(session) {
+  const meta = session?.metadata || {};
+  return safeStr(meta.org_id || meta.organization_id || "").trim() || DEFAULT_SCORE_ORG_ID;
 }
 
 exports.handler = async (event) => {
@@ -68,6 +79,7 @@ exports.handler = async (event) => {
     const amount_subtotal_mxn = Number(session.amount_subtotal || 0) / 100;
     const amount_shipping_mxn = Number(td.amount_shipping || 0) / 100;
     const amount_discount_mxn = Number(td.amount_discount || 0) / 100;
+    const amount_tax_mxn = Number(td.amount_tax || 0) / 100;
 
     const payment_status = String(session.payment_status || "");
     const status =
@@ -80,12 +92,15 @@ exports.handler = async (event) => {
     const metadata = session.metadata || {};
     const shipping_mode = safeStr(metadata.shipping_mode || metadata.ship_mode || "");
     const postal_code = safeStr(metadata.postal_code || "");
+    const orgId = pickOrgId(session);
 
     const sb = supabaseAdmin();
     if (sb) {
       try {
         await sb.from("orders").upsert(
           {
+            org_id: orgId,
+            organization_id: orgId,
             stripe_session_id: session.id,
             stripe_payment_intent_id:
               session.payment_intent
@@ -103,10 +118,15 @@ exports.handler = async (event) => {
             amount_subtotal_mxn,
             amount_shipping_mxn,
             amount_discount_mxn,
+            amount_tax_mxn,
+            shipping_total_mxn: amount_shipping_mxn,
             status,
             updated_at: new Date().toISOString(),
             items: items || [],
             metadata: {
+              ...(metadata || {}),
+              org_id: orgId,
+              organization_id: orgId,
               shipping_address: session.shipping_details?.address || null,
               shipping_mode,
               postal_code,
@@ -131,6 +151,7 @@ exports.handler = async (event) => {
         amount_subtotal_mxn,
         amount_shipping_mxn,
         amount_discount_mxn,
+        amount_tax_mxn,
         customer_email: session.customer_details?.email || session.customer_email || null,
         customer_name: session.customer_details?.name || session.shipping_details?.name || null,
         shipping_mode,
