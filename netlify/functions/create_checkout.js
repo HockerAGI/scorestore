@@ -20,6 +20,8 @@ const num = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
+
 const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
 
 const clampInt = (v, a, b) => {
@@ -61,11 +63,13 @@ const resolveOrgId = async (sb) => {
 const loadLocalCatalogIndex = () => {
   const cat = readJsonFile("data/catalog.json") || { products: [] };
   const map = new Map();
+
   for (const p of Array.isArray(cat?.products) ? cat.products : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
     map.set(sku, p);
   }
+
   return map;
 };
 
@@ -84,6 +88,7 @@ const getProductsFromDB = async (sb, orgId, skus) => {
   if (error) throw error;
 
   const map = new Map();
+
   for (const p of Array.isArray(data) ? data : []) {
     const sku = String(p?.sku || "").trim();
     if (!sku) continue;
@@ -105,6 +110,7 @@ const getProductsFromDB = async (sb, orgId, skus) => {
       stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
     });
   }
+
   return map;
 };
 
@@ -153,100 +159,104 @@ const getPromoFromLocal = (promosData, code) => {
   };
 };
 
+const normalizeFrontendPromo = (promo) => {
+  if (!promo || typeof promo !== "object") return null;
+  const code = normCode(promo.code);
+  if (!code) return null;
+
+  return {
+    code,
+    type: String(promo.type || "").trim(),
+    value: num(promo.value),
+    description: String(promo.description || "").trim(),
+    min_amount_mxn: num(promo.min_amount_mxn),
+  };
+};
+
+const sumLineItemsCents = (lineItems) =>
+  (Array.isArray(lineItems) ? lineItems : []).reduce((acc, li) => {
+    const qty = Math.max(1, Math.floor(Number(li?.quantity || 1)));
+    const unitAmount = Math.max(0, Math.floor(Number(li?.price_data?.unit_amount || 0)));
+    return acc + unitAmount * qty;
+  }, 0);
+
 function cloneLineItem(li, unitAmount, qty) {
   const out = JSON.parse(JSON.stringify(li));
-  out.price_data.unit_amount = Math.max(0, Math.floor(Number(unitAmount) || 0));
-  out.quantity = Math.max(1, Math.floor(Number(qty) || 1));
+  out.price_data.unit_amount = Math.max(0, Math.floor(Number(unitAmount || 0)));
+  out.quantity = Math.max(1, Math.floor(Number(qty || 1)));
   return out;
 }
 
-function sumLineItemsCents(items) {
-  let s = 0;
-  for (const li of Array.isArray(items) ? items : []) {
-    const u = Number(li?.price_data?.unit_amount || 0) || 0;
-    const q = Number(li?.quantity || 0) || 0;
-    s += Math.max(0, u) * Math.max(0, q);
-  }
-  return s;
-}
-
-function applyFixedDiscount(lineItems, discountCents) {
-  let remaining = Math.max(0, Math.floor(Number(discountCents) || 0));
-  if (!remaining) return { lineItems, discountApplied: 0 };
-
-  const out = [];
-  let applied = 0;
-
-  for (const li of lineItems) {
-    if (remaining <= 0) {
-      out.push(li);
-      continue;
-    }
-
-    const u = Number(li?.price_data?.unit_amount || 0) || 0;
-    const q = Number(li?.quantity || 0) || 0;
-
-    if (u <= 0 || q <= 0) {
-      out.push(li);
-      continue;
-    }
-
-    const maxReduce = u * q;
-    const take = Math.min(remaining, maxReduce);
-
-    const baseReduce = Math.floor(take / q);
-    const extraUnits = take % q;
-
-    const u1 = Math.max(0, u - baseReduce);
-    const u2 = Math.max(0, u - baseReduce - 1);
-
-    if (extraUnits > 0) {
-      out.push(cloneLineItem(li, u2, extraUnits));
-      if (q - extraUnits > 0) out.push(cloneLineItem(li, u1, q - extraUnits));
-    } else {
-      out.push(cloneLineItem(li, u1, q));
-    }
-
-    remaining -= take;
-    applied += take;
+function applyPromoToLineItems(lineItems, promoRule, subtotalCents) {
+  if (!promoRule || !Array.isArray(lineItems) || !lineItems.length) {
+    return {
+      lineItems,
+      freeShipping: false,
+      discountCents: 0,
+    };
   }
 
-  return { lineItems: out, discountApplied: applied };
-}
+  const type = String(promoRule.type || "").toLowerCase().trim();
+  const value = num(promoRule.value);
 
-function applyPromoToLineItems(lineItems, promo, subtotalCents) {
-  if (!promo) return { lineItems, discountApplied: 0, freeShipping: false };
+  if (type === "free_shipping") {
+    return {
+      lineItems,
+      freeShipping: true,
+      discountCents: 0,
+    };
+  }
 
-  const type = String(promo.type || "").toLowerCase();
+  if (type === "fixed") {
+    const discountCents = Math.max(0, Math.round(value * 100));
+    const remaining = Math.max(0, subtotalCents - discountCents);
+    const ratio = subtotalCents > 0 ? remaining / subtotalCents : 1;
 
-  if (type === "free_shipping") return { lineItems, discountApplied: 0, freeShipping: true };
+    const out = lineItems.map((li) => {
+      const baseUnit = Math.max(0, Math.floor(Number(li?.price_data?.unit_amount || 0)));
+      const nextUnit = Math.max(1, Math.round(baseUnit * ratio));
+      return cloneLineItem(li, nextUnit, li.quantity);
+    });
+
+    return {
+      lineItems: out,
+      freeShipping: false,
+      discountCents: discountCents,
+    };
+  }
 
   if (type === "percent" || type === "percentage") {
-    const raw = num(promo.value);
-    const frac = Math.max(0, Math.min(1, raw > 1 ? raw / 100 : raw));
-    const discountCents = Math.round(Math.max(0, subtotalCents) * frac);
-    return { ...applyFixedDiscount(lineItems, discountCents), freeShipping: false };
+    const ratio = Math.max(0, 1 - value / 100);
+    const discountCents = Math.max(0, Math.round(subtotalCents * (value / 100)));
+
+    const out = lineItems.map((li) => {
+      const baseUnit = Math.max(0, Math.floor(Number(li?.price_data?.unit_amount || 0)));
+      const nextUnit = Math.max(1, Math.round(baseUnit * ratio));
+      return cloneLineItem(li, nextUnit, li.quantity);
+    });
+
+    return {
+      lineItems: out,
+      freeShipping: false,
+      discountCents,
+    };
   }
 
-  if (type === "fixed_mxn" || type === "fixed") {
-    const discountCents = Math.round(Math.max(0, num(promo.value)) * 100);
-    return { ...applyFixedDiscount(lineItems, discountCents), freeShipping: false };
-  }
-
-  return { lineItems, discountApplied: 0, freeShipping: false };
+  return {
+    lineItems,
+    freeShipping: false,
+    discountCents: 0,
+  };
 }
 
-function normalizeFrontendPromo(input) {
-  if (!input || typeof input !== "object") return null;
-  const code = normCode(input.code);
-  if (!code) return null;
-  return {
-    code,
-    type: String(input.type || "").trim(),
-    value: num(input.value),
-    description: String(input.description || "").trim(),
-    min_amount_mxn: num(input.min_amount_mxn),
-  };
+async function seedPendingOrder(sb, payload) {
+  if (!sb || !payload?.stripe_session_id) return;
+
+  const { error } = await sb.from("orders").upsert(payload, {
+    onConflict: "stripe_session_id",
+  });
+
+  if (error) throw error;
 }
 
 exports.handler = async (event) => {
@@ -300,6 +310,7 @@ exports.handler = async (event) => {
 
     let line_items = [];
     let itemsQty = 0;
+    let pendingItems = [];
 
     for (const it of normalizedItems) {
       const p = productsIndex.get(it.sku);
@@ -327,6 +338,16 @@ exports.handler = async (event) => {
         },
         quantity: it.qty,
       });
+
+      pendingItems.push({
+        sku: it.sku,
+        size: it.size,
+        name: title,
+        qty: it.qty,
+        unit_amount_mxn: unitPrice / 100,
+        amount_total_mxn: (unitPrice * it.qty) / 100,
+        currency: "MXN",
+      });
     }
 
     const subtotalCents = sumLineItemsCents(line_items);
@@ -349,7 +370,11 @@ exports.handler = async (event) => {
     } else if (needsZip) {
       shippingCountry = shipping_mode === "envia_us" ? "US" : "MX";
 
-      const frontendQuoted = Math.max(0, Math.floor(Number(body?.shipping_amount_cents || body?.shippingAmountCents || 0)));
+      const frontendQuoted = Math.max(
+        0,
+        Math.floor(Number(body?.shipping_amount_cents || body?.shippingAmountCents || 0))
+      );
+
       if (frontendQuoted > 0) {
         shippingCents = frontendQuoted;
       } else {
@@ -388,6 +413,7 @@ exports.handler = async (event) => {
       customer_creation: "always",
       metadata: {
         org_id: orgId,
+        organization_id: orgId,
         shipping_mode,
         postal_code: needsZip ? postal_code : "",
         promo_code: promoRule?.code || "",
@@ -421,6 +447,34 @@ exports.handler = async (event) => {
       sessionParams,
       idempotencyKey ? { idempotencyKey } : undefined
     );
+
+    if (sb && session?.id) {
+      await seedPendingOrder(sb, {
+        org_id: orgId,
+        organization_id: orgId,
+        stripe_session_id: session.id,
+        currency: "MXN",
+        amount_total_mxn: (sumLineItemsCents(line_items) + finalShippingCents) / 100,
+        amount_subtotal_mxn: sumLineItemsCents(line_items) / 100,
+        amount_shipping_mxn: finalShippingCents / 100,
+        amount_discount_mxn: promoApplied.discountCents / 100,
+        shipping_total_mxn: finalShippingCents / 100,
+        status: "pending_payment",
+        items: pendingItems,
+        metadata: {
+          org_id: orgId,
+          organization_id: orgId,
+          shipping_mode,
+          postal_code: needsZip ? postal_code : "",
+          promo_code: promoRule?.code || "",
+          promo_type: promoRule?.type || "",
+          promo_value: promoRule?.value != null ? String(promoRule.value) : "",
+        },
+        updated_at: new Date().toISOString(),
+      }).catch((e) => {
+        console.warn("[create_checkout] warn pending order upsert:", e?.message);
+      });
+    }
 
     return jsonResponse(
       200,
