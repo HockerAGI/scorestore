@@ -1,23 +1,14 @@
 "use strict";
 
-/**
- * =========================================================
- * checkout_status.js (Netlify Function)
- *
- * PRO FIXES: 
- * - Validación cruzada estricta de Session_ID (Prevención DoS)
- * =========================================================
- */
-
 const {
   jsonResponse,
   handleOptions,
   initStripe,
-  isSupabaseConfigured,
   supabaseAdmin,
 } = require("./_shared");
 
 const safeUpper = (v) => String(v || "").toUpperCase().trim();
+const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
 
 const normalizeLineItems = (lineItems) => {
   const arr = Array.isArray(lineItems) ? lineItems : [];
@@ -37,19 +28,24 @@ const normalizeLineItems = (lineItems) => {
     .filter((x) => x.qty > 0);
 };
 
+function sessionLooksValid(sessionId) {
+  return /^cs_(test|live)_[a-zA-Z0-9]+$/.test(String(sessionId || "").trim());
+}
+
 exports.handler = async (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin || "*";
 
   try {
     if (event.httpMethod === "OPTIONS") return handleOptions(event);
-    if (event.httpMethod !== "GET") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+    if (event.httpMethod !== "GET") {
+      return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+    }
 
     const qs = event.queryStringParameters || {};
-    
-    // FIX: Sanitización estricta de regex para evitar inyecciones a la API de Stripe
     const session_id = String(qs.session_id || "").trim();
-    if (!/^cs_(test|live)_[a-zA-Z0-9]+$/.test(session_id)) {
-        return jsonResponse(400, { ok: false, error: "ID de sesión inválido" }, origin);
+
+    if (!sessionLooksValid(session_id)) {
+      return jsonResponse(400, { ok: false, error: "ID de sesión inválido" }, origin);
     }
 
     const stripe = initStripe();
@@ -60,7 +56,10 @@ exports.handler = async (event) => {
 
     let items = [];
     try {
-      const li = await stripe.checkout.sessions.listLineItems(session_id, { limit: 100, expand: ["data.price.product"] });
+      const li = await stripe.checkout.sessions.listLineItems(session_id, {
+        limit: 100,
+        expand: ["data.price.product"],
+      });
       items = normalizeLineItems(li?.data || []);
     } catch {}
 
@@ -78,36 +77,45 @@ exports.handler = async (event) => {
           ? "pending_payment"
           : "pending";
 
-    // Backup Save
-    if (isSupabaseConfigured() && items.length > 0) {
-      const sb = supabaseAdmin();
-      if (sb) {
-        try {
-          await sb.from("orders").upsert(
-            {
-              stripe_session_id: session.id,
-              stripe_payment_intent_id: session.payment_intent ? (typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent.id) : null,
-              stripe_customer_id: session.customer ? (typeof session.customer === "string" ? session.customer : session.customer.id) : null,
-              email: session.customer_details?.email || session.customer_email || null,
-              customer_name: session.customer_details?.name || session.shipping_details?.name || "Cliente",
-              phone: session.customer_details?.phone || null,
-              currency: safeUpper(session.currency || "mxn"),
-              amount_total_mxn,
-              amount_subtotal_mxn,
-              amount_shipping_mxn,
-              amount_discount_mxn,
-              status,
-              updated_at: new Date().toISOString(),
-              items: items || [],
-              metadata: {
-                shipping_address: session.shipping_details?.address || null,
-              },
+    const metadata = session.metadata || {};
+    const shipping_mode = safeStr(metadata.shipping_mode || metadata.ship_mode || "");
+    const postal_code = safeStr(metadata.postal_code || "");
+
+    const sb = supabaseAdmin();
+    if (sb) {
+      try {
+        await sb.from("orders").upsert(
+          {
+            stripe_session_id: session.id,
+            stripe_payment_intent_id:
+              session.payment_intent
+                ? (typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent.id)
+                : null,
+            stripe_customer_id:
+              session.customer
+                ? (typeof session.customer === "string" ? session.customer : session.customer.id)
+                : null,
+            email: session.customer_details?.email || session.customer_email || null,
+            customer_name: session.customer_details?.name || session.shipping_details?.name || "Cliente",
+            phone: session.customer_details?.phone || null,
+            currency: safeUpper(session.currency || "mxn"),
+            amount_total_mxn,
+            amount_subtotal_mxn,
+            amount_shipping_mxn,
+            amount_discount_mxn,
+            status,
+            updated_at: new Date().toISOString(),
+            items: items || [],
+            metadata: {
+              shipping_address: session.shipping_details?.address || null,
+              shipping_mode,
+              postal_code,
             },
-            { onConflict: "stripe_session_id" }
-          );
-        } catch (e) {
-          console.warn("[checkout_status] warn upsert:", e?.message);
-        }
+          },
+          { onConflict: "stripe_session_id" }
+        );
+      } catch (e) {
+        console.warn("[checkout_status] warn upsert:", e?.message);
       }
     }
 
@@ -125,12 +133,18 @@ exports.handler = async (event) => {
         amount_discount_mxn,
         customer_email: session.customer_details?.email || session.customer_email || null,
         customer_name: session.customer_details?.name || session.shipping_details?.name || null,
+        shipping_mode,
+        postal_code,
         items,
       },
       origin
     );
   } catch (e) {
     console.error("[checkout_status] error:", e?.message);
-    return jsonResponse(200, { ok: false, error: "No se pudo recuperar el estado del pedido." }, origin);
+    return jsonResponse(
+      200,
+      { ok: false, error: "No se pudo recuperar el estado del pedido." },
+      origin
+    );
   }
 };
