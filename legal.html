@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
+  <meta name="description" content="Términos, condiciones, envíos, cambios, privacidad y datos de contacto de SCORE STORE." />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -11,198 +12,393 @@
 
   <title>Políticas y Legal — SCORE STORE</title>
 
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
+
   <style>
-    .legal-content {
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      padding: 50px 40px;
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow-modal), inset 0 0 0 1px rgba(255,255,255,0.8);
-      margin: 40px auto;
-      max-width: 900px;
+    .legal-page {
+      min-height: 100vh;
       position: relative;
-      z-index: 10;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(225,6,0,0.08), transparent 0 26%),
+        linear-gradient(180deg, rgba(10,10,10,0.94), rgba(15,15,15,0.98));
     }
-    .legal-content h1 { font-size: 36px; font-weight: 900; color: var(--black-btn); margin: 0; line-height: 1.2; }
-    .legal-content h2 { font-size: 24px; font-weight: 900; color: var(--red); margin: 30px 0 15px; border-bottom: 2px solid rgba(225,6,0,0.2); padding-bottom: 8px; }
-    .legal-content h3 { font-size: 18px; font-weight: 800; color: var(--black-btn); margin: 20px 0 10px; }
-    .legal-content p, .legal-content li { line-height: 1.7; font-weight: 600; color: #444; margin-bottom: 12px; }
-    .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
-    .legal-content a { color: var(--red); text-decoration: none; font-weight: 700; }
-    .legal-content a:hover { text-decoration: underline; text-shadow: 0 0 10px rgba(225,6,0,0.3); }
+    .legal-hero-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)),
+        url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
+      filter: saturate(1.05) brightness(0.78);
+    }
+    .legal-shell {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    .legal-panel {
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-radius: 26px;
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.28),
+        inset 0 0 0 1px rgba(255,255,255,0.70);
+      overflow: hidden;
+    }
+    .legal-head {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background:
+        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 0 22%),
+        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.76));
+    }
+    .legal-body {
+      padding: 22px 24px 28px;
+    }
+    .legal-kicker {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 0 0 8px;
+    }
+    .legal-title {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 42px);
+      line-height: 1.05;
+      font-weight: 900;
+      color: var(--black-btn);
+    }
+    .legal-subtitle {
+      margin: 14px 0 0;
+      color: #4b5563;
+      font-weight: 600;
+      line-height: 1.65;
+      max-width: 800px;
+    }
+    .legal-updated {
+      margin-top: 12px;
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .legal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .legal-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .legal-btn:hover { transform: translateY(-1px); }
+    .legal-btn--primary {
+      background: linear-gradient(135deg, #E10600, #ff462a);
+      color: #fff;
+      box-shadow: 0 16px 40px rgba(225,6,0,0.22);
+    }
+    .legal-btn--ghost {
+      background: rgba(15,15,15,0.06);
+      color: var(--black-btn);
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .legal-grid {
+      display: grid;
+      gap: 18px;
+    }
+    .legal-box {
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 18px;
+      padding: 22px 20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.76));
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+    .legal-box h2 {
+      margin: 0 0 14px;
+      color: var(--red);
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 900;
+    }
+    .legal-box h3 {
+      margin: 20px 0 8px;
+      color: var(--black-btn);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .legal-box p,
+    .legal-box li {
+      margin: 0 0 12px;
+      color: #444;
+      line-height: 1.72;
+      font-weight: 600;
+    }
+    .legal-box ul {
+      margin: 0 0 12px;
+      padding-left: 20px;
+    }
+    .legal-contact {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-top: 10px;
+    }
+    .legal-contact-card {
+      border-radius: 16px;
+      padding: 16px;
+      background: rgba(15,15,15,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .legal-contact-card .label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .legal-contact-card a,
+    .legal-contact-card span {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--black-btn);
+      word-break: break-word;
+    }
+    .legal-footer-note {
+      margin-top: 22px;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 700;
+    }
 
-    .legal-box { border: 1px solid var(--border-glass); border-radius: 16px; padding: 30px; margin: 20px 0; background: rgba(255,255,255,0.7); box-shadow: var(--shadow-glass); }
-
-    .legal-header-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 10px; }
     @media (max-width: 640px) {
-      .legal-header-flex { flex-direction: column-reverse; }
-      .legal-header-flex .iconbtn { align-self: flex-end; }
-      .legal-content { padding: 30px 20px; }
-      .legal-content h1 { font-size: 28px; }
+      .legal-head,
+      .legal-body {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
     }
   </style>
 </head>
-<body>
+<body class="legal-page">
+  <div class="legal-hero-bg" aria-hidden="true"></div>
 
-  <div class="hero__bg" style="position:fixed; inset:0; z-index:-2; animation: slowPan 30s linear infinite alternate; filter: brightness(0.7) blur(2px);"></div>
-
-  <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000;">
-    <div class="wrap topbar__inner" style="justify-content: center;">
-      <a class="brand" href="index.html" aria-label="Score Store" style="position: relative; left: 0; transform: none;">
-        <img class="brand__logo" src="assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
+  <header class="topbar" role="banner" style="position:sticky; top:0; z-index:2000;">
+    <div class="wrap topbar__inner" style="justify-content:center;">
+      <a class="brand" href="/index.html" aria-label="Volver a Score Store">
+        <img class="brand__logo" src="/assets/logo-score.webp" alt="SCORE STORE" width="120" height="53" decoding="async" />
       </a>
     </div>
   </header>
 
-  <main class="wrap">
-    <div class="legal-content vfx-glass-container">
-
-      <div class="legal-header-flex">
-        <h1 class="tech-text">Términos, Condiciones y Privacidad</h1>
-        <a href="index.html" class="iconbtn hover-fx tech-close" style="flex-shrink: 0; text-decoration: none; font-weight: bold;" aria-label="Cerrar y volver a la tienda" title="Cerrar">✕</a>
-      </div>
-
-      <p class="hint" style="margin-bottom: 30px; color: var(--red);">Última actualización: Marzo de 2026</p>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">1. Términos y Condiciones de Uso y Compra</h2>
-        <p>Los presentes Términos y Condiciones rigen el uso del sitio web <strong>SCORE Store</strong> y la compra de mercancía oficial. El Sitio es operado legal y comercialmente por <strong>BAJATEX S. de R.L. de C.V.</strong> (Único Uniformes), con domicilio en Tijuana, B.C., México.</p>
-
-        <h3>1.1. Información de los Productos</h3>
-        <p>Todos los productos son mercancía oficial de SCORE International, fabricada por Único Uniformes. Debido a la naturaleza textil, pueden existir ligeras variaciones entre el producto digital y el físico.</p>
-
-        <h3>1.2. Precios y Pagos</h3>
-        <p>Precios expresados en <strong>MXN (Pesos Mexicanos)</strong> con IVA incluido. Los pagos son procesados de manera encriptada y segura por <strong>Stripe Inc</strong>. Aceptamos Tarjetas de Crédito, Débito y OXXO Pay. BAJATEX no procesa ni almacena datos financieros en sus servidores.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">2. Políticas de Envío y Entregas</h2>
-        <h3>2.1. Métodos de Entrega</h3>
-        <ul>
-          <li><strong>Pickup (Recolección en Fábrica):</strong> Sin costo. En instalaciones de Único Uniformes (Tijuana, B.C.).</li>
-          <li><strong>Envíos Nacionales e Internacionales:</strong> Gestionados vía <strong>Envia.com</strong> (Red DHL, FedEx, USPS). Costo calculado en tiempo real con precisión durante el Checkout.</li>
-        </ul>
-        <h3>2.2. Tiempos Logísticos</h3>
-        <p id="legalShippingNote">Procesamiento interno de almacén de 1 a 3 días hábiles. El tiempo en tránsito depende exclusivamente de la paquetería seleccionada automáticamente por la plataforma según su Código Postal.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">3. Cambios y Devoluciones</h2>
-        <p id="legalReturnsNote">El Cliente cuenta con <strong>7 días naturales</strong> a partir de la recepción para notificar defectos de fábrica. BAJATEX cubre el envío logístico en caso de defecto comprobable. Si el cambio es por error de selección de talla por parte del cliente, el cliente absorbe los costos de la nueva paquetería.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">4. Aviso de Privacidad Estricto</h2>
-        <p>Sus datos (Nombre, Dirección de Envío, Teléfono, Correo) son recabados exclusivamente para el procesamiento logístico, despacho de su pedido y facturación, en estricto cumplimiento con la LFPDPPP de México. Los datos son compartidos únicamente mediante conexión API cifrada con proveedores logísticos (Envia.com) para generar su guía oficial.</p>
-        <p>Para ejercer sus derechos ARCO, envíe una solicitud a <em id="legalArcoEmail">ventas.unicotextil@gmail.com</em>.</p>
-      </div>
-
-      <div style="text-align: center; margin-top: 40px;">
-        <p style="margin-bottom: 20px; font-weight: 600;">
-          <strong class="tech-text">BAJATEX S. de R.L. de C.V. (Único Uniformes)</strong><br>
-          <a id="legalEmailLink" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
-          |
-          Soporte WhatsApp:
-          <a id="legalWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
+  <main class="legal-shell">
+    <section class="legal-panel">
+      <div class="legal-head">
+        <p class="legal-kicker">Legal y políticas</p>
+        <h1 class="legal-title">Términos, condiciones, envíos y privacidad</h1>
+        <p class="legal-subtitle">
+          Este documento resume las reglas de uso de SCORE STORE, las condiciones de compra, las políticas
+          de envío, cambios y privacidad aplicables al storefront y a las órdenes generadas mediante Stripe.
         </p>
-        <p id="legalSupportHours" style="color:#666; font-weight:600;"></p>
+        <p class="legal-updated">Última actualización: Marzo 2026</p>
+
+        <div class="legal-actions">
+          <a href="/index.html" class="legal-btn legal-btn--primary">← Volver a la tienda</a>
+          <a href="#contacto" class="legal-btn legal-btn--ghost">Ver contacto oficial</a>
+        </div>
       </div>
-    </div>
+
+      <div class="legal-body">
+        <div class="legal-grid">
+          <article class="legal-box">
+            <h2>1. Términos generales de uso y compra</h2>
+            <p>
+              SCORE STORE es una tienda digital orientada a la venta de mercancía oficial. El uso del sitio,
+              la navegación del catálogo y el inicio de un proceso de pago implican aceptación de estos términos.
+            </p>
+            <p>
+              Las órdenes se generan con base en disponibilidad visible, configuración activa del catálogo y
+              condiciones de pago definidas por la pasarela Stripe.
+            </p>
+
+            <h3>1.1. Productos</h3>
+            <p>
+              Los productos pueden incluir ligeras variaciones visuales respecto a fotografías, mockups o materiales
+              promocionales, especialmente por iluminación, composición de imagen, lote textil o presentación digital.
+            </p>
+
+            <h3>1.2. Precios y moneda</h3>
+            <p>
+              Los precios del storefront se muestran principalmente en MXN. El sistema puede aplicar costos de envío,
+              descuentos promocionales y reglas de cotización según destino, volumen o modo de entrega.
+            </p>
+
+            <h3>1.3. Pago</h3>
+            <p>
+              El procesamiento de pagos es manejado por Stripe. SCORE STORE no almacena números completos de tarjeta
+              ni credenciales bancarias sensibles dentro del storefront.
+            </p>
+          </article>
+
+          <article class="legal-box">
+            <h2>2. Envíos, entrega y tiempos</h2>
+            <p>
+              El método de entrega puede variar entre recolección, envío nacional o envío internacional según la
+              configuración activa del checkout y del destino del cliente.
+            </p>
+
+            <h3>2.1. Cotizaciones de envío</h3>
+            <p>
+              Algunas órdenes usan tarifa calculada en tiempo real y otras pueden usar tarifas de respaldo
+              preconfiguradas cuando no exista una cotización instantánea disponible.
+            </p>
+
+            <h3>2.2. Tiempos</h3>
+            <p>
+              Los tiempos de preparación, embarque y tránsito pueden variar por temporada, saturación logística,
+              carrier seleccionado, validaciones de pago o eventos extraordinarios.
+            </p>
+
+            <h3>2.3. Tracking</h3>
+            <p>
+              Cuando la guía sea generada, el sistema podrá reflejar número de rastreo y estado logístico según
+              la información recibida por los servicios conectados.
+            </p>
+          </article>
+
+          <article class="legal-box">
+            <h2>3. Cambios, devoluciones y cancelaciones</h2>
+            <p>
+              Cambios, devoluciones o aclaraciones están sujetos a validación operativa y al estado real de la orden.
+              En productos con personalización, edición limitada, producción especial o uso evidente, pueden existir
+              restricciones adicionales.
+            </p>
+
+            <h3>3.1. Pedido pendiente</h3>
+            <p>
+              Si el pago no se confirma o la operación no concluye, la orden puede permanecer en estado pendiente
+              hasta recibir confirmación del proveedor de pago.
+            </p>
+
+            <h3>3.2. Pedido pagado</h3>
+            <p>
+              Una vez confirmado el pago, cualquier solicitud de ajuste estará sujeta al momento operativo de la orden:
+              preparación, embalaje, guía emitida, envío en tránsito o entrega final.
+            </p>
+          </article>
+
+          <article class="legal-box">
+            <h2>4. Privacidad y datos</h2>
+            <p>
+              Los datos compartidos por el cliente se utilizan para procesar órdenes, soporte, seguimiento y
+              comunicación relacionada con la compra. El storefront puede usar cookies o almacenamiento local
+              para el funcionamiento básico del carrito y la experiencia de navegación.
+            </p>
+
+            <h3>4.1. Datos de compra</h3>
+            <p>
+              Los datos operativos del pedido pueden incluir correo, nombre, teléfono, dirección, método de entrega,
+              identificadores de sesión y eventos relacionados con pago y envío.
+            </p>
+
+            <h3>4.2. Analítica y performance</h3>
+            <p>
+              La tienda puede usar herramientas de analítica, medición o pixel publicitario cuando así se encuentre
+              activado en la configuración pública del sitio.
+            </p>
+          </article>
+
+          <article class="legal-box" id="contacto">
+            <h2>5. Contacto oficial</h2>
+            <p>
+              Los siguientes datos se cargan desde la configuración activa del storefront cuando están disponibles.
+              Si algún valor aún no fue configurado, puede mostrarse un respaldo operativo temporal.
+            </p>
+
+            <div class="legal-contact">
+              <div class="legal-contact-card">
+                <div class="label">Correo</div>
+                <a id="legalEmailLink" href="mailto:ventas.unicotextil@gmail.com">
+                  <span id="legalEmailText">ventas.unicotextil@gmail.com</span>
+                </a>
+              </div>
+
+              <div class="legal-contact-card">
+                <div class="label">WhatsApp</div>
+                <a id="legalWaLink" href="https://wa.me/5216642368701" target="_blank" rel="noreferrer">
+                  <span id="legalWaText">664 236 8701</span>
+                </a>
+              </div>
+
+              <div class="legal-contact-card">
+                <div class="label">Sitio</div>
+                <a id="legalSiteLink" href="/index.html">
+                  <span>SCORE STORE</span>
+                </a>
+              </div>
+            </div>
+
+            <p class="legal-footer-note" id="legalFooterNote">
+              Merch oficial de SCORE International.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
-
-  <footer class="footer" role="contentinfo">
-    <div class="wrap footer__inner">
-      <div class="footer__brand-col">
-        <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
-        <div class="footer__sub">
-          <strong>Seguridad Total Garantizada</strong><br>
-          Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
-          Logística inteligente internacional con Envía.com.<br><br>
-          <span id="legalFooterNote">Hecho con pasión. Fabricado y Operado por <b style="color: white; text-shadow: 0 0 5px rgba(255,255,255,0.5);">Único Uniformes</b>.</span>
-        </div>
-      </div>
-
-      <div class="footer__socials">
-        <div class="social-title">SÍGUENOS EN LA PISTA</div>
-        <div class="social-links">
-          <a id="legalFacebookLink" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener">Facebook</a>
-          <a id="legalInstagramLink" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener">Instagram</a>
-          <a id="legalYoutubeLink" href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener">YouTube</a>
-        </div>
-      </div>
-
-      <div class="footer__right">
-        <a href="index.html" class="btn btn--primary btn--large cinematic-btn neon-border hover-fx" style="width: 100%; text-align: center;">← Regresar a la Tienda</a>
-      </div>
-    </div>
-  </footer>
 
   <script>
     (async () => {
       try {
-        const res = await fetch("/.netlify/functions/site_settings");
-        const data = await res.json();
+        const res = await fetch("/.netlify/functions/site_settings", { cache: "no-store" });
+        const data = await res.json().catch(() => null);
         if (!data || !data.ok) return;
 
         const contact = data.contact || {};
-        const socials = data.socials || {};
         const home = data.home || {};
 
         const email = String(contact.email || "").trim();
         const waE164 = String(contact.whatsapp_e164 || "").trim();
         const waDisplay = String(contact.whatsapp_display || "").trim();
+        const footerNote = String(home.footer_note || "").trim();
 
-        if (email) {
-          const el1 = document.getElementById("legalArcoEmail");
-          const el2 = document.getElementById("legalEmailLink");
-          if (el1) el1.textContent = email;
-          if (el2) {
-            el2.href = `mailto:${email}`;
-            el2.textContent = email;
-          }
+        const emailText = document.getElementById("legalEmailText");
+        const emailLink = document.getElementById("legalEmailLink");
+        const waText = document.getElementById("legalWaText");
+        const waLink = document.getElementById("legalWaLink");
+        const footer = document.getElementById("legalFooterNote");
+
+        if (email && emailText && emailLink) {
+          emailText.textContent = email;
+          emailLink.href = `mailto:${email}`;
         }
 
-        if (waE164 || waDisplay) {
-          const wa = document.getElementById("legalWhatsappLink");
-          if (wa) {
-            if (waE164) wa.href = `https://wa.me/${encodeURIComponent(waE164)}`;
-            if (waDisplay) wa.textContent = waDisplay;
-          }
+        if (waLink) {
+          if (waE164) waLink.href = `https://wa.me/${encodeURIComponent(waE164)}`;
+          if (waDisplay && waText) waText.textContent = waDisplay;
         }
 
-        if (home.shipping_note) {
-          const el = document.getElementById("legalShippingNote");
-          if (el) el.textContent = String(home.shipping_note);
-        }
-
-        if (home.returns_note) {
-          const el = document.getElementById("legalReturnsNote");
-          if (el) el.textContent = String(home.returns_note);
-        }
-
-        if (home.support_hours) {
-          const el = document.getElementById("legalSupportHours");
-          if (el) el.textContent = String(home.support_hours);
-        }
-
-        if (home.footer_note) {
-          const el = document.getElementById("legalFooterNote");
-          if (el) el.textContent = String(home.footer_note);
-        }
-
-        const fb = document.getElementById("legalFacebookLink");
-        const ig = document.getElementById("legalInstagramLink");
-        const yt = document.getElementById("legalYoutubeLink");
-
-        if (fb && socials.facebook) fb.href = String(socials.facebook);
-        if (ig && socials.instagram) ig.href = String(socials.instagram);
-        if (yt && socials.youtube) yt.href = String(socials.youtube);
+        if (footerNote && footer) footer.textContent = footerNote;
       } catch {}
     })();
   </script>
