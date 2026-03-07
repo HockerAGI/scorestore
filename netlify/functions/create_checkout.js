@@ -11,6 +11,7 @@ const {
 } = require("./_shared");
 
 const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+
 const isUuid = (s) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || "").trim());
 
@@ -34,7 +35,13 @@ const resolveOrgId = async (sb) => {
   let orgId = DEFAULT_SCORE_ORG_ID;
 
   try {
-    const { data: byId } = await sb.from("organizations").select("id").eq("id", orgId).limit(1).maybeSingle();
+    const { data: byId } = await sb
+      .from("organizations")
+      .select("id")
+      .eq("id", orgId)
+      .limit(1)
+      .maybeSingle();
+
     if (byId?.id) return orgId;
 
     const { data: byName } = await sb
@@ -68,7 +75,7 @@ const getProductsFromDB = async (sb, orgId, skus) => {
   const { data, error } = await sb
     .from("products")
     .select("sku,name,description,price_cents,price_mxn,images,sizes,image_url,stock,is_active,deleted_at")
-    .eq("organization_id", orgId)
+    .or(`organization_id.eq.${orgId},org_id.eq.${orgId}`)
     .in("sku", skus)
     .is("deleted_at", null)
     .eq("is_active", true)
@@ -108,7 +115,7 @@ const getPromoFromDB = async (sb, orgId, code) => {
   const { data, error } = await sb
     .from("promo_rules")
     .select("code,type,value,description,active,min_amount_mxn,expires_at")
-    .eq("organization_id", orgId)
+    .or(`organization_id.eq.${orgId},org_id.eq.${orgId}`)
     .ilike("code", c)
     .eq("active", true)
     .limit(1)
@@ -214,14 +221,14 @@ function applyPromoToLineItems(lineItems, promo, subtotalCents) {
 
   if (type === "free_shipping") return { lineItems, discountApplied: 0, freeShipping: true };
 
-  if (type === "percent") {
+  if (type === "percent" || type === "percentage") {
     const raw = num(promo.value);
     const frac = Math.max(0, Math.min(1, raw > 1 ? raw / 100 : raw));
     const discountCents = Math.round(Math.max(0, subtotalCents) * frac);
     return { ...applyFixedDiscount(lineItems, discountCents), freeShipping: false };
   }
 
-  if (type === "fixed_mxn") {
+  if (type === "fixed_mxn" || type === "fixed") {
     const discountCents = Math.round(Math.max(0, num(promo.value)) * 100);
     return { ...applyFixedDiscount(lineItems, discountCents), freeShipping: false };
   }
@@ -229,11 +236,26 @@ function applyPromoToLineItems(lineItems, promo, subtotalCents) {
   return { lineItems, discountApplied: 0, freeShipping: false };
 }
 
+function normalizeFrontendPromo(input) {
+  if (!input || typeof input !== "object") return null;
+  const code = normCode(input.code);
+  if (!code) return null;
+  return {
+    code,
+    type: String(input.type || "").trim(),
+    value: num(input.value),
+    description: String(input.description || "").trim(),
+    min_amount_mxn: num(input.min_amount_mxn),
+  };
+}
+
 exports.handler = async (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin || "*";
 
   if (event.httpMethod === "OPTIONS") return handleOptions(event);
-  if (event.httpMethod !== "POST") return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { ok: false, error: "Method not allowed" }, origin);
+  }
 
   try {
     const stripe = initStripe();
@@ -243,9 +265,9 @@ exports.handler = async (event) => {
     if (!items.length) return jsonResponse(400, { ok: false, error: "Carrito vacío" }, origin);
 
     const reqId = String(body?.req_id || "").trim();
-    const shipping_mode = String(body?.shipping_mode || "pickup").trim();
-    const postal_code = String(body?.postal_code || "").trim();
-    const promo_code = normCode(body?.promo_code);
+    const shipping_mode = String(body?.ship_mode || body?.shipping_mode || "pickup").trim();
+    const postal_code = String(body?.postal_code || body?.zip || "").trim();
+    const promo_code = normCode(body?.promo_code || body?.coupon || body?.promo?.code || "");
 
     const normalizedItems = items
       .map((it) => ({
@@ -255,7 +277,9 @@ exports.handler = async (event) => {
       }))
       .filter((it) => it.sku);
 
-    if (!normalizedItems.length) return jsonResponse(400, { ok: false, error: "Items inválidos" }, origin);
+    if (!normalizedItems.length) {
+      return jsonResponse(400, { ok: false, error: "Items inválidos" }, origin);
+    }
 
     const skuList = Array.from(new Set(normalizedItems.map((i) => i.sku))).slice(0, 80);
 
@@ -272,6 +296,7 @@ exports.handler = async (event) => {
 
     if (!productsIndex) productsIndex = loadLocalCatalogIndex();
     if (!promoRule && promo_code) promoRule = getPromoFromLocal(loadLocalPromos(), promo_code);
+    if (!promoRule && body?.promo) promoRule = normalizeFrontendPromo(body.promo);
 
     let line_items = [];
     let itemsQty = 0;
@@ -323,10 +348,23 @@ exports.handler = async (event) => {
       shippingCents = 0;
     } else if (needsZip) {
       shippingCountry = shipping_mode === "envia_us" ? "US" : "MX";
-      if (postal_code.length < 4) return jsonResponse(400, { ok: false, error: "CP/ZIP inválido" }, origin);
 
-      const shippingQuote = await getEnviaQuote({ zip: postal_code, country: shippingCountry, items_qty: itemsQty });
-      shippingCents = Math.max(0, Number(shippingQuote?.amount_cents || 0));
+      const frontendQuoted = Math.max(0, Math.floor(Number(body?.shipping_amount_cents || body?.shippingAmountCents || 0)));
+      if (frontendQuoted > 0) {
+        shippingCents = frontendQuoted;
+      } else {
+        if (postal_code.length < 4) {
+          return jsonResponse(400, { ok: false, error: "CP/ZIP inválido" }, origin);
+        }
+
+        const shippingQuote = await getEnviaQuote({
+          zip: postal_code,
+          country: shippingCountry,
+          items_qty: itemsQty,
+        });
+
+        shippingCents = Math.max(0, Number(shippingQuote?.amount_cents || 0));
+      }
     } else {
       return jsonResponse(400, { ok: false, error: "shipping_mode inválido" }, origin);
     }
@@ -335,7 +373,6 @@ exports.handler = async (event) => {
     const finalShippingCents = freeShipping ? 0 : shippingCents;
 
     const SITE_URL = String(process.env.SITE_URL || "https://scorestore.netlify.app").replace(/\/+$/, "");
-
     const pmTypes = ["card"];
     if (String(process.env.STRIPE_ENABLE_OXXO || "0") === "1") pmTypes.push("oxxo");
 
@@ -355,8 +392,12 @@ exports.handler = async (event) => {
         postal_code: needsZip ? postal_code : "",
         promo_code: promoRule?.code || "",
         promo_type: promoRule?.type || "",
+        promo_value: promoRule?.value != null ? String(promoRule.value) : "",
       },
-      shipping_address_collection: shipping_mode === "pickup" ? undefined : { allowed_countries: [shippingCountry] },
+      shipping_address_collection:
+        shipping_mode === "pickup"
+          ? undefined
+          : { allowed_countries: [shippingCountry] },
       shipping_options:
         shipping_mode === "pickup"
           ? undefined
@@ -376,9 +417,19 @@ exports.handler = async (event) => {
     };
 
     const idempotencyKey = reqId ? `scorestore_${reqId}` : undefined;
-    const session = await stripe.checkout.sessions.create(sessionParams, idempotencyKey ? { idempotencyKey } : undefined);
+    const session = await stripe.checkout.sessions.create(
+      sessionParams,
+      idempotencyKey ? { idempotencyKey } : undefined
+    );
 
-    return jsonResponse(200, { ok: true, url: session.url }, origin);
+    return jsonResponse(
+      200,
+      {
+        ok: true,
+        url: session.url,
+      },
+      origin
+    );
   } catch (e) {
     return jsonResponse(500, { ok: false, error: String(e?.message || e) }, origin);
   }
