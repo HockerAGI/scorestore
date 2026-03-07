@@ -7,9 +7,6 @@
   <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
-  <!-- CSP: Stripe + Supabase + Meta Pixel (si lo activas por site_settings) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
-
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -32,28 +29,17 @@
   <meta name="twitter:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="twitter:image" content="https://scorestore.netlify.app/assets/hero.webp" />
 
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <link rel="preconnect" href="https://js.stripe.com" crossorigin />
-  <link rel="preload" href="css/styles.css" as="style" />
-  <link rel="preload" href="assets/fondo-pagina-score.webp" as="image" type="image/webp" />
-  <link rel="preload" href="assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="stylesheet" href="css/override.css?v=2026-03-05" />
+  <link rel="preload" href="/css/styles.css" as="style" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
+  <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
 
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Store",
-      "name": "Score Store",
-      "url": "https://scorestore.netlify.app/",
-      "logo": "https://scorestore.netlify.app/assets/logo-score.webp",
-      "description": "Mercancía oficial de Score International Off-Road Racing, desarrollada con calidad premium.",
-      "paymentAccepted": "Credit Card, Debit Card, OXXO Pay"
-    }
-  </script>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
 </head>
 
 <body>
@@ -64,7 +50,15 @@
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
-        <img class="splash__logo" src="assets/logo-score.webp" alt="SCORE" width="220" height="88" />
+        <img
+          class="splash__logo"
+          src="/assets/logo-score.webp"
+          alt="SCORE"
+          width="220"
+          height="96"
+          decoding="async"
+          fetchpriority="high"
+        />
         <div class="splash__laser"></div>
       </div>
       <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
@@ -85,21 +79,42 @@
         <span class="icon" aria-hidden="true">≡</span>
       </button>
 
-      <a class="brand" href="index.html" aria-label="Ir a Inicio de Score Store">
-        <img class="brand__logo" src="assets/logo-score.webp" alt="Logotipo SCORE STORE" width="120" height="48" />
+      <a class="brand" href="/index.html" aria-label="Ir a Inicio de Score Store">
+        <img
+          class="brand__logo"
+          src="/assets/logo-score.webp"
+          alt="Logotipo SCORE STORE"
+          width="120"
+          height="53"
+          decoding="async"
+        />
       </a>
 
       <div class="topbar__actions">
         <div class="search desktop-only glass-panel">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" name="searchInput" class="search__input" type="search" placeholder="Buscar hoodies, gorras, merch..." autocomplete="off" aria-label="Caja de búsqueda de productos" />
+          <input
+            id="searchInput"
+            name="searchInput"
+            class="search__input"
+            type="search"
+            placeholder="Buscar hoodies, gorras, merch..."
+            autocomplete="off"
+            aria-label="Caja de búsqueda de productos"
+          />
         </div>
 
         <button id="mobileSearchBtn" class="iconbtn hover-fx mobile-only" type="button" aria-label="Buscar productos">
           <span class="icon" aria-hidden="true">⌕</span>
         </button>
 
-        <button id="openAssistantBtn" class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow" type="button" aria-label="Abrir Asistente Virtual SCORE" title="Pregúntale al Asistente SCORE">
+        <button
+          id="openAssistantBtn"
+          class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow"
+          type="button"
+          aria-label="Abrir Asistente Virtual SCORE"
+          title="Pregúntale al Asistente SCORE"
+        >
           <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
             <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
@@ -107,7 +122,13 @@
           </svg>
         </button>
 
-        <button id="openCartBtn" class="iconbtn iconbtn--dark hover-fx vfx-cart-btn" type="button" aria-label="Abrir tu carrito de compras" title="Mi Carrito">
+        <button
+          id="openCartBtn"
+          class="iconbtn iconbtn--dark hover-fx vfx-cart-btn"
+          type="button"
+          aria-label="Abrir tu carrito de compras"
+          title="Mi Carrito"
+        >
           <span class="icon" aria-hidden="true">🛒</span>
           <span id="cartCount" class="badge glow-badge" aria-label="Artículos en tu carrito">0</span>
         </button>
@@ -115,12 +136,24 @@
     </div>
 
     <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
-      <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." aria-label="Buscador móvil" />
-      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" type="button" aria-label="Cerrar buscador" style="border:none;">✕</button>
+      <input
+        id="mobileSearchInput"
+        name="mobileSearchInput"
+        class="input"
+        type="search"
+        placeholder="Buscar mercancía oficial..."
+        aria-label="Buscador móvil"
+      />
+      <button
+        id="closeMobileSearchBtn"
+        class="iconbtn btn--ghost"
+        type="button"
+        aria-label="Cerrar buscador"
+        style="border:none;"
+      >✕</button>
     </div>
   </header>
 
-  <!-- Promo Bar (controlado por site_settings) -->
   <div id="promoBar" class="promo-bar" role="status" aria-live="polite" hidden>
     <div class="wrap promo-bar__inner">
       <span id="promoBarText" class="promo-bar__text"></span>
@@ -135,13 +168,30 @@
 
     <div class="wrap hero__inner">
       <div class="hero__content">
-        <img class="hero__desert hero-vfx-float" src="assets/logo-world-desert.webp" alt="World Desert Championship" width="280" height="253" />
-        <!-- ✅ HERO COPY INTACTO -->
+        <img
+          class="hero__desert hero-vfx-float"
+          src="/assets/logo-world-desert.webp"
+          alt="World Desert Championship"
+          width="280"
+          height="253"
+          decoding="async"
+        />
+
         <h1 class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
-        <p class="hero__hook">Diseño, pasión y rendimiento extremo en cada hilo. <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong></p>
+        <p class="hero__hook">
+          Diseño, pasión y rendimiento extremo en cada hilo.
+          <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong>
+        </p>
 
         <div class="hero__cta">
-          <button id="scrollToCategoriesBtn" class="btn btn--primary btn--large cinematic-btn neon-border" type="button" aria-label="Desplazarse a ver las colecciones de la tienda">Explorar Colecciones ▼</button>
+          <button
+            id="scrollToCategoriesBtn"
+            class="btn btn--primary btn--large cinematic-btn neon-border"
+            type="button"
+            aria-label="Desplazarse a ver las colecciones de la tienda"
+          >
+            Explorar Colecciones ▼
+          </button>
         </div>
 
         <div class="hero__meta">
@@ -159,18 +209,34 @@
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div id="categoryHint" class="hint bounce-anim" style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);">
+      <div
+        id="categoryHint"
+        class="hint bounce-anim"
+        style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);"
+      >
         👈 Selecciona una tarjeta para descubrir productos exclusivos.
       </div>
     </section>
 
-    <section id="catalogCarouselSection" class="carousel-section wrap vfx-glass-container" aria-label="Productos destacados de la colección seleccionada" hidden>
+    <section
+      id="catalogCarouselSection"
+      class="carousel-section wrap vfx-glass-container"
+      aria-label="Productos destacados de la colección seleccionada"
+      hidden
+    >
       <div class="carousel-header">
         <div class="carousel-header__left">
           <h3 id="carouselTitle" class="section-title" style="margin:0;">Catálogo</h3>
           <div id="activeFilterRow" class="hint" hidden style="margin-top:8px;">
             <span id="activeFilterLabel"></span>
-            <button id="clearFilterBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button" style="margin-left:10px;">Limpiar</button>
+            <button
+              id="clearFilterBtn"
+              class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn"
+              type="button"
+              style="margin-left:10px;"
+            >
+              Limpiar
+            </button>
           </div>
         </div>
 
@@ -179,260 +245,177 @@
             <option value="featured">Destacados</option>
             <option value="price_asc">Precio: menor a mayor</option>
             <option value="price_desc">Precio: mayor a menor</option>
-            <option value="name_asc">Nombre: A-Z</option>
+            <option value="name_asc">Nombre A-Z</option>
           </select>
-
-          <div class="carousel-controls">
-            <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Ver anterior">←</button>
-            <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Ver siguiente">→</button>
-          </div>
         </div>
       </div>
 
-      <div id="statusRow" class="hint" style="margin: 6px 0 14px 0;"></div>
-
-      <!-- track -->
-      <div id="productGrid" class="product-grid product-grid--carousel" aria-live="polite"></div>
+      <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
+      <div id="statusRow" class="status" style="margin-top:10px;"></div>
     </section>
   </main>
 
-  <footer class="footer" role="contentinfo" style="background-color: var(--text); color: #ffffff;">
-    <div class="wrap footer__inner">
-      <div class="footer__brand-col">
-        <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
-        <div class="footer__sub" style="line-height: 1.8; color: #d1d1d1;">
-          <strong style="color: #ffffff;">Seguridad Total Garantizada</strong><br>
-          Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
-          Logística inteligente internacional con Envía.com.<br><br>
-          <div id="footerNote" style="margin: 0 0 12px 0;"></div>
-          <div style="margin-top: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 8px;">
-            <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte">
-              <span class="footer-icon">✉️</span> <span id="footerEmailText">ventas.unicotextil@gmail.com</span>
-            </a>
-            <a id="footerWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp">
-              <span class="footer-icon" style="color:#25D366;">💬</span> <span id="footerWhatsappText">664 236 8701</span>
-            </a>
-          </div>
-        </div>
+  <aside id="sideMenu" class="drawer" hidden aria-label="Menú lateral">
+    <div class="drawer__panel glass-panel">
+      <div class="drawer__head">
+        <strong>Menú</strong>
+        <button id="closeMenuBtn" class="iconbtn" type="button" aria-label="Cerrar menú">✕</button>
       </div>
 
-      <div class="footer__socials">
-        <div class="social-title" style="color: #ffffff;">SÍGUENOS EN LA PISTA</div>
-        <div class="social-links">
-          <a id="footerFacebookLink" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener noreferrer" aria-label="Facebook Oficial" style="color: #d1d1d1;">Facebook</a>
-          <a id="footerInstagramLink" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener noreferrer" aria-label="Instagram Oficial" style="color: #d1d1d1;">Instagram</a>
-          <a id="footerYoutubeLink" href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener noreferrer" aria-label="YouTube Oficial" style="color: #d1d1d1;">YouTube</a>
+      <div class="drawer__body">
+        <div class="search glass-panel" style="margin-bottom:16px;">
+          <span class="search__icon" aria-hidden="true">⌕</span>
+          <input
+            id="menuSearchInput"
+            class="search__input"
+            type="search"
+            placeholder="Buscar mercancía..."
+            autocomplete="off"
+            aria-label="Buscar en menú"
+          />
         </div>
-      </div>
 
-      <div class="footer__right">
-        <a href="legal.html" class="linkbtn hover-fx" aria-label="Leer términos y políticas de privacidad" style="color: #d1d1d1;">Términos, Privacidad y Devoluciones</a>
+        <nav class="menu-list">
+          <button id="navOpenCart" class="menu-list__item" type="button">🛒 Ver carrito</button>
+          <button id="navOpenAssistant" class="menu-list__item" type="button">✨ Asistente SCORE</button>
+        </nav>
       </div>
     </div>
-  </footer>
-
-  <div id="salesNotification" class="sales-toast glass-panel" hidden aria-hidden="true">
-    <div class="sales-toast__icon">🛍️</div>
-    <div class="sales-toast__content">
-      <div class="sales-toast__name" id="salesName">Alguien</div>
-      <div class="sales-toast__action" id="salesAction">compró un artículo</div>
-      <div class="sales-toast__time">Hace un momento</div>
-    </div>
-  </div>
-
-  <button id="floatingAssistantBtn" class="floating-assistant hover-fx neon-glow" type="button" aria-label="Hablar con el Asistente SCORE" title="Chatea con SCORE">
-    <svg class="assistant-icon pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
-      <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
-      <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
-    </svg>
-  </button>
-
-  <button id="scrollTopBtn" class="floating-scroll hover-fx neon-glow" type="button" aria-label="Volver arriba" title="Volver arriba" hidden>
-    <span class="icon" aria-hidden="true">↑</span>
-  </button>
+  </aside>
 
   <div id="overlay" class="overlay" hidden></div>
 
-  <div id="checkoutLoader" class="checkout-loader" hidden>
-    <div class="checkout-loader__spinner tech-spinner"></div>
-    <div class="checkout-loader__text">Estableciendo conexión encriptada con Stripe...<br><small style="color: var(--red); font-weight:bold;">Por tu seguridad, no actualices ni cierres esta ventana.</small></div>
-  </div>
-
-  <aside id="sideMenu" class="drawer glass-drawer" aria-label="Menú principal de navegación" hidden>
-    <div class="drawer__head">
-      <div class="drawer__title tech-text">Menú Principal</div>
-      <button id="closeMenuBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar menú lateral">✕</button>
-    </div>
-
-    <div class="drawer__body">
-      <div class="search glass-panel" style="margin-bottom: 20px;">
-        <span class="search__icon" aria-hidden="true">⌕</span>
-        <input id="menuSearchInput" name="menuSearchInput" class="search__input tech-input" type="search" placeholder="Buscar en la tienda..." autocomplete="off" aria-label="Búsqueda rápida en menú" />
+  <aside id="cartDrawer" class="drawer drawer--right" hidden aria-label="Carrito de compras">
+    <div class="drawer__panel glass-panel">
+      <div class="drawer__head">
+        <strong>Mi carrito</strong>
+        <button id="closeCartBtn" class="iconbtn" type="button" aria-label="Cerrar carrito">✕</button>
       </div>
 
-      <button class="navitem tech-navitem hover-fx" type="button" data-scroll="#categories">🏁 Ver Todas las Colecciones</button>
-      <button class="navitem tech-navitem hover-fx" type="button" id="navOpenCart">🛒 Ir a Mi Carrito de Compras</button>
+      <div class="drawer__body">
+        <div id="cartItems"></div>
 
-      <button class="navitem tech-navitem hover-fx" type="button" id="navOpenAssistant">
-        <svg class="assistant-icon assistant-icon--menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
-          <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
-          <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
-        </svg>
-        Consultar al Asistente SCORE
-      </button>
+        <div class="cartpanel">
+          <div class="cartline"><span>Subtotal</span><strong id="cartSubtotal">$0</strong></div>
+          <div class="cartline"><span>Envío</span><strong id="shippingLine">$0</strong></div>
+          <div id="discountLineWrap" class="cartline" hidden><span>Descuento</span><strong id="discountLine">-$0</strong></div>
+          <div class="cartline cartline--total"><span>Total</span><strong id="cartTotal">$0</strong></div>
 
-      <div class="drawer__divider"></div>
-      <a class="navitem navitem--link tech-navitem hover-fx" href="legal.html" style="font-size: 14px;">Centro de Ayuda / Políticas</a>
-    </div>
-
-    <div class="drawer__foot">
-      <div class="muted">SCORE STORE OS v<span id="appVersionLabel">—</span></div>
-    </div>
-  </aside>
-
-  <aside id="cartDrawer" class="drawer drawer--right glass-drawer" aria-label="Panel de tu carrito de compras" hidden>
-    <div class="drawer__head">
-      <div class="drawer__title tech-text">🛒 Tu Carrito</div>
-      <button id="closeCartBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Ocultar carrito de compras">✕</button>
-    </div>
-
-    <div class="drawer__body" style="display: flex; flex-direction: column; height: 100%;">
-      <div id="cartItems" class="cartitems custom-scrollbar" style="flex-grow: 1;"></div>
-
-      <div class="cartbox tech-cartbox">
-        <div class="cartrow">
-          <span>Subtotal de productos</span>
-          <b id="cartSubtotal">$0.00</b>
-        </div>
-
-        <div id="discountLineWrap" class="cartrow" style="color: var(--red);" hidden>
-          <span>Descuento aplicado</span>
-          <b id="discountLine">-$0.00</b>
-        </div>
-
-        <div class="cartrow cartrow--stack tech-shipping-box" style="background: var(--bg-alt); padding: 15px; border-radius: 8px; margin-top: 10px;">
-          <div class="cartrow__line">
-            <span style="font-weight:bold;">Logística y Entrega</span>
-            <span class="muted" id="shipHint" style="font-size: 12px; font-weight: bold;">Selecciona ▼</span>
+          <div class="cartsection">
+            <div class="ux-label">Entrega</div>
+            <div class="shipselector">
+              <button class="shipselector__btn" type="button" data-ship-mode="pickup">Pickup</button>
+              <button class="shipselector__btn" type="button" data-ship-mode="envia_mx">MX</button>
+              <button class="shipselector__btn" type="button" data-ship-mode="envia_us">USA</button>
+            </div>
+            <div id="shipHint" class="hint" style="margin-top:8px;"></div>
+            <div id="shippingNote" class="hint" style="margin-top:8px;"></div>
           </div>
 
-          <div class="seg tech-seg" role="group" aria-label="Selecciona tu opción de entrega">
-            <label class="seg__opt">
-              <input type="radio" name="shipMode" value="pickup" checked />
-              <span>Fábrica (TJ)</span>
-            </label>
-            <label class="seg__opt">
-              <input type="radio" name="shipMode" value="envia_mx" />
-              <span>Envío MX</span>
-            </label>
-            <label class="seg__opt">
-              <input type="radio" name="shipMode" value="envia_us" />
-              <span>Envío USA</span>
-            </label>
+          <div id="postalWrap" class="cartsection" hidden>
+            <div class="ux-label">CP / ZIP</div>
+            <div class="postalrow">
+              <input id="postalCode" class="input" type="text" inputmode="numeric" placeholder="Ej. 22614" />
+              <button id="quoteBtn" class="btn btn--ghost tech-ghost-btn" type="button">Cotizar</button>
+            </div>
           </div>
 
-          <div id="shippingNote" class="hint tech-hint" style="color: var(--red); font-size: 12px; text-align: center; margin-top: 8px;">
-            Recolección sin costo en nuestras instalaciones (Tijuana).
+          <div class="cartsection">
+            <div class="ux-label">Código promo</div>
+            <div class="postalrow">
+              <input id="promoCode" class="input" type="text" placeholder="Ej. SCORE10" />
+              <button id="applyPromoBtn" class="btn btn--ghost tech-ghost-btn" type="button">Aplicar</button>
+            </div>
           </div>
 
-          <div id="postalWrap" class="postal" hidden>
-            <input id="postalCode" name="postalCode" class="input tech-input" inputmode="numeric" maxlength="10" placeholder="Ingresa tu CP / ZIP para calcular..." aria-label="Escribe tu Código Postal" />
-            <button id="quoteBtn" class="btn btn--tiny btn--black hover-fx neon-border" type="button" aria-label="Cotizar envío a tu código postal">Cotizar</button>
-          </div>
-
-          <div class="cartrow" style="margin-top:12px; font-weight:bold;">
-            <span>Costo de Envío Final</span>
-            <b id="shippingLine">$0.00</b>
+          <div class="cartsection">
+            <button id="checkoutBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button">
+              Pagar con Stripe
+            </button>
+            <button id="continueShoppingBtn" class="btn btn--ghost btn--block tech-ghost-btn" type="button" style="margin-top:10px;">
+              Seguir comprando
+            </button>
+            <p id="checkoutMsg" class="hint" hidden style="margin-top:10px;"></p>
+            <div id="checkoutLoader" hidden style="margin-top:10px;">
+              <span class="spinner-mini"></span>
+            </div>
           </div>
         </div>
-
-        <div class="cartrow tech-total-row" style="border-top: 2px dashed var(--border); padding-top: 15px; margin-top: 15px; align-items: flex-end;">
-          <span class="total-label" style="font-size: 18px;">Total Seguro</span>
-          <b id="cartTotal" class="total-price tech-price" style="font-size: 26px; color: var(--black-btn);">$0.00</b>
-        </div>
-
-        <div class="cartrow cartrow--stack" style="margin-top: 10px;">
-          <label class="muted" for="promoCode" style="font-size: 13px; cursor: pointer;">¿Tienes un código de promoción SCORE?</label>
-          <div style="display: flex; gap: 8px;">
-            <input id="promoCode" name="promoCode" class="input tech-input" placeholder="Ej. SCOREVIP" aria-label="Escribe aquí tu código promocional" style="text-transform: uppercase;" />
-            <button id="applyPromoBtn" class="btn btn--black hover-fx" type="button" style="padding: 0 15px;">Validar</button>
-          </div>
-        </div>
-
-        <button id="checkoutBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button" style="margin-top: 20px; box-shadow: 0 4px 15px rgba(228,0,43,0.3);">
-          Proceder al Pago Seguro 🔒
-        </button>
-        <button id="continueShoppingBtn" class="btn btn--ghost btn--block btn--large hover-fx tech-ghost-btn" type="button" style="margin-top: 10px;">
-          ← Volver a la tienda
-        </button>
-
-        <div style="text-align: center; margin-top: 15px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; align-items: center;">
-          <span>Pagos respaldados y protegidos por infraestructura Stripe Inc.</span>
-          <div style="display:flex; gap: 8px; justify-content:center; align-items:center;">
-            <span>💳 Tarjetas Crédito/Débito</span>
-            <span>🏪 Efectivo en OXXO</span>
-          </div>
-        </div>
-
-        <div id="checkoutMsg" class="hint" hidden style="margin-top:10px; color:var(--red); text-align:center; font-weight: bold;"></div>
       </div>
     </div>
   </aside>
 
-  <section id="assistantModal" class="modal" role="dialog" aria-modal="true" aria-label="Interfaz del Asistente SCORE" hidden>
-    <div class="modal__panel modal__panel--tall vfx-modal-panel ai-panel-fx" style="border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-      <div class="modal__head glass-header" style="background: var(--black-btn); color: white; border-bottom: none; padding: 15px 20px; flex-shrink: 0;">
-        <div class="modal__title" style="display:flex; align-items:center; gap:8px;">
-          <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
-            <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
-            <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
-          </svg>
-          <div>
-            <span class="tech-text" style="display:block; font-size:16px;">SCORE System</span>
-            <span style="display:block; font-size:11px; color:#aaa; font-weight:normal;">Asistencia Virtual En Línea</span>
-          </div>
-        </div>
-        <button id="assistantClose" class="iconbtn hover-fx" type="button" aria-label="Minimizar chat" style="color:white; background: rgba(255,255,255,0.1); border:none;">✕</button>
+  <section id="assistantModal" class="modal" role="dialog" aria-modal="true" aria-label="Asistente SCORE" hidden>
+    <div class="modal__panel vfx-modal-panel">
+      <div class="modal__head sticky-header glass-header">
+        <h3 class="modal__title tech-text" style="margin:0;">Asistente SCORE</h3>
+        <button id="assistantClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar asistente">✕</button>
       </div>
-
-      <div class="modal__body ai-body-mobile" style="background: #f5f5f7; display:flex; flex-direction:column; padding: 15px; flex-grow: 1; overflow: hidden;">
-        <div id="assistantOutput" class="chat custom-scrollbar tech-chat-box" aria-live="polite" style="flex-grow: 1; margin-bottom: 15px;"></div>
-        <div class="chatbar" style="flex-shrink: 0; padding-bottom: max(10px, var(--safe-bottom));">
-          <input id="assistantInput" name="assistantInput" class="input tech-input" placeholder="Pregunta por tallas, envíos o modelos..." aria-label="Campo de escritura para el chat" />
-          <button id="assistantSendBtn" class="btn btn--primary hover-fx neon-border" type="button" aria-label="Enviar mensaje">Enviar ➢</button>
+      <div class="modal__body">
+        <div id="assistantOutput" class="chat__output custom-scrollbar"></div>
+        <div class="chat__composer">
+          <input id="assistantInput" class="input" type="text" placeholder="Ej. ¿Qué hoodies hay?" />
+          <button id="assistantSendBtn" class="btn btn--primary" type="button">Enviar</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ✅ Product Modal (RESTAURADO: requerido por main.js) -->
-  <section id="productModal" class="modal" role="dialog" aria-modal="true" aria-label="Detalles del producto" hidden>
-    <div class="modal__panel vfx-modal-panel">
-      <div class="modal__head sticky-header glass-header">
-        <button id="pmBackBtn" class="iconbtn hover-fx" type="button" aria-label="Regresar">←</button>
-        <h3 id="pmTitle" class="modal__title tech-text" style="text-align:center; flex:1; margin:0;">Producto</h3>
-        <button id="pmClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar">✕</button>
+  <button id="floatingAssistantBtn" class="floating-assistant hover-fx ai-fab" type="button" aria-label="Abrir asistente" title="Asistente SCORE">
+    ✨
+  </button>
+
+  <button id="scrollTopBtn" class="floating-scroll" type="button" aria-label="Volver arriba" title="Volver arriba">↑</button>
+
+  <div id="salesNotification" class="sales-toast glass-panel" hidden>
+    <strong id="salesName"></strong>
+    <span id="salesAction"></span>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <img src="/assets/logo-score.webp" alt="SCORE" width="120" height="53" decoding="async" />
+          <p id="footerNote" class="footer__note">Merch oficial de SCORE International.</p>
+        </div>
+
+        <div class="footer__contact">
+          <a id="footerEmailLink" href="mailto:info@scorestore.netlify.app"><span id="footerEmailText">info@scorestore.netlify.app</span></a>
+          <a id="footerWhatsappLink" href="https://wa.me/526642368701" target="_blank" rel="noreferrer"><span id="footerWhatsappText">+52 664 236 8701</span></a>
+        </div>
+
+        <div class="footer__social">
+          <a id="footerFacebookLink" href="#" target="_blank" rel="noreferrer" aria-label="Facebook">Facebook</a>
+          <a id="footerInstagramLink" href="#" target="_blank" rel="noreferrer" aria-label="Instagram">Instagram</a>
+          <a id="footerYoutubeLink" href="#" target="_blank" rel="noreferrer" aria-label="YouTube">YouTube</a>
+        </div>
       </div>
 
-      <div class="modal__body">
+      <div class="footer__bottom">
+        <a href="/legal.html">Legal</a>
+        <span id="appVersionLabel"></span>
+      </div>
+    </div>
+  </footer>
+
+  <section id="productModal" class="modal modal--product" role="dialog" aria-modal="true" aria-label="Detalle de producto" hidden>
+    <div class="modal__panel vfx-modal-panel">
+      <div class="modal__head sticky-header glass-header">
+        <button id="pmBackBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Regresar">←</button>
+        <h3 id="pmTitle" class="modal__title tech-text" style="margin:0;">Producto</h3>
+        <button id="pmClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar detalle">✕</button>
+      </div>
+
+      <div class="modal__body modal__body--product">
         <div class="pm__media">
-          <div id="pmCarousel" style="position:relative; width:100%; height:100%;"></div>
+          <div id="pmCarousel" class="pm__carousel"></div>
         </div>
 
         <div class="pm__info">
-          <div id="pmChips" class="pm__chips" aria-label="Etiquetas del producto"></div>
-
-          <div class="pm__row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom: 12px;">
-            <div class="pm__price-wrap">
-              <span class="ux-label" style="margin-bottom:6px;">Precio</span>
-              <div id="pmPrice" class="price" style="font-size: 28px; line-height: 1;"></div>
-            </div>
-            <span id="pmStockBadge" class="pill pill--logo" style="gap:6px; align-self:flex-end;" hidden></span>
-          </div>
-
+          <div id="pmChips" class="pm__chips"></div>
+          <div id="pmPrice" class="pm__price"></div>
+          <div id="pmStockBadge" class="pm__stock-badge" hidden></div>
           <div id="pmDesc" class="pm__desc"></div>
 
           <div class="pm__row" style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 10px;">
@@ -470,7 +453,6 @@
     </div>
   </section>
 
-  <!-- ✅ Size Guide Modal -->
   <section id="sizeGuideModal" class="modal" role="dialog" aria-modal="true" aria-label="Guía de tallas" hidden>
     <div class="modal__panel vfx-modal-panel">
       <div class="modal__head sticky-header glass-header">
@@ -497,7 +479,6 @@
     </div>
   </section>
 
-  <!-- ✅ Cookie banner (requerido por main.js) -->
   <div id="cookieBanner" class="cookie glass-panel" role="dialog" aria-label="Preferencias de cookies" hidden>
     <div class="cookie__text">
       Usamos cookies para funcionamiento básico del carrito y para mejorar la experiencia. Puedes aceptar o rechazar.
@@ -510,7 +491,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script>window.__APP_VERSION__ = "2026.03.05.SCORESTORE";</script>
-  <script src="js/main.js?v=2026-03-05" defer></script>
+  <script src="/js/main.js?v=2026-03-07" defer></script>
 </body>
 </html>
