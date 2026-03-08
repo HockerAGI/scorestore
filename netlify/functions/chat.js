@@ -1,17 +1,5 @@
 "use strict";
 
-/**
- * =========================================================
- * chat.js (Netlify Function)
- *
- * ALINEADO A SITE_SETTINGS + CONTACTO DINÁMICO
- * - Gemini auth correcta: x-goog-api-key header
- * - Default model actualizado: gemini-2.5-flash-lite
- * - Fallback automático si el modelo no existe
- * - Ya no depende solo de hardcodes de contacto
- * =========================================================
- */
-
 const {
   jsonResponse,
   handleOptions,
@@ -25,7 +13,7 @@ const sanitizeContext = (str) => {
   return String(str || "Ninguno")
     .replace(/[\[\]{}<>\\\n\r]/g, " ")
     .trim()
-    .substring(0, 180);
+    .substring(0, 220);
 };
 
 async function callGemini({ apiKey, model, systemText, userText }) {
@@ -36,7 +24,7 @@ async function callGemini({ apiKey, model, systemText, userText }) {
   const payload = {
     systemInstruction: { parts: [{ text: systemText }] },
     contents: [{ role: "user", parts: [{ text: userText }] }],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 500 },
+    generationConfig: { temperature: 0.45, maxOutputTokens: 550 },
   };
 
   const res = await fetch(endpoint, {
@@ -67,20 +55,12 @@ exports.handler = async (event) => {
     const context = body.context || {};
 
     if (!message) {
-      return jsonResponse(
-        400,
-        { ok: false, error: "Se requiere un mensaje válido." },
-        origin
-      );
+      return jsonResponse(400, { ok: false, error: "Se requiere un mensaje válido." }, origin);
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return jsonResponse(
-        200,
-        { ok: false, error: "El módulo de inteligencia no está conectado." },
-        origin
-      );
+      return jsonResponse(200, { ok: false, error: "El asistente no está conectado en este momento." }, origin);
     }
 
     const site = await readPublicSiteSettings().catch(() => null);
@@ -92,63 +72,43 @@ exports.handler = async (event) => {
     const preferredModel = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
     const fallbackModel = "gemini-2.5-flash";
 
-    const safeProduct = sanitizeContext(
-      context.currentProduct ||
-      context.currentSku ||
-      context.product ||
-      "Ninguno"
-    );
+    const safeProduct = sanitizeContext(context.currentProduct || context.currentSku || context.product || "Ninguno");
+    const safeCartItems = sanitizeContext(context.cartItems || context.cart || "Sin productos detectados");
+    const safeTotal = sanitizeContext(context.cartTotal || context.total || "No disponible");
+    const safeShipMode = sanitizeContext(context.shipMode || context.shippingMode || "No definido");
 
-    const safeCartItems = sanitizeContext(
-      context.cartItems ||
-      context.cart ||
-      "Sin productos detectados"
-    );
+    const sys = `Eres SCORE AI, la agente comercial y operativa de Score Store.
 
-    const safeTotal = sanitizeContext(
-      context.cartTotal ||
-      context.total ||
-      "No disponible"
-    );
-
-    const safeShipMode = sanitizeContext(
-      context.shipMode ||
-      context.shippingMode ||
-      "No definido"
-    );
-
-    const sys = `Eres SCORE AI, el agente comercial premium de Score Store, tienda oficial de merch SCORE International.
-Tu meta principal es asistir, resolver dudas y empujar la compra sin inventar información.
+OBJETIVO:
+- Resolver dudas
+- Guiar a compra
+- Explicar pasos del proceso de forma clara
+- Ayudar con carrito, pago, envío, tallas, promociones visibles y contacto
 
 TONO:
 - Seguro
-- Elegante
 - Claro
+- Comercial
 - Corto pero útil
-- En español mexicano
+- Nada de tecnicismos
 - Nada de texto robótico
 
 REGLAS DURAS:
-- NUNCA inventes precios, stock ni promos si no vienen en el contexto.
-- Si no sabes un dato exacto, dilo directo.
-- No prometas descuentos no confirmados.
-- No inventes tiempos de envío exactos; explica que la tarifa y tránsito se calculan en checkout.
-- Si te piden contacto humano, usa SOLO estos datos vigentes:
+- Nunca inventes precios, stock, promos ni tiempos exactos si no vienen en contexto.
+- Si no sabes un dato, dilo directo y ofrece el siguiente paso útil.
+- Si el usuario pide ayuda humana, usa solo estos datos vigentes:
   Correo: ${currentEmail || "No disponible"}
   WhatsApp: ${currentWhatsapp || "No disponible"}
   Horario: ${currentSupportHours || "No especificado"}
+- Si preguntan cómo comprar, explica el flujo real: elegir producto, talla, carrito, envío, pago y confirmación.
+- Si preguntan por pagos, explica solo lo que sí está disponible: Stripe, tarjeta y OXXO Pay cuando aplique.
+- Si preguntan por envíos, explica que se calculan según destino y que hay MX, USA y pickup cuando corresponda.
 
 CONTEXTO ACTUAL DEL USUARIO:
 - Producto actual: ${safeProduct}
 - Carrito actual: ${safeCartItems}
 - Total visible: ${safeTotal}
 - Modo de envío visible: ${safeShipMode}
-
-CONTEXTO OPERATIVO REAL DE LA TIENDA:
-- Checkout con Stripe
-- OXXO Pay disponible
-- Envíos por Envia.com a MX y USA
-- Pickup en fábrica en Tijuana cuando aplique
 
 COMANDOS DE ACCIÓN:
 Si detectas intención clarísima de compra sobre el producto actual, agrega EXACTAMENTE al final:
@@ -157,7 +117,7 @@ Si detectas intención clarísima de compra sobre el producto actual, agrega EXA
 Si detectas intención clarísima de abrir carrito o pagar, agrega EXACTAMENTE al final:
 [ACTION:OPEN_CART]
 
-No pongas ambos a menos que sea estrictamente necesario.`;
+Usa comandos solo cuando de verdad ayuden.`;
 
     let r = await callGemini({
       apiKey,
@@ -181,7 +141,7 @@ No pongas ambos a menos que sea estrictamente necesario.`;
     }
 
     if (!r.ok) {
-      const msg = r?.data?.error?.message || "Error conectando con el clúster de IA.";
+      const msg = r?.data?.error?.message || "El asistente no pudo responder.";
       return jsonResponse(200, { ok: false, error: String(msg) }, origin);
     }
 
@@ -189,24 +149,10 @@ No pongas ambos a menos que sea estrictamente necesario.`;
     const reply =
       data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "SCORE AI no pudo generar respuesta. Intenta de nuevo.";
+      "No pude generar una respuesta en este momento.";
 
-    return jsonResponse(
-      200,
-      {
-        ok: true,
-        reply: String(reply).trim(),
-      },
-      origin
-    );
-  } catch (e) {
-    return jsonResponse(
-      200,
-      {
-        ok: false,
-        error: "Sistemas tácticos de IA temporalmente fuera de línea.",
-      },
-      origin
-    );
+    return jsonResponse(200, { ok: true, reply: String(reply).trim() }, origin);
+  } catch {
+    return jsonResponse(200, { ok: false, error: "El asistente está temporalmente fuera de línea." }, origin);
   }
 };
