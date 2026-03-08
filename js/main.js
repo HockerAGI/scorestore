@@ -1,1234 +1,497 @@
-/* =========================================================
-   SCORE STORE — Frontend Fusion PRO
-   Base actual + rescate UX del deploy 69a7...
-   ========================================================= */
-
-(() => {
-  "use strict";
-
-  const APP_VERSION = window.__APP_VERSION__ || "2026.03.08.SCORESTORE";
-
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const debounce = (fn, wait = 160) => {
-    let t = null;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), wait);
-    };
-  };
-
-  const money = (cents) => {
-    const n = Number(cents);
-    const v = Number.isFinite(n) ? n : 0;
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 2,
-    }).format(v / 100);
-  };
-
-  const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
-  const safeUrl = (u) => {
-    const s = String(u || "").trim();
-    if (!s) return "";
-    if (s.startsWith("http://") || s.startsWith("https://")) return s;
-    if (s.startsWith("/")) return s;
-    return s;
-  };
-
-  const escapeHtml = (s) =>
-    String(s || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-
-  const splash = $("#splash");
-  const overlay = $("#overlay");
-
-  const sideMenu = $("#sideMenu");
-  const openMenuBtn = $("#openMenuBtn");
-  const closeMenuBtn = $("#closeMenuBtn");
-
-  const cartDrawer = $("#cartDrawer");
-  const openCartBtn = $("#openCartBtn");
-  const closeCartBtn = $("#closeCartBtn");
-  const navOpenCart = $("#navOpenCart");
-
-  const assistantModal = $("#assistantModal");
-  const openAssistantBtn = $("#openAssistantBtn");
-  const floatingAssistantBtn = $("#floatingAssistantBtn");
-  const navOpenAssistant = $("#navOpenAssistant");
-  const assistantClose = $("#assistantClose");
-  const assistantOutput = $("#assistantOutput");
-  const assistantInput = $("#assistantInput");
-  const assistantSendBtn = $("#assistantSendBtn");
-
-  const scrollToCategoriesBtn = $("#scrollToCategoriesBtn");
-  const categoryGrid = $("#categoryGrid");
-  const categoryHint = $("#categoryHint");
-  const catalogCarouselSection = $("#catalogCarouselSection");
-  const carouselTitle = $("#carouselTitle");
-  const productGrid = $("#productGrid");
-  const statusRow = $("#statusRow");
-
-  const searchInput = $("#searchInput");
-  const mobileSearchBtn = $("#mobileSearchBtn");
-  const mobileSearchWrap = $("#mobileSearchWrap");
-  const mobileSearchInput = $("#mobileSearchInput");
-  const closeMobileSearchBtn = $("#closeMobileSearchBtn");
-  const sortSelect = $("#sortSelect");
-  const menuSearchInput = $("#menuSearchInput");
-
-  const promoBar = $("#promoBar");
-  const promoBarText = $("#promoBarText");
-  const promoBarClose = $("#promoBarClose");
-
-  const footerNote = $("#footerNote");
-  const footerEmailLink = $("#footerEmailLink");
-  const footerEmailText = $("#footerEmailText");
-  const footerWhatsappLink = $("#footerWhatsappLink");
-  const footerWhatsappText = $("#footerWhatsappText");
-  const footerFacebookLink = $("#footerFacebookLink");
-  const footerInstagramLink = $("#footerInstagramLink");
-  const footerYoutubeLink = $("#footerYoutubeLink");
-
-  const activeFilterRow = $("#activeFilterRow");
-  const activeFilterLabel = $("#activeFilterLabel");
-  const clearFilterBtn = $("#clearFilterBtn");
-
-  const cartCount = $("#cartCount");
-  const cartItemsEl = $("#cartItems");
-  const cartSubtotalEl = $("#cartSubtotal");
-  const shippingLineEl = $("#shippingLine");
-  const discountLineWrap = $("#discountLineWrap");
-  const discountLineEl = $("#discountLine");
-  const cartTotalEl = $("#cartTotal");
-
-  const shipHint = $("#shipHint");
-  const shippingNote = $("#shippingNote");
-  const postalWrap = $("#postalWrap");
-  const postalCode = $("#postalCode");
-  const quoteBtn = $("#quoteBtn");
-
-  const promoCode = $("#promoCode");
-  const applyPromoBtn = $("#applyPromoBtn");
-
-  const checkoutBtn = $("#checkoutBtn");
-  const continueShoppingBtn = $("#continueShoppingBtn");
-  const checkoutMsg = $("#checkoutMsg");
-  const checkoutLoader = $("#checkoutLoader");
-
-  const cookieBanner = $("#cookieBanner");
-  const cookieAccept = $("#cookieAccept");
-  const cookieReject = $("#cookieReject");
-
-  const scrollTopBtn = $("#scrollTopBtn");
-  const salesNotification = $("#salesNotification");
-  const salesName = $("#salesName");
-  const salesAction = $("#salesAction");
-  const appVersionLabel = $("#appVersionLabel");
-
-  const productModal = $("#productModal");
-  const pmBackBtn = $("#pmBackBtn");
-  const pmClose = $("#pmClose");
-  const pmTitle = $("#pmTitle");
-  const pmCarousel = $("#pmCarousel");
-  const pmChips = $("#pmChips");
-  const pmPrice = $("#pmPrice");
-  const pmDesc = $("#pmDesc");
-  const pmStockBadge = $("#pmStockBadge");
-  const pmSizePills = $("#pmSizePills");
-  const pmQtyDec = $("#pmQtyDec");
-  const pmQtyInc = $("#pmQtyInc");
-  const pmQtyDisplay = $("#pmQtyDisplay");
-  const pmAdd = $("#pmAdd");
-  const pmShareBtn = $("#pmShareBtn");
-
-  const sizeGuideModal = $("#sizeGuideModal");
-  const openSizeGuideBtn = $("#openSizeGuideBtn");
-  const closeSizeGuideBtn = $("#closeSizeGuideBtn");
-  const understandSizeBtn = $("#understandSizeBtn");
-
-  const toast = $("#toast");
-
-  let categories = [];
-  let products = [];
-  let filteredProducts = [];
-  let activeCategory = null;
-  let searchQuery = "";
-  let currentProduct = null;
-  let currentQty = 1;
-  let currentSize = null;
-  let activePromo = null;
-  let shipMode = "pickup";
-  let shippingQuoted = 0;
-  let shippingMeta = null;
-
-  let cart = [];
-  const CART_KEY = "scorestore_cart_v1";
-  const CONSENT_KEY = "scorestore_cookie_consent_v1";
-
-  const siteSettings = {
-    hero_title: null,
-    hero_image: null,
-    promo_active: false,
-    promo_text: "",
-    pixel_id: "",
-    maintenance_mode: false,
-    season_key: "default",
-    theme: { accent: "#e10600", accent2: "#111111", particles: true },
-    home: { footer_note: "", shipping_note: "", returns_note: "", support_hours: "" },
-    socials: { facebook: "", instagram: "", youtube: "", tiktok: "" },
-    contact: {
-      email: "ventas.unicotextil@gmail.com",
-      phone: "",
-      whatsapp_e164: "5216642368701",
-      whatsapp_display: "664 236 8701",
-    },
-  };
-
-  const showToast = (msg, type = "ok", timeout = 2400) => {
-    if (!toast) return;
-    toast.textContent = String(msg || "");
-    toast.hidden = false;
-    toast.setAttribute("data-type", type);
-    toast.classList.add("is-visible");
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => {
-      toast.classList.remove("is-visible");
-      setTimeout(() => {
-        toast.hidden = true;
-      }, 180);
-    }, timeout);
-  };
-
-  const openOverlay = () => {
-    if (!overlay) return;
-    overlay.hidden = false;
-    document.body.classList.add("no-scroll");
-  };
-
-  const closeOverlay = () => {
-    if (!overlay) return;
-    overlay.hidden = true;
-    document.body.classList.remove("no-scroll");
-  };
-
-  const openDrawer = (el) => {
-    if (!el) return;
-    el.hidden = false;
-    requestAnimationFrame(() => el.classList.add("is-open"));
-    openOverlay();
-  };
-
-  const closeDrawer = (el) => {
-    if (!el) return;
-    el.classList.remove("is-open");
-    setTimeout(() => {
-      el.hidden = true;
-      if (
-        !assistantModal?.classList.contains("is-open") &&
-        !productModal?.classList.contains("is-open") &&
-        !sizeGuideModal?.classList.contains("is-open")
-      ) {
-        closeOverlay();
-      }
-    }, 180);
-  };
-
-  const openModal = (el) => {
-    if (!el) return;
-    el.hidden = false;
-    requestAnimationFrame(() => el.classList.add("is-open"));
-    openOverlay();
-  };
-
-  const closeModal = (el) => {
-    if (!el) return;
-    el.classList.remove("is-open");
-    setTimeout(() => {
-      el.hidden = true;
-      if (
-        !sideMenu?.classList.contains("is-open") &&
-        !cartDrawer?.classList.contains("is-open") &&
-        !assistantModal?.classList.contains("is-open") &&
-        !productModal?.classList.contains("is-open") &&
-        !sizeGuideModal?.classList.contains("is-open")
-      ) {
-        closeOverlay();
-      }
-    }, 180);
-  };
-
-  const closeAll = () => {
-    closeDrawer(sideMenu);
-    closeDrawer(cartDrawer);
-    closeModal(assistantModal);
-    closeModal(productModal);
-    closeModal(sizeGuideModal);
-  };
-
-  const setCheckoutLoading = (on) => {
-    if (!checkoutLoader) return;
-    checkoutLoader.hidden = !on;
-  };
-
-  const setStatus = (msg) => {
-    if (!statusRow) return;
-    statusRow.textContent = String(msg || "");
-  };
-
-  const smoothScrollTo = (target) => {
-    const el = typeof target === "string" ? $(target) : target;
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const persistCart = () => {
-    try {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    } catch {}
-  };
-
-  const restoreCart = () => {
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      if (!raw) return;
-      const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) cart = arr;
-    } catch {}
-  };
-
-  const setCookieConsent = (value) => {
-    try {
-      localStorage.setItem(CONSENT_KEY, value);
-    } catch {}
-  };
-
-  const initCookieBanner = () => {
-    if (!cookieBanner || localStorage.getItem(CONSENT_KEY)) {
-      if (cookieBanner) cookieBanner.hidden = true;
-      return;
-    }
-
-    cookieBanner.hidden = false;
-
-    cookieAccept?.addEventListener("click", () => {
-      setCookieConsent("accepted");
-      cookieBanner.hidden = true;
-    });
-
-    cookieReject?.addEventListener("click", () => {
-      setCookieConsent("rejected");
-      cookieBanner.hidden = true;
-    });
-  };
-
-  const applyFooterAndPromo = () => {
-    if (footerNote) {
-      footerNote.textContent = siteSettings.home?.footer_note || "Merch oficial de SCORE International.";
-    }
-
-    if (footerEmailLink && footerEmailText) {
-      const email = String(siteSettings.contact?.email || "").trim();
-      if (email) {
-        footerEmailLink.href = `mailto:${email}`;
-        footerEmailText.textContent = email;
-      }
-    }
-
-    if (footerWhatsappLink && footerWhatsappText) {
-      const waE164 = String(siteSettings.contact?.whatsapp_e164 || "").trim();
-      const waDisplay = String(siteSettings.contact?.whatsapp_display || "").trim();
-      if (waE164) footerWhatsappLink.href = `https://wa.me/${encodeURIComponent(waE164)}`;
-      if (waDisplay) footerWhatsappText.textContent = waDisplay;
-    }
-
-    if (footerFacebookLink && siteSettings.socials?.facebook) footerFacebookLink.href = siteSettings.socials.facebook;
-    if (footerInstagramLink && siteSettings.socials?.instagram) footerInstagramLink.href = siteSettings.socials.instagram;
-    if (footerYoutubeLink && siteSettings.socials?.youtube) footerYoutubeLink.href = siteSettings.socials.youtube;
-
-    if (promoBar && promoBarText) {
-      const enabled = !!siteSettings.promo_active && String(siteSettings.promo_text || "").trim();
-      promoBar.hidden = !enabled;
-      promoBarText.textContent = enabled ? String(siteSettings.promo_text || "") : "";
-    }
-
-    if (shippingNote) {
-      shippingNote.textContent = String(siteSettings.home?.shipping_note || "");
-    }
-
-    if (checkoutBtn) checkoutBtn.disabled = !!siteSettings.maintenance_mode || !cart.length;
-  };
-
-  const fetchSiteSettings = async () => {
-    try {
-      const res = await fetch("/.netlify/functions/site_settings", { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      if (!data || !data.ok) return;
-
-      Object.assign(siteSettings, data);
-      applyFooterAndPromo();
-    } catch {}
-  };
-
-  promoBarClose?.addEventListener("click", () => {
-    if (promoBar) promoBar.hidden = true;
-  });
-
-  const getProductName = (p) => String(p?.name || "Producto SCORE");
-  const getProductImage = (p) => safeUrl(p?.image_url || p?.img || (Array.isArray(p?.images) ? p.images[0] : ""));
-  const getProductImages = (p) => {
-    const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
-    const fallback = getProductImage(p);
-    return arr.length ? arr.map(safeUrl) : fallback ? [fallback] : [];
-  };
-  const getProductSizes = (p) => {
-    const arr = Array.isArray(p?.sizes) ? p.sizes.filter(Boolean) : [];
-    return arr.length ? arr.map((x) => String(x)) : ["Única"];
-  };
-  const getProductPriceCents = (p) => {
-    const price = Number(p?.price_cents);
-    if (Number.isFinite(price) && price > 0) return Math.round(price);
-    const mxn = Number(p?.price_mxn);
-    if (Number.isFinite(mxn) && mxn > 0) return Math.round(mxn * 100);
-    const base = Number(p?.base_mxn);
-    if (Number.isFinite(base) && base > 0) return Math.round(base * 100);
-    return 0;
-  };
-
-  const normalizeCategory = (row) => ({
-    id: String(row?.id || row?.slug || row?.section_id || ""),
-    name: String(row?.name || row?.title || row?.section_id || "Colección"),
-    logo: safeUrl(row?.logo || row?.image || ""),
-    section_id: String(row?.section_id || row?.id || ""),
-  });
-
-  const normalizeProduct = (row) => ({
-    ...row,
-    sku: String(row?.sku || ""),
-    name: String(row?.name || "Producto SCORE"),
-    section_id: String(row?.section_id || ""),
-    sub_section: String(row?.sub_section || ""),
-    image_url: safeUrl(row?.image_url || row?.img || ""),
-    images: Array.isArray(row?.images) ? row.images.map(safeUrl).filter(Boolean) : [],
-    sizes: Array.isArray(row?.sizes) ? row.sizes : [],
-  });
-
-  const loadCatalog = async () => {
-    const [catalogRes, categoriesRes] = await Promise.all([
-      fetch("/.netlify/functions/catalog", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
-      fetch("/data/catalog.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
-    ]);
-
-    const fallbackData = categoriesRes && typeof categoriesRes === "object" ? categoriesRes : {};
-
-    if (catalogRes?.ok) {
-      categories = Array.isArray(catalogRes.categories) ? catalogRes.categories.map(normalizeCategory) : [];
-      products = Array.isArray(catalogRes.products) ? catalogRes.products.map(normalizeProduct) : [];
-    } else {
-      categories = Array.isArray(fallbackData.categories) ? fallbackData.categories.map(normalizeCategory) : [];
-      products = Array.isArray(fallbackData.products) ? fallbackData.products.map(normalizeProduct) : [];
-    }
-
-    filteredProducts = [...products];
-  };
-
-  const applySort = (items) => {
-    const mode = String(sortSelect?.value || "featured");
-    const arr = [...items];
-    if (mode === "price_asc") arr.sort((a, b) => getProductPriceCents(a) - getProductPriceCents(b));
-    else if (mode === "price_desc") arr.sort((a, b) => getProductPriceCents(b) - getProductPriceCents(a));
-    else if (mode === "name_asc") arr.sort((a, b) => getProductName(a).localeCompare(getProductName(b), "es"));
-    return arr;
-  };
-
-  const getVisibleProducts = () => {
-    let list = [...products];
-
-    if (activeCategory?.section_id) {
-      list = list.filter((p) => String(p.section_id || "") === String(activeCategory.section_id));
-    }
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((p) =>
-        [p.name, p.sku, p.section_id, p.sub_section].some((x) =>
-          String(x || "").toLowerCase().includes(q)
-        )
-      );
-    }
-
-    return applySort(list);
-  };
-
-  const ensureCarouselUX = () => {
-    if (!productGrid) return;
-    productGrid.scrollTo({ left: 0, behavior: "instant" });
-  };
-
-  const renderCategories = () => {
-    if (!categoryGrid) return;
-    categoryGrid.innerHTML = "";
-
-    for (const cat of categories) {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "catcard glass-panel hover-fx";
-      card.innerHTML = `
-        <div class="catcard__media">
-          ${cat.logo ? `<img src="${escapeHtml(cat.logo)}" alt="${escapeHtml(cat.name)}" loading="lazy" />` : `<div class="product-card__placeholder">🏁</div>`}
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#E10600" />
+  <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
+  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <title>SCORE STORE — Official Merchandise</title>
+
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="canonical" href="https://scorestore.netlify.app/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_MX" />
+  <meta property="og:title" content="SCORE STORE — Official Merchandise" />
+  <meta property="og:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
+  <meta property="og:url" content="https://scorestore.netlify.app/" />
+  <meta property="og:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="SCORE STORE — Official Merchandise" />
+  <meta name="twitter:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
+  <meta name="twitter:image" content="https://scorestore.netlify.app/assets/hero.webp" />
+
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
+  <link rel="preload" href="/css/styles.css" as="style" />
+  <link rel="preload" href="/css/override.css?v=2026-03-08c" as="style" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
+  <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
+  <link rel="preload" href="/assets/logo-score.webp" as="image" type="image/webp" />
+
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-08c" />
+</head>
+
+<body>
+  <div id="splash" class="splash" aria-hidden="true">
+    <div class="splash__bg"></div>
+    <div class="splash__vignette"></div>
+    <div class="splash__dust"></div>
+    <div class="splash__grid"></div>
+    <div class="splash__inner">
+      <div class="splash__logo-wrap">
+        <img
+          class="splash__logo"
+          src="/assets/logo-score.webp"
+          alt="SCORE"
+          width="220"
+          height="96"
+          decoding="async"
+          fetchpriority="high"
+        />
+        <div class="splash__laser"></div>
+      </div>
+      <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
+      <div class="splash__bar-container">
+        <div class="splash__bar" role="progressbar" aria-label="Cargando entorno de tienda">
+          <div class="splash__barFill"></div>
         </div>
-        <div class="catcard__body">
-          <h3 class="catcard__title">${escapeHtml(cat.name)}</h3>
-          <p class="catcard__copy">Explorar colección oficial</p>
+      </div>
+      <div class="splash__text">SISTEMAS EN LÍNEA. CALENTANDO MOTORES...</div>
+    </div>
+  </div>
+
+  <a class="skip" href="#categories">Saltar navegación e ir directo al catálogo</a>
+
+  <header class="topbar" role="banner">
+    <div class="wrap topbar__inner">
+      <button id="openMenuBtn" class="iconbtn hover-fx" type="button" aria-label="Abrir menú principal">
+        <span class="icon" aria-hidden="true">≡</span>
+      </button>
+
+      <a class="brand" href="/index.html" aria-label="Ir a Inicio de Score Store">
+        <img
+          class="brand__logo"
+          src="/assets/logo-score.webp"
+          alt="Logotipo SCORE STORE"
+          width="120"
+          height="53"
+          decoding="async"
+        />
+      </a>
+
+      <div class="topbar__actions">
+        <div class="search desktop-only glass-panel">
+          <span class="search__icon" aria-hidden="true">⌕</span>
+          <input
+            id="searchInput"
+            name="searchInput"
+            class="search__input"
+            type="search"
+            placeholder="Buscar hoodies, gorras, merch..."
+            autocomplete="off"
+            aria-label="Caja de búsqueda de productos"
+          />
         </div>
-      `;
 
-      card.addEventListener("click", () => {
-        activeCategory = cat;
-        renderProducts();
-        if (catalogCarouselSection) catalogCarouselSection.hidden = false;
-        smoothScrollTo(catalogCarouselSection || "#catalogCarouselSection");
-      });
-
-      categoryGrid.appendChild(card);
-    }
-  };
-
-  const renderProducts = () => {
-    if (!productGrid) return;
-
-    filteredProducts = getVisibleProducts();
-
-    if (carouselTitle) {
-      carouselTitle.textContent = activeCategory?.name || "Catálogo";
-    }
-
-    if (categoryHint) categoryHint.hidden = !!activeCategory;
-
-    if (activeFilterRow && activeFilterLabel) {
-      const parts = [];
-      if (activeCategory?.name) parts.push(`Colección: ${activeCategory.name}`);
-      if (searchQuery) parts.push(`Búsqueda: ${searchQuery}`);
-      activeFilterLabel.textContent = parts.join(" · ");
-      activeFilterRow.hidden = !parts.length;
-    }
-
-    productGrid.innerHTML = "";
-
-    if (!filteredProducts.length) {
-      productGrid.innerHTML = `
-        <article class="glass-panel" style="padding:24px; min-width:100%;">
-          <h3 style="margin:0 0 8px 0;">Sin resultados</h3>
-          <p class="hint" style="margin:0;">No encontré productos para ese filtro.</p>
-        </article>
-      `;
-      ensureCarouselUX();
-      return;
-    }
-
-    for (const p of filteredProducts) {
-      const card = document.createElement("article");
-      card.className = "product-card glass-panel hover-fx";
-      card.dataset.sku = String(p.sku || "");
-      card.style.scrollSnapAlign = "start";
-
-      const image = getProductImage(p);
-      const cents = getProductPriceCents(p);
-      const available = Number(p.stock || 0) > 0 || p.stock == null;
-      const badge = available ? "Disponible" : "Agotado";
-
-      card.innerHTML = `
-        <button type="button" class="product-card__btn" aria-label="Abrir ${escapeHtml(getProductName(p))}">
-          <div class="product-card__media">
-            ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(getProductName(p))}" loading="lazy" />` : `<div class="product-card__placeholder">🏁</div>`}
-          </div>
-          <div class="product-card__body">
-            <div class="product-card__top">
-              <span class="pill">${escapeHtml(badge)}</span>
-              <span class="pill pill--logo">${escapeHtml(String(p.section_id || "SCORE"))}</span>
-            </div>
-            <h4 class="product-card__title">${escapeHtml(getProductName(p))}</h4>
-            <p class="product-card__sku">${escapeHtml(String(p.sku || ""))}</p>
-            <div class="product-card__bottom">
-              <div class="price">${money(cents)}</div>
-              <span class="product-card__cta">Ver detalle →</span>
-            </div>
-          </div>
+        <button id="mobileSearchBtn" class="iconbtn hover-fx mobile-only" type="button" aria-label="Buscar productos">
+          <span class="icon" aria-hidden="true">⌕</span>
         </button>
-      `;
 
-      card.querySelector(".product-card__btn")?.addEventListener("click", () => openProduct(String(p.sku || "")));
-      productGrid.appendChild(card);
-    }
+        <button
+          id="openAssistantBtn"
+          class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow"
+          type="button"
+          aria-label="Abrir Asistente Virtual SCORE"
+          title="Pregúntale al Asistente SCORE"
+        >
+          <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
+            <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
+            <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
+          </svg>
+        </button>
 
-    setStatus(`${filteredProducts.length} producto(s) encontrados.`);
-    ensureCarouselUX();
-  };
+        <button
+          id="openCartBtn"
+          class="iconbtn iconbtn--dark hover-fx vfx-cart-btn"
+          type="button"
+          aria-label="Abrir tu carrito de compras"
+          title="Mi Carrito"
+        >
+          <span class="icon" aria-hidden="true">🛒</span>
+          <span id="cartCount" class="badge glow-badge" aria-label="Artículos en tu carrito">0</span>
+        </button>
+      </div>
+    </div>
 
-  const renderPmSizes = (sizes) => {
-    if (!pmSizePills) return;
-    pmSizePills.innerHTML = "";
-    sizes.forEach((size, i) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "size-pill";
-      btn.textContent = String(size);
-      if (i === 0) {
-        btn.classList.add("is-active");
-        currentSize = String(size);
-      }
-      btn.addEventListener("click", () => {
-        $$(".size-pill", pmSizePills).forEach((x) => x.classList.remove("is-active"));
-        btn.classList.add("is-active");
-        currentSize = String(size);
-      });
-      pmSizePills.appendChild(btn);
-    });
-  };
+    <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
+      <input
+        id="mobileSearchInput"
+        name="mobileSearchInput"
+        class="input"
+        type="search"
+        placeholder="Buscar mercancía oficial..."
+        aria-label="Buscador móvil"
+      />
+      <button
+        id="closeMobileSearchBtn"
+        class="iconbtn btn--ghost"
+        type="button"
+        aria-label="Cerrar buscador"
+        style="border:none;"
+      >✕</button>
+    </div>
+  </header>
 
-  const renderPmCarousel = (images, alt) => {
-    if (!pmCarousel) return;
-    pmCarousel.innerHTML = "";
-    const list = Array.isArray(images) ? images.filter(Boolean) : [];
+  <div id="promoBar" class="promo-bar" role="status" aria-live="polite" hidden>
+    <div class="wrap promo-bar__inner">
+      <span id="promoBarText" class="promo-bar__text"></span>
+      <button id="promoBarClose" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Cerrar aviso" title="Cerrar">✕</button>
+    </div>
+  </div>
 
-    if (!list.length) {
-      pmCarousel.innerHTML = `<div class="product-card__placeholder" style="height:320px;">🏁</div>`;
-      return;
-    }
+  <section class="hero cinematic-hero" aria-label="Presentación Principal">
+    <div class="hero__bg" aria-hidden="true"></div>
+    <div class="hero__overlay" aria-hidden="true"></div>
+    <div class="hero__particles" aria-hidden="true"></div>
 
-    const track = document.createElement("div");
-    track.className = "pm-carousel__track";
+    <div class="wrap hero__inner">
+      <div class="hero__content">
+        <img
+          class="hero__desert hero-vfx-float"
+          src="/assets/logo-world-desert.webp"
+          alt="World Desert Championship"
+          width="280"
+          height="253"
+          decoding="async"
+        />
 
-    list.forEach((src) => {
-      const slide = document.createElement("div");
-      slide.className = "pm-carousel__slide";
-      slide.innerHTML = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
-      track.appendChild(slide);
-    });
+        <h1 class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
+        <p class="hero__hook">
+          Diseño, pasión y rendimiento extremo en cada hilo.
+          <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong>
+        </p>
 
-    pmCarousel.appendChild(track);
-  };
+        <div class="hero__cta">
+          <button
+            id="scrollToCategoriesBtn"
+            class="btn btn--primary btn--large cinematic-btn neon-border"
+            type="button"
+            aria-label="Desplazarse a ver las colecciones de la tienda"
+          >
+            Explorar Colecciones ▼
+          </button>
+        </div>
 
-  const addToCartItem = (product, size, qty = 1) => {
-    if (!product) return;
-    const sku = String(product.sku || "");
-    const existing = cart.find((x) => x.sku === sku && x.size === size);
+        <div class="hero__meta">
+          <span class="chip tech-chip" title="Transacciones encriptadas de extremo a extremo">🔒 Pago Seguro Stripe</span>
+          <span class="chip tech-chip" title="Cobertura total en México y Estados Unidos">📦 Envíos rápidos Envía.com</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    if (existing) {
-      existing.qty += qty;
-    } else {
-      cart.push({
-        sku,
-        name: getProductName(product),
-        title: getProductName(product),
-        price_cents: getProductPriceCents(product),
-        image: getProductImage(product),
-        size,
-        qty,
-      });
-    }
+  <main id="main" class="main" role="main">
+    <section class="wrap section main-card-bg vfx-glass-container" aria-label="Selección de Catálogos">
+      <div class="section__head">
+        <h2 id="categories" class="section-title">1. Elige tu Experiencia Off-Road</h2>
+      </div>
 
-    persistCart();
-    renderCart();
-  };
+      <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
+      <div
+        id="categoryHint"
+        class="hint bounce-anim"
+        style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);"
+      >
+        👈 Selecciona una tarjeta para descubrir productos exclusivos.
+      </div>
+    </section>
 
-  const addToCartBySku = (sku, size = null, qty = 1) => {
-    const p = products.find((x) => String(x.sku || "") === String(sku || ""));
-    if (!p) return false;
-    const finalSize = size || getProductSizes(p)[0] || "Única";
-    addToCartItem(p, finalSize, qty);
-    return true;
-  };
+    <section
+      id="catalogCarouselSection"
+      class="carousel-section wrap vfx-glass-container"
+      aria-label="Productos destacados de la colección seleccionada"
+      hidden
+    >
+      <div class="carousel-header">
+        <div class="carousel-header__left">
+          <h3 id="carouselTitle" class="section-title" style="margin:0;">Catálogo</h3>
+          <div id="activeFilterRow" class="hint" hidden style="margin-top:8px;">
+            <span id="activeFilterLabel"></span>
+            <button
+              id="clearFilterBtn"
+              class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn"
+              type="button"
+              style="margin-left:10px;"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
 
-  const openProduct = (sku) => {
-    const p = products.find((x) => x.sku === sku);
-    if (!p) return;
+        <div class="carousel-header__right">
+          <select id="sortSelect" class="input tech-input" aria-label="Ordenar productos" style="max-width: 220px;">
+            <option value="featured">Destacados</option>
+            <option value="price_asc">Precio: menor a mayor</option>
+            <option value="price_desc">Precio: mayor a menor</option>
+            <option value="name_asc">Nombre A-Z</option>
+          </select>
+        </div>
+      </div>
 
-    currentProduct = p;
-    currentQty = 1;
-    currentSize = null;
+      <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
+      <div id="statusRow" class="status" style="margin-top:10px;"></div>
+    </section>
+  </main>
 
-    if (pmTitle) pmTitle.textContent = getProductName(p);
-    if (pmPrice) pmPrice.textContent = money(getProductPriceCents(p));
-    if (pmDesc) pmDesc.textContent = String(p.description || p.short_description || "Merch oficial SCORE.");
-    if (pmQtyDisplay) pmQtyDisplay.textContent = String(currentQty);
+  <aside id="sideMenu" class="drawer" hidden aria-label="Menú lateral">
+    <div class="drawer__panel glass-panel">
+      <div class="drawer__head">
+        <strong>Menú</strong>
+        <button id="closeMenuBtn" class="iconbtn" type="button" aria-label="Cerrar menú">✕</button>
+      </div>
 
-    if (pmChips) {
-      pmChips.innerHTML = `
-        <span class="pill">${escapeHtml(String(p.section_id || "SCORE"))}</span>
-        ${p.sub_section ? `<span class="pill">${escapeHtml(String(p.sub_section))}</span>` : ""}
-      `;
-    }
+      <div class="drawer__body">
+        <div class="search glass-panel" style="margin-bottom:16px;">
+          <span class="search__icon" aria-hidden="true">⌕</span>
+          <input
+            id="menuSearchInput"
+            class="search__input"
+            type="search"
+            placeholder="Buscar mercancía..."
+            autocomplete="off"
+            aria-label="Buscar en menú"
+          />
+        </div>
 
-    if (pmStockBadge) {
-      const available = Number(p.stock || 0) > 0 || p.stock == null;
-      pmStockBadge.hidden = false;
-      pmStockBadge.textContent = available ? "Disponible" : "Agotado";
-      pmStockBadge.className = `pill pill--logo ${available ? "" : "is-off"}`;
-    }
+        <nav class="menu-list">
+          <button id="navOpenCart" class="menu-list__item" type="button">🛒 Ver carrito</button>
+          <button id="navOpenAssistant" class="menu-list__item" type="button">✨ Asistente SCORE</button>
+        </nav>
+      </div>
+    </div>
+  </aside>
 
-    renderPmSizes(getProductSizes(p));
-    renderPmCarousel(getProductImages(p), getProductName(p));
-    openModal(productModal);
-  };
+  <div id="overlay" class="overlay" hidden></div>
 
-  pmClose?.addEventListener("click", () => closeModal(productModal));
-  pmBackBtn?.addEventListener("click", () => closeModal(productModal));
+  <aside id="cartDrawer" class="drawer drawer--right" hidden aria-label="Carrito de compras">
+    <div class="drawer__panel glass-panel">
+      <div class="drawer__head">
+        <strong>Mi carrito</strong>
+        <button id="closeCartBtn" class="iconbtn" type="button" aria-label="Cerrar carrito">✕</button>
+      </div>
 
-  pmQtyDec?.addEventListener("click", () => {
-    currentQty = clamp(currentQty - 1, 1, 99);
-    if (pmQtyDisplay) pmQtyDisplay.textContent = String(currentQty);
-  });
+      <div class="drawer__body">
+        <div id="cartItems"></div>
 
-  pmQtyInc?.addEventListener("click", () => {
-    currentQty = clamp(currentQty + 1, 1, 99);
-    if (pmQtyDisplay) pmQtyDisplay.textContent = String(currentQty);
-  });
+        <div class="cartpanel">
+          <div class="cartline"><span>Subtotal</span><strong id="cartSubtotal">$0</strong></div>
+          <div class="cartline"><span>Envío</span><strong id="shippingLine">$0</strong></div>
+          <div id="discountLineWrap" class="cartline" hidden><span>Descuento</span><strong id="discountLine">-$0</strong></div>
+          <div class="cartline cartline--total"><span>Total</span><strong id="cartTotal">$0</strong></div>
 
-  pmAdd?.addEventListener("click", () => {
-    if (!currentProduct) return;
-
-    const original = pmAdd.innerHTML;
-    pmAdd.innerHTML = "✅ Agregado";
-    pmAdd.disabled = true;
-
-    const finalSize = currentSize || getProductSizes(currentProduct)[0] || "Única";
-    addToCartItem(currentProduct, finalSize, currentQty);
-
-    setTimeout(() => {
-      pmAdd.innerHTML = original;
-      pmAdd.disabled = false;
-      closeModal(productModal);
-      openDrawer(cartDrawer);
-      showToast("Agregado al carrito.", "ok");
-    }, 500);
-  });
-
-  pmShareBtn?.addEventListener("click", async () => {
-    if (!currentProduct) return;
-    const url = `${location.origin}${location.pathname}#sku=${encodeURIComponent(String(currentProduct.sku || ""))}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: getProductName(currentProduct), url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast("Link copiado.", "ok");
-      }
-    } catch {}
-  });
-
-  openSizeGuideBtn?.addEventListener("click", () => openModal(sizeGuideModal));
-  closeSizeGuideBtn?.addEventListener("click", () => closeModal(sizeGuideModal));
-  understandSizeBtn?.addEventListener("click", () => closeModal(sizeGuideModal));
-
-  const getCartSubtotal = () =>
-    cart.reduce((acc, item) => acc + Number(item.price_cents || 0) * Number(item.qty || 0), 0);
-
-  const getDiscountAmount = () => {
-    if (!activePromo) return 0;
-    const subtotal = getCartSubtotal();
-
-    if (activePromo.type === "percentage") {
-      return Math.round(subtotal * (Number(activePromo.value || 0) / 100));
-    }
-
-    if (activePromo.type === "fixed") {
-      return Math.min(subtotal, Math.round(Number(activePromo.value || 0) * 100));
-    }
-
-    return 0;
-  };
-
-  const getCartTotal = () => {
-    const subtotal = getCartSubtotal();
-    const discount = getDiscountAmount();
-    return Math.max(0, subtotal - discount + shippingQuoted);
-  };
-
-  const removeCartItem = (idx) => {
-    cart.splice(idx, 1);
-    persistCart();
-    renderCart();
-  };
-
-  const changeCartQty = (idx, delta) => {
-    const item = cart[idx];
-    if (!item) return;
-    item.qty = clamp(Number(item.qty || 1) + delta, 1, 99);
-    persistCart();
-    renderCart();
-  };
-
-  const refreshTotals = () => {
-    const subtotal = getCartSubtotal();
-    const discount = getDiscountAmount();
-    const total = getCartTotal();
-
-    if (cartSubtotalEl) cartSubtotalEl.textContent = money(subtotal);
-    if (shippingLineEl) shippingLineEl.textContent = money(shippingQuoted);
-    if (cartTotalEl) cartTotalEl.textContent = money(total);
-
-    if (discountLineWrap && discountLineEl) {
-      discountLineWrap.hidden = !(discount > 0);
-      discountLineEl.textContent = `-${money(discount)}`;
-    }
-  };
-
-  const renderCart = () => {
-    if (cartCount) cartCount.textContent = String(cart.reduce((a, i) => a + Number(i.qty || 0), 0));
-
-    if (cartItemsEl) {
-      if (!cart.length) {
-        cartItemsEl.innerHTML = `<div class="hint" style="padding: 10px 0;">Tu carrito está vacío.</div>`;
-      } else {
-        cartItemsEl.innerHTML = "";
-        cart.forEach((item, idx) => {
-          const row = document.createElement("article");
-          row.className = "cartitem";
-          row.innerHTML = `
-            <div class="cartitem__media">
-              ${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : `<div class="product-card__placeholder">🏁</div>`}
+          <div class="cartsection">
+            <div class="ux-label">Entrega</div>
+            <div class="shipselector">
+              <button class="shipselector__btn" type="button" data-ship-mode="pickup">Pickup</button>
+              <button class="shipselector__btn" type="button" data-ship-mode="envia_mx">MX</button>
+              <button class="shipselector__btn" type="button" data-ship-mode="envia_us">USA</button>
             </div>
-            <div class="cartitem__body">
-              <div class="cartitem__title">${escapeHtml(item.name)}</div>
-              <div class="cartitem__meta">
-                ${item.size ? `Talla: ${escapeHtml(item.size)} · ` : ""}${money(item.price_cents)}
-              </div>
-              <div class="cartitem__actions">
-                <button type="button" class="qtybtn js-dec" aria-label="Quitar una unidad">−</button>
-                <span class="qtytxt">${Number(item.qty || 0)}</span>
-                <button type="button" class="qtybtn js-inc" aria-label="Agregar una unidad">+</button>
-                <button type="button" class="linkbtn js-remove" aria-label="Eliminar del carrito">Eliminar</button>
-              </div>
+            <div id="shipHint" class="hint" style="margin-top:8px;"></div>
+            <div id="shippingNote" class="hint" style="margin-top:8px;"></div>
+          </div>
+
+          <div id="postalWrap" class="cartsection" hidden>
+            <div class="ux-label">CP / ZIP</div>
+            <div class="postalrow">
+              <input id="postalCode" class="input" type="text" inputmode="numeric" placeholder="Ej. 22614" />
+              <button id="quoteBtn" class="btn btn--ghost tech-ghost-btn" type="button">Cotizar</button>
             </div>
-          `;
-
-          row.querySelector(".js-dec")?.addEventListener("click", () => changeCartQty(idx, -1));
-          row.querySelector(".js-inc")?.addEventListener("click", () => changeCartQty(idx, 1));
-          row.querySelector(".js-remove")?.addEventListener("click", () => removeCartItem(idx));
-          cartItemsEl.appendChild(row);
-        });
-      }
-    }
-
-    refreshTotals();
-    if (checkoutBtn) checkoutBtn.disabled = !cart.length || !!siteSettings.maintenance_mode;
-  };
-
-  const applyPromo = async () => {
-    const code = normCode(promoCode?.value || "");
-    if (!code) {
-      activePromo = null;
-      refreshTotals();
-      showToast("Código promo vacío.", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/.netlify/functions/promos?code=${encodeURIComponent(code)}`, { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || !data?.ok || !data?.promo) {
-        activePromo = null;
-        refreshTotals();
-        showToast(data?.error || "Código no válido.", "error");
-        return;
-      }
-
-      activePromo = data.promo;
-      refreshTotals();
-      showToast("Promo aplicada.", "ok");
-    } catch {
-      activePromo = null;
-      refreshTotals();
-      showToast("No pude validar el código promo.", "error");
-    }
-  };
-
-  applyPromoBtn?.addEventListener("click", applyPromo);
-
-  const applyShipModeUi = () => {
-    $$("[data-ship-mode]").forEach((btn) => {
-      btn.classList.toggle("is-active", btn.dataset.shipMode === shipMode);
-    });
-
-    if (postalWrap) postalWrap.hidden = shipMode === "pickup";
-
-    if (shipHint) {
-      if (shipMode === "pickup") shipHint.textContent = "Recoge tu pedido en fábrica o punto acordado.";
-      if (shipMode === "envia_mx") shipHint.textContent = "Cotización nacional MX por código postal.";
-      if (shipMode === "envia_us") shipHint.textContent = "Cotización USA por ZIP Code.";
-    }
-
-    refreshTotals();
-  };
-
-  $$("[data-ship-mode]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      shipMode = String(btn.dataset.shipMode || "pickup");
-      shippingQuoted = 0;
-      shippingMeta = null;
-      applyShipModeUi();
-      renderCart();
-    });
-  });
-
-  const quoteShipping = async () => {
-    const postal = String(postalCode?.value || "").trim();
-    if (!postal) {
-      showToast("Escribe tu CP / ZIP.", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch("/.netlify/functions/quote_shipping", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart,
-          shipping_mode: shipMode,
-          postal_code: postal,
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "No se pudo cotizar.");
-      }
-
-      shippingQuoted = Number(data.amount_cents || 0);
-      shippingMeta = data;
-      refreshTotals();
-      showToast("Envío cotizado.", "ok");
-    } catch (e) {
-      shippingQuoted = 0;
-      shippingMeta = null;
-      refreshTotals();
-      showToast(String(e?.message || "No se pudo cotizar envío."), "error");
-    }
-  };
-
-  quoteBtn?.addEventListener("click", quoteShipping);
-
-  const doCheckout = async () => {
-    if (!cart.length) {
-      showToast("Tu carrito está vacío.", "error");
-      return;
-    }
-
-    if (siteSettings.maintenance_mode) {
-      showToast("La tienda está en mantenimiento.", "error");
-      return;
-    }
-
-    try {
-      setCheckoutLoading(true);
-      if (checkoutMsg) {
-        checkoutMsg.hidden = true;
-        checkoutMsg.textContent = "";
-      }
-
-      const payload = {
-        items: cart,
-        shipping_mode: shipMode,
-        postal_code: String(postalCode?.value || "").trim(),
-        promo_code: String(promoCode?.value || "").trim(),
-        quote: shippingMeta,
-      };
-
-      const res = await fetch("/.netlify/functions/create_checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || !data?.ok || !data?.url) {
-        throw new Error(data?.error || "No se pudo iniciar el checkout.");
-      }
-
-      location.href = data.url;
-    } catch (e) {
-      if (checkoutMsg) {
-        checkoutMsg.hidden = false;
-        checkoutMsg.textContent = String(e?.message || "No se pudo iniciar el checkout.");
-      }
-      showToast(String(e?.message || "No se pudo iniciar el checkout."), "error");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  checkoutBtn?.addEventListener("click", doCheckout);
-  continueShoppingBtn?.addEventListener("click", () => closeDrawer(cartDrawer));
-
-  const appendAssistantBubble = (role, text) => {
-    if (!assistantOutput) return;
-    const item = document.createElement("div");
-    item.className = `chat__bubble chat__bubble--${role}`;
-    item.textContent = String(text || "");
-    assistantOutput.appendChild(item);
-    assistantOutput.scrollTop = assistantOutput.scrollHeight;
-  };
-
-  const openAssistantChat = () => {
-    closeDrawer(sideMenu);
-    openModal(assistantModal);
-    setTimeout(() => assistantInput?.focus(), 250);
-
-    if (!assistantOutput?.children?.length) {
-      appendAssistantBubble(
-        "assistant",
-        "¡Hola! Soy SCORE AI. Te puedo ayudar a encontrar productos, aclarar envíos, promo, tallas o llevarte directo al carrito."
-      );
-    }
-  };
-
-  const parseAssistantActions = (replyStr) => {
-    let output = String(replyStr || "");
-
-    const actionAddMatch = output.match(/\[ACTION:ADD_TO_CART:(.*?)\]/i);
-    if (actionAddMatch) {
-      const sku = String(actionAddMatch[1] || "").trim();
-      output = output.replace(/\[ACTION:ADD_TO_CART:.*?\]/gi, "").trim();
-      if (sku && addToCartBySku(sku, null, 1)) {
-        output += "\n\nProducto agregado al carrito.";
-      }
-    }
-
-    const actionCartMatch = output.match(/\[ACTION:OPEN_CART\]/i);
-    if (actionCartMatch) {
-      output = output.replace(/\[ACTION:OPEN_CART\]/gi, "").trim();
-      setTimeout(() => {
-        closeModal(assistantModal);
-        openDrawer(cartDrawer);
-        renderCart();
-      }, 450);
-    }
-
-    return output;
-  };
-
-  const sendAssistant = async () => {
-    const message = String(assistantInput?.value || "").trim();
-    if (!message) return;
-
-    appendAssistantBubble("user", message);
-    if (assistantInput) assistantInput.value = "";
-
-    try {
-      if (assistantSendBtn) assistantSendBtn.disabled = true;
-
-      const ctx = {
-        currentProduct: currentProduct ? currentProduct.sku : null,
-        cartItems: cart.length > 0 ? cart.map((i) => `${i.qty}x ${i.name}`).join(", ") : "Vacío",
-        cartTotal: money(getCartTotal()),
-        shipMode,
-      };
-
-      const res = await fetch("/.netlify/functions/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, context: ctx }),
-      });
-
-      const data = await res.json().catch(() => null);
-      let reply = data?.reply || "No tuve una respuesta disponible.";
-      reply = parseAssistantActions(reply);
-      appendAssistantBubble("assistant", reply);
-    } catch {
-      appendAssistantBubble("assistant", "No pude conectarme con el asistente en este momento.");
-    } finally {
-      if (assistantSendBtn) assistantSendBtn.disabled = false;
-      assistantInput?.focus();
-    }
-  };
-
-  openAssistantBtn?.addEventListener("click", openAssistantChat);
-  floatingAssistantBtn?.addEventListener("click", openAssistantChat);
-  navOpenAssistant?.addEventListener("click", openAssistantChat);
-  assistantClose?.addEventListener("click", () => closeModal(assistantModal));
-  assistantSendBtn?.addEventListener("click", sendAssistant);
-
-  searchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      renderProducts();
-    }, 120)
-  );
-
-  mobileSearchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      if (searchInput) searchInput.value = searchQuery;
-      renderProducts();
-    }, 120)
-  );
-
-  menuSearchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      if (searchInput) searchInput.value = searchQuery;
-      if (mobileSearchInput) mobileSearchInput.value = searchQuery;
-      renderProducts();
-    }, 120)
-  );
-
-  sortSelect?.addEventListener("change", renderProducts);
-
-  clearFilterBtn?.addEventListener("click", () => {
-    activeCategory = null;
-    searchQuery = "";
-    if (searchInput) searchInput.value = "";
-    if (mobileSearchInput) mobileSearchInput.value = "";
-    if (menuSearchInput) menuSearchInput.value = "";
-    renderProducts();
-  });
-
-  scrollToCategoriesBtn?.addEventListener("click", () => smoothScrollTo("#categories"));
-
-  mobileSearchBtn?.addEventListener("click", () => {
-    if (!mobileSearchWrap) return;
-    mobileSearchWrap.hidden = false;
-    mobileSearchInput?.focus();
-  });
-
-  closeMobileSearchBtn?.addEventListener("click", () => {
-    if (mobileSearchWrap) mobileSearchWrap.hidden = true;
-  });
-
-  openMenuBtn?.addEventListener("click", () => openDrawer(sideMenu));
-  closeMenuBtn?.addEventListener("click", () => closeDrawer(sideMenu));
-  openCartBtn?.addEventListener("click", () => openDrawer(cartDrawer));
-  closeCartBtn?.addEventListener("click", () => closeDrawer(cartDrawer));
-  navOpenCart?.addEventListener("click", () => {
-    closeDrawer(sideMenu);
-    openDrawer(cartDrawer);
-  });
-
-  overlay?.addEventListener("click", () => {
-    if (checkoutLoader && !checkoutLoader.hidden) return;
-    closeAll();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (checkoutLoader && !checkoutLoader.hidden) return;
-      closeAll();
-    }
-  });
-
-  assistantInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendAssistant();
-  });
-
-  postalCode?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") quoteShipping();
-  });
-
-  promoCode?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyPromo();
-  });
-
-  scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-  window.addEventListener("scroll", () => {
-    if (!scrollTopBtn) return;
-    scrollTopBtn.classList.toggle("is-visible", window.scrollY > 500);
-  });
-
-  const runSalesAmbient = () => {
-    if (!salesNotification || !salesName || !salesAction) return;
-
-    const salesPool = [
-      ["Tijuana", "acaba de comprar una hoodie oficial"],
-      ["Ensenada", "agregó merch SCORE a su carrito"],
-      ["Mexicali", "confirmó una compra con Stripe"],
-      ["San Diego", "cotizó envío internacional"],
-    ];
-
-    setInterval(() => {
-      const [name, action] = salesPool[Math.floor(Math.random() * salesPool.length)];
-      salesName.textContent = name;
-      salesAction.textContent = action;
-      salesNotification.hidden = false;
-      salesNotification.classList.add("is-visible");
-      setTimeout(() => {
-        salesNotification.classList.remove("is-visible");
-        setTimeout(() => {
-          salesNotification.hidden = true;
-        }, 180);
-      }, 3200);
-    }, 18000);
-  };
-
-  const registerServiceWorker = async () => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-    try {
-      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!window.__scoreSwRefreshing) {
-          window.__scoreSwRefreshing = true;
-          window.location.reload();
-        }
-      });
-    } catch (e) {
-      console.warn("[scorestore] sw register failed", e);
-    }
-  };
-
-  const boot = async () => {
-    try {
-      if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
-
-      initCookieBanner();
-      restoreCart();
-      renderCart();
-      applyShipModeUi();
-
-      await registerServiceWorker();
-      await fetchSiteSettings();
-      await loadCatalog();
-
-      renderCategories();
-      renderProducts();
-      runSalesAmbient();
-
-      if (location.hash.startsWith("#sku=")) {
-        const sku = decodeURIComponent(location.hash.replace("#sku=", ""));
-        const maybeOpen = () => {
-          const p = products.find((x) => String(x.sku || "") === sku);
-          if (p) openProduct(sku);
-        };
-        setTimeout(maybeOpen, 200);
-      }
-    } catch (e) {
-      console.error(e);
-      showToast("No pude cargar la tienda completa.", "error", 3200);
-    } finally {
-      setTimeout(() => {
-        if (splash) {
-          splash.classList.add("is-out");
-          setTimeout(() => {
-            splash.hidden = true;
-          }, 700);
-        }
-      }, 350);
-    }
-  };
-
-  document.addEventListener("DOMContentLoaded", boot);
-})();
+          </div>
+
+          <div class="cartsection">
+            <div class="ux-label">Código promo</div>
+            <div class="postalrow">
+              <input id="promoCode" class="input" type="text" placeholder="Ej. SCORE10" />
+              <button id="applyPromoBtn" class="btn btn--ghost tech-ghost-btn" type="button">Aplicar</button>
+            </div>
+          </div>
+
+          <div class="cartsection">
+            <button id="checkoutBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button">
+              Pagar con Stripe
+            </button>
+            <button id="continueShoppingBtn" class="btn btn--ghost btn--block tech-ghost-btn" type="button" style="margin-top:10px;">
+              Seguir comprando
+            </button>
+            <p id="checkoutMsg" class="hint" hidden style="margin-top:10px;"></p>
+            <div id="checkoutLoader" hidden style="margin-top:10px;">
+              <span class="spinner-mini"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <section id="assistantModal" class="modal" role="dialog" aria-modal="true" aria-label="Asistente SCORE" hidden>
+    <div class="modal__panel vfx-modal-panel">
+      <div class="modal__head sticky-header glass-header">
+        <h3 class="modal__title tech-text" style="margin:0;">Asistente SCORE</h3>
+        <button id="assistantClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar asistente">✕</button>
+      </div>
+      <div class="modal__body">
+        <div id="assistantOutput" class="chat__output custom-scrollbar"></div>
+        <div class="chat__composer">
+          <input id="assistantInput" class="input" type="text" placeholder="Ej. ¿Qué hoodies hay?" />
+          <button id="assistantSendBtn" class="btn btn--primary" type="button">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <button id="floatingAssistantBtn" class="floating-assistant hover-fx ai-fab" type="button" aria-label="Abrir asistente" title="Asistente SCORE">
+    ✨
+  </button>
+
+  <button id="scrollTopBtn" class="floating-scroll" type="button" aria-label="Volver arriba" title="Volver arriba">↑</button>
+
+  <div id="salesNotification" class="sales-toast glass-panel" hidden>
+    <strong id="salesName"></strong>
+    <span id="salesAction"></span>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <img src="/assets/logo-score.webp" alt="SCORE" width="120" height="53" decoding="async" />
+          <p id="footerNote" class="footer__note">Merch oficial de SCORE International.</p>
+        </div>
+
+        <div class="footer__contact">
+          <a id="footerEmailLink" href="mailto:info@scorestore.netlify.app"><span id="footerEmailText">info@scorestore.netlify.app</span></a>
+          <a id="footerWhatsappLink" href="https://wa.me/526642368701" target="_blank" rel="noreferrer"><span id="footerWhatsappText">+52 664 236 8701</span></a>
+        </div>
+
+        <div class="footer__social">
+          <a id="footerFacebookLink" href="#" target="_blank" rel="noreferrer" aria-label="Facebook">Facebook</a>
+          <a id="footerInstagramLink" href="#" target="_blank" rel="noreferrer" aria-label="Instagram">Instagram</a>
+          <a id="footerYoutubeLink" href="#" target="_blank" rel="noreferrer" aria-label="YouTube">YouTube</a>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <a href="/legal.html">Legal</a>
+        <span id="appVersionLabel"></span>
+      </div>
+    </div>
+  </footer>
+
+  <section id="productModal" class="modal modal--product" role="dialog" aria-modal="true" aria-label="Detalle de producto" hidden>
+    <div class="modal__panel vfx-modal-panel">
+      <div class="modal__head sticky-header glass-header">
+        <button id="pmBackBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Regresar">←</button>
+        <h3 id="pmTitle" class="modal__title tech-text" style="margin:0;">Producto</h3>
+        <button id="pmClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar detalle">✕</button>
+      </div>
+
+      <div class="modal__body modal__body--product">
+        <div class="pm__media">
+          <div id="pmCarousel" class="pm__carousel"></div>
+        </div>
+
+        <div class="pm__info">
+          <div id="pmChips" class="pm__chips"></div>
+          <div id="pmPrice" class="pm__price"></div>
+          <div id="pmStockBadge" class="pm__stock-badge" hidden></div>
+          <div id="pmDesc" class="pm__desc"></div>
+
+          <div class="pm__row" style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 10px;">
+            <span class="ux-label" style="margin:0;">Talla</span>
+            <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button" aria-label="Abrir guía de tallas">Guía de tallas</button>
+          </div>
+
+          <div id="pmSizePills" class="size-pill-container" aria-label="Selecciona talla"></div>
+
+          <div class="pm__row" style="margin-top: 16px;">
+            <span class="ux-label">Cantidad</span>
+            <div class="qty-stepper-large" aria-label="Selector de cantidad">
+              <button id="pmQtyDec" type="button" aria-label="Disminuir cantidad">−</button>
+              <span id="pmQtyDisplay" aria-live="polite">1</span>
+              <button id="pmQtyInc" type="button" aria-label="Aumentar cantidad">+</button>
+            </div>
+          </div>
+
+          <div class="pm__row" style="display:flex; gap:10px; margin-top: 18px; flex-wrap: wrap;">
+            <button id="pmShareBtn" class="btn btn--ghost hover-fx tech-ghost-btn" type="button" aria-label="Compartir producto">Compartir</button>
+          </div>
+
+          <div class="sticky-mobile-cta glass-mobile-cta">
+            <div class="ux-trust-badges" style="margin-bottom: 12px;">
+              <div class="trust-item">🔒 Pago cifrado Stripe</div>
+              <div class="trust-item">📦 Tracking automático</div>
+            </div>
+
+            <button id="pmAdd" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button" aria-label="Agregar al carrito">
+              Agregar al carrito
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sizeGuideModal" class="modal" role="dialog" aria-modal="true" aria-label="Guía de tallas" hidden>
+    <div class="modal__panel vfx-modal-panel">
+      <div class="modal__head sticky-header glass-header">
+        <h3 class="modal__title tech-text" style="margin:0;">Guía de tallas</h3>
+        <button id="closeSizeGuideBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar guía">✕</button>
+      </div>
+
+      <div class="modal__body" style="padding: 20px;">
+        <div class="glass-panel" style="padding:14px; border-radius: 14px; margin: 14px 0;">
+          <p style="margin:0; font-weight:800;">Cómo medir:</p>
+          <ol style="margin: 8px 0 0 18px; line-height:1.6; font-weight:600; color: var(--muted);">
+            <li><b>Pecho:</b> mide alrededor del torso, a la altura del pecho.</li>
+            <li><b>Largo:</b> mide desde el hombro hasta el final de la prenda.</li>
+          </ol>
+          <p class="hint" style="margin: 10px 0 0 0;">
+            Para medidas exactas por modelo, escríbenos por WhatsApp y te confirmamos la talla ideal.
+          </p>
+        </div>
+
+        <button id="understandSizeBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border hover-fx" type="button">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div id="cookieBanner" class="cookie glass-panel" role="dialog" aria-label="Preferencias de cookies" hidden>
+    <div class="cookie__text">
+      Usamos cookies para funcionamiento básico del carrito y para mejorar la experiencia. Puedes aceptar o rechazar.
+    </div>
+    <div class="cookie__actions">
+      <button id="cookieReject" class="btn btn--ghost hover-fx tech-ghost-btn" type="button">Rechazar</button>
+      <button id="cookieAccept" class="btn btn--primary hover-fx neon-border" type="button">Aceptar</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
+
+  <script src="/js/main.js?v=2026-03-08c" defer></script>
+</body>
+</html>
