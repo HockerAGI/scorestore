@@ -389,17 +389,21 @@
   // =========================================================
   // Catalog data
   // =========================================================
-  const getProductName = (p) => String(p?.name || "Producto SCORE");
-  const getProductImage = (p) => safeUrl(p?.image_url || p?.img || (Array.isArray(p?.images) ? p.images[0] : ""));
+  const getProductName = (p) => String(p?.name || p?.title || "Producto SCORE");
+  const getProductImage = (p) =>
+    safeUrl(p?.image_url || p?.img || p?.image || (Array.isArray(p?.images) ? p.images[0] : ""));
+
   const getProductImages = (p) => {
     const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
     const fallback = getProductImage(p);
     return arr.length ? arr.map(safeUrl) : fallback ? [fallback] : [];
   };
+
   const getProductSizes = (p) => {
     const arr = Array.isArray(p?.sizes) ? p.sizes.filter(Boolean) : [];
     return arr.length ? arr.map((x) => String(x)) : ["Única"];
   };
+
   const getProductPriceCents = (p) => {
     const price = Number(p?.price_cents);
     if (Number.isFinite(price) && price > 0) return Math.round(price);
@@ -411,19 +415,21 @@
   };
 
   const normalizeCategory = (row) => ({
-    id: String(row?.id || row?.slug || row?.section_id || ""),
-    name: String(row?.name || row?.title || row?.section_id || "Colección"),
-    logo: safeUrl(row?.logo || row?.image || ""),
-    section_id: String(row?.section_id || row?.id || ""),
+    id: String(row?.id || row?.slug || row?.section_id || row?.sectionId || ""),
+    name: String(row?.name || row?.title || row?.section_id || row?.sectionId || "Colección"),
+    logo: safeUrl(row?.logo || row?.image || row?.cover_image || row?.coverImage || ""),
+    section_id: String(row?.section_id || row?.sectionId || row?.id || ""),
   });
 
   const normalizeProduct = (row) => ({
     ...row,
     sku: String(row?.sku || ""),
-    name: String(row?.name || "Producto SCORE"),
-    section_id: String(row?.section_id || ""),
-    sub_section: String(row?.sub_section || ""),
-    image_url: safeUrl(row?.image_url || row?.img || ""),
+    name: String(row?.name || row?.title || "Producto SCORE"),
+    title: String(row?.title || row?.name || "Producto SCORE"),
+    section_id: String(row?.section_id || row?.sectionId || ""),
+    sectionId: String(row?.sectionId || row?.section_id || ""),
+    sub_section: String(row?.sub_section || row?.collection || ""),
+    image_url: safeUrl(row?.image_url || row?.img || row?.image || ""),
     images: Array.isArray(row?.images) ? row.images.map(safeUrl).filter(Boolean) : [],
     sizes: Array.isArray(row?.sizes) ? row.sizes : [],
   });
@@ -434,20 +440,27 @@
       fetch("/data/catalog.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
     ]);
 
-    const fallbackData = categoriesRes && typeof categoriesRes === "object" ? categoriesRes : {};
+    const normalizePayload = (payload) => {
+      const data = payload && typeof payload === "object" ? payload : {};
+      return {
+        categories: Array.isArray(data.categories)
+          ? data.categories
+          : Array.isArray(data.sections)
+            ? data.sections
+            : [],
+        products: Array.isArray(data.products) ? data.products : [],
+      };
+    };
 
-    if (catalogRes?.ok) {
-      categories = Array.isArray(catalogRes.categories) ? catalogRes.categories.map(normalizeCategory) : [];
-      products = Array.isArray(catalogRes.products) ? catalogRes.products.map(normalizeProduct) : [];
-    } else {
-      categories = Array.isArray(fallbackData.categories) ? fallbackData.categories.map(normalizeCategory) : [];
-      products = Array.isArray(fallbackData.products) ? fallbackData.products.map(normalizeProduct) : [];
-    }
+    const apiData = catalogRes?.ok ? normalizePayload(catalogRes) : null;
+    const fallbackData = normalizePayload(categoriesRes);
+    const source = apiData && apiData.products.length ? apiData : fallbackData;
 
+    categories = source.categories.map(normalizeCategory);
+    products = source.products.map(normalizeProduct);
     filteredProducts = [...products];
   };
-
-  // =========================================================
+ =========================================================
   // Search / sort / categories
   // =========================================================
   const applySort = (items) => {
