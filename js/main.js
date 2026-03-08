@@ -1,18 +1,12 @@
 /* =========================================================
-   SCORE STORE — Frontend Fusion PRO
-   Base: repo actual real
-   Rescate puntual del deploy 69a7...:
-   - Escape handler
-   - Service Worker robusto
-   - ACTION:ADD_TO_CART
-   - ACTION:OPEN_CART
-   - Enter en promo / CP / asistente
+   SCORE STORE — Frontend (Repo-alineado + Anti-404 assets + Carousel Snap)
+   Build: 2026-03-04
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const APP_VERSION = window.__APP_VERSION__ || "2026.03.08d.SCORESTORE";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.03.04.SCORESTORE";
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -35,8 +29,6 @@
       maximumFractionDigits: 2,
     }).format(v / 100);
   };
-
-  const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
 
   const safeUrl = (u) => {
     const s = String(u || "").trim();
@@ -97,6 +89,7 @@
   const mobileSearchInput = $("#mobileSearchInput");
   const closeMobileSearchBtn = $("#closeMobileSearchBtn");
   const sortSelect = $("#sortSelect");
+
   const menuSearchInput = $("#menuSearchInput");
 
   const promoBar = $("#promoBar");
@@ -195,25 +188,6 @@
   const CART_KEY = "scorestore_cart_v1";
   const CONSENT_KEY = "scorestore_cookie_consent_v1";
 
-  const siteSettings = {
-    hero_title: null,
-    hero_image: null,
-    promo_active: false,
-    promo_text: "",
-    pixel_id: "",
-    maintenance_mode: false,
-    season_key: "default",
-    theme: { accent: "#e10600", accent2: "#111111", particles: true },
-    home: { footer_note: "", shipping_note: "", returns_note: "", support_hours: "" },
-    socials: { facebook: "", instagram: "", youtube: "", tiktok: "" },
-    contact: {
-      email: "ventas.unicotextil@gmail.com",
-      phone: "",
-      whatsapp_e164: "5216642368701",
-      whatsapp_display: "664 236 8701",
-    },
-  };
-
   // =========================================================
   // Utils UI
   // =========================================================
@@ -256,11 +230,7 @@
     el.classList.remove("is-open");
     setTimeout(() => {
       el.hidden = true;
-      if (
-        !assistantModal?.classList.contains("is-open") &&
-        !productModal?.classList.contains("is-open") &&
-        !sizeGuideModal?.classList.contains("is-open")
-      ) {
+      if (!assistantModal?.classList.contains("is-open") && !productModal?.classList.contains("is-open")) {
         closeOverlay();
       }
     }, 180);
@@ -278,24 +248,10 @@
     el.classList.remove("is-open");
     setTimeout(() => {
       el.hidden = true;
-      if (
-        !sideMenu?.classList.contains("is-open") &&
-        !cartDrawer?.classList.contains("is-open") &&
-        !assistantModal?.classList.contains("is-open") &&
-        !productModal?.classList.contains("is-open") &&
-        !sizeGuideModal?.classList.contains("is-open")
-      ) {
+      if (!sideMenu?.classList.contains("is-open") && !cartDrawer?.classList.contains("is-open")) {
         closeOverlay();
       }
     }, 180);
-  };
-
-  const closeAll = () => {
-    closeDrawer(sideMenu);
-    closeDrawer(cartDrawer);
-    closeModal(assistantModal);
-    closeModal(productModal);
-    closeModal(sizeGuideModal);
   };
 
   const setCheckoutLoading = (on) => {
@@ -313,6 +269,8 @@
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  const canUseCookies = () => localStorage.getItem(CONSENT_KEY) === "accepted";
 
   const persistCart = () => {
     try {
@@ -355,8 +313,27 @@
   };
 
   // =========================================================
-  // Site settings
+  // Site settings / footer / promo
   // =========================================================
+  const siteSettings = {
+    hero_title: null,
+    hero_image: null,
+    promo_active: false,
+    promo_text: "",
+    pixel_id: "",
+    maintenance_mode: false,
+    season_key: "default",
+    theme: { accent: "#e10600", accent2: "#111111", particles: true },
+    home: { footer_note: "", shipping_note: "", returns_note: "", support_hours: "" },
+    socials: { facebook: "", instagram: "", youtube: "", tiktok: "" },
+    contact: {
+      email: "ventas.unicotextil@gmail.com",
+      phone: "",
+      whatsapp_e164: "5216642368701",
+      whatsapp_display: "664 236 8701",
+    },
+  };
+
   const applyFooterAndPromo = () => {
     if (footerNote) {
       footerNote.textContent = siteSettings.home?.footer_note || "Merch oficial de SCORE International.";
@@ -410,24 +387,19 @@
   });
 
   // =========================================================
-  // Catalog normalization
+  // Catalog data
   // =========================================================
   const getProductName = (p) => String(p?.name || "Producto SCORE");
-
-  const getProductImage = (p) =>
-    safeUrl(p?.image_url || p?.img || (Array.isArray(p?.images) ? p.images[0] : ""));
-
+  const getProductImage = (p) => safeUrl(p?.image_url || p?.img || (Array.isArray(p?.images) ? p.images[0] : ""));
   const getProductImages = (p) => {
     const arr = Array.isArray(p?.images) ? p.images.filter(Boolean) : [];
     const fallback = getProductImage(p);
     return arr.length ? arr.map(safeUrl) : fallback ? [fallback] : [];
   };
-
   const getProductSizes = (p) => {
     const arr = Array.isArray(p?.sizes) ? p.sizes.filter(Boolean) : [];
     return arr.length ? arr.map((x) => String(x)) : ["Única"];
   };
-
   const getProductPriceCents = (p) => {
     const price = Number(p?.price_cents);
     if (Number.isFinite(price) && price > 0) return Math.round(price);
@@ -475,8 +447,12 @@
     filteredProducts = [...products];
   };
 
+  // =========================================================
+  // Search / sort / categories
+  // =========================================================
   const applySort = (items) => {
     const mode = String(sortSelect?.value || "featured");
+
     const arr = [...items];
     if (mode === "price_asc") arr.sort((a, b) => getProductPriceCents(a) - getProductPriceCents(b));
     else if (mode === "price_desc") arr.sort((a, b) => getProductPriceCents(b) - getProductPriceCents(a));
@@ -505,16 +481,9 @@
 
   const ensureCarouselUX = () => {
     if (!productGrid) return;
-    try {
-      productGrid.scrollTo({ left: 0, behavior: "instant" });
-    } catch {
-      productGrid.scrollLeft = 0;
-    }
+    productGrid.scrollTo({ left: 0, behavior: "instant" });
   };
 
-  // =========================================================
-  // Render catalog
-  // =========================================================
   const renderCategories = () => {
     if (!categoryGrid) return;
     categoryGrid.innerHTML = "";
@@ -525,7 +494,7 @@
       card.className = "catcard glass-panel hover-fx";
       card.innerHTML = `
         <div class="catcard__media">
-          ${cat.logo ? `<img class="catcard__logo" src="${escapeHtml(cat.logo)}" alt="${escapeHtml(cat.name)}" loading="lazy" />` : `<div class="product-card__placeholder">🏁</div>`}
+          ${cat.logo ? `<img src="${escapeHtml(cat.logo)}" alt="${escapeHtml(cat.name)}" loading="lazy" />` : `<div class="product-card__placeholder">🏁</div>`}
         </div>
         <div class="catcard__body">
           <h3 class="catcard__title">${escapeHtml(cat.name)}</h3>
@@ -615,6 +584,56 @@
     ensureCarouselUX();
   };
 
+  searchInput?.addEventListener(
+    "input",
+    debounce((e) => {
+      searchQuery = String(e.target.value || "").trim();
+      renderProducts();
+    }, 120)
+  );
+
+  mobileSearchInput?.addEventListener(
+    "input",
+    debounce((e) => {
+      searchQuery = String(e.target.value || "").trim();
+      if (searchInput) searchInput.value = searchQuery;
+      renderProducts();
+    }, 120)
+  );
+
+  menuSearchInput?.addEventListener(
+    "input",
+    debounce((e) => {
+      searchQuery = String(e.target.value || "").trim();
+      if (searchInput) searchInput.value = searchQuery;
+      if (mobileSearchInput) mobileSearchInput.value = searchQuery;
+      renderProducts();
+    }, 120)
+  );
+
+  sortSelect?.addEventListener("change", renderProducts);
+
+  clearFilterBtn?.addEventListener("click", () => {
+    activeCategory = null;
+    searchQuery = "";
+    if (searchInput) searchInput.value = "";
+    if (mobileSearchInput) mobileSearchInput.value = "";
+    if (menuSearchInput) menuSearchInput.value = "";
+    renderProducts();
+  });
+
+  scrollToCategoriesBtn?.addEventListener("click", () => smoothScrollTo("#categories"));
+
+  mobileSearchBtn?.addEventListener("click", () => {
+    if (!mobileSearchWrap) return;
+    mobileSearchWrap.hidden = false;
+    mobileSearchInput?.focus();
+  });
+
+  closeMobileSearchBtn?.addEventListener("click", () => {
+    if (mobileSearchWrap) mobileSearchWrap.hidden = true;
+  });
+
   // =========================================================
   // Product modal
   // =========================================================
@@ -642,8 +661,8 @@
   const renderPmCarousel = (images, alt) => {
     if (!pmCarousel) return;
     pmCarousel.innerHTML = "";
-    const list = Array.isArray(images) ? images.filter(Boolean) : [];
 
+    const list = Array.isArray(images) ? images.filter(Boolean) : [];
     if (!list.length) {
       pmCarousel.innerHTML = `<div class="product-card__placeholder" style="height:320px;">🏁</div>`;
       return;
@@ -694,8 +713,10 @@
     openModal(productModal);
   };
 
-  pmClose?.addEventListener("click", () => closeModal(productModal));
-  pmBackBtn?.addEventListener("click", () => closeModal(productModal));
+  const closeProduct = () => closeModal(productModal);
+
+  pmClose?.addEventListener("click", closeProduct);
+  pmBackBtn?.addEventListener("click", closeProduct);
 
   pmQtyDec?.addEventListener("click", () => {
     currentQty = clamp(currentQty - 1, 1, 99);
@@ -707,54 +728,29 @@
     if (pmQtyDisplay) pmQtyDisplay.textContent = String(currentQty);
   });
 
-  const addToCartItem = (product, size, qty = 1) => {
-    if (!product) return;
-    const sku = String(product.sku || "");
-    const existing = cart.find((x) => x.sku === sku && x.size === size);
+  pmAdd?.addEventListener("click", () => {
+    if (!currentProduct) return;
+
+    const sku = String(currentProduct.sku || "");
+    const existing = cart.find((x) => x.sku === sku && x.size === currentSize);
 
     if (existing) {
-      existing.qty += qty;
+      existing.qty += currentQty;
     } else {
       cart.push({
         sku,
-        name: getProductName(product),
-        title: getProductName(product),
-        price_cents: getProductPriceCents(product),
-        image: getProductImage(product),
-        size,
-        qty,
+        name: getProductName(currentProduct),
+        price_cents: getProductPriceCents(currentProduct),
+        image: getProductImage(currentProduct),
+        size: currentSize,
+        qty: currentQty,
       });
     }
 
     persistCart();
     renderCart();
-  };
-
-  const addToCartBySku = (sku, size = null, qty = 1) => {
-    const p = products.find((x) => String(x.sku || "") === String(sku || ""));
-    if (!p) return false;
-    const finalSize = size || getProductSizes(p)[0] || "Única";
-    addToCartItem(p, finalSize, qty);
-    return true;
-  };
-
-  pmAdd?.addEventListener("click", () => {
-    if (!currentProduct) return;
-
-    const original = pmAdd.innerHTML;
-    pmAdd.innerHTML = "✅ Agregado";
-    pmAdd.disabled = true;
-
-    const finalSize = currentSize || getProductSizes(currentProduct)[0] || "Única";
-    addToCartItem(currentProduct, finalSize, currentQty);
-
-    setTimeout(() => {
-      pmAdd.innerHTML = original;
-      pmAdd.disabled = false;
-      closeModal(productModal);
-      openDrawer(cartDrawer);
-      showToast("Agregado al carrito.", "ok");
-    }, 500);
+    closeProduct();
+    showToast("Agregado al carrito.", "ok");
   });
 
   pmShareBtn?.addEventListener("click", async () => {
@@ -872,10 +868,10 @@
   };
 
   // =========================================================
-  // Promo + shipping
+  // Promo
   // =========================================================
   const applyPromo = async () => {
-    const code = normCode(promoCode?.value || "");
+    const code = String(promoCode?.value || "").trim();
     if (!code) {
       activePromo = null;
       refreshTotals();
@@ -884,12 +880,9 @@
     }
 
     try {
-      if (applyPromoBtn) {
-        applyPromoBtn.disabled = true;
-        applyPromoBtn.innerHTML = "<span class='spinner-mini'></span>";
-      }
-
-      const res = await fetch(`/.netlify/functions/promos?code=${encodeURIComponent(code)}`, { cache: "no-store" });
+      const res = await fetch(`/.netlify/functions/promos?code=${encodeURIComponent(code)}`, {
+        cache: "no-store",
+      });
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok || !data?.promo) {
@@ -906,22 +899,22 @@
       activePromo = null;
       refreshTotals();
       showToast("No pude validar el código promo.", "error");
-    } finally {
-      if (applyPromoBtn) {
-        applyPromoBtn.disabled = false;
-        applyPromoBtn.textContent = "Aplicar";
-      }
     }
   };
 
   applyPromoBtn?.addEventListener("click", applyPromo);
 
+  // =========================================================
+  // Shipping
+  // =========================================================
   const applyShipModeUi = () => {
     $$("[data-ship-mode]").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.shipMode === shipMode);
     });
 
-    if (postalWrap) postalWrap.hidden = shipMode === "pickup";
+    if (postalWrap) {
+      postalWrap.hidden = shipMode === "pickup";
+    }
 
     if (shipHint) {
       if (shipMode === "pickup") shipHint.textContent = "Recoge tu pedido en fábrica o punto acordado.";
@@ -942,19 +935,14 @@
     });
   });
 
-  const quoteShipping = async () => {
+  quoteBtn?.addEventListener("click", async () => {
     const postal = String(postalCode?.value || "").trim();
-    if (!postal && shipMode !== "pickup") {
+    if (!postal) {
       showToast("Escribe tu CP / ZIP.", "error");
       return;
     }
 
     try {
-      if (quoteBtn) {
-        quoteBtn.disabled = true;
-        quoteBtn.innerHTML = "<span class='spinner-mini'></span>";
-      }
-
       const res = await fetch("/.netlify/functions/quote_shipping", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -980,20 +968,13 @@
       shippingMeta = null;
       refreshTotals();
       showToast(String(e?.message || "No se pudo cotizar envío."), "error");
-    } finally {
-      if (quoteBtn) {
-        quoteBtn.disabled = false;
-        quoteBtn.textContent = "Cotizar";
-      }
     }
-  };
-
-  quoteBtn?.addEventListener("click", quoteShipping);
+  });
 
   // =========================================================
   // Checkout
   // =========================================================
-  const doCheckout = async () => {
+  checkoutBtn?.addEventListener("click", async () => {
     if (!cart.length) {
       showToast("Tu carrito está vacío.", "error");
       return;
@@ -1041,9 +1022,8 @@
     } finally {
       setCheckoutLoading(false);
     }
-  };
+  });
 
-  checkoutBtn?.addEventListener("click", doCheckout);
   continueShoppingBtn?.addEventListener("click", () => closeDrawer(cartDrawer));
 
   // =========================================================
@@ -1058,44 +1038,6 @@
     assistantOutput.scrollTop = assistantOutput.scrollHeight;
   };
 
-  const openAssistantChat = () => {
-    closeDrawer(sideMenu);
-    openModal(assistantModal);
-    setTimeout(() => assistantInput?.focus(), 300);
-
-    if (!assistantOutput?.children?.length) {
-      appendAssistantBubble(
-        "assistant",
-        "¡Hola! Soy SCORE AI. Te puedo ayudar a encontrar productos, aclarar envíos, promo, tallas o llevarte directo al carrito."
-      );
-    }
-  };
-
-  const parseAssistantActions = (replyStr) => {
-    let output = String(replyStr || "");
-
-    const actionAddMatch = output.match(/\[ACTION:ADD_TO_CART:(.*?)\]/i);
-    if (actionAddMatch) {
-      const sku = String(actionAddMatch[1] || "").trim();
-      output = output.replace(/\[ACTION:ADD_TO_CART:.*?\]/gi, "").trim();
-      if (sku && addToCartBySku(sku, null, 1)) {
-        output += "\n\nProducto agregado al carrito.";
-      }
-    }
-
-    const actionCartMatch = output.match(/\[ACTION:OPEN_CART\]/i);
-    if (actionCartMatch) {
-      output = output.replace(/\[ACTION:OPEN_CART\]/gi, "").trim();
-      setTimeout(() => {
-        closeModal(assistantModal);
-        openDrawer(cartDrawer);
-        renderCart();
-      }, 450);
-    }
-
-    return output;
-  };
-
   const sendAssistant = async () => {
     const message = String(assistantInput?.value || "").trim();
     if (!message) return;
@@ -1104,100 +1046,37 @@
     if (assistantInput) assistantInput.value = "";
 
     try {
-      if (assistantSendBtn) {
-        assistantSendBtn.disabled = true;
-        assistantSendBtn.innerHTML = "<span class='spinner-mini'></span>";
-      }
-
-      const ctx = {
-        currentProduct: currentProduct ? currentProduct.sku : null,
-        cartItems: cart.length > 0 ? cart.map((i) => `${i.qty}x ${i.name}`).join(", ") : "Vacío",
-        cartTotal: money(getCartTotal()),
-        shipMode,
-      };
-
       const res = await fetch("/.netlify/functions/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, context: ctx }),
+        body: JSON.stringify({ message }),
       });
 
       const data = await res.json().catch(() => null);
-      let reply = data?.reply || "No tuve una respuesta disponible.";
-      reply = parseAssistantActions(reply);
-      appendAssistantBubble("assistant", reply);
+      appendAssistantBubble("assistant", data?.reply || "No tuve una respuesta disponible.");
     } catch {
       appendAssistantBubble("assistant", "No pude conectarme con el asistente en este momento.");
-    } finally {
-      if (assistantSendBtn) {
-        assistantSendBtn.disabled = false;
-        assistantSendBtn.textContent = "Enviar";
-      }
-      assistantInput?.focus();
     }
   };
 
-  openAssistantBtn?.addEventListener("click", openAssistantChat);
-  floatingAssistantBtn?.addEventListener("click", openAssistantChat);
-  navOpenAssistant?.addEventListener("click", openAssistantChat);
+  openAssistantBtn?.addEventListener("click", () => openModal(assistantModal));
+  floatingAssistantBtn?.addEventListener("click", () => openModal(assistantModal));
+  navOpenAssistant?.addEventListener("click", () => {
+    closeDrawer(sideMenu);
+    openModal(assistantModal);
+  });
   assistantClose?.addEventListener("click", () => closeModal(assistantModal));
   assistantSendBtn?.addEventListener("click", sendAssistant);
+  assistantInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendAssistant();
+  });
 
   // =========================================================
-  // Inputs / controls
+  // Drawers / misc UI
   // =========================================================
-  searchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      renderProducts();
-    }, 120)
-  );
-
-  mobileSearchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      if (searchInput) searchInput.value = searchQuery;
-      renderProducts();
-    }, 120)
-  );
-
-  menuSearchInput?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = String(e.target.value || "").trim();
-      if (searchInput) searchInput.value = searchQuery;
-      if (mobileSearchInput) mobileSearchInput.value = searchQuery;
-      renderProducts();
-    }, 120)
-  );
-
-  sortSelect?.addEventListener("change", renderProducts);
-
-  clearFilterBtn?.addEventListener("click", () => {
-    activeCategory = null;
-    searchQuery = "";
-    if (searchInput) searchInput.value = "";
-    if (mobileSearchInput) mobileSearchInput.value = "";
-    if (menuSearchInput) menuSearchInput.value = "";
-    renderProducts();
-  });
-
-  scrollToCategoriesBtn?.addEventListener("click", () => smoothScrollTo("#categories"));
-
-  mobileSearchBtn?.addEventListener("click", () => {
-    if (!mobileSearchWrap) return;
-    mobileSearchWrap.hidden = false;
-    mobileSearchInput?.focus();
-  });
-
-  closeMobileSearchBtn?.addEventListener("click", () => {
-    if (mobileSearchWrap) mobileSearchWrap.hidden = true;
-  });
-
   openMenuBtn?.addEventListener("click", () => openDrawer(sideMenu));
   closeMenuBtn?.addEventListener("click", () => closeDrawer(sideMenu));
+
   openCartBtn?.addEventListener("click", () => openDrawer(cartDrawer));
   closeCartBtn?.addEventListener("click", () => closeDrawer(cartDrawer));
   navOpenCart?.addEventListener("click", () => {
@@ -1206,43 +1085,11 @@
   });
 
   overlay?.addEventListener("click", () => {
-    if (checkoutLoader && !checkoutLoader.hidden) return;
-    closeAll();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (checkoutLoader && !checkoutLoader.hidden) return;
-      closeAll();
-    }
-  });
-
-  assistantInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendAssistant();
-  });
-
-  postalCode?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") quoteShipping();
-  });
-
-  promoCode?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyPromo();
-  });
-
-  scrollLeftBtn?.addEventListener("click", () => {
-    const step =
-      productGrid?.querySelector(".product-card")?.offsetWidth
-        ? productGrid.querySelector(".product-card").offsetWidth + 24
-        : window.innerWidth * 0.8;
-    productGrid?.scrollBy({ left: -step, behavior: "smooth" });
-  });
-
-  scrollRightBtn?.addEventListener("click", () => {
-    const step =
-      productGrid?.querySelector(".product-card")?.offsetWidth
-        ? productGrid.querySelector(".product-card").offsetWidth + 24
-        : window.innerWidth * 0.8;
-    productGrid?.scrollBy({ left: step, behavior: "smooth" });
+    closeDrawer(sideMenu);
+    closeDrawer(cartDrawer);
+    closeModal(assistantModal);
+    closeModal(productModal);
+    closeModal(sizeGuideModal);
   });
 
   scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
@@ -1253,7 +1100,7 @@
   });
 
   // =========================================================
-  // Ambient
+  // Ambient sales
   // =========================================================
   const runSalesAmbient = () => {
     if (!salesNotification || !salesName || !salesAction) return;
@@ -1261,7 +1108,7 @@
     const salesPool = [
       ["Tijuana", "acaba de comprar una hoodie oficial"],
       ["Ensenada", "agregó merch SCORE a su carrito"],
-      ["Mexicali", "confirmó una compra segura"],
+      ["Mexicali", "confirmó una compra con Stripe"],
       ["San Diego", "cotizó envío internacional"],
     ];
 
@@ -1281,52 +1128,6 @@
   };
 
   // =========================================================
-  // Service Worker (rescate robusto del deploy viejo)
-  // =========================================================
-  const registerServiceWorker = async () => {
-    try {
-      if (!("serviceWorker" in navigator)) return;
-
-      const reg = await navigator.serviceWorker.register("/sw.js", {
-        scope: "/",
-        updateViaCache: "none",
-      });
-
-      if (reg.waiting) {
-        reg.waiting.postMessage({ type: "SKIP_WAITING" });
-      }
-
-      if (reg.installing) {
-        const nw = reg.installing;
-        nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) {
-            nw.postMessage?.({ type: "SKIP_WAITING" });
-          }
-        });
-      }
-
-      reg.addEventListener("updatefound", () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) {
-            nw.postMessage?.({ type: "SKIP_WAITING" });
-          }
-        });
-      });
-
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!window.__scoreSwRefreshing) {
-          window.__scoreSwRefreshing = true;
-          window.location.reload();
-        }
-      });
-    } catch (e) {
-      console.warn("[scorestore] sw register failed", e);
-    }
-  };
-
-  // =========================================================
   // Boot
   // =========================================================
   const boot = async () => {
@@ -1338,7 +1139,6 @@
       renderCart();
       applyShipModeUi();
 
-      await registerServiceWorker();
       await fetchSiteSettings();
       await loadCatalog();
 
