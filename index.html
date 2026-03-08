@@ -34,12 +34,25 @@
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
   <link rel="preload" href="/css/styles.css" as="style" />
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-08" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "Score Store",
+      "url": "https://scorestore.netlify.app/",
+      "logo": "https://scorestore.netlify.app/assets/logo-score.webp",
+      "description": "Mercancía oficial de Score International Off-Road Racing.",
+      "paymentAccepted": "Credit Card, Debit Card, OXXO Pay"
+    }
+  </script>
 </head>
 
 <body>
@@ -491,6 +504,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script src="/js/main.js?v=2026-03-07" defer></script>
+  <script src="/js/main.js?v=2026-03-08" defer></script>
 </body>
 </html>
