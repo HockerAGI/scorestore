@@ -1,7 +1,8 @@
 /* override.css */
-/* =========================================================
-   Override NO destructivo (iconos + perf + carrusel)
-   ========================================================= */
+ /* =========================================================
+    Override NO destructivo (iconos + perf + carrusel + estabilidad visual)
+    Base: repo actual real
+    ========================================================= */
 
 .assistant-icon{
   width: 18px;
@@ -39,8 +40,11 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 .promo-bar__inner{
-  display:flex; align-items:center; justify-content:space-between;
-  gap: 12px; padding: 10px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 10px 0;
 }
 .promo-bar__text{
   font-weight: 900;
@@ -50,8 +54,16 @@
   text-shadow: 0 2px 10px rgba(0,0,0,0.35);
 }
 
-.glass-panel, .vfx-glass-container, .topbar, .glass-drawer, .glass-header,
-.modal, .overlay, .checkout-loader, .sticky-mobile-cta, .sales-toast{
+.glass-panel,
+.vfx-glass-container,
+.topbar,
+.glass-drawer,
+.glass-header,
+.modal,
+.overlay,
+.checkout-loader,
+.sticky-mobile-cta,
+.sales-toast{
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
@@ -60,20 +72,59 @@
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
 }
 
-#catalogCarouselSection, .partners, .footer{
+#catalogCarouselSection,
+.partners,
+.footer{
   content-visibility: auto;
   contain-intrinsic-size: 900px;
 }
 
 @media (max-width: 520px){
-  .catcard, .card{
+  .catcard,
+  .card{
     box-shadow: 0 10px 24px rgba(0,0,0,0.10) !important;
   }
   .hero__particles{ display:none; }
 }
 
-/* Partner logos */
-.partners__row img{ height: 36px; width: auto; }
+/* ===== Estabilidad visual / Lighthouse ===== */
+.partners__row img{
+  height: 36px;
+  width: auto;
+  display: block;
+}
+
+.brand__logo,
+.splash__logo,
+.footer__brand img,
+.hero__desert,
+.catcard__media img,
+.product-card__media img,
+.cartitem__media img,
+.pm-carousel__slide img{
+  display:block;
+}
+
+.brand__logo{
+  width: 120px;
+  height: auto;
+}
+
+.splash__logo{
+  width: 220px;
+  max-width: min(58vw, 220px);
+  height: auto;
+}
+
+.footer__brand img{
+  width: 120px;
+  height: auto;
+}
+
+.hero__desert{
+  width: min(280px, 58vw);
+  height: auto;
+}
 
 /* ✅ Fix Lighthouse: image-aspect-ratio (cat logos) */
 .catcard__logo{
@@ -81,6 +132,20 @@
   width: auto;
   max-width: 120px;
   object-fit: contain;
+}
+
+/* Contención y estabilidad general de imágenes */
+.product-card__media img,
+.cartitem__media img,
+.pm-carousel__slide img,
+.catcard__media img{
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.pm-carousel__slide{
+  overflow: hidden;
 }
 
 /* ===== Carrusel UX ===== */
@@ -115,7 +180,8 @@
 .carousel-fade{
   pointer-events:none;
   position: absolute;
-  top: 0; bottom: 0;
+  top: 0;
+  bottom: 0;
   width: 54px;
   z-index: 10;
 }
@@ -157,4 +223,25 @@
   font-size: 12px;
   color: rgba(255,255,255,0.92);
   text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+
+/* ===== Ajustes móviles finos ===== */
+@media (max-width: 768px){
+  .splash__logo{
+    max-width: min(64vw, 200px);
+  }
+
+  .hero__desert{
+    width: min(220px, 62vw);
+  }
+
+  .promo-bar__text{
+    font-size: 12px;
+  }
+
+  .carousel-track{
+    padding-left: 10px;
+    padding-right: 10px;
+    scroll-padding-left: 10px;
+  }
 }
