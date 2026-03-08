@@ -46,9 +46,6 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
 
-  // =========================================================
-  // DOM
-  // =========================================================
   const splash = $("#splash");
   const overlay = $("#overlay");
 
@@ -77,9 +74,6 @@
 
   const catalogCarouselSection = $("#catalogCarouselSection");
   const carouselTitle = $("#carouselTitle");
-  const scrollLeftBtn = $("#scrollLeftBtn");
-  const scrollRightBtn = $("#scrollRightBtn");
-
   const productGrid = $("#productGrid");
   const statusRow = $("#statusRow");
 
@@ -89,7 +83,6 @@
   const mobileSearchInput = $("#mobileSearchInput");
   const closeMobileSearchBtn = $("#closeMobileSearchBtn");
   const sortSelect = $("#sortSelect");
-
   const menuSearchInput = $("#menuSearchInput");
 
   const promoBar = $("#promoBar");
@@ -139,10 +132,8 @@
   const salesNotification = $("#salesNotification");
   const salesName = $("#salesName");
   const salesAction = $("#salesAction");
-
   const appVersionLabel = $("#appVersionLabel");
 
-  // Product modal
   const productModal = $("#productModal");
   const pmBackBtn = $("#pmBackBtn");
   const pmClose = $("#pmClose");
@@ -159,7 +150,6 @@
   const pmAdd = $("#pmAdd");
   const pmShareBtn = $("#pmShareBtn");
 
-  // Size guide
   const sizeGuideModal = $("#sizeGuideModal");
   const openSizeGuideBtn = $("#openSizeGuideBtn");
   const closeSizeGuideBtn = $("#closeSizeGuideBtn");
@@ -167,9 +157,6 @@
 
   const toast = $("#toast");
 
-  // =========================================================
-  // State
-  // =========================================================
   let categories = [];
   let products = [];
   let filteredProducts = [];
@@ -188,9 +175,6 @@
   const CART_KEY = "scorestore_cart_v1";
   const CONSENT_KEY = "scorestore_cookie_consent_v1";
 
-  // =========================================================
-  // Utils UI
-  // =========================================================
   const showToast = (msg, type = "ok", timeout = 2400) => {
     if (!toast) return;
     toast.textContent = String(msg || "");
@@ -270,8 +254,6 @@
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const canUseCookies = () => localStorage.getItem(CONSENT_KEY) === "accepted";
-
   const persistCart = () => {
     try {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
@@ -312,9 +294,6 @@
     });
   };
 
-  // =========================================================
-  // Site settings / footer / promo
-  // =========================================================
   const siteSettings = {
     hero_title: null,
     hero_image: null,
@@ -386,9 +365,6 @@
     if (promoBar) promoBar.hidden = true;
   });
 
-  // =========================================================
-  // Catalog data
-  // =========================================================
   const getProductName = (p) => String(p?.name || "Producto SCORE");
   const getProductImage = (p) => safeUrl(p?.image_url || p?.img || (Array.isArray(p?.images) ? p.images[0] : ""));
   const getProductImages = (p) => {
@@ -447,9 +423,6 @@
     filteredProducts = [...products];
   };
 
-  // =========================================================
-  // Search / sort / categories
-  // =========================================================
   const applySort = (items) => {
     const mode = String(sortSelect?.value || "featured");
 
@@ -634,9 +607,6 @@
     if (mobileSearchWrap) mobileSearchWrap.hidden = true;
   });
 
-  // =========================================================
-  // Product modal
-  // =========================================================
   const renderPmSizes = (sizes) => {
     if (!pmSizePills) return;
     pmSizePills.innerHTML = "";
@@ -770,9 +740,6 @@
   closeSizeGuideBtn?.addEventListener("click", () => closeModal(sizeGuideModal));
   understandSizeBtn?.addEventListener("click", () => closeModal(sizeGuideModal));
 
-  // =========================================================
-  // Cart
-  // =========================================================
   const getCartSubtotal = () =>
     cart.reduce((acc, item) => acc + Number(item.price_cents || 0) * Number(item.qty || 0), 0);
 
@@ -867,9 +834,6 @@
     if (checkoutBtn) checkoutBtn.disabled = !cart.length || !!siteSettings.maintenance_mode;
   };
 
-  // =========================================================
-  // Promo
-  // =========================================================
   const applyPromo = async () => {
     const code = String(promoCode?.value || "").trim();
     if (!code) {
@@ -904,9 +868,6 @@
 
   applyPromoBtn?.addEventListener("click", applyPromo);
 
-  // =========================================================
-  // Shipping
-  // =========================================================
   const applyShipModeUi = () => {
     $$("[data-ship-mode]").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.shipMode === shipMode);
@@ -971,9 +932,6 @@
     }
   });
 
-  // =========================================================
-  // Checkout
-  // =========================================================
   checkoutBtn?.addEventListener("click", async () => {
     if (!cart.length) {
       showToast("Tu carrito está vacío.", "error");
@@ -1026,9 +984,6 @@
 
   continueShoppingBtn?.addEventListener("click", () => closeDrawer(cartDrawer));
 
-  // =========================================================
-  // Assistant
-  // =========================================================
   const appendAssistantBubble = (role, text) => {
     if (!assistantOutput) return;
     const item = document.createElement("div");
@@ -1071,9 +1026,6 @@
     if (e.key === "Enter") sendAssistant();
   });
 
-  // =========================================================
-  // Drawers / misc UI
-  // =========================================================
   openMenuBtn?.addEventListener("click", () => openDrawer(sideMenu));
   closeMenuBtn?.addEventListener("click", () => closeDrawer(sideMenu));
 
@@ -1099,9 +1051,6 @@
     scrollTopBtn.classList.toggle("is-visible", window.scrollY > 500);
   });
 
-  // =========================================================
-  // Ambient sales
-  // =========================================================
   const runSalesAmbient = () => {
     if (!salesNotification || !salesName || !salesAction) return;
 
@@ -1127,9 +1076,22 @@
     }, 18000);
   };
 
-  // =========================================================
-  // Boot
-  // =========================================================
+  const registerServiceWorker = async () => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!window.__scoreSwRefreshing) {
+          window.__scoreSwRefreshing = true;
+          window.location.reload();
+        }
+      });
+    } catch (e) {
+      console.warn("[scorestore] sw register failed", e);
+    }
+  };
+
   const boot = async () => {
     try {
       if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
@@ -1139,6 +1101,7 @@
       renderCart();
       applyShipModeUi();
 
+      await registerServiceWorker();
       await fetchSiteSettings();
       await loadCatalog();
 
