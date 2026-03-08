@@ -33,14 +33,13 @@
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
+  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
   <link rel="preload" href="/css/styles.css" as="style" />
-  <link rel="preload" href="/css/override.css?v=2026-03-08c" as="style" />
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
-  <link rel="preload" href="/assets/logo-score.webp" as="image" type="image/webp" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-08c" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-08-restore" />
 </head>
 
 <body>
@@ -373,29 +372,33 @@
     <span id="salesAction"></span>
   </div>
 
-  <footer class="footer">
+  <footer class="footer" role="contentinfo" style="background-color: var(--text); color: #ffffff;">
     <div class="wrap footer__inner">
-      <div class="footer__top">
-        <div class="footer__brand">
-          <img src="/assets/logo-score.webp" alt="SCORE" width="120" height="53" decoding="async" />
-          <p id="footerNote" class="footer__note">Merch oficial de SCORE International.</p>
-        </div>
-
-        <div class="footer__contact">
-          <a id="footerEmailLink" href="mailto:info@scorestore.netlify.app"><span id="footerEmailText">info@scorestore.netlify.app</span></a>
-          <a id="footerWhatsappLink" href="https://wa.me/526642368701" target="_blank" rel="noreferrer"><span id="footerWhatsappText">+52 664 236 8701</span></a>
-        </div>
-
-        <div class="footer__social">
-          <a id="footerFacebookLink" href="#" target="_blank" rel="noreferrer" aria-label="Facebook">Facebook</a>
-          <a id="footerInstagramLink" href="#" target="_blank" rel="noreferrer" aria-label="Instagram">Instagram</a>
-          <a id="footerYoutubeLink" href="#" target="_blank" rel="noreferrer" aria-label="YouTube">YouTube</a>
+      <div class="footer__brand-col">
+        <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
+        <div class="footer__sub" style="line-height: 1.8; color: #d1d1d1;">
+          <strong style="color: #ffffff;">Seguridad Total Garantizada</strong><br>
+          <span id="footerNote">Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
+          Logística inteligente internacional con Envía.com.</span><br><br>
+          <div style="margin-top: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 8px;">
+            <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte"><span class="footer-icon">✉️</span> <span id="footerEmailText">ventas.unicotextil@gmail.com</span></a>
+            <a id="footerWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp"><span class="footer-icon" style="color:#25D366;">💬</span> <span id="footerWhatsappText">664 236 8701</span></a>
+          </div>
         </div>
       </div>
 
-      <div class="footer__bottom">
-        <a href="/legal.html">Legal</a>
-        <span id="appVersionLabel"></span>
+      <div class="footer__socials">
+        <div class="social-title" style="color: #ffffff;">SÍGUENOS EN LA PISTA</div>
+        <div class="social-links">
+          <a id="footerFacebookLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Facebook Oficial" style="color: #d1d1d1;">Facebook</a>
+          <a id="footerInstagramLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram Oficial" style="color: #d1d1d1;">Instagram</a>
+          <a id="footerYoutubeLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube Oficial" style="color: #d1d1d1;">YouTube</a>
+        </div>
+      </div>
+
+      <div class="footer__right">
+        <a href="/legal.html" class="linkbtn hover-fx" aria-label="Leer términos y políticas de privacidad" style="color: #d1d1d1;">Términos, Privacidad y Devoluciones</a>
+        <div style="margin-top:12px; font-size:12px; color:#d1d1d1;"><span id="appVersionLabel"></span></div>
       </div>
     </div>
   </footer>
@@ -492,6 +495,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script src="/js/main.js?v=2026-03-08c" defer></script>
+  <script src="/js/main.js?v=2026-03-08-restore" defer></script>
 </body>
 </html>
