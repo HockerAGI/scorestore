@@ -68,14 +68,24 @@ exports.handler = async (event) => {
     const currentEmail = String(contact.email || SUPPORT_EMAIL || "").trim();
     const currentWhatsapp = String(contact.whatsapp_display || SUPPORT_WHATSAPP_DISPLAY || "").trim();
     const currentSupportHours = String(site?.home?.support_hours || "").trim();
+    const currentShippingNote = String(site?.home?.shipping_note || "").trim();
+    const currentReturnsNote = String(site?.home?.returns_note || "").trim();
 
     const preferredModel = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
     const fallbackModel = "gemini-2.5-flash";
 
-    const safeProduct = sanitizeContext(context.currentProduct || context.currentSku || context.product || "Ninguno");
-    const safeCartItems = sanitizeContext(context.cartItems || context.cart || "Sin productos detectados");
-    const safeTotal = sanitizeContext(context.cartTotal || context.total || "No disponible");
-    const safeShipMode = sanitizeContext(context.shipMode || context.shippingMode || "No definido");
+    const safeProduct = sanitizeContext(
+      context.currentProduct || context.currentSku || context.product || "Ninguno"
+    );
+    const safeCartItems = sanitizeContext(
+      context.cartItems || context.cart || "Sin productos detectados"
+    );
+    const safeTotal = sanitizeContext(
+      context.cartTotal || context.total || "No disponible"
+    );
+    const safeShipMode = sanitizeContext(
+      context.shipMode || context.shippingMode || "No definido"
+    );
 
     const sys = `Eres SCORE AI, la agente comercial y operativa de Score Store.
 
@@ -92,6 +102,7 @@ TONO:
 - Corto pero útil
 - Nada de tecnicismos
 - Nada de texto robótico
+- Sonido premium y confiable
 
 REGLAS DURAS:
 - Nunca inventes precios, stock, promos ni tiempos exactos si no vienen en contexto.
@@ -103,6 +114,9 @@ REGLAS DURAS:
 - Si preguntan cómo comprar, explica el flujo real: elegir producto, talla, carrito, envío, pago y confirmación.
 - Si preguntan por pagos, explica solo lo que sí está disponible: Stripe, tarjeta y OXXO Pay cuando aplique.
 - Si preguntan por envíos, explica que se calculan según destino y que hay MX, USA y pickup cuando corresponda.
+- Si hay notas públicas activas sobre envíos o cambios, puedes usarlas:
+  Nota de envíos: ${currentShippingNote || "No disponible"}
+  Nota de cambios o devoluciones: ${currentReturnsNote || "No disponible"}
 
 CONTEXTO ACTUAL DEL USUARIO:
 - Producto actual: ${safeProduct}
