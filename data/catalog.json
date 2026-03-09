@@ -6,27 +6,27 @@
   },
   "sections": [
     {
-      "id": "BAJA1000",
+      "id": "EDICION_2025",
       "title": "BAJA 1000",
-      "cover_image": "assets/EDICION_2025/camiseta-negra-baja1000.webp",
+      "cover_image": "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
       "count": 9
     },
     {
       "id": "BAJA500",
       "title": "BAJA 500",
-      "cover_image": "assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
+      "cover_image": "/assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
       "count": 2
     },
     {
       "id": "BAJA400",
       "title": "BAJA 400",
-      "cover_image": "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
+      "cover_image": "/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
       "count": 1
     },
     {
       "id": "SF250",
       "title": "SAN FELIPE 250",
-      "cover_image": "assets/SF250/camiseta-negra-sinmangas-SF250.webp",
+      "cover_image": "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
       "count": 1
     }
   ],
@@ -41,9 +41,9 @@
       "rank": 1,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
-        "assets/EDICION_2025/hoodie-negro-gris-baja1000-atras.webp",
-        "assets/EDICION_2025/hoodie-negro-gris-baja1000-detalle.webp"
+        "/assets/EDICION_2025/hoodie-negro-gris-baja1000.webp",
+        "/assets/EDICION_2025/hoodie-negro-gris-baja1000-atras.webp",
+        "/assets/EDICION_2025/hoodie-negro-gris-baja1000-detalle.webp"
       ]
     },
     {
@@ -56,8 +56,8 @@
       "rank": 2,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/chamarra-baja1000.webp",
-        "assets/EDICION_2025/chamarra-baja1000-detalle.webp"
+        "/assets/EDICION_2025/chamarra-baja1000.webp",
+        "/assets/EDICION_2025/chamarra-baja1000-detalle.webp"
       ]
     },
     {
@@ -70,9 +70,9 @@
       "rank": 3,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camiseta-negra-baja1000.webp",
-        "assets/EDICION_2025/camiseta-negra-baja1000-atras.jpg.webp",
-        "assets/EDICION_2025/camiseta-negra-baja1000-detalles.jpg.webp"
+        "/assets/EDICION_2025/camiseta-negra-baja1000.webp",
+        "/assets/EDICION_2025/camiseta-negra-baja1000-atras.jpg.webp",
+        "/assets/EDICION_2025/camiseta-negra-baja1000-detalles.jpg.webp"
       ]
     },
     {
@@ -85,9 +85,9 @@
       "rank": 4,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
-        "assets/EDICION_2025/camiseta-cafe-baja1000-atras.jpg.webp",
-        "assets/EDICION_2025/camiseta-cafe-baja1000-detalles.jpg.webp"
+        "/assets/EDICION_2025/camiseta-cafe-baja1000.jpg.webp",
+        "/assets/EDICION_2025/camiseta-cafe-baja1000-atras.jpg.webp",
+        "/assets/EDICION_2025/camiseta-cafe-baja1000-detalles.jpg.webp"
       ]
     },
     {
@@ -100,7 +100,7 @@
       "rank": 5,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp"
+        "/assets/EDICION_2025/camiseta-cafe-claro-baja1000.webp"
       ]
     },
     {
@@ -113,8 +113,8 @@
       "rank": 6,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
-        "assets/EDICION_2025/camisa-negra-pits-baja1000-detalle.webp"
+        "/assets/EDICION_2025/camisa-negra-pits-baja1000.webp",
+        "/assets/EDICION_2025/camisa-negra-pits-baja1000-detalle.webp"
       ]
     },
     {
@@ -127,8 +127,8 @@
       "rank": 7,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
-        "assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"
+        "/assets/EDICION_2025/camisa-gris-pits-baja1000.jpg.webp",
+        "/assets/EDICION_2025/camisa-gris-pits-baja1000-detalles.jpg.webp"
       ]
     },
     {
@@ -141,8 +141,8 @@
       "rank": 8,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
-        "assets/EDICION_2025/camisa-rosa-pits-baja1000-detalles.jpg.webp"
+        "/assets/EDICION_2025/camisa-rosa-pits-baja1000.jpg.webp",
+        "/assets/EDICION_2025/camisa-rosa-pits-baja1000-detalles.jpg.webp"
       ]
     },
     {
@@ -155,7 +155,7 @@
       "rank": 9,
       "sizes": ["Unitalla"],
       "images": [
-        "assets/EDICION_2025/gorras-roja-gris.webp"
+        "/assets/EDICION_2025/gorras-roja-gris.webp"
       ]
     },
     {
@@ -168,8 +168,8 @@
       "rank": 10,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
-        "assets/EDICION_2025/camiseta-gris-baja500-atras.webp"
+        "/assets/EDICION_2025/camiseta-gris-baja500-detalle.webp",
+        "/assets/EDICION_2025/camiseta-gris-baja500-atras.webp"
       ]
     },
     {
@@ -182,7 +182,7 @@
       "rank": 11,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/BAJA500/camiseta-gris-baja500.webp"
+        "/assets/BAJA500/camiseta-gris-baja500.webp"
       ]
     },
     {
@@ -195,9 +195,9 @@
       "rank": 12,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp",
-        "assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"
+        "/assets/BAJA400/camiseta-cafe- oscuro-baja400.webp",
+        "/assets/BAJA400/camiseta-cafe- oscuro-baja400-atras.webp",
+        "/assets/BAJA400/camiseta-cafe- oscuro-baja400-detalle.webp"
       ]
     },
     {
@@ -210,9 +210,9 @@
       "rank": 13,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/SF250/camiseta-negra-sinmangas-SF250.webp",
-        "assets/SF250/camiseta-negra-sinmangas-S250-atras.webp",
-        "assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"
+        "/assets/SF250/camiseta-negra-sinmangas-SF250.webp",
+        "/assets/SF250/camiseta-negra-sinmangas-S250-atras.webp",
+        "/assets/SF250/camiseta-negra-sinmangas-S250-detalles.webp"
       ]
     },
     {
@@ -225,8 +225,8 @@
       "rank": 14,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
-        "assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-detalle.webp"
+        "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000.webp",
+        "/assets/OTRAS_EDICIONES/hoodie-negra-roja-baja1000-detalle.webp"
       ]
     },
     {
@@ -239,7 +239,7 @@
       "rank": 15,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"
+        "/assets/OTRAS_EDICIONES/hoodie-negra-baja1000.webp"
       ]
     },
     {
@@ -252,7 +252,7 @@
       "rank": 16,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp"
+        "/assets/OTRAS_EDICIONES/hoodie-rosa-baja1000.jpg.webp"
       ]
     },
     {
@@ -265,7 +265,7 @@
       "rank": 17,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp"
+        "/assets/OTRAS_EDICIONES/sudadera-negra-baja1000.webp"
       ]
     },
     {
@@ -278,9 +278,9 @@
       "rank": 18,
       "sizes": ["S", "M", "L", "XL", "XXL"],
       "images": [
-        "assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
-        "assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-atras.webp",
-        "assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-detalles.webp"
+        "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000.webp",
+        "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-atras.webp",
+        "/assets/OTRAS_EDICIONES/camisa-negra-rojo-baja1000-detalles.webp"
       ]
     }
   ]
