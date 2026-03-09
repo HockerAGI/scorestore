@@ -34,12 +34,25 @@
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
+  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
   <link rel="preload" href="/css/styles.css" as="style" />
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
-
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-08-restore" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-09-unified" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "Score Store",
+      "url": "https://scorestore.netlify.app/",
+      "logo": "https://scorestore.netlify.app/assets/logo-score.webp",
+      "description": "Mercancía oficial de Score International Off-Road Racing, desarrollada con calidad premium.",
+      "paymentAccepted": "Credit Card, Debit Card, OXXO Pay"
+    }
+  </script>
 </head>
 
 <body>
@@ -50,15 +63,7 @@
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
-        <img
-          class="splash__logo"
-          src="/assets/logo-score.webp"
-          alt="SCORE"
-          width="180"
-          height="79"
-          decoding="async"
-          fetchpriority="high"
-        />
+        <img class="splash__logo" src="/assets/logo-score.webp" alt="SCORE" width="220" height="88" />
         <div class="splash__laser"></div>
       </div>
       <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
@@ -79,13 +84,13 @@
         <span class="icon" aria-hidden="true">≡</span>
       </button>
 
-      <a class="brand" href="/index.html" aria-label="Ir a Inicio de Score Store">
+      <a class="brand" href="/" aria-label="Ir a Inicio de Score Store">
         <img
           class="brand__logo"
           src="/assets/logo-score.webp"
           alt="Logotipo SCORE STORE"
           width="120"
-          height="53"
+          height="48"
           decoding="async"
         />
       </a>
@@ -212,7 +217,7 @@
       <div
         id="categoryHint"
         class="hint bounce-anim"
-        style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--red);"
+        style="text-align:center; margin-top:15px; font-weight:bold; color:var(--red);"
       >
         👈 Selecciona una tarjeta para descubrir productos exclusivos.
       </div>
@@ -240,8 +245,10 @@
           </div>
         </div>
 
-        <div class="carousel-header__right">
-          <select id="sortSelect" class="input tech-input" aria-label="Ordenar productos" style="max-width: 220px;">
+        <div class="carousel-header__right" style="display:flex; align-items:center; gap:10px;">
+          <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la izquierda" title="Ver anteriores">←</button>
+          <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la derecha" title="Ver siguientes">→</button>
+          <select id="sortSelect" class="input tech-input" aria-label="Ordenar productos" style="max-width:220px;">
             <option value="featured">Destacados</option>
             <option value="price_asc">Precio: menor a mayor</option>
             <option value="price_desc">Precio: mayor a menor</option>
@@ -250,10 +257,34 @@
         </div>
       </div>
 
-      <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
+      <div style="position:relative;">
+        <div class="carousel-fade carousel-fade--left" aria-hidden="true"></div>
+        <div class="carousel-fade carousel-fade--right" aria-hidden="true"></div>
+        <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
+      </div>
+
+      <div class="carousel-progress" aria-hidden="true">
+        <div class="carousel-progress__bar">
+          <span id="carouselProgressFill" class="carousel-progress__fill"></span>
+        </div>
+        <div id="carouselProgressText" class="carousel-progress__text">0%</div>
+      </div>
+
       <div id="statusRow" class="status" style="margin-top:10px;"></div>
     </section>
   </main>
+
+  <section class="partners" aria-label="Marcas y patrocinadores oficiales">
+    <div class="wrap partners__inner">
+      <div class="partners__title">SCORE INTERNATIONAL OFFICIAL PARTNERS</div>
+      <div class="partners__row">
+        <img src="/assets/logo-ford.webp" alt="Ford" loading="lazy" decoding="async" />
+        <img src="/assets/logo-rzr.webp" alt="RZR" loading="lazy" decoding="async" />
+        <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" loading="lazy" decoding="async" />
+        <img src="/assets/logo-unico.webp" alt="Único Uniformes" loading="lazy" decoding="async" />
+      </div>
+    </div>
+  </section>
 
   <aside id="sideMenu" class="drawer" hidden aria-label="Menú lateral">
     <div class="drawer__panel glass-panel">
@@ -361,10 +392,7 @@
     </div>
   </section>
 
-  <button id="floatingAssistantBtn" class="floating-assistant hover-fx ai-fab" type="button" aria-label="Abrir asistente" title="Asistente SCORE">
-    ✨
-  </button>
-
+  <button id="floatingAssistantBtn" class="floating-assistant hover-fx ai-fab" type="button" aria-label="Abrir asistente" title="Asistente SCORE">✨</button>
   <button id="scrollTopBtn" class="floating-scroll" type="button" aria-label="Volver arriba" title="Volver arriba">↑</button>
 
   <div id="salesNotification" class="sales-toast glass-panel" hidden>
@@ -378,11 +406,11 @@
         <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
         <div class="footer__sub" style="line-height: 1.8; color: #d1d1d1;">
           <strong style="color: #ffffff;">Seguridad Total Garantizada</strong><br>
-          <span id="footerNote">Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
-          Logística inteligente internacional con Envía.com.</span><br><br>
+          Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
+          Logística inteligente internacional con Envía.com.<br><br>
           <div style="margin-top: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 8px;">
-            <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte"><span class="footer-icon">✉️</span> <span id="footerEmailText">ventas.unicotextil@gmail.com</span></a>
-            <a id="footerWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp"><span class="footer-icon" style="color:#25D366;">💬</span> <span id="footerWhatsappText">664 236 8701</span></a>
+            <a href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte"><span class="footer-icon">✉️</span> ventas.unicotextil@gmail.com</a>
+            <a href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp"><span class="footer-icon" style="color:#25D366;">💬</span> 664 236 8701</a>
           </div>
         </div>
       </div>
@@ -390,9 +418,9 @@
       <div class="footer__socials">
         <div class="social-title" style="color: #ffffff;">SÍGUENOS EN LA PISTA</div>
         <div class="social-links">
-          <a id="footerFacebookLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Facebook Oficial" style="color: #d1d1d1;">Facebook</a>
-          <a id="footerInstagramLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram Oficial" style="color: #d1d1d1;">Instagram</a>
-          <a id="footerYoutubeLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube Oficial" style="color: #d1d1d1;">YouTube</a>
+          <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook Oficial" style="color: #d1d1d1;">Facebook</a>
+          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram Oficial" style="color: #d1d1d1;">Instagram</a>
+          <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube Oficial" style="color: #d1d1d1;">YouTube</a>
         </div>
       </div>
 
@@ -422,14 +450,14 @@
           <div id="pmStockBadge" class="pm__stock-badge" hidden></div>
           <div id="pmDesc" class="pm__desc"></div>
 
-          <div class="pm__row" style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 10px;">
+          <div class="pm__row" style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;">
             <span class="ux-label" style="margin:0;">Talla</span>
             <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button" aria-label="Abrir guía de tallas">Guía de tallas</button>
           </div>
 
           <div id="pmSizePills" class="size-pill-container" aria-label="Selecciona talla"></div>
 
-          <div class="pm__row" style="margin-top: 16px;">
+          <div class="pm__row" style="margin-top:16px;">
             <span class="ux-label">Cantidad</span>
             <div class="qty-stepper-large" aria-label="Selector de cantidad">
               <button id="pmQtyDec" type="button" aria-label="Disminuir cantidad">−</button>
@@ -438,12 +466,12 @@
             </div>
           </div>
 
-          <div class="pm__row" style="display:flex; gap:10px; margin-top: 18px; flex-wrap: wrap;">
+          <div class="pm__row" style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
             <button id="pmShareBtn" class="btn btn--ghost hover-fx tech-ghost-btn" type="button" aria-label="Compartir producto">Compartir</button>
           </div>
 
           <div class="sticky-mobile-cta glass-mobile-cta">
-            <div class="ux-trust-badges" style="margin-bottom: 12px;">
+            <div class="ux-trust-badges" style="margin-bottom:12px;">
               <div class="trust-item">🔒 Pago cifrado Stripe</div>
               <div class="trust-item">📦 Tracking automático</div>
             </div>
@@ -464,14 +492,14 @@
         <button id="closeSizeGuideBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar guía">✕</button>
       </div>
 
-      <div class="modal__body" style="padding: 20px;">
-        <div class="glass-panel" style="padding:14px; border-radius: 14px; margin: 14px 0;">
+      <div class="modal__body" style="padding:20px;">
+        <div class="glass-panel" style="padding:14px; border-radius:14px; margin:14px 0;">
           <p style="margin:0; font-weight:800;">Cómo medir:</p>
-          <ol style="margin: 8px 0 0 18px; line-height:1.6; font-weight:600; color: var(--muted);">
+          <ol style="margin:8px 0 0 18px; line-height:1.6; font-weight:600; color: var(--muted);">
             <li><b>Pecho:</b> mide alrededor del torso, a la altura del pecho.</li>
             <li><b>Largo:</b> mide desde el hombro hasta el final de la prenda.</li>
           </ol>
-          <p class="hint" style="margin: 10px 0 0 0;">
+          <p class="hint" style="margin:10px 0 0 0;">
             Para medidas exactas por modelo, escríbenos por WhatsApp y te confirmamos la talla ideal.
           </p>
         </div>
@@ -495,6 +523,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script src="/js/main.js?v=2026-03-08-restore" defer></script>
+  <script src="/js/main.js?v=2026-03-09-unified" defer></script>
 </body>
 </html>
