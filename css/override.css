@@ -1,8 +1,8 @@
 /* override.css */
- /* =========================================================
-    Override NO destructivo (iconos + perf + carrusel + estabilidad visual)
-    Base: repo actual real
-    ========================================================= */
+/* =========================================================
+   Override NO destructivo (iconos + fixes móviles)
+   Repo-aligned — v2026-03-09
+   ========================================================= */
 
 .assistant-icon{
   width: 18px;
@@ -13,19 +13,23 @@
 }
 .assistant-icon--small{ width:16px; height:16px; }
 .assistant-icon--menu{ width:18px; height:18px; margin-right:10px; }
-
 .pulse-svg{ animation: pulseGlow 2.4s ease-in-out infinite; }
+
 @keyframes pulseGlow{
-  0%,100%{ filter: drop-shadow(0 0 0 rgba(225,6,0,0)); opacity:.9; transform: scale(1); }
-  50%{ filter: drop-shadow(0 0 10px rgba(225,6,0,.55)); opacity:1; transform: scale(1.06); }
+  0%,100%{ filter: drop-shadow(0 0 0 rgba(225,6,0,0)); opacity:.9; transform: scale(1);}
+  50%{ filter: drop-shadow(0 0 10px rgba(225,6,0,.55)); opacity:1; transform: scale(1.06);}
 }
 
-/* ===== Performance + Promo Bar ===== */
+/* =========================================================
+   Performance + Promo Bar
+   ========================================================= */
+
 :root{
   --topbar-h: 74px;
   --glass-blur: 16px;
   --glass-blur-strong: 22px;
 }
+
 @media (max-width: 768px){
   :root{ --topbar-h: 66px; --glass-blur: 12px; --glass-blur-strong: 16px; }
 }
@@ -67,6 +71,7 @@
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
+
 .vfx-glass-container{
   backdrop-filter: blur(var(--glass-blur-strong));
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
@@ -87,161 +92,91 @@
   .hero__particles{ display:none; }
 }
 
-/* ===== Estabilidad visual / Lighthouse ===== */
 .partners__row img{
   height: 36px;
   width: auto;
+}
+
+.catcard__logo{
+  height: auto !important;
+  max-width: 180px;
+  width: min(140px, 70vw);
+  object-fit: contain;
   display: block;
 }
 
-.brand__logo,
-.splash__logo,
-.footer__brand img,
-.hero__desert,
-.catcard__media img,
-.product-card__media img,
-.cartitem__media img,
-.pm-carousel__slide img{
-  display:block;
+.catcard__meta{
+  margin-top: 14px;
+  text-align: center;
+  color: #ffffff;
+  font-weight: 900;
+}
+.catcard__title{
+  font-size: 15px;
+  letter-spacing: .4px;
+  line-height: 1.1;
+}
+.catcard__sub{
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.82);
+  font-weight: 800;
 }
 
-.brand__logo{
-  width: 120px;
-  height: auto;
+.card__track{
+  scroll-snap-stop: always;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
-.splash__logo{
-  width: 220px;
-  max-width: min(58vw, 220px);
-  height: auto;
-}
-
-.footer__brand img{
-  width: 120px;
-  height: auto;
-}
-
-.hero__desert{
-  width: min(280px, 58vw);
-  height: auto;
-}
-
-/* ✅ Fix Lighthouse: image-aspect-ratio (cat logos) */
-.catcard__logo{
-  height: auto !important;
-  width: auto;
-  max-width: 120px;
-  object-fit: contain;
-}
-
-/* Contención y estabilidad general de imágenes */
-.product-card__media img,
-.cartitem__media img,
-.pm-carousel__slide img,
-.catcard__media img{
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-.pm-carousel__slide{
-  overflow: hidden;
-}
-
-/* ===== Carrusel UX ===== */
-.carousel-hint{
-  display:inline-flex;
+.product-swipe-hint{
+  position:absolute;
+  right: 10px;
+  top: 12px;
+  z-index: 6;
+  display:flex;
   align-items:center;
-  gap:8px;
+  gap: 8px;
   padding: 8px 12px;
   border-radius: 999px;
+  background: rgba(0,0,0,0.60);
+  color: #fff;
   font-weight: 900;
   font-size: 12px;
-  color: rgba(255,255,255,0.92);
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  letter-spacing: .2px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  pointer-events:none;
+  opacity: .98;
+  transform: translateY(0);
+  transition: opacity .25s ease, transform .25s ease;
 }
-.carousel-hint__arrow{
+.product-swipe-hint__arr{
   display:inline-block;
-  animation: hintSwipe 1.4s ease-in-out infinite;
+  font-size: 14px;
 }
-@keyframes hintSwipe{
+.product-swipe-hint.is-hide{
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.product-swipe-hint.is-pulse .product-swipe-hint__arr{
+  animation: hintArrow 1.2s ease-in-out infinite;
+}
+@keyframes hintArrow{
   0%,100%{ transform: translateX(0); opacity: .85; }
-  50%{ transform: translateX(8px); opacity: 1; }
+  50%{ transform: translateX(6px); opacity: 1; }
 }
 
 .carousel-track{
-  scroll-padding-left: 14px;
-  padding-left: 14px;
-  padding-right: 14px;
+  scroll-snap-stop: always;
+  overscroll-behavior-x: contain;
+  scroll-padding-left: 8px;
+  scroll-padding-right: 72px;
+  padding-right: 72px;
 }
-
-.carousel-fade{
-  pointer-events:none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 54px;
-  z-index: 10;
-}
-.carousel-fade--left{
-  left: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.28), rgba(0,0,0,0));
-}
-.carousel-fade--right{
-  right: 0;
-  background: linear-gradient(270deg, rgba(0,0,0,0.28), rgba(0,0,0,0));
-}
-
-.carousel-progress{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top: 10px;
-  width: min(420px, 92vw);
-}
-.carousel-progress__bar{
-  flex: 1;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.12);
-  overflow:hidden;
-}
-.carousel-progress__fill{
-  display:block;
-  height:100%;
-  width:0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(225,6,0,0.95), rgba(255,255,255,0.65));
-}
-.carousel-progress__text{
-  min-width: 64px;
-  text-align:right;
-  font-weight: 900;
-  font-size: 12px;
-  color: rgba(255,255,255,0.92);
-  text-shadow: 0 2px 10px rgba(0,0,0,0.35);
-}
-
-/* ===== Ajustes móviles finos ===== */
-@media (max-width: 768px){
-  .splash__logo{
-    max-width: min(64vw, 200px);
-  }
-
-  .hero__desert{
-    width: min(220px, 62vw);
-  }
-
-  .promo-bar__text{
-    font-size: 12px;
-  }
-
-  .carousel-track{
-    padding-left: 10px;
-    padding-right: 10px;
-    scroll-padding-left: 10px;
-  }
+@media (max-width: 520px){
+  .product-swipe-hint{ font-size: 11px; padding: 7px 10px; }
 }
