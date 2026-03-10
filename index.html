@@ -41,7 +41,7 @@
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-09-fusion" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-09-fusion-v2" />
 
   <script type="application/ld+json">
     {
@@ -69,7 +69,7 @@
           src="/assets/logo-score.webp"
           alt="SCORE"
           width="220"
-          height="96"
+          height="88"
           decoding="async"
           fetchpriority="high"
         />
@@ -99,7 +99,7 @@
           src="/assets/logo-score.webp"
           alt="Logotipo SCORE STORE"
           width="120"
-          height="53"
+          height="48"
           decoding="async"
         />
       </a>
@@ -122,13 +122,7 @@
           <span class="icon" aria-hidden="true">⌕</span>
         </button>
 
-        <button
-          id="openAssistantBtn"
-          class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow"
-          type="button"
-          aria-label="Abrir Asistente Virtual SCORE"
-          title="Pregúntale al Asistente SCORE"
-        >
+        <button id="openAssistantBtn" class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow" type="button" aria-label="Abrir Asistente Virtual SCORE" title="Pregúntale al Asistente SCORE">
           <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
             <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
@@ -136,13 +130,7 @@
           </svg>
         </button>
 
-        <button
-          id="openCartBtn"
-          class="iconbtn iconbtn--dark hover-fx vfx-cart-btn"
-          type="button"
-          aria-label="Abrir tu carrito de compras"
-          title="Mi Carrito"
-        >
+        <button id="openCartBtn" class="iconbtn iconbtn--dark hover-fx vfx-cart-btn" type="button" aria-label="Abrir tu carrito de compras" title="Mi Carrito">
           <span class="icon" aria-hidden="true">🛒</span>
           <span id="cartCount" class="badge glow-badge" aria-label="Artículos en tu carrito">0</span>
         </button>
@@ -150,21 +138,8 @@
     </div>
 
     <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
-      <input
-        id="mobileSearchInput"
-        name="mobileSearchInput"
-        class="input"
-        type="search"
-        placeholder="Buscar mercancía oficial..."
-        aria-label="Buscador móvil"
-      />
-      <button
-        id="closeMobileSearchBtn"
-        class="iconbtn btn--ghost"
-        type="button"
-        aria-label="Cerrar buscador"
-        style="border:none;"
-      >✕</button>
+      <input id="mobileSearchInput" name="mobileSearchInput" class="input" type="search" placeholder="Buscar mercancía oficial..." aria-label="Buscador móvil" />
+      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" type="button" aria-label="Cerrar buscador" style="border:none;">✕</button>
     </div>
   </header>
 
@@ -182,28 +157,17 @@
 
     <div class="wrap hero__inner">
       <div class="hero__content">
-        <img
-          class="hero__desert hero-vfx-float"
-          src="/assets/logo-world-desert.webp"
-          alt="World Desert Championship"
-          width="280"
-          height="253"
-          decoding="async"
-        />
+        <img class="hero__desert hero-vfx-float" src="/assets/logo-world-desert.webp" alt="World Desert Championship" width="280" height="253" decoding="async" />
 
         <h1 class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
+
         <p class="hero__hook">
           Diseño, pasión y rendimiento extremo en cada hilo.
           <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong>
         </p>
 
         <div class="hero__cta">
-          <button
-            id="scrollToCategoriesBtn"
-            class="btn btn--primary btn--large cinematic-btn neon-border"
-            type="button"
-            aria-label="Desplazarse a ver las colecciones de la tienda"
-          >
+          <button id="scrollToCategoriesBtn" class="btn btn--primary btn--large cinematic-btn neon-border" type="button" aria-label="Desplazarse a ver las colecciones de la tienda">
             Explorar Colecciones ▼
           </button>
         </div>
@@ -223,41 +187,29 @@
       </div>
 
       <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div
-        id="categoryHint"
-        class="hint bounce-anim"
-        style="text-align:center; margin-top:15px; font-weight:bold; color:var(--red);"
-      >
+      <div id="categoryHint" class="hint bounce-anim" style="text-align:center; margin-top:15px; font-weight:bold; color:var(--red);">
         👈 Selecciona una tarjeta para descubrir productos exclusivos.
       </div>
     </section>
 
-    <section
-      id="catalogCarouselSection"
-      class="carousel-section wrap vfx-glass-container"
-      aria-label="Productos destacados de la colección seleccionada"
-      hidden
-    >
+    <section id="catalogCarouselSection" class="carousel-section wrap vfx-glass-container" aria-label="Productos destacados de la colección seleccionada" hidden>
       <div class="carousel-header">
-        <div class="carousel-header__left">
-          <h3 id="carouselTitle" class="section-title" style="margin:0;">Catálogo</h3>
-          <div id="activeFilterRow" class="hint" hidden style="margin-top:8px;">
-            <span id="activeFilterLabel"></span>
-            <button
-              id="clearFilterBtn"
-              class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn"
-              type="button"
-              style="margin-left:10px;"
-            >
-              Quitar filtros ✕
-            </button>
-          </div>
-        </div>
+        <h3 id="carouselTitle" style="color:var(--red); display:flex; align-items:center; gap:10px; margin:0; text-shadow:0 2px 10px rgba(225,6,0,0.3);">Catálogo</h3>
 
-        <div class="carousel-header__right" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="carousel-controls">
           <button id="scrollLeftBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la izquierda" title="Ver anteriores">←</button>
           <button id="scrollRightBtn" class="iconbtn iconbtn--dark hover-fx vfx-nav-btn" type="button" aria-label="Desplazar carrusel hacia la derecha" title="Ver siguientes">→</button>
+        </div>
+      </div>
 
+      <div class="section__head" style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div id="activeFilterRow" class="hint" hidden>
+          <span id="activeFilterLabel"></span>
+          <button id="clearFilterBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button" style="margin-left:10px;">Quitar filtros ✕</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+          <label for="sortSelect" class="hint" style="font-weight:700;">Ordenar:</label>
           <select id="sortSelect" class="input tech-input" aria-label="Ordenar productos" style="max-width:220px;">
             <option value="featured">★ Relevancia</option>
             <option value="price_asc">Menor Precio</option>
@@ -267,7 +219,7 @@
         </div>
       </div>
 
-      <div class="carousel-wrapper" style="position:relative;">
+      <div style="position:relative;">
         <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
       </div>
 
@@ -279,10 +231,10 @@
     <div class="wrap partners__inner">
       <div class="partners__title">SCORE INTERNATIONAL OFFICIAL PARTNERS</div>
       <div class="partners__row">
-        <img src="/assets/logo-ford.webp" alt="Ford" width="90" height="35" loading="lazy" decoding="async" />
-        <img src="/assets/logo-rzr.webp" alt="RZR" width="90" height="35" loading="lazy" decoding="async" />
-        <img src="/assets/logo-bfgodrich.webp" alt="BFGoodrich" width="90" height="35" loading="lazy" decoding="async" />
-        <img src="/assets/logo-unico.webp" alt="Único Uniformes" width="90" height="35" loading="lazy" decoding="async" />
+        <img src="/assets/logo-ford.webp" alt="Socio comercial: Ford" width="90" height="35" loading="lazy" decoding="async" />
+        <img src="/assets/logo-rzr.webp" alt="Socio comercial: Polaris RZR" width="90" height="35" loading="lazy" decoding="async" />
+        <img src="/assets/logo-bfgodrich.webp" alt="Socio comercial: BFGoodrich Tires" width="90" height="35" loading="lazy" decoding="async" />
+        <img src="/assets/logo-unico.webp" alt="Socio comercial: Único Uniformes" width="90" height="35" loading="lazy" decoding="async" />
       </div>
     </div>
   </section>
@@ -297,14 +249,7 @@
       <div class="drawer__body">
         <div class="search glass-panel" style="margin-bottom:16px;">
           <span class="search__icon" aria-hidden="true">⌕</span>
-          <input
-            id="menuSearchInput"
-            class="search__input"
-            type="search"
-            placeholder="Buscar mercancía..."
-            autocomplete="off"
-            aria-label="Buscar en menú"
-          />
+          <input id="menuSearchInput" class="search__input" type="search" placeholder="Buscar mercancía..." autocomplete="off" aria-label="Buscar en menú" />
         </div>
 
         <nav class="menu-list">
@@ -539,6 +484,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script src="/js/main.js?v=2026-03-09-fusion" defer></script>
+  <script src="/js/main.js?v=2026-03-09-fusion-v2" defer></script>
 </body>
 </html>
