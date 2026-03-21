@@ -5,7 +5,7 @@
   "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes).",
   "main": "index.html",
   "scripts": {
-    "build": "mkdir public && cp -r index.html js css images legalfonts api public/"
+    "build": "mkdir public && cp -r api assets css js index.html cancel.html legal.html success.html robots.txt site.webmanifest sitemap.xml sw.js icons-score.svg public/"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
