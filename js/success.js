@@ -161,7 +161,7 @@
 
   async function hydrateSupport() {
     try {
-      const res = await fetch("/.netlify/functions/site_settings", { cache: "no-store" });
+      const res = await fetch("/api/site_settings", { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!data || !data.ok) return;
 
@@ -209,7 +209,7 @@
       );
 
       const res = await fetch(
-        `/.netlify/functions/checkout_status?session_id=${encodeURIComponent(sessionId)}`,
+        `/api/checkout_status?session_id=${encodeURIComponent(sessionId)}`,
         { cache: "no-store" }
       );
 

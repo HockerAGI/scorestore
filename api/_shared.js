@@ -1,4 +1,4 @@
-"use strict";
+'''"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -10,6 +10,8 @@ let createClient = null;
 try { ({ createClient } = require("@supabase/supabase-js")); } catch {}
 
 const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+// Vercel-aware URL generation
+const VERCEL_PROD_URL = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://scorestore.vercel.app';
 
 const getCorsAllowlist = () => {
   const envList = process.env.CORS_ALLOWLIST || "";
@@ -17,14 +19,18 @@ const getCorsAllowlist = () => {
 };
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
+  if (!origin) return true; // Server-to-server
+  // Automatically allow Vercel preview deployments and the production URL
+  if (origin.endsWith('.vercel.app')) return true;
   const allowed = getCorsAllowlist();
-  if (allowed.length === 0) return true;
+  // Allow any if wildcard is present
+  if (allowed.includes('*')) return true;
   return allowed.includes(origin) || origin.startsWith("http://localhost");
 };
 
 const corsHeaders = (origin) => {
-  const safeOrigin = isAllowedOrigin(origin) ? origin : "https://scorestore.netlify.app";
+  // Fallback to the production URL if the origin is not explicitly allowed.
+  const safeOrigin = isAllowedOrigin(origin) ? origin : VERCEL_PROD_URL;
   return {
     "Access-Control-Allow-Origin": safeOrigin,
     "Access-Control-Allow-Headers": "Content-Type, stripe-signature, x-org-id, x-envia-token",
@@ -90,7 +96,8 @@ const getBaseUrl = (event) => {
     process.env.URL ||
     process.env.DEPLOY_PRIME_URL;
 
-  if (!host) return "https://scorestore.netlify.app";
+  // Fallback to the Vercel production URL
+  if (!host) return VERCEL_PROD_URL;
   if (host.startsWith("http")) return host;
   return `${proto}://${host}`;
 };
@@ -138,7 +145,8 @@ const supabaseAdmin = (() => {
 
     client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
-      global: { headers: { "x-client-info": "scorestore-netlify-functions" } },
+      // Updated client info for Vercel environment
+      global: { headers: { "x-client-info": "scorestore-vercel-functions" } },
     });
 
     return client;
@@ -563,4 +571,4 @@ module.exports = {
   SUPPORT_PHONE,
   SUPPORT_WHATSAPP_E164,
   SUPPORT_WHATSAPP_DISPLAY,
-};
+};'''

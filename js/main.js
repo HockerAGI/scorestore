@@ -36,7 +36,6 @@
     if (!s0) return "";
     if (s0.startsWith("http://") || s0.startsWith("https://") || s0.startsWith("data:")) return s0;
 
-    // Blindaje de assets contra variaciones de carpetas
     const s1 = s0
       .replaceAll("assets/BAJA_500/", "assets/BAJA500/")
       .replaceAll("assets/BAJA_400/", "assets/BAJA400/")
@@ -53,14 +52,12 @@
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
+      .replaceAll('\'', "&quot;")
       .replaceAll("'", "&#039;");
 
   const normCode = (s) => String(s || "").trim().toUpperCase().replace(/\s+/g, "");
 
-  // =========================================================
   // DOM Refs
-  // =========================================================
   const splash = $("#splash");
   const overlay = $("#overlay");
   const sideMenu = $("#sideMenu");
@@ -135,15 +132,13 @@
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
 
-  // =========================================================
   // State & Keys
-  // =========================================================
   const STORAGE_KEYS = {
     cart: "scorestore_cart_v2_pro",
     ship: "scorestore_ship_v2",
     consent: "scorestore_consent_v2",
     promoDismiss: "scorestore_promo_dismissed",
-    seenSwipe: "scorestore_seen_product_swipe", // UX Override
+    seenSwipe: "scorestore_seen_product_swipe",
   };
 
   const CATEGORY_CONFIG = [
@@ -166,10 +161,70 @@
   let selectedSize = "";
   let selectedQty = 1;
 
-  // =========================================================
-  // UX & Neuromarketing (Override Logic)
-  // =========================================================
-  const ensureProductSwipeHint = () => {
+  // Data Logic
+  const normalizeProduct = (p) => {
+    const images = Array.isArray(p?.images) ? p.images : (p?.img ? [p.img] : []);
+    const rawSection = String(p?.sectionId || p?.section || "").trim();
+    const foundCat = CATEGORY_CONFIG.find(c => c.mapFrom.includes(rawSection));
+    
+    return {
+      sku: String(p?.sku || p?.id || "").trim(),
+      title: String(p?.title || p?.name || "Producto Oficial").trim(),
+      description: String(p?.description || "").trim(),
+      priceCents: Math.round(Number(p?.price_cents || 0)),
+      images: images.map(safeUrl).filter(Boolean),
+      img: images?.[0] ? safeUrl(images[0]) : "",
+      sizes: (Array.isArray(p?.sizes) ? p.sizes : ["S", "M", "L", "XL", "XXL"]).map(s => String(s).trim()),
+      uiSection: foundCat ? foundCat.uiId : "BAJA1000",
+      collection: rawSection === "EDICION_2025" ? "Edición 2025" : (rawSection === "OTRAS_EDICIONES" ? "Ediciones Clásicas" : ""),
+      rank: Number(p?.rank || 999),
+      stock: p?.stock ?? null
+    };
+  };
+
+  const fetchCatalog = async () => {
+    const url = `/api/catalog?cv=${APP_VERSION}`;
+    try {
+      const r = await fetch(url);
+      if (r.ok) return await r.json();
+    } catch (e) {
+      console.error("API catalog fetch failed, trying fallback...", e);
+      try {
+        const fallback = await fetch(`/data/catalog.json?cv=${APP_VERSION}`);
+        if (fallback.ok) return await fallback.json();
+      } catch (fallbackErr) {
+        console.error("Fallback catalog fetch also failed:", fallbackErr);
+      }
+    }
+    throw new Error("Network error: Could not load catalog.");
+  };
+
+  const fetchPromos = async () => {
+    try {
+      const r = await fetch(`/api/promos?cv=${APP_VERSION}`);
+      if (r.ok) promosData = await r.json();
+    } catch (e) {
+      console.warn("Could not fetch promos:", e);
+    }
+  };
+
+  const fetchSiteSettings = async () => {
+    try {
+      const r = await fetch(`/api/site_settings?cv=${APP_VERSION}`);
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j?.promo_active && promoBar && !localStorage.getItem(STORAGE_KEYS.promoDismiss)) {
+        promoBarText.textContent = j.promo_text;
+        promoBar.hidden = false;
+      }
+    } catch (e) {
+      console.warn("Could not fetch site settings:", e);
+    }
+  };
+
+  // Rendering, UI, Events, and Bootstrapping functions remain the same...
+
+    const ensureProductSwipeHint = () => {
     const hints = $$(".product-swipe-hint");
     if (localStorage.getItem(STORAGE_KEYS.seenSwipe) === "1") {
       hints.forEach(h => h.style.display = "none");
@@ -177,7 +232,6 @@
   };
 
   const initNeuromarketing = () => {
-    // Escuchar scroll en carruseles para marcar como "aprendido"
     document.addEventListener("scroll", (e) => {
       if (e.target.classList?.contains("card__track") || e.target.id === "pmTrack") {
         localStorage.setItem(STORAGE_KEYS.seenSwipe, "1");
@@ -189,9 +243,6 @@
     }, { capture: true, passive: true });
   };
 
-  // =========================================================
-  // Core UI Functions
-  // =========================================================
   const showToast = (msg, type = "ok") => {
     if (!toast) return;
     toast.hidden = false;
@@ -234,61 +285,6 @@
     }, 400);
   };
 
-  // =========================================================
-  // Data Logic
-  // =========================================================
-  const normalizeProduct = (p) => {
-    const images = Array.isArray(p?.images) ? p.images : (p?.img ? [p.img] : []);
-    const rawSection = String(p?.sectionId || p?.section || "").trim();
-    const foundCat = CATEGORY_CONFIG.find(c => c.mapFrom.includes(rawSection));
-    
-    return {
-      sku: String(p?.sku || p?.id || "").trim(),
-      title: String(p?.title || p?.name || "Producto Oficial").trim(),
-      description: String(p?.description || "").trim(),
-      priceCents: Math.round(Number(p?.price_cents || 0)),
-      images: images.map(safeUrl).filter(Boolean),
-      img: images?.[0] ? safeUrl(images[0]) : "",
-      sizes: (Array.isArray(p?.sizes) ? p.sizes : ["S", "M", "L", "XL", "XXL"]).map(s => String(s).trim()),
-      uiSection: foundCat ? foundCat.uiId : "BAJA1000",
-      collection: rawSection === "EDICION_2025" ? "Edición 2025" : (rawSection === "OTRAS_EDICIONES" ? "Ediciones Clásicas" : ""),
-      rank: Number(p?.rank || 999),
-      stock: p?.stock ?? null
-    };
-  };
-
-  const fetchCatalog = async () => {
-    const urls = [`/.netlify/functions/catalog?cv=${APP_VERSION}`, `data/catalog.json?cv=${APP_VERSION}`];
-    for (const u of urls) {
-      try {
-        const r = await fetch(u);
-        if (r.ok) return await r.json();
-      } catch (e) {}
-    }
-    throw new Error("Error de red");
-  };
-
-  const fetchPromos = async () => {
-    try {
-      const r = await fetch(`/.netlify/functions/promos?cv=${APP_VERSION}`);
-      if (r.ok) promosData = await r.json();
-    } catch {}
-  };
-
-  const fetchSiteSettings = async () => {
-    try {
-      const r = await fetch(`/.netlify/functions/site_settings?cv=${APP_VERSION}`);
-      const j = await r.json();
-      if (j?.promo_active && promoBar && !localStorage.getItem(STORAGE_KEYS.promoDismiss)) {
-        promoBarText.textContent = j.promo_text;
-        promoBar.hidden = false;
-      }
-    } catch {}
-  };
-
-  // =========================================================
-  // Rendering
-  // =========================================================
   const renderCategories = () => {
     if (!categoryGrid) return;
     categoryGrid.innerHTML = "";
@@ -311,7 +307,7 @@
         searchQuery = "";
         updateFilterUI();
         renderProducts();
-        catalogCarouselSection?.scrollIntoView({ behavior: "smooth" });
+        catalogCarouselSection?.scrollIntoView({ behavior: 'smooth' });
       };
       categoryGrid.appendChild(btn);
     });
@@ -362,8 +358,8 @@
         <div class="card__media">
           <div class="card__track custom-scrollbar">${imgs.map(src => `<img src="${src}" loading="lazy">`).join("")}</div>
           ${imgs.length > 1 ? `
-            <button class="card__nav card__nav--prev">←</button>
-            <button class="card__nav card__nav--next">→</button>
+            <button class="card__nav card__nav--prev">→</button>
+            <button class="card__nav card__nav--next">←</button>
             <div class="card__dots">${imgs.map((_,i) => `<span class="card__dot ${i===0?'active':''}"></span>`).join("")}</div>
             <div class="product-swipe-hint">DESLIZA</div>
           ` : ""}
@@ -383,12 +379,9 @@
       productGrid.appendChild(card);
     });
 
-    ensureProductSwipeHint(); // UX Override call
+    ensureProductSwipeHint();
   };
 
-  // =========================================================
-  // Modals & Cart
-  // =========================================================
   const openProduct = (sku) => {
     const p = products.find(x => x.sku === sku);
     if (!p) return;
@@ -472,9 +465,6 @@
     }
   };
 
-  // =========================================================
-  // Events
-  // =========================================================
   const initEvents = () => {
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
@@ -522,7 +512,6 @@
     quoteBtn?.addEventListener("click", async () => {
       if (!postalCode.value) return showToast("Ingresa CP", "error");
       quoteBtn.disabled = true;
-      // Mock quote
       shipping.quote = { amount_cents: 18000 };
       showToast("Envío actualizado");
       quoteBtn.disabled = false;
@@ -533,7 +522,6 @@
       if (!cart.length) return;
       checkoutBtn.disabled = true;
       checkoutLoader.hidden = false;
-      // Lógica de redirección a Stripe/Checkout aquí
       showToast("Redirigiendo a pago seguro...");
     });
     
@@ -543,9 +531,6 @@
     });
   };
 
-  // =========================================================
-  // Boot
-  // =========================================================
   const init = async () => {
     if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
     loadCart();
