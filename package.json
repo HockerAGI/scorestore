@@ -1,0 +1,14 @@
+{
+  "name": "scorestore",
+  "version": "1.0.0",
+  "description": "Tienda Oficial Score Store - Unico Uniformes",
+  "main": "api/catalog.js",
+  "scripts": {
+    "start": "node api/catalog.js",
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "stripe": "^16.12.0"
+  }
+}
