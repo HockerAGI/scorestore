@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-
-# Disallow API routes and raw data from being indexed
-Disallow: /api/
-Disallow: /data/
-
-Sitemap: /sitemap.xml
