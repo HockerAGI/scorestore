@@ -1,0 +1,5 @@
+node_modules
+.micromamba
+bin
+*.tar.bz2
+agente.sh
