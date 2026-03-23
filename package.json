@@ -22,5 +22,8 @@
     "build": "echo 'Building the project...'"
   },
   "author": "BAJATEX",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.0"
+  }
 }
