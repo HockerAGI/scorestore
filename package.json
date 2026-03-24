@@ -1,13 +1,23 @@
 {
-  "name": "scorestore",
-  "version": "1.0.2",
-  "description": "Score Store - Unico Uniformes",
-  "main": "api/catalog.js",
+  "name": "score-store-official",
+  "version": "4.0.1",
+  "private": true,
+  "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes).",
   "scripts": {
-    "build": "echo 'Build exitoso'"
+    "dev": "vercel dev",
+    "preview": "vercel dev",
+    "build": "echo \"Build ready for Vercel\"",
+    "lint": "echo \"No lint configured\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
     "stripe": "^16.12.0"
-  }
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "author": "BAJATEX S. de R.L. de C.V.",
+  "license": "UNLICENSED"
 }
