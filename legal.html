@@ -3,405 +3,244 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Términos, condiciones, envíos, cambios, privacidad y datos de contacto de SCORE STORE." />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.vercel.app; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' *.vercel.app; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net *.vercel.app; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
-
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <title>Políticas y Legal — SCORE STORE</title>
 
+  <meta name="theme-color" content="#0f0f0f" />
+  <meta name="description" content="Términos, condiciones, envíos, cambios, privacidad y contacto de SCORE STORE." />
+
+  <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
+  <!-- Seguridad -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' *.vercel.app;
+    img-src 'self' data: https:;
+    script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net;
+    style-src 'self' 'unsafe-inline' *.vercel.app;
+    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net *.vercel.app;
+    frame-src https://js.stripe.com https://hooks.stripe.com;" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="/css/styles.css" />
   <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
 
   <style>
+    body {
+      margin: 0;
+      font-family: system-ui;
+      background: #0f0f0f;
+    }
+
     .legal-page {
       min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
       background:
-        radial-gradient(circle at top right, rgba(225,6,0,0.08), transparent 0 26%),
-        linear-gradient(180deg, rgba(10,10,10,0.94), rgba(15,15,15,0.98));
+        radial-gradient(circle at top right, rgba(225,6,0,0.08), transparent),
+        linear-gradient(180deg, #0a0a0a, #0f0f0f);
     }
+
     .legal-hero-bg {
       position: fixed;
       inset: 0;
-      z-index: -2;
+      z-index: -1;
       background:
-        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)),
+        linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.85)),
         url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
-      filter: saturate(1.05) brightness(0.78);
-    }
-    .legal-shell {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 28px 18px 60px;
-      position: relative;
-      z-index: 2;
-    }
-    .legal-panel {
-      background: rgba(255,255,255,0.94);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      border-radius: 26px;
-      box-shadow:
-        0 30px 90px rgba(0,0,0,0.28),
-        inset 0 0 0 1px rgba(255,255,255,0.70);
-      overflow: hidden;
-    }
-    .legal-head {
-      padding: 28px 24px 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      background:
-        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 0 22%),
-        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.76));
-    }
-    .legal-body {
-      padding: 22px 24px 28px;
-    }
-    .legal-kicker {
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--red);
-      margin: 0 0 8px;
-    }
-    .legal-title {
-      margin: 0;
-      font-size: clamp(30px, 4vw, 42px);
-      line-height: 1.05;
-      font-weight: 900;
-      color: var(--black-btn);
-    }
-    .legal-subtitle {
-      margin: 14px 0 0;
-      color: #4b5563;
-      font-weight: 600;
-      line-height: 1.65;
-      max-width: 800px;
-    }
-    .legal-updated {
-      margin-top: 12px;
-      color: var(--red);
-      font-size: 13px;
-      font-weight: 800;
-    }
-    .legal-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .legal-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 900;
-      text-decoration: none;
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
-    }
-    .legal-btn:hover { transform: translateY(-1px); }
-    .legal-btn--primary {
-      background: linear-gradient(135deg, #E10600, #ff462a);
-      color: #fff;
-      box-shadow: 0 16px 40px rgba(225,6,0,0.22);
-    }
-    .legal-btn--ghost {
-      background: rgba(15,15,15,0.06);
-      color: var(--black-btn);
-      border: 1px solid rgba(0,0,0,0.08);
-    }
-    .legal-grid {
-      display: grid;
-      gap: 18px;
-    }
-    .legal-box {
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 18px;
-      padding: 22px 20px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.76));
-      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-    }
-    .legal-box h2 {
-      margin: 0 0 14px;
-      color: var(--red);
-      font-size: 24px;
-      line-height: 1.15;
-      font-weight: 900;
-    }
-    .legal-box h3 {
-      margin: 20px 0 8px;
-      color: var(--black-btn);
-      font-size: 18px;
-      font-weight: 800;
-    }
-    .legal-box p,
-    .legal-box li {
-      margin: 0 0 12px;
-      color: #444;
-      line-height: 1.72;
-      font-weight: 600;
-    }
-    .legal-box ul {
-      margin: 0 0 12px;
-      padding-left: 20px;
-    }
-    .legal-contact {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      margin-top: 10px;
-    }
-    .legal-contact-card {
-      border-radius: 16px;
-      padding: 16px;
-      background: rgba(15,15,15,0.04);
-      border: 1px solid rgba(0,0,0,0.06);
-    }
-    .legal-contact-card .label {
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: #6b7280;
-      margin-bottom: 6px;
-    }
-    .legal-contact-card a,
-    .legal-contact-card span {
-      font-size: 15px;
-      font-weight: 900;
-      color: var(--black-btn);
-      word-break: break-word;
-    }
-    .legal-footer-note {
-      margin-top: 22px;
-      font-size: 12px;
-      color: #6b7280;
-      font-weight: 700;
     }
 
-    @media (max-width: 640px) {
-      .legal-head,
-      .legal-body {
-        padding-left: 18px;
-        padding-right: 18px;
-      }
+    .legal-shell {
+      max-width: 1000px;
+      margin: auto;
+      padding: 30px 20px;
+    }
+
+    .legal-panel {
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    }
+
+    .legal-head {
+      padding: 30px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .legal-title {
+      font-size: 38px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .legal-subtitle {
+      color: #555;
+      margin-top: 10px;
+    }
+
+    .legal-body {
+      padding: 25px;
+    }
+
+    .legal-box {
+      margin-bottom: 25px;
+    }
+
+    .legal-box h2 {
+      color: #E10600;
+      font-size: 22px;
+    }
+
+    .legal-box h3 {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+
+    .legal-box p, .legal-box li {
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .legal-contact {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .legal-contact-card {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 12px;
+    }
+
+    .legal-contact-card a {
+      font-weight: bold;
+      color: #000;
+      text-decoration: none;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #E10600;
+      color: #fff;
     }
   </style>
 </head>
+
 <body class="legal-page">
-  <div class="legal-hero-bg" aria-hidden="true"></div>
 
-  <header class="topbar" role="banner" style="position:sticky; top:0; z-index:2000;">
-    <div class="wrap topbar__inner" style="justify-content:center;">
-      <a class="brand" href="/index.html" aria-label="Volver a Score Store">
-        <img class="brand__logo" src="/assets/logo-score.webp" alt="SCORE STORE" width="120" height="53" decoding="async" />
-      </a>
-    </div>
-  </header>
+<div class="legal-hero-bg"></div>
 
-  <main class="legal-shell">
-    <section class="legal-panel">
-      <div class="legal-head">
-        <p class="legal-kicker">Legal y políticas</p>
-        <h1 class="legal-title">Términos, condiciones, envíos y privacidad</h1>
-        <p class="legal-subtitle">
-          Este documento resume las reglas de uso de SCORE STORE, las condiciones de compra, las políticas
-          de envío, cambios y privacidad aplicables al storefront y a las órdenes generadas mediante Stripe.
-        </p>
-        <p class="legal-updated">Última actualización: Marzo 2026</p>
+<header class="topbar" style="text-align:center; padding:15px;">
+  <a href="/index.html">
+    <img src="/assets/logo-score.webp" width="120">
+  </a>
+</header>
 
-        <div class="legal-actions">
-          <a href="/index.html" class="legal-btn legal-btn--primary">← Volver a la tienda</a>
-          <a href="#contacto" class="legal-btn legal-btn--ghost">Ver contacto oficial</a>
-        </div>
-      </div>
+<main class="legal-shell">
+<section class="legal-panel">
 
-      <div class="legal-body">
-        <div class="legal-grid">
-          <article class="legal-box">
-            <h2>1. Términos generales de uso y compra</h2>
-            <p>
-              SCORE STORE es una tienda digital orientada a la venta de mercancía oficial. El uso del sitio,
-              la navegación del catálogo y el inicio de un proceso de pago implican aceptación de estos términos.
-            </p>
-            <p>
-              Las órdenes se generan con base en disponibilidad visible, configuración activa del catálogo y
-              condiciones de pago definidas por la pasarela Stripe.
-            </p>
+<div class="legal-head">
+  <h1 class="legal-title">Términos, Condiciones y Privacidad</h1>
+  <p class="legal-subtitle">Reglas de uso, compra, envíos y protección de datos.</p>
+  <a href="/index.html" class="btn btn-primary">← Volver</a>
+</div>
 
-            <h3>1.1. Productos</h3>
-            <p>
-              Los productos pueden incluir ligeras variaciones visuales respecto a fotografías, mockups o materiales
-              promocionales, especialmente por iluminación, composición de imagen, lote textil o presentación digital.
-            </p>
+<div class="legal-body">
 
-            <h3>1.2. Precios y moneda</h3>
-            <p>
-              Los precios del storefront se muestran principalmente en MXN. El sistema puede aplicar costos de envío,
-              descuentos promocionales y reglas de cotización según destino, volumen o modo de entrega.
-            </p>
+<div class="legal-box">
+<h2>1. Uso y Compra</h2>
+<p>SCORE STORE es operado por <strong>BAJATEX S. de R.L. de C.V. (Único Uniformes)</strong>.</p>
+<p>El uso del sitio implica aceptación de estos términos.</p>
 
-            <h3>1.3. Pago</h3>
-            <p>
-              El procesamiento de pagos es manejado por Stripe. SCORE STORE no almacena números completos de tarjeta
-              ni credenciales bancarias sensibles dentro del storefront.
-            </p>
-          </article>
+<h3>Productos</h3>
+<p>Pueden existir variaciones visuales por producción textil.</p>
 
-          <article class="legal-box">
-            <h2>2. Envíos, entrega y tiempos</h2>
-            <p>
-              El método de entrega puede variar entre recolección, envío nacional o envío internacional según la
-              configuración activa del checkout y del destino del cliente.
-            </p>
+<h3>Pagos</h3>
+<p>Procesados por Stripe. No almacenamos datos bancarios.</p>
+</div>
 
-            <h3>2.1. Cotizaciones de envío</h3>
-            <p>
-              Algunas órdenes usan tarifa calculada en tiempo real y otras pueden usar tarifas de respaldo
-              preconfiguradas cuando no exista una cotización instantánea disponible.
-            </p>
+<div class="legal-box">
+<h2>2. Envíos</h2>
+<ul>
+<li>Pickup en fábrica</li>
+<li>Envíos vía Envia.com (DHL, FedEx, etc.)</li>
+</ul>
+<p>Tiempos variables según logística.</p>
+</div>
 
-            <h3>2.2. Tiempos</h3>
-            <p>
-              Los tiempos de preparación, embarque y tránsito pueden variar por temporada, saturación logística,
-              carrier seleccionado, validaciones de pago o eventos extraordinarios.
-            </p>
+<div class="legal-box">
+<h2>3. Cambios</h2>
+<p>7 días por defecto de fábrica.</p>
+<p>Errores de talla: cliente paga envío.</p>
+</div>
 
-            <h3>2.3. Tracking</h3>
-            <p>
-              Cuando la guía sea generada, el sistema podrá reflejar número de rastreo y estado logístico según
-              la información recibida por los servicios conectados.
-            </p>
-          </article>
+<div class="legal-box">
+<h2>4. Privacidad</h2>
+<p>Datos usados solo para logística y pedidos.</p>
+<p>Cumplimiento con LFPDPPP.</p>
+</div>
 
-          <article class="legal-box">
-            <h2>3. Cambios, devoluciones y cancelaciones</h2>
-            <p>
-              Cambios, devoluciones o aclaraciones están sujetos a validación operativa y al estado real de la orden.
-              En productos con personalización, edición limitada, producción especial o uso evidente, pueden existir
-              restricciones adicionales.
-            </p>
+<div class="legal-box" id="contacto">
+<h2>5. Contacto</h2>
 
-            <h3>3.1. Pedido pendiente</h3>
-            <p>
-              Si el pago no se confirma o la operación no concluye, la orden puede permanecer en estado pendiente
-              hasta recibir confirmación del proveedor de pago.
-            </p>
+<div class="legal-contact">
 
-            <h3>3.2. Pedido pagado</h3>
-            <p>
-              Una vez confirmado el pago, cualquier solicitud de ajuste estará sujeta al momento operativo de la orden:
-              preparación, embalaje, guía emitida, envío en tránsito o entrega final.
-            </p>
-          </article>
+<div class="legal-contact-card">
+Correo:
+<a id="emailLink">ventas.unicotextil@gmail.com</a>
+</div>
 
-          <article class="legal-box">
-            <h2>4. Privacidad y datos</h2>
-            <p>
-              Los datos compartidos por el cliente se utilizan para procesar órdenes, soporte, seguimiento y
-              comunicación relacionada con la compra. El storefront puede usar cookies o almacenamiento local
-              para el funcionamiento básico del carrito y la experiencia de navegación.
-            </p>
+<div class="legal-contact-card">
+WhatsApp:
+<a id="waLink">6642368701</a>
+</div>
 
-            <h3>4.1. Datos de compra</h3>
-            <p>
-              Los datos operativos del pedido pueden incluir correo, nombre, teléfono, dirección, método de entrega,
-              identificadores de sesión y eventos relacionados con pago y envío.
-            </p>
+</div>
+</div>
 
-            <h3>4.2. Analítica y performance</h3>
-            <p>
-              La tienda puede usar herramientas de analítica, medición o pixel publicitario cuando así se encuentre
-              activado en la configuración pública del sitio.
-            </p>
-          </article>
+</div>
+</section>
+</main>
 
-          <article class="legal-box" id="contacto">
-            <h2>5. Contacto oficial</h2>
-            <p>
-              Los siguientes datos se cargan desde la configuración activa del storefront cuando están disponibles.
-              Si algún valor aún no fue configurado, puede mostrarse un respaldo operativo temporal.
-            </p>
+<script>
+(async () => {
+  async function fetchConfig(url) {
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
 
-            <div class="legal-contact">
-              <div class="legal-contact-card">
-                <div class="label">Correo</div>
-                <a id="legalEmailLink" href="mailto:ventas.unicotextil@gmail.com">
-                  <span id="legalEmailText">ventas.unicotextil@gmail.com</span>
-                </a>
-              </div>
+  let data =
+    await fetchConfig("/api/site_settings") ||
+    await fetchConfig("/.netlify/functions/site_settings");
 
-              <div class="legal-contact-card">
-                <div class="label">WhatsApp</div>
-                <a id="legalWaLink" href="https://wa.me/5216642368701" target="_blank" rel="noreferrer">
-                  <span id="legalWaText">664 236 8701</span>
-                </a>
-              </div>
+  if (!data || !data.contact) return;
 
-              <div class="legal-contact-card">
-                <div class="label">Sitio</div>
-                <a id="legalSiteLink" href="/index.html">
-                  <span>SCORE STORE</span>
-                </a>
-              </div>
-            </div>
+  const email = data.contact.email;
+  const wa = data.contact.whatsapp_e164;
 
-            <p class="legal-footer-note" id="legalFooterNote">
-              Merch oficial de SCORE International.
-            </p>
-          </article>
-        </div>
-      </div>
-    </section>
-  </main>
+  if (email) {
+    document.getElementById("emailLink").textContent = email;
+    document.getElementById("emailLink").href = "mailto:" + email;
+  }
 
-  <script>
-    (async () => {
-      try {
-        const res = await fetch("/api/site_settings", { cache: "no-store" });
-        const data = await res.json().catch(() => null);
-        if (!data || !data.ok) return;
+  if (wa) {
+    document.getElementById("waLink").href = "https://wa.me/" + wa;
+  }
+})();
+</script>
 
-        const contact = data.contact || {};
-        const home = data.home || {};
-
-        const email = String(contact.email || "").trim();
-        const waE164 = String(contact.whatsapp_e164 || "").trim();
-        const waDisplay = String(contact.whatsapp_display || "").trim();
-        const footerNote = String(home.footer_note || "").trim();
-
-        const emailText = document.getElementById("legalEmailText");
-        const emailLink = document.getElementById("legalEmailLink");
-        const waText = document.getElementById("legalWaText");
-        const waLink = document.getElementById("legalWaLink");
-        const footer = document.getElementById("legalFooterNote");
-
-        if (email && emailText && emailLink) {
-          emailText.textContent = email;
-          emailLink.href = `mailto:${email}`;
-        }
-
-        if (waLink) {
-          if (waE164) waLink.href = `https://wa.me/${encodeURIComponent(waE164)}`;
-          if (waDisplay && waText) waText.textContent = waDisplay;
-        }
-
-        if (footerNote && footer) footer.textContent = footerNote;
-      } catch {}
-    })();
-  </script>
 </body>
 </html>
