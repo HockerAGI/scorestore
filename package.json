@@ -1,10 +1,10 @@
 {
   "name": "scorestore",
-  "version": "1.0.1",
-  "description": "Score Store Official",
+  "version": "1.0.2",
+  "description": "Score Store - Unico Uniformes",
   "main": "api/catalog.js",
   "scripts": {
-    "build": "echo 'Build OK'"
+    "build": "echo 'Build exitoso'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
