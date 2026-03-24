@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Estado del pedido en SCORE STORE." />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.vercel.app; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' *.vercel.app; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net *.vercel.app; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
+  <meta name="description" content="Estado de tu pedido en SCORE STORE. Revisa el resumen de pago, entrega y soporte oficial." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -172,6 +172,17 @@
     .success-support a:hover {
       text-decoration: underline;
     }
+    @media (max-width: 640px) {
+      .success-panel {
+        padding: 22px 16px;
+      }
+      .success-title {
+        font-size: 28px;
+      }
+      .success-emoji {
+        font-size: 50px;
+      }
+    }
   </style>
 </head>
 <body class="success-page">
@@ -190,9 +201,9 @@
 
       <div class="success-hero">
         <div id="heroEmoji" class="success-emoji">🏁</div>
-        <h1 id="heroTitle" class="success-title">Cargando estado…</h1>
+        <h1 id="heroTitle" class="success-title">Verificando tu pedido…</h1>
         <p id="heroText" class="success-copy">
-          Estableciendo conexión encriptada para verificar tu pago con Stripe.
+          Estableciendo conexión para mostrar el estado de tu pago y tu información de compra.
         </p>
       </div>
 
@@ -245,6 +256,130 @@
     </section>
   </main>
 
-  <script src="/js/success.js?v=2026-03-07"></script>
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+
+      const orderId =
+        params.get("order_id") ||
+        params.get("session_id") ||
+        params.get("payment_intent") ||
+        params.get("checkout_id") ||
+        "—";
+
+      const rawStatus = String(params.get("status") || params.get("payment_status") || "success").toLowerCase();
+      const emailFromUrl = String(params.get("email") || "").trim();
+      const shipMode = String(params.get("ship") || params.get("shipping") || params.get("delivery") || "—").trim();
+      const currency = String(params.get("currency") || "MXN").toUpperCase();
+
+      const amountRaw =
+        params.get("total_cents") ||
+        params.get("amount_total_cents") ||
+        params.get("amount_cents") ||
+        params.get("total") ||
+        params.get("amount_total") ||
+        "";
+
+      const amountNumber = Number(amountRaw);
+      const amountText = Number.isFinite(amountNumber)
+        ? new Intl.NumberFormat("es-MX", { style: "currency", currency, maximumFractionDigits: 2 }).format(
+            amountRaw.includes("cents") || amountNumber >= 1000 ? amountNumber / 100 : amountNumber
+          )
+        : "—";
+
+      const heroEmoji = document.getElementById("heroEmoji");
+      const heroTitle = document.getElementById("heroTitle");
+      const heroText = document.getElementById("heroText");
+      const orderIdEl = document.getElementById("orderId");
+      const orderTotalEl = document.getElementById("orderTotal");
+      const orderStatusText = document.getElementById("orderStatusText");
+      const orderEmail = document.getElementById("orderEmail");
+      const orderShipMode = document.getElementById("orderShipMode");
+      const extraHint = document.getElementById("extraHint");
+      const copyBtn = document.getElementById("copyBtn");
+
+      const isSuccessLike = ["success", "succeeded", "paid", "complete", "completed", "ok"].includes(rawStatus);
+      const isPendingLike = ["processing", "pending", "open"].includes(rawStatus);
+      const isCanceledLike = ["canceled", "cancelled", "failed", "error"].includes(rawStatus);
+
+      if (isSuccessLike) {
+        if (heroEmoji) heroEmoji.textContent = "🏁";
+        if (heroTitle) heroTitle.textContent = "Pago confirmado";
+        if (heroText) heroText.textContent = "Tu pedido fue registrado correctamente. Conserva este resumen para cualquier seguimiento.";
+        if (orderStatusText) orderStatusText.textContent = "Confirmado";
+        if (extraHint) extraHint.textContent = "Tu correo recibirá la confirmación y cualquier actualización de despacho.";
+      } else if (isPendingLike) {
+        if (heroEmoji) heroEmoji.textContent = "⏳";
+        if (heroTitle) heroTitle.textContent = "Pago en proceso";
+        if (heroText) heroText.textContent = "Tu pago fue recibido y puede tardar un momento en reflejarse por completo.";
+        if (orderStatusText) orderStatusText.textContent = "En proceso";
+        if (extraHint) extraHint.textContent = "Si pagaste con OXXO, la confirmación puede tardar hasta 1 día hábil.";
+      } else if (isCanceledLike) {
+        if (heroEmoji) heroEmoji.textContent = "⚠️";
+        if (heroTitle) heroTitle.textContent = "Pago no completado";
+        if (heroText) heroText.textContent = "No se generó un cargo final. Puedes volver a intentar con otro método de pago.";
+        if (orderStatusText) orderStatusText.textContent = "Cancelado";
+        if (extraHint) extraHint.textContent = "Tu carrito permanece guardado en este dispositivo.";
+      } else {
+        if (heroEmoji) heroEmoji.textContent = "🏁";
+        if (heroTitle) heroTitle.textContent = "Estado de pedido";
+        if (heroText) heroText.textContent = "Aquí puedes revisar el resumen principal de tu operación.";
+        if (orderStatusText) orderStatusText.textContent = rawStatus || "—";
+      }
+
+      if (orderIdEl) orderIdEl.textContent = orderId;
+      if (orderTotalEl) orderTotalEl.textContent = amountText;
+      if (orderEmail) orderEmail.textContent = emailFromUrl || "—";
+      if (orderShipMode) orderShipMode.textContent = shipMode === "—" ? "—" : shipMode.toUpperCase();
+
+      if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(String(orderId));
+            const original = copyBtn.textContent;
+            copyBtn.textContent = "Copiado";
+            setTimeout(() => {
+              copyBtn.textContent = original;
+            }, 1200);
+          } catch {
+            alert("No fue posible copiar el ID.");
+          }
+        });
+      }
+
+      (async () => {
+        try {
+          const res = await fetch("/api/site_settings", { cache: "no-store" });
+          const data = await res.json().catch(() => null);
+          if (!data || !data.ok) return;
+
+          const contact = data.contact || {};
+          const home = data.home || {};
+
+          const email = String(contact.email || "").trim();
+          const waE164 = String(contact.whatsapp_e164 || "").trim();
+          const waDisplay = String(contact.whatsapp_display || "").trim();
+          const footerNote = String(home.footer_note || "").trim();
+
+          const emailLink = document.getElementById("successSupportEmail");
+          const waLink = document.getElementById("successSupportWa");
+
+          if (email && emailLink) {
+            emailLink.textContent = email;
+            emailLink.href = `mailto:${email}`;
+          }
+
+          if (waLink) {
+            if (waE164) waLink.href = `https://wa.me/${encodeURIComponent(waE164)}`;
+            if (waDisplay) waLink.textContent = waDisplay;
+          }
+
+          if (footerNote && extraHint && isSuccessLike && !params.get("custom_hint")) {
+            extraHint.textContent = footerNote;
+          }
+        } catch {}
+      })();
+    })();
+  </script>
 </body>
 </html>
