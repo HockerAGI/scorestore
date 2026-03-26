@@ -8,6 +8,8 @@
   <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
 
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
+
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -30,16 +32,30 @@
   <meta name="twitter:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="twitter:image" content="https://scorestore.vercel.app/assets/hero.webp" />
 
+  <!-- PWA (ya estaba en tu repo original) -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
+  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
   <link rel="preload" href="/css/styles.css" as="style" />
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
-
   <link rel="stylesheet" href="/css/styles.css" />
   <link rel="stylesheet" href="/css/override.css?v=2026-03-08-restore" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": "Score Store",
+      "url": "https://scorestore.vercel.app/",
+      "logo": "https://scorestore.vercel.app/assets/logo-score.webp",
+      "description": "Mercancía oficial de Score International Off-Road Racing, desarrollada con calidad premium.",
+      "paymentAccepted": "Credit Card, Debit Card, OXXO Pay"
+    }
+  </script>
 </head>
 
 <body>
@@ -50,15 +66,7 @@
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
-        <img
-          class="splash__logo"
-          src="/assets/logo-score.webp"
-          alt="SCORE"
-          width="180"
-          height="79"
-          decoding="async"
-          fetchpriority="high"
-        />
+        <img class="splash__logo" src="/assets/logo-score.webp" alt="SCORE" width="220" height="88" decoding="async" fetchpriority="high" />
         <div class="splash__laser"></div>
       </div>
       <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
@@ -80,14 +88,7 @@
       </button>
 
       <a class="brand" href="/index.html" aria-label="Ir a Inicio de Score Store">
-        <img
-          class="brand__logo"
-          src="/assets/logo-score.webp"
-          alt="Logotipo SCORE STORE"
-          width="120"
-          height="53"
-          decoding="async"
-        />
+        <img class="brand__logo" src="/assets/logo-score.webp" alt="Logotipo SCORE STORE" width="120" height="48" decoding="async" />
       </a>
 
       <div class="topbar__actions">
