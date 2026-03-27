@@ -46,22 +46,7 @@ const str = (v, fallback = "") => {
   return s || fallback;
 };
 
-const arr = (v) => {
-  if (Array.isArray(v)) return v;
-  if (typeof v === "string") {
-    const t = v.trim();
-    if (!t) return [];
-    if ((t.startsWith("[") && t.endsWith("]")) || (t.startsWith('"[') && t.endsWith(']"'))) {
-      try {
-        const parsed = JSON.parse(t);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-  }
-  return [];
-};
+const arr = (v) => (Array.isArray(v) ? v : []);
 
 const withNoStore = (resp) => {
   const out = resp || {};
@@ -86,34 +71,53 @@ const normalizeSectionIdToUi = (sectionId) => {
   return found ? found.uiId : null;
 };
 
-const normalizeAssetUrl = (value) => {
-  const s0 = str(value);
-  if (!s0) return "";
-  if (/^(https?:|data:|blob:)/i.test(s0)) return s0;
+const normalizeAssetPath = (input) => {
+  let s = String(input || "").trim();
+  if (!s) return "";
+  if (/^(https?:|data:|blob:)/i.test(s)) return s;
 
-  const s1 = s0
-    .replaceAll("assets/BAJA_500/", "assets/BAJA500/")
-    .replaceAll("assets/BAJA_400/", "assets/BAJA400/")
-    .replaceAll("assets/SF_250/", "assets/SF250/")
-    .replaceAll("assets/BAJA_1000/", "assets/EDICION_2025/");
+  s = s.replaceAll("\\", "/");
 
-  if (s1.startsWith("/")) return s1;
-  if (
-    s1.startsWith("assets/") ||
-    s1.startsWith("css/") ||
-    s1.startsWith("js/") ||
-    s1.startsWith("data/")
-  ) {
-    return `/${s1}`;
-  }
+  s = s.replaceAll("/assets/BAJA_1000/", "/assets/edicion_2025/");
+  s = s.replaceAll("/assets/BAJA1000/", "/assets/edicion_2025/");
+  s = s.replaceAll("/assets/EDICION_2025/", "/assets/edicion_2025/");
+  s = s.replaceAll("/assets/BAJA_500/", "/assets/baja500/");
+  s = s.replaceAll("/assets/BAJA500/", "/assets/baja500/");
+  s = s.replaceAll("/assets/BAJA_400/", "/assets/baja400/");
+  s = s.replaceAll("/assets/BAJA400/", "/assets/baja400/");
+  s = s.replaceAll("/assets/SF_250/", "/assets/sf250/");
+  s = s.replaceAll("/assets/SF250/", "/assets/sf250/");
+  s = s.replaceAll("/assets/OTRAS_EDICIONES/", "/assets/otras_ediciones/");
 
-  return s1;
+  s = s.replaceAll("assets/BAJA_1000/", "assets/edicion_2025/");
+  s = s.replaceAll("assets/BAJA1000/", "assets/edicion_2025/");
+  s = s.replaceAll("assets/EDICION_2025/", "assets/edicion_2025/");
+  s = s.replaceAll("assets/BAJA_500/", "assets/baja500/");
+  s = s.replaceAll("assets/BAJA500/", "assets/baja500/");
+  s = s.replaceAll("assets/BAJA_400/", "assets/baja400/");
+  s = s.replaceAll("assets/BAJA400/", "assets/baja400/");
+  s = s.replaceAll("assets/SF_250/", "assets/sf250/");
+  s = s.replaceAll("assets/SF250/", "assets/sf250/");
+  s = s.replaceAll("assets/OTRAS_EDICIONES/", "assets/otras_ediciones/");
+
+  s = s.replaceAll("S250", "SF250");
+  s = s.replaceAll("SF_250", "sf250");
+  s = s.replaceAll("BAJA_1000", "edicion_2025");
+  s = s.replaceAll("BAJA_500", "baja500");
+  s = s.replaceAll("BAJA_400", "baja400");
+  s = s.replaceAll(/\s+/g, "");
+  s = s.replaceAll(".jpg.webp", ".webp");
+
+  if (s.startsWith("assets/")) s = `/${s}`;
+  if (!s.startsWith("/")) s = `/${s}`;
+
+  return s;
 };
 
 const pickImage = (...values) => {
   for (const value of values) {
-    const s = normalizeAssetUrl(value);
-    if (s) return s;
+    const s = str(value);
+    if (s) return normalizeAssetPath(s);
   }
   return "";
 };
@@ -135,14 +139,13 @@ const normalizeSection = (row) => {
 };
 
 const normalizeProduct = (p) => {
-  const sku = str(p?.sku || p?.id);
+  const sku = str(p?.sku);
   if (!sku) return null;
 
-  const images = arr(p?.images).filter(Boolean).map((x) => normalizeAssetUrl(x)).filter(Boolean);
-
+  const images = arr(p?.images).filter(Boolean).map((v) => normalizeAssetPath(String(v)));
   const sizes =
     arr(p?.sizes).length > 0
-      ? arr(p?.sizes).filter(Boolean).map((x) => String(x).trim()).filter(Boolean)
+      ? arr(p?.sizes).filter(Boolean).map(String)
       : ["S", "M", "L", "XL", "XXL"];
 
   const priceCents =
@@ -150,15 +153,7 @@ const normalizeProduct = (p) => {
       ? Math.max(0, Math.floor(num(p?.price_cents)))
       : Number.isFinite(Number(p?.price_mxn)) && num(p?.price_mxn) > 0
         ? Math.max(0, Math.round(num(p?.price_mxn) * 100))
-        : Number.isFinite(Number(p?.base_mxn)) && num(p?.base_mxn) > 0
-          ? Math.max(0, Math.round(num(p?.base_mxn) * 100))
-          : Number.isFinite(Number(p?.price)) && num(p?.price) > 0
-            ? Math.max(0, Math.round(num(p?.price) * 100))
-            : 0;
-
-  const sectionId = str(p?.section_id || p?.sectionId || p?.section || p?.categoryId, "EDICION_2025");
-  const uiSection = normalizeSectionIdToUi(sectionId) || sectionId;
-  const collection = str(p?.sub_section || p?.collection || p?.subSection);
+        : Math.max(0, Math.round(num(p?.base_mxn) * 100));
 
   const primary = pickImage(
     p?.img,
@@ -166,6 +161,10 @@ const normalizeProduct = (p) => {
     p?.image,
     images.length ? images[0] : ""
   );
+
+  const sectionId = str(p?.section_id || p?.sectionId, "EDICION_2025");
+  const uiSection = normalizeSectionIdToUi(sectionId) || sectionId;
+  const collection = str(p?.sub_section || p?.collection);
 
   return {
     id: str(p?.id, sku),
@@ -178,8 +177,6 @@ const normalizeProduct = (p) => {
     base_mxn: num(p?.base_mxn, 0),
     sectionId,
     section_id: sectionId,
-    section: sectionId,
-    categoryId: str(p?.categoryId || p?.category_id, ""),
     uiSection,
     collection,
     sub_section: collection,
@@ -204,22 +201,10 @@ const normalizePayload = (payload) => {
       ? data.categories
       : [];
 
-  const rawProducts = Array.isArray(data.products)
-    ? data.products
-    : Array.isArray(data.items)
-      ? data.items
-      : [];
+  const rawProducts = Array.isArray(data.products) ? data.products : [];
 
   const products = rawProducts.map(normalizeProduct).filter(Boolean);
   let sections = rawSections.map(normalizeSection);
-
-  const countByUi = new Map();
-
-  for (const item of products) {
-    const key = String(item.uiSection || item.sectionId || "").trim();
-    if (!key) continue;
-    countByUi.set(key, (countByUi.get(key) || 0) + 1);
-  }
 
   if (!sections.length) {
     const sectionMap = new Map();
@@ -247,12 +232,15 @@ const normalizePayload = (payload) => {
 
     sections = Array.from(sectionMap.values());
   } else {
-    sections = sections.map((s) => {
-      const key =
-        String(s?.id || s?.sectionId || s?.section_id || "").trim() ||
-        normalizeSectionIdToUi(s?.id || s?.sectionId || s?.section_id || "") ||
-        String(s?.id || s?.sectionId || s?.section_id || "").trim();
+    const countByUi = new Map();
+    for (const item of products) {
+      const key = String(item.uiSection || item.sectionId || "").trim();
+      if (!key) continue;
+      countByUi.set(key, (countByUi.get(key) || 0) + 1);
+    }
 
+    sections = sections.map((s) => {
+      const key = String(s?.id || s?.sectionId || s?.section_id || "").trim();
       return {
         ...s,
         count: countByUi.get(key) || 0,
@@ -299,7 +287,28 @@ const resolveOrgId = async (sb) => {
   return orgId;
 };
 
-const buildFallback = () => {
+module.exports = async (req, res) => {
+  const origin = req.headers.origin || req.headers.Origin || "*";
+
+  if (req.method === "OPTIONS") {
+    const optionsRes = handleOptions?.({ headers: { origin } }) || {
+      statusCode: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+      body: "",
+    };
+
+    return send(res, optionsRes);
+  }
+
+  if (req.method !== "GET") {
+    return send(res, jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
+  }
+
   const fallbackRaw =
     readJsonFile("data/catalog.json") || {
       store: { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
@@ -307,37 +316,7 @@ const buildFallback = () => {
       products: [],
     };
 
-  return normalizePayload(fallbackRaw);
-};
-
-module.exports = async (req, res) => {
-  const origin = req.headers.origin || req.headers.Origin || "*";
-
-  if (req.method === "OPTIONS") {
-    const optionsRes =
-      handleOptions?.({ headers: { origin } }) ||
-      {
-        statusCode: 204,
-        headers: {
-          "Access-Control-Allow-Origin": origin,
-          "Access-Control-Allow-Credentials": "true",
-          "Access-Control-Allow-Methods": "GET,OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-        body: "",
-      };
-
-    return send(res, optionsRes);
-  }
-
-  if (req.method !== "GET") {
-    return send(
-      res,
-      jsonResponse(405, { ok: false, error: "Method not allowed" }, origin)
-    );
-  }
-
-  const fallback = buildFallback();
+  const fallback = normalizePayload(fallbackRaw);
 
   const sb = supabaseAdmin();
   if (!sb) {
@@ -350,7 +329,7 @@ module.exports = async (req, res) => {
     const { data, error } = await sb
       .from("products")
       .select(
-        "id,sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,sectionId,section,categoryId,sub_section,rank,img,image_url,image,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
+        "id,sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,sub_section,rank,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
       )
       .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
       .is("deleted_at", null)
@@ -374,15 +353,13 @@ module.exports = async (req, res) => {
         price_cents: p.price_cents,
         price_mxn: p.price_mxn,
         base_mxn: p.base_mxn,
-        sectionId: p.section_id || p.sectionId || p.section || p.categoryId,
-        section_id: p.section_id || p.sectionId || p.section || p.categoryId,
-        section: p.section || p.section_id || p.sectionId,
-        categoryId: p.categoryId,
+        sectionId: p.section_id,
+        section_id: p.section_id,
         sub_section: p.sub_section,
         collection: p.sub_section,
-        image: p.image_url || p.img || p.image,
-        image_url: p.image_url || p.image || p.img,
-        img: p.img || p.image || p.image_url,
+        image: p.image_url || p.img,
+        image_url: p.image_url,
+        img: p.img,
         images: Array.isArray(p.images) ? p.images : [],
         sizes: Array.isArray(p.sizes) ? p.sizes : [],
         rank: p.rank,
