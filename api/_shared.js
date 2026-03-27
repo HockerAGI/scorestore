@@ -1,47 +1,69 @@
-'''"use strict";
+"use strict";
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 let Stripe = null;
-try { Stripe = require("stripe"); } catch {}
+try {
+  Stripe = require("stripe");
+} catch {}
 
 let createClient = null;
-try { ({ createClient } = require("@supabase/supabase-js")); } catch {}
+try {
+  ({ createClient } = require("@supabase/supabase-js"));
+} catch {}
 
 const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
-// Vercel-aware URL generation
-const VERCEL_PROD_URL = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://scorestore.vercel.app';
+const VERCEL_PROD_URL =
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://scorestore.vercel.app";
+
+/* =========================================================
+   CORS / RESPONSE HELPERS
+   ========================================================= */
 
 const getCorsAllowlist = () => {
   const envList = process.env.CORS_ALLOWLIST || "";
-  return envList.split(",").map((s) => s.trim()).filter(Boolean);
+  return envList
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 };
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true; // Server-to-server
-  // Automatically allow Vercel preview deployments and the production URL
-  if (origin.endsWith('.vercel.app')) return true;
+  if (!origin) return true; // server-to-server / same-origin fallback
+  if (origin.startsWith("http://localhost")) return true;
+
+  // Always allow Vercel preview and production deployments
+  if (origin.endsWith(".vercel.app")) return true;
+  if (origin === VERCEL_PROD_URL) return true;
+
   const allowed = getCorsAllowlist();
-  // Allow any if wildcard is present
-  if (allowed.includes('*')) return true;
-  return allowed.includes(origin) || origin.startsWith("http://localhost");
+  if (allowed.includes("*")) return true;
+
+  return allowed.includes(origin);
 };
 
 const corsHeaders = (origin) => {
-  // Fallback to the production URL if the origin is not explicitly allowed.
-  const safeOrigin = isAllowedOrigin(origin) ? origin : VERCEL_PROD_URL;
+  const safeOrigin = isAllowedOrigin(origin) ? origin || VERCEL_PROD_URL : VERCEL_PROD_URL;
   return {
     "Access-Control-Allow-Origin": safeOrigin,
     "Access-Control-Allow-Headers": "Content-Type, stripe-signature, x-org-id, x-envia-token",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
 };
 
 const jsonResponse = (statusCode, data, origin) => {
   if (origin && !isAllowedOrigin(origin)) {
-    return { statusCode: 403, body: JSON.stringify({ error: "Forbidden Origin" }) };
+    return {
+      statusCode: 403,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({ error: "Forbidden Origin" }),
+    };
   }
 
   return {
@@ -56,8 +78,16 @@ const jsonResponse = (statusCode, data, origin) => {
 
 const handleOptions = (event) => {
   const origin = event?.headers?.origin || event?.headers?.Origin;
-  return { statusCode: 204, headers: corsHeaders(origin), body: "" };
+  return {
+    statusCode: 204,
+    headers: corsHeaders(origin),
+    body: "",
+  };
 };
+
+/* =========================================================
+   SAFE UTILITIES
+   ========================================================= */
 
 const safeJsonParse = (raw) => {
   try {
@@ -78,14 +108,21 @@ const normalizeQty = (items) => {
   if (!Array.isArray(items)) return [];
   return items
     .map((it) => ({
-      sku: String(it?.sku || "").trim(),
+      sku: String(it?.sku || it?.id || "").trim(),
       qty: clampInt(it?.qty, 1, 99),
       size: it?.size ? String(it.size).trim() : "",
-      priceCents: it?.priceCents ? Number(it.priceCents) : 0,
+      priceCents: Number.isFinite(Number(it?.priceCents))
+        ? Number(it.priceCents)
+        : Number.isFinite(Number(it?.price_cents))
+          ? Number(it.price_cents)
+          : 0,
       title: it?.title ? String(it.title).trim() : "",
     }))
     .filter((it) => it.sku);
 };
+
+const itemsQtyFromAny = (items) =>
+  normalizeQty(items).reduce((sum, it) => sum + Number(it.qty || 0), 0);
 
 const getBaseUrl = (event) => {
   const headers = event?.headers || {};
@@ -96,7 +133,6 @@ const getBaseUrl = (event) => {
     process.env.URL ||
     process.env.DEPLOY_PRIME_URL;
 
-  // Fallback to the Vercel production URL
   if (!host) return VERCEL_PROD_URL;
   if (host.startsWith("http")) return host;
   return `${proto}://${host}`;
@@ -132,10 +168,21 @@ const isUuid = (s) =>
     String(s || "").trim()
   );
 
-const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
+const safeStr = (v, d = "") =>
+  typeof v === "string" ? v : v == null ? d : String(v);
+
+/* =========================================================
+   SUPABASE
+   ========================================================= */
+
+const getSupabaseServiceKey = () =>
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  "";
 
 const isSupabaseConfigured = () =>
-  Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && createClient);
+  Boolean(process.env.SUPABASE_URL && getSupabaseServiceKey() && createClient);
 
 const supabaseAdmin = (() => {
   let client = null;
@@ -143,15 +190,15 @@ const supabaseAdmin = (() => {
 
   return () => {
     if (initError) {
-      // Log the initialization error on every call to see it in Vercel logs.
       console.error("Supabase client failed to initialize:", initError);
       return null;
     }
+
     if (client) return client;
     if (!isSupabaseConfigured()) return null;
 
     try {
-      client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      client = createClient(process.env.SUPABASE_URL, getSupabaseServiceKey(), {
         auth: { persistSession: false },
         global: { headers: { "x-client-info": "scorestore-vercel-functions" } },
       });
@@ -163,6 +210,10 @@ const supabaseAdmin = (() => {
     }
   };
 })();
+
+/* =========================================================
+   ENVÍA / SHIPMENTS
+   ========================================================= */
 
 const ENVIA_API_URL = (process.env.ENVIA_API_URL || "https://api.envia.com").replace(/\/+$/, "");
 const ENVIA_GEOCODES_URL = (process.env.ENVIA_GEOCODES_URL || "https://geocodes.envia.com").replace(/\/+$/, "");
@@ -319,11 +370,12 @@ const pickBestRate = (rates) => {
   for (const r of arr) {
     const price = Number(
       r?.totalPrice ??
-      r?.basePrice ??
-      r?.price ??
-      r?.amount ??
-      r?.rate ??
-      NaN
+        r?.totalAmount ??
+        r?.basePrice ??
+        r?.price ??
+        r?.amount ??
+        r?.rate ??
+        NaN
     );
 
     if (!Number.isFinite(price) || price <= 0) continue;
@@ -371,8 +423,10 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
     destination,
     packages: [pkg],
     shipment: {
-      carrier: process.env.ENVIA_DEFAULT_CARRIER || undefined,
-      type: process.env.ENVIA_DEFAULT_TYPE || undefined,
+      carrier: c === "US"
+        ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
+        : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      type: Number(process.env.ENVIA_DEFAULT_TYPE || 1),
     },
     settings: { currency: "MXN" },
   };
@@ -390,16 +444,24 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
     throw new Error("No se pudo conectar con los servidores de paquetería.");
   }
 
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(`Respuesta inválida del servidor de envíos (${res.status}).`);
+  }
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.message || "No se pudo cotizar envío");
 
   const rates = data?.data || data?.rates || data || [];
   const best = pickBestRate(rates);
-  if (!best) throw new Error("No se encontró tarifa para ese CP/ZIP");
+  if (!best) throw new Error("No se encontró tarifa (Envía.com) para ese CP/ZIP");
 
-  const priceMXN = Number(best.price);
-  if (!Number.isFinite(priceMXN) || priceMXN <= 0) {
-    throw new Error("Tarifa inválida");
+  let priceMXN = Number(best.price);
+  if (!Number.isFinite(priceMXN) || priceMXN <= 0) throw new Error("Tarifa inválida");
+
+  const fx = Number(process.env.FX_USD_TO_MXN) || 18;
+  if (String(c) === "US" && String(process.env.ENVIA_FORCE_USD_TO_MXN || "0") === "1") {
+    if (Number.isFinite(fx) && fx > 0) priceMXN = priceMXN * fx;
   }
 
   const amount_cents = Math.round(priceMXN * 100);
@@ -407,12 +469,130 @@ const getEnviaQuote = async ({ zip, country, items_qty }) => {
   return {
     ok: true,
     provider: "envia",
-    label: `${best.carrier.toUpperCase()} · ${best.service}`,
+    label: `${String(best.carrier || "").toUpperCase()} · ${String(best.service || "")}`,
     country: c,
     amount_cents,
     amount_mxn: priceMXN,
+    raw: data,
   };
 };
+
+const getFallbackShipping = (country, items_qty) => {
+  const c = String(country || "MX").toUpperCase();
+  const qty = clampInt(items_qty || 1, 1, 99);
+  const base = c === "US"
+    ? Number(process.env.FALLBACK_US_PRICE_MXN || 850)
+    : Number(process.env.FALLBACK_MX_PRICE_MXN || 250);
+  const perItem = Number(process.env.FALLBACK_PER_ITEM_MXN || 50);
+  const price = (Number.isFinite(base) ? base : 0) + (Number.isFinite(perItem) ? perItem * Math.max(0, qty - 1) : 0);
+  const priceMXN = Math.max(0, price);
+
+  return {
+    ok: true,
+    provider: "fallback",
+    label: c === "US" ? "Envío USA (estimado)" : "Envío MX (estimado)",
+    country: c,
+    amount_cents: Math.round(priceMXN * 100),
+    amount_mxn: priceMXN,
+  };
+};
+
+const stripeShippingToEnviaDestination = (stripe_session_or_shipping_details) => {
+  const sess = stripe_session_or_shipping_details && stripe_session_or_shipping_details.shipping_details
+    ? stripe_session_or_shipping_details
+    : null;
+
+  const sd = sess ? (sess.shipping_details || {}) : (stripe_session_or_shipping_details || {});
+  const cd = sess ? (sess.customer_details || {}) : {};
+  const addr = sd.address || {};
+  const country = String(addr.country || "").toUpperCase();
+
+  let calle = String(addr.line1 || "Domicilio Conocido").trim();
+  let numStreet = String(addr.line2 || "").trim();
+
+  if (!numStreet || numStreet.toLowerCase() === "s/n") {
+    const match = calle.match(/^(.*?)\s+((?:No\.?\s*|#\s*)?\d+[a-zA-Z]?(?:-\d+)?)$/i);
+    if (match) {
+      calle = match[1].trim();
+      numStreet = match[2].trim();
+    } else {
+      numStreet = "S/N";
+    }
+  }
+
+  let telefonoSeguro = String(sd.phone || cd.phone || "").replace(/\D/g, "");
+  if (telefonoSeguro.length < 10) telefonoSeguro = "0000000000";
+
+  const emailSeguro =
+    cd.email ||
+    sess?.customer_email ||
+    process.env.DEFAULT_CUSTOMER_EMAIL ||
+    "cliente@scorestore.com";
+
+  return {
+    name: sd.name || cd.name || "Cliente Final",
+    company: "",
+    email: emailSeguro,
+    phone: telefonoSeguro,
+    street: calle.substring(0, 100),
+    number: numStreet.substring(0, 20),
+    district: String(addr.line2 || "").substring(0, 100) || "Centro",
+    city: String(addr.city || "").substring(0, 50),
+    state: String(addr.state || "").substring(0, 50),
+    country: country || "MX",
+    postalCode: String(addr.postal_code || addr.postalCode || "").substring(0, 10),
+    reference: "Venta Stripe Webhook",
+  };
+};
+
+const createEnviaLabel = async ({ shipping_country, stripe_session, items_qty }) => {
+  const country = String(shipping_country || "MX").toUpperCase();
+  const origin = getOriginByCountry(country);
+  const destination = stripeShippingToEnviaDestination(stripe_session);
+
+  if (!destination?.postalCode || !destination?.state || !destination?.country) {
+    throw new Error("Dirección incompleta en Stripe para generar guía automáticamente");
+  }
+
+  const pkg = getPackageSpecs(country, items_qty || 1);
+  const payload = {
+    origin,
+    destination,
+    packages: [pkg],
+    shipment: {
+      carrier: country === "US"
+        ? (process.env.ENVIA_US_DEFAULT_CARRIER || "usps")
+        : (process.env.ENVIA_MX_DEFAULT_CARRIER || "dhl"),
+      type: Number(process.env.ENVIA_DEFAULT_TYPE || 1),
+    },
+    settings: { printFormat: "PDF", printSize: "STOCK_4X6", currency: "MXN" },
+  };
+
+  const url = `${ENVIA_API_URL}/ship/generate`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: enviaHeaders(),
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new Error("Conexión fallida al servidor de Envía.");
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(`Respuesta no-JSON de Envía (${res.status})`);
+  }
+
+  const data = await res.json();
+  if (data?.error) throw new Error(data.error.message || "Error al crear la guía en Envía.com");
+  return data?.data || data;
+};
+
+/* =========================================================
+   STRIPE
+   ========================================================= */
 
 const initStripe = () => {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -420,6 +600,23 @@ const initStripe = () => {
   if (!Stripe) throw new Error("Dependencia 'stripe' no instalada");
   return new Stripe(key, { apiVersion: "2024-06-20" });
 };
+
+const readRawBody = (event) => {
+  const body = event?.body || "";
+  if (event?.isBase64Encoded) return Buffer.from(body, "base64");
+  return Buffer.from(body, "utf8");
+};
+
+const makeCheckoutIdempotencyKey = (params, req_id) => {
+  if (req_id) return String(req_id);
+  const raw = JSON.stringify(params || {});
+  const hash = crypto.createHash("sha256").update(raw).digest("hex");
+  return `checkout_req_${hash}`;
+};
+
+/* =========================================================
+   SCORE ORG / SITE SETTINGS
+   ========================================================= */
 
 const resolveScoreOrgId = async (sb) => {
   const envId = process.env.SCORE_ORG_ID || process.env.DEFAULT_ORG_ID;
@@ -561,25 +758,78 @@ const readPublicSiteSettings = async () => {
   }
 };
 
+/* =========================================================
+   CATALOG / TELEGRAM / MISC
+   ========================================================= */
+
+const getCatalogIndex = () => {
+  const cat = readJsonFile("data/catalog.json");
+  const products = Array.isArray(cat?.products) ? cat.products : [];
+  const idx = new Map();
+
+  for (const p of products) {
+    const sku = String(p?.sku || p?.id || "").trim();
+    if (!sku) continue;
+    idx.set(sku, p);
+  }
+
+  return { catalog: cat, index: idx };
+};
+
+const sendTelegram = async (text) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: String(text || "").slice(0, 3500),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+    });
+  } catch (e) {
+    console.log("[telegram] warn:", e?.message || e);
+  }
+};
+
+/* =========================================================
+   EXPORTS
+   ========================================================= */
+
 module.exports = {
   jsonResponse,
   handleOptions,
   safeJsonParse,
   clampInt,
   normalizeQty,
+  itemsQtyFromAny,
   getBaseUrl,
   readJsonFile,
+  getCatalogIndex,
   validateZip,
   isUuid,
   safeStr,
   supabaseAdmin,
+  isSupabaseConfigured,
   getOriginByCountry,
   getEnviaQuote,
+  getFallbackShipping,
+  stripeShippingToEnviaDestination,
+  createEnviaLabel,
   initStripe,
+  readRawBody,
+  makeCheckoutIdempotencyKey,
   resolveScoreOrgId,
   readPublicSiteSettings,
+  sendTelegram,
   SUPPORT_EMAIL,
   SUPPORT_PHONE,
   SUPPORT_WHATSAPP_E164,
   SUPPORT_WHATSAPP_DISPLAY,
-};'''
+  VERCEL_PROD_URL,
+};
