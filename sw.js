@@ -1,10 +1,9 @@
-/* SCORE STORE — Service Worker (PWA producción, Vercel-ready v3.1.0)
-   Objetivo:
-   - Evitar quedarse pegado a una versión vieja
-   - No cachear /data/*.json ni /api/*
-   - Bypassear Stripe / Supabase / Envía / proveedores externos
-   - Mantener navegación estable con fallback a caché
-   - No dejar rastros de Netlify
+/* SCORE STORE — Service Worker (Vercel-ready)
+   Objetivos:
+   - No cachear /api ni /data/*.json
+   - Mantener navegación estable con fallback
+   - Dar prioridad a assets core
+   - Evitar quedarse pegado a versiones viejas
 */
 
 const CACHE_VERSION = "scorestore-vfx-pro-v3.1.0";
@@ -27,36 +26,45 @@ const CORE_ASSETS = [
   "/assets/hero.webp"
 ];
 
-const EXTERNAL_SKIP_HOSTS = [
-  "stripe.com",
-  "supabase.co",
-  "envia.com",
-  "facebook.com",
-  "connect.facebook.net",
-  "googleapis.com",
-  "generativelanguage.googleapis.com"
-];
-
-const isSafeToCache = (requestUrl) => {
+const isSameOrigin = (requestUrl) => {
   const url = new URL(requestUrl, self.location.origin);
-
-  if (url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/api/")) return false;
-  if (url.pathname.startsWith("/data/")) return false;
-  if (url.pathname.startsWith("/admin/")) return false;
-  if (url.pathname.includes("/.netlify/")) return false;
-  if (url.pathname.endsWith(".json")) return false;
-
-  return true;
+  return url.origin === self.location.origin;
 };
+
+const shouldNeverCache = (requestUrl) => {
+  const url = new URL(requestUrl, self.location.origin);
+  if (url.origin !== self.location.origin) return true;
+  if (url.pathname.startsWith("/api/")) return true;
+  if (url.pathname.startsWith("/data/")) return true;
+  if (url.pathname.startsWith("/admin/")) return true;
+  if (url.pathname.includes("/.netlify/")) return true;
+  if (url.pathname.endsWith(".json")) return true;
+  return false;
+};
+
+async function reloadAllClients() {
+  try {
+    const clients = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    });
+    await Promise.allSettled(
+      clients.map((client) => {
+        try {
+          return client.navigate(client.url);
+        } catch {
+          return null;
+        }
+      })
+    );
+  } catch {}
+}
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-
       await Promise.allSettled(
         CORE_ASSETS.map(async (asset) => {
           try {
@@ -84,6 +92,7 @@ self.addEventListener("activate", (event) => {
       }
 
       await self.clients.claim();
+      await reloadAllClients();
     })()
   );
 });
@@ -100,12 +109,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
 
-  if (EXTERNAL_SKIP_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) {
-    return;
-  }
-
-  if (url.origin === self.location.origin && url.pathname.startsWith("/api/")) return;
-  if (url.origin === self.location.origin && url.pathname.startsWith("/data/")) return;
+  if (shouldNeverCache(req.url)) return;
 
   if (req.mode === "navigate") {
     event.respondWith(
@@ -141,7 +145,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.origin === self.location.origin && CORE_ASSETS.includes(url.pathname)) {
+  if (isSameOrigin(req.url) && CORE_ASSETS.includes(url.pathname)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
@@ -158,10 +162,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (
-    url.origin === self.location.origin &&
-    (url.pathname.startsWith("/js/") || url.pathname.startsWith("/css/"))
-  ) {
+  if (isSameOrigin(req.url) && (url.pathname.startsWith("/js/") || url.pathname.startsWith("/css/") || url.pathname.startsWith("/assets/"))) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
@@ -180,7 +181,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (isSafeToCache(req.url)) {
+  if (isSameOrigin(req.url)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
