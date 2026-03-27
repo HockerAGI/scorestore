@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#E10600" />
   <meta name="description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
 
   <meta name="mobile-web-app-capable" content="yes" />
@@ -32,7 +31,6 @@
   <meta name="twitter:description" content="Merch Oficial de Score International. Pago cifrado seguro con Stripe + Logística Envía.com." />
   <meta name="twitter:image" content="https://scorestore.vercel.app/assets/hero.webp" />
 
-  <!-- PWA (ya estaba en tu repo original) -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
@@ -43,7 +41,7 @@
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" />
   <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-08-restore" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-26-vercel-fused" />
 
   <script type="application/ld+json">
     {
@@ -309,6 +307,14 @@
             <b id="discountLine">-$0.00</b>
           </div>
 
+          <div class="cartsection" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="ux-label">Cupón / Promo</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input id="promoCode" class="input tech-input" type="text" placeholder="Código promo" aria-label="Código promo" />
+              <button id="applyPromoBtn" class="btn btn--tiny btn--black hover-fx neon-border" type="button">Aplicar</button>
+            </div>
+          </div>
+
           <div class="cartrow cartrow--stack tech-shipping-box" style="background: var(--bg-alt); padding: 15px; border-radius: 14px; margin-top: 6px;">
             <div class="cartrow__line">
               <span style="font-weight:bold;">Logística y Entrega</span>
@@ -551,6 +557,6 @@
 
   <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
 
-  <script src="/js/main.js?v=2026-03-08-restore" defer></script>
+  <script src="/js/main.js?v=2026-03-26-vercel-fused" defer></script>
 </body>
 </html>
