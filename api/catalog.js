@@ -36,6 +36,33 @@ const isUuid = (s) =>
     String(s || "").trim()
   );
 
+const num = (v, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const str = (v, fallback = "") => {
+  const s = String(v ?? "").trim();
+  return s || fallback;
+};
+
+const arr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") {
+    const t = v.trim();
+    if (!t) return [];
+    if ((t.startsWith("[") && t.endsWith("]")) || (t.startsWith('"[') && t.endsWith(']"'))) {
+      try {
+        const parsed = JSON.parse(t);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+  }
+  return [];
+};
+
 const withNoStore = (resp) => {
   const out = resp || {};
   out.headers = out.headers || {};
@@ -47,34 +74,199 @@ const withNoStore = (resp) => {
 
 const send = (res, resp) => {
   const out = withNoStore(resp);
-  Object.keys(out.headers || {}).forEach((key) => res.setHeader(key, out.headers[key]));
-  res.status(out.statusCode || 200).send(out.body);
-};
-
-const num = (v, fallback = 0) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
-
-const str = (v, fallback = "") => {
-  const s = String(v ?? "").trim();
-  return s || fallback;
-};
-
-const arr = (v) => (Array.isArray(v) ? v : []);
-
-const pickImage = (...values) => {
-  for (const value of values) {
-    const s = str(value);
-    if (s) return s;
+  if (out.headers) {
+    Object.keys(out.headers).forEach((key) => res.setHeader(key, out.headers[key]));
   }
-  return "";
+  res.status(out.statusCode || 200).send(out.body);
 };
 
 const normalizeSectionIdToUi = (sectionId) => {
   const sid = String(sectionId || "").trim();
   const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
   return found ? found.uiId : null;
+};
+
+const normalizeAssetUrl = (value) => {
+  const s0 = str(value);
+  if (!s0) return "";
+  if (/^(https?:|data:|blob:)/i.test(s0)) return s0;
+
+  const s1 = s0
+    .replaceAll("assets/BAJA_500/", "assets/BAJA500/")
+    .replaceAll("assets/BAJA_400/", "assets/BAJA400/")
+    .replaceAll("assets/SF_250/", "assets/SF250/")
+    .replaceAll("assets/BAJA_1000/", "assets/EDICION_2025/");
+
+  if (s1.startsWith("/")) return s1;
+  if (
+    s1.startsWith("assets/") ||
+    s1.startsWith("css/") ||
+    s1.startsWith("js/") ||
+    s1.startsWith("data/")
+  ) {
+    return `/${s1}`;
+  }
+
+  return s1;
+};
+
+const pickImage = (...values) => {
+  for (const value of values) {
+    const s = normalizeAssetUrl(value);
+    if (s) return s;
+  }
+  return "";
+};
+
+const normalizeSection = (row) => {
+  const sectionId = str(row?.section_id || row?.sectionId || row?.id, "EDICION_2025");
+  const name = str(row?.name || row?.title || row?.label, sectionId.replaceAll("_", " "));
+
+  return {
+    id: sectionId,
+    section_id: sectionId,
+    sectionId: sectionId,
+    name,
+    title: name,
+    image: pickImage(row?.image, row?.logo, row?.cover_image, row?.coverImage),
+    logo: pickImage(row?.logo, row?.image, row?.cover_image, row?.coverImage),
+    count: num(row?.count, 0),
+  };
+};
+
+const normalizeProduct = (p) => {
+  const sku = str(p?.sku || p?.id);
+  if (!sku) return null;
+
+  const images = arr(p?.images).filter(Boolean).map((x) => normalizeAssetUrl(x)).filter(Boolean);
+
+  const sizes =
+    arr(p?.sizes).length > 0
+      ? arr(p?.sizes).filter(Boolean).map((x) => String(x).trim()).filter(Boolean)
+      : ["S", "M", "L", "XL", "XXL"];
+
+  const priceCents =
+    Number.isFinite(Number(p?.price_cents)) && num(p?.price_cents) > 0
+      ? Math.max(0, Math.floor(num(p?.price_cents)))
+      : Number.isFinite(Number(p?.price_mxn)) && num(p?.price_mxn) > 0
+        ? Math.max(0, Math.round(num(p?.price_mxn) * 100))
+        : Number.isFinite(Number(p?.base_mxn)) && num(p?.base_mxn) > 0
+          ? Math.max(0, Math.round(num(p?.base_mxn) * 100))
+          : Number.isFinite(Number(p?.price)) && num(p?.price) > 0
+            ? Math.max(0, Math.round(num(p?.price) * 100))
+            : 0;
+
+  const sectionId = str(p?.section_id || p?.sectionId || p?.section || p?.categoryId, "EDICION_2025");
+  const uiSection = normalizeSectionIdToUi(sectionId) || sectionId;
+  const collection = str(p?.sub_section || p?.collection || p?.subSection);
+
+  const primary = pickImage(
+    p?.img,
+    p?.image_url,
+    p?.image,
+    images.length ? images[0] : ""
+  );
+
+  return {
+    id: str(p?.id, sku),
+    sku,
+    title: str(p?.title || p?.name, "Producto Oficial"),
+    name: str(p?.name || p?.title, "Producto Oficial"),
+    description: str(p?.description),
+    price_cents: priceCents,
+    price_mxn: num(p?.price_mxn, 0),
+    base_mxn: num(p?.base_mxn, 0),
+    sectionId,
+    section_id: sectionId,
+    section: sectionId,
+    categoryId: str(p?.categoryId || p?.category_id, ""),
+    uiSection,
+    collection,
+    sub_section: collection,
+    image: primary,
+    image_url: primary,
+    img: primary,
+    images: images.length ? images : primary ? [primary] : [],
+    sizes,
+    rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
+    stock: p?.stock == null ? null : num(p?.stock, 0),
+    active: p?.active == null ? true : !!p?.active,
+    is_active: p?.is_active == null ? true : !!p?.is_active,
+  };
+};
+
+const normalizePayload = (payload) => {
+  const data = payload && typeof payload === "object" ? payload : {};
+
+  const rawSections = Array.isArray(data.sections)
+    ? data.sections
+    : Array.isArray(data.categories)
+      ? data.categories
+      : [];
+
+  const rawProducts = Array.isArray(data.products)
+    ? data.products
+    : Array.isArray(data.items)
+      ? data.items
+      : [];
+
+  const products = rawProducts.map(normalizeProduct).filter(Boolean);
+  let sections = rawSections.map(normalizeSection);
+
+  const countByUi = new Map();
+
+  for (const item of products) {
+    const key = String(item.uiSection || item.sectionId || "").trim();
+    if (!key) continue;
+    countByUi.set(key, (countByUi.get(key) || 0) + 1);
+  }
+
+  if (!sections.length) {
+    const sectionMap = new Map();
+
+    for (const item of products) {
+      const key = String(item.uiSection || item.sectionId || "").trim();
+      if (!key) continue;
+
+      if (!sectionMap.has(key)) {
+        const cfg = CATEGORY_CONFIG.find((c) => c.uiId === key);
+        sectionMap.set(key, {
+          id: key,
+          section_id: key,
+          sectionId: key,
+          name: cfg?.title || key.replaceAll("_", " "),
+          title: cfg?.title || key.replaceAll("_", " "),
+          image: cfg?.logo || item.image || item.image_url || "",
+          logo: cfg?.logo || item.image || item.image_url || "",
+          count: 0,
+        });
+      }
+
+      sectionMap.get(key).count += 1;
+    }
+
+    sections = Array.from(sectionMap.values());
+  } else {
+    sections = sections.map((s) => {
+      const key =
+        String(s?.id || s?.sectionId || s?.section_id || "").trim() ||
+        normalizeSectionIdToUi(s?.id || s?.sectionId || s?.section_id || "") ||
+        String(s?.id || s?.sectionId || s?.section_id || "").trim();
+
+      return {
+        ...s,
+        count: countByUi.get(key) || 0,
+      };
+    });
+  }
+
+  return {
+    ok: true,
+    store: data.store || { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
+    sections,
+    categories: sections,
+    products,
+  };
 };
 
 const resolveOrgId = async (sb) => {
@@ -107,210 +299,7 @@ const resolveOrgId = async (sb) => {
   return orgId;
 };
 
-const normalizeSection = (row) => {
-  const rawSectionId = str(row?.section_id || row?.sectionId || row?.id, "");
-  const uiId = normalizeSectionIdToUi(rawSectionId) || rawSectionId || "BAJA1000";
-  const cfg = CATEGORY_CONFIG.find((c) => c.uiId === uiId);
-
-  const name = str(
-    row?.name || row?.title || row?.label,
-    cfg?.title || rawSectionId.replaceAll("_", " ") || uiId.replaceAll("_", " ")
-  );
-
-  const logo = pickImage(row?.logo, row?.image, row?.cover_image, row?.coverImage, cfg?.logo);
-
-  return {
-    id: uiId,
-    uiId,
-    section_id: rawSectionId || uiId,
-    sectionId: rawSectionId || uiId,
-    name: cfg?.title || name,
-    title: cfg?.title || name,
-    image: logo,
-    logo,
-    count: num(row?.count, 0),
-  };
-};
-
-const normalizeImages = (value) => {
-  if (Array.isArray(value)) return value.map(String).map((s) => s.trim()).filter(Boolean);
-  if (typeof value === "string") {
-    const s = value.trim();
-    if (!s) return [];
-    if (s.startsWith("[") && s.endsWith("]")) {
-      try {
-        const parsed = JSON.parse(s);
-        if (Array.isArray(parsed)) return parsed.map(String).map((x) => x.trim()).filter(Boolean);
-      } catch {}
-    }
-    return [s];
-  }
-  return [];
-};
-
-const normalizeProduct = (p) => {
-  const sku = str(p?.sku || p?.id);
-  if (!sku) return null;
-
-  const images = normalizeImages(p?.images);
-  const primary = pickImage(
-    p?.img,
-    p?.image_url,
-    p?.image,
-    images[0] || ""
-  );
-
-  const sizesRaw = arr(p?.sizes).map(String).map((s) => s.trim()).filter(Boolean);
-  const sizes = sizesRaw.length ? sizesRaw : ["S", "M", "L", "XL", "XXL"];
-
-  const priceCents =
-    Number.isFinite(Number(p?.price_cents)) && num(p?.price_cents) > 0
-      ? Math.max(0, Math.floor(num(p?.price_cents)))
-      : Number.isFinite(Number(p?.price_mxn)) && num(p?.price_mxn) > 0
-        ? Math.max(0, Math.round(num(p?.price_mxn) * 100))
-        : Number.isFinite(Number(p?.base_mxn)) && num(p?.base_mxn) > 0
-          ? Math.max(0, Math.round(num(p?.base_mxn) * 100))
-          : 0;
-
-  const rawSectionId = str(p?.section_id || p?.sectionId || p?.section || p?.categoryId, "");
-  const uiSection = normalizeSectionIdToUi(rawSectionId) || "BAJA1000";
-  const collection = str(p?.sub_section || p?.collection, "");
-
-  return {
-    id: str(p?.id, sku),
-    sku,
-    title: str(p?.title || p?.name, "Producto Oficial"),
-    name: str(p?.name || p?.title, "Producto Oficial"),
-    description: str(p?.description),
-    price_cents: priceCents,
-    price_mxn: num(p?.price_mxn, 0),
-    base_mxn: num(p?.base_mxn, 0),
-    sectionId: rawSectionId || uiSection,
-    section_id: rawSectionId || uiSection,
-    section: rawSectionId || uiSection,
-    categoryId: rawSectionId || uiSection,
-    uiSection,
-    collection,
-    sub_section: collection,
-    image: primary,
-    image_url: primary,
-    img: primary,
-    images: images.length ? images : primary ? [primary] : [],
-    sizes,
-    rank: Number.isFinite(Number(p?.rank)) ? Math.round(Number(p.rank)) : 999,
-    stock: p?.stock == null ? null : num(p?.stock, 0),
-    active: p?.active == null ? true : !!p?.active,
-    is_active: p?.is_active == null ? true : !!p?.is_active,
-  };
-};
-
-const buildSectionsFromProducts = (products) => {
-  const sectionMap = new Map();
-
-  for (const item of products) {
-    const ui = String(item.uiSection || "BAJA1000").trim();
-    const cfg = CATEGORY_CONFIG.find((c) => c.uiId === ui);
-
-    if (!sectionMap.has(ui)) {
-      sectionMap.set(ui, {
-        id: ui,
-        uiId: ui,
-        section_id: ui,
-        sectionId: ui,
-        name: cfg?.title || ui.replaceAll("_", " "),
-        title: cfg?.title || ui.replaceAll("_", " "),
-        image: cfg?.logo || item.image || item.image_url || "",
-        logo: cfg?.logo || item.image || item.image_url || "",
-        count: 0,
-      });
-    }
-
-    sectionMap.get(ui).count += 1;
-  }
-
-  return Array.from(sectionMap.values());
-};
-
-const normalizePayload = (payload) => {
-  const data = payload && typeof payload === "object" ? payload : {};
-
-  const rawSections = Array.isArray(data.sections)
-    ? data.sections
-    : Array.isArray(data.categories)
-      ? data.categories
-      : [];
-
-  const rawProducts = Array.isArray(data.products)
-    ? data.products
-    : Array.isArray(data.items)
-      ? data.items
-      : [];
-
-  const products = rawProducts.map(normalizeProduct).filter(Boolean);
-
-  let sections = rawSections.map(normalizeSection);
-
-  if (!sections.length) {
-    sections = buildSectionsFromProducts(products);
-  } else {
-    const countByUi = new Map();
-    for (const item of products) {
-      const key = String(item.uiSection || item.sectionId || "").trim();
-      if (!key) continue;
-      countByUi.set(key, (countByUi.get(key) || 0) + 1);
-    }
-
-    sections = sections.map((s) => {
-      const key = String(s?.id || s?.uiId || s?.sectionId || s?.section_id || "").trim();
-      const ui = normalizeSectionIdToUi(key) || key || "BAJA1000";
-      const cfg = CATEGORY_CONFIG.find((c) => c.uiId === ui);
-      return {
-        ...s,
-        id: ui,
-        uiId: ui,
-        section_id: key || ui,
-        sectionId: key || ui,
-        name: cfg?.title || s.name || ui,
-        title: cfg?.title || s.title || ui,
-        logo: cfg?.logo || s.logo || s.image || "",
-        image: cfg?.logo || s.image || s.logo || "",
-        count: countByUi.get(ui) || 0,
-      };
-    });
-  }
-
-  return {
-    ok: true,
-    store: data.store || { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
-    sections,
-    categories: sections,
-    products,
-    items: products,
-  };
-};
-
-module.exports = async (req, res) => {
-  const origin = req.headers.origin || req.headers.Origin || "";
-
-  if (req.method === "OPTIONS") {
-    const optionsRes = handleOptions?.({ headers: { origin } }) || {
-      statusCode: 204,
-      headers: {
-        "Access-Control-Allow-Origin": origin || "*",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Methods": "GET,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-      body: "",
-    };
-
-    return send(res, optionsRes);
-  }
-
-  if (req.method !== "GET") {
-    return send(res, jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
-  }
-
+const buildFallback = () => {
   const fallbackRaw =
     readJsonFile("data/catalog.json") || {
       store: { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
@@ -318,7 +307,37 @@ module.exports = async (req, res) => {
       products: [],
     };
 
-  const fallback = normalizePayload(fallbackRaw);
+  return normalizePayload(fallbackRaw);
+};
+
+module.exports = async (req, res) => {
+  const origin = req.headers.origin || req.headers.Origin || "*";
+
+  if (req.method === "OPTIONS") {
+    const optionsRes =
+      handleOptions?.({ headers: { origin } }) ||
+      {
+        statusCode: 204,
+        headers: {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Methods": "GET,OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+        body: "",
+      };
+
+    return send(res, optionsRes);
+  }
+
+  if (req.method !== "GET") {
+    return send(
+      res,
+      jsonResponse(405, { ok: false, error: "Method not allowed" }, origin)
+    );
+  }
+
+  const fallback = buildFallback();
 
   const sb = supabaseAdmin();
   if (!sb) {
@@ -331,7 +350,7 @@ module.exports = async (req, res) => {
     const { data, error } = await sb
       .from("products")
       .select(
-        "id,sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,sub_section,rank,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
+        "id,sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,sectionId,section,categoryId,sub_section,rank,img,image_url,image,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
       )
       .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
       .is("deleted_at", null)
@@ -344,13 +363,33 @@ module.exports = async (req, res) => {
       return send(res, jsonResponse(200, fallback, origin));
     }
 
-    const products = data.map(normalizeProduct).filter(Boolean);
-    const sections = buildSectionsFromProducts(products);
-
     const normalized = normalizePayload({
       store: fallback.store,
-      sections,
-      products,
+      products: data.map((p) => ({
+        id: p.id,
+        sku: p.sku,
+        title: p.name,
+        name: p.name,
+        description: p.description,
+        price_cents: p.price_cents,
+        price_mxn: p.price_mxn,
+        base_mxn: p.base_mxn,
+        sectionId: p.section_id || p.sectionId || p.section || p.categoryId,
+        section_id: p.section_id || p.sectionId || p.section || p.categoryId,
+        section: p.section || p.section_id || p.sectionId,
+        categoryId: p.categoryId,
+        sub_section: p.sub_section,
+        collection: p.sub_section,
+        image: p.image_url || p.img || p.image,
+        image_url: p.image_url || p.image || p.img,
+        img: p.img || p.image || p.image_url,
+        images: Array.isArray(p.images) ? p.images : [],
+        sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        rank: p.rank,
+        stock: p.stock,
+        active: p.active,
+        is_active: p.is_active,
+      })),
     });
 
     return send(res, jsonResponse(200, normalized, origin));
