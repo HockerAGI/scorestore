@@ -2,8 +2,8 @@
   "name": "SCORE STORE",
   "short_name": "SCORE",
   "description": "Tienda oficial SCORE con pagos seguros y seguimiento de pedidos.",
-  "id": "scorestore-pwa",
-  "start_url": "/?source=pwa&v=2026-03-24",
+  "id": "/",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": [
