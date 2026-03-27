@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
   <meta name="description" content="Tu pago fue cancelado o no se completó. Revisa tu método de pago o vuelve a intentar el checkout de SCORE STORE." />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.vercel.app; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' *.vercel.app; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net *.vercel.app; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.vercel.app; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net https://*.vercel.app; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -13,24 +14,15 @@
 
   <title>Pago Cancelado — SCORE STORE</title>
 
+  <link rel="canonical" href="https://scorestore.vercel.app/cancel.html" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-03-07" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-03-26-vercel-fused" />
 
   <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      margin: 0;
-      overflow: hidden;
-      text-align: center;
-      background-color: #0f0f0f;
-    }
-
     .cancel-page {
       min-height: 100vh;
       display: flex;
@@ -38,6 +30,10 @@
       justify-content: center;
       position: relative;
       padding: 24px 16px;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 0 26%),
+        linear-gradient(180deg, #090909 0%, #101010 100%);
     }
 
     .cancel-bg {
@@ -50,13 +46,27 @@
       filter: grayscale(1) brightness(0.25);
     }
 
-    .cancel-panel {
-      max-width: 560px;
+    .cancel-shell {
       width: 100%;
+      max-width: 620px;
       position: relative;
-      z-index: 10;
+      z-index: 2;
+    }
+
+    .cancel-panel {
+      max-width: 100%;
+      width: 100%;
       padding: 40px;
       text-align: center;
+      border-radius: var(--radius2);
+    }
+
+    .cancel-logo {
+      height: 50px;
+      width: auto;
+      margin: 0 auto 20px auto;
+      filter: grayscale(1);
+      opacity: 0.8;
     }
 
     .cancel-icon {
@@ -95,6 +105,29 @@
       flex-wrap: wrap;
     }
 
+    .cancel-support {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(0,0,0,0.06);
+      color: #444;
+      font-size: 13px;
+      line-height: 1.65;
+      text-align: left;
+    }
+
+    .cancel-support a {
+      font-weight: 900;
+      color: var(--black-btn);
+      word-break: break-word;
+      text-decoration: none;
+    }
+
+    .cancel-support a:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 640px) {
       .cancel-panel {
         padding: 28px 18px;
@@ -113,19 +146,31 @@
 <body>
   <div class="cancel-bg" aria-hidden="true"></div>
 
+  <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000;">
+    <div class="wrap topbar__inner" style="justify-content: center;">
+      <a class="brand" href="/index.html" aria-label="Score Store" style="position: relative; left: 0; transform: none;">
+        <img class="brand__logo" src="/assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
+      </a>
+    </div>
+  </header>
+
   <main class="cancel-page">
-    <section class="wrap section vfx-glass-container cancel-panel">
+    <section class="wrap section vfx-glass-container cancel-panel cancel-shell">
       <img
+        id="cancelLogo"
         src="/assets/logo-score.webp"
         alt="Score Store"
-        style="height: 50px; margin: 0 auto 20px auto; filter: grayscale(1); opacity: 0.8;"
+        class="cancel-logo"
+        width="120"
+        height="50"
+        decoding="async"
       >
 
-      <div class="cancel-icon">⚠️</div>
-      <h1 class="tech-text cancel-title">Transacción Incompleta</h1>
+      <div class="cancel-icon" id="cancelIcon">⚠️</div>
+      <h1 class="tech-text cancel-title" id="cancelTitle">Transacción Incompleta</h1>
 
       <div class="glass-panel cancel-copy">
-        <p>
+        <p id="cancelCopy">
           No se ha realizado ningún cargo a tu método de pago. Tu carrito de compras está seguro y guardado en este dispositivo.<br><br>
           Si el banco declinó la tarjeta por seguridad, te sugerimos intentar de nuevo con otra tarjeta, o seleccionar
           <b>Efectivo en OXXO</b>.
@@ -136,37 +181,132 @@
         <a class="btn btn--primary btn--large cinematic-btn neon-border" href="/index.html">← Regresar a mi Carrito</a>
         <a class="btn btn--ghost btn--large hover-fx tech-ghost-btn" href="/legal.html">Ver soporte legal</a>
       </div>
+
+      <div class="cancel-support">
+        <strong>Soporte oficial</strong>
+        Correo:
+        <a id="cancelEmail" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
+        <br />
+        WhatsApp:
+        <a id="cancelWa" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer">664 236 8701</a>
+        <br />
+        <span id="cancelFooterNote">Si necesitas ayuda con tu pago, revisa el método utilizado o contacta soporte.</span>
+      </div>
     </section>
   </main>
 
+  <footer class="footer" role="contentinfo">
+    <div class="wrap footer__inner">
+      <div class="footer__brand-col">
+        <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
+        <div class="footer__sub" style="line-height: 1.8; color: #d1d1d1;">
+          <strong style="color: #ffffff;">Seguridad Total Garantizada</strong><br>
+          <span id="footerNote">Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br>
+          Logística inteligente internacional con Envía.com.</span><br><br>
+          <div style="margin-top: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 8px;">
+            <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color: #ffffff;" aria-label="Enviar correo a soporte">
+              <span class="footer-icon">✉️</span> <span id="footerEmailText">ventas.unicotextil@gmail.com</span>
+            </a>
+            <a id="footerWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color: #ffffff;" aria-label="Contactar por WhatsApp">
+              <span class="footer-icon" style="color:#25D366;">💬</span> <span id="footerWhatsappText">664 236 8701</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__socials">
+        <div class="social-title" style="color: #ffffff;">SÍGUENOS EN LA PISTA</div>
+        <div class="social-links">
+          <a id="footerFacebookLink" href="https://www.facebook.com/uniforme.unico/" target="_blank" rel="noopener noreferrer" aria-label="Facebook Oficial" style="color: #d1d1d1;">Facebook</a>
+          <a id="footerInstagramLink" href="https://www.instagram.com/uniformes.unico" target="_blank" rel="noopener noreferrer" aria-label="Instagram Oficial" style="color: #d1d1d1;">Instagram</a>
+          <a id="footerYoutubeLink" href="https://youtu.be/F4lw1EcehIA?si=jFBT9skFLs566g8N" target="_blank" rel="noopener noreferrer" aria-label="YouTube Oficial" style="color: #d1d1d1;">YouTube</a>
+        </div>
+      </div>
+
+      <div class="footer__right">
+        <a href="/index.html" class="btn btn--primary btn--large cinematic-btn neon-border hover-fx" style="width: 100%; text-align: center;">← Regresar a la Tienda</a>
+      </div>
+    </div>
+  </footer>
+
   <script>
     (async () => {
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && value) el.textContent = value;
+      };
+
+      const setHref = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && value) el.setAttribute("href", value);
+      };
+
       try {
         const res = await fetch("/api/site_settings", { cache: "no-store" });
         const data = await res.json().catch(() => null);
-        if (!data || !data.ok) return;
+        const settings = data?.data && typeof data.data === "object" ? data.data : data;
+        if (!settings || typeof settings !== "object") return;
 
-        const contact = data.contact || {};
-        const home = data.home || {};
+        const contact = settings.contact || {};
+        const home = settings.home || {};
+        const socials = settings.socials || {};
 
-        const email = String(contact.email || "").trim();
-        const waE164 = String(contact.whatsapp_e164 || "").trim();
+        const email = String(contact.email || "ventas.unicotextil@gmail.com").trim();
+        const waE164 = String(contact.whatsapp_e164 || "5216642368701").trim();
+        const waDisplay = String(contact.whatsapp_display || "664 236 8701").trim();
         const footerNote = String(home.footer_note || "").trim();
 
-        if (email) {
-          const emailLink = document.querySelector('a[href^="mailto:"]');
-          if (emailLink) emailLink.href = `mailto:${email}`;
-        }
+        [
+          "cancelEmail",
+          "footerEmailLink"
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.textContent = email;
+          el.setAttribute("href", `mailto:${email}`);
+        });
 
-        if (waE164) {
-          const waLink = document.querySelector('a[href*="wa.me"]');
-          if (waLink) waLink.href = `https://wa.me/${encodeURIComponent(waE164)}`;
-        }
+        [
+          "cancelWa",
+          "footerWhatsappLink"
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.setAttribute("href", `https://wa.me/${waE164}`);
+        });
+
+        setText("footerEmailText", email);
+        setText("footerWhatsappText", waDisplay);
+
+        if (socials.facebook) setHref("footerFacebookLink", socials.facebook);
+        if (socials.instagram) setHref("footerInstagramLink", socials.instagram);
+        if (socials.youtube) setHref("footerYoutubeLink", socials.youtube);
 
         if (footerNote) {
-          const footerEl = document.querySelector('[data-footer-note]');
-          if (footerEl) footerEl.textContent = footerNote;
+          setText("footerNote", footerNote);
+          setText("cancelFooterNote", footerNote);
         }
+
+        const cancelCopy = document.getElementById("cancelCopy");
+        const cancelTitle = document.getElementById("cancelTitle");
+
+        const params = new URLSearchParams(location.search);
+        const status = String(params.get("status") || params.get("payment_status") || "cancelled").toLowerCase();
+
+        if (["processing", "pending", "open"].includes(status)) {
+          if (cancelTitle) cancelTitle.textContent = "Pago en proceso";
+          if (cancelCopy) {
+            cancelCopy.innerHTML = `
+              <p>
+                Tu pago fue recibido pero todavía no termina de confirmarse.<br><br>
+                Si pagaste con OXXO, la validación puede tardar hasta 1 día hábil.
+                Si el pago fue con tarjeta, recarga esta página o revisa tu correo para ver el estado final.
+              </p>
+            `;
+          }
+          document.title = "Pago en proceso — SCORE STORE";
+        }
+
       } catch {}
     })();
   </script>
