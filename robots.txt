@@ -1,16 +1,4 @@
 User-agent: *
 Allow: /
-Crawl-delay: 1
-
-# Bloqueo de rutas dinámicas y datos crudos
-Disallow: /api/
-Disallow: /data/
-Disallow: /admin/
-Disallow: /.netlify/
-
-# Evitar indexación de JSON y entornos de prueba antiguos
-Disallow: /data/*.json
-Disallow: /deploy-preview-*
-Disallow: /branch-deploys-*
 
 Sitemap: https://scorestore.vercel.app/sitemap.xml
