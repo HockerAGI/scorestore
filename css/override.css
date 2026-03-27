@@ -1,7 +1,6 @@
 /* =========================================================
    SCORE STORE — override.css
-   Repo-aligned / Vercel-ready
-   Merge limpio de los 3 overrides
+   Fusión limpia / Vercel-ready / no destructivo
    ========================================================= */
 
 /* =========================================================
@@ -143,10 +142,9 @@
 .footer__brand img,
 .hero__desert,
 .catcard__logo,
-.catcard__media img,
-.product-card__media img,
-.cartitem__media img,
-.pm-carousel__slide img{
+.card__track img,
+.pm__track img,
+.cartitem__img img{
   display:block;
 }
 
@@ -171,6 +169,7 @@
   height: auto;
 }
 
+/* Logos de categorías */
 .catcard__logo{
   height: auto !important;
   width: auto;
@@ -178,6 +177,57 @@
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+/* Imágenes de productos: no tocar el encuadre funcional del JS */
+.card__media,
+.pm__media{
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.card__track{
+  scroll-snap-stop: always;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.card__track img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  padding: 20px;
+}
+
+.pm__track{
+  scroll-snap-stop: always;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  min-width: 100%;
+}
+
+.pm__track img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  padding: 30px;
+}
+
+.cartitem__img{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.cartitem__img img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* =========================================================
@@ -228,14 +278,6 @@
   flex: 0 0 280px;
   scroll-snap-align: start;
   max-width: 85vw;
-}
-
-/* Control adicional para la imagen dentro del carrusel de producto */
-.card__track{
-  scroll-snap-stop: always;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
 }
 
 /* Fade lateral opcional para carruseles */
@@ -377,9 +419,10 @@
 /* =========================================================
    OBSERVACIÓN IMPORTANTE
    =========================================================
-   Este override NO bloquea el splash.
-   Si la tienda no pasa del intro, el origen está en JS:
-   - espera de fetch del catálogo
-   - rutas /api que tardan o no responden
-   - o una carga de datos que no resuelve antes de ocultar #splash
+   Este override NO bloquea el splash ni oculta imágenes.
+   Si los productos siguen sin verse, el origen está en:
+   - catálogo /data/catalog.json o /api/catalog
+   - normalización en main.js
+   - rutas en image_url / img / images
+   - safeUrl() o valores vacíos en el JSON
    ========================================================= */
