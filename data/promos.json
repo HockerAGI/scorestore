@@ -2,8 +2,8 @@
   "rules": [
     {
       "code": "SCORE25",
-      "type": "percent",
-      "value": 0.25,
+      "type": "percentage",
+      "value": 25,
       "description": "25% OFF por Inauguración",
       "active": true,
       "min_amount_mxn": 1000,
@@ -11,8 +11,8 @@
     },
     {
       "code": "BAJA25",
-      "type": "percent",
-      "value": 0.25,
+      "type": "percentage",
+      "value": 25,
       "description": "25% OFF Cupón Baja",
       "active": true,
       "min_amount_mxn": 0,
@@ -20,8 +20,8 @@
     },
     {
       "code": "SCORE10",
-      "type": "percent",
-      "value": 0.1,
+      "type": "percentage",
+      "value": 10,
       "description": "10% OFF Fans",
       "active": true,
       "min_amount_mxn": 500,
@@ -29,8 +29,9 @@
     },
     {
       "code": "BAJA200",
-      "type": "fixed_mxn",
-      "value": 200,
+      "type": "fixed",
+      "value": 20000,
+      "value_mxn": 200,
       "description": "$200 MXN OFF en tu carrito",
       "active": true,
       "min_amount_mxn": 1500,
