@@ -6,21 +6,13 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui",
-    "browser"
-  ],
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#0f0f0f",
   "theme_color": "#E10600",
   "lang": "es-MX",
   "dir": "ltr",
-  "categories": [
-    "shopping",
-    "sports",
-    "lifestyle"
-  ],
+  "categories": ["shopping", "sports", "lifestyle"],
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",
@@ -57,14 +49,6 @@
           "sizes": "192x192"
         }
       ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/assets/screenshots/home.webp",
-      "sizes": "1080x1920",
-      "type": "image/webp",
-      "form_factor": "narrow"
     }
   ],
   "prefer_related_applications": false
