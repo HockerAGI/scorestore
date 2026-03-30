@@ -1,18 +1,35 @@
-
-# Vercel build output
-public/
-
-# Node.js dependencies
-node_modules/
-
-# Environment variables
+# =========================
+# ENV
+# =========================
 .env
 .env.*
 !.env.example
+
+# =========================
+# VERCEL
+# =========================
 .vercel
-.env*.local
-.env.local
-.env
-.env
-.env.local
-.env.development.local
+
+# =========================
+# NODE
+# =========================
+node_modules/
+
+# =========================
+# BACKUPS / TEMP
+# =========================
+*.bak
+*.tmp
+*.log
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# BUILD (opcional)
+# =========================
+public/
+dist/
