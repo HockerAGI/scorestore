@@ -4,8 +4,8 @@
   "private": true,
   "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes).",
   "scripts": {
-    "dev": "vercel dev",
-    "preview": "vercel dev",
+    "dev": "echo dev",
+    "preview": "echo preview",
     "build": "echo \"Build ready for Vercel\"",
     "lint": "echo \"No lint configured\""
   },
