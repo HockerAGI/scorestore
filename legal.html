@@ -4,181 +4,140 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Términos, condiciones, envíos, cambios, privacidad y contacto de SCORE STORE." />
+  <meta name="description" content="Tu pago fue cancelado o no se completó. Revisa tu método de pago o vuelve a intentar el checkout de SCORE STORE." />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.vercel.app; img-src 'self' data: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net https://*.vercel.app; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <title>Políticas y Legal — SCORE STORE</title>
+  <title>Pago Cancelado — SCORE STORE</title>
 
-  <link rel="canonical" href="https://scorestore.vercel.app/legal.html" />
+  <link rel="canonical" href="https://scorestore.vercel.app/cancel.html" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self';
-    img-src 'self' data: https:;
-    script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net;
-    style-src 'self' 'unsafe-inline';
-    connect-src 'self' https://*.vercel.app https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net;
-    frame-src https://js.stripe.com https://hooks.stripe.com;" />
 
   <link rel="stylesheet" href="/css/styles.css" />
   <link rel="stylesheet" href="/css/override.css?v=2026-03-26-vercel-fused" />
 
   <style>
-    .legal-page {
+    .cancel-page {
       min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 24px 16px;
+      overflow-x: hidden;
       background:
-        radial-gradient(circle at top right, rgba(225,6,0,0.08), transparent),
-        linear-gradient(180deg, #0a0a0a, #0f0f0f);
+        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 0 26%),
+        linear-gradient(180deg, #090909 0%, #101010 100%);
     }
 
-    .legal-hero-bg {
+    .cancel-bg {
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: -2;
       background:
-        linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.85)),
+        linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.82)),
         url("/assets/fondo-pagina-score.webp") center/cover no-repeat;
+      filter: grayscale(1) brightness(0.25);
     }
 
-    .legal-shell {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 30px 20px 60px;
-    }
-
-    .legal-content {
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      padding: 50px 40px;
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow-modal), inset 0 0 0 1px rgba(255,255,255,0.8);
-      margin: 40px auto;
+    .cancel-shell {
+      width: 100%;
+      max-width: 620px;
       position: relative;
-      z-index: 10;
+      z-index: 2;
     }
 
-    .legal-content h1 {
-      font-size: 36px;
-      font-weight: 900;
-      color: var(--black-btn);
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .legal-content h2 {
-      font-size: 24px;
-      font-weight: 900;
-      color: var(--red);
-      margin: 30px 0 15px;
-      border-bottom: 2px solid rgba(225,6,0,0.2);
-      padding-bottom: 8px;
-    }
-
-    .legal-content h3 {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--black-btn);
-      margin: 20px 0 10px;
-    }
-
-    .legal-content p,
-    .legal-content li {
-      line-height: 1.7;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 12px;
-    }
-
-    .legal-content ul {
-      margin-bottom: 20px;
-      padding-left: 20px;
-    }
-
-    .legal-content a {
-      color: var(--red);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .legal-content a:hover {
-      text-decoration: underline;
-      text-shadow: 0 0 10px rgba(225,6,0,0.3);
-    }
-
-    .legal-box {
-      border: 1px solid var(--border-glass);
-      border-radius: 16px;
-      padding: 30px;
-      margin: 20px 0;
-      background: rgba(255,255,255,0.72);
-      box-shadow: var(--shadow-glass);
-    }
-
-    .legal-header-flex {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
-      margin-bottom: 10px;
-    }
-
-    .legal-contact {
-      display: grid;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .legal-contact-card {
-      background: rgba(245,245,245,0.95);
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.06);
-    }
-
-    .legal-contact-card a {
-      font-weight: bold;
-      color: #000;
-      text-decoration: none;
-      word-break: break-word;
-    }
-
-    .legal-footer-space {
-      margin-top: 40px;
+    .cancel-panel {
+      max-width: 100%;
+      width: 100%;
+      padding: 40px;
       text-align: center;
+      border-radius: var(--radius2);
+    }
+
+    .cancel-logo {
+      height: 50px;
+      width: auto;
+      margin: 0 auto 20px auto;
+      filter: grayscale(1);
+      opacity: 0.8;
+    }
+
+    .cancel-icon {
+      font-size: 54px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.5s ease;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    }
+
+    .cancel-title {
+      color: var(--black-btn);
+      font-weight: 900;
+      margin: 0 0 16px;
+      font-size: 28px;
+    }
+
+    .cancel-copy {
+      margin: 0 auto 22px;
+      max-width: 520px;
+      line-height: 1.75;
+      color: #3f3f46;
+      font-size: 15px;
+    }
+
+    .cancel-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cancel-support {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(0,0,0,0.06);
+      color: #444;
+      font-size: 13px;
+      line-height: 1.65;
+      text-align: left;
+    }
+
+    .cancel-support a {
+      font-weight: 900;
+      color: var(--black-btn);
+      word-break: break-word;
+      text-decoration: none;
+    }
+
+    .cancel-support a:hover {
+      text-decoration: underline;
     }
 
     @media (max-width: 640px) {
-      .legal-header-flex {
-        flex-direction: column-reverse;
+      .cancel-panel {
+        padding: 28px 18px;
       }
 
-      .legal-header-flex .iconbtn {
-        align-self: flex-end;
+      .cancel-title {
+        font-size: 24px;
       }
 
-      .legal-content {
-        padding: 30px 20px;
-      }
-
-      .legal-content h1 {
-        font-size: 28px;
-      }
-
-      .legal-shell {
-        padding: 20px 16px 48px;
+      .cancel-icon {
+        font-size: 48px;
       }
     }
   </style>
 </head>
-<body class="legal-page">
-
-  <div class="legal-hero-bg" aria-hidden="true"></div>
+<body>
+  <div class="cancel-bg" aria-hidden="true"></div>
 
   <header class="topbar" role="banner" style="position: sticky; top: 0; z-index: 2000;">
     <div class="wrap topbar__inner" style="justify-content: center;">
@@ -188,77 +147,45 @@
     </div>
   </header>
 
-  <main class="legal-shell wrap">
-    <div class="legal-content vfx-glass-container">
+  <main class="cancel-page">
+    <section class="wrap section vfx-glass-container cancel-panel cancel-shell">
+      <img
+        id="cancelLogo"
+        src="/assets/logo-score.webp"
+        alt="Score Store"
+        class="cancel-logo"
+        width="120"
+        height="50"
+        decoding="async"
+      >
 
-      <div class="legal-header-flex">
-        <h1 class="tech-text">Términos, Condiciones y Privacidad</h1>
-        <a href="/index.html" class="iconbtn hover-fx tech-close" style="flex-shrink: 0; text-decoration: none; font-weight: bold;" aria-label="Cerrar y volver a la tienda" title="Cerrar">✕</a>
-      </div>
+      <div class="cancel-icon" id="cancelIcon">⚠️</div>
+      <h1 class="tech-text cancel-title" id="cancelTitle">Transacción Incompleta</h1>
 
-      <p class="hint" style="margin-bottom: 30px; color: var(--red);">Última actualización: Febrero de 2026</p>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">1. Términos y Condiciones de Uso y Compra</h2>
-        <p>Los presentes Términos y Condiciones rigen el uso del sitio web <strong>SCORE Store</strong> y la compra de mercancía oficial. El Sitio es operado legal y comercialmente por <strong>BAJATEX S. de R.L. de C.V.</strong> (Único Uniformes), con domicilio en Tijuana, B.C., México.</p>
-
-        <h3>1.1. Información de los Productos</h3>
-        <p>Todos los productos son mercancía oficial de SCORE International, fabricada por Único Uniformes. Debido a la naturaleza textil, pueden existir ligeras variaciones entre el producto digital y el físico.</p>
-
-        <h3>1.2. Precios y Pagos</h3>
-        <p>Precios expresados en <strong>MXN (Pesos Mexicanos)</strong> con IVA incluido. Los pagos son procesados de manera encriptada y segura por <strong>Stripe Inc</strong>. Aceptamos Tarjetas de Crédito, Débito y OXXO Pay. BAJATEX no procesa ni almacena datos financieros en sus servidores.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">2. Políticas de Envío y Entregas</h2>
-        <h3>2.1. Métodos de Entrega</h3>
-        <ul>
-          <li><strong>Pickup (Recolección en Fábrica):</strong> Sin costo. En instalaciones de Único Uniformes (Tijuana, B.C.).</li>
-          <li><strong>Envíos Nacionales e Internacionales:</strong> Gestionados vía <strong>Envia.com</strong> (Red DHL, FedEx, USPS). Costo calculado en tiempo real con precisión durante el Checkout.</li>
-        </ul>
-        <h3>2.2. Tiempos Logísticos</h3>
-        <p>Procesamiento interno de almacén de 1 a 3 días hábiles. El tiempo en tránsito depende exclusivamente de la paquetería seleccionada automáticamente por la plataforma según su Código Postal.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">3. Cambios y Devoluciones</h2>
-        <p>El Cliente cuenta con <strong>7 días naturales</strong> a partir de la recepción para notificar defectos de fábrica. BAJATEX cubre el envío logístico en caso de defecto comprobable. Si el cambio es por error de selección de talla por parte del cliente, el cliente absorbe los costos de la nueva paquetería.</p>
-      </div>
-
-      <div class="legal-box glass-panel">
-        <h2 class="tech-text">4. Aviso de Privacidad Estricto</h2>
-        <p>Sus datos (Nombre, Dirección de Envío, Teléfono, Correo) son recabados exclusivamente para el procesamiento logístico, despacho de su pedido y facturación, en estricto cumplimiento con la LFPDPPP de México. Los datos son compartidos únicamente mediante conexión API cifrada con proveedores logísticos (Envia.com) para generar su guía oficial.</p>
-        <p>Para ejercer sus derechos ARCO, envíe una solicitud a <em id="privacyEmail">ventas.unicotextil@gmail.com</em>.</p>
-      </div>
-
-      <div class="legal-box glass-panel" id="contacto">
-        <h2 class="tech-text">5. Contacto</h2>
-        <p>Atención directa para soporte, cotizaciones y seguimiento de pedidos.</p>
-
-        <div class="legal-contact">
-          <div class="legal-contact-card">
-            Correo:
-            <a id="footerMailLink" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
-          </div>
-
-          <div class="legal-contact-card">
-            WhatsApp:
-            <a id="footerWaLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="legal-footer-space">
-        <p style="margin-bottom: 20px; font-weight: 600;">
-          <strong class="tech-text">BAJATEX S. de R.L. de C.V. (Único Uniformes)</strong><br>
-          <a id="footerMailLinkInline" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a> |
-          Soporte WhatsApp: <a id="footerWaLinkInline" href="https://wa.me/5216642368701" target="_blank" rel="noopener">664 236 8701</a>
+      <div class="glass-panel cancel-copy">
+        <p id="cancelCopy">
+          No se ha realizado ningún cargo a tu método de pago. Tu carrito de compras está seguro y guardado en este dispositivo.<br><br>
+          Si el banco declinó la tarjeta por seguridad, te sugerimos intentar de nuevo con otra tarjeta, o seleccionar
+          <b>Efectivo en OXXO</b>.
         </p>
       </div>
-    </div>
+
+      <div class="cancel-actions">
+        <a class="btn btn--primary btn--large cinematic-btn neon-border" href="/index.html">← Regresar a mi Carrito</a>
+        <a class="btn btn--ghost btn--large hover-fx tech-ghost-btn" href="/legal.html">Ver soporte legal</a>
+      </div>
+
+      <div class="cancel-support">
+        <div><strong>Soporte por correo:</strong> <a id="cancelEmail" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a></div>
+        <div><strong>Soporte por WhatsApp:</strong> <a id="cancelWa" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer">664 236 8701</a></div>
+        <div style="margin-top:10px;">
+          Si el problema persiste, revisa el método de pago o vuelve a intentarlo más tarde.
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer class="footer" role="contentinfo">
+  <footer class="footer" role="contentinfo" style="margin-top: 24px;">
     <div class="wrap footer__inner">
       <div class="footer__brand-col">
         <div class="footer__brand"><span class="tech-text" style="color: var(--red);">SCORE</span> STORE</div>
@@ -293,82 +220,73 @@
   </footer>
 
   <script>
-  (async () => {
-    async function fetchConfig(url) {
+    (async () => {
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && value) el.textContent = value;
+      };
+
+      const setHref = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && value) el.setAttribute("href", value);
+      };
+
       try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error("bad response");
-        return await res.json();
-      } catch {
-        return null;
-      }
-    }
+        const res = await fetch("/api/site_settings", { cache: "no-store" });
+        const data = await res.json().catch(() => null);
+        const settings = data?.data && typeof data.data === "object" ? data.data : data;
+        if (!settings || typeof settings !== "object") return;
 
-    const data = await fetchConfig("/api/site_settings");
-    const contact = data?.contact || {};
-    const socials = data?.socials || {};
+        const contact = settings.contact || {};
+        const home = settings.home || {};
+        const socials = settings.socials || {};
 
-    const email = String(contact.email || "ventas.unicotextil@gmail.com").trim();
-    const wa = String(contact.whatsapp_e164 || "5216642368701").trim();
+        const email = String(contact.email || "ventas.unicotextil@gmail.com").trim();
+        const waE164 = String(contact.whatsapp_e164 || "5216642368701").trim();
+        const waDisplay = String(contact.whatsapp_display || "664 236 8701").trim();
+        const footerNote = String(home.footer_note || "").trim();
 
-    const setText = (id, value) => {
-      const el = document.getElementById(id);
-      if (el && value) el.textContent = value;
-    };
+        const emailEls = [
+          document.getElementById("cancelEmail"),
+          document.getElementById("footerEmailLink"),
+        ].filter(Boolean);
 
-    const setHref = (id, value) => {
-      const el = document.getElementById(id);
-      if (el && value) el.setAttribute("href", value);
-    };
+        for (const el of emailEls) {
+          el.textContent = email;
+          el.setAttribute("href", `mailto:${email}`);
+        }
 
-    [
-      "footerMailLink",
-      "footerMailLinkInline",
-      "footerEmailLink",
-      "privacyEmail"
-    ].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (id === "privacyEmail") {
-        el.textContent = email;
-      } else {
-        el.textContent = email;
-        el.href = `mailto:${email}`;
-      }
-    });
+        const waEls = [
+          document.getElementById("cancelWa"),
+          document.getElementById("footerWhatsappLink"),
+        ].filter(Boolean);
 
-    [
-      "footerWaLink",
-      "footerWaLinkInline",
-      "footerWhatsappLink"
-    ].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.href = `https://wa.me/${wa}`;
-    });
+        for (const el of waEls) {
+          el.setAttribute("href", `https://wa.me/${waE164}`);
+        }
 
-    setText("footerEmailText", email);
-    setHref("footerEmailLink", `mailto:${email}`);
-    setText("footerWhatsappText", String(contact.whatsapp_display || "664 236 8701"));
-    setHref("footerWhatsappLink", `https://wa.me/${wa}`);
+        setText("footerEmailText", email);
+        setText("footerWhatsappText", waDisplay);
 
-    if (socials.facebook) {
-      setHref("footerFacebookLink", socials.facebook);
-    }
-    if (socials.instagram) {
-      setHref("footerInstagramLink", socials.instagram);
-    }
-    if (socials.youtube) {
-      setHref("footerYoutubeLink", socials.youtube);
-    }
+        if (socials.facebook) setHref("footerFacebookLink", socials.facebook);
+        if (socials.instagram) setHref("footerInstagramLink", socials.instagram);
+        if (socials.youtube) setHref("footerYoutubeLink", socials.youtube);
 
-    const footerNote = document.getElementById("footerNote");
-    if (footerNote) {
-      footerNote.textContent =
-        data?.home?.footer_note ||
-        "Pago cifrado vía Stripe. Aceptamos OXXO Pay.\nLogística inteligente internacional con Envía.com.";
-    }
-  })();
+        if (footerNote) {
+          setText("footerNote", footerNote);
+        }
+
+        const cancelCopy = document.getElementById("cancelCopy");
+        const cancelTitle = document.getElementById("cancelTitle");
+
+        if (cancelTitle) cancelTitle.textContent = "Transacción Incompleta";
+        if (cancelCopy) {
+          cancelCopy.innerHTML =
+            "No se ha realizado ningún cargo a tu método de pago. Tu carrito de compras está seguro y guardado en este dispositivo.<br><br>" +
+            "Si el banco declinó la tarjeta por seguridad, te sugerimos intentar de nuevo con otra tarjeta, o seleccionar <b>Efectivo en OXXO</b>.";
+        }
+      } catch {}
+    })();
   </script>
 </body>
 </html>
