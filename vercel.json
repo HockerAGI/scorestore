@@ -3,56 +3,44 @@
   "public": true,
   "cleanUrls": false,
   "trailingSlash": false,
+
   "headers": [
     {
-      "source": "/",
+      "source": "/api/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
       ]
     },
+
+    {
+      "source": "/(success|cancel).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
+      ]
+    },
+
     {
       "source": "/index.html",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     },
-    {
-      "source": "/success.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
-      ]
-    },
-    {
-      "source": "/cancel.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
-      ]
-    },
+
     {
       "source": "/legal.html",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
       ]
     },
+
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" },
+        { "key": "Cache-Control", "value": "no-store" },
         { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
       ]
     },
+
     {
       "source": "/site.webmanifest",
       "headers": [
@@ -60,32 +48,37 @@
         { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" }
       ]
     },
+
     {
       "source": "/robots.txt",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" },
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
       ]
     },
+
     {
       "source": "/sitemap.xml",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" },
         { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
       ]
     },
+
     {
       "source": "/css/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
+
     {
       "source": "/js/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
+
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -93,13 +86,15 @@
       ]
     }
   ],
+
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
+
     {
-      "src": "/(.*)",
+      "src": "/$",
       "dest": "/index.html"
     }
   ]
