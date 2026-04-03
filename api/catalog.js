@@ -1,199 +1,286 @@
+// api/catalog.js
 "use strict";
 
-const { jsonResponse, handleOptions, supabaseAdmin, readJsonFile } = require("./_shared");
+const shared = require("./_shared");
 
-const DEFAULT_SCORE_ORG_ID = "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
+const jsonResponse = shared.jsonResponse;
+const handleOptions = shared.handleOptions;
+const readJsonFile = shared.readJsonFile;
+const getCatalogIndex = shared.getCatalogIndex;
+const readPublicSiteSettings = shared.readPublicSiteSettings;
+const safeStr = shared.safeStr || ((v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v)));
+
+const DEFAULT_STORE = {
+  name: "SCORE STORE",
+  currency: "MXN",
+  locale: "es-MX",
+};
 
 const CATEGORY_CONFIG = [
   {
     uiId: "BAJA1000",
+    name: "BAJA 1000",
     title: "BAJA 1000",
     logo: "/assets/logo-baja1000.webp",
     mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES", "BAJA_1000_2025"],
   },
   {
     uiId: "BAJA500",
+    name: "BAJA 500",
     title: "BAJA 500",
     logo: "/assets/logo-baja500.webp",
     mapFrom: ["BAJA500", "BAJA_500"],
   },
   {
     uiId: "BAJA400",
+    name: "BAJA 400",
     title: "BAJA 400",
     logo: "/assets/logo-baja400.webp",
     mapFrom: ["BAJA400", "BAJA_400"],
   },
   {
     uiId: "SF250",
+    name: "SAN FELIPE 250",
     title: "SAN FELIPE 250",
     logo: "/assets/logo-sf250.webp",
     mapFrom: ["SF250", "SF_250"],
   },
 ];
 
-const isUuid = (s) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    String(s || "").trim()
-  );
-
-const num = (v, fallback = 0) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
-
-const str = (v, fallback = "") => {
-  const s = String(v ?? "").trim();
-  return s || fallback;
-};
-
-const arr = (v) => (Array.isArray(v) ? v : []);
-
-const withNoStore = (resp) => {
+function send(res, resp) {
   const out = resp || {};
   out.headers = out.headers || {};
   out.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
   out.headers["Pragma"] = "no-cache";
   out.headers["Expires"] = "0";
-  return out;
-};
 
-const send = (res, resp) => {
-  const out = withNoStore(resp);
   if (out.headers) {
     Object.keys(out.headers).forEach((key) => res.setHeader(key, out.headers[key]));
   }
+
   res.status(out.statusCode || 200).send(out.body);
-};
+}
 
-const normalizeSectionIdToUi = (sectionId) => {
-  const sid = String(sectionId || "").trim();
+function cleanText(v, fallback = "") {
+  return safeStr(v, fallback).trim();
+}
+
+function cleanSku(v) {
+  return cleanText(v).replace(/\s+/g, "-");
+}
+
+function normalizeSectionToUi(sectionId) {
+  const sid = cleanText(sectionId);
+  if (!sid) return "BAJA1000";
+
   const found = CATEGORY_CONFIG.find((c) => c.mapFrom.includes(sid));
-  return found ? found.uiId : null;
-};
+  return found ? found.uiId : "BAJA1000";
+}
 
-const normalizeAssetPath = (input) => {
-  let s = String(input || "").trim();
-  if (!s) return "";
-  if (/^(https?:|data:|blob:)/i.test(s)) return s;
-
-  s = s.replaceAll("\\", "/");
-
-  s = s.replaceAll("/assets/BAJA_1000/", "/assets/edicion_2025/");
-  s = s.replaceAll("/assets/BAJA1000/", "/assets/edicion_2025/");
-  s = s.replaceAll("/assets/EDICION_2025/", "/assets/edicion_2025/");
-  s = s.replaceAll("/assets/BAJA_500/", "/assets/baja500/");
-  s = s.replaceAll("/assets/BAJA500/", "/assets/baja500/");
-  s = s.replaceAll("/assets/BAJA_400/", "/assets/baja400/");
-  s = s.replaceAll("/assets/BAJA400/", "/assets/baja400/");
-  s = s.replaceAll("/assets/SF_250/", "/assets/sf250/");
-  s = s.replaceAll("/assets/SF250/", "/assets/sf250/");
-  s = s.replaceAll("/assets/OTRAS_EDICIONES/", "/assets/otras_ediciones/");
-
-  s = s.replaceAll("assets/BAJA_1000/", "assets/edicion_2025/");
-  s = s.replaceAll("assets/BAJA1000/", "assets/edicion_2025/");
-  s = s.replaceAll("assets/EDICION_2025/", "assets/edicion_2025/");
-  s = s.replaceAll("assets/BAJA_500/", "assets/baja500/");
-  s = s.replaceAll("assets/BAJA500/", "assets/baja500/");
-  s = s.replaceAll("assets/BAJA_400/", "assets/baja400/");
-  s = s.replaceAll("assets/BAJA400/", "assets/baja400/");
-  s = s.replaceAll("assets/SF_250/", "assets/sf250/");
-  s = s.replaceAll("assets/SF250/", "assets/sf250/");
-  s = s.replaceAll("assets/OTRAS_EDICIONES/", "assets/otras_ediciones/");
-
-  s = s.replaceAll("S250", "SF250");
-  s = s.replaceAll("SF_250", "sf250");
-  s = s.replaceAll("BAJA_1000", "edicion_2025");
-  s = s.replaceAll("BAJA_500", "baja500");
-  s = s.replaceAll("BAJA_400", "baja400");
-  s = s.replaceAll(/\s+/g, "");
-  s = s.replaceAll(".jpg.webp", ".webp");
-
-  if (s.startsWith("assets/")) s = `/${s}`;
-  if (!s.startsWith("/")) s = `/${s}`;
-
-  return s;
-};
-
-const pickImage = (...values) => {
-  for (const value of values) {
-    const s = str(value);
-    if (s) return normalizeAssetPath(s);
-  }
-  return "";
-};
-
-const normalizeSection = (row) => {
-  const sectionId = str(row?.section_id || row?.sectionId || row?.id, "EDICION_2025");
-  const name = str(row?.name || row?.title || row?.label, sectionId.replaceAll("_", " "));
-
-  return {
-    id: sectionId,
-    section_id: sectionId,
-    sectionId: sectionId,
-    name,
-    title: name,
-    image: pickImage(row?.image, row?.logo, row?.cover_image, row?.coverImage),
-    logo: pickImage(row?.logo, row?.image, row?.cover_image, row?.coverImage),
-    count: num(row?.count, 0),
-  };
-};
-
-const normalizeProduct = (p) => {
-  const sku = str(p?.sku);
-  if (!sku) return null;
-
-  const images = arr(p?.images).filter(Boolean).map((v) => normalizeAssetPath(String(v)));
-  const sizes =
-    arr(p?.sizes).length > 0
-      ? arr(p?.sizes).filter(Boolean).map(String)
-      : ["S", "M", "L", "XL", "XXL"];
-
-  const priceCents =
-    Number.isFinite(Number(p?.price_cents)) && num(p?.price_cents) > 0
-      ? Math.max(0, Math.floor(num(p?.price_cents)))
-      : Number.isFinite(Number(p?.price_mxn)) && num(p?.price_mxn) > 0
-        ? Math.max(0, Math.round(num(p?.price_mxn) * 100))
-        : Math.max(0, Math.round(num(p?.base_mxn) * 100));
-
-  const primary = pickImage(
-    p?.img,
-    p?.image_url,
-    p?.image,
-    images.length ? images[0] : ""
+function inferCollection(product) {
+  const sid = cleanText(
+    product?.sectionId ||
+      product?.section_id ||
+      product?.section ||
+      product?.categoryId ||
+      ""
   );
 
-  const sectionId = str(p?.section_id || p?.sectionId, "EDICION_2025");
-  const uiSection = normalizeSectionIdToUi(sectionId) || sectionId;
-  const collection = str(p?.sub_section || p?.collection);
+  if (sid === "EDICION_2025") return "Edición 2025";
+  if (sid === "OTRAS_EDICIONES") return "Otras ediciones";
+
+  return cleanText(product?.collection || product?.sub_section || "");
+}
+
+function safeUrl(input) {
+  const value = cleanText(input);
+  if (!value) return "";
+  if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  if (value.startsWith("/")) return value;
+  return `/${value.replace(/^\.?\//, "")}`;
+}
+
+function toNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeProduct(row) {
+  if (!row || typeof row !== "object") return null;
+
+  const images = Array.isArray(row.images)
+    ? row.images
+    : row.image_url || row.img || row.image
+      ? [row.image_url || row.img || row.image]
+      : [];
+
+  const sizes = Array.isArray(row.sizes) && row.sizes.length
+    ? row.sizes
+    : ["S", "M", "L", "XL", "XXL"];
+
+  const priceFrom =
+    Number.isFinite(Number(row.price_cents)) ? Math.round(Number(row.price_cents)) :
+    Number.isFinite(Number(row.price_mxn)) ? Math.round(Number(row.price_mxn) * 100) :
+    Number.isFinite(Number(row.base_mxn)) ? Math.round(Number(row.base_mxn) * 100) :
+    Number.isFinite(Number(row.price)) ? Math.round(Number(row.price) * 100) :
+    0;
+
+  const sectionRaw = cleanText(
+    row.sectionId || row.section_id || row.section || row.categoryId || ""
+  );
+
+  const sku = cleanSku(row.sku || row.id || row.slug || "");
+  const name = cleanText(row.name || row.title || "Producto SCORE");
+  const title = cleanText(row.title || row.name || "Producto SCORE");
+  const description = cleanText(row.description || "");
+  const primaryImage = safeUrl(row.image_url || row.img || row.image || images[0] || "");
 
   return {
-    id: str(p?.id, sku),
+    ...row,
+    id: cleanText(row.id || sku),
     sku,
-    title: str(p?.title || p?.name, "Producto Oficial"),
-    name: str(p?.name || p?.title, "Producto Oficial"),
-    description: str(p?.description),
-    price_cents: priceCents,
-    price_mxn: num(p?.price_mxn, 0),
-    base_mxn: num(p?.base_mxn, 0),
-    sectionId,
-    section_id: sectionId,
-    uiSection,
-    collection,
-    sub_section: collection,
-    image: primary,
-    image_url: primary,
-    img: primary,
-    images: images.length ? images : primary ? [primary] : [],
-    sizes,
-    rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
-    stock: p?.stock == null ? null : num(p?.stock, 0),
-    active: p?.active == null ? true : !!p?.active,
-    is_active: p?.is_active == null ? true : !!p?.is_active,
+    title,
+    name,
+    description,
+    sectionId: sectionRaw,
+    section_id: sectionRaw,
+    uiSection: normalizeSectionToUi(sectionRaw),
+    collection: inferCollection(row),
+    sub_section: inferCollection(row),
+    category: cleanText(row.category || ""),
+    image: primaryImage,
+    image_url: primaryImage,
+    img: primaryImage,
+    images: images.map(safeUrl).filter(Boolean),
+    sizes: sizes.map((x) => cleanText(x)).filter(Boolean),
+    price_cents: priceFrom,
+    price_mxn: Number.isFinite(Number(row.price_mxn)) ? Number(row.price_mxn) : priceFrom / 100,
+    base_mxn: Number.isFinite(Number(row.base_mxn)) ? Number(row.base_mxn) : priceFrom / 100,
+    rank: Number.isFinite(Number(row.rank)) ? Math.round(Number(row.rank)) : 999,
+    stock: row.stock == null ? null : toNumber(row.stock, 0),
+    active: row.active == null ? true : !!row.active,
+    is_active: row.is_active == null ? true : !!row.is_active,
+    deleted_at: row.deleted_at || null,
   };
-};
+}
 
-const normalizePayload = (payload) => {
-  const data = payload && typeof payload === "object" ? payload : {};
+function normalizeSection(row) {
+  if (!row || typeof row !== "object") return null;
+
+  const id = cleanText(row.id || row.slug || row.section_id || row.sectionId || "");
+  if (!id) return null;
+
+  const cfg = CATEGORY_CONFIG.find((c) => c.uiId === id || c.mapFrom.includes(id));
+
+  return {
+    id,
+    section_id: cleanText(row.section_id || row.sectionId || id),
+    sectionId: cleanText(row.sectionId || row.section_id || id),
+    uiId: cfg?.uiId || id,
+    name: cleanText(row.name || row.title || cfg?.title || id.replaceAll("_", " ")),
+    title: cleanText(row.title || row.name || cfg?.title || id.replaceAll("_", " ")),
+    logo: safeUrl(row.logo || row.image || row.cover_image || row.coverImage || cfg?.logo || ""),
+    image: safeUrl(row.image || row.logo || row.cover_image || row.coverImage || cfg?.logo || ""),
+    count: Number.isFinite(Number(row.count)) ? Math.max(0, Math.round(Number(row.count))) : 0,
+    rank: Number.isFinite(Number(row.rank)) ? Math.round(Number(row.rank)) : 999,
+  };
+}
+
+function buildSectionsFromProducts(products) {
+  const sectionMap = new Map();
+
+  for (const item of Array.isArray(products) ? products : []) {
+    const key = cleanText(item.uiSection || item.sectionId || item.section_id || "");
+    if (!key) continue;
+
+    if (!sectionMap.has(key)) {
+      const cfg = CATEGORY_CONFIG.find((c) => c.uiId === key);
+      sectionMap.set(key, {
+        id: key,
+        section_id: key,
+        sectionId: key,
+        uiId: key,
+        name: cfg?.title || key.replaceAll("_", " "),
+        title: cfg?.title || key.replaceAll("_", " "),
+        logo: cfg?.logo || item.image || item.image_url || "",
+        image: cfg?.logo || item.image || item.image_url || "",
+        count: 0,
+      });
+    }
+
+    sectionMap.get(key).count += 1;
+  }
+
+  return Array.from(sectionMap.values());
+}
+
+function countBySection(products) {
+  const out = new Map();
+  for (const item of Array.isArray(products) ? products : []) {
+    const key = cleanText(item.uiSection || item.sectionId || item.section_id || "");
+    if (!key) continue;
+    out.set(key, (out.get(key) || 0) + 1);
+  }
+  return out;
+}
+
+function attachCounts(sections, products) {
+  const counts = countBySection(products);
+  return (Array.isArray(sections) ? sections : []).map((section) => {
+    const key = cleanText(section.id || section.sectionId || section.section_id || section.uiId || "");
+    return {
+      ...section,
+      count: counts.get(key) || 0,
+    };
+  });
+}
+
+function matchesSearch(product, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  const haystack = [
+    product?.sku,
+    product?.name,
+    product?.title,
+    product?.description,
+    product?.collection,
+    product?.sub_section,
+    product?.sectionId,
+    product?.uiSection,
+    product?.category,
+  ]
+    .map((v) => cleanText(v).toLowerCase())
+    .join(" | ");
+
+  return haystack.includes(q);
+}
+
+function matchesSection(product, section) {
+  if (!section) return true;
+  const target = cleanText(section).toUpperCase();
+  if (!target) return true;
+
+  const candidates = [
+    cleanText(product?.uiSection).toUpperCase(),
+    cleanText(product?.sectionId).toUpperCase(),
+    cleanText(product?.section_id).toUpperCase(),
+  ];
+
+  return candidates.includes(target);
+}
+
+function shouldIncludeInactive(req) {
+  const value =
+    req.query?.include_inactive ||
+    req.query?.includeInactive ||
+    req.query?.drafts ||
+    "0";
+
+  return ["1", "true", "yes", "on"].includes(String(value).trim().toLowerCase());
+}
+
+function parsePayload(raw) {
+  const data = raw && typeof raw === "object" ? raw : {};
 
   const rawSections = Array.isArray(data.sections)
     ? data.sections
@@ -201,176 +288,146 @@ const normalizePayload = (payload) => {
       ? data.categories
       : [];
 
-  const rawProducts = Array.isArray(data.products) ? data.products : [];
+  const rawProducts = Array.isArray(data.products)
+    ? data.products
+    : Array.isArray(data.items)
+      ? data.items
+      : [];
 
   const products = rawProducts.map(normalizeProduct).filter(Boolean);
-  let sections = rawSections.map(normalizeSection);
+  let sections = rawSections.map(normalizeSection).filter(Boolean);
 
   if (!sections.length) {
-    const sectionMap = new Map();
-
-    for (const item of products) {
-      const key = String(item.uiSection || item.sectionId || "").trim();
-      if (!key) continue;
-
-      if (!sectionMap.has(key)) {
-        const cfg = CATEGORY_CONFIG.find((c) => c.uiId === key);
-        sectionMap.set(key, {
-          id: key,
-          section_id: key,
-          sectionId: key,
-          name: cfg?.title || key.replaceAll("_", " "),
-          title: cfg?.title || key.replaceAll("_", " "),
-          image: cfg?.logo || item.image || item.image_url || "",
-          logo: cfg?.logo || item.image || item.image_url || "",
-          count: 0,
-        });
-      }
-
-      sectionMap.get(key).count += 1;
-    }
-
-    sections = Array.from(sectionMap.values());
+    sections = buildSectionsFromProducts(products);
   } else {
-    const countByUi = new Map();
-    for (const item of products) {
-      const key = String(item.uiSection || item.sectionId || "").trim();
-      if (!key) continue;
-      countByUi.set(key, (countByUi.get(key) || 0) + 1);
-    }
-
-    sections = sections.map((s) => {
-      const key = String(s?.id || s?.sectionId || s?.section_id || "").trim();
-      return {
-        ...s,
-        count: countByUi.get(key) || 0,
-      };
-    });
+    sections = attachCounts(sections, products);
   }
 
   return {
     ok: true,
-    store: data.store || { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
+    store: data.store && typeof data.store === "object" ? data.store : DEFAULT_STORE,
     sections,
     categories: sections,
     products,
+    items: products,
   };
-};
+}
 
-const resolveOrgId = async (sb) => {
-  const envId = process.env.SCORE_ORG_ID || process.env.DEFAULT_ORG_ID;
-  if (envId && isUuid(envId)) return String(envId).trim();
+async function loadCatalogSource() {
+  const fromJson = readJsonFile ? readJsonFile("data/catalog.json") : null;
+  if (fromJson && typeof fromJson === "object") return fromJson;
 
-  let orgId = DEFAULT_SCORE_ORG_ID;
+  if (typeof getCatalogIndex === "function") {
+    try {
+      const out = getCatalogIndex();
+      if (out?.catalog && typeof out.catalog === "object") return out.catalog;
+    } catch {}
+  }
+
+  return { products: [], sections: [], categories: [] };
+}
+
+async function loadStoreInfo() {
+  const defaults = { ...DEFAULT_STORE };
 
   try {
-    const { data: byId } = await sb
-      .from("organizations")
-      .select("id")
-      .eq("id", orgId)
-      .limit(1)
-      .maybeSingle();
-
-    if (byId?.id) return orgId;
-
-    const { data: byName } = await sb
-      .from("organizations")
-      .select("id")
-      .ilike("name", "%score%")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (byName?.id) orgId = byName.id;
+    if (typeof readPublicSiteSettings === "function") {
+      const site = await readPublicSiteSettings();
+      if (site && typeof site === "object") {
+        const title = cleanText(site.hero_title || "");
+        if (title) defaults.name = title;
+      }
+    }
   } catch {}
 
-  return orgId;
-};
+  return defaults;
+}
 
 module.exports = async (req, res) => {
   const origin = req.headers.origin || req.headers.Origin || "*";
 
-  if (req.method === "OPTIONS") {
-    const optionsRes = handleOptions?.({ headers: { origin } }) || {
-      statusCode: 204,
-      headers: {
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Methods": "GET,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-      body: "",
-    };
-
-    return send(res, optionsRes);
-  }
-
-  if (req.method !== "GET") {
-    return send(res, jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
-  }
-
-  const fallbackRaw =
-    readJsonFile("data/catalog.json") || {
-      store: { name: "SCORE STORE", currency: "MXN", locale: "es-MX" },
-      sections: [],
-      products: [],
-    };
-
-  const fallback = normalizePayload(fallbackRaw);
-
-  const sb = supabaseAdmin();
-  if (!sb) {
-    return send(res, jsonResponse(200, fallback, origin));
-  }
-
   try {
-    const orgId = await resolveOrgId(sb);
+    if (req.method === "OPTIONS") {
+      const optionsRes =
+        handleOptions?.({ headers: { origin } }) ||
+        {
+          statusCode: 204,
+          headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET,OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          },
+          body: "",
+        };
 
-    const { data, error } = await sb
-      .from("products")
-      .select(
-        "id,sku,name,description,price_cents,price_mxn,base_mxn,images,sizes,section_id,sub_section,rank,img,image_url,stock,active,is_active,deleted_at,org_id,organization_id,created_at"
-      )
-      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
-      .is("deleted_at", null)
-      .or("active.eq.true,is_active.eq.true")
-      .order("rank", { ascending: true })
-      .order("created_at", { ascending: false })
-      .limit(800);
-
-    if (error || !Array.isArray(data) || data.length === 0) {
-      return send(res, jsonResponse(200, fallback, origin));
+      return send(res, optionsRes);
     }
 
-    const normalized = normalizePayload({
-      store: fallback.store,
-      products: data.map((p) => ({
-        id: p.id,
-        sku: p.sku,
-        title: p.name,
-        name: p.name,
-        description: p.description,
-        price_cents: p.price_cents,
-        price_mxn: p.price_mxn,
-        base_mxn: p.base_mxn,
-        sectionId: p.section_id,
-        section_id: p.section_id,
-        sub_section: p.sub_section,
-        collection: p.sub_section,
-        image: p.image_url || p.img,
-        image_url: p.image_url,
-        img: p.img,
-        images: Array.isArray(p.images) ? p.images : [],
-        sizes: Array.isArray(p.sizes) ? p.sizes : [],
-        rank: p.rank,
-        stock: p.stock,
-        active: p.active,
-        is_active: p.is_active,
-      })),
+    if (req.method !== "GET") {
+      return send(res, jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
+    }
+
+    const rawCatalog = await loadCatalogSource();
+    const store = await loadStoreInfo();
+    const normalized = parsePayload({
+      ...rawCatalog,
+      store: {
+        ...(rawCatalog?.store && typeof rawCatalog.store === "object" ? rawCatalog.store : {}),
+        ...store,
+      },
     });
 
-    return send(res, jsonResponse(200, normalized, origin));
-  } catch {
-    return send(res, jsonResponse(200, fallback, origin));
+    const q = cleanText(req.query?.q || req.query?.search || "");
+    const section = cleanText(req.query?.section || req.query?.sectionId || req.query?.uiSection || "");
+    const includeInactive = shouldIncludeInactive(req);
+
+    let products = Array.isArray(normalized.products) ? [...normalized.products] : [];
+
+    if (!includeInactive) {
+      products = products.filter((p) => p.deleted_at == null && p.active !== false && p.is_active !== false);
+    }
+
+    if (section) {
+      products = products.filter((p) => matchesSection(p, section));
+    }
+
+    if (q) {
+      products = products.filter((p) => matchesSearch(p, q));
+    }
+
+    let sections = Array.isArray(normalized.sections) ? [...normalized.sections] : [];
+    if (section || q || !includeInactive) {
+      sections = attachCounts(
+        sections.length ? sections : buildSectionsFromProducts(products),
+        products
+      );
+    }
+
+    const payload = {
+      ok: true,
+      store: normalized.store || store,
+      sections,
+      categories: sections,
+      products,
+      items: products,
+      count: products.length,
+      sections_count: sections.length,
+      updated_at: new Date().toISOString(),
+    };
+
+    return send(res, jsonResponse(200, payload, origin));
+  } catch (error) {
+    return send(
+      res,
+      jsonResponse(
+        500,
+        {
+          ok: false,
+          error: String(error?.message || error || "No se pudo cargar el catálogo"),
+        },
+        origin
+      )
+    );
   }
 };
