@@ -1287,10 +1287,11 @@
     }
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mode: "assistant",
           org_id: siteSettings.org_id || catalog?.store?.org_id || "",
           message: msg,
           context: {
