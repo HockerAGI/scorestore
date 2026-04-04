@@ -1,72 +1,114 @@
 // api/chat.js
 "use strict";
 
-const {
-  jsonResponse,
-  handleOptions,
-  readPublicSiteSettings,
-  SUPPORT_EMAIL,
-  SUPPORT_WHATSAPP_DISPLAY,
-} = require("./_shared");
+const shared = require("./_shared");
+const { rateLimit } = require("./_rate_limit");
 
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash";
-const MAX_MESSAGE_LEN = 1200;
-const MAX_CONTEXT_LEN = 220;
-const MAX_REPLY_LEN = 5000;
+const jsonResponse = shared.jsonResponse;
+const handleOptions = shared.handleOptions;
+const supabaseAdmin = shared.supabaseAdmin;
+const safeStr = shared.safeStr || ((v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v)));
+const readJsonFile = shared.readJsonFile || null;
+const resolveScoreOrgId = shared.resolveScoreOrgId || (async () => process.env.DEFAULT_SCORE_ORG_ID || "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6");
+const readPublicSiteSettings = shared.readPublicSiteSettings || null;
+const sendTelegram = shared.sendTelegram || null;
 
-const sanitizeContext = (str) =>
-  String(str || "Ninguno")
-    .replace(/[\[\]{}<>\\\n\r]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .substring(0, MAX_CONTEXT_LEN);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash";
+const GEMINI_API_BASE = process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com/v1beta";
+const DEFAULT_SCORE_ORG_ID = process.env.DEFAULT_SCORE_ORG_ID || "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
 
-const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
+const noStoreHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
 
-function send(res, resp) {
-  const out = resp || {};
+function send(res, payload) {
+  const out = payload || {};
   out.headers = out.headers || {};
   out.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
   out.headers["Pragma"] = "no-cache";
   out.headers["Expires"] = "0";
 
-  if (out.headers) {
-    Object.keys(out.headers).forEach((key) => res.setHeader(key, out.headers[key]));
-  }
-  res.status(out.statusCode || 200).send(out.body);
+  res.statusCode = out.statusCode || 200;
+  Object.entries(out.headers).forEach(([k, v]) => res.setHeader(k, v));
+  res.end(out.body || "");
 }
 
-function getBody(req) {
-  const raw = req?.body;
-  if (!raw) return {};
-  if (typeof raw === "object") return raw;
-  if (typeof raw === "string") {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return {};
-    }
+function getOrigin(req) {
+  return req?.headers?.origin || req?.headers?.Origin || "*";
+}
+
+function normalizeText(v) {
+  return safeStr(v).trim();
+}
+
+function clampText(v, max = 1800) {
+  return String(v ?? "").trim().slice(0, max);
+}
+
+function safeJsonParse(raw, fallback = null) {
+  try {
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
   }
+}
+
+function parseBody(req) {
+  const body = req?.body;
+
+  if (body && typeof body === "object" && !Buffer.isBuffer(body)) {
+    return body;
+  }
+
+  if (typeof body === "string") {
+    return safeJsonParse(body, {});
+  }
+
   return {};
 }
 
-function normalizeGeminiError(e) {
-  const msg = String(e?.message || e || "");
-  if (/model.*not found|404/i.test(msg)) {
-    return "El modelo de IA configurado no está disponible. Revisa GEMINI_MODEL en Vercel.";
-  }
-  if (/api key|unauth|permission|denied|401|403/i.test(msg)) {
-    return "El asistente no tiene permiso o llave válida en este momento.";
-  }
-  return "El asistente no pudo completar la solicitud.";
+function parseOrgId(body, req) {
+  const fromBody = normalizeText(body?.org_id || body?.orgId || body?.organization_id || "");
+  if (fromBody) return fromBody;
+
+  try {
+    const url = new URL(req.url, "http://localhost");
+    const fromQuery = normalizeText(url.searchParams.get("org_id") || url.searchParams.get("orgId") || "");
+    if (fromQuery) return fromQuery;
+  } catch {}
+
+  return "";
 }
 
-function extractActions(text) {
+function parseMessage(body) {
+  return clampText(body?.message ?? body?.prompt ?? body?.text ?? body?.input ?? "");
+}
+
+function parseContext(body) {
+  const ctx = body?.context && typeof body.context === "object" ? body.context : {};
+
+  return {
+    currentProduct: normalizeText(ctx.currentProduct || ctx.product || ctx.currentSku || body?.currentProduct || ""),
+    currentSku: normalizeText(ctx.currentSku || ctx.sku || body?.currentSku || ""),
+    cartItems: normalizeText(ctx.cartItems || ctx.cart || body?.cartItems || ""),
+    cartTotal: normalizeText(ctx.cartTotal || ctx.total || body?.cartTotal || ""),
+    shipMode: normalizeText(ctx.shipMode || ctx.shippingMode || body?.shipMode || ""),
+    orderId: normalizeText(ctx.orderId || ctx.order_id || body?.orderId || ""),
+    actionHint: normalizeText(ctx.actionHint || ctx.action || body?.actionHint || ""),
+    category: normalizeText(ctx.category || ctx.section || body?.category || ""),
+  };
+}
+
+function extractActionMarkers(text) {
   const raw = String(text || "");
   const actions = [];
-
   const regex = /\[ACTION:([A-Z_]+)(?::([^\]]+))?\]/g;
+
   for (const match of raw.matchAll(regex)) {
     actions.push({
       action: safeStr(match[1]).toUpperCase(),
@@ -77,225 +119,351 @@ function extractActions(text) {
   return actions;
 }
 
-function stripActions(text) {
+function stripActionMarkers(text) {
   return String(text || "")
     .replace(/\[ACTION:[A-Z_]+(?::[^\]]+)?\]/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-async function callGemini({ apiKey, model, systemText, userText }) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-
-  const payload = {
-    systemInstruction: { parts: [{ text: systemText }] },
-    contents: [{ role: "user", parts: [{ text: userText }] }],
-    generationConfig: {
-      temperature: 0.45,
-      maxOutputTokens: 550,
-    },
-  };
-
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
+function normalizeGeminiError(err) {
+  const msg = String(err?.message || err || "");
+  if (/model.*not found|404/i.test(msg)) {
+    return "El modelo de IA configurado no está disponible.";
+  }
+  if (/api key|unauth|permission|denied|401|403/i.test(msg)) {
+    return "La IA no tiene permiso o llave válida en este momento.";
+  }
+  return "La IA no pudo completar la solicitud.";
 }
 
-function buildSystemText(site, context) {
-  const contact = site?.contact || {};
-  const home = site?.home || {};
-  const socials = site?.socials || {};
+function buildPrompt({ settings, catalogSummary, context }) {
+  const contact = settings?.contact || {};
+  const home = settings?.home || {};
+  const socials = settings?.socials || {};
 
-  const email =
-    String(contact.email || SUPPORT_EMAIL || "ventas.unicotextil@gmail.com").trim() ||
-    "ventas.unicotextil@gmail.com";
-  const whatsappDisplay =
-    String(contact.whatsapp_display || SUPPORT_WHATSAPP_DISPLAY || "664 236 8701").trim() ||
-    "664 236 8701";
-  const supportHours = String(home.support_hours || "").trim();
-  const shippingNote = String(home.shipping_note || "").trim();
-  const returnsNote = String(home.returns_note || "").trim();
-  const footerNote = String(home.footer_note || "").trim();
-  const heroTitle = String(site?.hero_title || "SCORE STORE").trim();
+  const email = safeStr(contact.email || process.env.SUPPORT_EMAIL || "ventas.unicotextil@gmail.com");
+  const phone = safeStr(contact.phone || process.env.SUPPORT_PHONE || "6642368701");
+  const whatsapp = safeStr(contact.whatsapp_display || process.env.SUPPORT_WHATSAPP_DISPLAY || "664 236 8701");
+  const supportHours = safeStr(home.support_hours || "");
+  const shippingNote = safeStr(home.shipping_note || "");
+  const returnsNote = safeStr(home.returns_note || "");
+  const footerNote = safeStr(home.footer_note || "");
+  const promoText = safeStr(settings?.promo_text || "");
+  const heroTitle = safeStr(settings?.hero_title || "SCORE STORE");
+  const maintenanceMode = Boolean(settings?.maintenance_mode);
 
-  const safeProduct = sanitizeContext(context.currentProduct || context.currentSku || context.product || "Ninguno");
-  const safeCartItems = sanitizeContext(context.cartItems || context.cart || "Sin productos detectados");
-  const safeTotal = sanitizeContext(context.cartTotal || context.total || "No disponible");
-  const safeShipMode = sanitizeContext(context.shipMode || context.shippingMode || "No definido");
-  const safeCategory = sanitizeContext(context.category || context.section || "No definida");
+  const safeProduct = safeStr(context.currentProduct || "Ninguno");
+  const safeSku = safeStr(context.currentSku || "Ninguno");
+  const safeCartItems = safeStr(context.cartItems || "Sin datos");
+  const safeTotal = safeStr(context.cartTotal || "Sin datos");
+  const safeShipMode = safeStr(context.shipMode || "Sin datos");
+  const safeOrderId = safeStr(context.orderId || "Ninguno");
+  const safeActionHint = safeStr(context.actionHint || "Ninguna");
+  const safeCategory = safeStr(context.category || "No definida");
 
   return `
-Eres SCORE AI, la agente comercial y operativa de Score Store.
+Eres SCORE Store Chat, el asistente público de la tienda.
 
-OBJETIVO:
-- Resolver dudas.
-- Guiar a compra.
-- Explicar el proceso de forma clara.
-- Ayudar con carrito, pago, envío, tallas, promociones visibles y contacto.
+Tono:
+- Claro, breve, premium y comercial.
+- Responde en español.
+- No uses tecnicismos innecesarios.
+- Si faltan datos, dilo directo.
 
-TONO:
-- Seguro.
-- Claro.
-- Comercial.
-- Corto pero útil.
-- Nada de tecnicismos.
-- Nada de texto robótico.
-- Sonido premium y confiable.
-
-REGLAS DURAS:
-- Nunca inventes precios, stock, promos ni tiempos exactos si no vienen en contexto.
-- Si no sabes un dato, dilo directo y ofrece el siguiente paso útil.
-- Si el usuario pide ayuda humana, usa solo estos datos vigentes:
+Reglas:
+- Nunca inventes stock, precios, promos ni tiempos exactos.
+- Si el usuario pregunta por pagos, habla solo de Stripe y OXXO Pay si aplica.
+- Si pregunta por envíos, explica que dependen del destino y del método disponible.
+- Si pregunta por tallas, guía con recomendaciones generales.
+- Si pide contacto humano, usa estos datos:
   Correo: ${email}
-  WhatsApp: ${whatsappDisplay}
+  WhatsApp: ${whatsapp}
+  Teléfono: ${phone}
   Horario: ${supportHours || "No especificado"}
-- Si preguntan cómo comprar, explica el flujo real: elegir producto, talla, carrito, envío, pago y confirmación.
-- Si preguntan por pagos, explica solo lo que sí está disponible: Stripe, tarjeta y OXXO Pay cuando aplique.
-- Si preguntan por envíos, explica que se calculan según destino y que hay MX, USA y pickup cuando corresponda.
-- Si hay notas públicas activas sobre envíos o cambios, puedes usarlas:
-  Nota de envíos: ${shippingNote || "No disponible"}
-  Nota de cambios o devoluciones: ${returnsNote || "No disponible"}
-- Si preguntas por el sitio, referencia pública: ${heroTitle}
-- Si preguntas por redes o contacto, no inventes: usa solo datos del contexto.
-- Nunca prometas acciones del sistema que no fueron confirmadas por el backend.
+- Si el modo mantenimiento está activo, menciónalo con prudencia.
+- Si no sabes algo, ofrece el siguiente paso útil.
 
-CONTEXTO ACTUAL DEL USUARIO:
+Contexto público:
+- Sitio: ${heroTitle}
+- Promo visible: ${promoText || "Sin promo activa"}
+- Modo mantenimiento: ${maintenanceMode ? "sí" : "no"}
+- Nota envíos: ${shippingNote || "No disponible"}
+- Nota devoluciones: ${returnsNote || "No disponible"}
+- Footer note: ${footerNote || "Sin nota"}
+- Redes: Facebook=${safeStr(socials.facebook || "")}, Instagram=${safeStr(socials.instagram || "")}, YouTube=${safeStr(socials.youtube || "")}
+- Catálogo activo: ${catalogSummary?.activeProducts ?? "No disponible"}
+- Productos destacados: ${catalogSummary?.featuredProducts ?? "No disponible"}
+
+Contexto del usuario:
 - Producto actual: ${safeProduct}
-- Carrito actual: ${safeCartItems}
+- SKU actual: ${safeSku}
+- Carrito: ${safeCartItems}
 - Total visible: ${safeTotal}
-- Modo de envío visible: ${safeShipMode}
-- Categoría/Sección visible: ${safeCategory}
-- Footer note pública: ${footerNote || "Sin nota"}
+- Envío visible: ${safeShipMode}
+- Pedido en foco: ${safeOrderId}
+- Sugerencia de acción: ${safeActionHint}
+- Categoría/Sección: ${safeCategory}
 
-COMANDOS DE ACCIÓN:
-Si detectas intención clarísima de compra sobre el producto actual, agrega exactamente al final:
-[ACTION:ADD_TO_CART:${safeProduct}]
-
-Si detectas intención clarísima de abrir carrito o pagar, agrega exactamente al final:
+Comandos:
+- Si la intención de compra es clara y hay SKU/producto en contexto, termina exactamente con:
+[ACTION:ADD_TO_CART:${safeSku || safeProduct}]
+- Si la intención es revisar el carrito o pagar, termina exactamente con:
 [ACTION:OPEN_CART]
-
-Usa comandos solo cuando de verdad ayuden.
 `.trim();
 }
 
-function normalizeReply(reply) {
-  return String(reply || "").trim().slice(0, MAX_REPLY_LEN);
-}
+async function loadPublicContext(sb, orgId) {
+  let settings = null;
 
-async function answerWithModel({ apiKey, systemText, message }) {
-  const preferredModel = DEFAULT_MODEL;
-  const fallbackModel = FALLBACK_MODEL;
-
-  let r = await callGemini({
-    apiKey,
-    model: preferredModel,
-    systemText,
-    userText: message,
-  });
-
-  if (!r.ok) {
-    const errMsg = String(r?.data?.error?.message || "");
-    const looksLikeModelIssue = r.status === 404 || /model.*not found/i.test(errMsg);
-
-    if (looksLikeModelIssue && preferredModel !== fallbackModel) {
-      r = await callGemini({
-        apiKey,
-        model: fallbackModel,
-        systemText,
-        userText: message,
-      });
-    }
+  if (typeof readPublicSiteSettings === "function") {
+    try {
+      settings = await readPublicSiteSettings(sb, orgId);
+    } catch {}
   }
 
-  if (!r.ok) {
-    const msg = r?.data?.error?.message || "El asistente no pudo responder.";
-    return { ok: false, error: String(msg) };
+  if (!settings) {
+    try {
+      const { data } = await sb
+        .from("site_settings")
+        .select("organization_id, org_id, hero_title, promo_active, promo_text, maintenance_mode, home, socials, contact_email, contact_phone, whatsapp_e164, whatsapp_display, updated_at, created_at")
+        .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+        .maybeSingle();
+
+      settings = data || null;
+    } catch {}
   }
 
-  const data = r.data || {};
-  const reply =
-    data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-    "No pude generar una respuesta en este momento.";
+  const contact = {
+    email: safeStr(
+      settings?.contact?.email ||
+        settings?.contact_email ||
+        process.env.SUPPORT_EMAIL ||
+        "ventas.unicotextil@gmail.com"
+    ),
+    phone: safeStr(
+      settings?.contact?.phone ||
+        settings?.contact_phone ||
+        process.env.SUPPORT_PHONE ||
+        "6642368701"
+    ),
+    whatsapp_display: safeStr(
+      settings?.contact?.whatsapp_display ||
+        settings?.whatsapp_display ||
+        process.env.SUPPORT_WHATSAPP_DISPLAY ||
+        "664 236 8701"
+    ),
+  };
 
-  return { ok: true, reply: normalizeReply(reply) };
-}
-
-module.exports = async (req, res) => {
-  const origin = req.headers.origin || req.headers.Origin || "*";
-
-  const sendResponse = (statusCode, data) => {
-    const response = jsonResponse(statusCode, data, origin);
-    Object.entries(response.headers).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
-    res.status(response.statusCode).send(response.body);
+  const catalogSummary = {
+    activeProducts: "N/D",
+    featuredProducts: "N/D",
   };
 
   try {
+    const { data: products } = await sb
+      .from("products")
+      .select("id, rank, active, is_active, deleted_at, stock")
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+      .is("deleted_at", null)
+      .limit(50);
+
+    const list = Array.isArray(products) ? products : [];
+    catalogSummary.activeProducts = list.filter((p) => p.active !== false && p.is_active !== false).length;
+    catalogSummary.featuredProducts = list.filter((p) => Number(p.rank || 0) <= 12).length;
+  } catch {}
+
+  return { settings, contact, catalogSummary };
+}
+
+async function callGemini({ message, prompt }) {
+  if (!GEMINI_API_KEY) return null;
+
+  const model = GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const url = `${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `${prompt}\n\nUSUARIO:\n${message}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.25,
+        topP: 0.9,
+        maxOutputTokens: 1024,
+      },
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error?.message || `Gemini HTTP ${res.status}`);
+  }
+
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p) => safeStr(p?.text || ""))
+      .join("")
+      .trim() || "";
+
+  return text || null;
+}
+
+function fallbackReply(message, settings, contact) {
+  const m = normalizeText(message).toLowerCase();
+  const email = safeStr(contact?.email || process.env.SUPPORT_EMAIL || "ventas.unicotextil@gmail.com");
+  const whatsapp = safeStr(contact?.whatsapp_display || process.env.SUPPORT_WHATSAPP_DISPLAY || "664 236 8701");
+  const phone = safeStr(contact?.phone || process.env.SUPPORT_PHONE || "6642368701");
+  const shippingNote = safeStr(settings?.home?.shipping_note || "");
+  const returnsNote = safeStr(settings?.home?.returns_note || "");
+  const promoText = safeStr(settings?.promo_text || "");
+
+  if (m.includes("envío") || m.includes("envio") || m.includes("ship")) {
+    return `Puedo ayudarte con envíos. ${shippingNote || "Se calculan según destino y método disponible."} Si necesitas soporte humano: ${whatsapp} · ${email}`;
+  }
+
+  if (m.includes("promo") || m.includes("cupón") || m.includes("cupon") || m.includes("descuento")) {
+    return promoText
+      ? `Promoción visible: ${promoText}`
+      : `No veo una promoción activa en este momento. Puedo ayudarte a revisar el carrito y aplicar un cupón válido.`;
+  }
+
+  if (m.includes("talla") || m.includes("size") || m.includes("medida")) {
+    return `Las tallas se manejan por producto. Si me dices la prenda, te oriento con la mejor opción.`;
+  }
+
+  if (m.includes("devol") || m.includes("cambio") || m.includes("return")) {
+    return returnsNote
+      ? returnsNote
+      : `Los cambios y devoluciones dependen del caso y del producto. Para soporte: ${phone} · ${email}`;
+  }
+
+  return `Estoy listo para ayudarte con catálogo, tallas, envío y checkout. Si prefieres soporte humano: ${whatsapp} · ${email}`;
+}
+
+module.exports = async (req, res) => {
+  const origin = getOrigin(req);
+
+  try {
     if (req.method === "OPTIONS") {
-      const response = handleOptions({ headers: req.headers });
-      Object.entries(response.headers).forEach(([key, value]) => {
-        res.setHeader(key, value);
-      });
-      res.status(response.statusCode).send(response.body);
-      return;
+      return send(res, handleOptions({ headers: req.headers }));
     }
 
     if (req.method !== "POST") {
-      sendResponse(405, { ok: false, error: "Method not allowed" });
-      return;
+      return send(res, jsonResponse(405, { ok: false, error: "Method not allowed" }, origin));
     }
 
-    const body = getBody(req);
-    const message = String(body.message || "").trim().slice(0, MAX_MESSAGE_LEN);
-    const context = body.context && typeof body.context === "object" ? body.context : {};
+    const rl = rateLimit(req);
+    if (!rl.ok) {
+      return send(res, jsonResponse(429, { ok: false, error: "rate_limited" }, origin));
+    }
 
+    const body = parseBody(req);
+    const message = parseMessage(body);
     if (!message) {
-      sendResponse(400, { ok: false, error: "Se requiere un mensaje válido." });
-      return;
+      return send(res, jsonResponse(400, { ok: false, error: "Se requiere un mensaje." }, origin));
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      sendResponse(200, { ok: false, error: "El asistente no está conectado en este momento." });
-      return;
+    const sb = supabaseAdmin();
+    if (!sb) {
+      return send(res, jsonResponse(500, { ok: false, error: "Supabase not configured" }, origin));
     }
 
-    const site = await readPublicSiteSettings().catch(() => null);
-    const systemText = buildSystemText(site, context);
-
-    let result = await answerWithModel({
-      apiKey,
-      systemText,
-      message,
-    });
-
-    if (!result.ok) {
-      sendResponse(200, { ok: false, error: normalizeGeminiError(result.error) });
-      return;
+    let orgId = parseOrgId(body, req);
+    if (!orgId) {
+      try {
+        orgId = await resolveScoreOrgId(sb);
+      } catch {
+        orgId = DEFAULT_SCORE_ORG_ID;
+      }
     }
 
-    const actions = extractActions(result.reply);
-    const reply = stripActions(result.reply);
+    const context = parseContext(body);
+    const { settings, contact, catalogSummary } = await loadPublicContext(sb, orgId);
 
-    sendResponse(200, {
-      ok: true,
-      reply,
-      actions,
-    });
-  } catch (error) {
-    sendResponse(500, {
-      ok: false,
-      error: "El asistente está temporalmente fuera de línea.",
-    });
+    const prompt = buildPrompt({ settings, catalogSummary, context });
+
+    let reply = null;
+    let usedModel = null;
+
+    if (GEMINI_API_KEY) {
+      try {
+        reply = await callGemini({ message, prompt });
+        usedModel = GEMINI_MODEL;
+      } catch (e) {
+        if (GEMINI_FALLBACK_MODEL && GEMINI_FALLBACK_MODEL !== GEMINI_MODEL) {
+          try {
+            const prev = process.env.GEMINI_MODEL;
+            process.env.GEMINI_MODEL = GEMINI_FALLBACK_MODEL;
+            reply = await callGemini({ message, prompt });
+            usedModel = GEMINI_FALLBACK_MODEL;
+            process.env.GEMINI_MODEL = prev;
+          } catch (fallbackErr) {
+            reply = fallbackReply(message, settings, contact);
+            usedModel = "fallback";
+          }
+        } else {
+          reply = fallbackReply(message, settings, contact);
+          usedModel = "fallback";
+        }
+      }
+    } else {
+      reply = fallbackReply(message, settings, contact);
+      usedModel = "fallback";
+    }
+
+    const rawReply = safeStr(reply || fallbackReply(message, settings, contact));
+    const actions = extractActionMarkers(rawReply);
+    const cleanReply = stripActionMarkers(rawReply);
+
+    if (typeof sendTelegram === "function" && actions.length) {
+      try {
+        await sendTelegram(
+          [
+            "💬 <b>Score Store Chat</b>",
+            `Org: ${orgId}`,
+            `Actions: ${actions.map((a) => `${a.action}${a.value ? `:${a.value}` : ""}`).join(", ")}`,
+          ].join("\n")
+        );
+      } catch {}
+    }
+
+    return send(
+      res,
+      jsonResponse(
+        200,
+        {
+          ok: true,
+          org_id: orgId,
+          reply: cleanReply,
+          actions,
+          model: usedModel || (GEMINI_API_KEY ? GEMINI_MODEL : "fallback"),
+        },
+        origin
+      )
+    );
+  } catch (e) {
+    return send(
+      res,
+      jsonResponse(
+        500,
+        {
+          ok: false,
+          error: String(e?.message || e || "No fue posible procesar el chat."),
+        },
+        origin
+      )
+    );
   }
 };
