@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "npx --yes serve . -l 3000",
     "preview": "npx --yes serve . -l 4173",
-    "build": "node scripts/validate-static.js",
-    "lint": "node scripts/validate-static.js",
-    "check": "node scripts/validate-static.js"
+    "build": "node scripts/check-api-budget.js && node scripts/validate-static.js",
+    "lint": "node scripts/check-api-budget.js && node scripts/validate-static.js",
+    "check": "node scripts/check-api-budget.js && node scripts/validate-static.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
