@@ -170,17 +170,24 @@ const safeStr = (v, d = "") =>
   typeof v === "string" ? v : v == null ? d : String(v);
 
 /* =========================================================
-   SUPABASE
+   SUPABASE (CORREGIDO)
    ========================================================= */
 
 const getSupabaseServiceKey = () =>
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_ROLE ||
-  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || // Fallback para cliente
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  "";
+
+const getSupabaseUrl = () => 
+  process.env.SUPABASE_URL || 
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 
   "";
 
 const isSupabaseConfigured = () =>
-  Boolean(process.env.SUPABASE_URL && getSupabaseServiceKey() && createClient);
+  Boolean(getSupabaseUrl() && getSupabaseServiceKey() && createClient);
 
 const supabaseAdmin = (() => {
   let client = null;
@@ -192,7 +199,7 @@ const supabaseAdmin = (() => {
     if (!isSupabaseConfigured()) return null;
 
     try {
-      client = createClient(process.env.SUPABASE_URL, getSupabaseServiceKey(), {
+      client = createClient(getSupabaseUrl(), getSupabaseServiceKey(), {
         auth: { persistSession: false },
         global: { headers: { "x-client-info": "scorestore-vercel-functions" } },
       });
