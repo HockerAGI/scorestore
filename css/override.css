@@ -1,4 +1,4 @@
-/* =========================================================
+lo/* =========================================================
    SCORE STORE — override.css (final visual layer)
    Catálogo, carrito, chat, categorías y microinteracciones.
    Complementa styles.css sin romper checkout ni PWA.
@@ -1174,4 +1174,465 @@ img {
     right: 12px;
     bottom: calc(12px + var(--safe-bottom));
   }
+}
+// src/app/api/ai/route.js
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { serverSupabase, requireUserFromToken } from "@/lib/serverSupabase";
+import { hasPerm } from "@/lib/authz";
+import { writeAudit } from "@/lib/auditServer";
+import { getMyRoleForOrg, isUuid, normEmail } from "@/lib/dbScope";
+
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash";
+const MAX_MESSAGE_LEN = 1800;
+const MAX_REPLY_LEN = 1800;
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
+function json(status, payload) {
+  return NextResponse.json(payload, { status, headers: noStoreHeaders });
+}
+
+function getBearerToken(req) {
+  const h = req.headers.get("authorization") || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1] : "";
+}
+
+function safeStr(v, d = "") {
+  return typeof v === "string" ? v : v == null ? d : String(v);
+}
+
+function safeBool(v, d = false) {
+  if (typeof v === "boolean") return v;
+  if (v === "true" || v === "1" || v === 1) return true;
+  if (v === "false" || v === "0" || v === 0) return false;
+  return d;
+}
+
+function safeNum(v, d = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+}
+
+function clampText(v, max = MAX_MESSAGE_LEN) {
+  return String(v ?? "").trim().slice(0, max);
+}
+
+function normalizeLower(v) {
+  return safeStr(v).trim().toLowerCase();
+}
+
+function parseOrgId(body = {}, req = null) {
+  const q = req?.url ? new URL(req.url) : null;
+  const fromBody = safeStr(body?.org_id || body?.orgId || body?.organization_id || "").trim();
+  const fromQuery = safeStr(
+    q?.searchParams.get("org_id") ||
+      q?.searchParams.get("orgId") ||
+      q?.searchParams.get("organization_id") ||
+      ""
+  ).trim();
+
+  return fromBody || fromQuery;
+}
+
+function parseMessage(body = {}) {
+  return clampText(body?.message ?? body?.prompt ?? body?.text ?? body?.input ?? "");
+}
+
+function parseContext(body = {}) {
+  const ctx = body?.context && typeof body.context === "object" ? body.context : {};
+  return {
+    currentProduct: safeStr(ctx.currentProduct || ctx.product || body?.currentProduct || ""),
+    currentSku: safeStr(ctx.currentSku || ctx.sku || body?.currentSku || ""),
+    cartItems: safeStr(ctx.cartItems || ctx.cart || body?.cartItems || ""),
+    cartTotal: safeStr(ctx.cartTotal || ctx.total || body?.cartTotal || ""),
+    shipMode: safeStr(ctx.shipMode || ctx.shippingMode || body?.shipMode || ""),
+    orderId: safeStr(ctx.orderId || ctx.order_id || body?.orderId || ""),
+    actionHint: safeStr(ctx.actionHint || ctx.action || body?.actionHint || ""),
+    category: safeStr(ctx.category || ctx.section || body?.category || ""),
+  };
+}
+
+function normalizeReply(text) {
+  return String(text || "")
+    .replace(/\[ACTION:[A-Z_]+(?::[^\]]+)?\]/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, MAX_REPLY_LEN);
+}
+
+function extractActionMarkers(text) {
+  const raw = String(text || "");
+  const actions = [];
+  const regex = /\[ACTION:([A-Z_]+)(?::([^\]]+))?\]/g;
+
+  for (const match of raw.matchAll(regex)) {
+    actions.push({
+      action: safeStr(match[1]).toUpperCase(),
+      value: safeStr(match[2]).trim(),
+    });
+  }
+
+  return actions;
+}
+
+function parseModelJson(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return null;
+
+  const cleaned = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeGeminiError(err) {
+  const msg = String(err?.message || err || "");
+  if (/model.*not found|404/i.test(msg)) return "El modelo de IA configurado no está disponible.";
+  if (/api key|unauth|permission|denied|401|403/i.test(msg)) return "La IA no tiene permiso o llave válida.";
+  return "La IA no pudo completar la solicitud.";
+}
+
+async function loadContext(sb, orgId) {
+  const [settingsRes, orgRes, ordersRes, productsRes, auditRes] = await Promise.all([
+    sb
+      .from("site_settings")
+      .select("hero_title, hero_image, promo_active, promo_text, pixel_id, maintenance_mode, season_key, theme, home, socials, contact_email, contact_phone, whatsapp_e164, whatsapp_display, created_at, updated_at, org_id, organization_id")
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+      .maybeSingle(),
+    sb
+      .from("organizations")
+      .select("id, name, slug")
+      .eq("id", orgId)
+      .maybeSingle(),
+    sb
+      .from("orders")
+      .select("id, status, payment_status, amount_total_mxn, created_at, org_id, organization_id")
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    sb
+      .from("products")
+      .select("id, name, sku, stock, active, is_active, deleted_at, rank, org_id, organization_id")
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+      .order("rank", { ascending: true })
+      .limit(80),
+    sb
+      .from("audit_log")
+      .select("id, action, entity, summary, created_at, org_id, organization_id")
+      .or(`org_id.eq.${orgId},organization_id.eq.${orgId}`)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const settings = settingsRes?.data || {};
+  const org = orgRes?.data || null;
+  const orders = Array.isArray(ordersRes?.data) ? ordersRes.data : [];
+  const products = Array.isArray(productsRes?.data) ? productsRes.data : [];
+  const audit = Array.isArray(auditRes?.data) ? auditRes.data : [];
+
+  const totalOrders = orders.length;
+  const paidOrders = orders.filter((o) => {
+    const s = normalizeLower(o?.status || o?.payment_status || "");
+    return ["paid", "fulfilled"].includes(s);
+  }).length;
+
+  const pendingOrders = orders.filter((o) => {
+    const s = normalizeLower(o?.status || o?.payment_status || "");
+    return ["pending", "pending_payment", "payment_failed", "unpaid"].includes(s);
+  }).length;
+
+  const refundedOrders = orders.filter((o) => normalizeLower(o?.status || o?.payment_status || "") === "refunded").length;
+  const valueMXN = orders.reduce((sum, o) => sum + safeNum(o?.amount_total_mxn, 0), 0);
+  const activeProducts = products.filter((p) => p?.active !== false && p?.is_active !== false && !p?.deleted_at).length;
+  const lowStockProducts = products.filter((p) => safeNum(p?.stock, 999) > 0 && safeNum(p?.stock, 999) <= 5).length;
+
+  const contact = {
+    email: safeStr(settings.contact_email || process.env.SUPPORT_EMAIL || "ventas.unicotextil@gmail.com"),
+    phone: safeStr(settings.contact_phone || process.env.SUPPORT_PHONE || "6642368701"),
+    whatsapp_e164: safeStr(settings.whatsapp_e164 || process.env.SUPPORT_WHATSAPP_E164 || "5216642368701"),
+    whatsapp_display: safeStr(settings.whatsapp_display || process.env.SUPPORT_WHATSAPP_DISPLAY || "664 236 8701"),
+  };
+
+  const theme = settings.theme && typeof settings.theme === "object" ? settings.theme : {};
+  const home = settings.home && typeof settings.home === "object" ? settings.home : {};
+  const socials = settings.socials && typeof settings.socials === "object" ? settings.socials : {};
+
+  return {
+    orgName: org?.name || settings.hero_title || "Organización",
+    settings: {
+      hero_title: safeStr(settings.hero_title || "SCORE STORE"),
+      hero_image: safeStr(settings.hero_image || ""),
+      promo_active: safeBool(settings.promo_active, false),
+      promo_text: safeStr(settings.promo_text || ""),
+      pixel_id: safeStr(settings.pixel_id || ""),
+      maintenance_mode: safeBool(settings.maintenance_mode, false),
+      season_key: safeStr(settings.season_key || "default"),
+      theme: {
+        accent: safeStr(theme.accent || "#e10600"),
+        accent2: safeStr(theme.accent2 || "#111111"),
+        particles: safeBool(theme.particles, true),
+      },
+      home: {
+        footer_note: safeStr(home.footer_note || ""),
+        shipping_note: safeStr(home.shipping_note || ""),
+        returns_note: safeStr(home.returns_note || ""),
+        support_hours: safeStr(home.support_hours || ""),
+      },
+      socials: {
+        facebook: safeStr(socials.facebook || ""),
+        instagram: safeStr(socials.instagram || ""),
+        youtube: safeStr(socials.youtube || ""),
+        tiktok: safeStr(socials.tiktok || ""),
+      },
+      contact,
+      updated_at: settings.updated_at || null,
+      created_at: settings.created_at || null,
+    },
+    orders: { totalOrders, paidOrders, pendingOrders, refundedOrders, valueMXN: Math.round(valueMXN * 100) / 100 },
+    products: { activeProducts, lowStockProducts },
+    audit: { totalAudit: audit.length },
+  };
+}
+
+function buildPrompt({ orgName, role, settings, orders, products, audit, context }) {
+  const contact = settings.contact || {};
+  const home = settings.home || {};
+  const socials = settings.socials || {};
+
+  return `
+Eres UnicOs AI, el agente operativo y administrativo del panel.
+
+Objetivo:
+- Resolver dudas operativas.
+- Proponer acciones seguras.
+- Ejecutar acciones administrativas mediante respuestas estructuradas.
+- Mantener el panel limpio, claro y accionable.
+
+Reglas:
+- No inventes datos.
+- No expongas secretos ni tokens.
+- Si falta información, dilo directo.
+- Si el usuario pide una acción real, responde con JSON válido:
+{
+  "reply": "texto breve y útil",
+  "actions": [
+    { "type": "update_settings", "payload": { ... } },
+    { "type": "activate_product", "payload": { "product_id": "..." } },
+    { "type": "deactivate_product", "payload": { "product_id": "..." } },
+    { "type": "mark_order_shipped", "payload": { "order_id": "..." } },
+    { "type": "set_promo", "payload": { "promo_active": true, "promo_text": "..." } }
+  ]
+}
+- Si no hay acción, devuelve igual JSON con "actions": [].
+- Si no estás seguro, devuelve solo una recomendación en "reply" y sin acciones.
+
+Contexto de organización:
+- Organización: ${orgName}
+- Rol: ${role}
+- Hero title: ${settings.hero_title}
+- Promo activa: ${settings.promo_active ? "sí" : "no"}
+- Promo text: ${settings.promo_text || "—"}
+- Mantenimiento: ${settings.maintenance_mode ? "sí" : "no"}
+- Soporte: ${home.support_hours || "—"}
+- Correo: ${contact.email}
+- Teléfono: ${contact.phone}
+- WhatsApp: ${contact.whatsapp_display}
+- Redes: FB=${socials.facebook || "—"} IG=${socials.instagram || "—"} YT=${socials.youtube || "—"}
+
+Métricas:
+- Pedidos: ${orders.totalOrders}
+- Pagados: ${orders.paidOrders}
+- Pendientes: ${orders.pendingOrders}
+- Reembolsados: ${orders.refundedOrders}
+- Valor: ${orders.valueMXN} MXN
+- Productos activos: ${products.activeProducts}
+- Stock bajo: ${products.lowStockProducts}
+- Auditoría reciente: ${audit.totalAudit}
+
+Contexto de usuario:
+- Producto actual: ${safeStr(context.currentProduct || "—")}
+- SKU actual: ${safeStr(context.currentSku || "—")}
+- Carrito: ${safeStr(context.cartItems || "—")}
+- Total: ${safeStr(context.cartTotal || "—")}
+- Modo envío: ${safeStr(context.shipMode || "—")}
+- Pedido foco: ${safeStr(context.orderId || "—")}
+- Sugerencia: ${safeStr(context.actionHint || "—")}
+- Categoría: ${safeStr(context.category || "—")}
+
+Idioma: español.
+Tono: profesional, breve, claro, ejecutable.
+`.trim();
+}
+
+async function callGemini(apiKey, model, prompt, message) {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const gm = genAI.getGenerativeModel({
+    model,
+    systemInstruction: prompt,
+    generationConfig: {
+      temperature: 0.2,
+      topP: 0.9,
+      maxOutputTokens: 1024,
+    },
+  });
+
+  const result = await gm.generateContent(message);
+  return result?.response?.text?.() || "";
+}
+
+async function authorize(req, sb, orgId) {
+  const token = getBearerToken(req);
+  const { user, error: authErr } = await requireUserFromToken(sb, token);
+  if (authErr || !user) return { ok: false, res: json(401, { ok: false, error: "No autorizado" }) };
+
+  const role = await getMyRoleForOrg(sb, orgId, user);
+  const roleName = safeStr(role || "").toLowerCase();
+
+  if (!(hasPerm(role, "ai") || ["owner", "admin", "marketing"].includes(roleName))) {
+    return { ok: false, res: json(403, { ok: false, error: "Permisos insuficientes" }) };
+  }
+
+  return { ok: true, user, role: roleName || "viewer" };
+}
+
+async function persistActions(sb, orgId, actions = [], sourceText = "") {
+  const allowed = new Set([
+    "activate_product",
+    "deactivate_product",
+    "mark_order_shipped",
+    "set_promo",
+    "update_settings",
+  ]);
+
+  const rows = (Array.isArray(actions) ? actions : [])
+    .map((a) => ({
+      org_id: orgId,
+      type: safeStr(a?.type || a?.action || "").trim().toLowerCase(),
+      payload: a?.payload && typeof a.payload === "object" ? a.payload : {},
+      status: "pending",
+      result: null,
+    }))
+    .filter((a) => allowed.has(a.type));
+
+  if (!rows.length) return [];
+
+  const { data, error } = await sb.from("ai_actions").insert(rows).select("id, type, status, created_at");
+  if (error) throw error;
+
+  return Array.isArray(data) ? data : [];
+}
+
+export async function POST(req) {
+  try {
+    const sb = serverSupabase();
+    if (!sb) return json(500, { ok: false, error: "Supabase no configurado" });
+
+    const body = await req.json().catch(() => ({}));
+    const orgId = parseOrgId(body, req);
+    const message = parseMessage(body);
+    const context = parseContext(body);
+
+    if (!isUuid(orgId)) return json(400, { ok: false, error: "org_id inválido" });
+    if (!message) return json(400, { ok: false, error: "Se requiere un mensaje válido." });
+
+    const auth = await authorize(req, sb, orgId);
+    if (!auth.ok) return auth.res;
+
+    const { orgName, settings, orders, products, audit } = await loadContext(sb, orgId);
+    const prompt = buildPrompt({ orgName, role: auth.role, settings, orders, products, audit, context });
+
+    const apiKey = process.env.GEMINI_API_KEY || "";
+    if (!apiKey) {
+      return json(500, { ok: false, error: "GEMINI_API_KEY no configurada" });
+    }
+
+    const preferredModel = safeStr(process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+    const fallbackModel = safeStr(process.env.GEMINI_FALLBACK_MODEL || FALLBACK_MODEL).trim();
+
+    let raw = "";
+    let usedModel = preferredModel;
+
+    try {
+      raw = await callGemini(apiKey, preferredModel, prompt, message);
+    } catch (err) {
+      const errMsg = String(err?.message || err || "");
+      if (/model.*not found|404/i.test(errMsg) && fallbackModel && fallbackModel !== preferredModel) {
+        usedModel = fallbackModel;
+        raw = await callGemini(apiKey, fallbackModel, prompt, message);
+      } else {
+        return json(200, { ok: false, error: normalizeGeminiError(err) });
+      }
+    }
+
+    const structured = parseModelJson(raw);
+    const fallbackReply = normalizeReply(raw || "No pude generar una respuesta en este momento.");
+    const reply = normalizeReply(structured?.reply || fallbackReply);
+    const actions = Array.isArray(structured?.actions) ? structured.actions : extractActionMarkers(raw);
+
+    const insertedActions = await persistActions(sb, orgId, actions, raw).catch(() => []);
+
+    await writeAudit(sb, {
+      organization_id: orgId,
+      actor_email: normEmail(auth.user?.email),
+      actor_user_id: auth.user?.id || null,
+      action: "ai.chat",
+      entity: "ai",
+      entity_id: orgId,
+      summary: clampText(message, 220),
+      before: null,
+      after: {
+        reply_preview: clampText(reply, 400),
+        actions: insertedActions,
+      },
+      meta: {
+        role: auth.role,
+        model: usedModel,
+        source: "api/ai",
+        context: {
+          currentProduct: context.currentProduct || null,
+          currentSku: context.currentSku || null,
+          orderId: context.orderId || null,
+          actionHint: context.actionHint || null,
+        },
+      },
+      ip: req.headers.get("x-forwarded-for") || null,
+      user_agent: req.headers.get("user-agent") || null,
+    });
+
+    return json(200, {
+      ok: true,
+      reply,
+      actions: insertedActions,
+      model: usedModel,
+      org_id: orgId,
+      org_name: orgName,
+    });
+  } catch (e) {
+    return json(500, { ok: false, error: String(e?.message || e) });
+  }
+}
+
+export async function GET() {
+  return json(405, { ok: false, error: "Method not allowed" });
+}
+
+export async function OPTIONS() {
+  return json(204, {});
 }
