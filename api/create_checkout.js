@@ -22,7 +22,7 @@ const {
 } = require("./_shared");
 
 const { rateLimit } = require("./_rate_limit");
-const { checkIdempotency, saveIdempotency } = require("../lib/idempotency");
+const { checkIdempotency, saveIdempotency } = require("../idempotency");
 
 const DEFAULT_CURRENCY = "MXN";
 const MAX_ITEMS = 120;
@@ -564,15 +564,13 @@ async function main(req, res) {
       updated_at: new Date().toISOString(),
     };
 
-    if (sb) {
-      try {
-        const { error } = await sb.from("orders").upsert(row, {
-          onConflict: "checkout_session_id",
-        });
-        if (error) throw error;
-      } catch (e) {
-        console.error("[create_checkout] order upsert failed:", e?.message || e);
-      }
+    try {
+      const { error } = await sb.from("orders").upsert(row, {
+        onConflict: "checkout_session_id",
+      });
+      if (error) throw error;
+    } catch (e) {
+      console.error("[create_checkout] order upsert failed:", e?.message || e);
     }
 
     if (typeof sendTelegram === "function") {
@@ -596,7 +594,6 @@ async function main(req, res) {
         ok: true,
         url: session.url,
         checkout_url: session.url,
-        session_url: session.url,
         session_id: session.id,
         id: session.id,
         payment_status: session.payment_status || "unpaid",
