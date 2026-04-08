@@ -21,12 +21,10 @@ function walkJsFiles(dir, base = dir) {
 
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
-
     if (entry.isDirectory()) {
       out.push(...walkJsFiles(full, base));
       continue;
     }
-
     if (entry.isFile() && entry.name.endsWith(".js")) {
       out.push(path.relative(base, full).replaceAll(path.sep, "/"));
     }
@@ -41,15 +39,19 @@ if (!fs.existsSync(apiDir)) {
 }
 
 const routeFiles = walkJsFiles(apiDir).sort();
-const count = routeFiles.length;
+const extra = routeFiles.filter((file) => file !== "index.js");
 
-console.log(`OK: archivos JS detectados en api/: ${count}/${FUNCTION_LIMIT}`);
+console.log(`OK: archivos JS detectados en api/: ${routeFiles.length}/${FUNCTION_LIMIT}`);
 for (const file of routeFiles) {
   console.log(`- ${file}`);
 }
 
-if (count > FUNCTION_LIMIT) {
-  fail(`El repositorio supera el límite de ${FUNCTION_LIMIT} Serverless Functions del plan Hobby.`);
+if (!routeFiles.includes("index.js")) {
+  fail("Falta api/index.js.");
 }
 
-console.log("OK: presupuesto de funciones dentro del límite.");
+if (extra.length > 0) {
+  fail(`Hay archivos JS extra en api/: ${extra.join(", ")}`);
+}
+
+console.log("OK: solo api/index.js permanece en /api/.");
