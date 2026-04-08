@@ -1,14 +1,12 @@
 /* SCORE STORE — Service Worker
-   Fix visual/cache layer:
-   - Precache limpio
+   UI fix:
    - Bump de versión para invalidar caches viejos
-   - Activación inmediata
-   - Sin interferir con navegación
+   - Precache de assets de catálogo y hero
+   - No interceptar navegación
+   - ignoreSearch para estilos con query string
 */
 
-const VERSION = "scorestore-sw-v2-2026-04-08-ui-fix-2";
-const ASSET_VERSION = "2026-04-08-ui-fix-2";
-
+const VERSION = "scorestore-sw-v3-2026-04-08-images-ui";
 const STATIC_CACHE = `scorestore-static-${VERSION}`;
 const RUNTIME_CACHE = `scorestore-runtime-${VERSION}`;
 
@@ -23,13 +21,19 @@ const PRECACHE = [
   "/sitemap.xml",
   "/css/styles.css",
   "/css/override.css",
-  `/css/override.css?v=${ASSET_VERSION}`,
   "/js/main.js",
   "/js/success.js",
+  "/assets/logo-score.webp",
+  "/assets/hero.webp",
+  "/assets/fondo-pagina-score.webp",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
   "/assets/icons/icon-192-maskable.png",
   "/assets/icons/icon-512-maskable.png",
+  "/assets/edicion_2025/camiseta-negra-baja1000.webp",
+  "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
+  "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
+  "/assets/sf250/camiseta-negra-sinmangas-SF250.webp",
 ];
 
 function shouldNeverCache(url) {
@@ -66,14 +70,14 @@ async function safePrecache() {
         await cache.put(url, res.clone());
       }
     } catch {
-      // Silencioso: el sitio debe seguir arrancando aunque un asset falle.
+      // Silencioso
     }
   }
 }
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(req);
+  const cached = await cache.match(req, { ignoreSearch: true });
   if (cached) return cached;
 
   const fresh = await fetch(req);
@@ -85,7 +89,7 @@ async function cacheFirst(req, cacheName) {
 
 async function staleWhileRevalidate(req, cacheName, event) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(req);
+  const cached = await cache.match(req, { ignoreSearch: true });
 
   const networkPromise = fetch(req)
     .then(async (fresh) => {
@@ -132,16 +136,6 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   if (req.mode === "navigate") return;
   if (shouldNeverCache(req.url)) return;
-
-  if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(cacheFirst(req, STATIC_CACHE));
-    return;
-  }
-
-  if (PRECACHE.includes(url.pathname) || PRECACHE.includes(url.pathname + url.search)) {
-    event.respondWith(staleWhileRevalidate(req, STATIC_CACHE, event));
-    return;
-  }
 
   if (
     url.pathname.startsWith("/assets/") ||
