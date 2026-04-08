@@ -1,301 +1,358 @@
-<!doctype html>
-<html lang="es-MX">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f0f0f" />
-  <meta name="description" content="Estado de tu pedido en SCORE STORE. Revisa el resumen de pago, entrega y soporte oficial." />
-  <meta name="robots" content="noindex,nofollow" />
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' https://*.vercel.app;
-        img-src 'self' data: https:;
-        script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net;
-        style-src 'self' 'unsafe-inline';
-        connect-src 'self' https://*.vercel.app https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net;
-        manifest-src 'self';
-        worker-src 'self';
-        frame-src https://js.stripe.com https://hooks.stripe.com;" />
+(() => {
+  "use strict";
 
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  const $ = (sel, root = document) => root.querySelector(sel);
 
-  <title>Pago Confirmado — SCORE STORE</title>
+  const heroEmoji = $("#heroEmoji");
+  const heroTitle = $("#heroTitle");
+  const heroText = $("#heroText");
 
-  <link rel="canonical" href="https://scorestore.vercel.app/success.html" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  const orderId = $("#orderId");
+  const orderTotal = $("#orderTotal");
+  const orderStatusText = $("#orderStatusText");
+  const orderEmail = $("#orderEmail");
+  const orderShipMode = $("#orderShipMode");
 
-  <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-04-08-ui-fix-2" />
+  const extraHint = $("#extraHint");
+  const copyBtn = $("#copyBtn");
 
-  <style>
-    .success-page {
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top right, rgba(225,6,0,0.10), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(14,165,233,0.10), transparent 35%),
-        linear-gradient(180deg, #0a0a0a, #111);
-      color: #fff;
+  const successSupportEmail = $("#successSupportEmail");
+  const successSupportWa = $("#successSupportWa");
+  const footerNote = $("#footerNote");
+
+  const STORAGE_KEYS = [
+    "scorestore_cart_v3",
+    "scorestore_ship_v3",
+    "scorestore_promo_v3",
+    "scorestore_customer_v3",
+    "scorestore_ui_v3",
+    "scorestore_cart_v2_pro",
+    "scorestore_ship_v2",
+    "scorestore_customer_v2",
+  ];
+
+  function safeStr(v, d = "—") {
+    return typeof v === "string" && v.trim() ? v.trim() : d;
+  }
+
+  function money(value) {
+    const n = Number(value);
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 2,
+    }).format(Number.isFinite(n) ? n / 100 : 0);
+  }
+
+  function getSessionId() {
+    const url = new URL(window.location.href);
+    return (
+      url.searchParams.get("session_id") ||
+      url.searchParams.get("payment_intent") ||
+      url.searchParams.get("checkout_id") ||
+      url.searchParams.get("order_id") ||
+      ""
+    ).trim();
+  }
+
+  function normalizePaymentStatus(v) {
+    const s = safeStr(v, "").toLowerCase();
+    if (!s) return "processing";
+    if (["paid", "succeeded", "complete", "completed", "confirmed"].includes(s)) return "paid";
+    if (["pending", "processing", "open", "requires_payment_method", "requires_action"].includes(s)) return "pending";
+    if (["refunded", "refund"].includes(s)) return "refunded";
+    if (["failed", "canceled", "cancelled", "error"].includes(s)) return "failed";
+    return s;
+  }
+
+  function normalizeShipMode(mode) {
+    const m = safeStr(mode, "").toLowerCase();
+    if (m === "pickup") return "Recogida en tienda";
+    if (m === "pickup_local") return "Recogida local";
+    if (m === "delivery") return "Envío a domicilio";
+    if (m === "envia_mx") return "Envía MX";
+    if (m === "envia_us") return "Envía US";
+    return m ? m.replaceAll("_", " ") : "No definido";
+  }
+
+  function setText(el, value) {
+    if (!el) return;
+    el.textContent = value;
+  }
+
+  function setHref(el, href) {
+    if (!el || !href) return;
+    el.setAttribute("href", href);
+  }
+
+  function setHero(type, title, text) {
+    const map = {
+      paid: ["🏆", "Pago confirmado"],
+      pending: ["⏳", "Pago en proceso"],
+      refunded: ["↩️", "Pago reembolsado"],
+      failed: ["⚠️", "Error de verificación"],
+      default: ["🏁", "Estado del pedido"],
+    };
+
+    const [emoji, defaultTitle] = map[type] || map.default;
+
+    if (heroEmoji) heroEmoji.textContent = emoji;
+    if (heroTitle) heroTitle.textContent = title || defaultTitle;
+    if (heroText) heroText.textContent = text || "Estableciendo conexión con el estado de tu compra.";
+
+    document.title = `${title || defaultTitle} — SCORE STORE`;
+  }
+
+  function clearCart() {
+    try {
+      for (const key of STORAGE_KEYS) {
+        localStorage.removeItem(key);
+      }
+    } catch {}
+  }
+
+  function bindCopy(sessionId) {
+    if (!copyBtn) return;
+
+    copyBtn.addEventListener("click", async () => {
+      const text = safeStr(orderId?.textContent || sessionId || "", "").trim();
+      if (!text || text === "—") return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = copyBtn.textContent;
+        copyBtn.textContent = "Copiado ✅";
+        setTimeout(() => {
+          copyBtn.textContent = original || "Copiar ID";
+        }, 1500);
+      } catch {
+        setText(extraHint, text);
+      }
+    });
+  }
+
+  function applyOrderData(data, sessionId) {
+    const statusRaw = normalizePaymentStatus(data?.payment_status || data?.status || data?.paymentIntentStatus);
+    const shipModeLabel = normalizeShipMode(data?.shipping_mode);
+
+    const idValue =
+      safeStr(
+        data?.session_id ||
+          data?.checkout_session_id ||
+          data?.stripe_session_id ||
+          data?.id ||
+          sessionId ||
+          ""
+      ).trim();
+
+    const totalCents =
+      Number.isFinite(Number(data?.amount_total_cents))
+        ? Number(data.amount_total_cents)
+        : Number.isFinite(Number(data?.total_cents))
+          ? Number(data.total_cents)
+          : Number.isFinite(Number(data?.amount_total))
+            ? Number(data.amount_total)
+            : Number.isFinite(Number(data?.amount_total_mxn))
+              ? Math.round(Number(data.amount_total_mxn) * 100)
+              : null;
+
+    const emailValue = safeStr(
+      data?.customer_email ||
+        data?.email ||
+        data?.customer_details?.email ||
+        data?.stripe_session?.customer_email ||
+        "—"
+    );
+
+    const titleMap = {
+      paid: "Pago confirmado",
+      pending: "Pago en proceso",
+      refunded: "Pago reembolsado",
+      failed: "No se pudo verificar",
+    };
+
+    const heroMap = {
+      paid: "Tu compra quedó lista y registrada en el sistema.",
+      pending: "Tu pago todavía puede estar sincronizándose con Stripe o con el método elegido.",
+      refunded: "La orden fue marcada como reembolsada o cancelada.",
+      failed: "El estado no pudo confirmarse en este momento.",
+    };
+
+    if (idValue) setText(orderId, idValue);
+    if (Number.isFinite(totalCents) && orderTotal) setText(orderTotal, money(totalCents));
+    if (orderStatusText) {
+      const label =
+        statusRaw === "paid"
+          ? "Confirmado"
+          : statusRaw === "pending"
+            ? "Procesando"
+            : statusRaw === "refunded"
+              ? "Reembolsado"
+              : statusRaw === "failed"
+                ? "Error"
+                : "Procesando";
+      setText(orderStatusText, label);
     }
 
-    .success-shell {
-      width: min(1120px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 32px 0 48px;
+    if (orderEmail) setText(orderEmail, emailValue);
+    if (orderShipMode) setText(orderShipMode, shipModeLabel);
+
+    const hint =
+      statusRaw === "paid"
+        ? "Tu compra quedó registrada. Conserva el ID de sesión para soporte."
+        : statusRaw === "pending"
+          ? "Si pagaste con OXXO, la validación puede tardar hasta 1 día hábil. Si fue con tarjeta, revisa tu correo o recarga la página."
+          : statusRaw === "refunded"
+            ? "Si el cargo fue reembolsado, el tiempo de reflejo depende del banco o método de pago."
+            : "Conserva el ID de sesión para soporte y seguimiento.";
+
+    if (extraHint) setText(extraHint, hint);
+
+    setHero(
+      statusRaw,
+      titleMap[statusRaw] || "Estado del pedido",
+      heroMap[statusRaw] || "Estableciendo conexión con el estado de tu compra."
+    );
+
+    if (statusRaw === "paid") {
+      document.body.classList.add("is-paid");
+      document.body.classList.remove("is-pending", "is-failed", "is-refunded");
+    } else if (statusRaw === "pending") {
+      document.body.classList.add("is-pending");
+      document.body.classList.remove("is-paid", "is-failed", "is-refunded");
+    } else if (statusRaw === "refunded") {
+      document.body.classList.add("is-refunded");
+      document.body.classList.remove("is-paid", "is-pending", "is-failed");
+    } else if (statusRaw === "failed") {
+      document.body.classList.add("is-failed");
+      document.body.classList.remove("is-paid", "is-pending", "is-refunded");
+    }
+  }
+
+  async function hydrateSupport() {
+    try {
+      const res = await fetch("/api/site_settings", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      const settings = data?.site_settings || data?.data || data || {};
+      const contact = settings.contact || {};
+      const home = settings.home || {};
+      const socials = settings.socials || {};
+
+      const email = safeStr(contact.email || "ventas.unicotextil@gmail.com", "ventas.unicotextil@gmail.com");
+      const waE164 = safeStr(contact.whatsapp_e164 || "5216642368701", "5216642368701");
+      const waDisplay = safeStr(contact.whatsapp_display || "664 236 8701", "664 236 8701");
+      const footerText = safeStr(
+        home.footer_note || "Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.",
+        "Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com."
+      );
+
+      if (successSupportEmail) {
+        setText(successSupportEmail, email);
+        setHref(successSupportEmail, `mailto:${email}`);
+      }
+
+      if (successSupportWa) {
+        setText(successSupportWa, waDisplay);
+        setHref(successSupportWa, `https://wa.me/${encodeURIComponent(waE164)}`);
+      }
+
+      if (footerNote && footerText) {
+        setText(footerNote, footerText);
+      }
+
+      const fb = $("#footerFacebookLink");
+      const ig = $("#footerInstagramLink");
+      const yt = $("#footerYoutubeLink");
+      if (fb && socials.facebook) setHref(fb, socials.facebook);
+      if (ig && socials.instagram) setHref(ig, socials.instagram);
+      if (yt && socials.youtube) setHref(yt, socials.youtube);
+    } catch {}
+  }
+
+  async function loadStatus() {
+    const sessionId = getSessionId();
+
+    if (copyBtn && sessionId) {
+      copyBtn.dataset.sessionId = sessionId;
     }
 
-    .success-card {
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(9, 14, 26, 0.82);
-      backdrop-filter: blur(18px);
-      border-radius: 28px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.35);
-      overflow: hidden;
+    if (!sessionId) {
+      setHero("failed", "Sin ID de sesión", "No se pudo identificar el pedido.");
+      setText(orderId, "—");
+      setText(orderTotal, "—");
+      setText(orderStatusText, "Procesando");
+      setText(orderEmail, "—");
+      setText(orderShipMode, "No definido");
+      return;
     }
 
-    .success-hero {
-      padding: 28px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+    try {
+      setHero("default", "Verificando pedido...", "Estableciendo conexión con el estado de tu compra.");
+
+      const res = await fetch(`/api/checkout_status?session_id=${encodeURIComponent(sessionId)}`, {
+        cache: "no-store",
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!data || data.ok === false) {
+        throw new Error(data?.error || "No se pudo verificar el estado");
+      }
+
+      applyOrderData(data, sessionId);
+    } catch {
+      setHero("failed", "Error temporal", "No se pudo verificar el estado en este momento.");
+      setText(orderId, sessionId);
+      setText(orderStatusText, "Procesando");
+      if (extraHint) {
+        extraHint.textContent = "La orden puede seguir sincronizándose. Conserva el ID de sesión para soporte.";
+      }
+    }
+  }
+
+  function parseExtraStateFromUrl() {
+    const url = new URL(window.location.href);
+    const status = String(url.searchParams.get("status") || url.searchParams.get("payment_status") || "").toLowerCase();
+
+    if (!status) return null;
+    if (["processing", "pending", "open"].includes(status)) return "pending";
+    if (["paid", "succeeded", "confirmed"].includes(status)) return "paid";
+    if (["refunded", "refund"].includes(status)) return "refunded";
+    if (["failed", "canceled", "cancelled", "error"].includes(status)) return "failed";
+    return null;
+  }
+
+  function applyUrlHintIfNeeded() {
+    const forced = parseExtraStateFromUrl();
+    if (!forced) return;
+
+    if (forced === "pending") {
+      setHero("pending", "Pago en proceso", "Tu pago fue recibido pero todavía puede no haber terminado de confirmarse.");
+      if (extraHint) {
+        extraHint.textContent = "Si pagaste con OXXO, la validación puede tardar hasta 1 día hábil. Si fue con tarjeta, revisa tu correo.";
+      }
     }
 
-    .success-hero__top {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
+    if (forced === "refunded") {
+      setHero("refunded", "Pago reembolsado", "La transacción fue marcada como reembolsada.");
     }
 
-    .success-emoji {
-      width: 62px;
-      height: 62px;
-      border-radius: 20px;
-      display: grid;
-      place-items: center;
-      font-size: 30px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+    if (forced === "failed") {
+      setHero("failed", "Estado no confirmado", "No se pudo validar el pago en este momento.");
     }
+  }
 
-    .success-kicker {
-      margin: 0;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.72);
+  function init() {
+    clearCart();
+    bindCopy(getSessionId());
+    hydrateSupport();
+    applyUrlHintIfNeeded();
+    loadStatus();
+
+    const copyFallback = $("#heroTitle");
+    if (copyFallback && !copyFallback.textContent) {
+      copyFallback.textContent = "Verificando pedido...";
     }
+  }
 
-    .success-title {
-      margin: 6px 0 0;
-      font-size: clamp(28px, 4vw, 48px);
-      line-height: 1.02;
-      font-weight: 900;
-      letter-spacing: -.04em;
-    }
-
-    .success-copy {
-      margin: 12px 0 0;
-      max-width: 720px;
-      color: rgba(255,255,255,.72);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    .success-grid {
-      display: grid;
-      grid-template-columns: 1.3fr .9fr;
-      gap: 0;
-    }
-
-    .success-panel {
-      padding: 28px;
-    }
-
-    .success-panel + .success-panel {
-      border-left: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .detail-list {
-      display: grid;
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .detail-item {
-      display: grid;
-      gap: 6px;
-      padding: 16px 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .detail-item span {
-      font-size: 11px;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      font-weight: 900;
-      color: rgba(255,255,255,.55);
-    }
-
-    .detail-item strong {
-      font-size: 17px;
-      line-height: 1.3;
-    }
-
-    .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .btn-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 18px;
-      padding: 14px 18px;
-      font-size: 14px;
-      font-weight: 900;
-      border: 1px solid rgba(255,255,255,0.10);
-      transition: transform .18s ease, background .18s ease, border-color .18s ease;
-    }
-
-    .btn-link:hover { transform: translateY(-1px); }
-    .btn-link--primary { background: #E10600; color: #fff; border-color: rgba(225,6,0,.35); }
-    .btn-link--secondary { background: rgba(255,255,255,0.05); color: #fff; }
-    .btn-link--ghost { background: transparent; color: #fff; }
-
-    .support-box {
-      display: grid;
-      gap: 12px;
-    }
-
-    .support-row {
-      padding: 16px 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .support-row span {
-      display: block;
-      font-size: 11px;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      font-weight: 900;
-      color: rgba(255,255,255,.55);
-      margin-bottom: 8px;
-    }
-
-    .support-row a {
-      font-size: 15px;
-      font-weight: 800;
-      word-break: break-word;
-    }
-
-    .footer-note {
-      margin-top: 18px;
-      color: rgba(255,255,255,.62);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    @media (max-width: 900px) {
-      .success-grid { grid-template-columns: 1fr; }
-      .success-panel + .success-panel { border-left: 0; border-top: 1px solid rgba(255,255,255,0.08); }
-      .success-hero { padding: 24px; }
-      .success-panel { padding: 24px; }
-    }
-  </style>
-</head>
-<body class="success-page">
-  <main class="success-shell">
-    <section class="success-card">
-      <header class="success-hero">
-        <div class="success-hero__top">
-          <div id="heroEmoji" class="success-emoji" aria-hidden="true">🏁</div>
-          <div>
-            <p class="success-kicker">SCORE STORE</p>
-            <h1 id="heroTitle" class="success-title">Verificando pedido...</h1>
-          </div>
-        </div>
-        <p id="heroText" class="success-copy">
-          Estableciendo conexión con el estado de tu compra.
-        </p>
-      </header>
-
-      <div class="success-grid">
-        <section class="success-panel">
-          <div class="detail-list">
-            <div class="detail-item">
-              <span>ID de sesión</span>
-              <strong id="orderId">—</strong>
-            </div>
-
-            <div class="detail-item">
-              <span>Total pagado</span>
-              <strong id="orderTotal">—</strong>
-            </div>
-
-            <div class="detail-item">
-              <span>Estado del pago</span>
-              <strong id="orderStatusText">Procesando</strong>
-            </div>
-
-            <div class="detail-item">
-              <span>Email del cliente</span>
-              <strong id="orderEmail">—</strong>
-            </div>
-
-            <div class="detail-item">
-              <span>Modo de entrega</span>
-              <strong id="orderShipMode">No definido</strong>
-            </div>
-          </div>
-
-          <div class="cta-row">
-            <button id="copyBtn" type="button" class="btn-link btn-link--primary">Copiar ID</button>
-            <a href="/index.html" class="btn-link btn-link--secondary">Volver a la tienda</a>
-            <a href="/legal.html" class="btn-link btn-link--ghost">Ver políticas</a>
-          </div>
-
-          <p id="extraHint" class="footer-note">
-            Tu compra quedó registrada. Conserva el ID de sesión para soporte.
-          </p>
-        </section>
-
-        <aside class="success-panel">
-          <div class="support-box">
-            <div class="support-row">
-              <span>Soporte por correo</span>
-              <a id="successSupportEmail" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a>
-            </div>
-
-            <div class="support-row">
-              <span>Soporte por WhatsApp</span>
-              <a id="successSupportWa" href="https://wa.me/5216642368701">664 236 8701</a>
-            </div>
-
-            <div class="support-row">
-              <span>Estado operativo</span>
-              <p class="footer-note" style="margin:0">
-                Si tu pago aparece pendiente, el sistema sigue validando la transacción y el pedido puede tardar unos minutos en sincronizarse.
-              </p>
-            </div>
-          </div>
-
-          <p id="footerNote" class="footer-note">
-            Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.
-          </p>
-        </aside>
-      </div>
-    </section>
-  </main>
-
-  <script defer src="/js/success.js"></script>
-</body>
-</html>
+  document.addEventListener("DOMContentLoaded", init);
+})();
