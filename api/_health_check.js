@@ -42,6 +42,8 @@ function getToken(req) {
 
 async function checkAuth(req) {
   const token = getToken(req);
+
+  // 🔥 FIX REAL: no ejecutar requireAdmin sin token
   if (!token) {
     return {
       ok: false,
@@ -51,6 +53,7 @@ async function checkAuth(req) {
   }
 
   const admin = requireAdmin(req);
+
   if (!admin?.ok) {
     return {
       ok: false,
