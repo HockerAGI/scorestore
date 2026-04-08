@@ -1,4 +1,4 @@
-// api/health_check.js
+// api/_health_check.js
 "use strict";
 
 const {
