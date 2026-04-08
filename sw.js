@@ -29,14 +29,6 @@ const PRECACHE = [
   "/assets/icons/icon-512-maskable.png",
 ];
 
-function isSameOrigin(url) {
-  try {
-    return new URL(url).origin === self.location.origin;
-  } catch {
-    return false;
-  }
-}
-
 function shouldNeverCache(url) {
   try {
     const u = new URL(url);
@@ -77,7 +69,7 @@ async function cacheFirst(req, cacheName) {
   return fresh;
 }
 
-async function staleWhileRevalidate(req, cacheName) {
+async function staleWhileRevalidate(req, cacheName, event) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(req, { ignoreSearch: true });
 
@@ -122,38 +114,30 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
-
-  if (shouldNeverCache(req.url)) return;
-
   const url = new URL(req.url);
 
-  // Navegación: no interceptar. El servidor entrega HTML normal.
+  if (req.method !== "GET") return;
   if (req.mode === "navigate") return;
+  if (shouldNeverCache(req.url)) return;
 
-  // Core assets del sitio
-  if (
-    url.pathname === "/site.webmanifest" ||
-    url.pathname === "/robots.txt" ||
-    url.pathname === "/sitemap.xml" ||
-    url.pathname.startsWith("/css/") ||
-    url.pathname.startsWith("/js/") ||
-    url.pathname.startsWith("/assets/icons/")
-  ) {
+  // Next chunks (hashed) => cache-first
+  if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(cacheFirst(req, STATIC_CACHE));
     return;
   }
 
-  // Recursos estáticos adicionales del mismo origen
-  if (isSameOrigin(req.url)) {
-    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
+  if (PRECACHE.includes(url.pathname)) {
+    event.respondWith(staleWhileRevalidate(req, STATIC_CACHE, event));
+    return;
+  }
+
+  if (
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/css/") ||
+    url.pathname.startsWith("/js/")
+  ) {
+    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE, event));
   }
 });
