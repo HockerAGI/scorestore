@@ -1,21 +1,20 @@
-// api/index.js
 "use strict";
 
 /**
  * SCORE STORE - Centralized API Router
- * Single Vercel Serverless Function. All handlers live in /lib/handlers/.
+ * Una sola Serverless Function en Vercel.
  */
 
-const auth         = require("../lib/handlers/_auth.js");
-const catalog      = require("../lib/handlers/_catalog.js");
-const checkoutStatus  = require("../lib/handlers/_checkout_status.js");
-const createCheckout  = require("../lib/handlers/_create_checkout.js");
-const enviaWebhook    = require("../lib/handlers/_envia_webhook.js");
-const healthCheck     = require("../lib/handlers/_health_check.js");
-const promos          = require("../lib/handlers/_promos.js");
-const quoteShipping   = require("../lib/handlers/_quote_shipping.js");
-const siteSettings    = require("../lib/handlers/_site_settings.js");
-const stripeWebhook   = require("../lib/handlers/_stripe_webhook.js");
+const auth = require("../lib/handlers/_auth.js");
+const catalog = require("../lib/handlers/_catalog.js");
+const checkoutStatus = require("../lib/handlers/_checkout_status.js");
+const createCheckout = require("../lib/handlers/_create_checkout.js");
+const enviaWebhook = require("../lib/handlers/_envia_webhook.js");
+const healthCheck = require("../lib/handlers/_health_check.js");
+const promos = require("../lib/handlers/_promos.js");
+const quoteShipping = require("../lib/handlers/_quote_shipping.js");
+const siteSettings = require("../lib/handlers/_site_settings.js");
+const stripeWebhook = require("../lib/handlers/_stripe_webhook.js");
 
 const { handleOptions } = require("../lib/_shared.js");
 
@@ -23,11 +22,13 @@ module.exports = async (req, res) => {
   if (req.method === "OPTIONS") {
     const out = handleOptions({ headers: req.headers });
     res.statusCode = out.statusCode || 204;
+
     if (out.headers) {
       Object.entries(out.headers).forEach(([key, value]) => {
         res.setHeader(key, value);
       });
     }
+
     return res.end();
   }
 
@@ -37,16 +38,35 @@ module.exports = async (req, res) => {
 
   try {
     switch (target) {
-      case "auth":             return await auth(req, res);
-      case "catalog":          return await catalog(req, res);
-      case "checkout_status":  return await checkoutStatus(req, res);
-      case "create_checkout":  return await createCheckout(req, res);
-      case "envia_webhook":    return await enviaWebhook(req, res);
-      case "health_check":     return await healthCheck(req, res);
-      case "promos":           return await promos(req, res);
-      case "quote_shipping":   return await quoteShipping(req, res);   // ← BUG FIX (ver abajo)
-      case "site_settings":    return await siteSettings(req, res);
-      case "stripe_webhook":   return await stripeWebhook(req, res);
+      case "auth":
+        return await auth(req, res);
+
+      case "catalog":
+        return await catalog(req, res);
+
+      case "checkout_status":
+        return await checkoutStatus(req, res);
+
+      case "create_checkout":
+        return await createCheckout(req, res);
+
+      case "envia_webhook":
+        return await enviaWebhook(req, res);
+
+      case "health_check":
+        return await healthCheck(req, res);
+
+      case "promos":
+        return await promos(req, res);
+
+      case "quote_shipping":
+        return await quoteShipping(req, res);
+
+      case "site_settings":
+        return await siteSettings(req, res);
+
+      case "stripe_webhook":
+        return await stripeWebhook(req, res);
 
       default:
         res.statusCode = 404;
@@ -54,7 +74,7 @@ module.exports = async (req, res) => {
         return res.end(JSON.stringify({
           ok: false,
           error: "Endpoint no encontrado",
-          path: url.pathname
+          path: url.pathname,
         }));
     }
   } catch (error) {
@@ -64,7 +84,9 @@ module.exports = async (req, res) => {
     return res.end(JSON.stringify({
       ok: false,
       error: "Error interno del servidor",
-      message: error.message
+      message: error.message,
     }));
   }
 };
+
+module.exports.default = module.exports;
