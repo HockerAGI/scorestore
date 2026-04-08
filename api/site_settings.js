@@ -8,7 +8,11 @@ const handleOptions = shared.handleOptions;
 const supabaseAdmin = shared.supabaseAdmin;
 const readPublicSiteSettings = shared.readPublicSiteSettings;
 const resolveScoreOrgId = shared.resolveScoreOrgId;
-const safeStr = shared.safeStr;
+const safeStr = shared.safeStr || ((v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v)));
+
+const DEFAULT_SCORE_ORG_ID =
+  process.env.DEFAULT_SCORE_ORG_ID ||
+  "1f3b9980-a1c5-4557-b4eb-a75bb9a8aaa6";
 
 function send(res, payload) {
   const out = payload || {};
