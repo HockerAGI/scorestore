@@ -1,4 +1,4 @@
-// api/catalog.js
+// api/_catalog.js
 "use strict";
 
 const {
