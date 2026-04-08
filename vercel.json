@@ -8,15 +8,19 @@
       "source": "/api/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, max-age=0" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS,DELETE,PUT,PATCH" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, Idempotency-Key, stripe-signature, x-org-id, x-envia-token, x-request-id" }
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,OPTIONS,DELETE,PUT,PATCH"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, Idempotency-Key, stripe-signature, x-org-id, x-envia-token, x-request-id"
+        }
       ]
     },
     {
       "source": "/(success|cancel).html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
     },
     {
       "source": "/index.html",
