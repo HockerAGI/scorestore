@@ -2,7 +2,7 @@
 
 /**
  * SCORE STORE - Centralized API Router
- * Una sola Serverless Function en Vercel.
+ * Single Vercel Serverless Function.
  */
 
 const auth = require("../lib/handlers/_auth.js");
@@ -15,6 +15,8 @@ const promos = require("../lib/handlers/_promos.js");
 const quoteShipping = require("../lib/handlers/_quote_shipping.js");
 const siteSettings = require("../lib/handlers/_site_settings.js");
 const stripeWebhook = require("../lib/handlers/_stripe_webhook.js");
+const ia = require("../lib/handlers/_ia.js");
+const chat = require("../lib/handlers/_chat.js");
 
 const { handleOptions } = require("../lib/_shared.js");
 
@@ -67,6 +69,12 @@ module.exports = async (req, res) => {
 
       case "stripe_webhook":
         return await stripeWebhook(req, res);
+
+      case "ia":
+        return await ia(req, res);
+
+      case "chat":
+        return await chat(req, res);
 
       default:
         res.statusCode = 404;
