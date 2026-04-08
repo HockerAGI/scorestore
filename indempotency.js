@@ -1,46 +1,32 @@
+// idempotency.js
 "use strict";
 
 const store = new Map();
 
-function getHeaderValue(headers, key) {
-  if (!headers) return "";
-  if (typeof headers.get === "function") {
-    return headers.get(key) || headers.get(key.toLowerCase()) || "";
-  }
-
-  const lower = String(key).toLowerCase();
+function getKey(req) {
   return (
-    headers[key] ||
-    headers[lower] ||
-    headers[key.toUpperCase()] ||
+    req.headers["idempotency-key"] ||
+    req.headers["Idempotency-Key"] ||
     ""
   );
 }
 
-function getKey(req) {
-  const h = req?.headers || {};
-  return String(
-    getHeaderValue(h, "idempotency-key") ||
-      getHeaderValue(h, "Idempotency-Key") ||
-      ""
-  ).trim();
-}
-
 function checkIdempotency(key) {
-  const safeKey = String(key || "").trim();
-  if (!safeKey) return { ok: true };
+  if (!key) return { ok: true };
 
-  if (store.has(safeKey)) {
-    return { ok: false, cached: store.get(safeKey) };
+  if (store.has(key)) {
+    return {
+      ok: false,
+      cached: store.get(key),
+    };
   }
 
   return { ok: true };
 }
 
 function saveIdempotency(key, response) {
-  const safeKey = String(key || "").trim();
-  if (!safeKey) return;
-  store.set(safeKey, response);
+  if (!key) return;
+  store.set(key, response);
 }
 
 function clearIdempotency(key) {
