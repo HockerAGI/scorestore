@@ -1,15 +1,17 @@
 /* SCORE STORE — Service Worker
-   Objetivo:
-   - Precargar assets críticos del storefront
-   - No interceptar navegación para evitar problemas con Lighthouse
-   - Mantener navegación nativa y solo optimizar recursos estáticos
+   Fix visual/cache layer:
+   - Precache limpio
+   - Bump de versión para invalidar caches viejos
+   - Activación inmediata
+   - Sin interferir con navegación
 */
 
-const VERSION = "scorestore-sw-v1";
+const VERSION = "scorestore-sw-v2-2026-04-08-ui-fix-2";
+const ASSET_VERSION = "2026-04-08-ui-fix-2";
+
 const STATIC_CACHE = `scorestore-static-${VERSION}`;
 const RUNTIME_CACHE = `scorestore-runtime-${VERSION}`;
 
-// El validador del repo exige explícitamente que se precachee /site.webmanifest.
 const PRECACHE = [
   "/",
   "/index.html",
@@ -21,6 +23,7 @@ const PRECACHE = [
   "/sitemap.xml",
   "/css/styles.css",
   "/css/override.css",
+  `/css/override.css?v=${ASSET_VERSION}`,
   "/js/main.js",
   "/js/success.js",
   "/assets/icons/icon-192.png",
@@ -32,34 +35,45 @@ const PRECACHE = [
 function shouldNeverCache(url) {
   try {
     const u = new URL(url);
-
     if (u.origin !== self.location.origin) return true;
     if (u.pathname.startsWith("/api/")) return true;
-
     return false;
   } catch {
     return true;
   }
 }
 
+async function cleanupOldCaches() {
+  const keys = await caches.keys();
+  await Promise.all(
+    keys.map((key) => {
+      if (key === STATIC_CACHE || key === RUNTIME_CACHE) return Promise.resolve();
+      if (key.startsWith("scorestore-static-") || key.startsWith("scorestore-runtime-")) {
+        return caches.delete(key);
+      }
+      return Promise.resolve();
+    })
+  );
+}
+
 async function safePrecache() {
   const cache = await caches.open(STATIC_CACHE);
 
-  for (const path of PRECACHE) {
+  for (const url of PRECACHE) {
     try {
-      const res = await fetch(path, { cache: "no-store" });
+      const res = await fetch(url, { cache: "no-store" });
       if (res && res.ok) {
-        await cache.put(path, res.clone());
+        await cache.put(url, res.clone());
       }
     } catch {
-      // Silencioso: el sitio debe seguir arrancando aunque falle un asset puntual.
+      // Silencioso: el sitio debe seguir arrancando aunque un asset falle.
     }
   }
 }
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(req, { ignoreSearch: true });
+  const cached = await cache.match(req);
   if (cached) return cached;
 
   const fresh = await fetch(req);
@@ -71,7 +85,7 @@ async function cacheFirst(req, cacheName) {
 
 async function staleWhileRevalidate(req, cacheName, event) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(req, { ignoreSearch: true });
+  const cached = await cache.match(req);
 
   const networkPromise = fetch(req)
     .then(async (fresh) => {
@@ -92,23 +106,21 @@ async function staleWhileRevalidate(req, cacheName, event) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(safePrecache());
+  event.waitUntil(
+    (async () => {
+      await safePrecache();
+      if (self.skipWaiting) await self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys.map((key) =>
-          key.startsWith("scorestore-") &&
-          key !== STATIC_CACHE &&
-          key !== RUNTIME_CACHE
-            ? caches.delete(key)
-            : null
-        )
-      );
-      await self.clients.claim();
+      await cleanupOldCaches();
+      if (self.clients && self.clients.claim) {
+        await self.clients.claim();
+      }
     })()
   );
 });
@@ -126,7 +138,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (PRECACHE.includes(url.pathname)) {
+  if (PRECACHE.includes(url.pathname) || PRECACHE.includes(url.pathname + url.search)) {
     event.respondWith(staleWhileRevalidate(req, STATIC_CACHE, event));
     return;
   }
