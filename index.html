@@ -1,41 +1,259 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es-MX">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#e10600" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>SCORE STORE</title>
 
-  <title>Score Store</title>
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/assets/logo-score.webp" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+
+  <link rel="preload" href="/assets/logo-score.webp" as="image" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css" />
-
+  <link rel="stylesheet" href="/css/override.css?v=2026-04-10-intro-fix" />
 </head>
-<body>
+<body class="no-scroll">
 
-  <!-- 🔥 SPLASH INTRO (DEL ZIP ORIGINAL) -->
-  <div id="splash" class="splash">
+  <div id="splash" class="splash" aria-hidden="true">
     <div class="splash__bg"></div>
     <div class="splash__vignette"></div>
     <div class="splash__dust"></div>
     <div class="splash__grid"></div>
-
-    <div class="splash__content">
-      <h1 class="splash__logo">SCORE STORE</h1>
-      <div class="splash__laser"></div>
+    <div class="splash__inner">
+      <div class="splash__logo-wrap">
+        <img class="splash__logo" src="/assets/logo-score.webp" alt="SCORE" width="220" height="88" />
+        <div class="splash__laser"></div>
+      </div>
+      <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
+      <div class="splash__bar-container">
+        <div class="splash__bar" role="progressbar" aria-label="Cargando entorno de tienda">
+          <div class="splash__barFill"></div>
+        </div>
+      </div>
+      <div class="splash__text">SISTEMAS EN LÍNEA. CALENTANDO MOTORES...</div>
     </div>
   </div>
 
-  <!-- 🏠 APP -->
-  <div id="app" class="app hidden">
-
-    <header class="header">
-      <h1>Score Store</h1>
-    </header>
-
-    <main id="catalog" class="catalog"></main>
-
+  <div id="promoBar" class="promo-bar" hidden>
+    <div class="promo-bar__inner wrap">
+      <div id="promoBarText" class="promo-bar__text"></div>
+      <button id="promoBarClose" type="button" class="iconbtn" aria-label="Cerrar promoción">✕</button>
+    </div>
   </div>
 
-  <script src="/js/main.js"></script>
+  <header class="topbar site-header">
+    <div class="topbar__inner site-header__inner wrap">
+      <a class="brand" href="/" aria-label="Inicio">
+        <img class="brand__logo" src="/assets/logo-score.webp" alt="Score Store" />
+        <span class="brand__text">
+          <strong class="brand__title">SCORE STORE</strong>
+          <small class="brand__subtitle">Official Merchandise</small>
+        </span>
+      </a>
+
+      <nav class="topnav topbar__nav">
+        <a href="#catalogCarouselSection">Catálogo</a>
+        <a href="#footerSection">Contacto</a>
+      </nav>
+
+      <div class="topbar__actions">
+        <button id="openAssistantBtn" class="iconbtn" type="button" aria-label="Abrir asistente">AI</button>
+        <button id="cartToggleBtn" class="cart-toggle" type="button" aria-label="Abrir carrito">
+          Carrito <span id="cartCountBadge" class="cart-toggle__badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero__inner wrap">
+        <div class="hero__content">
+          <div class="hero__eyebrow" id="heroTagline">Official Merchandise</div>
+          <h1 class="hero__title" id="heroTitle">SCORE STORE</h1>
+          <p class="hero__copy" id="heroText">
+            Mercancía oficial SCORE International con una experiencia de compra rápida, visual y premium.
+          </p>
+
+          <div class="hero__actions">
+            <a href="#catalogCarouselSection" class="btn btn-link--primary">Explorar catálogo</a>
+            <button type="button" class="btn btn-link--secondary" id="scrollToCategoriesBtn">Ver colecciones</button>
+          </div>
+
+          <div class="hero__stats">
+            <div class="stat">
+              <span>Pedidos</span>
+              <strong>Checkout rápido</strong>
+            </div>
+            <div class="stat">
+              <span>Atención</span>
+              <strong>IA + soporte</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__panel">
+          <img
+            id="heroImage"
+            src="/assets/hero.webp"
+            alt="Score Store hero"
+            class="hero__media"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog-section wrap" id="categoriesSection">
+      <div class="section-heading">Colecciones</div>
+      <div id="categoryHint" class="status-row">Explora por edición.</div>
+      <div id="categoryGrid" class="category-grid"></div>
+    </section>
+
+    <section class="catalog-section wrap" id="catalogCarouselSection">
+      <div class="carousel-header">
+        <div class="carousel-header__left">
+          <h2 id="carouselTitle">Productos destacados</h2>
+        </div>
+        <div class="carousel-header__right">
+          <button id="scrollLeftBtn" type="button" class="iconbtn" aria-label="Mover a la izquierda">←</button>
+          <button id="scrollRightBtn" type="button" class="iconbtn" aria-label="Mover a la derecha">→</button>
+        </div>
+      </div>
+
+      <div id="activeFilterRow" class="active-filter-row" hidden>
+        <div>Filtro activo: <strong id="activeFilterLabel">Todos los productos</strong></div>
+        <button id="clearFilterBtn" type="button" class="btn btn-link--ghost">Limpiar</button>
+      </div>
+
+      <div id="statusRow" class="status-row">Cargando catálogo…</div>
+      <div id="productGrid" class="carousel-track"></div>
+    </section>
+  </main>
+
+  <footer id="footerSection" class="site-footer footer">
+    <div class="site-footer__grid footer__inner wrap">
+      <div>
+        <h3>Score Store</h3>
+        <p id="footerNote" class="footer-note">Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.</p>
+      </div>
+      <div>
+        <p>Contacto</p>
+        <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a><br />
+        <a id="footerWhatsappLink" href="https://wa.me/5216642368701">664 236 8701</a>
+      </div>
+      <div>
+        <p>Versión</p>
+        <small id="appVersionLabel">—</small>
+      </div>
+    </div>
+  </footer>
+
+  <div id="cartDrawer" class="drawer drawer--right" hidden aria-hidden="true">
+    <div class="drawer__head">
+      <strong>Carrito</strong>
+      <button id="closeCartBtn" type="button" class="iconbtn">✕</button>
+    </div>
+    <div class="drawer__body">
+      <div id="cartEmptyState" class="panel">Tu carrito está vacío.</div>
+      <div id="cartItems"></div>
+
+      <div class="panel">
+        <div class="drawer__totals">
+          <div><span>Subtotal</span><strong id="cartSubtotal">$0.00</strong></div>
+          <div><span>Envío</span><strong id="cartShipping">Gratis</strong></div>
+          <div><span>Descuento</span><strong id="cartDiscount">- $0.00</strong></div>
+          <div><span>Total</span><strong id="cartTotal">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <input id="checkoutName" type="text" placeholder="Nombre" />
+        <input id="checkoutEmail" type="email" placeholder="Correo" />
+        <input id="checkoutPhone" type="tel" placeholder="Teléfono" />
+        <input id="checkoutAddress" type="text" placeholder="Dirección" />
+        <input id="checkoutPostal" type="text" placeholder="Código postal" />
+        <textarea id="checkoutNotes" placeholder="Notas"></textarea>
+        <select id="checkoutCountry">
+          <option value="MX">México</option>
+          <option value="US">Estados Unidos</option>
+        </select>
+
+        <div class="hero__actions">
+          <button id="checkoutQuoteShipBtn" type="button" class="btn btn-link--secondary">Cotizar envío</button>
+          <button id="cartCheckoutBtn" type="button" class="btn btn-link--primary">Pagar</button>
+          <button id="cartClearBtn" type="button" class="btn btn-link--ghost">Vaciar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="assistantDrawer" class="drawer" hidden aria-hidden="true">
+    <div class="drawer__head">
+      <strong>Score IA</strong>
+      <button id="assistantCloseBtn" type="button" class="iconbtn">✕</button>
+    </div>
+    <div class="drawer__body">
+      <div id="assistantLog" class="chat-sheet__body"></div>
+      <div class="chat-sheet__composer">
+        <input id="assistantInput" type="text" placeholder="Escribe tu mensaje…" />
+        <button id="assistantSendBtn" type="button" class="chat-sheet__send">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal" hidden aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h3 class="modal__title" id="pmTitle">Producto</h3>
+        <button id="productModalCloseBtn" type="button" class="iconbtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="pm__media">
+          <div id="pmCarousel" class="pm__carousel"></div>
+          <div id="pmDots" class="pm__dots"></div>
+        </div>
+        <div class="pm__info">
+          <div id="pmChips" class="pm__chips"></div>
+          <div id="pmStockBadge" class="pm__stock-badge"></div>
+          <div id="pmPrice" class="pm__price"></div>
+          <p id="pmDesc" class="pm__desc"></p>
+
+          <div id="pmSizePills" class="size-pill-container"></div>
+
+          <div class="qty-stepper-large">
+            <button id="pmQtyMinus" type="button">−</button>
+            <span id="pmQtyDisplay">1</span>
+            <button id="pmQtyPlus" type="button">+</button>
+          </div>
+
+          <button id="pmAddBtn" type="button" class="btn btn-link--primary">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cookieBanner" class="cookie-banner" hidden>
+    <div class="cookie-banner__inner">
+      <p>Usamos cookies para mejorar tu experiencia.</p>
+      <div class="cookie-banner__actions">
+        <button id="cookieReject" type="button" class="btn btn-link--ghost">Rechazar</button>
+        <button id="cookieAccept" type="button" class="btn btn-link--primary">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="salesNotification" class="sales-toast">
+    <strong id="salesName">S. López</strong>
+    <span id="salesAction">compró una gorra</span>
+  </div>
+
+  <script src="/js/main.js?v=2026-04-10-intro-fix" defer></script>
 </body>
 </html>
