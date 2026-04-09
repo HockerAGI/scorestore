@@ -1,14 +1,14 @@
 /* =========================================================
    SCORE STORE — main.js
-   Restored cinematic intro + current structure compatibility
-   - Preserves current /api routing
-   - Preserves catalog normalization
-   - Restores old splash sequence and hero behavior
+   Current structure compatible
+   - Cinematic intro with 4s fail-safe
+   - /api/catalog as source for products + IA
+   - /api/site_settings, /api/promos, /api/quote_shipping, /api/create_checkout
 ========================================================= */
 (() => {
   "use strict";
 
-  const APP_VERSION = "2026.04.10.restore-ui";
+  const APP_VERSION = "2026.04.10-intro-4s";
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -29,32 +29,59 @@
     phone: "6642368701",
     whatsappE164: "5216642368701",
     whatsappDisplay: "664 236 8701",
-    supportHours: "Horario por confirmar en configuración del sitio.",
-    promoBar: "",
   };
 
   const CATEGORY_CONFIG = [
-    { uiId: "BAJA1000", name: "BAJA 1000", logo: "/assets/logo-baja1000.webp", cover_image: "/assets/edicion_2025/camiseta-negra-baja1000.webp", aliases: ["BAJA1000", "BAJA_1000", "EDICION_2025", "EDICION_2026"] },
-    { uiId: "BAJA500", name: "BAJA 500", logo: "/assets/logo-baja500.webp", cover_image: "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp", aliases: ["BAJA500", "BAJA_500"] },
-    { uiId: "BAJA400", name: "BAJA 400", logo: "/assets/logo-baja400.webp", cover_image: "/assets/baja400/camiseta-cafe-oscuro-baja400.webp", aliases: ["BAJA400", "BAJA_400"] },
-    { uiId: "SF250", name: "SAN FELIPE 250", logo: "/assets/logo-sf250.webp", cover_image: "/assets/sf250/camiseta-negra-sinmangas-sf250.webp", aliases: ["SF250", "SF_250"] },
+    {
+      uiId: "BAJA1000",
+      name: "BAJA 1000",
+      logo: "/assets/edicion_2025/camiseta-negra-baja1000.webp",
+      cover_image: "/assets/edicion_2025/camiseta-negra-baja1000.webp",
+      aliases: ["BAJA1000", "BAJA_1000", "EDICION_2025", "EDICION_2026"],
+    },
+    {
+      uiId: "BAJA500",
+      name: "BAJA 500",
+      logo: "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
+      cover_image: "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
+      aliases: ["BAJA500", "BAJA_500"],
+    },
+    {
+      uiId: "BAJA400",
+      name: "BAJA 400",
+      logo: "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
+      cover_image: "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
+      aliases: ["BAJA400", "BAJA_400"],
+    },
+    {
+      uiId: "SF250",
+      name: "SAN FELIPE 250",
+      logo: "/assets/sf250/camiseta-negra-sinmangas-sf250.webp",
+      cover_image: "/assets/sf250/camiseta-negra-sinmangas-sf250.webp",
+      aliases: ["SF250", "SF_250"],
+    },
   ];
 
   const els = {
     splash: $("#splash"),
+
     topbar: $(".topbar"),
     promoBar: $("#promoBar"),
     promoBarText: $("#promoBarText"),
     promoBarClose: $("#promoBarClose"),
 
-    categoryGrid: $("#categoryGrid") || $("#catalogCategories"),
+    heroTitle: $("#heroTitle"),
+    heroText: $("#heroText"),
+    heroTagline: $("#heroTagline"),
+
+    categoryGrid: $("#categoryGrid"),
     categoryHint: $("#categoryHint"),
     activeFilterLabel: $("#activeFilterLabel"),
     activeFilterRow: $("#activeFilterRow"),
     clearFilterBtn: $("#clearFilterBtn"),
     carouselTitle: $("#carouselTitle"),
     catalogCarouselSection: $("#catalogCarouselSection"),
-    productGrid: $("#productGrid") || $("#catalogGrid"),
+    productGrid: $("#productGrid"),
     statusRow: $("#statusRow"),
 
     searchInput: $("#searchInput"),
@@ -83,6 +110,7 @@
     checkoutPostal: $("#checkoutPostal"),
     checkoutNotes: $("#checkoutNotes"),
     checkoutCountry: $("#checkoutCountry"),
+    checkoutPromo: $("#checkoutPromo"),
     checkoutQuoteShipBtn: $("#checkoutQuoteShipBtn"),
     checkoutApplyPromoBtn: $("#checkoutApplyPromoBtn"),
     cartCheckoutBtn: $("#cartCheckoutBtn"),
@@ -126,10 +154,10 @@
     salesName: $("#salesName"),
     salesAction: $("#salesAction"),
 
-    heroTitle: $("#heroTitle"),
-    heroText: $("#heroText"),
-    heroTagline: $("#heroTagline"),
-    heroImage: $("#heroImage"),
+    overlay: $("#overlay"),
+    scrollTopBtn: $("#scrollTopBtn"),
+    mobileSearchWrap: $("#mobileSearchWrap"),
+    closeMobileSearchBtn: $("#closeMobileSearchBtn"),
   };
 
   let catalog = { categories: [], products: [] };
@@ -143,15 +171,19 @@
   let shippingQuote = null;
   let activePromo = null;
   let siteSettings = {
-    hero_title: null,
-    hero_image: null,
+    org_id: "",
+    hero_title: "SCORE STORE",
+    hero_image: "/assets/hero.webp",
     promo_active: false,
     promo_text: "",
-    pixel_id: "",
     maintenance_mode: false,
-    season_key: "default",
     theme: { accent: "#e10600", accent2: "#111111", particles: true },
-    home: { footer_note: "", shipping_note: "", returns_note: "", support_hours: "" },
+    home: {
+      footer_note: "Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.",
+      shipping_note: "",
+      returns_note: "",
+      support_hours: "",
+    },
     socials: { facebook: "", instagram: "", youtube: "", tiktok: "" },
     contact: {
       email: DEFAULTS.email,
@@ -167,7 +199,10 @@
   let loadingCatalog = false;
   let assistantBusy = false;
   let salesTimer = null;
-  let hideIntroTimer = null;
+  let introTimer = null;
+  let introFailSafeTimer = null;
+  let splashClosing = false;
+  let serviceWorkerRegistered = false;
 
   const safeStr = (v, d = "") => (typeof v === "string" ? v : v == null ? d : String(v));
   const safeNum = (v, d = 0) => {
@@ -195,6 +230,10 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   function readStorage(key, fallback = null) {
     try {
@@ -428,39 +467,24 @@
     return out;
   }
 
-  function buildCatalogResponse(source = {}) {
-    const rawProducts = Array.isArray(source.products) ? source.products : [];
-    const rawCategories = Array.isArray(source.categories)
-      ? source.categories
-      : Array.isArray(source.sections)
-        ? source.sections
-        : [];
+  function readJsonFile(relPath) {
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const abs = path.join(process.cwd(), relPath);
+      if (!fs.existsSync(abs)) return null;
+      return JSON.parse(fs.readFileSync(abs, "utf8"));
+    } catch {
+      return null;
+    }
+  }
 
-    const productsOut = rawProducts.map(normalizeProduct).filter(Boolean);
-    const categoriesOut = rawCategories.length ? rawCategories.map(normalizeCategory).filter(Boolean) : buildSectionsFromProducts(productsOut);
-
-    return {
-      products: productsOut,
-      categories: rawCategories.length ? attachCounts(categoriesOut, productsOut) : categoriesOut,
-      stats: {
-        activeProducts: productsOut.filter((p) => p.active !== false && p.is_active !== false && !p.deleted_at).length,
-        lowStockProducts: productsOut.filter((p) => Number(p.stock) > 0 && Number(p.stock) <= 5).length,
-        featuredProducts: productsOut.filter((p) => Number(p.rank) <= 12).length,
-      },
-      store: {
-        org_id: safeStr(source?.store?.org_id || source?.org_id || ""),
-        name: safeStr(source?.store?.name || source?.store?.hero_title || source?.hero_title || "SCORE STORE"),
-        hero_title: safeStr(source?.store?.hero_title || source?.hero_title || "SCORE STORE"),
-        hero_image: safeStr(source?.store?.hero_image || source?.hero_image || "/assets/hero.webp"),
-        promo_active: !!(source?.store?.promo_active ?? source?.promo_active),
-        promo_text: safeStr(source?.store?.promo_text || source?.promo_text || ""),
-        maintenance_mode: !!(source?.store?.maintenance_mode ?? source?.maintenance_mode),
-        contact: source?.store?.contact || source?.contact || {},
-        home: source?.store?.home || source?.home || {},
-        socials: source?.store?.socials || source?.socials || {},
-        theme: source?.store?.theme || source?.theme || {},
-      },
-    };
+  function safeGet(obj, path, fallback = "") {
+    try {
+      return path.split(".").reduce((acc, key) => acc?.[key], obj) ?? fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   function getOrigin(req) {
@@ -487,23 +511,7 @@
 
   function handleOptions({ headers = {} } = {}) {
     const origin = headers.origin || headers.Origin || "";
-    return jsonResponse(
-      204,
-      null,
-      origin
-    );
-  }
-
-  function readJsonFile(relPath) {
-    try {
-      const fs = require("fs");
-      const path = require("path");
-      const abs = path.join(process.cwd(), relPath);
-      if (!fs.existsSync(abs)) return null;
-      return JSON.parse(fs.readFileSync(abs, "utf8"));
-    } catch {
-      return null;
-    }
+    return jsonResponse(204, null, origin);
   }
 
   function supabaseAdmin() {
@@ -567,11 +575,19 @@
   async function loadCatalogFromJsonOrDb(orgId = "") {
     const json = readJsonFile("data/catalog.json");
     if (json && (Array.isArray(json.products) || Array.isArray(json.categories) || Array.isArray(json.sections))) {
-      return buildCatalogResponse(json);
+      return {
+        ...buildCatalogResponse(json),
+        source: "json",
+      };
     }
 
     const sb = supabaseAdmin();
-    if (!sb) return buildCatalogResponse({ products: [], categories: [] });
+    if (!sb) {
+      return {
+        ...buildCatalogResponse({ products: [], categories: [], sections: [] }),
+        source: "fallback",
+      };
+    }
 
     let resolvedOrgId = orgId;
     if (!resolvedOrgId) {
@@ -583,7 +599,9 @@
     }
 
     const [settings, productsDb, categoriesDb] = await Promise.all([
-      typeof readPublicSiteSettings === "function" ? readPublicSiteSettings(sb, resolvedOrgId).catch(() => null) : Promise.resolve(null),
+      typeof readPublicSiteSettings === "function"
+        ? readPublicSiteSettings(sb, resolvedOrgId).catch(() => null)
+        : Promise.resolve(null),
       selectByOrgMany(
         sb,
         "products",
@@ -593,47 +611,53 @@
       selectByOrgMany(sb, "site_categories", "*", resolvedOrgId).catch(() => []),
     ]);
 
-    return buildCatalogResponse({
-      products: productsDb,
-      categories: categoriesDb,
-      org_id: resolvedOrgId,
-      ...settings,
-      store: settings || {},
-    });
+    return {
+      ...buildCatalogResponse({
+        products: productsDb,
+        categories: categoriesDb,
+        sections: categoriesDb,
+        org_id: resolvedOrgId,
+        ...settings,
+        store: settings || {},
+      }),
+      source: "db",
+    };
   }
 
-  async function callGemini({ apiKey, model, systemText, userText }) {
-    const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-    const url = `${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  function buildCatalogResponse(source = {}) {
+    const rawProducts = Array.isArray(source.products) ? source.products : [];
+    const rawCategories = Array.isArray(source.categories)
+      ? source.categories
+      : Array.isArray(source.sections)
+        ? source.sections
+        : [];
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `${systemText}\n\nUSUARIO:\n${userText}` }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.25,
-          topP: 0.9,
-          maxOutputTokens: 1024,
-        },
-      }),
-    });
+    const productsOut = rawProducts.map(normalizeProduct).filter(Boolean);
+    const categoriesOut = rawCategories.length ? rawCategories.map(normalizeCategory).filter(Boolean) : buildSectionsFromProducts(productsOut);
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.error?.message || `Gemini HTTP ${res.status}`);
-
-    const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p) => safeStr(p?.text || ""))
-        .join("")
-        .trim() || "";
-
-    return text || "";
+    return {
+      products: productsOut,
+      categories: rawCategories.length ? attachCounts(categoriesOut, productsOut) : categoriesOut,
+      sections: rawCategories.length ? attachCounts(categoriesOut, productsOut) : categoriesOut,
+      stats: {
+        activeProducts: productsOut.filter((p) => p.active !== false && p.is_active !== false && !p.deleted_at).length,
+        lowStockProducts: productsOut.filter((p) => Number(p.stock) > 0 && Number(p.stock) <= 5).length,
+        featuredProducts: productsOut.filter((p) => Number(p.rank) <= 12).length,
+      },
+      store: {
+        org_id: safeStr(source?.store?.org_id || source?.org_id || ""),
+        name: safeStr(source?.store?.name || source?.store?.hero_title || source?.hero_title || "SCORE STORE"),
+        hero_title: safeStr(source?.store?.hero_title || source?.hero_title || "SCORE STORE"),
+        hero_image: safeStr(source?.store?.hero_image || source?.hero_image || "/assets/hero.webp"),
+        promo_active: !!(source?.store?.promo_active ?? source?.promo_active),
+        promo_text: safeStr(source?.store?.promo_text || source?.promo_text || ""),
+        maintenance_mode: !!(source?.store?.maintenance_mode ?? source?.maintenance_mode),
+        contact: source?.store?.contact || source?.contact || {},
+        home: source?.store?.home || source?.home || {},
+        socials: source?.store?.socials || source?.socials || {},
+        theme: source?.store?.theme || source?.theme || {},
+      },
+    };
   }
 
   function parseBody(req) {
@@ -649,35 +673,29 @@
     return {};
   }
 
-  function parseMessage(body = {}) {
-    return safeStr(
-      body?.message ??
-        body?.prompt ??
-        body?.text ??
-        body?.input ??
-        body?.query ??
-        body?.question ??
-        ""
-    ).trim();
-  }
-
   function parseMode(req, body) {
-    const q = safeStr(body?.mode || body?.type || body?.assistant || req?.query?.mode || req?.query?.type || "").trim().toLowerCase();
-    if (q) return q;
-    if (body?.message) return "assistant";
-    return "catalog";
+    const url = new URL(req.url, "http://localhost");
+    const q = safeStr(url.searchParams.get("mode") || url.searchParams.get("type") || "").trim().toLowerCase();
+    const b = safeStr(body?.mode || body?.type || body?.assistant || "").trim().toLowerCase();
+    return b || q || (body?.message ? "assistant" : "catalog");
   }
 
   function parseOrgId(req, body) {
+    const url = new URL(req.url, "http://localhost");
     return safeStr(
       body?.org_id ||
         body?.orgId ||
         body?.organization_id ||
-        req?.query?.org_id ||
-        req?.query?.orgId ||
-        req?.query?.organization_id ||
+        url.searchParams.get("org_id") ||
+        url.searchParams.get("orgId") ||
+        url.searchParams.get("organization_id") ||
         ""
     ).trim();
+  }
+
+  function parseMessage(body = {}) {
+    const msg = body?.message ?? body?.prompt ?? body?.text ?? body?.input ?? body?.query ?? body?.question ?? "";
+    return safeStr(msg).trim().slice(0, 1800);
   }
 
   function parseContext(body = {}) {
@@ -695,7 +713,7 @@
     };
   }
 
-  function buildPublicPrompt({ store, stats, products: list, categories: catList, context }) {
+  function buildPublicPrompt({ store, stats, products, categories, context }) {
     const contact = store?.contact || {};
     const home = store?.home || {};
     const socials = store?.socials || {};
@@ -710,12 +728,12 @@
     const heroTitle = safeStr(store?.hero_title || store?.name || "SCORE STORE");
     const maintenanceMode = !!store?.maintenance_mode;
 
-    const productsPreview = (Array.isArray(list) ? list : [])
+    const productsPreview = (Array.isArray(products) ? products : [])
       .slice(0, 24)
       .map((p) => `- ${getProductName(p)} | SKU:${getProductSku(p)} | ${money(getProductPriceCents(p))} | ${getStockLabel(p)}`)
       .join("\n");
 
-    const categoryPreview = (Array.isArray(catList) ? catList : [])
+    const categoryPreview = (Array.isArray(categories) ? categories : [])
       .slice(0, 12)
       .map((c) => `- ${safeStr(c.name)} (${safeStr(c.uiId)})`)
       .join("\n");
@@ -807,11 +825,11 @@ Redes públicas:
     return `Estoy listo para ayudarte con catálogo, tallas, envío y checkout. Si necesitas soporte humano: ${whatsapp} · ${email}`;
   }
 
-  function normalizeGeminiError(err) {
-    const msg = String(err?.message || err || "");
-    if (/model.*not found|404/i.test(msg)) return "El modelo de IA configurado no está disponible.";
-    if (/api key|unauth|permission|denied|401|403/i.test(msg)) return "La IA no tiene permiso o llave válida.";
-    return "La IA no pudo completar la solicitud.";
+  function normalizeReply(text) {
+    return safeStr(text || "")
+      .replace(/\[ACTION:[A-Z_]+(?::[^\]]+)?\]/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   function extractActionMarkers(text) {
@@ -824,38 +842,102 @@ Redes públicas:
     return out;
   }
 
-  function normalizeReply(text) {
-    return safeStr(text || "")
-      .replace(/\[ACTION:[A-Z_]+(?::[^\]]+)?\]/g, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+  function normalizeGeminiError(err) {
+    const msg = String(err?.message || err || "");
+    if (/model.*not found|404/i.test(msg)) return "El modelo de IA configurado no está disponible.";
+    if (/api key|unauth|permission|denied|401|403/i.test(msg)) return "La IA no tiene permiso o llave válida.";
+    return "La IA no pudo completar la solicitud.";
   }
 
-  function send(res, payload) {
-    const out = payload || {};
-    const headers = out.headers || {};
-    res.statusCode = out.statusCode || 200;
-    Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
-    return res.end(out.body || "");
+  async function maybeNotifyTelegram(message) {
+    try {
+      const { sendTelegram } = require("../_shared");
+      if (typeof sendTelegram !== "function") return;
+      await sendTelegram(message);
+    } catch {}
+  }
+
+  async function callGemini({ apiKey, model, systemText, userText }) {
+    const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+    const url = `${GEMINI_API_BASE}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `${systemText}\n\nUSUARIO:\n${userText}` }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.25,
+          topP: 0.9,
+          maxOutputTokens: 1024,
+        },
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error?.message || `Gemini HTTP ${res.status}`);
+
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p) => safeStr(p?.text || ""))
+        .join("")
+        .trim() || "";
+
+    return text || "";
   }
 
   async function handleCatalog(req) {
     const origin = getOrigin(req);
+    const rl = rateLimit(req);
+
+    if (!rl.ok) {
+      return jsonResponse(429, { ok: false, error: "rate_limited" }, origin);
+    }
+
     const body = parseBody(req);
     const mode = parseMode(req, body);
 
     if (mode !== "assistant") {
       const orgId = parseOrgId(req, body);
-      const data = await loadCatalogFromJsonOrDb(orgId);
-      return jsonResponse(200, { ok: true, mode: "catalog", ...data }, origin);
+      const catalogData = await loadCatalogFromJsonOrDb(orgId);
+
+      return jsonResponse(
+        200,
+        {
+          ok: true,
+          mode: "catalog",
+          ...catalogData,
+        },
+        origin
+      );
     }
 
     const message = parseMessage(body);
-    if (!message) return jsonResponse(400, { ok: false, error: "Se requiere un mensaje válido." }, origin);
+    if (!message) {
+      return jsonResponse(400, { ok: false, error: "Se requiere un mensaje válido." }, origin);
+    }
 
     const orgId = parseOrgId(req, body);
     const context = parseContext(body);
     const catalogData = await loadCatalogFromJsonOrDb(orgId);
+
+    let resolvedOrgId = orgId || catalogData?.store?.org_id || "";
+    if (!resolvedOrgId) {
+      const sb = supabaseAdmin();
+      if (sb) {
+        try {
+          resolvedOrgId = await resolveScoreOrgId(sb);
+        } catch {
+          resolvedOrgId = "";
+        }
+      }
+    }
+
     const systemText = buildPublicPrompt({
       store: catalogData.store,
       stats: catalogData.stats,
@@ -864,20 +946,36 @@ Redes públicas:
       context,
     });
 
+    const preferredModel = safeStr(process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim();
+    const fallbackModel = safeStr(process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash").trim();
+
     let replyText = "";
-    let usedModel = safeStr(process.env.GEMINI_MODEL || "gemini-2.5-flash-lite");
+    let usedModel = preferredModel || "fallback";
+
     if (process.env.GEMINI_API_KEY) {
       try {
         replyText = await callGemini({
           apiKey: process.env.GEMINI_API_KEY,
-          model: usedModel,
+          model: preferredModel,
           systemText,
           userText: message,
         });
-      } catch (err) {
-        replyText = fallbackReply(message, catalogData.store, catalogData.store?.contact || {});
-        usedModel = "fallback";
-        console.warn("[catalog assistant]", normalizeGeminiError(err));
+      } catch (e) {
+        const errMsg = String(e?.message || e || "");
+        const looksLikeModelIssue = /model.*not found|404/i.test(errMsg);
+
+        if (looksLikeModelIssue && fallbackModel && fallbackModel !== preferredModel) {
+          usedModel = fallbackModel;
+          replyText = await callGemini({
+            apiKey: process.env.GEMINI_API_KEY,
+            model: fallbackModel,
+            systemText,
+            userText: message,
+          });
+        } else {
+          replyText = fallbackReply(message, catalogData.store, catalogData.store?.contact || {});
+          usedModel = "fallback";
+        }
       }
     } else {
       replyText = fallbackReply(message, catalogData.store, catalogData.store?.contact || {});
@@ -888,13 +986,24 @@ Redes públicas:
     const reply = normalizeReply(rawReply).slice(0, 1400);
     const actions = extractActionMarkers(rawReply);
 
+    if (actions.length) {
+      await maybeNotifyTelegram(
+        [
+          "💬 <b>Score Store AI</b>",
+          `Org: ${resolvedOrgId || catalogData.store?.org_id || "N/D"}`,
+          `Actions: ${actions.map((a) => `${a.action}${a.value ? `:${a.value}` : ""}`).join(", ")}`,
+          `Model: ${usedModel}`,
+        ].join("\n")
+      );
+    }
+
     return jsonResponse(
       200,
       {
         ok: true,
         endpoint: "catalog",
         mode: "assistant",
-        org_id: orgId || catalogData.store?.org_id || "",
+        org_id: resolvedOrgId || catalogData.store?.org_id || "",
         reply,
         actions,
         model: usedModel,
@@ -907,6 +1016,15 @@ Redes públicas:
       },
       origin
     );
+  }
+
+  function updateFooterVersion() {
+    if (els.appVersionLabel) els.appVersionLabel.textContent = APP_VERSION;
+  }
+
+  function setBodyNoScroll(locked) {
+    document.body.classList.toggle("no-scroll", !!locked);
+    document.documentElement.classList.toggle("no-scroll", !!locked);
   }
 
   function refreshHeaderPromo() {
@@ -933,22 +1051,31 @@ Redes públicas:
       els.footerEmailLink.setAttribute("href", `mailto:${email}`);
       els.footerEmailLink.textContent = email;
     }
+
     if (els.footerWhatsappLink) {
       els.footerWhatsappLink.setAttribute("href", `https://wa.me/${waE164}`);
       els.footerWhatsappLink.textContent = waDisplay;
     }
+
     if (els.footerNote) {
-      els.footerNote.textContent = safeStr(home.footer_note || "Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.");
+      els.footerNote.textContent = safeStr(
+        home.footer_note || "Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com."
+      );
     }
 
     if (els.heroTitle && siteSettings.hero_title) els.heroTitle.textContent = siteSettings.hero_title;
     if (els.heroText && home.hero_text) els.heroText.textContent = home.hero_text;
-    if (els.heroImage && siteSettings.hero_image) {
-      els.heroImage.src = normalizeAssetPath(siteSettings.hero_image);
-      els.heroImage.onerror = () => {
-        els.heroImage.onerror = null;
-        els.heroImage.src = "/assets/hero.webp";
-      };
+    if (els.heroTagline && siteSettings.hero_title) els.heroTagline.textContent = "Official Merchandise";
+
+    if (siteSettings.hero_image) {
+      const heroImg = $("#heroImage");
+      if (heroImg) {
+        heroImg.src = normalizeAssetPath(siteSettings.hero_image);
+        heroImg.onerror = () => {
+          heroImg.onerror = null;
+          heroImg.src = "/assets/hero.webp";
+        };
+      }
     }
 
     if (siteSettings.promo_active && siteSettings.promo_text && els.promoBarText && !readStorage(STORAGE_KEYS.hiddenPromo, "0")) {
@@ -1117,6 +1244,24 @@ Redes públicas:
     els.statusRow.innerHTML = `<span class="status">${count} producto${count === 1 ? "" : "s"} encontrado${count === 1 ? "" : "s"}</span>`;
   }
 
+  function animateCards(selector) {
+    $$(selector).forEach((el, idx) => {
+      if (el.dataset.entered === "1") return;
+      el.dataset.entered = "1";
+      el.style.animationDelay = `${idx * 35}ms`;
+      el.classList.add("is-entered");
+    });
+  }
+
+  function bindCardHover() {
+    $$(".card, .catcard").forEach((el) => {
+      if (el.dataset.bound === "1") return;
+      el.dataset.bound = "1";
+      el.addEventListener("pointerenter", () => el.classList.add("is-hovered"), { passive: true });
+      el.addEventListener("pointerleave", () => el.classList.remove("is-hovered"), { passive: true });
+    });
+  }
+
   function renderCategories() {
     if (!els.categoryGrid) return;
 
@@ -1180,6 +1325,10 @@ Redes públicas:
     }
 
     els.categoryGrid.appendChild(frag);
+    if (els.categoryHint) els.categoryHint.hidden = false;
+
+    animateCards(".catcard");
+    bindCardHover();
   }
 
   function productCardHTML(p) {
@@ -1189,6 +1338,7 @@ Redes públicas:
     const price = money(getProductPriceCents(p));
     const stock = escapeHtml(getStockLabel(p));
     const imgs = getProductImages(p);
+
     const track = imgs.length
       ? imgs.map((src) => `<img src="${escapeHtml(src)}" alt="${title}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/logo-score.webp'">`).join("")
       : `<img src="${escapeHtml(normalizeAssetPath(p.cover_image || p.image || p.img || "/assets/logo-score.webp"))}" alt="${title}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/assets/logo-score.webp'">`;
@@ -1216,6 +1366,21 @@ Redes públicas:
         </div>
       </article>
     `;
+  }
+
+  function maybeShowSwipeHint() {
+    const hint = $("#productSwipeHint");
+    if (!hint) return;
+    const seen = readStorage(STORAGE_KEYS.seenSwipe, "0") === "1";
+    if (!seen && products.length > 0) {
+      hint.hidden = false;
+      hint.classList.add("is-pulse");
+      setTimeout(() => {
+        hint.classList.remove("is-pulse");
+        hint.classList.add("is-hide");
+        writeStorage(STORAGE_KEYS.seenSwipe, "1");
+      }, 4500);
+    }
   }
 
   function renderProducts() {
@@ -1252,39 +1417,6 @@ Redes públicas:
     if (els.activeFilterRow) els.activeFilterRow.hidden = !activeCategory && !searchQuery;
     if (els.carouselTitle) els.carouselTitle.textContent = activeCategory ? (cat?.name || "Productos") : "Productos destacados";
     if (els.catalogCarouselSection) els.catalogCarouselSection.hidden = products.length === 0 && !searchQuery && !activeCategory;
-  }
-
-  function maybeShowSwipeHint() {
-    const hint = $("#productSwipeHint");
-    if (!hint) return;
-    const seen = readStorage(STORAGE_KEYS.seenSwipe, "0") === "1";
-    if (!seen && products.length > 0) {
-      hint.hidden = false;
-      hint.classList.add("is-pulse");
-      setTimeout(() => {
-        hint.classList.remove("is-pulse");
-        hint.classList.add("is-hide");
-        writeStorage(STORAGE_KEYS.seenSwipe, "1");
-      }, 4500);
-    }
-  }
-
-  function animateCards(selector) {
-    $$(selector).forEach((el, idx) => {
-      if (el.dataset.entered === "1") return;
-      el.dataset.entered = "1";
-      el.style.animationDelay = `${idx * 35}ms`;
-      el.classList.add("is-entered");
-    });
-  }
-
-  function bindCardHover() {
-    $$(".card, .catcard").forEach((el) => {
-      if (el.dataset.bound === "1") return;
-      el.dataset.bound = "1";
-      el.addEventListener("pointerenter", () => el.classList.add("is-hovered"), { passive: true });
-      el.addEventListener("pointerleave", () => el.classList.remove("is-hovered"), { passive: true });
-    });
   }
 
   function getCartKey(item) {
@@ -1380,6 +1512,7 @@ Redes públicas:
     if (els.cartDiscount) els.cartDiscount.textContent = `- ${money(getDiscountCents())}`;
     if (els.cartTotal) els.cartTotal.textContent = money(getTotalAmount());
     if (els.cartCountBadge) els.cartCountBadge.textContent = String(cart.reduce((sum, item) => sum + clampInt(item.qty, 1, 99, 1), 0));
+    updateCheckoutState();
   }
 
   function updateCheckoutState() {
@@ -1390,12 +1523,6 @@ Redes públicas:
       const stock = Number(currentProduct.stock);
       els.pmAddBtn.disabled = Number.isFinite(stock) && stock <= 0;
     }
-  }
-
-  function updateBodyClasses() {
-    const open = Boolean((els.cartDrawer && !els.cartDrawer.hidden) || (els.assistantDrawer && !els.assistantDrawer.hidden) || (els.productModal && !els.productModal.hidden));
-    document.documentElement.classList.toggle("no-scroll", open || (els.splash && !els.splash.hidden));
-    document.body.classList.toggle("no-scroll", open || (els.splash && !els.splash.hidden));
   }
 
   function renderCart() {
@@ -1504,21 +1631,24 @@ Redes públicas:
     if (!els.cartDrawer) return;
     els.cartDrawer.hidden = false;
     els.cartDrawer.setAttribute("aria-hidden", "false");
-    updateBodyClasses();
+    setBodyNoScroll(true);
+    if (els.overlay) els.overlay.hidden = false;
   }
 
   function closeCart() {
     if (!els.cartDrawer) return;
     els.cartDrawer.hidden = true;
     els.cartDrawer.setAttribute("aria-hidden", "true");
-    updateBodyClasses();
+    if (els.overlay) els.overlay.hidden = true;
+    updateBodyLocks();
   }
 
   function openAssistant() {
     if (!els.assistantDrawer) return;
     els.assistantDrawer.hidden = false;
     els.assistantDrawer.setAttribute("aria-hidden", "false");
-    updateBodyClasses();
+    setBodyNoScroll(true);
+    if (els.overlay) els.overlay.hidden = false;
     if (els.assistantInput) setTimeout(() => els.assistantInput.focus(), 80);
     if (els.assistantLog && els.assistantLog.childElementCount === 0) {
       appendAssistant("bot", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy?");
@@ -1529,7 +1659,8 @@ Redes públicas:
     if (!els.assistantDrawer) return;
     els.assistantDrawer.hidden = true;
     els.assistantDrawer.setAttribute("aria-hidden", "true");
-    updateBodyClasses();
+    if (els.overlay) els.overlay.hidden = true;
+    updateBodyLocks();
   }
 
   function appendAssistant(kind, text) {
@@ -1644,7 +1775,8 @@ Redes públicas:
     buildProductModal(p);
     els.productModal.hidden = false;
     els.productModal.classList.add("modal--open");
-    updateBodyClasses();
+    setBodyNoScroll(true);
+    if (els.overlay) els.overlay.hidden = false;
     setTimeout(() => els.pmAddBtn?.focus(), 50);
   }
 
@@ -1653,14 +1785,9 @@ Redes públicas:
     els.productModal.classList.remove("modal--open");
     setTimeout(() => {
       els.productModal.hidden = true;
-      updateBodyClasses();
+      if (els.overlay) els.overlay.hidden = true;
+      updateBodyLocks();
     }, 350);
-  }
-
-  function syncShipUI() {
-    const isDelivery = shipMode === "delivery";
-    persistShip();
-    refreshTotals();
   }
 
   function applyPromoCode(code) {
@@ -1839,27 +1966,6 @@ Redes públicas:
     if (sku) setTimeout(() => openProduct(sku), 180);
   }
 
-  function hideSplash(force = false) {
-    if (!els.splash) return;
-
-    if (force) {
-      els.splash.hidden = true;
-      updateBodyClasses();
-      return;
-    }
-
-    els.splash.classList.add("fade-out");
-    setTimeout(() => {
-      if (els.splash) els.splash.hidden = true;
-      updateBodyClasses();
-    }, 800);
-  }
-
-  function refreshTotalsUI() {
-    refreshTotals();
-    updateCheckoutState();
-  }
-
   function syncSearch(value) {
     searchQuery = safeStr(value || "").trim();
     if (els.searchInput && els.searchInput.value !== searchQuery) els.searchInput.value = searchQuery;
@@ -1868,15 +1974,47 @@ Redes públicas:
     writeStorage(STORAGE_KEYS.ui, { searchQuery, activeCategory });
   }
 
+  function updateBodyLocks() {
+    const open = Boolean(
+      (els.cartDrawer && !els.cartDrawer.hidden) ||
+      (els.assistantDrawer && !els.assistantDrawer.hidden) ||
+      (els.productModal && !els.productModal.hidden) ||
+      (els.splash && !els.splash.hidden)
+    );
+    setBodyNoScroll(open);
+    if (els.overlay) els.overlay.hidden = !open;
+  }
+
+  function hideSplash(force = false) {
+    if (!els.splash || els.splash.hidden || splashClosing) return;
+    splashClosing = true;
+
+    if (force) {
+      els.splash.hidden = true;
+      splashClosing = false;
+      updateBodyLocks();
+      return;
+    }
+
+    els.splash.classList.add("fade-out");
+    setTimeout(() => {
+      if (els.splash) els.splash.hidden = true;
+      splashClosing = false;
+      updateBodyLocks();
+    }, 800);
+  }
+
   function bindEvents() {
     els.searchInput?.addEventListener("input", (e) => {
       syncSearch(e.target.value);
       updateResults();
     });
+
     els.mobileSearchInput?.addEventListener("input", (e) => {
       syncSearch(e.target.value);
       updateResults();
     });
+
     els.menuSearchInput?.addEventListener("input", (e) => {
       syncSearch(e.target.value);
       updateResults();
@@ -1925,6 +2063,12 @@ Redes públicas:
     els.checkoutApplyPromoBtn?.addEventListener("click", () => applyPromoCode(els.checkoutPromo?.value || ""));
     els.cartCheckoutBtn?.addEventListener("click", submitCheckout);
 
+    els.cartClearBtn?.addEventListener("click", () => {
+      cart = [];
+      persistCart();
+      renderCart();
+    });
+
     els.scrollLeftBtn?.addEventListener("click", () => {
       els.productGrid?.scrollBy({ left: -360, behavior: "smooth" });
     });
@@ -1942,6 +2086,10 @@ Redes públicas:
 
     els.scrollToCategoriesBtn?.addEventListener("click", () => {
       els.categoryGrid?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    els.closeMobileSearchBtn?.addEventListener("click", () => {
+      if (els.mobileSearchWrap) els.mobileSearchWrap.hidden = true;
     });
 
     document.addEventListener("click", (e) => {
@@ -1982,9 +2130,23 @@ Redes públicas:
         closeAssistant();
       }
     });
+
+    window.addEventListener("hashchange", openProductByHash);
+    window.addEventListener("scroll", () => {
+      if (!els.scrollTopBtn) return;
+      els.scrollTopBtn.hidden = window.scrollY < 400;
+    });
+    els.scrollTopBtn?.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
-  async function loadStatus() {}
+  function registerServiceWorker() {
+    if (serviceWorkerRegistered) return;
+    if (!("serviceWorker" in navigator)) return;
+    serviceWorkerRegistered = true;
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
 
   async function boot() {
     updateFooterVersion();
@@ -2017,38 +2179,39 @@ Redes públicas:
     bindEvents();
     initCookieBanner();
     renderCart();
-    syncShipUI();
     updateCheckoutState();
-    updateBodyClasses();
+    updateBodyLocks();
 
-    const splashFailSafe = setTimeout(() => hideSplash(true), 4500);
+    if (els.splash && !els.splash.hidden) {
+      introFailSafeTimer = setTimeout(() => {
+        if (els.splash && !els.splash.hidden) hideSplash(false);
+      }, 4000);
+    }
 
     try {
       await Promise.race([
         Promise.allSettled([loadPromos(), loadSiteSettings(), loadCatalog()]),
         delay(3500),
       ]);
+    } catch (err) {
+      console.error("[boot]", err);
     } finally {
-      clearTimeout(splashFailSafe);
+      if (introFailSafeTimer) clearTimeout(introFailSafeTimer);
+      introFailSafeTimer = null;
+      introTimer = setTimeout(() => hideSplash(false), 180);
     }
 
     renderCategories();
     renderProducts();
     updateResults();
     openProductByHash();
-    hideSplash();
     initSalesNotification();
     refreshHeaderPromo();
-    updateBodyClasses();
-
-    if (els.checkoutEmail) {
-      ["input", "change"].forEach((evt) => {
-        els.checkoutEmail.addEventListener(evt, saveCustomer);
-      });
-    }
+    registerServiceWorker();
 
     ["input", "change"].forEach((evt) => {
       els.checkoutName?.addEventListener(evt, saveCustomer);
+      els.checkoutEmail?.addEventListener(evt, saveCustomer);
       els.checkoutPhone?.addEventListener(evt, saveCustomer);
       els.checkoutAddress?.addEventListener(evt, saveCustomer);
       els.checkoutPostal?.addEventListener(evt, saveCustomer);
@@ -2059,10 +2222,6 @@ Redes públicas:
       syncSearch(els.searchInput.value);
       updateResults();
     }
-  }
-
-  async function loadAndBoot() {
-    await loadStatus();
   }
 
   window.SCORESTORE = {
@@ -2077,7 +2236,7 @@ Redes públicas:
     renderCategories,
     renderProducts,
     updateResults,
-    refreshTotals: refreshTotalsUI,
+    refreshTotals,
     applyPromoCode,
     quoteShipping,
     openProduct,
