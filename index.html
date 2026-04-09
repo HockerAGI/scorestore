@@ -2,61 +2,25 @@
 <html lang="es-MX">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#E10600" />
-  <meta name="description" content="Merch oficial de Score International. Pago cifrado con Stripe y logística inteligente con Envía.com." />
-  <meta name="facebook-domain-verification" content="wuo7x5sxsjcer1t0epn1id5xgjp8su" />
-  <meta name="robots" content="index,follow,max-image-preview:large" />
-  <meta name="format-detection" content="telephone=no" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#e10600" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>SCORE STORE</title>
 
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https: https://www.facebook.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://www.facebook.com https://connect.facebook.net; manifest-src 'self'; worker-src 'self'; frame-src https://js.stripe.com https://hooks.stripe.com;" />
-
-  <title>SCORE STORE — Official Merchandise</title>
-
-  <link rel="canonical" href="https://scorestore.vercel.app/" />
   <link rel="manifest" href="/site.webmanifest" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
-  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
-  <link rel="preconnect" href="https://connect.facebook.net" crossorigin />
-  <link rel="preload" href="/css/styles.css" as="style" />
-  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" type="image/webp" fetchpriority="high" />
-  <link rel="preload" href="/assets/hero.webp" as="image" type="image/webp" fetchpriority="high" />
+  <link rel="icon" href="/assets/logo-score.webp" />
+  <link rel="apple-touch-icon" href="/assets/logo-score.webp" />
+
+  <link rel="preload" href="/assets/logo-score.webp" as="image" />
+  <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
+
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-04-09-v3" />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:locale" content="es_MX" />
-  <meta property="og:title" content="SCORE STORE — Official Merchandise" />
-  <meta property="og:description" content="Merch oficial de Score International. Pago cifrado con Stripe y logística inteligente con Envía.com." />
-  <meta property="og:url" content="https://scorestore.vercel.app/" />
-  <meta property="og:image" content="https://scorestore.vercel.app/assets/hero.webp" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="SCORE STORE — Official Merchandise" />
-  <meta name="twitter:description" content="Merch oficial de Score International. Pago cifrado con Stripe y logística inteligente con Envía.com." />
-  <meta name="twitter:image" content="https://scorestore.vercel.app/assets/hero.webp" />
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Store",
-    "name": "SCORE STORE",
-    "url": "https://scorestore.vercel.app/",
-    "logo": "https://scorestore.vercel.app/assets/logo-score.webp",
-    "description": "Mercancía oficial de Score International Off-Road Racing.",
-    "paymentAccepted": "Credit Card, Debit Card, OXXO Pay",
-    "currenciesAccepted": "MXN, USD"
-  }
-  </script>
+  <link rel="stylesheet" href="/css/override.css?v=2026-04-10-intro-fix" />
 </head>
+<body class="no-scroll">
 
-<body>
-
-  <!-- ══ SPLASH ══════════════════════════════════════════════════ -->
   <div id="splash" class="splash" aria-hidden="true">
     <div class="splash__bg"></div>
     <div class="splash__vignette"></div>
@@ -64,14 +28,7 @@
     <div class="splash__grid"></div>
     <div class="splash__inner">
       <div class="splash__logo-wrap">
-        <img
-          class="splash__logo"
-          src="/assets/logo-score.webp"
-          alt="SCORE STORE"
-          width="220" height="97"
-          decoding="async"
-          fetchpriority="high"
-        />
+        <img class="splash__logo" src="/assets/logo-score.webp" alt="SCORE" width="220" height="88" />
         <div class="splash__laser"></div>
       </div>
       <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
@@ -84,443 +41,219 @@
     </div>
   </div>
 
-  <!-- ══ SKIP LINK ═══════════════════════════════════════════════ -->
-  <a class="skip" href="#categories">Ir al catálogo</a>
+  <div id="promoBar" class="promo-bar" hidden>
+    <div class="promo-bar__inner wrap">
+      <div id="promoBarText" class="promo-bar__text"></div>
+      <button id="promoBarClose" type="button" class="iconbtn" aria-label="Cerrar promoción">✕</button>
+    </div>
+  </div>
 
-  <!-- ══ HEADER ══════════════════════════════════════════════════ -->
-  <header class="topbar" role="banner">
-    <div class="wrap topbar__inner">
-
-      <button id="openMenuBtn" class="iconbtn hover-fx" type="button" aria-label="Abrir menú">
-        <span class="icon" aria-hidden="true">≡</span>
-      </button>
-
-      <a class="brand" href="/" aria-label="SCORE STORE inicio">
-        <img
-          class="brand__logo"
-          src="/assets/logo-score.webp"
-          alt="SCORE STORE"
-          width="120" height="53"
-          decoding="async"
-        />
+  <header class="topbar site-header">
+    <div class="topbar__inner site-header__inner wrap">
+      <a class="brand" href="/" aria-label="Inicio">
+        <img class="brand__logo" src="/assets/logo-score.webp" alt="Score Store" />
+        <span class="brand__text">
+          <strong class="brand__title">SCORE STORE</strong>
+          <small class="brand__subtitle">Official Merchandise</small>
+        </span>
       </a>
 
+      <nav class="topnav topbar__nav">
+        <a href="#catalogCarouselSection">Catálogo</a>
+        <a href="#footerSection">Contacto</a>
+      </nav>
+
       <div class="topbar__actions">
-        <div class="search desktop-only glass-panel">
-          <span class="search__icon" aria-hidden="true">⌕</span>
-          <input
-            id="searchInput"
-            name="searchInput"
-            class="search__input"
-            type="search"
-            placeholder="Buscar hoodies, gorras, merch..."
-            autocomplete="off"
-            aria-label="Buscar productos"
-          />
-        </div>
-
-        <button id="mobileSearchBtn" class="iconbtn hover-fx mobile-only" type="button" aria-label="Buscar">
-          <span class="icon" aria-hidden="true">⌕</span>
-        </button>
-
-        <button
-          id="openAssistantBtn"
-          class="iconbtn desktop-only tooltip-wrap hover-fx tech-glow"
-          type="button"
-          aria-label="Asistente SCORE"
-          title="Pregúntale al Asistente"
-        >
-          <svg class="assistant-icon assistant-icon--small pulse-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2z"></path>
-            <path d="M19 12l.8 2.4 2.2.9-2.2.9L19 18l-.8-2.4-2.2-.9 2.2-.9L19 12z"></path>
-            <path d="M5 12l.8 2.4 2.2.9-2.2.9L5 18l-.8-2.4-2.2-.9 2.2-.9L5 12z"></path>
-          </svg>
-        </button>
-
-        <button
-          id="cartToggleBtn"
-          class="iconbtn iconbtn--dark hover-fx vfx-cart-btn"
-          type="button"
-          aria-label="Abrir carrito"
-          title="Mi carrito"
-        >
-          <span class="icon" aria-hidden="true">🛒</span>
-          <span id="cartCountBadge" class="badge glow-badge" aria-label="Artículos en carrito">0</span>
+        <button id="openAssistantBtn" class="iconbtn" type="button" aria-label="Abrir asistente">AI</button>
+        <button id="cartToggleBtn" class="cart-toggle" type="button" aria-label="Abrir carrito">
+          Carrito <span id="cartCountBadge" class="cart-toggle__badge">0</span>
         </button>
       </div>
-    </div>
-
-    <!-- Mobile search bar -->
-    <div id="mobileSearchWrap" class="mobile-search-bar glass-panel" hidden>
-      <input
-        id="mobileSearchInput"
-        name="mobileSearchInput"
-        class="input"
-        type="search"
-        placeholder="Buscar mercancía oficial..."
-        aria-label="Buscador móvil"
-      />
-      <button id="closeMobileSearchBtn" class="iconbtn btn--ghost" type="button" aria-label="Cerrar buscador" style="border:none;">✕</button>
     </div>
   </header>
 
-  <!-- ══ PROMO BAR ════════════════════════════════════════════════ -->
-  <div id="promoBar" class="promo-bar" role="status" aria-live="polite" hidden>
-    <div class="wrap promo-bar__inner">
-      <span id="promoBarText" class="promo-bar__text"></span>
-      <button id="promoBarClose" class="iconbtn iconbtn--dark hover-fx" type="button" aria-label="Cerrar aviso">✕</button>
-    </div>
-  </div>
+  <main>
+    <section class="hero">
+      <div class="hero__inner wrap">
+        <div class="hero__content">
+          <div class="hero__eyebrow" id="heroTagline">Official Merchandise</div>
+          <h1 class="hero__title" id="heroTitle">SCORE STORE</h1>
+          <p class="hero__copy" id="heroText">
+            Mercancía oficial SCORE International con una experiencia de compra rápida, visual y premium.
+          </p>
 
-  <!-- ══ HERO — CINEMATIC ═════════════════════════════════════════ -->
-  <section class="hero cinematic-hero" aria-label="Presentación">
-    <div class="hero__bg" aria-hidden="true"></div>
-    <div class="hero__overlay" aria-hidden="true"></div>
-    <div class="hero__particles" aria-hidden="true"></div>
+          <div class="hero__actions">
+            <a href="#catalogCarouselSection" class="btn btn-link--primary">Explorar catálogo</a>
+            <button type="button" class="btn btn-link--secondary" id="scrollToCategoriesBtn">Ver colecciones</button>
+          </div>
 
-    <div class="wrap hero__inner">
-      <div class="hero__content">
-        <img
-          class="hero__desert hero-vfx-float"
-          src="/assets/logo-world-desert.webp"
-          alt="World Desert Championship"
-          width="280" height="253"
-          decoding="async"
-        />
-
-        <h1 id="heroTitle" class="hero__title">Merch Oficial <span class="accent tech-text">SCORE</span></h1>
-        <p id="heroText" class="hero__hook">
-          Diseño, pasión y rendimiento extremo en cada hilo.
-          <strong>Fabricado por UNICO UNIFORMES, patrocinador oficial.</strong>
-        </p>
-
-        <div class="hero__cta">
-          <button
-            id="scrollToCategoriesBtn"
-            class="btn btn--primary btn--large cinematic-btn neon-border"
-            type="button"
-            aria-label="Ver colecciones"
-          >
-            Explorar Colecciones ▼
-          </button>
-        </div>
-
-        <div class="hero__meta">
-          <span class="chip tech-chip" title="Transacciones cifradas">🔒 Pago Seguro Stripe</span>
-          <span class="chip tech-chip" title="Cobertura MX y USA">📦 Envíos con Envía.com</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ MAIN ═════════════════════════════════════════════════════ -->
-  <main id="main" class="main" role="main">
-
-    <!-- Categorías -->
-    <section class="wrap section main-card-bg vfx-glass-container" aria-label="Colecciones">
-      <div class="section__head">
-        <h2 id="categories" class="section-title">1. Elige tu Experiencia Off-Road</h2>
-      </div>
-      <div id="categoryGrid" class="catgrid" aria-live="polite"></div>
-      <div
-        id="categoryHint"
-        class="hint bounce-anim"
-        style="text-align:center;margin-top:15px;font-weight:bold;color:var(--red);"
-      >
-        👈 Selecciona una tarjeta para ver los productos exclusivos.
-      </div>
-    </section>
-
-    <!-- Catálogo / Carrusel -->
-    <section
-      id="catalogCarouselSection"
-      class="carousel-section wrap vfx-glass-container"
-      aria-label="Productos de la colección"
-      hidden
-    >
-      <div class="carousel-header">
-        <div class="carousel-header__left">
-          <h3 id="carouselTitle" class="section-title" style="margin:0;">Catálogo</h3>
-          <div id="activeFilterRow" class="hint" hidden style="margin-top:8px;">
-            <span id="activeFilterLabel"></span>
-            <button
-              id="clearFilterBtn"
-              class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn"
-              type="button"
-              style="margin-left:10px;"
-            >
-              Limpiar
-            </button>
+          <div class="hero__stats">
+            <div class="stat">
+              <span>Pedidos</span>
+              <strong>Checkout rápido</strong>
+            </div>
+            <div class="stat">
+              <span>Atención</span>
+              <strong>IA + soporte</strong>
+            </div>
           </div>
         </div>
-        <div class="carousel-header__right">
-          <select id="sortSelect" class="input tech-input" aria-label="Ordenar" style="max-width:220px;">
-            <option value="featured">Destacados</option>
-            <option value="price_asc">Precio: menor a mayor</option>
-            <option value="price_desc">Precio: mayor a menor</option>
-            <option value="name_asc">Nombre A-Z</option>
-          </select>
-        </div>
-      </div>
 
-      <div id="productGrid" class="carousel-track custom-scrollbar" aria-live="polite"></div>
-      <div id="statusRow" class="status" style="margin-top:10px;"></div>
-    </section>
-
-  </main>
-
-  <!-- ══ OVERLAY ══════════════════════════════════════════════════ -->
-  <div id="overlay" class="overlay" hidden></div>
-
-  <!-- ══ SIDE MENU ════════════════════════════════════════════════ -->
-  <aside id="sideMenu" class="drawer" hidden aria-label="Menú">
-    <div class="drawer__panel glass-panel">
-      <div class="drawer__head">
-        <strong>Menú</strong>
-        <button id="closeMenuBtn" class="iconbtn" type="button" aria-label="Cerrar menú">✕</button>
-      </div>
-      <div class="drawer__body">
-        <div class="search glass-panel" style="margin-bottom:16px;">
-          <span class="search__icon" aria-hidden="true">⌕</span>
-          <input
-            id="menuSearchInput"
-            class="search__input"
-            type="search"
-            placeholder="Buscar mercancía..."
-            autocomplete="off"
-            aria-label="Buscar en menú"
+        <div class="hero__panel">
+          <img
+            id="heroImage"
+            src="/assets/hero.webp"
+            alt="Score Store hero"
+            class="hero__media"
           />
         </div>
-        <nav class="menu-list">
-          <button id="navOpenCart" class="menu-list__item" type="button">🛒 Ver carrito</button>
-          <button id="navOpenAssistant" class="menu-list__item" type="button">✨ Asistente SCORE</button>
-        </nav>
       </div>
-    </div>
-  </aside>
+    </section>
 
-  <!-- ══ CART DRAWER ══════════════════════════════════════════════ -->
-  <aside id="cartDrawer" class="drawer drawer--right" hidden aria-label="Carrito de compras">
-    <div class="drawer__panel glass-panel">
-      <div class="drawer__head">
-        <strong>Mi carrito</strong>
-        <button id="closeCartBtn" class="iconbtn" type="button" aria-label="Cerrar carrito">✕</button>
-      </div>
+    <section class="catalog-section wrap" id="categoriesSection">
+      <div class="section-heading">Colecciones</div>
+      <div id="categoryHint" class="status-row">Explora por edición.</div>
+      <div id="categoryGrid" class="category-grid"></div>
+    </section>
 
-      <div class="drawer__body">
-        <div id="cartItems"></div>
-
-        <div class="cartpanel">
-          <div class="cartline"><span>Subtotal</span><strong id="cartSubtotal">$0</strong></div>
-          <div class="cartline"><span>Envío</span><strong id="shippingLine">$0</strong></div>
-          <div id="discountLineWrap" class="cartline" hidden><span>Descuento</span><strong id="discountLine">-$0</strong></div>
-          <div class="cartline cartline--total"><span>Total</span><strong id="cartTotal">$0</strong></div>
-
-          <div class="cartsection">
-            <div class="ux-label">Entrega</div>
-            <div class="shipselector">
-              <button class="shipselector__btn" type="button" data-ship-mode="pickup">Pickup</button>
-              <button class="shipselector__btn" type="button" data-ship-mode="envia_mx">MX</button>
-              <button class="shipselector__btn" type="button" data-ship-mode="envia_us">USA</button>
-            </div>
-            <div id="shipHint" class="hint" style="margin-top:8px;"></div>
-            <div id="shippingNote" class="hint" style="margin-top:8px;"></div>
-          </div>
-
-          <div id="postalWrap" class="cartsection" hidden>
-            <div class="ux-label">CP / ZIP</div>
-            <div class="postalrow">
-              <input id="postalCode" class="input" type="text" inputmode="numeric" placeholder="Ej. 22614" />
-              <button id="quoteBtn" class="btn btn--ghost tech-ghost-btn" type="button">Cotizar</button>
-            </div>
-          </div>
-
-          <div class="cartsection">
-            <div class="ux-label">Código promo</div>
-            <div class="postalrow">
-              <input id="promoCode" class="input" type="text" placeholder="Ej. SCORE10" />
-              <button id="applyPromoBtn" class="btn btn--ghost tech-ghost-btn" type="button">Aplicar</button>
-            </div>
-          </div>
-
-          <div class="cartsection">
-            <button id="checkoutBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button">
-              Pagar con Stripe
-            </button>
-            <button id="continueShoppingBtn" class="btn btn--ghost btn--block tech-ghost-btn" type="button" style="margin-top:10px;">
-              Seguir comprando
-            </button>
-            <p id="checkoutMsg" class="hint" hidden style="margin-top:10px;"></p>
-            <div id="checkoutLoader" hidden style="margin-top:10px;">
-              <span class="spinner-mini"></span>
-            </div>
-          </div>
+    <section class="catalog-section wrap" id="catalogCarouselSection">
+      <div class="carousel-header">
+        <div class="carousel-header__left">
+          <h2 id="carouselTitle">Productos destacados</h2>
         </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ══ ASSISTANT MODAL ══════════════════════════════════════════ -->
-  <section id="assistantModal" class="modal" role="dialog" aria-modal="true" aria-label="Asistente SCORE" hidden>
-    <div class="modal__panel vfx-modal-panel">
-      <div class="modal__head sticky-header glass-header">
-        <h3 class="modal__title tech-text" style="margin:0;">Asistente SCORE</h3>
-        <button id="assistantCloseBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="modal__body">
-        <div id="assistantOutput" class="chat__output custom-scrollbar"></div>
-        <div class="chat__composer">
-          <input id="assistantInput" class="input" type="text" placeholder="Ej. ¿Qué hoodies hay disponibles?" />
-          <button id="assistantSendBtn" class="btn btn--primary" type="button">Enviar</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ PRODUCT MODAL ════════════════════════════════════════════ -->
-  <section id="productModal" class="modal modal--product" role="dialog" aria-modal="true" aria-label="Detalle de producto" hidden>
-    <div class="modal__panel vfx-modal-panel">
-      <div class="modal__head sticky-header glass-header">
-        <button id="pmBackBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Regresar">←</button>
-        <h3 id="pmTitle" class="modal__title tech-text" style="margin:0;">Producto</h3>
-        <button id="pmClose" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar">✕</button>
-      </div>
-
-      <div class="modal__body modal__body--product">
-        <div class="pm__media">
-          <div id="pmCarousel" class="pm__carousel"></div>
-        </div>
-
-        <div class="pm__info">
-          <div id="pmChips" class="pm__chips"></div>
-          <div id="pmPrice" class="pm__price"></div>
-          <div id="pmStockBadge" class="pm__stock-badge" hidden></div>
-          <div id="pmDesc" class="pm__desc"></div>
-
-          <div class="pm__row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
-            <span class="ux-label" style="margin:0;">Talla</span>
-            <button id="openSizeGuideBtn" class="btn btn--tiny btn--ghost hover-fx tech-ghost-btn" type="button">Guía de tallas</button>
-          </div>
-
-          <div id="pmSizePills" class="size-pill-container" aria-label="Seleccionar talla"></div>
-
-          <div class="pm__row" style="margin-top:16px;">
-            <span class="ux-label">Cantidad</span>
-            <div class="qty-stepper-large" aria-label="Cantidad">
-              <button id="pmQtyDec" type="button" aria-label="Menos">−</button>
-              <span id="pmQtyDisplay" aria-live="polite">1</span>
-              <button id="pmQtyInc" type="button" aria-label="Más">+</button>
-            </div>
-          </div>
-
-          <div class="pm__row" style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
-            <button id="pmShareBtn" class="btn btn--ghost hover-fx tech-ghost-btn" type="button">Compartir</button>
-          </div>
-
-          <div class="sticky-mobile-cta glass-mobile-cta">
-            <div class="ux-trust-badges" style="margin-bottom:12px;">
-              <div class="trust-item">🔒 Pago cifrado Stripe</div>
-              <div class="trust-item">📦 Tracking automático</div>
-            </div>
-            <button id="pmAdd" class="btn btn--primary btn--block btn--large cinematic-btn neon-border" type="button">
-              Agregar al carrito
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ SIZE GUIDE MODAL ═════════════════════════════════════════ -->
-  <section id="sizeGuideModal" class="modal" role="dialog" aria-modal="true" aria-label="Guía de tallas" hidden>
-    <div class="modal__panel vfx-modal-panel">
-      <div class="modal__head sticky-header glass-header">
-        <h3 class="modal__title tech-text" style="margin:0;">Guía de tallas</h3>
-        <button id="closeSizeGuideBtn" class="iconbtn hover-fx tech-close" type="button" aria-label="Cerrar guía">✕</button>
-      </div>
-      <div class="modal__body" style="padding:20px;">
-        <div class="glass-panel" style="padding:14px;border-radius:14px;margin:14px 0;">
-          <p style="margin:0;font-weight:800;">Cómo medir:</p>
-          <ol style="margin:8px 0 0 18px;line-height:1.6;font-weight:600;color:var(--muted);">
-            <li><b>Pecho:</b> mide alrededor del torso, a la altura del pecho.</li>
-            <li><b>Largo:</b> mide desde el hombro hasta el final de la prenda.</li>
-          </ol>
-          <p class="hint" style="margin:10px 0 0 0;">
-            Para medidas exactas por modelo, escríbenos por WhatsApp y te confirmamos la talla ideal.
-          </p>
-        </div>
-        <button id="understandSizeBtn" class="btn btn--primary btn--block btn--large cinematic-btn neon-border hover-fx" type="button">
-          Entendido
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ FLOATING BUTTONS ═════════════════════════════════════════ -->
-  <button id="floatingAssistantBtn" class="floating-assistant hover-fx ai-fab" type="button" aria-label="Asistente" title="Asistente SCORE">
-    ✨
-  </button>
-
-  <button id="scrollTopBtn" class="floating-scroll" type="button" aria-label="Volver arriba" title="Subir">↑</button>
-
-  <!-- ══ SALES NOTIFICATION ═══════════════════════════════════════ -->
-  <div id="salesNotification" class="sales-toast glass-panel" hidden>
-    <strong id="salesName"></strong>
-    <span id="salesAction"></span>
-  </div>
-
-  <!-- ══ COOKIE BANNER ════════════════════════════════════════════ -->
-  <div id="cookieBanner" class="cookie glass-panel" role="dialog" aria-label="Cookies" hidden>
-    <div class="cookie__text">
-      Usamos cookies para funcionamiento básico del carrito y para mejorar tu experiencia.
-    </div>
-    <div class="cookie__actions">
-      <button id="cookieReject" class="btn btn--ghost hover-fx tech-ghost-btn" type="button">Rechazar</button>
-      <button id="cookieAccept" class="btn btn--primary hover-fx neon-border" type="button">Aceptar</button>
-    </div>
-  </div>
-
-  <!-- ══ TOAST ════════════════════════════════════════════════════ -->
-  <div id="toast" class="toast glass-panel" role="status" aria-live="polite" hidden></div>
-
-  <!-- ══ FOOTER ══════════════════════════════════════════════════ -->
-  <footer class="footer" role="contentinfo">
-    <div class="wrap footer__inner">
-      <div class="footer__brand-col">
-        <div class="footer__brand"><span class="tech-text" style="color:var(--red);">SCORE</span> STORE</div>
-        <div class="footer__sub" style="line-height:1.8;color:#d1d1d1;">
-          <strong style="color:#ffffff;">Seguridad Total Garantizada</strong><br />
-          <span id="footerNote">Pago cifrado vía Stripe. Aceptamos OXXO Pay.<br />
-          Logística inteligente internacional con Envía.com.</span><br /><br />
-          <div style="margin-top:15px;font-weight:600;display:flex;flex-direction:column;gap:8px;">
-            <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com" class="footer-contact-link" style="color:#ffffff;" aria-label="Correo soporte">
-              <span class="footer-icon">✉️</span>
-              <span id="footerEmailText">ventas.unicotextil@gmail.com</span>
-            </a>
-            <a id="footerWhatsappLink" href="https://wa.me/5216642368701" target="_blank" rel="noopener noreferrer" class="footer-contact-link" style="color:#ffffff;" aria-label="WhatsApp">
-              <span class="footer-icon" style="color:#25D366;">💬</span>
-              <span id="footerWhatsappText">664 236 8701</span>
-            </a>
-          </div>
+        <div class="carousel-header__right">
+          <button id="scrollLeftBtn" type="button" class="iconbtn" aria-label="Mover a la izquierda">←</button>
+          <button id="scrollRightBtn" type="button" class="iconbtn" aria-label="Mover a la derecha">→</button>
         </div>
       </div>
 
-      <div class="footer__socials">
-        <div class="social-title" style="color:#ffffff;">SÍGUENOS EN LA PISTA</div>
-        <div class="social-links">
-          <a id="footerFacebookLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style="color:#d1d1d1;">Facebook</a>
-          <a id="footerInstagramLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style="color:#d1d1d1;">Instagram</a>
-          <a id="footerYoutubeLink" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube" style="color:#d1d1d1;">YouTube</a>
-        </div>
+      <div id="activeFilterRow" class="active-filter-row" hidden>
+        <div>Filtro activo: <strong id="activeFilterLabel">Todos los productos</strong></div>
+        <button id="clearFilterBtn" type="button" class="btn btn-link--ghost">Limpiar</button>
       </div>
 
-      <div class="footer__right">
-        <a href="/legal.html" class="linkbtn hover-fx" style="color:#d1d1d1;">Términos, Privacidad y Devoluciones</a>
-        <div style="margin-top:12px;font-size:12px;color:#d1d1d1;"><span id="appVersionLabel"></span></div>
+      <div id="statusRow" class="status-row">Cargando catálogo…</div>
+      <div id="productGrid" class="carousel-track"></div>
+    </section>
+  </main>
+
+  <footer id="footerSection" class="site-footer footer">
+    <div class="site-footer__grid footer__inner wrap">
+      <div>
+        <h3>Score Store</h3>
+        <p id="footerNote" class="footer-note">Pago cifrado vía Stripe. Aceptamos OXXO Pay. Logística inteligente internacional con Envía.com.</p>
+      </div>
+      <div>
+        <p>Contacto</p>
+        <a id="footerEmailLink" href="mailto:ventas.unicotextil@gmail.com">ventas.unicotextil@gmail.com</a><br />
+        <a id="footerWhatsappLink" href="https://wa.me/5216642368701">664 236 8701</a>
+      </div>
+      <div>
+        <p>Versión</p>
+        <small id="appVersionLabel">—</small>
       </div>
     </div>
   </footer>
 
-  <script defer src="/js/main.js?v=2026-04-09-v3"></script>
+  <div id="cartDrawer" class="drawer drawer--right" hidden aria-hidden="true">
+    <div class="drawer__head">
+      <strong>Carrito</strong>
+      <button id="closeCartBtn" type="button" class="iconbtn">✕</button>
+    </div>
+    <div class="drawer__body">
+      <div id="cartEmptyState" class="panel">Tu carrito está vacío.</div>
+      <div id="cartItems"></div>
+
+      <div class="panel">
+        <div class="drawer__totals">
+          <div><span>Subtotal</span><strong id="cartSubtotal">$0.00</strong></div>
+          <div><span>Envío</span><strong id="cartShipping">Gratis</strong></div>
+          <div><span>Descuento</span><strong id="cartDiscount">- $0.00</strong></div>
+          <div><span>Total</span><strong id="cartTotal">$0.00</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <input id="checkoutName" type="text" placeholder="Nombre" />
+        <input id="checkoutEmail" type="email" placeholder="Correo" />
+        <input id="checkoutPhone" type="tel" placeholder="Teléfono" />
+        <input id="checkoutAddress" type="text" placeholder="Dirección" />
+        <input id="checkoutPostal" type="text" placeholder="Código postal" />
+        <textarea id="checkoutNotes" placeholder="Notas"></textarea>
+        <select id="checkoutCountry">
+          <option value="MX">México</option>
+          <option value="US">Estados Unidos</option>
+        </select>
+
+        <div class="hero__actions">
+          <button id="checkoutQuoteShipBtn" type="button" class="btn btn-link--secondary">Cotizar envío</button>
+          <button id="cartCheckoutBtn" type="button" class="btn btn-link--primary">Pagar</button>
+          <button id="cartClearBtn" type="button" class="btn btn-link--ghost">Vaciar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="assistantDrawer" class="drawer" hidden aria-hidden="true">
+    <div class="drawer__head">
+      <strong>Score IA</strong>
+      <button id="assistantCloseBtn" type="button" class="iconbtn">✕</button>
+    </div>
+    <div class="drawer__body">
+      <div id="assistantLog" class="chat-sheet__body"></div>
+      <div class="chat-sheet__composer">
+        <input id="assistantInput" type="text" placeholder="Escribe tu mensaje…" />
+        <button id="assistantSendBtn" type="button" class="chat-sheet__send">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal" hidden aria-hidden="true">
+    <div class="modal__panel">
+      <div class="modal__head">
+        <h3 class="modal__title" id="pmTitle">Producto</h3>
+        <button id="productModalCloseBtn" type="button" class="iconbtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="pm__media">
+          <div id="pmCarousel" class="pm__carousel"></div>
+          <div id="pmDots" class="pm__dots"></div>
+        </div>
+        <div class="pm__info">
+          <div id="pmChips" class="pm__chips"></div>
+          <div id="pmStockBadge" class="pm__stock-badge"></div>
+          <div id="pmPrice" class="pm__price"></div>
+          <p id="pmDesc" class="pm__desc"></p>
+
+          <div id="pmSizePills" class="size-pill-container"></div>
+
+          <div class="qty-stepper-large">
+            <button id="pmQtyMinus" type="button">−</button>
+            <span id="pmQtyDisplay">1</span>
+            <button id="pmQtyPlus" type="button">+</button>
+          </div>
+
+          <button id="pmAddBtn" type="button" class="btn btn-link--primary">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cookieBanner" class="cookie-banner" hidden>
+    <div class="cookie-banner__inner">
+      <p>Usamos cookies para mejorar tu experiencia.</p>
+      <div class="cookie-banner__actions">
+        <button id="cookieReject" type="button" class="btn btn-link--ghost">Rechazar</button>
+        <button id="cookieAccept" type="button" class="btn btn-link--primary">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="salesNotification" class="sales-toast">
+    <strong id="salesName">S. López</strong>
+    <span id="salesAction">compró una gorra</span>
+  </div>
+
+  <script src="/js/main.js?v=2026-04-10-intro-fix" defer></script>
 </body>
 </html>
