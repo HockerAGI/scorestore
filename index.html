@@ -22,11 +22,11 @@
   <link rel="preload" href="/assets/fondo-pagina-score.webp" as="image" />
 
   <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/override.css?v=2026-04-10-ui-fix" />
+  <link rel="stylesheet" href="/css/override.css?v=2026-04-10-legacy-visual" />
 </head>
 <body class="no-scroll">
 
-  <a class="skip" href="#catalogCarouselSection">Saltar al catálogo</a>
+  <a class="skip" href="#categoriesSection">Saltar al catálogo</a>
 
   <div id="splash" class="splash" aria-hidden="true">
     <div class="splash__bg"></div>
@@ -43,6 +43,7 @@
           width="320"
           height="128"
           decoding="async"
+          fetchpriority="high"
         />
         <div class="splash__laser" aria-hidden="true"></div>
       </div>
@@ -50,7 +51,7 @@
       <div class="splash__subtitle">OFFICIAL MERCHANDISE</div>
 
       <div class="splash__bar-container" aria-hidden="true">
-        <div class="splash__bar">
+        <div class="splash__bar" role="progressbar" aria-label="Cargando entorno de tienda">
           <div class="splash__barFill"></div>
         </div>
       </div>
@@ -63,19 +64,34 @@
     <div class="topbar__inner wrap">
       <div class="desktop-only" aria-hidden="true" style="min-width: 180px;"></div>
 
-      <a class="brand" href="/index.html" aria-label="Score Store inicio">
-        <img class="brand__logo" src="/assets/logo-score.webp" alt="SCORE STORE" width="120" height="48" />
+      <a class="brand" href="/index.html" aria-label="Ir a Inicio de Score Store">
+        <img
+          class="brand__logo"
+          src="/assets/logo-score.webp"
+          alt="Logotipo SCORE STORE"
+          width="120"
+          height="53"
+          decoding="async"
+        />
       </a>
 
-      <nav class="topnav site-nav" aria-label="Navegación principal">
-        <a href="#categoriesSection">Colecciones</a>
-        <a href="#catalogCarouselSection">Catálogo</a>
-        <a href="#footerSection">Contacto</a>
-      </nav>
-
       <div class="topbar__actions">
-        <button id="openAssistantBtn" class="iconbtn hover-fx" type="button" aria-label="Abrir asistente">AI</button>
-        <button id="cartToggleBtn" class="cart-toggle hover-fx" type="button" aria-label="Abrir carrito">
+        <button
+          id="openAssistantBtn"
+          class="iconbtn hover-fx tech-glow"
+          type="button"
+          aria-label="Abrir asistente"
+          title="Asistente SCORE"
+        >
+          AI
+        </button>
+
+        <button
+          id="cartToggleBtn"
+          class="cart-toggle hover-fx"
+          type="button"
+          aria-label="Abrir carrito"
+        >
           Carrito <span id="cartCountBadge" class="cart-toggle__badge">0</span>
         </button>
       </div>
@@ -110,9 +126,10 @@
       <div class="hero__inner wrap">
         <div class="hero__content">
           <img
+            id="heroImage"
             class="hero__desert hero-vfx-float"
-            src="/assets/logo-score.webp"
-            alt="Score Store"
+            src="/assets/hero.webp"
+            alt="Score Store hero"
             width="280"
             height="112"
             decoding="async"
@@ -126,8 +143,12 @@
           </p>
 
           <div class="hero__cta">
-            <a href="#catalogCarouselSection" class="btn btn-link--primary cinematic-btn neon-border">Explorar catálogo</a>
-            <button id="scrollToCategoriesBtn" type="button" class="btn btn-link--secondary hover-fx">Ver colecciones</button>
+            <button id="scrollToCategoriesBtn" type="button" class="btn btn-link--primary cinematic-btn neon-border">
+              Explorar catálogo
+            </button>
+            <button type="button" class="btn btn-link--secondary hover-fx" onclick="document.querySelector('#categoriesSection')?.scrollIntoView({behavior:'smooth', block:'start'})">
+              Ver colecciones
+            </button>
           </div>
 
           <div class="hero__meta">
@@ -230,7 +251,7 @@
         </div>
 
         <div class="panel__grid" style="margin-top: 12px;">
-          <label id="shipModePickupWrap" class="detail-item" style="cursor:pointer;">
+          <label class="detail-item" style="cursor:pointer;">
             <span>Método</span>
             <strong>
               <input id="shipModePickup" type="radio" name="shipMode" value="pickup" checked />
@@ -238,7 +259,7 @@
             </strong>
           </label>
 
-          <label id="shipModeDeliveryWrap" class="detail-item" style="cursor:pointer;">
+          <label class="detail-item" style="cursor:pointer;">
             <span>Método</span>
             <strong>
               <input id="shipModeDelivery" type="radio" name="shipMode" value="delivery" />
@@ -356,6 +377,6 @@
     </div>
   </footer>
 
-  <script src="/js/main.js?v=2026-04-10-ui-fix" defer></script>
+  <script src="/js/main.js?v=2026-04-10-legacy-visual" defer></script>
 </body>
 </html>
