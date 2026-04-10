@@ -38,29 +38,29 @@
     {
       uiId: "BAJA1000",
       name: "BAJA 1000",
-      logo: "/assets/edicion_2025/camiseta-negra-baja1000.webp",
-      cover_image: "/assets/edicion_2025/camiseta-negra-baja1000.webp",
+      logo: "/assets/products/baja1000/edicion_2025/camiseta-negra-baja1000.webp",
+      cover_image: "/assets/products/baja1000/edicion_2025/camiseta-negra-baja1000.webp",
       aliases: ["BAJA1000", "BAJA_1000", "EDICION_2025", "EDICION_2026"],
     },
     {
       uiId: "BAJA500",
       name: "BAJA 500",
-      logo: "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
-      cover_image: "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
+      logo: "/assets/products/baja1000/edicion_2025/camiseta-gris-baja500-detalle.webp",
+      cover_image: "/assets/products/baja1000/edicion_2025/camiseta-gris-baja500-detalle.webp",
       aliases: ["BAJA500", "BAJA_500"],
     },
     {
       uiId: "BAJA400",
       name: "BAJA 400",
-      logo: "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
-      cover_image: "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
+      logo: "/assets/products/baja400/camiseta-cafe--oscuro-baja400.webp",
+      cover_image: "/assets/products/baja400/camiseta-cafe--oscuro-baja400.webp",
       aliases: ["BAJA400", "BAJA_400"],
     },
     {
       uiId: "SF250",
       name: "SAN FELIPE 250",
-      logo: "/assets/sf250/camiseta-negra-sinmangas-sf250.webp",
-      cover_image: "/assets/sf250/camiseta-negra-sinmangas-sf250.webp",
+      logo: "/assets/products/sf250/camiseta-negra-sinmangas-sf250.webp",
+      cover_image: "/assets/products/sf250/camiseta-negra-sinmangas-sf250.webp",
       aliases: ["SF250", "SF_250"],
     },
   ];
@@ -276,16 +276,16 @@
     if (!s) return "";
     if (/^(https?:|data:|blob:)/i.test(s)) return s;
     s = s.replaceAll("\\", "/").replace(/^\.\//, "");
-    s = s.replaceAll("/assets/BAJA_1000/", "/assets/edicion_2025/");
-    s = s.replaceAll("/assets/BAJA1000/", "/assets/edicion_2025/");
-    s = s.replaceAll("/assets/edicion_2025/", "/assets/edicion_2025/");
-    s = s.replaceAll("/assets/baja500/", "/assets/edicion_2025/");
-    s = s.replaceAll("/assets/baja500/", "/assets/edicion_2025/");
-    s = s.replaceAll("/assets/baja400/", "/assets/baja400/");
-    s = s.replaceAll("/assets/baja400/", "/assets/baja400/");
-    s = s.replaceAll("/assets/sf250/", "/assets/sf250/");
-    s = s.replaceAll("/assets/sf250/", "/assets/sf250/");
-    s = s.replaceAll("/assets/otras_ediciones/", "/assets/otras_ediciones/");
+    s = s.replaceAll("/assets/products/baja1000/", "/assets/products/baja1000/edicion_2025/");
+    s = s.replaceAll("", "/assets/products/baja1000/edicion_2025/");
+    s = s.replaceAll("/assets/products/baja1000/edicion_2025/", "/assets/products/baja1000/edicion_2025/");
+    s = s.replaceAll("/assets/products/baja500/", "/assets/products/baja1000/edicion_2025/");
+    s = s.replaceAll("/assets/products/baja500/", "/assets/products/baja1000/edicion_2025/");
+    s = s.replaceAll("/assets/products/baja400/", "/assets/products/baja400/");
+    s = s.replaceAll("/assets/products/baja400/", "/assets/products/baja400/");
+    s = s.replaceAll("/assets/products/sf250/", "/assets/products/sf250/");
+    s = s.replaceAll("/assets/products/sf250/", "/assets/products/sf250/");
+    s = s.replaceAll("/assets/products/baja1000/otras_ediciones/", "/assets/products/baja1000/otras_ediciones/");
     return s.startsWith("/") ? s : `/${s.replace(/^\/+/, "")}`;
   }
 
