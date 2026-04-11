@@ -3,6 +3,7 @@
   "version": "4.0.2",
   "private": true,
   "description": "Tienda Oficial SCORE International — Fabricado y operado por BAJATEX (Único Uniformes).",
+  "type": "module",
   "scripts": {
     "dev": "npx --yes serve . -l 3000",
     "preview": "npx --yes serve . -l 4173",
@@ -21,5 +22,14 @@
     "node": "20.x"
   },
   "author": "BAJATEX S. de R.L. de C.V.",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@eslint/css": "^1.1.0",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^1.2.0",
+    "@eslint/markdown": "^8.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.4.0",
+    "typescript-eslint": "^8.58.1"
+  }
 }

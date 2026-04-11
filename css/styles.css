@@ -1190,3 +1190,11 @@ button{cursor:pointer}
     scroll-behavior:auto !important;
   }
 }
+
+
+/* AUTO FIX: pm__track */
+.pm__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}

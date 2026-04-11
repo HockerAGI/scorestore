@@ -31,7 +31,7 @@ const PRECACHE = [
   "/assets/edicion_2025/camiseta-negra-baja1000.webp",
   "/assets/edicion_2025/camiseta-gris-baja500-detalle.webp",
   "/assets/baja400/camiseta-cafe-oscuro-baja400.webp",
-  "/assets/sf250/camiseta-negra-sinmangas-SF250.webp",
+  "/assets/sf250/camiseta-negra-sinmangas-sf250.webp",
 ];
 
 function shouldNeverCache(url) {
