@@ -1,23 +1,16 @@
 #!/usr/bin/env node
 "use strict";
 
-/**
- * check-api-budget.js
- * ────────────────────
- * Verifica que /api/ tenga como máximo 1 archivo JS (index.js).
- * En Vercel Hobby, TODOS los .js en /api/ cuentan como Serverless Functions,
- * incluyendo los prefijados con _ . El límite del plan es 12.
- * Nuestra arquitectura usa 1 función central (index.js) + handlers en /lib/handlers/.
- */
-
-const fs   = require("fs");
+const fs = require("fs");
 const path = require("path");
 
-const root          = process.cwd();
-const apiDir        = path.join(root, "api");
-const handlersDir   = path.join(root, "lib", "handlers");
-const VERCEL_LIMIT  = 12;  // Límite hard de Vercel Hobby
-const TARGET_COUNT  = 1;   // Nuestro target: solo index.js en /api/
+const root = process.cwd();
+const apiDir = path.join(root, "api");
+const handlersDir = path.join(root, "lib", "handlers");
+const sharedFile = path.join(root, "lib", "_shared.js");
+
+const VERCEL_LIMIT = 12;
+const TARGET_COUNT = 1;
 
 function fail(message) {
   console.error(`\nERROR: ${message}\n`);
@@ -50,12 +43,13 @@ if (!fs.existsSync(apiDir)) {
   process.exit(0);
 }
 
-const apiFiles     = walkJsFiles(apiDir).sort();
+const apiFiles = walkJsFiles(apiDir).sort();
 const handlerFiles = fs.existsSync(handlersDir) ? walkJsFiles(handlersDir).sort() : [];
-const count        = apiFiles.length;
+const count = apiFiles.length;
 
 console.log(`\n── Vercel Function Budget ──────────────────────────────`);
 console.log(`   Archivos JS en /api/: ${count} (límite Vercel: ${VERCEL_LIMIT}, target: ${TARGET_COUNT})`);
+
 for (const f of apiFiles) {
   const isExpected = f === "index.js";
   console.log(`   ${isExpected ? "✅" : "⚠️ "} api/${f}`);
@@ -67,22 +61,25 @@ if (handlerFiles.length > 0) {
     console.log(`   ✅ lib/handlers/${f}`);
   }
 }
+
+if (!fs.existsSync(sharedFile)) {
+  warn("Falta lib/_shared.js, requerido por api/index.js.");
+}
+
 console.log(`────────────────────────────────────────────────────────\n`);
 
 if (count > VERCEL_LIMIT) {
   fail(
     `Superado el límite de ${VERCEL_LIMIT} Serverless Functions del plan Hobby.\n` +
-    `  Tienes ${count} archivos en /api/. Mueve los handlers a /lib/handlers/.`
+      `Tienes ${count} archivos en /api/. Deja solo api/index.js y mueve el resto a /lib/handlers/.`
   );
 }
 
 if (count > TARGET_COUNT) {
   warn(
     `Se detectaron ${count} archivos JS en /api/ (target = ${TARGET_COUNT}).\n` +
-    `  Solo index.js debería vivir en /api/.\n` +
-    `  Los handlers con prefijo _ deben ir en /lib/handlers/ para no consumir cuota de Vercel.`
+      `Solo api/index.js debería vivir ahí en tu arquitectura centralizada.`
   );
-  // No es un error fatal — es una advertencia. El deploy puede proceder si count <= 12.
 }
 
 console.log("OK: presupuesto de funciones dentro del límite.\n");
