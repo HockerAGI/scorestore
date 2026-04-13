@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = "2026.04.PREMIUM";
+  const APP_VERSION = window.__APP_VERSION__ || "2026.04.PREMIUM.VERCEL";
 
   const API = {
     catalog: "/api/catalog",
@@ -20,6 +20,13 @@
     seenSwipe: "scorestore_seen_product_swipe",
   };
 
+  const CATEGORY_CONFIG = [
+    { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
+    { uiId: "BAJA500", name: "BAJA 500", logo: "assets/logo-baja500.webp", mapFrom: ["BAJA500", "BAJA_500"] },
+    { uiId: "BAJA400", name: "BAJA 400", logo: "assets/logo-baja400.webp", mapFrom: ["BAJA400", "BAJA_400"] },
+    { uiId: "SF250", name: "SAN FELIPE 250", logo: "assets/logo-sf250.webp", mapFrom: ["SF250", "SF_250"] },
+  ];
+
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -31,12 +38,15 @@
     };
   };
 
-  const money = (cents) =>
-    new Intl.NumberFormat("es-MX", {
+  const money = (cents) => {
+    const n = Number(cents);
+    const v = Number.isFinite(n) ? n : 0;
+    return new Intl.NumberFormat("es-MX", {
       style: "currency",
       currency: "MXN",
       maximumFractionDigits: 2,
-    }).format((Number(cents) || 0) / 100);
+    }).format(v / 100);
+  };
 
   const escapeHtml = (s) =>
     String(s ?? "")
@@ -175,6 +185,7 @@
   const scrollTopBtn = $("#scrollTopBtn");
   const toast = $("#toast");
   const appVersionLabel = $("#appVersionLabel");
+
   const salesNotification = $("#salesNotification");
   const salesName = $("#salesName");
   const salesAction = $("#salesAction");
@@ -197,13 +208,6 @@
       whatsapp_display: "664 236 8701",
     },
   };
-
-  const CATEGORY_CONFIG = [
-    { uiId: "BAJA1000", name: "BAJA 1000", logo: "assets/logo-baja1000.webp", mapFrom: ["BAJA1000", "BAJA_1000", "EDICION_2025", "OTRAS_EDICIONES"] },
-    { uiId: "BAJA500", name: "BAJA 500", logo: "assets/logo-baja500.webp", mapFrom: ["BAJA500", "BAJA_500"] },
-    { uiId: "BAJA400", name: "BAJA 400", logo: "assets/logo-baja400.webp", mapFrom: ["BAJA400", "BAJA_400"] },
-    { uiId: "SF250", name: "SAN FELIPE 250", logo: "assets/logo-sf250.webp", mapFrom: ["SF250", "SF_250"] },
-  ];
 
   let catalog = null;
   let products = [];
@@ -230,6 +234,14 @@
     }, timeout);
   };
 
+  const isModal = (el) => !!el?.classList?.contains("modal");
+  const anyLayerOpen = () =>
+    !sideMenu?.hidden ||
+    !cartDrawer?.hidden ||
+    !assistantModal?.hidden ||
+    !productModal?.hidden ||
+    !sizeGuideModal?.hidden;
+
   const openOverlay = () => {
     if (!overlay) return;
     overlay.hidden = false;
@@ -241,14 +253,6 @@
     overlay.hidden = true;
     document.documentElement.classList.remove("no-scroll");
   };
-
-  const isModal = (el) => !!el?.classList?.contains("modal");
-  const anyLayerOpen = () =>
-    !sideMenu?.hidden ||
-    !cartDrawer?.hidden ||
-    !assistantModal?.hidden ||
-    !productModal?.hidden ||
-    !sizeGuideModal?.hidden;
 
   const openLayer = (el) => {
     if (!el) return;
@@ -262,20 +266,21 @@
     if (!el) return;
     const MODAL_T = 520;
 
-    const finalize = () => {
-      if (el.hidden) return;
-      el.hidden = true;
-      if (!anyLayerOpen()) closeOverlay();
-    };
-
     if (isModal(el)) {
       el.classList.remove("modal--open");
-      setTimeout(finalize, MODAL_T);
+      setTimeout(() => {
+        el.hidden = true;
+        if (!anyLayerOpen()) closeOverlay();
+      }, MODAL_T);
       return;
     }
 
     el.classList.remove("is-open");
-    setTimeout(finalize, 180);
+    setTimeout(() => {
+      if (el.hidden) return;
+      el.hidden = true;
+      if (!anyLayerOpen()) closeOverlay();
+    }, 180);
   };
 
   const setCheckoutLoading = (on) => {
@@ -284,7 +289,8 @@
   };
 
   const setStatus = (msg) => {
-    if (statusRow) statusRow.textContent = String(msg || "");
+    if (!statusRow) return;
+    statusRow.textContent = String(msg || "");
   };
 
   const smoothScrollTo = (target) => {
@@ -293,7 +299,9 @@
   };
 
   const persistCart = () => {
-    try { localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
+    } catch {}
   };
 
   const restoreCart = () => {
@@ -301,11 +309,15 @@
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
       const parsed = raw ? JSON.parse(raw) : [];
       cart = Array.isArray(parsed) ? parsed : [];
-    } catch { cart = []; }
+    } catch {
+      cart = [];
+    }
   };
 
   const saveShipping = () => {
-    try { localStorage.setItem(STORAGE_KEYS.ship, JSON.stringify(shipping)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEYS.ship, JSON.stringify(shipping));
+    } catch {}
   };
 
   const loadShipping = () => {
@@ -319,7 +331,9 @@
   };
 
   const setCookieConsent = (value) => {
-    try { localStorage.setItem(STORAGE_KEYS.consent, value); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEYS.consent, value);
+    } catch {}
   };
 
   const loadMetaPixel = (pixelId) => {
@@ -395,14 +409,20 @@
   };
 
   const fetchJsonFirstOk = async (urls) => {
+    const list = Array.isArray(urls) ? urls : [];
     let lastErr = null;
-    for (const u of urls || []) {
+    for (const u of list) {
       try {
         const res = await fetch(u, { headers: { "cache-control": "no-store" } });
-        if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+        if (!res.ok) {
+          lastErr = new Error(`HTTP ${res.status}`);
+          continue;
+        }
         const j = await res.json().catch(() => null);
         if (j) return j;
-      } catch (e) { lastErr = e; }
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw lastErr || new Error("No se pudo cargar JSON");
   };
@@ -464,7 +484,7 @@
       rawSection,
       uiSection,
       collection: inferCollection(p),
-      rank: Number.isFinite(Number(p?.rank)) ? Number(p.rank) : 999,
+      rank: Number.isFinite(Number(p?.rank)) ? Math.round(Number(p.rank)) : 999,
       stock: Number.isFinite(Number(p?.stock)) ? Number(p.stock) : null,
     };
   };
@@ -535,7 +555,7 @@
   };
 
   const ensureCarouselUX = () => {
-    if (productGrid) productGrid.scrollTo({ left: 0, behavior: "instant" });
+    if (productGrid) productGrid.scrollTo({ left: 0, behavior: "auto" });
   };
 
   const getTrackStep = () => {
@@ -566,14 +586,18 @@
     wrap.appendChild(el);
 
     const dismiss = () => {
-      try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEYS.seenSwipe, "1");
+      } catch {}
       el.classList.add("is-hide");
       setTimeout(() => el.remove(), 350);
       productGrid?.removeEventListener?.("scroll", dismiss);
     };
 
     productGrid?.addEventListener?.("scroll", dismiss, { passive: true });
-    setTimeout(() => { if (document.body.contains(el)) el.classList.add("is-pulse"); }, 900);
+    setTimeout(() => {
+      if (document.body.contains(el)) el.classList.add("is-pulse");
+    }, 900);
   };
 
   const getScarcityText = (p) => {
@@ -609,12 +633,19 @@
       const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
       scrollToIndex(clamp(idx + 1, 0, imgs.length - 1));
     });
-    dots.forEach((d, i) => d.addEventListener("click", (e) => { e.stopPropagation(); scrollToIndex(i); }));
+    dots.forEach((d, i) => d.addEventListener("click", (e) => {
+      e.stopPropagation();
+      scrollToIndex(i);
+    }));
 
-    track.addEventListener("scroll", debounce(() => {
-      const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-      setActiveDot(clamp(idx, 0, imgs.length - 1));
-    }, 70), { passive: true });
+    track.addEventListener(
+      "scroll",
+      debounce(() => {
+        const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
+        setActiveDot(clamp(idx, 0, imgs.length - 1));
+      }, 70),
+      { passive: true }
+    );
 
     const settle = debounce(() => {
       const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
@@ -642,18 +673,19 @@
     CATEGORY_CONFIG.forEach((cat) => {
       const count = counts.get(cat.uiId) || 0;
       const card = document.createElement("button");
+      card.className = "catcard hover-fx";
       card.type = "button";
-      card.className = "catcard glass-panel hover-fx";
       card.setAttribute("data-cat", cat.uiId);
 
       card.innerHTML = `
-        <div class="catcard__media">
-          ${cat.logo ? `<img class="catcard__logo" src="${escapeHtml(safeUrl(cat.logo))}" alt="${escapeHtml(cat.name)}" loading="lazy" decoding="async">` : `<div class="product-card__placeholder">🏁</div>`}
-        </div>
-        <div class="catcard__body">
-          <h3 class="catcard__title">${escapeHtml(cat.name)}</h3>
-          <p class="catcard__copy">${count} productos disponibles</p>
-          <span class="catcard__btn">Explorar</span>
+        <div class="catcard__bg" aria-hidden="true"></div>
+        <div class="catcard__inner">
+          <img class="catcard__logo" src="${safeUrl(cat.logo)}" alt="${escapeHtml(cat.name)}" loading="lazy" decoding="async">
+          <div class="catcard__meta">
+            <div class="catcard__title tech-text">${escapeHtml(cat.name)}</div>
+            <div class="catcard__sub">${count} productos</div>
+          </div>
+          <div class="catcard__btn">Explorar</div>
         </div>
       `;
 
@@ -749,9 +781,14 @@
         </div>
       `;
 
-      card.querySelector(".card__action-btn")?.addEventListener("click", (e) => { e.stopPropagation(); openProduct(p.sku); });
+      card.querySelector(".card__action-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProduct(p.sku);
+      });
       card.addEventListener("click", () => openProduct(p.sku));
-      card.addEventListener("keydown", (e) => { if (e.key === "Enter") openProduct(p.sku); });
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") openProduct(p.sku);
+      });
       mountCardCarousel(card, imgs, p.title);
       frag.appendChild(card);
     }
@@ -862,10 +899,14 @@
         scrollToIndex(clamp(idx + 1, 0, imgs.length - 1));
       });
       dots.forEach((d, i) => d.addEventListener("click", () => scrollToIndex(i)));
-      track?.addEventListener("scroll", debounce(() => {
-        const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
-        setDot(clamp(idx, 0, Math.max(0, imgs.length - 1)));
-      }, 70), { passive: true });
+      track?.addEventListener(
+        "scroll",
+        debounce(() => {
+          const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
+          setDot(clamp(idx, 0, Math.max(0, imgs.length - 1)));
+        }, 70),
+        { passive: true }
+      );
 
       const snap = debounce(() => {
         const idx = Math.round((track.scrollLeft || 0) / (track.clientWidth || 1));
@@ -885,8 +926,13 @@
     if (cartCount) cartCount.textContent = String(cart.reduce((a, i) => a + Number(i.qty || 0), 0));
   };
 
+  const getCartItemPrice = (item) => Number(item.priceCents ?? item.price_cents ?? item.price ?? 0) || 0;
+  const getCartItemName = (item) => String(item.title ?? item.name ?? item.sku ?? "Producto");
+  const getCartItemImage = (item) => safeUrl(item.image ?? item.img ?? item.image_url ?? "");
+  const getCartItemSize = (item) => String(item.size ?? "Única");
+
   const computeSubtotal = () =>
-    cart.reduce((sum, it) => sum + Number(it.priceCents || it.price_cents || 0) * Number(it.qty || 0), 0);
+    cart.reduce((sum, it) => sum + getCartItemPrice(it) * Number(it.qty || 0), 0);
 
   const computeDiscount = (subtotalCents) => {
     if (!activePromo) return 0;
@@ -955,16 +1001,17 @@
     cart.forEach((item, idx) => {
       const row = document.createElement("article");
       row.className = "cartitem";
-      const title = String(item.title || item.name || item.sku || "");
-      const priceCents = Number(item.priceCents || item.price_cents || 0);
+
+      const title = getCartItemName(item);
+      const priceCents = getCartItemPrice(item);
 
       row.innerHTML = `
         <div class="cartitem__media">
-          ${item.image ? `<img src="${escapeHtml(safeUrl(item.image))}" alt="${escapeHtml(title)}" />` : `<div class="product-card__placeholder">🏁</div>`}
+          ${getCartItemImage(item) ? `<img src="${escapeHtml(getCartItemImage(item))}" alt="${escapeHtml(title)}" />` : `<div class="product-card__placeholder">🏁</div>`}
         </div>
         <div class="cartitem__body">
           <div class="cartitem__title">${escapeHtml(title)}</div>
-          <div class="cartitem__meta">${item.size ? `Talla: ${escapeHtml(item.size)} · ` : ""}${money(priceCents)}</div>
+          <div class="cartitem__meta">${item.size ? `Talla: ${escapeHtml(getCartItemSize(item))} · ` : ""}${money(priceCents)}</div>
           <div class="cartitem__actions">
             <button type="button" class="qtybtn js-dec" aria-label="Quitar una unidad">−</button>
             <span class="qtytxt">${Number(item.qty || 0)}</span>
@@ -1044,6 +1091,10 @@
   };
 
   const syncShipModeInputs = () => {
+    $$("[data-ship-mode]").forEach((btn) => {
+      btn.classList.toggle("is-active", normalizeText(btn.dataset.shipMode) === shipping.mode);
+    });
+
     $$('input[name="shipMode"]').forEach((radio) => {
       radio.checked = normalizeText(radio.value) === shipping.mode;
     });
@@ -1145,12 +1196,21 @@
         checkoutMsg.textContent = "";
       }
 
+      const req_id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
       const payload = {
-        items: cart,
-        cart,
+        req_id,
+        items: cart.map((it) => ({
+          sku: String(it.sku || "").trim(),
+          title: String(it.title || it.name || "").trim(),
+          qty: Number(it.qty || 1),
+          size: String(it.size || "Unitalla").trim(),
+          priceCents: Number(getCartItemPrice(it)),
+          price_cents: Number(getCartItemPrice(it)),
+        })),
         shipping_mode: shipping.mode,
-        postal_code: normalizeText(postalCode?.value || shipping.postal_code || ""),
-        promo_code: normalizeText(promoCode?.value || activePromo?.code || ""),
+        postal_code: String(postalCode?.value || shipping.postal_code || "").trim(),
+        promo_code: String(promoCode?.value || activePromo?.code || "").trim(),
         quote: shipping.quote,
       };
 
@@ -1197,17 +1257,11 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
+
       const j = await res.json().catch(() => null);
       appendAssistantBubble("assistant", j?.reply || "No tuve una respuesta disponible.");
     } catch {
       appendAssistantBubble("assistant", "No pude conectarme con el asistente en este momento.");
-    }
-  };
-
-  const openAssistant = () => {
-    openLayer(assistantModal);
-    if (assistantOutput && assistantOutput.childElementCount === 0) {
-      appendAssistantBubble("assistant", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy?");
     }
   };
 
@@ -1231,80 +1285,198 @@
     });
   };
 
-  const initSalesTicker = () => {
+  const initNeuromarketing = () => {
     if (!salesNotification || !salesName || !salesAction) return;
-
-    const people = ["Luis", "Ana", "Carlos", "María", "Dani", "Rafa", "Sofía", "Pablo"];
-    const actions = ["compró una pieza", "agregó al carrito", "cotizó envío", "finalizó checkout"];
+    const names = ["Alex", "María", "Chris", "Fernanda", "Luis", "Sofía", "Diego", "Ana", "Jorge", "Daniela"];
+    const actions = ["compró un hoodie", "compró una gorra", "compró una camiseta", "compró una chamarra", "compró mercancía oficial"];
     const tick = () => {
-      const name = people[Math.floor(Math.random() * people.length)];
-      const action = actions[Math.floor(Math.random() * actions.length)];
-      salesName.textContent = name;
-      salesAction.textContent = action;
+      if (document.hidden) return;
+      salesName.textContent = names[Math.floor(Math.random() * names.length)];
+      salesAction.textContent = actions[Math.floor(Math.random() * actions.length)];
       salesNotification.hidden = false;
-      setTimeout(() => { salesNotification.hidden = true; }, 5000);
+      salesNotification.classList.add("is-visible");
+      setTimeout(() => {
+        salesNotification.classList.remove("is-visible");
+        setTimeout(() => {
+          salesNotification.hidden = true;
+        }, 180);
+      }, 3200);
     };
-
     setTimeout(() => {
       tick();
       setInterval(tick, 18000);
     }, 7000);
   };
 
-  const registerServiceWorker = () => {
+  const registerServiceWorker = async () => {
+    if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    if (location.protocol !== "https:" && location.hostname !== "localhost") return;
+
+    let refreshing = false;
+
+    const activateWaitingWorker = (registration) => {
+      if (registration?.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+        updateViaCache: "none",
+      });
+
+      if (registration.waiting) {
+        activateWaitingWorker(registration);
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const installing = registration.installing;
+        if (!installing) return;
+
+        installing.addEventListener("statechange", () => {
+          if (installing.state === "installed" && navigator.serviceWorker.controller) {
+            activateWaitingWorker(registration);
+          }
+        });
+      });
+
+      try {
+        await navigator.serviceWorker.ready;
+      } catch {}
+
+      try {
+        await registration.update();
+      } catch {}
+    } catch (err) {
+      console.error("SW register error:", err);
+    }
+  };
+
+  const runSalesAmbient = () => {
+    if (!salesNotification || !salesName || !salesAction) return;
+
+    const salesPool = [
+      ["Tijuana", "acaba de comprar una hoodie oficial"],
+      ["Ensenada", "agregó merch SCORE a su carrito"],
+      ["Mexicali", "confirmó una compra con Stripe"],
+      ["San Diego", "cotizó envío internacional"],
+    ];
+
+    setInterval(() => {
+      const [name, action] = salesPool[Math.floor(Math.random() * salesPool.length)];
+      salesName.textContent = name;
+      salesAction.textContent = action;
+      salesNotification.hidden = false;
+      salesNotification.classList.add("is-visible");
+      setTimeout(() => {
+        salesNotification.classList.remove("is-visible");
+        setTimeout(() => {
+          salesNotification.hidden = true;
+        }, 180);
+      }, 3200);
+    }, 18000);
   };
 
   const bindEvents = () => {
     openMenuBtn?.addEventListener("click", () => openLayer(sideMenu));
     closeMenuBtn?.addEventListener("click", () => closeLayer(sideMenu));
-    navOpenAssistant?.addEventListener("click", () => { closeLayer(sideMenu); openAssistant(); });
-    navOpenCart?.addEventListener("click", () => { closeLayer(sideMenu); openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
+    navOpenAssistant?.addEventListener("click", () => {
+      closeLayer(sideMenu);
+      openLayer(assistantModal);
+    });
+    navOpenCart?.addEventListener("click", () => {
+      closeLayer(sideMenu);
+      openLayer(cartDrawer);
+      refreshShippingUI();
+      renderCart();
+    });
 
-    openCartBtn?.addEventListener("click", () => { openLayer(cartDrawer); refreshShippingUI(); renderCart(); });
+    openCartBtn?.addEventListener("click", () => {
+      openLayer(cartDrawer);
+      refreshShippingUI();
+      renderCart();
+    });
     closeCartBtn?.addEventListener("click", () => closeLayer(cartDrawer));
 
-    openAssistantBtn?.addEventListener("click", openAssistant);
-    floatingAssistantBtn?.addEventListener("click", openAssistant);
+    openAssistantBtn?.addEventListener("click", () => {
+      openLayer(assistantModal);
+      if (assistantOutput && assistantOutput.childElementCount === 0) {
+        appendAssistantBubble("assistant", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy?");
+      }
+    });
+    floatingAssistantBtn?.addEventListener("click", () => {
+      openLayer(assistantModal);
+      if (assistantOutput && assistantOutput.childElementCount === 0) {
+        appendAssistantBubble("assistant", "Hola. Soy el asistente de SCORE STORE. ¿Qué buscas hoy?");
+      }
+    });
     assistantClose?.addEventListener("click", () => closeLayer(assistantModal));
     assistantSendBtn?.addEventListener("click", sendAssistant);
-    assistantInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendAssistant(); });
+    assistantInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendAssistant();
+    });
 
     overlay?.addEventListener("click", () => {
-      if (!productModal?.hidden) return closeLayer(productModal);
-      if (!sizeGuideModal?.hidden) return closeLayer(sizeGuideModal);
-      if (!assistantModal?.hidden) return closeLayer(assistantModal);
-      if (!cartDrawer?.hidden) return closeLayer(cartDrawer);
-      if (!sideMenu?.hidden) return closeLayer(sideMenu);
+      closeLayer(sideMenu);
+      closeLayer(cartDrawer);
+      closeLayer(assistantModal);
+      closeLayer(productModal);
+      closeLayer(sizeGuideModal);
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
-      if (!productModal?.hidden) return closeLayer(productModal);
-      if (!sizeGuideModal?.hidden) return closeLayer(sizeGuideModal);
-      if (!assistantModal?.hidden) return closeLayer(assistantModal);
-      if (!cartDrawer?.hidden) return closeLayer(cartDrawer);
-      if (!sideMenu?.hidden) return closeLayer(sideMenu);
+      closeLayer(sideMenu);
+      closeLayer(cartDrawer);
+      closeLayer(assistantModal);
+      closeLayer(productModal);
+      closeLayer(sizeGuideModal);
+    });
+
+    scrollTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    window.addEventListener("scroll", () => {
+      if (!scrollTopBtn) return;
+      scrollTopBtn.classList.toggle("is-visible", window.scrollY > 500);
     });
 
     scrollToCategoriesBtn?.addEventListener("click", () => smoothScrollTo("#categories"));
     scrollLeftBtn?.addEventListener("click", () => productGrid?.scrollBy({ left: -getTrackStep(), behavior: "smooth" }));
     scrollRightBtn?.addEventListener("click", () => productGrid?.scrollBy({ left: getTrackStep(), behavior: "smooth" }));
 
-    productGrid?.addEventListener("touchend", debounce(() => {
-      const step = getTrackStep();
-      const idx = Math.round((productGrid.scrollLeft || 0) / step);
-      productGrid.scrollTo({ left: idx * step, behavior: "smooth" });
-      try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {}
-    }, 120), { passive: true });
+    productGrid?.addEventListener(
+      "touchend",
+      debounce(() => {
+        const step = getTrackStep();
+        const idx = Math.round((productGrid.scrollLeft || 0) / step);
+        productGrid.scrollTo({ left: idx * step, behavior: "smooth" });
+        try {
+          localStorage.setItem(STORAGE_KEYS.seenSwipe, "1");
+        } catch {}
+      }, 120),
+      { passive: true }
+    );
 
-    productGrid?.addEventListener("pointerup", debounce(() => {
-      const step = getTrackStep();
-      const idx = Math.round((productGrid.scrollLeft || 0) / step);
-      productGrid.scrollTo({ left: idx * step, behavior: "smooth" });
-      try { localStorage.setItem(STORAGE_KEYS.seenSwipe, "1"); } catch {}
-    }, 120), { passive: true });
+    productGrid?.addEventListener(
+      "pointerup",
+      debounce(() => {
+        const step = getTrackStep();
+        const idx = Math.round((productGrid.scrollLeft || 0) / step);
+        productGrid.scrollTo({ left: idx * step, behavior: "smooth" });
+        try {
+          localStorage.setItem(STORAGE_KEYS.seenSwipe, "1");
+        } catch {}
+      }, 120),
+      { passive: true }
+    );
 
     sortSelect?.addEventListener("change", () => {
       sortMode = String(sortSelect.value || "featured");
@@ -1355,7 +1527,10 @@
       mobileSearchWrap.hidden = false;
       mobileSearchInput?.focus();
     });
-    closeMobileSearchBtn?.addEventListener("click", () => { if (mobileSearchWrap) mobileSearchWrap.hidden = true; });
+
+    closeMobileSearchBtn?.addEventListener("click", () => {
+      if (mobileSearchWrap) mobileSearchWrap.hidden = true;
+    });
 
     pmClose?.addEventListener("click", () => closeLayer(productModal));
     pmBackBtn?.addEventListener("click", () => closeLayer(productModal));
@@ -1417,6 +1592,16 @@
       } catch {}
     });
 
+    $$("[data-ship-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        shipping.mode = normalizeText(btn.dataset.shipMode || "pickup");
+        shipping.quote = null;
+        shipping.postal_code = "";
+        saveShipping();
+        refreshShippingUI();
+      });
+    });
+
     $$('input[name="shipMode"]').forEach((radio) => {
       radio.addEventListener("change", () => {
         if (!radio.checked) return;
@@ -1428,145 +1613,92 @@
       });
     });
 
+    postalCode?.addEventListener("input", () => {
+      shipping.postal_code = normalizeText(postalCode.value || "");
+      saveShipping();
+    });
+
     quoteBtn?.addEventListener("click", doQuote);
     applyPromoBtn?.addEventListener("click", validatePromo);
-    promoCode?.addEventListener("keydown", (e) => { if (e.key === "Enter") validatePromo(); });
+    promoCode?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") validatePromo();
+    });
+
     continueShoppingBtn?.addEventListener("click", () => closeLayer(cartDrawer));
     checkoutBtn?.addEventListener("click", doCheckout);
 
-    const onScroll = debounce(() => {
-      const y = window.scrollY || document.documentElement.scrollTop || 0;
-      if (!scrollTopBtn) return;
-      scrollTopBtn.hidden = y < 800;
-    }, 80);
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-  // =========================================================
-  // Service Worker
-  // =========================================================
-  const registerServiceWorker = async () => {
-    if (typeof window === "undefined") return;
-    if (!("serviceWorker" in navigator)) return;
-    if (location.protocol !== "https:" && location.hostname !== "localhost") return;
-
-    let refreshing = false;
-
-    const activateWaitingWorker = (registration) => {
-      if (registration?.waiting) {
-        registration.waiting.postMessage({ type: "SKIP_WAITING" });
-      }
-    };
-
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
+    promoBarClose?.addEventListener("click", () => {
+      if (promoBar) promoBar.hidden = true;
+      try {
+        localStorage.setItem(STORAGE_KEYS.promoDismiss, "1");
+      } catch {}
     });
+  };
 
-    try {
-      const registration = await navigator.serviceWorker.register("/sw.js", {
-        scope: "/",
-        updateViaCache: "none",
-      });
+  const applyShipModeUi = () => {
+    syncShipModeInputs();
 
-      if (registration.waiting) {
-        activateWaitingWorker(registration);
-      }
-
-      registration.addEventListener("updatefound", () => {
-        const installing = registration.installing;
-        if (!installing) return;
-
-        installing.addEventListener("statechange", () => {
-          if (installing.state === "installed" && navigator.serviceWorker.controller) {
-            activateWaitingWorker(registration);
-          }
-        });
-      });
-
-      try {
-        await navigator.serviceWorker.ready;
-      } catch {}
-
-      try {
-        await registration.update();
-      } catch {}
-    } catch (err) {
-      console.error("SW register error:", err);
+    if (postalWrap) {
+      postalWrap.hidden = shipping.mode === "pickup";
     }
+
+    if (shipHint) {
+      if (shipping.mode === "pickup") shipHint.textContent = "Recoger en fábrica (Tijuana).";
+      if (shipping.mode === "envia_mx") shipHint.textContent = "Cotización nacional MX por código postal.";
+      if (shipping.mode === "envia_us") shipHint.textContent = "Cotización USA por ZIP Code.";
+    }
+
+    refreshTotals();
   };
 
-  // =========================================================
-  // Ambient sales
-  // =========================================================
-  const runSalesAmbient = () => {
-    if (!salesNotification || !salesName || !salesAction) return;
-
-    const salesPool = [
-      ["Tijuana", "acaba de comprar una hoodie oficial"],
-      ["Ensenada", "agregó merch SCORE a su carrito"],
-      ["Mexicali", "confirmó una compra con Stripe"],
-      ["San Diego", "cotizó envío internacional"],
-    ];
-
-    setInterval(() => {
-      const [name, action] = salesPool[Math.floor(Math.random() * salesPool.length)];
-      salesName.textContent = name;
-      salesAction.textContent = action;
-      salesNotification.hidden = false;
-      salesNotification.classList.add("is-visible");
-
-      setTimeout(() => {
-        salesNotification.classList.remove("is-visible");
-        setTimeout(() => {
-          salesNotification.hidden = true;
-        }, 180);
-      }, 3200);
-    }, 18000);
-  };
-
-  // =========================================================
-  // Boot
-  // =========================================================
   const boot = async () => {
     try {
       if (appVersionLabel) appVersionLabel.textContent = APP_VERSION;
 
       initCookieBanner();
       restoreCart();
+      loadShipping();
       renderCart();
       applyShipModeUi();
 
       await fetchSiteSettings();
-      await loadCatalog();
+      await fetchPromos();
+      await fetchCatalog();
+
+      catalog = { products, categories: CATEGORY_CONFIG };
+
+      products = (catalog?.products?.length ? catalog.products : products).map(normalizeProduct);
+      filteredProducts = [...products];
 
       renderCategories();
       renderProducts();
-      runSalesAmbient();
+      updateFilterUI();
+      initNeuromarketing();
+      bindEvents();
       await registerServiceWorker();
 
-      const hashSku = new URLSearchParams(location.hash.replace(/^#/, "")).get("sku");
-      if (hashSku) {
-        const exists = products.find((p) => p.sku === hashSku);
-        if (exists) openProduct(hashSku);
+      if (location.hash.startsWith("#sku=")) {
+        const sku = decodeURIComponent(location.hash.replace("#sku=", ""));
+        const maybeOpen = () => {
+          const p = products.find((x) => String(x.sku || "") === sku);
+          if (p) openProduct(sku);
+        };
+        setTimeout(maybeOpen, 200);
       }
-    } catch (err) {
-      console.error(err);
-      showToast("No se pudo inicializar Score Store.", "error");
+    } catch (e) {
+      console.error(e);
+      showToast("No pude cargar la tienda completa.", "error", 3200);
     } finally {
-      if (splash) {
-        splash.classList.add("is-hide");
-        setTimeout(() => {
-          splash.hidden = true;
-          if (overlay && anyLayerOpen()) overlay.hidden = false;
-        }, 420);
-      }
+      setTimeout(() => {
+        if (splash) {
+          splash.classList.add("is-out");
+          setTimeout(() => {
+            splash.hidden = true;
+          }, 700);
+        }
+      }, 350);
     }
   };
 
-  boot().catch((err) => {
-    console.error(err);
-    if (splash) splash.hidden = true;
-  });
+  document.addEventListener("DOMContentLoaded", boot);
 })();
